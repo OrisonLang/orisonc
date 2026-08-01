@@ -256,6 +256,79 @@ auto computed_dynamic_array_for_element_load_render_state_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_loop_continue_render_state_report(
+    pipeline::ComputedDynamicArrayForLoopContinueRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "renders " << state.render_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.render_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_loop_continue_inputs_ready ? " [loop continue ready]" : " [loop continue blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "loop continue render",
+        state.render_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " continue " << indexed_name_or_unknown(state.continue_block_names, index);
+        fields << " condition " << indexed_name_or_unknown(state.condition_block_names, index);
+        fields << " index " << indexed_name_or_unknown(state.index_names, index);
+        fields << " next " << indexed_name_or_unknown(state.next_index_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "loop continue render",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_dynamic_array_for_loop_render_sequence_state_report(
+    pipeline::ComputedDynamicArrayForLoopRenderSequenceState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "sequences " << state.sequence_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.sequence_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_body_blocks_ready ? " [body blocks ready]" : " [body blocks blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "loop render sequence",
+        state.sequence_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " body " << indexed_name_or_unknown(state.body_block_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "loop render sequence",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_inserted_cleanup_handoff_state_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string> {

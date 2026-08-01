@@ -1091,8 +1091,10 @@ int main() {
             "[element address ready] (metadata only)",
             "computed DynamicArray element load render planned renders 1 snippets 1 [metadata available] "
             "[element load ready] (metadata only)",
-            smoke::computed_dynamic_array_loop_continue_render_report,
-            smoke::computed_dynamic_array_loop_render_sequence_report,
+            "computed DynamicArray loop continue render planned renders 1 snippets 3 [metadata available] "
+            "[loop continue ready] (metadata only)",
+            "computed DynamicArray loop render sequence planned sequences 1 snippets 15 [metadata available] "
+            "[body blocks ready] (metadata only)",
             smoke::computed_dynamic_array_loop_exit_cleanup_report,
             smoke::computed_dynamic_array_cleanup_transition_report,
             smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,

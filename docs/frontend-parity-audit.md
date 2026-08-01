@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-01: the full DynamicArray cleanup audit now renders computed DynamicArray loop-continue and
+  loop-render-sequence sections from typed pipeline state at the driver edge instead of appending those report vectors
+  directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders computed DynamicArray element-address and element-load
   render sections from typed pipeline state at the driver edge instead of appending those report vectors directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders computed DynamicArray descriptor and loop-control render

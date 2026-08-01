@@ -192,6 +192,61 @@ void assert_computed_dynamic_array_render_reports() {
         "source DynamicArray<UInt32> element UInt32 lowers-to i32 "
         "address %items.computed_for.element.addr item %items.computed_for.item (metadata only)"
     );
+
+    auto loop_continue = driver::computed_dynamic_array_for_loop_continue_render_state_report(
+        pipeline::ComputedDynamicArrayForLoopContinueRenderState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .continue_block_names = {"items.computed_for.continue"},
+            .condition_block_names = {"items.computed_for.condition"},
+            .index_names = {"%items.computed_for.index"},
+            .next_index_names = {"%items.computed_for.next.index"},
+            .render_metadata_available = true,
+            .all_loop_continue_inputs_ready = true,
+            .render_count = 1,
+            .rendered_ir_snippet_count = 3,
+        }
+    );
+    assert(loop_continue.size() == 2);
+    assert(
+        loop_continue[0] ==
+        "computed DynamicArray loop continue render planned renders 1 snippets 3 [metadata available] "
+        "[loop continue ready] (metadata only)"
+    );
+    assert(
+        loop_continue[1] ==
+        "computed DynamicArray loop continue render detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 continue items.computed_for.continue "
+        "condition items.computed_for.condition index %items.computed_for.index "
+        "next %items.computed_for.next.index (metadata only)"
+    );
+
+    auto sequence = driver::computed_dynamic_array_for_loop_render_sequence_state_report(
+        pipeline::ComputedDynamicArrayForLoopRenderSequenceState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .body_block_names = {"items.computed_for.body"},
+            .sequence_metadata_available = true,
+            .all_body_blocks_ready = true,
+            .sequence_count = 1,
+            .rendered_ir_snippet_count = 15,
+        }
+    );
+    assert(sequence.size() == 2);
+    assert(
+        sequence[0] ==
+        "computed DynamicArray loop render sequence planned sequences 1 snippets 15 [metadata available] "
+        "[body blocks ready] (metadata only)"
+    );
+    assert(
+        sequence[1] ==
+        "computed DynamicArray loop render sequence detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 body items.computed_for.body (metadata only)"
+    );
 }
 
 void assert_computed_inserted_cleanup_handoff_reports() {
