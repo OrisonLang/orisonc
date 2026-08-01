@@ -135,6 +135,63 @@ void assert_computed_dynamic_array_render_reports() {
         "index %items.computed_for.index next %items.computed_for.next.index bounds %items.computed_for.more "
         "(metadata only)"
     );
+
+    auto address = driver::computed_dynamic_array_for_element_address_render_state_report(
+        pipeline::ComputedDynamicArrayForElementAddressRenderState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .element_llvm_type_names = {"i32"},
+            .data_pointer_names = {"%items.computed_for.data"},
+            .index_names = {"%items.computed_for.index"},
+            .element_address_names = {"%items.computed_for.element.addr"},
+            .render_metadata_available = true,
+            .all_element_address_inputs_ready = true,
+            .render_count = 1,
+            .rendered_ir_snippet_count = 1,
+        }
+    );
+    assert(address.size() == 2);
+    assert(
+        address[0] ==
+        "computed DynamicArray element address render planned renders 1 snippets 1 [metadata available] "
+        "[element address ready] (metadata only)"
+    );
+    assert(
+        address[1] ==
+        "computed DynamicArray element address render detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 lowers-to i32 data %items.computed_for.data "
+        "index %items.computed_for.index address %items.computed_for.element.addr (metadata only)"
+    );
+
+    auto load = driver::computed_dynamic_array_for_element_load_render_state_report(
+        pipeline::ComputedDynamicArrayForElementLoadRenderState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .element_llvm_type_names = {"i32"},
+            .element_address_names = {"%items.computed_for.element.addr"},
+            .item_value_names = {"%items.computed_for.item"},
+            .render_metadata_available = true,
+            .all_element_load_inputs_ready = true,
+            .render_count = 1,
+            .rendered_ir_snippet_count = 1,
+        }
+    );
+    assert(load.size() == 2);
+    assert(
+        load[0] ==
+        "computed DynamicArray element load render planned renders 1 snippets 1 [metadata available] "
+        "[element load ready] (metadata only)"
+    );
+    assert(
+        load[1] ==
+        "computed DynamicArray element load render detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 lowers-to i32 "
+        "address %items.computed_for.element.addr item %items.computed_for.item (metadata only)"
+    );
 }
 
 void assert_computed_inserted_cleanup_handoff_reports() {

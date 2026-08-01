@@ -1087,8 +1087,10 @@ int main() {
             "[descriptor projections ready] (metadata only)",
             "computed DynamicArray loop control render planned renders 1 snippets 5 [metadata available] "
             "[control flow ready] (metadata only)",
-            smoke::computed_dynamic_array_element_address_render_report,
-            smoke::computed_dynamic_array_element_load_render_report,
+            "computed DynamicArray element address render planned renders 1 snippets 1 [metadata available] "
+            "[element address ready] (metadata only)",
+            "computed DynamicArray element load render planned renders 1 snippets 1 [metadata available] "
+            "[element load ready] (metadata only)",
             smoke::computed_dynamic_array_loop_continue_render_report,
             smoke::computed_dynamic_array_loop_render_sequence_report,
             smoke::computed_dynamic_array_loop_exit_cleanup_report,

@@ -181,6 +181,81 @@ auto computed_dynamic_array_for_loop_control_render_state_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_element_address_render_state_report(
+    pipeline::ComputedDynamicArrayForElementAddressRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "renders " << state.render_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.render_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_element_address_inputs_ready ? " [element address ready]" : " [element address blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "element address render",
+        state.render_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " lowers-to " << indexed_name_or_unknown(state.element_llvm_type_names, index);
+        fields << " data " << indexed_name_or_unknown(state.data_pointer_names, index);
+        fields << " index " << indexed_name_or_unknown(state.index_names, index);
+        fields << " address " << indexed_name_or_unknown(state.element_address_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "element address render",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_dynamic_array_for_element_load_render_state_report(
+    pipeline::ComputedDynamicArrayForElementLoadRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "renders " << state.render_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.render_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_element_load_inputs_ready ? " [element load ready]" : " [element load blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "element load render",
+        state.render_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " lowers-to " << indexed_name_or_unknown(state.element_llvm_type_names, index);
+        fields << " address " << indexed_name_or_unknown(state.element_address_names, index);
+        fields << " item " << indexed_name_or_unknown(state.item_value_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "element load render",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_inserted_cleanup_handoff_state_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string> {
