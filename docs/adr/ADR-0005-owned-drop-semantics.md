@@ -35,6 +35,8 @@ inventing semantics outside the spec/tour.
   source type, receiver status, and diagnostic text when present. This is debugging/audit metadata only.
 - A test-only lowering option can collect aggregate projection access-plan report lines into function and module
   emission results. Normal compiler output remains unchanged.
+- The driver exposes those aggregate projection access-plan lines only through the explicit
+  `--test-only-aggregate-projection-access-plans` report command.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

@@ -54,6 +54,7 @@ auto usage_text() -> std::string {
            "--test-only-computed-dynamic-array-consumed-cleanup-descriptors <file> | "
            "--computed-dynamic-array-cleanup-proof-summary <file> | "
            "--test-only-computed-dynamic-array-cleanup-proof-summary <file> | "
+           "--test-only-aggregate-projection-access-plans <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -840,6 +841,19 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                 return computed_cleanup_proof_summary_state_report(
                     result.computed_dynamic_array_for_cleanup_proof_summary_state
                 );
+            }
+        )) {
+        return std::move(*result);
+    }
+
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--test-only-aggregate-projection-access-plans",
+            pipeline::CompilePipelineOptions {
+                .test_only_collect_aggregate_projection_access_plans = true,
+            },
+            [](auto const& result) -> auto const& {
+                return result.aggregate_projection_access_plan_report;
             }
         )) {
         return std::move(*result);
