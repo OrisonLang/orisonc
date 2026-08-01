@@ -39,6 +39,14 @@ auto computed_dynamic_array_for_loop_render_sequence_state_report(
     pipeline::ComputedDynamicArrayForLoopRenderSequenceState const& state
 ) -> std::vector<std::string>;
 
+auto computed_dynamic_array_for_loop_exit_cleanup_state_report(
+    pipeline::ComputedDynamicArrayForLoopExitCleanupState const& state
+) -> std::vector<std::string>;
+
+auto computed_dynamic_array_for_cleanup_transition_state_report(
+    pipeline::ComputedDynamicArrayForCleanupTransitionState const& state
+) -> std::vector<std::string>;
+
 auto computed_inserted_cleanup_handoff_state_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string>;

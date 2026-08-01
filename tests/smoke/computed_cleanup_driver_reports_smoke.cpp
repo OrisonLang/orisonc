@@ -247,6 +247,66 @@ void assert_computed_dynamic_array_render_reports() {
         "computed DynamicArray loop render sequence detail owner items function sum_words "
         "source DynamicArray<UInt32> element UInt32 body items.computed_for.body (metadata only)"
     );
+
+    auto exit_cleanup = driver::computed_dynamic_array_for_loop_exit_cleanup_state_report(
+        pipeline::ComputedDynamicArrayForLoopExitCleanupState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .exit_block_names = {"items.computed_for.exit"},
+            .loop_entry_cleanup_owner_names = {"items.loop.entry"},
+            .loop_exit_cleanup_owner_names = {"items"},
+            .cleanup_resumption_operation_names = {"items.computed_for.cleanup.resume"},
+            .cleanup_metadata_available = true,
+            .all_cleanup_resumptions_ready = true,
+            .cleanup_count = 1,
+            .rendered_ir_snippet_count = 2,
+        }
+    );
+    assert(exit_cleanup.size() == 2);
+    assert(
+        exit_cleanup[0] ==
+        "computed DynamicArray loop exit cleanup planned cleanups 1 snippets 2 [metadata available] "
+        "[cleanup resumptions ready] (metadata only)"
+    );
+    assert(
+        exit_cleanup[1] ==
+        "computed DynamicArray loop exit cleanup detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 exit items.computed_for.exit from items.loop.entry "
+        "to items operation items.computed_for.cleanup.resume (metadata only)"
+    );
+
+    auto transition = driver::computed_dynamic_array_for_cleanup_transition_state_report(
+        pipeline::ComputedDynamicArrayForCleanupTransitionState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .acquisition_source_owner_names = {"items"},
+            .acquisition_target_owner_names = {"items.loop.entry"},
+            .acquisition_operation_names = {"items.computed_for.cleanup.acquire"},
+            .resumption_source_owner_names = {"items.loop.entry"},
+            .resumption_target_owner_names = {"items"},
+            .resumption_operation_names = {"items.computed_for.cleanup.resume"},
+            .transition_metadata_available = true,
+            .all_transitions_paired = true,
+            .transition_count = 1,
+        }
+    );
+    assert(transition.size() == 2);
+    assert(
+        transition[0] ==
+        "computed DynamicArray cleanup transition planned transitions 1 [metadata available] "
+        "[transitions paired] (metadata only)"
+    );
+    assert(
+        transition[1] ==
+        "computed DynamicArray cleanup transition detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 acquire-from items acquire-to items.loop.entry "
+        "acquire-operation items.computed_for.cleanup.acquire resume-from items.loop.entry "
+        "resume-to items resume-operation items.computed_for.cleanup.resume (metadata only)"
+    );
 }
 
 void assert_computed_inserted_cleanup_handoff_reports() {

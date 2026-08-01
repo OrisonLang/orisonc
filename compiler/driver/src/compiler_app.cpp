@@ -282,6 +282,14 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_loop_render_sequence_state =
             std::move(emitted_result.computed_dynamic_array_for_loop_render_sequence_state);
     }
+    if (emitted_result.computed_dynamic_array_for_loop_exit_cleanup_state.cleanup_count > 0) {
+        result.computed_dynamic_array_for_loop_exit_cleanup_state =
+            std::move(emitted_result.computed_dynamic_array_for_loop_exit_cleanup_state);
+    }
+    if (emitted_result.computed_dynamic_array_for_cleanup_transition_state.transition_count > 0) {
+        result.computed_dynamic_array_for_cleanup_transition_state =
+            std::move(emitted_result.computed_dynamic_array_for_cleanup_transition_state);
+    }
     if (emitted_result.computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count > 0) {
         result.computed_dynamic_array_for_inserted_cleanup_handoff_state =
             std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_handoff_state);
@@ -362,8 +370,18 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_loop_render_sequence_state
         )
     );
-    append_report_lines(report, result.computed_dynamic_array_for_loop_exit_cleanup_report);
-    append_report_lines(report, result.computed_dynamic_array_for_cleanup_transition_report);
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_loop_exit_cleanup_state_report(
+            result.computed_dynamic_array_for_loop_exit_cleanup_state
+        )
+    );
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_cleanup_transition_state_report(
+            result.computed_dynamic_array_for_cleanup_transition_state
+        )
+    );
     append_report_lines(
         report,
         computed_inserted_cleanup_handoff_state_report(

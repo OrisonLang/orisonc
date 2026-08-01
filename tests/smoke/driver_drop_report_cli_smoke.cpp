@@ -1095,8 +1095,10 @@ int main() {
             "[loop continue ready] (metadata only)",
             "computed DynamicArray loop render sequence planned sequences 1 snippets 15 [metadata available] "
             "[body blocks ready] (metadata only)",
-            smoke::computed_dynamic_array_loop_exit_cleanup_report,
-            smoke::computed_dynamic_array_cleanup_transition_report,
+            "computed DynamicArray loop exit cleanup planned cleanups 1 snippets 2 [metadata available] "
+            "[cleanup resumptions ready] (metadata only)",
+            "computed DynamicArray cleanup transition planned transitions 1 [metadata available] "
+            "[transitions paired] (metadata only)",
             smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
             "computed DynamicArray production emission gate planned gates 1 snippets 17 [metadata available] "
             "[ownership ready] [loop render ready] [loop cleanup ownership ready] "

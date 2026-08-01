@@ -329,6 +329,84 @@ auto computed_dynamic_array_for_loop_render_sequence_state_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_loop_exit_cleanup_state_report(
+    pipeline::ComputedDynamicArrayForLoopExitCleanupState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "cleanups " << state.cleanup_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.cleanup_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_cleanup_resumptions_ready ? " [cleanup resumptions ready]" :
+        " [cleanup resumptions blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "loop exit cleanup",
+        state.cleanup_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " exit " << indexed_name_or_unknown(state.exit_block_names, index);
+        fields << " from " << indexed_name_or_unknown(state.loop_entry_cleanup_owner_names, index);
+        fields << " to " << indexed_name_or_unknown(state.loop_exit_cleanup_owner_names, index);
+        fields << " operation " << indexed_name_or_unknown(state.cleanup_resumption_operation_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "loop exit cleanup",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_dynamic_array_for_cleanup_transition_state_report(
+    pipeline::ComputedDynamicArrayForCleanupTransitionState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "transitions " << state.transition_count;
+    counts << (state.transition_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_transitions_paired ? " [transitions paired]" : " [transitions blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "cleanup transition",
+        state.transition_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " acquire-from " << indexed_name_or_unknown(state.acquisition_source_owner_names, index);
+        fields << " acquire-to " << indexed_name_or_unknown(state.acquisition_target_owner_names, index);
+        fields << " acquire-operation " << indexed_name_or_unknown(state.acquisition_operation_names, index);
+        fields << " resume-from " << indexed_name_or_unknown(state.resumption_source_owner_names, index);
+        fields << " resume-to " << indexed_name_or_unknown(state.resumption_target_owner_names, index);
+        fields << " resume-operation " << indexed_name_or_unknown(state.resumption_operation_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "cleanup transition",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_inserted_cleanup_handoff_state_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string> {
