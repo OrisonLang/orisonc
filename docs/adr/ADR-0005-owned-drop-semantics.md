@@ -46,6 +46,8 @@ inventing semantics outside the spec/tour.
   consume that state instead of parsing report strings.
 - The driver aggregate projection access-plan report now renders from the typed pipeline state while preserving the
   previous report text.
+- Pipeline results no longer expose aggregate projection access-plan report strings; aggregate projection access
+  consumers use typed state at the pipeline boundary.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

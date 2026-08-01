@@ -910,8 +910,6 @@ void populate_lowering_emission_reports(
         build_computed_consumed_cleanup_descriptor_state(cleanup_proof_model);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
         cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
-    result.aggregate_projection_access_plan_report =
-        std::move(emission.aggregate_projection_access_plan_report);
     result.aggregate_projection_access_plan_state =
         build_aggregate_projection_access_plan_state(emission);
     result.computed_dynamic_array_for_production_emission_gate_report =
