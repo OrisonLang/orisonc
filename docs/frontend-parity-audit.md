@@ -52,6 +52,8 @@
   check, so user-visible declaration names cannot diverge into ambiguous per-kind namespaces.
 - 2026-08-02: foreign import local function names now participate in that top-level callable namespace collision check
   while source/foreign function name conflicts keep the existing single duplicate-function diagnostic.
+- 2026-08-02: source function symbols plus foreign import/export ABI aliases using the compiler-reserved `__orison_`
+  prefix are now rejected before LLVM module-prelude runtime declarations can collide with user-emitted symbols.
 - 2026-08-02: import bindings and foreign import local function names now reject duplicates during semantic analysis
   before callable signature collection.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline

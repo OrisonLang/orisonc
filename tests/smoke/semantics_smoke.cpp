@@ -7437,6 +7437,61 @@ void test_foreign_function_constant_top_level_name_collision_failure() {
     assert_fixture_single_diagnostic(path, 4, "top-level name 'errno' is already used by function");
 }
 
+void test_reserved_source_function_prelude_symbol_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_reserved_source_function_symbol.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "function __orison_dynamic_array_bounds_failed() -> UInt32",
+            "    return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        2,
+        "function symbol '__orison_dynamic_array_bounds_failed' is reserved for compiler prelude declarations"
+    );
+}
+
+void test_reserved_foreign_import_prelude_symbol_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_reserved_foreign_import_symbol.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "package foreign \"c\"",
+            "    function host_bounds_failed() -> Unit as \"__orison_dynamic_array_bounds_failed\"",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "foreign import symbol '__orison_dynamic_array_bounds_failed' is reserved for compiler prelude declarations"
+    );
+}
+
+void test_reserved_foreign_export_prelude_symbol_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_reserved_foreign_export_symbol.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "public foreign \"c\" as \"__orison_dynamic_array_bounds_failed\"",
+            "function exported() -> UInt32",
+            "    return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "foreign export symbol '__orison_dynamic_array_bounds_failed' is reserved for compiler prelude declarations"
+    );
+}
+
 void test_duplicate_foreign_import_function_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_foreign_import_function_failure.or";
     write_concurrency_fixture(
@@ -13685,6 +13740,9 @@ int main() {
     test_type_constant_top_level_name_collision_failure();
     test_import_foreign_function_top_level_name_collision_failure();
     test_foreign_function_constant_top_level_name_collision_failure();
+    test_reserved_source_function_prelude_symbol_failure();
+    test_reserved_foreign_import_prelude_symbol_failure();
+    test_reserved_foreign_export_prelude_symbol_failure();
     test_duplicate_foreign_import_function_name_failure();
     test_foreign_import_function_conflicts_with_source_function_failure();
     test_duplicate_type_alias_name_failure();

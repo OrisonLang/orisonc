@@ -50,6 +50,17 @@ struct TopLevelNameBinding {
     std::string category;
 };
 
+auto unquoted_text(std::string_view text) -> std::string_view {
+    if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
+        return text.substr(1, text.size() - 2);
+    }
+    return text;
+}
+
+auto is_compiler_prelude_symbol_name(std::string_view name) -> bool {
+    return name.rfind("__orison_", 0) == 0;
+}
+
 struct CallableSignature {
     std::string name;
     std::vector<std::string> generic_parameters;
@@ -87,6 +98,7 @@ public:
         validate_duplicate_type_members();
         validate_duplicate_top_level_functions();
         validate_top_level_name_collisions();
+        validate_reserved_compiler_prelude_symbols();
         validate_duplicate_foreign_import_functions();
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
@@ -3512,6 +3524,52 @@ private:
                         "foreign import function '" + function.name + "' is duplicated"
                     );
                 }
+            }
+        }
+    }
+
+    void validate_reserved_compiler_prelude_symbols() {
+        auto validate_source_function_symbol = [&](syntax::FunctionSyntax const& function, std::string const& label) {
+            if (is_compiler_prelude_symbol_name(function.name)) {
+                diagnostics_.error(
+                    function.line,
+                    label + " '" + function.name + "' is reserved for compiler prelude declarations"
+                );
+            }
+        };
+
+        for (auto const& function : module_.functions) {
+            validate_source_function_symbol(function, "function symbol");
+        }
+
+        for (auto const& foreign_import : module_.foreign_imports) {
+            for (auto const& function : foreign_import.functions) {
+                auto symbol_name = function.external_name.empty()
+                    ? std::string_view {function.name}
+                    : unquoted_text(function.external_name);
+                if (is_compiler_prelude_symbol_name(symbol_name)) {
+                    diagnostics_.error(
+                        function.line,
+                        "foreign import symbol '" + std::string(symbol_name) +
+                            "' is reserved for compiler prelude declarations"
+                    );
+                }
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            validate_source_function_symbol(foreign_export.function, "foreign export function symbol");
+            if (foreign_export.external_name.empty()) {
+                continue;
+            }
+
+            auto symbol_name = unquoted_text(foreign_export.external_name);
+            if (is_compiler_prelude_symbol_name(symbol_name)) {
+                diagnostics_.error(
+                    foreign_export.function.line,
+                    "foreign export symbol '" + std::string(symbol_name) +
+                        "' is reserved for compiler prelude declarations"
+                );
             }
         }
     }
