@@ -29,6 +29,7 @@ struct ImportSyntax {
 
 struct TypeAliasSyntax {
     Visibility visibility = Visibility::package_visibility;
+    std::size_t line = 0;
     std::string name;
     TypeSyntax aliased_type;
 };
@@ -145,6 +146,7 @@ struct StatementSyntax {
 
 struct RecordSyntax {
     Visibility visibility = Visibility::package_visibility;
+    std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
     std::vector<FieldSyntax> fields;
@@ -157,6 +159,7 @@ struct ChoiceVariantSyntax {
 
 struct ChoiceSyntax {
     Visibility visibility = Visibility::package_visibility;
+    std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
     std::vector<ChoiceVariantSyntax> variants;
@@ -173,6 +176,7 @@ struct InterfaceMethodSyntax {
 
 struct InterfaceSyntax {
     Visibility visibility = Visibility::package_visibility;
+    std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
     std::vector<InterfaceMethodSyntax> methods;

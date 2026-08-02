@@ -1767,6 +1767,7 @@ private:
     }
 
     void parse_type_alias(ParseResult& result, Visibility visibility) {
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "type alias declaration requires a name");
         if (name.empty()) {
@@ -1789,6 +1790,7 @@ private:
 
         result.module.type_aliases.push_back(TypeAliasSyntax {
             .visibility = visibility,
+            .line = line,
             .name = std::move(name),
             .aliased_type = std::move(aliased_type),
         });
@@ -1851,6 +1853,7 @@ private:
     }
 
     void parse_record(ParseResult& result, Visibility visibility) {
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "record declaration requires a type name");
         if (name.empty()) {
@@ -1858,7 +1861,12 @@ private:
             return;
         }
 
-        RecordSyntax record {.visibility = visibility, .name = name, .generic_parameters = parse_generic_parameter_names(result)};
+        RecordSyntax record {
+            .visibility = visibility,
+            .line = line,
+            .name = name,
+            .generic_parameters = parse_generic_parameter_names(result),
+        };
 
         if (!consume_block_start(result, "record declaration requires an indented field block")) {
             skip_to_next_top_level();
@@ -1902,6 +1910,7 @@ private:
     }
 
     void parse_choice(ParseResult& result, Visibility visibility) {
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "choice declaration requires a type name");
         if (name.empty()) {
@@ -1909,7 +1918,12 @@ private:
             return;
         }
 
-        ChoiceSyntax choice {.visibility = visibility, .name = name, .generic_parameters = parse_generic_parameter_names(result)};
+        ChoiceSyntax choice {
+            .visibility = visibility,
+            .line = line,
+            .name = name,
+            .generic_parameters = parse_generic_parameter_names(result),
+        };
         if (!consume_block_start(result, "choice declaration requires an indented variant block")) {
             skip_to_next_top_level();
             return;
@@ -1975,6 +1989,7 @@ private:
     }
 
     void parse_interface(ParseResult& result, Visibility visibility) {
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "interface declaration requires a name");
         if (name.empty()) {
@@ -1984,6 +1999,7 @@ private:
 
         InterfaceSyntax interface_syntax {
             .visibility = visibility,
+            .line = line,
             .name = name,
             .generic_parameters = parse_generic_parameter_names(result),
             .methods = {},

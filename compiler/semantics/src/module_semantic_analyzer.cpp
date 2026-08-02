@@ -78,6 +78,7 @@ public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
 
     auto analyze() -> SemanticAnalysisResult {
+        validate_duplicate_type_declarations();
         validate_duplicate_top_level_functions();
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
@@ -3323,6 +3324,32 @@ private:
                     .payloads = variant.payloads,
                 });
             }
+        }
+    }
+
+    void validate_duplicate_type_declarations() {
+        std::unordered_set<std::string> seen_type_names;
+
+        auto validate_type_name = [&](std::string const& name, std::size_t line) {
+            if (!seen_type_names.insert(name).second) {
+                diagnostics_.error(line, "type declaration '" + name + "' is duplicated");
+            }
+        };
+
+        for (auto const& type_alias : module_.type_aliases) {
+            validate_type_name(type_alias.name, type_alias.line);
+        }
+
+        for (auto const& record : module_.records) {
+            validate_type_name(record.name, record.line);
+        }
+
+        for (auto const& choice : module_.choices) {
+            validate_type_name(choice.name, choice.line);
+        }
+
+        for (auto const& interface : module_.interfaces) {
+            validate_type_name(interface.name, interface.line);
         }
     }
 

@@ -7314,6 +7314,83 @@ void test_duplicate_top_level_function_name_failure() {
     assert_fixture_single_diagnostic(path, 4, "top-level function 'id' is duplicated");
 }
 
+void test_duplicate_type_alias_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_type_alias_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "type Word = UInt32",
+            "type Word = UInt64",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "type declaration 'Word' is duplicated");
+}
+
+void test_duplicate_record_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_record_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "record Buffer",
+            "    value: UInt32",
+            "record Buffer",
+            "    value: UInt64",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "type declaration 'Buffer' is duplicated");
+}
+
+void test_duplicate_choice_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_choice_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "choice Status",
+            "    Ready",
+            "choice Status",
+            "    Done",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "type declaration 'Status' is duplicated");
+}
+
+void test_duplicate_interface_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_interface_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "interface Reader",
+            "    function read(this: shared This) -> UInt64",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "type declaration 'Reader' is duplicated");
+}
+
+void test_duplicate_cross_kind_type_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_cross_kind_type_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "type Buffer = UInt32",
+            "record Buffer",
+            "    value: UInt32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "type declaration 'Buffer' is duplicated");
+}
+
 void test_duplicate_extension_method_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_extension_method_name_failure.or";
     write_concurrency_fixture(
@@ -13255,6 +13332,11 @@ int main() {
     test_unknown_constant_initializer_reference_failure();
     test_duplicate_top_level_constant_name_failure();
     test_duplicate_top_level_function_name_failure();
+    test_duplicate_type_alias_name_failure();
+    test_duplicate_record_name_failure();
+    test_duplicate_choice_name_failure();
+    test_duplicate_interface_name_failure();
+    test_duplicate_cross_kind_type_name_failure();
     test_duplicate_extension_method_name_failure();
     test_duplicate_interface_method_name_failure();
     test_duplicate_implementation_method_name_failure();
