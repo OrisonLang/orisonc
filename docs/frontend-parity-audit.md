@@ -2134,5 +2134,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   smoke coverage renders exact runtime request audit text from state instead of reading a pipeline report vector.
 - 2026-08-01: pipeline results now expose DynamicArray allocation-call emission state with rendered snippet counts and
   snippets, so smoke coverage no longer reads allocation-call IR from a direct pipeline vector.
+- 2026-08-01: pipeline results now expose planned drop declarations as typed state, and driver planned/emitted drop
+  reports render from that state instead of reading pre-rendered pipeline vectors.
 - 2026-07-27: the computed cleanup-proof model is now a reusable private pipeline component instead of anonymous
   report-formatting state, so later lowering pipeline stages can consume the same typed proof bundle.

@@ -60,6 +60,10 @@ struct DynamicArrayAllocationCallEmissionState {
     std::size_t rendered_call_count = 0;
 };
 
+struct PlannedDropDeclarationState {
+    std::vector<lowering::PlannedDropDeclaration> declarations;
+};
+
 struct DynamicArrayCleanupObligationState {
     std::vector<std::string> function_symbol_names;
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
@@ -526,8 +530,7 @@ struct CompilePipelineResult {
     ComputedDynamicArrayForProductionReadiness computed_dynamic_array_for_production_readiness;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_module_ir;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
-    std::vector<std::string> planned_drop_report;
-    std::vector<std::string> emitted_drop_declaration_report;
+    PlannedDropDeclarationState planned_drop_declaration_state;
     std::vector<std::string> planned_drop_action_report;
     std::vector<std::string> drop_cleanup_authorization_report;
     lowering::DropReadinessSnapshot drop_readiness_snapshot;

@@ -3,6 +3,7 @@
 #include "computed_cleanup_proof_model.hpp"
 
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
@@ -94,6 +95,22 @@ auto dynamic_array_runtime_request_report(
 ) -> std::vector<std::string> {
     return orison::lowering::format_dynamic_array_runtime_request_report(
         result.dynamic_array_runtime_request_state.operations
+    );
+}
+
+auto planned_drop_declaration_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::lowering::format_planned_drop_report(
+        result.planned_drop_declaration_state.declarations
+    );
+}
+
+auto emitted_drop_declaration_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::lowering::format_emitted_drop_declaration_report(
+        result.planned_drop_declaration_state.declarations
     );
 }
 
@@ -338,8 +355,9 @@ auto main() -> int {
     assert(ir.ir_text.find("define i32 @main()") != std::string::npos);
     assert(ir.ir_text.find("ret i32 0") != std::string::npos);
     assert(ir.semantic_drop_lowering_authorizations.empty());
-    assert(ir.planned_drop_report.empty());
-    assert(ir.emitted_drop_declaration_report.empty());
+    assert(ir.planned_drop_declaration_state.declarations.empty());
+    assert(planned_drop_declaration_report(ir).empty());
+    assert(emitted_drop_declaration_report(ir).empty());
     assert(ir.drop_readiness_snapshot.semantic_authorizations.empty());
     assert(ir.drop_readiness_snapshot.emitted_declarations.empty());
     assert(ir.drop_readiness_snapshot.cleanup_authorizations.empty());
@@ -5856,9 +5874,11 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_authorized_readiness.has_errors());
-    assert(dynamic_array_authorized_readiness.emitted_drop_declaration_report.size() == 1);
+    auto dynamic_array_authorized_readiness_emitted_report =
+        emitted_drop_declaration_report(dynamic_array_authorized_readiness);
+    assert(dynamic_array_authorized_readiness_emitted_report.size() == 1);
     assert_line_contains(
-        dynamic_array_authorized_readiness.emitted_drop_declaration_report,
+        dynamic_array_authorized_readiness_emitted_report,
         0,
         "__orison_drop.Payload"
     );
@@ -5900,9 +5920,11 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
     auto multi_drop_readiness = pipeline.emit_llvm(multi_drop_readiness_path);
     assert(!multi_drop_readiness.has_errors());
-    assert(multi_drop_readiness.planned_drop_report.size() == 2);
-    assert_line_contains(multi_drop_readiness.planned_drop_report, 0, "__orison_drop.Payload");
-    assert_line_contains(multi_drop_readiness.planned_drop_report, 1, "__orison_drop.OtherPayload");
+    auto multi_drop_readiness_planned_report =
+        planned_drop_declaration_report(multi_drop_readiness);
+    assert(multi_drop_readiness.planned_drop_declaration_state.declarations.size() == 2);
+    assert_line_contains(multi_drop_readiness_planned_report, 0, "__orison_drop.Payload");
+    assert_line_contains(multi_drop_readiness_planned_report, 1, "__orison_drop.OtherPayload");
     assert(multi_drop_readiness.planned_drop_action_report.size() == 2);
     assert_line_contains(multi_drop_readiness.planned_drop_action_report, 0, "capture payload: Payload");
     assert_line_contains(multi_drop_readiness.planned_drop_action_report, 1, "capture other: OtherPayload");

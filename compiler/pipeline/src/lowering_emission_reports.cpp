@@ -46,6 +46,14 @@ auto build_dynamic_array_allocation_call_emission_state(
     return state;
 }
 
+auto build_planned_drop_declaration_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> PlannedDropDeclarationState {
+    return PlannedDropDeclarationState {
+        .declarations = emission.planned_drop_declarations,
+    };
+}
+
 auto build_dynamic_array_cleanup_obligation_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupObligationState {
@@ -1018,9 +1026,8 @@ void populate_lowering_emission_reports(
         std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
-    result.planned_drop_report = emission.planned_drop_report();
-    result.emitted_drop_declaration_report =
-        emission.emitted_drop_declaration_report();
+    result.planned_drop_declaration_state =
+        build_planned_drop_declaration_state(emission);
     result.planned_drop_action_report =
         emission.planned_drop_action_report();
     result.drop_cleanup_authorization_report =
