@@ -27,6 +27,8 @@
 - 2026-08-02: generic function specialization now infers ternary argument source types when both arms resolve to the
   same concrete generic record type, so `value(flag ? Box(...) : Box(...))` specializes and lowers through an aggregate
   phi.
+- 2026-08-02: mismatched ternary generic-constructor argument arms, such as `Box<UInt32>` versus `Box<UInt64>`, remain
+  unresolved and are pinned as a rejected generic specialization boundary.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

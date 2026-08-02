@@ -568,6 +568,11 @@ auto main() -> int {
         executable,
         fixtures / "generic_function_ternary_constructor_argument.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "generic_function_ternary_constructor_argument_mismatch.or",
+        "call return type mismatch: value returns , expected i32"
+    );
     auto generic_method_path = smoke_temp_root / "orison_cli_generic_method_specialization.or";
     write_lines(generic_method_path, generic_method_lines());
     assert_cli_run_fixture_success(
