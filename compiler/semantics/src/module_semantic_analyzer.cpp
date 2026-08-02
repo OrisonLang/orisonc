@@ -79,6 +79,7 @@ public:
 
     auto analyze() -> SemanticAnalysisResult {
         validate_duplicate_type_declarations();
+        validate_duplicate_type_members();
         validate_duplicate_top_level_functions();
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
@@ -3350,6 +3351,30 @@ private:
 
         for (auto const& interface : module_.interfaces) {
             validate_type_name(interface.name, interface.line);
+        }
+    }
+
+    void validate_duplicate_type_members() {
+        for (auto const& record : module_.records) {
+            std::unordered_set<std::string> seen_field_names;
+
+            for (auto const& field : record.fields) {
+                auto key = record.name + "." + field.name;
+                if (!seen_field_names.insert(key).second) {
+                    diagnostics_.error(field.line, "record field '" + key + "' is duplicated");
+                }
+            }
+        }
+
+        for (auto const& choice : module_.choices) {
+            std::unordered_set<std::string> seen_variant_names;
+
+            for (auto const& variant : choice.variants) {
+                auto key = choice.name + "." + variant.name;
+                if (!seen_variant_names.insert(key).second) {
+                    diagnostics_.error(variant.line, "choice variant '" + key + "' is duplicated");
+                }
+            }
         }
     }
 

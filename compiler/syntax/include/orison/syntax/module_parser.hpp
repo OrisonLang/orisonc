@@ -41,6 +41,7 @@ struct NamedTypeSyntax {
 
 struct FieldSyntax {
     Visibility visibility = Visibility::private_visibility;
+    std::size_t line = 0;
     std::string name;
     TypeSyntax type;
 };
@@ -153,6 +154,7 @@ struct RecordSyntax {
 };
 
 struct ChoiceVariantSyntax {
+    std::size_t line = 0;
     std::string name;
     std::vector<NamedTypeSyntax> payloads;
 };

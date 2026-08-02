@@ -1880,6 +1880,7 @@ private:
             }
 
             FieldSyntax field;
+            field.line = current().line;
             field.visibility = parse_field_visibility();
             field.name = expect_identifier(result, "record field requires a name");
             if (field.name.empty()) {
@@ -1936,6 +1937,7 @@ private:
             }
 
             ChoiceVariantSyntax variant;
+            variant.line = current().line;
             variant.name = expect_identifier(result, "choice variant requires a name");
             if (variant.name.empty()) {
                 skip_to_next_line();

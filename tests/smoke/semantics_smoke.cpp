@@ -7391,6 +7391,36 @@ void test_duplicate_cross_kind_type_name_failure() {
     assert_fixture_single_diagnostic(path, 3, "type declaration 'Buffer' is duplicated");
 }
 
+void test_duplicate_record_field_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_record_field_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "record Packet",
+            "    value: UInt32",
+            "    value: UInt64",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "record field 'Packet.value' is duplicated");
+}
+
+void test_duplicate_choice_variant_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_choice_variant_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "choice Status",
+            "    Ready",
+            "    Ready",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "choice variant 'Status.Ready' is duplicated");
+}
+
 void test_duplicate_extension_method_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_extension_method_name_failure.or";
     write_concurrency_fixture(
@@ -13337,6 +13367,8 @@ int main() {
     test_duplicate_choice_name_failure();
     test_duplicate_interface_name_failure();
     test_duplicate_cross_kind_type_name_failure();
+    test_duplicate_record_field_name_failure();
+    test_duplicate_choice_variant_name_failure();
     test_duplicate_extension_method_name_failure();
     test_duplicate_interface_method_name_failure();
     test_duplicate_implementation_method_name_failure();
