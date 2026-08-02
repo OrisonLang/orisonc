@@ -123,6 +123,8 @@ inventing semantics outside the spec/tour.
   action state instead of reading a pre-rendered pipeline vector.
 - Pipeline results now expose drop cleanup authorization as typed state with cleanup plans and authorization records.
   Driver cleanup authorization reports render from that state instead of reading a pre-rendered pipeline vector.
+- Pipeline results expose drop readiness summaries only as typed state. Driver and smoke-test summary reports render at
+  the consumer edge instead of reading a pre-rendered pipeline vector.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

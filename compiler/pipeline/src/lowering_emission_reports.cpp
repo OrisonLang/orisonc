@@ -1062,8 +1062,6 @@ void populate_lowering_emission_reports(
     result.drop_readiness_snapshot_report =
         emission.drop_readiness_snapshot_report();
     result.drop_readiness_summary = emission.drop_readiness_summary();
-    result.drop_readiness_summary_report =
-        emission.drop_readiness_summary_report();
     result.drop_readiness_relation_report =
         emission.drop_readiness_relation_report();
     result.drop_readiness_blocker_summary =

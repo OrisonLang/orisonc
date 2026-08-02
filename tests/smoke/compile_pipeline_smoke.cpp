@@ -148,6 +148,15 @@ auto drop_cleanup_authorization_report(
     return lines;
 }
 
+auto drop_readiness_summary_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    if (result.has_errors()) {
+        return {};
+    }
+    return {orison::lowering::format_drop_readiness_summary(result.drop_readiness_summary)};
+}
+
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
         {
@@ -404,9 +413,10 @@ auto main() -> int {
     assert(ir.drop_readiness_summary.emitted_declarations == 0);
     assert(ir.drop_readiness_summary.cleanup_authorized == 0);
     assert(ir.drop_readiness_summary.cleanup_blocked == 0);
-    assert(ir.drop_readiness_summary_report.size() == 1);
+    auto ir_drop_readiness_summary_report = drop_readiness_summary_report(ir);
+    assert(ir_drop_readiness_summary_report.size() == 1);
     assert(
-        ir.drop_readiness_summary_report.front().find("semantic authorized 0 blocked 0") != std::string::npos
+        ir_drop_readiness_summary_report.front().find("semantic authorized 0 blocked 0") != std::string::npos
     );
     assert(ir.drop_readiness_relation_report.empty());
     assert(ir.drop_readiness_blocker_summary.blocked_cleanups == 0);
@@ -474,9 +484,10 @@ auto main() -> int {
     assert(drop_readiness.drop_readiness_summary.emitted_declarations == 0);
     assert(drop_readiness.drop_readiness_summary.cleanup_authorized == 0);
     assert(drop_readiness.drop_readiness_summary.cleanup_blocked == 1);
-    assert(drop_readiness.drop_readiness_summary_report.size() == 1);
+    auto drop_readiness_summary_report_lines = drop_readiness_summary_report(drop_readiness);
+    assert(drop_readiness_summary_report_lines.size() == 1);
     assert(
-        drop_readiness.drop_readiness_summary_report.front().find("semantic authorized 0 blocked 1") !=
+        drop_readiness_summary_report_lines.front().find("semantic authorized 0 blocked 1") !=
         std::string::npos
     );
     assert(drop_readiness.drop_readiness_relation_report.size() == 3);
@@ -6034,9 +6045,10 @@ auto main() -> int {
     assert(multi_drop_readiness.drop_readiness_summary.emitted_declarations == 0);
     assert(multi_drop_readiness.drop_readiness_summary.cleanup_authorized == 0);
     assert(multi_drop_readiness.drop_readiness_summary.cleanup_blocked == 1);
-    assert(multi_drop_readiness.drop_readiness_summary_report.size() == 1);
+    auto multi_drop_readiness_summary_report = drop_readiness_summary_report(multi_drop_readiness);
+    assert(multi_drop_readiness_summary_report.size() == 1);
     assert(
-        multi_drop_readiness.drop_readiness_summary_report.front().find("semantic authorized 0 blocked 2") !=
+        multi_drop_readiness_summary_report.front().find("semantic authorized 0 blocked 2") !=
         std::string::npos
     );
     assert(multi_drop_readiness.drop_readiness_relation_report.size() == 5);
@@ -6095,7 +6107,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(failed_lowering.drop_readiness_snapshot_report.empty());
-    assert(failed_lowering.drop_readiness_summary_report.empty());
+    assert(drop_readiness_summary_report(failed_lowering).empty());
     assert(failed_lowering.drop_readiness_relation_report.empty());
     assert(failed_lowering.drop_readiness_blocker_report.empty());
 
@@ -6115,7 +6127,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(failed_unary_lowering.drop_readiness_snapshot_report.empty());
-    assert(failed_unary_lowering.drop_readiness_summary_report.empty());
+    assert(drop_readiness_summary_report(failed_unary_lowering).empty());
     assert(failed_unary_lowering.drop_readiness_relation_report.empty());
     assert(failed_unary_lowering.drop_readiness_blocker_report.empty());
 
@@ -6135,7 +6147,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(failed_cast_lowering.drop_readiness_snapshot_report.empty());
-    assert(failed_cast_lowering.drop_readiness_summary_report.empty());
+    assert(drop_readiness_summary_report(failed_cast_lowering).empty());
     assert(failed_cast_lowering.drop_readiness_relation_report.empty());
     assert(failed_cast_lowering.drop_readiness_blocker_report.empty());
 
@@ -6159,7 +6171,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(failed_final_if_lowering.drop_readiness_snapshot_report.empty());
-    assert(failed_final_if_lowering.drop_readiness_summary_report.empty());
+    assert(drop_readiness_summary_report(failed_final_if_lowering).empty());
     assert(failed_final_if_lowering.drop_readiness_relation_report.empty());
     assert(failed_final_if_lowering.drop_readiness_blocker_report.empty());
 
@@ -6182,7 +6194,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(failed_final_switch_lowering.drop_readiness_snapshot_report.empty());
-    assert(failed_final_switch_lowering.drop_readiness_summary_report.empty());
+    assert(drop_readiness_summary_report(failed_final_switch_lowering).empty());
     assert(failed_final_switch_lowering.drop_readiness_relation_report.empty());
     assert(failed_final_switch_lowering.drop_readiness_blocker_report.empty());
 

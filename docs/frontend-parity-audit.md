@@ -1250,6 +1250,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `drop_readiness_multi.or` fixture for planned-drop, action, and cleanup-authorization report coverage.
 - 2026-07-03: expanded pipeline smoke coverage for `drop_readiness_multi.or` to pin planned-drop, action,
   cleanup-authorization, readiness snapshot, and readiness summary reports below the CLI.
+- 2026-08-01: removed the pipeline-level drop-readiness summary report vector; pipeline consumers now render summary
+  report text from typed `DropReadinessSummary` state.
 - 2026-07-03: replaced the remaining single-capture planned-drop/readiness temporary CLI smoke source with the
   checked-in `drop_readiness.or` fixture and removed redundant fixture-only readiness assertions.
 - 2026-07-03: isolated `orison_driver_smoke` generated temp files under a per-process `TMPDIR`, preventing direct

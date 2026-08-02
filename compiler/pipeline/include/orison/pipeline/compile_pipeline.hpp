@@ -545,7 +545,6 @@ struct CompilePipelineResult {
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     std::vector<std::string> drop_readiness_snapshot_report;
     lowering::DropReadinessSummary drop_readiness_summary;
-    std::vector<std::string> drop_readiness_summary_report;
     std::vector<std::string> drop_readiness_relation_report;
     lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
     std::vector<std::string> drop_readiness_blocker_report;
