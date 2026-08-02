@@ -417,6 +417,7 @@ private:
 
     auto parse_parameter(ParseResult& result) -> ParameterSyntax {
         ParameterSyntax parameter;
+        parameter.line = current().line;
         parameter.name = expect_identifier(result, "function parameter requires a name");
         if (parameter.name.empty()) {
             return parameter;
@@ -439,6 +440,7 @@ private:
     auto parse_named_type(ParseResult& result, std::string const& name_message, std::string const& type_message)
         -> NamedTypeSyntax {
         NamedTypeSyntax named_type;
+        named_type.line = current().line;
         named_type.name = expect_identifier(result, name_message);
         if (named_type.name.empty()) {
             return named_type;

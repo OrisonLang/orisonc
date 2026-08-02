@@ -84,6 +84,7 @@ public:
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
         validate_duplicate_extension_methods();
+        validate_duplicate_callable_parameters();
         collect_async_callable_names();
         collect_unsafe_callable_names();
         collect_callable_return_types();
@@ -3374,6 +3375,17 @@ private:
                 if (!seen_variant_names.insert(key).second) {
                     diagnostics_.error(variant.line, "choice variant '" + key + "' is duplicated");
                 }
+
+                std::unordered_set<std::string> seen_payload_names;
+                for (auto const& payload : variant.payloads) {
+                    auto payload_key = key + "." + payload.name;
+                    if (!seen_payload_names.insert(payload_key).second) {
+                        diagnostics_.error(
+                            payload.line,
+                            "choice payload '" + payload_key + "' is duplicated"
+                        );
+                    }
+                }
             }
         }
     }
@@ -3438,6 +3450,73 @@ private:
                         "extension method '" + key + "' is duplicated"
                     );
                 }
+            }
+        }
+    }
+
+    void validate_duplicate_callable_parameters() {
+        for (auto const& function : module_.functions) {
+            validate_duplicate_function_parameters(function, "function '" + function.name + "'");
+        }
+
+        for (auto const& interface : module_.interfaces) {
+            for (auto const& method : interface.methods) {
+                validate_duplicate_parameters(
+                    method.parameters,
+                    "interface method '" + interface.name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            auto interface_type_name = render_type_name(implementation.interface_type);
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                validate_duplicate_function_parameters(
+                    method,
+                    "implementation method '" + interface_type_name + " for " +
+                        receiver_type_name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                validate_duplicate_function_parameters(
+                    method,
+                    "extension method '" + receiver_type_name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            validate_duplicate_function_parameters(
+                foreign_export.function,
+                "foreign export function '" + foreign_export.function.name + "'"
+            );
+        }
+    }
+
+    void validate_duplicate_function_parameters(
+        syntax::FunctionSyntax const& function,
+        std::string const& callable_name
+    ) {
+        validate_duplicate_parameters(function.parameters, callable_name);
+    }
+
+    void validate_duplicate_parameters(
+        std::vector<syntax::ParameterSyntax> const& parameters,
+        std::string const& callable_name
+    ) {
+        std::unordered_set<std::string> seen_parameter_names;
+
+        for (auto const& parameter : parameters) {
+            if (!seen_parameter_names.insert(parameter.name).second) {
+                diagnostics_.error(
+                    parameter.line,
+                    callable_name + " parameter '" + parameter.name + "' is duplicated"
+                );
             }
         }
     }

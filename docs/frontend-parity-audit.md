@@ -44,6 +44,8 @@
   `interface`; duplicate names are rejected before type and lowering metadata collection.
 - 2026-08-02: record fields and choice variants now reject duplicate member names during semantic analysis before
   aggregate and variant metadata collection.
+- 2026-08-02: function-like parameter lists and choice variant payload lists now reject duplicate names during semantic
+  analysis before signature and variant metadata consumers run.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

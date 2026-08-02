@@ -7421,6 +7421,88 @@ void test_duplicate_choice_variant_name_failure() {
     assert_fixture_single_diagnostic(path, 4, "choice variant 'Status.Ready' is duplicated");
 }
 
+void test_duplicate_choice_payload_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_choice_payload_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.types",
+        {
+            "choice Packet",
+            "    Data(value: UInt32, value: UInt64)",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "choice payload 'Packet.Data.value' is duplicated");
+}
+
+void test_duplicate_function_parameter_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_function_parameter_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.parameters",
+        {
+            "function sum(value: UInt32, value: UInt64) -> UInt32",
+            "    return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 2, "function 'sum' parameter 'value' is duplicated");
+}
+
+void test_duplicate_interface_method_parameter_name_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_duplicate_interface_method_parameter_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.parameters",
+        {
+            "interface Reader",
+            "    function read(this: shared This, this: shared This) -> UInt32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "interface method 'Reader.read' parameter 'this' is duplicated");
+}
+
+void test_duplicate_extension_method_parameter_name_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_duplicate_extension_method_parameter_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.parameters",
+        {
+            "extend Buffer",
+            "    function read(this: shared This, this: shared This) -> UInt32",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "extension method 'Buffer.read' parameter 'this' is duplicated");
+}
+
+void test_duplicate_implementation_method_parameter_name_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_duplicate_implementation_method_parameter_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.parameters",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "implements Reader for Buffer",
+            "    function read(this: shared This, this: shared This) -> UInt32",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "implementation method 'Reader for Buffer.read' parameter 'this' is duplicated"
+    );
+}
+
 void test_duplicate_extension_method_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_extension_method_name_failure.or";
     write_concurrency_fixture(
@@ -13369,6 +13451,11 @@ int main() {
     test_duplicate_cross_kind_type_name_failure();
     test_duplicate_record_field_name_failure();
     test_duplicate_choice_variant_name_failure();
+    test_duplicate_choice_payload_name_failure();
+    test_duplicate_function_parameter_name_failure();
+    test_duplicate_interface_method_parameter_name_failure();
+    test_duplicate_extension_method_parameter_name_failure();
+    test_duplicate_implementation_method_parameter_name_failure();
     test_duplicate_extension_method_name_failure();
     test_duplicate_interface_method_name_failure();
     test_duplicate_implementation_method_name_failure();

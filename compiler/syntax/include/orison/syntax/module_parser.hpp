@@ -35,6 +35,7 @@ struct TypeAliasSyntax {
 };
 
 struct NamedTypeSyntax {
+    std::size_t line = 0;
     std::string name;
     TypeSyntax type;
 };
@@ -47,6 +48,7 @@ struct FieldSyntax {
 };
 
 struct ParameterSyntax {
+    std::size_t line = 0;
     std::string name;
     TypeSyntax type;
 };
