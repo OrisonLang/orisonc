@@ -26,6 +26,7 @@ struct DynamicArrayCleanupAvailability {
 };
 
 struct DynamicArrayCleanupEmissionCapabilityState {
+    std::vector<std::string> function_symbol_names;
     std::vector<std::string> cleanup_pairs;
     std::vector<std::string> cleanup_operation_names;
     std::vector<std::string> cleanup_owner_names;
@@ -460,14 +461,12 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
     bool dynamic_array_cleanup_capability_proven = false;
     std::vector<std::string> dynamic_array_cleanup_missing_element_drop_pairs;
-    std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
     DynamicArrayCleanupEmissionCapabilityState dynamic_array_cleanup_emission_capability_state;
     DynamicArrayCleanupAvailability dynamic_array_cleanup_availability;
     std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_emission_capability_report;
     ComputedDynamicArrayForDescriptorRenderState computed_dynamic_array_for_descriptor_render_state;
     ComputedDynamicArrayForLoopControlRenderState computed_dynamic_array_for_loop_control_render_state;
     ComputedDynamicArrayForElementAddressRenderState computed_dynamic_array_for_element_address_render_state;

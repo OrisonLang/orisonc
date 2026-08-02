@@ -36,6 +36,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
 
     auto proven = driver::dynamic_array_cleanup_emission_capability_state_report(
         pipeline::DynamicArrayCleanupEmissionCapabilityState {
+            .function_symbol_names = {"use_items"},
             .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
             .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
             .cleanup_owner_names = {"items"},
@@ -50,6 +51,8 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
         }
     );
     assert(proven.size() == 1);
+    assert(proven.front().find("function use_items dynamic array cleanup emission capability proven") !=
+        std::string::npos);
     assert(proven.front().find("dynamic array cleanup emission capability proven") != std::string::npos);
     assert(
         proven.front().find("cleanup-pairs [items:__orison_dynamic_array_cleanup.0]") !=
@@ -63,6 +66,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
 
     auto blocked = driver::dynamic_array_cleanup_emission_capability_state_report(
         pipeline::DynamicArrayCleanupEmissionCapabilityState {
+            .function_symbol_names = {"use_items"},
             .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
             .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
             .cleanup_owner_names = {"items"},

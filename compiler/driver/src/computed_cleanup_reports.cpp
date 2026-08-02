@@ -852,46 +852,57 @@ auto dynamic_array_cleanup_emission_capability_state_report(
     auto const status = [](bool value) {
         return value ? "ok" : "missing";
     };
-    auto output = std::ostringstream {};
-    output << "dynamic array cleanup emission capability ";
-    output << (state.proven ? "proven" : "blocked");
+    auto details = std::ostringstream {};
+    details << "dynamic array cleanup emission capability ";
+    details << (state.proven ? "proven" : "blocked");
     if (!state.cleanup_pairs.empty()) {
-        output << " cleanup-pairs";
+        details << " cleanup-pairs";
         for (auto const& cleanup_pair : state.cleanup_pairs) {
-            output << " [" << cleanup_pair << "]";
+            details << " [" << cleanup_pair << "]";
         }
     }
     if (!state.cleanup_operation_names.empty()) {
-        output << " cleanup-operations";
+        details << " cleanup-operations";
         for (auto const& cleanup_operation_name : state.cleanup_operation_names) {
-            output << " [" << cleanup_operation_name << "]";
+            details << " [" << cleanup_operation_name << "]";
         }
     }
     if (!state.cleanup_owner_names.empty()) {
-        output << " cleanup-owners";
+        details << " cleanup-owners";
         for (auto const& cleanup_owner_name : state.cleanup_owner_names) {
-            output << " [" << cleanup_owner_name << "]";
+            details << " [" << cleanup_owner_name << "]";
         }
     }
     if (!state.element_drop_pairs.empty()) {
-        output << " element-drop-pairs";
+        details << " element-drop-pairs";
         for (auto const& element_drop_pair : state.element_drop_pairs) {
-            output << " [" << element_drop_pair << "]";
+            details << " [" << element_drop_pair << "]";
         }
     }
     if (!state.missing_element_drop_pairs.empty()) {
-        output << " missing-element-drop-pairs";
+        details << " missing-element-drop-pairs";
         for (auto const& missing_element_drop_pair : state.missing_element_drop_pairs) {
-            output << " [" << missing_element_drop_pair << "]";
+            details << " [" << missing_element_drop_pair << "]";
         }
     }
-    output << " [emission " << status(state.emission_enabled) << "]";
-    output << " [descriptor storage " << status(state.descriptor_storage_bound) << "]";
-    output << " [sequence verification " << status(state.sequence_verified) << "]";
-    output << " [element cleanup " << status(state.element_cleanup_authorized_or_not_required) << "]";
-    output << " [descriptor deallocation " << status(state.descriptor_deallocation_authorized) << "]";
-    output << " (metadata only)";
-    return {output.str()};
+    details << " [emission " << status(state.emission_enabled) << "]";
+    details << " [descriptor storage " << status(state.descriptor_storage_bound) << "]";
+    details << " [sequence verification " << status(state.sequence_verified) << "]";
+    details << " [element cleanup " << status(state.element_cleanup_authorized_or_not_required) << "]";
+    details << " [descriptor deallocation " << status(state.descriptor_deallocation_authorized) << "]";
+    details << " (metadata only)";
+
+    auto lines = std::vector<std::string> {};
+    if (state.function_symbol_names.empty()) {
+        lines.push_back(details.str());
+        return lines;
+    }
+    for (auto const& function_symbol_name : state.function_symbol_names) {
+        auto line = std::ostringstream {};
+        line << "function " << function_symbol_name << ' ' << details.str();
+        lines.push_back(line.str());
+    }
+    return lines;
 }
 
 auto computed_cleanup_proof_summary_state_report(

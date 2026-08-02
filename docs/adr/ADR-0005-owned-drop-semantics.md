@@ -96,6 +96,10 @@ inventing semantics outside the spec/tour.
   typed DynamicArray cleanup production-readiness state.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
+- DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders
+  capability lines from that typed state at the driver edge.
+- Pipeline results no longer expose raw DynamicArray cleanup emission-capability report strings; pipeline consumers use
+  typed DynamicArray cleanup emission-capability state.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

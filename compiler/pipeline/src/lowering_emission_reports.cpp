@@ -30,12 +30,15 @@ auto build_computed_dynamic_array_for_production_sequence_state(
 }
 
 auto build_dynamic_array_cleanup_emission_capability_state(
-    std::optional<lowering::DynamicArrayCleanupEmissionCapability> const& capability
+    lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupEmissionCapabilityState {
+    auto const& capability = emission.dynamic_array_cleanup_emission_capability;
     if (!capability.has_value()) {
         return {};
     }
     return DynamicArrayCleanupEmissionCapabilityState {
+        .function_symbol_names =
+            emission.emitted_dynamic_array_cleanup_emission_capability_function_symbols,
         .cleanup_pairs = capability->cleanup_pairs,
         .cleanup_operation_names = capability->cleanup_operation_names,
         .cleanup_owner_names = capability->cleanup_owner_names,
@@ -836,10 +839,8 @@ void populate_lowering_emission_reports(
         result.dynamic_array_cleanup_missing_element_drop_pairs =
             emission.dynamic_array_cleanup_emission_capability->missing_element_drop_pairs;
     }
-    result.dynamic_array_cleanup_emission_capability_report =
-        emission.dynamic_array_cleanup_emission_capability_report();
     result.dynamic_array_cleanup_emission_capability_state =
-        build_dynamic_array_cleanup_emission_capability_state(emission.dynamic_array_cleanup_emission_capability);
+        build_dynamic_array_cleanup_emission_capability_state(emission);
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
         .missing_element_drop_pairs = result.dynamic_array_cleanup_missing_element_drop_pairs,
         .descriptor_origins_available = !result.semantic_result.dynamic_array_descriptor_origins.empty(),
@@ -857,8 +858,6 @@ void populate_lowering_emission_reports(
         std::move(emission.emitted_dynamic_array_cleanup_sequence_verification_report);
     result.emitted_dynamic_array_cleanup_emission_gate_report =
         std::move(emission.emitted_dynamic_array_cleanup_emission_gate_report);
-    result.emitted_dynamic_array_cleanup_emission_capability_report =
-        std::move(emission.emitted_dynamic_array_cleanup_emission_capability_report);
     result.computed_dynamic_array_for_descriptor_render_state =
         build_computed_dynamic_array_for_descriptor_render_state(emission);
     result.computed_dynamic_array_for_loop_control_render_state =

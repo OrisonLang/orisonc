@@ -699,8 +699,16 @@ auto main() -> int {
         cleanup_metadata_facade.dynamic_array_cleanup_sequence_verification_report
     );
     assert(
-        cleanup_metadata_collector.dynamic_array_cleanup_emission_capability_report ==
-        cleanup_metadata_facade.dynamic_array_cleanup_emission_capability_report
+        cleanup_metadata_collector.dynamic_array_cleanup_emission_capability_state.cleanup_pairs ==
+        cleanup_metadata_facade.dynamic_array_cleanup_emission_capability_state.cleanup_pairs
+    );
+    assert(
+        cleanup_metadata_collector.dynamic_array_cleanup_emission_capability_state.cleanup_owner_names ==
+        cleanup_metadata_facade.dynamic_array_cleanup_emission_capability_state.cleanup_owner_names
+    );
+    assert(
+        cleanup_metadata_collector.dynamic_array_cleanup_emission_capability_state.proven ==
+        cleanup_metadata_facade.dynamic_array_cleanup_emission_capability_state.proven
     );
     assert(
         orison::pipeline::format_dynamic_array_cleanup_production_readiness(
@@ -752,7 +760,6 @@ auto main() -> int {
         0,
         "__orison_dynamic_array_cleanup.0 allowed"
     );
-    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.proven);
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.emission_enabled);
@@ -773,15 +780,12 @@ auto main() -> int {
     );
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.cleanup_owner_names.size() == 1);
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.cleanup_owner_names.front() == "words");
-    assert_line_contains(
-        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report,
-        0,
-        "capability proven"
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.function_symbol_names.size() == 1
     );
-    assert_line_contains(
-        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report,
-        0,
-        "[element cleanup ok]"
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.function_symbol_names.front() ==
+        "use_words"
     );
     assert(
         scalar_dynamic_array_cleanup.ir_text.find("declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)") !=
@@ -4304,17 +4308,6 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_blocked_owned_cleanup.has_errors());
-    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
-        0,
-        "capability blocked"
-    );
-    assert_line_contains(
-        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
-        0,
-        "[element cleanup missing]"
-    );
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
     assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
@@ -4416,17 +4409,6 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_owned_cleanup.has_errors());
-    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
-        0,
-        "capability proven"
-    );
-    assert_line_contains(
-        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
-        0,
-        "[element cleanup ok]"
-    );
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);

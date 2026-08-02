@@ -214,10 +214,10 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.dynamic_array_cleanup_emission_gate_report,
         std::move(emitted_result.emitted_dynamic_array_cleanup_emission_gate_report)
     );
-    prefer_report_lines(
-        result.dynamic_array_cleanup_emission_capability_report,
-        std::move(emitted_result.emitted_dynamic_array_cleanup_emission_capability_report)
-    );
+    if (emitted_result.dynamic_array_cleanup_emission_capability_state.capability_metadata_available) {
+        result.dynamic_array_cleanup_emission_capability_state =
+            std::move(emitted_result.dynamic_array_cleanup_emission_capability_state);
+    }
     if (emitted_result.computed_dynamic_array_for_descriptor_render_state.render_count > 0) {
         result.computed_dynamic_array_for_descriptor_render_state =
             std::move(emitted_result.computed_dynamic_array_for_descriptor_render_state);
@@ -293,7 +293,12 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.dynamic_array_cleanup_sequence_plan_report);
     append_report_lines(report, result.dynamic_array_cleanup_sequence_verification_report);
     append_report_lines(report, result.dynamic_array_cleanup_emission_gate_report);
-    append_report_lines(report, result.dynamic_array_cleanup_emission_capability_report);
+    append_report_lines(
+        report,
+        dynamic_array_cleanup_emission_capability_state_report(
+            result.dynamic_array_cleanup_emission_capability_state
+        )
+    );
     append_report_lines(
         report,
         computed_dynamic_array_for_descriptor_render_state_report(
