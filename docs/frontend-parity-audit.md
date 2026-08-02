@@ -24,6 +24,9 @@
   receiver methods with additional method-level generics are now pinned through CLI run and LLVM checks.
 - 2026-08-02: generic function specialization now infers generic record constructor argument types directly, so
   `value(Box(13 as UInt32))` specializes to `value__UInt32` without requiring a named temporary.
+- 2026-08-02: generic function specialization now infers ternary argument source types when both arms resolve to the
+  same concrete generic record type, so `value(flag ? Box(...) : Box(...))` specializes and lowers through an aggregate
+  phi.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

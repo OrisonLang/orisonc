@@ -241,6 +241,18 @@ auto source_type_name_for_generic_call_argument(
         return "Text";
     }
 
+    if (expression.kind == syntax::ExpressionKind::ternary &&
+        expression.right != nullptr &&
+        expression.alternate != nullptr) {
+        auto then_source_type = source_type_name_for_generic_call_argument(*expression.right, resolver);
+        auto else_source_type = source_type_name_for_generic_call_argument(*expression.alternate, resolver);
+        if (!then_source_type.has_value() || !else_source_type.has_value() ||
+            *then_source_type != *else_source_type) {
+            return std::nullopt;
+        }
+        return then_source_type;
+    }
+
     if (expression.kind != syntax::ExpressionKind::call ||
         expression.left == nullptr ||
         expression.left->kind != syntax::ExpressionKind::name) {

@@ -257,6 +257,8 @@ representation.
   over the concrete receiver descriptor ABI.
 - Generic function specialization now infers generic record constructor argument types directly, allowing constructor
   arguments such as `Box(13 as UInt32)` to bind the callee generic parameter without a named temporary.
+- Generic function specialization also infers ternary argument source types when both arms resolve to the same concrete
+  generic record type; mismatched or unresolved arms remain unbound.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the
