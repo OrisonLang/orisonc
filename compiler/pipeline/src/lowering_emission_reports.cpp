@@ -2,7 +2,6 @@
 
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/aggregate_path.hpp"
-#include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 
 #include "dynamic_array_cleanup_readiness.hpp"
 #include "computed_cleanup_proof_model.hpp"
@@ -1062,8 +1061,6 @@ void populate_lowering_emission_reports(
     result.drop_readiness_summary = emission.drop_readiness_summary();
     result.drop_readiness_blocker_summary =
         lowering::summarize_drop_readiness_blockers(result.drop_readiness_snapshot);
-    result.drop_readiness_source_correlation_report =
-        format_drop_readiness_source_correlation_report(result.drop_readiness_snapshot);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
 }
 

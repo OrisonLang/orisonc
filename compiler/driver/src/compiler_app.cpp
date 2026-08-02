@@ -7,6 +7,7 @@
 #include "orison/link/host_linker.hpp"
 #include "orison/link/host_runner.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -94,6 +95,12 @@ auto drop_readiness_blocker_state_report(
     lowering::DropReadinessBlockerSummary const& summary
 ) -> std::vector<std::string> {
     return lowering::format_drop_readiness_blocker_report(summary);
+}
+
+auto drop_readiness_source_correlation_state_report(
+    lowering::DropReadinessSnapshot const& snapshot
+) -> std::vector<std::string> {
+    return pipeline::format_drop_readiness_source_correlation_report(snapshot);
 }
 
 auto usage_text() -> std::string {
@@ -863,8 +870,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-source-correlations") {
-        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.drop_readiness_source_correlation_report;
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return drop_readiness_source_correlation_state_report(result.drop_readiness_snapshot);
         });
     }
 

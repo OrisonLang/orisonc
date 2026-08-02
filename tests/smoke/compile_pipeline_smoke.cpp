@@ -9,6 +9,7 @@
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 
 #include <cassert>
@@ -182,6 +183,15 @@ auto drop_readiness_blocker_report(
         return {};
     }
     return orison::lowering::format_drop_readiness_blocker_report(result.drop_readiness_blocker_summary);
+}
+
+auto drop_readiness_source_correlation_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    if (result.has_errors()) {
+        return {};
+    }
+    return orison::pipeline::format_drop_readiness_source_correlation_report(result.drop_readiness_snapshot);
 }
 
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
@@ -459,9 +469,10 @@ auto main() -> int {
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "source lowering blocked 0 missing declarations 0"
     );
-    assert(ir.drop_readiness_source_correlation_report.size() == 1);
+    auto ir_drop_readiness_source_correlation_report = drop_readiness_source_correlation_report(ir);
+    assert(ir_drop_readiness_source_correlation_report.size() == 1);
     assert(
-        ir.drop_readiness_source_correlation_report.front() ==
+        ir_drop_readiness_source_correlation_report.front() ==
         "drop readiness source correlations actions 0 semantic sites 0"
     );
     assert(ir.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
@@ -550,13 +561,15 @@ auto main() -> int {
     assert(
         drop_readiness_blocker_report_lines[1].find("__orison_drop.Payload") != std::string::npos
     );
-    assert(drop_readiness.drop_readiness_source_correlation_report.size() == 2);
+    auto drop_readiness_source_correlation_report_lines =
+        drop_readiness_source_correlation_report(drop_readiness);
+    assert(drop_readiness_source_correlation_report_lines.size() == 2);
     assert(
-        drop_readiness.drop_readiness_source_correlation_report[0] ==
+        drop_readiness_source_correlation_report_lines[0] ==
         "drop readiness source correlations actions 1 semantic sites 1"
     );
     assert(
-        drop_readiness.drop_readiness_source_correlation_report[1].find(
+        drop_readiness_source_correlation_report_lines[1].find(
             "__orison_thread_cleanup.launch.12.0 __orison_drop.Payload"
         ) != std::string::npos
     );
@@ -641,18 +654,20 @@ auto main() -> int {
         2,
         "missing declaration __orison_drop.Payload"
     );
-    assert(dynamic_array_drop_readiness.drop_readiness_source_correlation_report.size() == 2);
+    auto dynamic_array_drop_readiness_source_correlation_report =
+        drop_readiness_source_correlation_report(dynamic_array_drop_readiness);
+    assert(dynamic_array_drop_readiness_source_correlation_report.size() == 2);
     assert(
-        dynamic_array_drop_readiness.drop_readiness_source_correlation_report[0] ==
+        dynamic_array_drop_readiness_source_correlation_report[0] ==
         "drop readiness source correlations actions 1 semantic sites 0"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness.drop_readiness_source_correlation_report,
+        dynamic_array_drop_readiness_source_correlation_report,
         1,
         "__orison_dynamic_array_cleanup.0 __orison_drop.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness.drop_readiness_source_correlation_report,
+        dynamic_array_drop_readiness_source_correlation_report,
         1,
         "semantic absent source lowering absent declaration missing"
     );
@@ -772,24 +787,26 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_source_correlated_cleanup.has_errors());
-    assert(dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report.size() == 2);
+    auto dynamic_array_source_correlated_cleanup_source_correlation_report =
+        drop_readiness_source_correlation_report(dynamic_array_source_correlated_cleanup);
+    assert(dynamic_array_source_correlated_cleanup_source_correlation_report.size() == 2);
     assert_line_contains(
-        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        dynamic_array_source_correlated_cleanup_source_correlation_report,
         0,
         "drop readiness source correlations actions 1 semantic sites"
     );
     assert_line_contains(
-        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        dynamic_array_source_correlated_cleanup_source_correlation_report,
         1,
         "__orison_dynamic_array_cleanup.0 __orison_drop.Payload for Payload capture items.element field 0 action line 6"
     );
     assert_line_contains(
-        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        dynamic_array_source_correlated_cleanup_source_correlation_report,
         1,
         "semantic owner items.element site line 6"
     );
     assert_line_contains(
-        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        dynamic_array_source_correlated_cleanup_source_correlation_report,
         1,
         "declaration missing"
     );
@@ -5997,9 +6014,11 @@ auto main() -> int {
         "__orison_dynamic_array_cleanup.0 authorized"
     );
     assert(dynamic_array_authorized_readiness.drop_readiness_blocker_summary.blocked_cleanups == 0);
-    assert(dynamic_array_authorized_readiness.drop_readiness_source_correlation_report.size() == 1);
+    auto dynamic_array_authorized_readiness_source_correlation_report =
+        drop_readiness_source_correlation_report(dynamic_array_authorized_readiness);
+    assert(dynamic_array_authorized_readiness_source_correlation_report.size() == 1);
     assert(
-        dynamic_array_authorized_readiness.drop_readiness_source_correlation_report.front() ==
+        dynamic_array_authorized_readiness_source_correlation_report.front() ==
         "drop readiness source correlations actions 0 semantic sites 1"
     );
     assert(dynamic_array_authorized_readiness.ir_text.find("declare void @__orison_drop.Payload") != std::string::npos);
@@ -6390,13 +6409,15 @@ auto main() -> int {
         parsed_drop_readiness_blocker_report[2].find("source lowering not accepted") !=
         std::string::npos
     );
-    assert(parsed_drop_readiness.drop_readiness_source_correlation_report.size() == 2);
+    auto parsed_drop_readiness_source_correlation_report =
+        drop_readiness_source_correlation_report(parsed_drop_readiness);
+    assert(parsed_drop_readiness_source_correlation_report.size() == 2);
     assert(
-        parsed_drop_readiness.drop_readiness_source_correlation_report[0] ==
+        parsed_drop_readiness_source_correlation_report[0] ==
         "drop readiness source correlations actions 1 semantic sites 1"
     );
     assert(
-        parsed_drop_readiness.drop_readiness_source_correlation_report[1].find("semantic resolved") !=
+        parsed_drop_readiness_source_correlation_report[1].find("semantic resolved") !=
         std::string::npos
     );
     assert(parsed_drop_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);

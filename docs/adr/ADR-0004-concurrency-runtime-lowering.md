@@ -108,8 +108,8 @@ drop/cleanup decisions.
   status and emitted-declaration status without changing generated IR.
   The source-correlation formatter lives in a dedicated pipeline report component so compile orchestration does not own
   report matching and rendering policy, and direct smoke coverage pins its matching behavior independently from the
-  full compile pipeline. Pipeline smoke coverage now verifies report wiring rather than duplicating exact formatter
-  matching cases.
+  full compile pipeline. Pipeline smoke coverage verifies typed snapshot state rendered as source-correlation text at
+  the consumer edge.
 - Direct smoke coverage now pins drop readiness relation report formatting independently from the full compile
   pipeline, including empty, blocked, authorized, and multi-action cleanup states. Pipeline smoke verifies typed
   snapshot state rendered as relation text at the consumer edge.

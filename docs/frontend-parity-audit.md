@@ -1258,6 +1258,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   report text from typed `DropReadinessSnapshot` state.
 - 2026-08-01: removed the pipeline-level drop-readiness blocker report vector; pipeline consumers now render blocker
   report text from typed `DropReadinessBlockerSummary` state.
+- 2026-08-01: removed the pipeline-level drop-readiness source-correlation report vector; pipeline consumers now render
+  source-correlation report text from typed `DropReadinessSnapshot` state.
 - 2026-07-03: replaced the remaining single-capture planned-drop/readiness temporary CLI smoke source with the
   checked-in `drop_readiness.or` fixture and removed redundant fixture-only readiness assertions.
 - 2026-07-03: isolated `orison_driver_smoke` generated temp files under a per-process `TMPDIR`, preventing direct
