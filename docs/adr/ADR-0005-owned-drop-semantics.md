@@ -101,6 +101,8 @@ inventing semantics outside the spec/tour.
   `SemanticAnalysisResult::planned_drop_sites`, and typed lowering authorizations.
 - Pipeline results no longer duplicate DynamicArray missing element-drop pairs as a standalone top-level vector.
   Consumers use typed cleanup availability or cleanup emission capability state.
+- Pipeline results expose computed DynamicArray production sequence module comment IR through a named artifact state
+  instead of a bare top-level string vector.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders

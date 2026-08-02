@@ -120,6 +120,10 @@ struct ComputedDynamicArrayForProductionSequenceState {
     std::size_t module_comment_line_count = 0;
 };
 
+struct ComputedDynamicArrayForProductionSequenceModuleIrArtifactState {
+    std::vector<std::string> comment_ir_lines;
+};
+
 struct ComputedDynamicArrayForDescriptorRenderState {
     std::vector<std::string> enclosing_function_names;
     std::vector<std::string> cleanup_owner_names;
@@ -540,7 +544,8 @@ struct CompilePipelineResult {
     ComputedDynamicArrayForProductionEmissionGateState computed_dynamic_array_for_production_emission_gate_state;
     ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
     ComputedDynamicArrayForProductionReadiness computed_dynamic_array_for_production_readiness;
-    std::vector<std::string> computed_dynamic_array_for_production_sequence_module_ir;
+    ComputedDynamicArrayForProductionSequenceModuleIrArtifactState
+        computed_dynamic_array_for_production_sequence_module_ir_artifact_state;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     PlannedDropDeclarationState planned_drop_declaration_state;
     PlannedDropActionState planned_drop_action_state;

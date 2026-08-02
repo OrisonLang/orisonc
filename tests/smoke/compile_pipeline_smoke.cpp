@@ -2210,7 +2210,7 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_metadata_without_comments.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments
-            .computed_dynamic_array_for_production_sequence_module_ir.empty()
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines.empty()
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments
@@ -2264,7 +2264,7 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_metadata_with_comments.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments
-            .computed_dynamic_array_for_production_sequence_module_ir.size() == 18
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines.size() == 18
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments
