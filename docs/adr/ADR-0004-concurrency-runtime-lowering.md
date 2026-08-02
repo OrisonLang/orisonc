@@ -99,7 +99,7 @@ drop/cleanup decisions.
 - Drop readiness reporting now includes a compact blocker report derived from the same snapshot as the readiness summary
   and relation reports, listing blocked cleanup count plus semantic-lowering and missing-declaration blockers without
   changing normal lowering behavior. Direct smoke coverage pins blocker report formatting while pipeline smoke verifies
-  orchestration wiring.
+  typed blocker summary state rendered at the consumer edge.
 - Drop cleanup authorization reports now split semantic-lowering blockers into unresolved semantic drops versus
   source-drop-lowering-not-accepted blockers. This lets parsed/proven source-derived drop candidates reduce the
   semantic uncertainty in reports while normal lowering still emits no drop declarations or calls.

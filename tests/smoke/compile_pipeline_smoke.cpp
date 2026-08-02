@@ -175,6 +175,15 @@ auto drop_readiness_relation_report(
     return orison::lowering::format_drop_readiness_relation_report(result.drop_readiness_snapshot);
 }
 
+auto drop_readiness_blocker_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    if (result.has_errors()) {
+        return {};
+    }
+    return orison::lowering::format_drop_readiness_blocker_report(result.drop_readiness_blocker_summary);
+}
+
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
         {
@@ -443,9 +452,10 @@ auto main() -> int {
     assert(ir.drop_readiness_blocker_summary.semantic_unresolved_blockers.empty());
     assert(ir.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
     assert(ir.drop_readiness_blocker_summary.missing_declarations.empty());
-    assert(ir.drop_readiness_blocker_report.size() == 1);
+    auto ir_drop_readiness_blocker_report = drop_readiness_blocker_report(ir);
+    assert(ir_drop_readiness_blocker_report.size() == 1);
     assert(
-        ir.drop_readiness_blocker_report.front() ==
+        ir_drop_readiness_blocker_report.front() ==
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "source lowering blocked 0 missing declarations 0"
     );
@@ -530,14 +540,15 @@ auto main() -> int {
     assert(drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.size() == 1);
     assert(drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
     assert(drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 1);
-    assert(drop_readiness.drop_readiness_blocker_report.size() == 4);
+    auto drop_readiness_blocker_report_lines = drop_readiness_blocker_report(drop_readiness);
+    assert(drop_readiness_blocker_report_lines.size() == 4);
     assert(
-        drop_readiness.drop_readiness_blocker_report[0] ==
+        drop_readiness_blocker_report_lines[0] ==
         "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 1 "
         "source lowering blocked 0 missing declarations 1"
     );
     assert(
-        drop_readiness.drop_readiness_blocker_report[1].find("__orison_drop.Payload") != std::string::npos
+        drop_readiness_blocker_report_lines[1].find("__orison_drop.Payload") != std::string::npos
     );
     assert(drop_readiness.drop_readiness_source_correlation_report.size() == 2);
     assert(
@@ -6109,14 +6120,15 @@ auto main() -> int {
     assert(multi_drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.size() == 2);
     assert(multi_drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
     assert(multi_drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 2);
-    assert(multi_drop_readiness.drop_readiness_blocker_report.size() == 7);
+    auto multi_drop_readiness_blocker_report = drop_readiness_blocker_report(multi_drop_readiness);
+    assert(multi_drop_readiness_blocker_report.size() == 7);
     assert(
-        multi_drop_readiness.drop_readiness_blocker_report[0] ==
+        multi_drop_readiness_blocker_report[0] ==
         "drop readiness blockers cleanups 1 semantic blockers 2 semantic unresolved 2 "
         "source lowering blocked 0 missing declarations 2"
     );
     assert(
-        multi_drop_readiness.drop_readiness_blocker_report[2].find("__orison_drop.OtherPayload") !=
+        multi_drop_readiness_blocker_report[2].find("__orison_drop.OtherPayload") !=
         std::string::npos
     );
 
@@ -6138,7 +6150,7 @@ auto main() -> int {
     assert(drop_readiness_snapshot_report(failed_lowering).empty());
     assert(drop_readiness_summary_report(failed_lowering).empty());
     assert(drop_readiness_relation_report(failed_lowering).empty());
-    assert(failed_lowering.drop_readiness_blocker_report.empty());
+    assert(drop_readiness_blocker_report(failed_lowering).empty());
 
     auto failed_unary_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_unary_failure.or";
@@ -6158,7 +6170,7 @@ auto main() -> int {
     assert(drop_readiness_snapshot_report(failed_unary_lowering).empty());
     assert(drop_readiness_summary_report(failed_unary_lowering).empty());
     assert(drop_readiness_relation_report(failed_unary_lowering).empty());
-    assert(failed_unary_lowering.drop_readiness_blocker_report.empty());
+    assert(drop_readiness_blocker_report(failed_unary_lowering).empty());
 
     auto failed_cast_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_cast_failure.or";
@@ -6178,7 +6190,7 @@ auto main() -> int {
     assert(drop_readiness_snapshot_report(failed_cast_lowering).empty());
     assert(drop_readiness_summary_report(failed_cast_lowering).empty());
     assert(drop_readiness_relation_report(failed_cast_lowering).empty());
-    assert(failed_cast_lowering.drop_readiness_blocker_report.empty());
+    assert(drop_readiness_blocker_report(failed_cast_lowering).empty());
 
     auto failed_final_if_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_final_if_failure.or";
@@ -6202,7 +6214,7 @@ auto main() -> int {
     assert(drop_readiness_snapshot_report(failed_final_if_lowering).empty());
     assert(drop_readiness_summary_report(failed_final_if_lowering).empty());
     assert(drop_readiness_relation_report(failed_final_if_lowering).empty());
-    assert(failed_final_if_lowering.drop_readiness_blocker_report.empty());
+    assert(drop_readiness_blocker_report(failed_final_if_lowering).empty());
 
     auto failed_final_switch_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_final_switch_failure.or";
@@ -6225,7 +6237,7 @@ auto main() -> int {
     assert(drop_readiness_snapshot_report(failed_final_switch_lowering).empty());
     assert(drop_readiness_summary_report(failed_final_switch_lowering).empty());
     assert(drop_readiness_relation_report(failed_final_switch_lowering).empty());
-    assert(failed_final_switch_lowering.drop_readiness_blocker_report.empty());
+    assert(drop_readiness_blocker_report(failed_final_switch_lowering).empty());
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());
@@ -6367,14 +6379,15 @@ auto main() -> int {
     assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.empty());
     assert(parsed_drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.size() == 1);
     assert(parsed_drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 1);
-    assert(parsed_drop_readiness.drop_readiness_blocker_report.size() == 4);
+    auto parsed_drop_readiness_blocker_report = drop_readiness_blocker_report(parsed_drop_readiness);
+    assert(parsed_drop_readiness_blocker_report.size() == 4);
     assert(
-        parsed_drop_readiness.drop_readiness_blocker_report[0] ==
+        parsed_drop_readiness_blocker_report[0] ==
         "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0 "
         "source lowering blocked 1 missing declarations 1"
     );
     assert(
-        parsed_drop_readiness.drop_readiness_blocker_report[2].find("source lowering not accepted") !=
+        parsed_drop_readiness_blocker_report[2].find("source lowering not accepted") !=
         std::string::npos
     );
     assert(parsed_drop_readiness.drop_readiness_source_correlation_report.size() == 2);

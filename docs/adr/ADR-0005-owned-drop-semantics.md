@@ -129,6 +129,8 @@ inventing semantics outside the spec/tour.
   the consumer edge instead of reading a pre-rendered pipeline vector.
 - Pipeline results expose drop readiness relations through the typed snapshot state. Driver and smoke-test relation
   reports render at the consumer edge instead of reading a pre-rendered pipeline vector.
+- Pipeline results expose drop readiness blockers through typed blocker summary state. Driver and smoke-test blocker
+  reports render at the consumer edge instead of reading a pre-rendered pipeline vector.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
