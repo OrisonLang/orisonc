@@ -920,6 +920,22 @@ add_test(
     COMMAND orison_lowering_context_smoke
 )
 
+add_executable(orison_module_symbol_registry_smoke
+    smoke/module_symbol_registry_smoke.cpp
+)
+
+target_link_libraries(orison_module_symbol_registry_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_module_symbol_registry_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_module_symbol_registry_smoke
+    COMMAND orison_module_symbol_registry_smoke
+)
+
 add_executable(orison_string_constants_smoke
     smoke/string_constants_smoke.cpp
 )

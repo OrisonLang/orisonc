@@ -60,6 +60,8 @@
   colliding with generated generic function specialization symbols or generated method symbols before IR emission.
 - 2026-08-02: the lowering symbol registry now also rejects source function symbols colliding with generated generic
   specialization symbols and C foreign export aliases colliding with generated method symbols.
+- 2026-08-02: the lowering symbol registry is now a reusable component with constructed-state smoke coverage for
+  generated concurrency thunk, generated concurrency cleanup, and planned drop declaration collisions.
 - 2026-08-02: import bindings and foreign import local function names now reject duplicates during semantic analysis
   before callable signature collection.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline

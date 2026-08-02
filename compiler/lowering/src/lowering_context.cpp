@@ -3,6 +3,7 @@
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/module_symbol_registry.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -41,76 +42,6 @@ struct GenericMethodCandidate {
     syntax::TypeSyntax const* receiver_type = nullptr;
     syntax::FunctionSyntax const* method = nullptr;
     std::vector<std::string> generic_parameters;
-};
-
-struct ModuleSymbolBinding {
-    std::string category;
-};
-
-class ModuleSymbolRegistry {
-public:
-    auto register_symbol(
-        std::string const& symbol_name,
-        std::string category,
-        std::size_t line,
-        diagnostics::DiagnosticBag& diagnostics
-    ) -> bool {
-        if (symbol_name.empty()) {
-            return true;
-        }
-        auto attempted_category = std::move(category);
-        auto [existing, inserted] =
-            symbols_.emplace(symbol_name, ModuleSymbolBinding {.category = attempted_category});
-        if (inserted) {
-            return true;
-        }
-
-        diagnostics.error(
-            line,
-            "LLVM symbol '" + symbol_name + "' for " + attempted_category +
-                " collides with " + existing->second.category
-        );
-        return false;
-    }
-
-    auto validate_foreign_declaration(
-        std::string const& symbol_name,
-        std::size_t line,
-        diagnostics::DiagnosticBag& diagnostics
-    ) const -> bool {
-        auto existing = symbols_.find(symbol_name);
-        if (existing == symbols_.end()) {
-            return true;
-        }
-
-        diagnostics.error(
-            line,
-            "LLVM symbol '" + symbol_name + "' for foreign declaration collides with " +
-                existing->second.category
-        );
-        return false;
-    }
-
-    auto validate_foreign_export(
-        std::string const& symbol_name,
-        std::size_t line,
-        diagnostics::DiagnosticBag& diagnostics
-    ) const -> bool {
-        auto existing = symbols_.find(symbol_name);
-        if (existing == symbols_.end()) {
-            return true;
-        }
-
-        diagnostics.error(
-            line,
-            "LLVM symbol '" + symbol_name + "' for foreign export collides with " +
-                existing->second.category
-        );
-        return false;
-    }
-
-private:
-    std::unordered_map<std::string, ModuleSymbolBinding> symbols_;
 };
 
 void collect_generic_method_calls_from_expression(
