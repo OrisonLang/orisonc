@@ -19,6 +19,14 @@ auto build_dynamic_array_descriptor_cleanup_plan_state(
     };
 }
 
+auto build_dynamic_array_construction_plan_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> DynamicArrayConstructionPlanState {
+    return DynamicArrayConstructionPlanState {
+        .plans = emission.dynamic_array_construction_plans,
+    };
+}
+
 auto build_dynamic_array_cleanup_obligation_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupObligationState {
@@ -885,8 +893,8 @@ void populate_lowering_emission_reports(
         emission.computed_dynamic_array_inserted_cleanup_handoffs,
         emission.computed_dynamic_array_cleanup_call_operands
     );
-    result.dynamic_array_construction_plan_report =
-        emission.dynamic_array_construction_plan_report();
+    result.dynamic_array_construction_plan_state =
+        build_dynamic_array_construction_plan_state(emission);
     result.dynamic_array_runtime_request_report =
         emission.dynamic_array_runtime_request_report();
     result.dynamic_array_allocation_call_ir =

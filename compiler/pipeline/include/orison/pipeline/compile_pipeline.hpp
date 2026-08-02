@@ -46,6 +46,10 @@ struct DynamicArrayDescriptorCleanupPlanState {
     std::vector<lowering::DynamicArrayDescriptorCleanupPlan> plans;
 };
 
+struct DynamicArrayConstructionPlanState {
+    std::vector<lowering::DynamicArrayConstructionPlan> plans;
+};
+
 struct DynamicArrayCleanupObligationState {
     std::vector<std::string> function_symbol_names;
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
@@ -471,7 +475,7 @@ struct CompilePipelineResult {
     std::vector<std::string> semantic_drop_lowering_authorization_report;
     std::vector<std::string> semantic_drop_resolution_summary_report;
     DynamicArrayDescriptorCleanupPlanState dynamic_array_descriptor_cleanup_plan_state;
-    std::vector<std::string> dynamic_array_construction_plan_report;
+    DynamicArrayConstructionPlanState dynamic_array_construction_plan_state;
     std::vector<std::string> dynamic_array_runtime_request_report;
     std::vector<std::string> dynamic_array_allocation_call_ir;
     DynamicArrayCleanupObligationState dynamic_array_cleanup_obligation_state;

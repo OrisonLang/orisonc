@@ -3,6 +3,7 @@
 #include "computed_cleanup_proof_model.hpp"
 
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
@@ -78,6 +79,14 @@ auto formatted_dynamic_array_cleanup_production_readiness_report(
             result.dynamic_array_cleanup_production_readiness
         ),
     };
+}
+
+auto dynamic_array_construction_plan_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::lowering::format_dynamic_array_construction_plan_report(
+        result.dynamic_array_construction_plan_state.plans
+    );
 }
 
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
@@ -4537,9 +4546,11 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_owned_construction_gate.has_errors());
-    assert(dynamic_array_owned_construction_gate.dynamic_array_construction_plan_report.size() == 1);
+    assert(dynamic_array_owned_construction_gate.dynamic_array_construction_plan_state.plans.size() == 1);
+    auto dynamic_array_owned_construction_gate_plan_report =
+        dynamic_array_construction_plan_report(dynamic_array_owned_construction_gate);
     assert_line_contains(
-        dynamic_array_owned_construction_gate.dynamic_array_construction_plan_report,
+        dynamic_array_owned_construction_gate_plan_report,
         0,
         "requests __orison_dynamic_array_allocate"
     );
@@ -4600,9 +4611,11 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_source_construction.has_errors());
-    assert(dynamic_array_source_construction.dynamic_array_construction_plan_report.size() == 1);
+    assert(dynamic_array_source_construction.dynamic_array_construction_plan_state.plans.size() == 1);
+    auto dynamic_array_source_construction_plan_report =
+        dynamic_array_construction_plan_report(dynamic_array_source_construction);
     assert(
-        dynamic_array_source_construction.dynamic_array_construction_plan_report.front() ==
+        dynamic_array_source_construction_plan_report.front() ==
         "dynamic array construction DynamicArray<UInt32> owner items element UInt32 lowers to i32 "
         "element_size 4 initial_capacity 0 requests __orison_dynamic_array_allocate (metadata only)"
     );
@@ -4646,9 +4659,11 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_placed_construction.has_errors());
-    assert(dynamic_array_placed_construction.dynamic_array_construction_plan_report.size() == 1);
+    assert(dynamic_array_placed_construction.dynamic_array_construction_plan_state.plans.size() == 1);
+    auto dynamic_array_placed_construction_plan_report =
+        dynamic_array_construction_plan_report(dynamic_array_placed_construction);
     assert_line_contains(
-        dynamic_array_placed_construction.dynamic_array_construction_plan_report,
+        dynamic_array_placed_construction_plan_report,
         0,
         "owner items"
     );
