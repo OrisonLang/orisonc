@@ -7298,6 +7298,42 @@ void test_duplicate_top_level_constant_name_failure() {
     assert_duplicate_top_level_constant_diagnostic(path, 3, "STATUS_MASK");
 }
 
+void test_duplicate_top_level_function_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_function_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.functions",
+        {
+            "function id(value: UInt32) -> UInt32",
+            "    return value",
+            "function id(value: UInt64) -> UInt64",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "top-level function 'id' is duplicated");
+}
+
+void test_duplicate_extension_method_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_extension_method_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.extensions",
+        {
+            "record Box<T>",
+            "    value: T",
+            "extend Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.value",
+            "extend Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 8, "extension method 'Box<T>.value' is duplicated");
+}
+
 void test_direct_constant_initializer_cycle_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_direct_constant_cycle_failure.or";
     write_concurrency_fixture(
@@ -13163,6 +13199,8 @@ int main() {
     test_forward_constant_initializer_reference_success();
     test_unknown_constant_initializer_reference_failure();
     test_duplicate_top_level_constant_name_failure();
+    test_duplicate_top_level_function_name_failure();
+    test_duplicate_extension_method_name_failure();
     test_direct_constant_initializer_cycle_failure();
     test_indirect_constant_initializer_cycle_failure();
     test_constant_initializer_await_failure();

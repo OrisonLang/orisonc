@@ -35,8 +35,9 @@
   `T` first binding to `UInt32` and later seeing `UInt64`.
 - 2026-08-02: ambiguous generic specialization matches now report all matching lowered candidate symbols instead of
   collapsing to a silent no-match.
-- 2026-08-02: duplicate generic extension methods now reach the end-to-end CLI ambiguous-specialization diagnostic
-  instead of being silently collapsed during generic method specialization collection.
+- 2026-08-02: duplicate top-level functions and duplicate extension receiver/method pairs are now rejected during
+  semantic analysis before lowering; the lowerer ambiguity diagnostic remains an internal guard for constructed
+  duplicate specialization state.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

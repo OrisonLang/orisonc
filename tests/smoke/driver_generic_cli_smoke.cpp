@@ -602,7 +602,7 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "generic_method_ambiguous_specialization.or",
-        "ambiguous generic specialization: Box<UInt32>.value matches multiple generic method specializations: method.Box_UInt32_.value__UInt32, method.Box_UInt32_.value__UInt32"
+        "extension method 'Box<T>.value' is duplicated"
     );
     assert_cli_run_fixture_success(
         executable,

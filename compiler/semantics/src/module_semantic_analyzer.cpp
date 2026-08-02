@@ -78,6 +78,8 @@ public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
 
     auto analyze() -> SemanticAnalysisResult {
+        validate_duplicate_top_level_functions();
+        validate_duplicate_extension_methods();
         collect_async_callable_names();
         collect_unsafe_callable_names();
         collect_callable_return_types();
@@ -3318,6 +3320,36 @@ private:
                     .variant_name = variant.name,
                     .payloads = variant.payloads,
                 });
+            }
+        }
+    }
+
+    void validate_duplicate_top_level_functions() {
+        std::unordered_set<std::string> seen_function_names;
+
+        for (auto const& function : module_.functions) {
+            if (!seen_function_names.insert(function.name).second) {
+                diagnostics_.error(
+                    function.line,
+                    "top-level function '" + function.name + "' is duplicated"
+                );
+            }
+        }
+    }
+
+    void validate_duplicate_extension_methods() {
+        std::unordered_set<std::string> seen_method_names;
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                auto key = receiver_type_name + "." + method.name;
+                if (!seen_method_names.insert(key).second) {
+                    diagnostics_.error(
+                        method.line,
+                        "extension method '" + key + "' is duplicated"
+                    );
+                }
             }
         }
     }
