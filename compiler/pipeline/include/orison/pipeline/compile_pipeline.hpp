@@ -54,6 +54,12 @@ struct DynamicArrayRuntimeRequestState {
     std::vector<lowering::DynamicArrayRuntimeOperation> operations;
 };
 
+struct DynamicArrayAllocationCallEmissionState {
+    std::vector<std::string> rendered_ir_snippets;
+    bool allocation_calls_rendered = false;
+    std::size_t rendered_call_count = 0;
+};
+
 struct DynamicArrayCleanupObligationState {
     std::vector<std::string> function_symbol_names;
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
@@ -481,7 +487,7 @@ struct CompilePipelineResult {
     DynamicArrayDescriptorCleanupPlanState dynamic_array_descriptor_cleanup_plan_state;
     DynamicArrayConstructionPlanState dynamic_array_construction_plan_state;
     DynamicArrayRuntimeRequestState dynamic_array_runtime_request_state;
-    std::vector<std::string> dynamic_array_allocation_call_ir;
+    DynamicArrayAllocationCallEmissionState dynamic_array_allocation_call_emission_state;
     DynamicArrayCleanupObligationState dynamic_array_cleanup_obligation_state;
     DynamicArrayCleanupSequencePlanState dynamic_array_cleanup_sequence_plan_state;
     DynamicArrayCleanupSequenceVerificationState dynamic_array_cleanup_sequence_verification_state;

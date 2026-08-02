@@ -35,6 +35,17 @@ auto build_dynamic_array_runtime_request_state(
     };
 }
 
+auto build_dynamic_array_allocation_call_emission_state(
+    std::vector<std::string>&& rendered_ir_snippets
+) -> DynamicArrayAllocationCallEmissionState {
+    auto state = DynamicArrayAllocationCallEmissionState {
+        .rendered_ir_snippets = std::move(rendered_ir_snippets),
+    };
+    state.rendered_call_count = state.rendered_ir_snippets.size();
+    state.allocation_calls_rendered = state.rendered_call_count > 0;
+    return state;
+}
+
 auto build_dynamic_array_cleanup_obligation_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupObligationState {
@@ -905,8 +916,10 @@ void populate_lowering_emission_reports(
         build_dynamic_array_construction_plan_state(emission);
     result.dynamic_array_runtime_request_state =
         build_dynamic_array_runtime_request_state(emission);
-    result.dynamic_array_allocation_call_ir =
-        std::move(emission.dynamic_array_allocation_call_ir);
+    result.dynamic_array_allocation_call_emission_state =
+        build_dynamic_array_allocation_call_emission_state(
+            std::move(emission.dynamic_array_allocation_call_ir)
+        );
     result.dynamic_array_descriptor_cleanup_plan_state =
         build_dynamic_array_descriptor_cleanup_plan_state(emission);
     result.dynamic_array_cleanup_obligation_state =

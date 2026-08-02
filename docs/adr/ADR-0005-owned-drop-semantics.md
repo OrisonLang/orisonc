@@ -115,6 +115,8 @@ inventing semantics outside the spec/tour.
   audit text from lowering plan records instead of reading a pre-rendered pipeline report vector.
 - Pipeline results now expose typed DynamicArray runtime-request state. Pipeline consumers render runtime request audit
   text from runtime operation records instead of reading a pre-rendered pipeline report vector.
+- Pipeline results now expose DynamicArray allocation-call emission state with rendered snippet counts and snippets,
+  instead of exposing allocation-call IR as a direct pipeline vector.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

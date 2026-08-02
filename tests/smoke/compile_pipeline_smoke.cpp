@@ -4575,9 +4575,17 @@ auto main() -> int {
         dynamic_array_runtime_request_report(dynamic_array_owned_construction_gate),
         "__orison_dynamic_array_allocate"
     );
-    assert(dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.size() == 1);
     assert(
-        dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.front() ==
+        dynamic_array_owned_construction_gate
+            .dynamic_array_allocation_call_emission_state.rendered_call_count == 1
+    );
+    assert(
+        dynamic_array_owned_construction_gate
+            .dynamic_array_allocation_call_emission_state.allocation_calls_rendered
+    );
+    assert(
+        dynamic_array_owned_construction_gate
+            .dynamic_array_allocation_call_emission_state.rendered_ir_snippets.front() ==
         "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
         "  call void @__orison_dynamic_array_allocate("
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 8, i64 2)\n"
@@ -4641,9 +4649,17 @@ auto main() -> int {
         0,
         "__orison_dynamic_array_allocate"
     );
-    assert(dynamic_array_source_construction.dynamic_array_allocation_call_ir.size() == 1);
     assert(
-        dynamic_array_source_construction.dynamic_array_allocation_call_ir.front() ==
+        dynamic_array_source_construction
+            .dynamic_array_allocation_call_emission_state.rendered_call_count == 1
+    );
+    assert(
+        dynamic_array_source_construction
+            .dynamic_array_allocation_call_emission_state.allocation_calls_rendered
+    );
+    assert(
+        dynamic_array_source_construction
+            .dynamic_array_allocation_call_emission_state.rendered_ir_snippets.front() ==
         "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
         "  call void @__orison_dynamic_array_allocate("
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 0)\n"
