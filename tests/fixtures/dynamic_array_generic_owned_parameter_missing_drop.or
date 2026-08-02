@@ -1,0 +1,11 @@
+package tests.dynamicarraygenericownedparametermissingdrop
+
+record Payload
+    value: UInt32
+
+function count_items<T>(values: DynamicArray<T>) -> IntSize
+    values.length()
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    count_items(values) == 1 as IntSize ? 0 as UInt32 : 1 as UInt32

@@ -16,6 +16,9 @@
 - 2026-08-02: the complete DynamicArray contract fixture now runs through the canonical pipeline smoke path
   (`--emit-llvm`, `--emit-object`, `run`, and `--build`) to pin receiver methods, append, replacement, projection,
   iteration, owned cleanup, and object/link coverage together.
+- 2026-08-02: generic `DynamicArray<Payload>` parameters now specialize on the default path when source Drop proof
+  authorizes `values.element`; the callee emits initialized-element drop walks plus descriptor deallocation, while the
+  missing-Drop fixture is rejected at the owned-parameter proof boundary.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

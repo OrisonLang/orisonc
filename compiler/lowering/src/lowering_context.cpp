@@ -421,7 +421,8 @@ auto generic_method_parameters(
 
 void record_dynamic_array_descriptor_parameter_types(
     syntax::FunctionSyntax const& function,
-    LoweredFunctionSignature& signature
+    LoweredFunctionSignature& signature,
+    bool allow_owned_element_descriptors = false
 ) {
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         if (index >= signature.parameter_types.size()) {
@@ -443,7 +444,8 @@ void record_dynamic_array_descriptor_parameter_types(
             signature.parameter_signedness[index] = IntegerSignedness::not_integer;
             continue;
         }
-        if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        if (!allow_owned_element_descriptors &&
+            !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
             continue;
         }
         signature.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
@@ -1703,7 +1705,7 @@ auto build_lowering_context(
             record_names,
             context.choices
         );
-        record_dynamic_array_descriptor_parameter_types(specialization, signature);
+        record_dynamic_array_descriptor_parameter_types(specialization, signature, true);
         if (!has_supported_function_signature_types(signature)) {
             continue;
         }

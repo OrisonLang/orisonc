@@ -109,6 +109,9 @@ inventing semantics outside the spec/tour.
   libraries, or named IR artifacts. Raw report-vector cleanup at the pipeline boundary is complete.
 - The complete DynamicArray contract fixture now runs through the canonical pipeline smoke path to pin receiver methods,
   append, replacement, projection, iteration, owned cleanup, and object/link coverage together.
+- Generic `DynamicArray<Payload>` parameter specialization now keeps owned descriptor ABI signatures available for
+  emission, but function emission still requires source-backed `values.element` Drop proof before the specialization can
+  lower. Missing proof remains a diagnostic boundary.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders

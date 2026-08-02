@@ -1,0 +1,19 @@
+package tests.dynamicarraygenericownedparameter
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function count_items<T>(values: DynamicArray<T>) -> IntSize
+    values.length()
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(3 as UInt32))
+    count_items(values) == 1 as IntSize ? 0 as UInt32 : 1 as UInt32

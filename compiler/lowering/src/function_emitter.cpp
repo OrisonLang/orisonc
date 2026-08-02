@@ -392,6 +392,35 @@ auto unsupported_dynamic_array_parameter_diagnostic(
         sequence->element_source_type_name + " requires ownership/drop proof before production lowering";
 }
 
+auto dynamic_array_owned_parameter_has_drop_proof(
+    syntax::ParameterSyntax const& parameter,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    if (parameter.name == "this") {
+        return true;
+    }
+
+    auto source_type_name = render_source_type_name(parameter.type);
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        sequence->kind != DynamicSequenceKind::dynamic_array ||
+        is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        return true;
+    }
+    if (options.test_only_enable_dynamic_array_parameter_descriptors) {
+        return true;
+    }
+
+    auto const expected_owner_name = parameter.name + ".element";
+    auto const expected_symbol_name = "__orison_drop." + sequence->element_source_type_name;
+    return std::ranges::any_of(options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+        return authorization.authorized &&
+            authorization.site.owner_name == expected_owner_name &&
+            authorization.site.source_type_name == sequence->element_source_type_name &&
+            authorization.site.abi_symbol_name == expected_symbol_name;
+    });
+}
+
 auto infer_unit_binding_type(
     syntax::StatementSyntax const& statement,
     EmissionContext const& context,
@@ -1118,6 +1147,13 @@ void emit_function_body(
             }
             diagnostics.error(function.line, "lowering does not yet support this function parameter type");
             return;
+        }
+        if (index < function.parameters.size() &&
+            !dynamic_array_owned_parameter_has_drop_proof(function.parameters[index], context.options)) {
+            if (auto diagnostic = unsupported_dynamic_array_parameter_diagnostic(function.parameters[index])) {
+                diagnostics.error(function.line, *diagnostic);
+                return;
+            }
         }
     }
 

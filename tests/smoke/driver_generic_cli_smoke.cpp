@@ -127,6 +127,21 @@ void assert_cli_emit_llvm_fixture_success(
     assert(output.find("getelementptr i64, ptr %values.dynamic_array_index") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_owned_dynamic_array_generic_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i64 @count_items__Payload({ ptr, i64, i64 } %values)") != std::string::npos);
+    assert(output.find("call i64 @count_items__Payload({ ptr, i64, i64 } %tmp") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup"
+    ) != std::string::npos);
+}
+
 void assert_cli_emit_llvm_call_result_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -448,6 +463,19 @@ auto main() -> int {
     assert_cli_emit_llvm_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_generic_owned_parameter.or"
+    );
+    assert_cli_emit_llvm_owned_dynamic_array_generic_fixture_success(
+        executable,
+        fixtures / "dynamic_array_generic_owned_parameter.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_generic_owned_parameter_missing_drop.or",
+        "lowering DynamicArray parameter 'values' with owned element type Payload requires ownership/drop proof before production lowering"
     );
     assert_cli_run_fixture_success(
         executable,

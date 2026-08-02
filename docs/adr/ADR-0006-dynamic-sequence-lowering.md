@@ -249,6 +249,9 @@ representation.
   available. Generic-call source inference recognizes non-generic record constructors such as `Payload(...)`, exclusive
   receiver methods pass descriptor storage by pointer, shared receiver methods pass descriptors by value, and the full
   receiver contract fixture now covers owned append, owned first-element read, and initialized-element cleanup.
+- Generic functions taking `DynamicArray<T>` now keep owned-record descriptor ABI specializations available for emission.
+  The actual specialization still lowers only when source-backed Drop proof authorizes the concrete parameter element
+  cleanup owner, preserving the missing-Drop diagnostic boundary.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the
