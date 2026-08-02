@@ -49,11 +49,28 @@ struct ModuleSymbolBinding {
 
 class ModuleSymbolRegistry {
 public:
-    void register_symbol(std::string const& symbol_name, std::string category) {
+    auto register_symbol(
+        std::string const& symbol_name,
+        std::string category,
+        std::size_t line,
+        diagnostics::DiagnosticBag& diagnostics
+    ) -> bool {
         if (symbol_name.empty()) {
-            return;
+            return true;
         }
-        symbols_.emplace(symbol_name, ModuleSymbolBinding {.category = std::move(category)});
+        auto attempted_category = std::move(category);
+        auto [existing, inserted] =
+            symbols_.emplace(symbol_name, ModuleSymbolBinding {.category = attempted_category});
+        if (inserted) {
+            return true;
+        }
+
+        diagnostics.error(
+            line,
+            "LLVM symbol '" + symbol_name + "' for " + attempted_category +
+                " collides with " + existing->second.category
+        );
+        return false;
     }
 
     auto validate_foreign_declaration(
@@ -69,6 +86,24 @@ public:
         diagnostics.error(
             line,
             "LLVM symbol '" + symbol_name + "' for foreign declaration collides with " +
+                existing->second.category
+        );
+        return false;
+    }
+
+    auto validate_foreign_export(
+        std::string const& symbol_name,
+        std::size_t line,
+        diagnostics::DiagnosticBag& diagnostics
+    ) const -> bool {
+        auto existing = symbols_.find(symbol_name);
+        if (existing == symbols_.end()) {
+            return true;
+        }
+
+        diagnostics.error(
+            line,
+            "LLVM symbol '" + symbol_name + "' for foreign export collides with " +
                 existing->second.category
         );
         return false;
@@ -1875,6 +1910,7 @@ auto build_lowering_context(
             context.choices
         );
         signature.generic_parameters = function.generic_parameters;
+        symbol_registry.register_symbol(signature.symbol_name, "source function symbol", function.line, diagnostics);
         context.functions.emplace(function.name, std::move(signature));
     }
 
@@ -1900,7 +1936,14 @@ auto build_lowering_context(
         if (!has_supported_function_signature_types(signature)) {
             continue;
         }
-        symbol_registry.register_symbol(signature.symbol_name, "generated generic function specialization");
+        if (!symbol_registry.register_symbol(
+                signature.symbol_name,
+                "generated generic function specialization",
+                specialization.line,
+                diagnostics
+            )) {
+            continue;
+        }
         auto original_name = std::string {};
         auto delimiter = specialization.name.find("__");
         if (delimiter != std::string::npos) {
@@ -1924,7 +1967,12 @@ auto build_lowering_context(
             );
             if (!is_uninstantiated_generic_function(method) &&
                 !is_generic_receiver_pattern(implementation.receiver_type, module)) {
-                symbol_registry.register_symbol(lowered_method.signature.symbol_name, "generated method symbol");
+                symbol_registry.register_symbol(
+                    lowered_method.signature.symbol_name,
+                    "generated method symbol",
+                    method.line,
+                    diagnostics
+                );
             }
             context.methods.push_back(std::move(lowered_method));
         }
@@ -1942,7 +1990,12 @@ auto build_lowering_context(
             );
             if (!is_uninstantiated_generic_function(method) &&
                 !is_generic_receiver_pattern(extension.receiver_type, module)) {
-                symbol_registry.register_symbol(lowered_method.signature.symbol_name, "generated method symbol");
+                symbol_registry.register_symbol(
+                    lowered_method.signature.symbol_name,
+                    "generated method symbol",
+                    method.line,
+                    diagnostics
+                );
             }
             context.methods.push_back(std::move(lowered_method));
         }
@@ -1965,7 +2018,14 @@ auto build_lowering_context(
         if (!has_supported_function_signature_types(signature)) {
             continue;
         }
-        symbol_registry.register_symbol(signature.symbol_name, "generated method symbol");
+        if (!symbol_registry.register_symbol(
+                signature.symbol_name,
+                "generated method symbol",
+                specialization.method->line,
+                diagnostics
+            )) {
+            continue;
+        }
         context.methods.push_back(LoweredMethodSignature {
             .receiver_type_name = specialization.receiver_type_name,
             .method_name = specialization.method_name,
@@ -2014,6 +2074,14 @@ auto build_lowering_context(
             context.functions.emplace(function.name, signature);
             context.foreign_declarations.push_back(std::move(signature));
         }
+    }
+
+    for (auto const& foreign_export : module.foreign_exports) {
+        if (unquoted_text(foreign_export.abi) != "c" || foreign_export.external_name.empty()) {
+            continue;
+        }
+        auto symbol_name = std::string {unquoted_text(foreign_export.external_name)};
+        symbol_registry.validate_foreign_export(symbol_name, foreign_export.function.line, diagnostics);
     }
     return context;
 }
