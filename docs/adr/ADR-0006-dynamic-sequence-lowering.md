@@ -252,6 +252,9 @@ representation.
 - Generic functions taking `DynamicArray<T>` now keep owned-record descriptor ABI specializations available for emission.
   The actual specialization still lowers only when source-backed Drop proof authorizes the concrete parameter element
   cleanup owner, preserving the missing-Drop diagnostic boundary.
+- Generic method specialization now observes inferred source types for unannotated generic record constructor locals.
+  `DynamicArray<T>` receiver methods with their own method-level generic parameters are pinned as specialized methods
+  over the concrete receiver descriptor ABI.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the

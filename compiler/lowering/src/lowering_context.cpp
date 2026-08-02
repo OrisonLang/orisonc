@@ -816,6 +816,11 @@ void collect_generic_method_calls_from_statement(
     }
 }
 
+auto infer_constructor_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
+) -> std::optional<syntax::TypeSyntax>;
+
 auto collect_generic_method_specializations(
     syntax::ModuleSyntax const& module,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions
@@ -824,6 +829,12 @@ auto collect_generic_method_specializations(
     for (auto const& function : module.functions) {
         if (!function.generic_parameters.empty()) {
             generic_functions.emplace(function.name, &function);
+        }
+    }
+    auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
+    for (auto const& record : module.records) {
+        if (!record.generic_parameters.empty()) {
+            generic_records.emplace(record.name, &record);
         }
     }
 
@@ -877,6 +888,27 @@ auto collect_generic_method_specializations(
                  statement.kind == syntax::StatementKind::var_binding) &&
                 !statement.annotated_type.name.empty()) {
                 local_source_types[statement.name] = render_source_type_name(statement.annotated_type);
+            } else if ((statement.kind == syntax::StatementKind::let_binding ||
+                        statement.kind == syntax::StatementKind::var_binding) &&
+                       !statement.name.empty()) {
+                auto inferred_source_type = source_type_name_for_generic_call_argument(
+                    statement.expression,
+                    GenericCallSourceResolver {
+                        .generic_functions = &generic_functions,
+                        .functions = &functions,
+                        .local_source_types = &local_source_types,
+                        .record_names = &record_names,
+                    }
+                );
+                if (!inferred_source_type.has_value()) {
+                    if (auto inferred_constructor_type =
+                            infer_constructor_expression_type(statement.expression, generic_records)) {
+                        inferred_source_type = render_source_type_name(*inferred_constructor_type);
+                    }
+                }
+                if (inferred_source_type.has_value()) {
+                    local_source_types[statement.name] = std::move(*inferred_source_type);
+                }
             }
             collect_generic_method_calls_from_statement(
                 statement,
@@ -913,11 +945,6 @@ auto collect_generic_method_specializations(
     }
     return specializations;
 }
-
-auto infer_constructor_expression_type(
-    syntax::ExpressionSyntax const& expression,
-    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
-) -> std::optional<syntax::TypeSyntax>;
 
 auto infer_constructor_argument_type(
     syntax::ExpressionSyntax const& expression,

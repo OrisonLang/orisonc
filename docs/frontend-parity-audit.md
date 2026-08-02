@@ -19,6 +19,9 @@
 - 2026-08-02: generic `DynamicArray<Payload>` parameters now specialize on the default path when source Drop proof
   authorizes `values.element`; the callee emits initialized-element drop walks plus descriptor deallocation, while the
   missing-Drop fixture is rejected at the owned-parameter proof boundary.
+- 2026-08-02: unannotated generic record constructor locals now carry inferred source types into lowering, so generic
+  receiver method specialization can discover calls such as `let box = Box(13 as UInt32); box.value()`. DynamicArray
+  receiver methods with additional method-level generics are now pinned through CLI run and LLVM checks.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

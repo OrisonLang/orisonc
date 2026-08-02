@@ -1,0 +1,13 @@
+package tests.dynamicarraygenericmethodparameter
+
+record Payload
+    value: UInt32
+
+extend DynamicArray<T>
+    function count_with<U>(this: shared This, value: U) -> IntSize
+        this.length()
+
+function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(7 as UInt32)
+    values.count_with(Payload(3 as UInt32)) == 1 as IntSize ? 0 as UInt32 : 1 as UInt32

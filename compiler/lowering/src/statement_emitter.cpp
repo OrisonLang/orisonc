@@ -1498,6 +1498,8 @@ auto lower_let_statement(
         type = std::move(*annotated_type);
     } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
         type = std::move(*inferred);
+        annotated_source_type_name =
+            source_type_name_for_expression(statement.expression, context.lowering, session.state);
     }
 
     if (reject_owned_aggregate_projection_value_read(statement.expression, context, session)) {
@@ -1609,6 +1611,8 @@ auto lower_var_statement(
         type = std::move(*annotated_type);
     } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
         type = std::move(*inferred);
+        annotated_source_type_name =
+            source_type_name_for_expression(statement.expression, context.lowering, session.state);
     }
 
     if (reject_owned_aggregate_projection_value_read(statement.expression, context, session)) {
