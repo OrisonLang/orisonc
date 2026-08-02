@@ -2096,14 +2096,6 @@ auto LlvmIrEmissionResult::dynamic_array_construction_plan_report() const -> std
     return format_dynamic_array_construction_plan_report(dynamic_array_construction_plans);
 }
 
-auto LlvmIrEmissionResult::dynamic_array_descriptor_cleanup_plan_report() const -> std::vector<std::string> {
-    return format_dynamic_array_descriptor_cleanup_plan_report(dynamic_array_descriptor_cleanup_plans);
-}
-
-auto LlvmIrEmissionResult::dynamic_array_cleanup_obligation_report() const -> std::vector<std::string> {
-    return format_dynamic_array_cleanup_obligation_report(dynamic_array_cleanup_obligations);
-}
-
 auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_plan_report() const -> std::vector<std::string> {
     return format_dynamic_array_cleanup_sequence_plan_report(dynamic_array_cleanup_sequence_plans);
 }

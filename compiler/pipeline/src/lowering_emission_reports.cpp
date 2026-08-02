@@ -15,18 +15,33 @@ auto prefixed_function_line(std::string const& function_symbol_name, std::string
     return "function " + function_symbol_name + " " + line;
 }
 
-auto emitted_dynamic_array_cleanup_obligation_report(
+auto build_dynamic_array_descriptor_cleanup_plan_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> DynamicArrayDescriptorCleanupPlanState {
+    return DynamicArrayDescriptorCleanupPlanState {
+        .plans = emission.dynamic_array_descriptor_cleanup_plans,
+    };
+}
+
+auto build_dynamic_array_cleanup_obligation_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> DynamicArrayCleanupObligationState {
+    return DynamicArrayCleanupObligationState {
+        .obligations = emission.dynamic_array_cleanup_obligations,
+    };
+}
+
+auto build_emitted_dynamic_array_cleanup_obligation_state(
     std::vector<lowering::DynamicArrayCleanupObligationRecord> const& records
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    report.reserve(records.size());
+) -> DynamicArrayCleanupObligationState {
+    auto state = DynamicArrayCleanupObligationState {};
+    state.function_symbol_names.reserve(records.size());
+    state.obligations.reserve(records.size());
     for (auto const& record : records) {
-        report.push_back(prefixed_function_line(
-            record.function_symbol_name,
-            lowering::format_dynamic_array_cleanup_obligation(record.obligation)
-        ));
+        state.function_symbol_names.push_back(record.function_symbol_name);
+        state.obligations.push_back(record.obligation);
     }
-    return report;
+    return state;
 }
 
 auto emitted_dynamic_array_cleanup_sequence_plan_report(
@@ -880,10 +895,10 @@ void populate_lowering_emission_reports(
         emission.dynamic_array_runtime_request_report();
     result.dynamic_array_allocation_call_ir =
         std::move(emission.dynamic_array_allocation_call_ir);
-    result.dynamic_array_descriptor_cleanup_plan_report =
-        emission.dynamic_array_descriptor_cleanup_plan_report();
-    result.dynamic_array_cleanup_obligation_report =
-        emission.dynamic_array_cleanup_obligation_report();
+    result.dynamic_array_descriptor_cleanup_plan_state =
+        build_dynamic_array_descriptor_cleanup_plan_state(emission);
+    result.dynamic_array_cleanup_obligation_state =
+        build_dynamic_array_cleanup_obligation_state(emission);
     result.dynamic_array_cleanup_sequence_plan_report =
         emission.dynamic_array_cleanup_sequence_plan_report();
     result.dynamic_array_cleanup_sequence_verification_report =
@@ -914,8 +929,8 @@ void populate_lowering_emission_reports(
         .sequence_verification_passed = result.dynamic_array_cleanup_sequence_verification_passed,
         .cleanup_capability_proven = result.dynamic_array_cleanup_capability_proven,
     };
-    result.emitted_dynamic_array_cleanup_obligation_report =
-        emitted_dynamic_array_cleanup_obligation_report(emission.emitted_dynamic_array_cleanup_obligations);
+    result.emitted_dynamic_array_cleanup_obligation_state =
+        build_emitted_dynamic_array_cleanup_obligation_state(emission.emitted_dynamic_array_cleanup_obligations);
     result.emitted_dynamic_array_cleanup_sequence_plan_report =
         emitted_dynamic_array_cleanup_sequence_plan_report(emission.emitted_dynamic_array_cleanup_sequence_plans);
     result.emitted_dynamic_array_cleanup_sequence_verification_report =

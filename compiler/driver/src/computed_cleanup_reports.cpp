@@ -1,6 +1,7 @@
 #include "computed_cleanup_reports.hpp"
 
 #include "orison/lowering/aggregate_path.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 
 #include <cstddef>
 #include <set>
@@ -46,6 +47,27 @@ void append_computed_cleanup_detail(
 }
 
 }  // namespace
+
+auto dynamic_array_descriptor_cleanup_plan_state_report(
+    pipeline::DynamicArrayDescriptorCleanupPlanState const& state
+) -> std::vector<std::string> {
+    return lowering::format_dynamic_array_descriptor_cleanup_plan_report(state.plans);
+}
+
+auto dynamic_array_cleanup_obligation_state_report(
+    pipeline::DynamicArrayCleanupObligationState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.obligations.size());
+    for (auto index = std::size_t {0}; index < state.obligations.size(); ++index) {
+        auto line = lowering::format_dynamic_array_cleanup_obligation(state.obligations[index]);
+        if (index < state.function_symbol_names.size() && !state.function_symbol_names[index].empty()) {
+            line = "function " + state.function_symbol_names[index] + " " + line;
+        }
+        lines.push_back(std::move(line));
+    }
+    return lines;
+}
 
 auto computed_cleanup_call_insertion_capability_report(
     pipeline::ComputedCleanupCallInsertionCapabilityState const& state

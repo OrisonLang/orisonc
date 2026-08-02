@@ -2,6 +2,7 @@
 
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/aggregate_projection_access_plan.hpp"
+#include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
@@ -39,6 +40,15 @@ struct DynamicArrayCleanupEmissionCapabilityState {
     bool sequence_verified = false;
     bool element_cleanup_authorized_or_not_required = false;
     bool descriptor_deallocation_authorized = false;
+};
+
+struct DynamicArrayDescriptorCleanupPlanState {
+    std::vector<lowering::DynamicArrayDescriptorCleanupPlan> plans;
+};
+
+struct DynamicArrayCleanupObligationState {
+    std::vector<std::string> function_symbol_names;
+    std::vector<lowering::DynamicArrayCleanupObligation> obligations;
 };
 
 struct DynamicArrayCleanupProductionReadiness {
@@ -450,11 +460,11 @@ struct CompilePipelineResult {
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
     std::vector<std::string> semantic_drop_lowering_authorization_report;
     std::vector<std::string> semantic_drop_resolution_summary_report;
-    std::vector<std::string> dynamic_array_descriptor_cleanup_plan_report;
+    DynamicArrayDescriptorCleanupPlanState dynamic_array_descriptor_cleanup_plan_state;
     std::vector<std::string> dynamic_array_construction_plan_report;
     std::vector<std::string> dynamic_array_runtime_request_report;
     std::vector<std::string> dynamic_array_allocation_call_ir;
-    std::vector<std::string> dynamic_array_cleanup_obligation_report;
+    DynamicArrayCleanupObligationState dynamic_array_cleanup_obligation_state;
     std::vector<std::string> dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
     bool dynamic_array_cleanup_sequence_verification_passed = false;
@@ -463,7 +473,7 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_missing_element_drop_pairs;
     DynamicArrayCleanupEmissionCapabilityState dynamic_array_cleanup_emission_capability_state;
     DynamicArrayCleanupAvailability dynamic_array_cleanup_availability;
-    std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
+    DynamicArrayCleanupObligationState emitted_dynamic_array_cleanup_obligation_state;
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;

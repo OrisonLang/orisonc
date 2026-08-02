@@ -50,6 +50,8 @@
   instead of formatted report strings; pipeline state derives function symbols from those records.
 - 2026-08-01: lower-level emitted DynamicArray cleanup obligation, sequence-plan, sequence-verification, and
   emission-gate metadata now travels as structured records; pipeline report population owns audit formatting.
+- 2026-08-01: DynamicArray descriptor cleanup-plan and cleanup-obligation pipeline state is now typed, and the driver
+  renders those audit sections from typed state instead of direct pipeline report vectors.
 - 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup handoffs from typed pipeline state at
   the driver edge instead of appending the inserted-cleanup transition report vector directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup calls and consumed cleanup descriptors

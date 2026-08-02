@@ -7,6 +7,14 @@
 
 namespace orison::driver {
 
+auto dynamic_array_descriptor_cleanup_plan_state_report(
+    pipeline::DynamicArrayDescriptorCleanupPlanState const& state
+) -> std::vector<std::string>;
+
+auto dynamic_array_cleanup_obligation_state_report(
+    pipeline::DynamicArrayCleanupObligationState const& state
+) -> std::vector<std::string>;
+
 auto computed_cleanup_call_insertion_capability_report(
     pipeline::ComputedCleanupCallInsertionCapabilityState const& state
 ) -> std::vector<std::string>;

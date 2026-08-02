@@ -323,8 +323,6 @@ struct LlvmIrEmissionResult {
     auto render(std::string_view path) const -> std::string;
     auto planned_drop_report() const -> std::vector<std::string>;
     auto dynamic_array_construction_plan_report() const -> std::vector<std::string>;
-    auto dynamic_array_descriptor_cleanup_plan_report() const -> std::vector<std::string>;
-    auto dynamic_array_cleanup_obligation_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_sequence_plan_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_sequence_verification_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string>;

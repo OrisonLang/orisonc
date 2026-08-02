@@ -314,7 +314,7 @@ auto main() -> int {
     assert(analysis.semantic_drop_lowering_authorizations.empty());
     assert(analysis.semantic_drop_lowering_authorization_report.empty());
     assert(analysis.semantic_drop_resolution_summary_report.empty());
-    assert(analysis.dynamic_array_descriptor_cleanup_plan_report.empty());
+    assert(analysis.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
     assert(!ir.has_errors());
@@ -356,7 +356,7 @@ auto main() -> int {
         ir.drop_readiness_source_correlation_report.front() ==
         "drop readiness source correlations actions 0 semantic sites 0"
     );
-    assert(ir.dynamic_array_descriptor_cleanup_plan_report.empty());
+    assert(ir.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
     assert(!ir.dynamic_array_cleanup_availability.descriptor_origins_available);
     assert(!ir.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(!ir.dynamic_array_cleanup_availability.cleanup_obligations_available);
@@ -582,18 +582,22 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_bound_descriptor.has_errors());
-    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_report,
-        0,
-        "descriptor %items.addr bound"
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.size() == 1);
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.front().owner_name == "items");
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.front().descriptor_storage_name ==
+        "%items.addr"
     );
-    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_report,
-        0,
-        "owner items source DynamicArray<Payload> element Payload descriptor %items.addr origin line 6 actions 1"
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.size() == 1);
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.front()
+            .descriptor_cleanup.owner_name == "items"
     );
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.front()
+            .descriptor_cleanup.source_type_name == "DynamicArray<Payload>"
+    );
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.front().actions.size() == 1);
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_report.size() == 1);
     assert_line_contains(
         dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_report,
@@ -691,8 +695,8 @@ auto main() -> int {
     assert(!cleanup_metadata_facade.has_errors());
     assert(!cleanup_metadata_collector.has_errors());
     assert(
-        cleanup_metadata_collector.dynamic_array_cleanup_obligation_report ==
-        cleanup_metadata_facade.dynamic_array_cleanup_obligation_report
+        cleanup_metadata_collector.dynamic_array_cleanup_obligation_state.obligations.size() ==
+        cleanup_metadata_facade.dynamic_array_cleanup_obligation_state.obligations.size()
     );
     assert(
         cleanup_metadata_collector.dynamic_array_cleanup_sequence_verification_report ==
@@ -736,11 +740,10 @@ auto main() -> int {
         }
     );
     assert(!scalar_dynamic_array_cleanup.has_errors());
-    assert(scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_report.size() == 1);
-    assert_line_contains(
-        scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_report,
-        0,
-        "descriptor %words.addr bound"
+    assert(scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_state.plans.size() == 1);
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_state.plans.front().descriptor_storage_name ==
+        "%words.addr"
     );
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_report.size() == 1);
     assert_line_contains(

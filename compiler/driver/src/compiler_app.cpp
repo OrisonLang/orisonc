@@ -198,10 +198,10 @@ void prefer_emitted_dynamic_array_cleanup_reports(
     pipeline::CompilePipelineResult& result,
     pipeline::CompilePipelineResult&& emitted_result
 ) {
-    prefer_report_lines(
-        result.dynamic_array_cleanup_obligation_report,
-        std::move(emitted_result.emitted_dynamic_array_cleanup_obligation_report)
-    );
+    if (!emitted_result.emitted_dynamic_array_cleanup_obligation_state.obligations.empty()) {
+        result.dynamic_array_cleanup_obligation_state =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_obligation_state);
+    }
     prefer_report_lines(
         result.dynamic_array_cleanup_sequence_plan_report,
         std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_plan_report)
@@ -288,8 +288,13 @@ void prefer_emitted_dynamic_array_cleanup_reports(
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     append_report_lines(report, result.semantic_dynamic_array_descriptor_origin_report);
-    append_report_lines(report, result.dynamic_array_descriptor_cleanup_plan_report);
-    append_report_lines(report, result.dynamic_array_cleanup_obligation_report);
+    append_report_lines(
+        report,
+        dynamic_array_descriptor_cleanup_plan_state_report(result.dynamic_array_descriptor_cleanup_plan_state)
+    );
+    append_report_lines(report, dynamic_array_cleanup_obligation_state_report(
+        result.dynamic_array_cleanup_obligation_state
+    ));
     append_report_lines(report, result.dynamic_array_cleanup_sequence_plan_report);
     append_report_lines(report, result.dynamic_array_cleanup_sequence_verification_report);
     append_report_lines(report, result.dynamic_array_cleanup_emission_gate_report);
@@ -793,8 +798,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
-            [](auto const& result) -> auto const& {
-                return result.dynamic_array_descriptor_cleanup_plan_report;
+            [](auto const& result) {
+                return dynamic_array_descriptor_cleanup_plan_state_report(
+                    result.dynamic_array_descriptor_cleanup_plan_state
+                );
             }
         );
     }
@@ -803,8 +810,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
-            [](auto const& result) -> auto const& {
-                return result.dynamic_array_cleanup_obligation_report;
+            [](auto const& result) {
+                return dynamic_array_cleanup_obligation_state_report(result.dynamic_array_cleanup_obligation_state);
             }
         );
     }

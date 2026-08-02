@@ -1,6 +1,7 @@
 #include "computed_dynamic_array_audit_expectations.hpp"
 
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
@@ -1351,14 +1352,18 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         blocked.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
         orison::lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local
     );
-    auto cleanup_report = blocked.dynamic_array_descriptor_cleanup_plan_report();
+    auto cleanup_report = orison::lowering::format_dynamic_array_descriptor_cleanup_plan_report(
+        blocked.dynamic_array_descriptor_cleanup_plans
+    );
     assert(cleanup_report.size() == 1);
     assert(
         cleanup_report.front() ==
         "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
         "lowers to %record.Payload descriptor %items.addr predicted element_size 8 (metadata only)"
     );
-    auto obligation_report = blocked.dynamic_array_cleanup_obligation_report();
+    auto obligation_report = orison::lowering::format_dynamic_array_cleanup_obligation_report(
+        blocked.dynamic_array_cleanup_obligations
+    );
     assert(obligation_report.size() == 1);
     assert(
         obligation_report.front() ==
@@ -1489,7 +1494,9 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         result.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
         orison::lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local
     );
-    auto obligation_report = result.dynamic_array_cleanup_obligation_report();
+    auto obligation_report = orison::lowering::format_dynamic_array_cleanup_obligation_report(
+        result.dynamic_array_cleanup_obligations
+    );
     assert(obligation_report.size() == 1);
     assert(
         obligation_report.front() ==
@@ -1647,7 +1654,9 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         bound.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
         orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
     );
-    auto cleanup_report = bound.dynamic_array_descriptor_cleanup_plan_report();
+    auto cleanup_report = orison::lowering::format_dynamic_array_descriptor_cleanup_plan_report(
+        bound.dynamic_array_descriptor_cleanup_plans
+    );
     assert(cleanup_report.size() == 1);
     assert(
         cleanup_report.front() ==
