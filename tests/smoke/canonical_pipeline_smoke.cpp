@@ -103,6 +103,19 @@ void assert_pipeline_demo(
     assert_build(source_path, output_stem.string() + ".exe");
 }
 
+void assert_pipeline_fixture(
+    std::string_view name,
+    std::string_view required_ir_text
+) {
+    auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / name;
+    auto output_stem = std::filesystem::temp_directory_path() / std::filesystem::path(name).stem();
+
+    assert_emit_llvm(source_path, required_ir_text);
+    assert_emit_object(source_path, output_stem.string() + ".o");
+    assert_run(source_path);
+    assert_build(source_path, output_stem.string() + ".exe");
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -127,6 +140,10 @@ auto main() -> int {
     for (auto const& demo : backend_demos) {
         assert_pipeline_demo(demo.name, demo.required_ir_text);
     }
+    assert_pipeline_fixture(
+        "dynamic_array_complete_contract.or",
+        "define void @method.DynamicArray_Payload_.replace_first__Payload"
+    );
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

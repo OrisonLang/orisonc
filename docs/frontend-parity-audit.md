@@ -11,6 +11,11 @@
   artifact state instead of a bare top-level string vector.
 - 2026-08-02: DynamicArray allocation call rendered IR snippets now live under a named IR artifact state nested in the
   allocation call emission state, keeping readiness/count fields separate from artifact text.
+- 2026-08-02: the remaining `CompilePipelineResult` string-vector payloads are classified as metadata identifiers,
+  diagnostics, link libraries, or named IR artifacts; raw report-vector cleanup at the pipeline boundary is complete.
+- 2026-08-02: the complete DynamicArray contract fixture now runs through the canonical pipeline smoke path
+  (`--emit-llvm`, `--emit-object`, `run`, and `--build`) to pin receiver methods, append, replacement, projection,
+  iteration, owned cleanup, and object/link coverage together.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

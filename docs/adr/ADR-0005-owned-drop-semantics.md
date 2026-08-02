@@ -105,6 +105,10 @@ inventing semantics outside the spec/tour.
   instead of a bare top-level string vector.
 - DynamicArray allocation call rendered IR snippets live under a named IR artifact state nested in allocation call
   emission state, keeping readiness/count fields separate from artifact text.
+- Remaining `CompilePipelineResult` string-vector payloads are classified as metadata identifiers, diagnostics, link
+  libraries, or named IR artifacts. Raw report-vector cleanup at the pipeline boundary is complete.
+- The complete DynamicArray contract fixture now runs through the canonical pipeline smoke path to pin receiver methods,
+  append, replacement, projection, iteration, owned cleanup, and object/link coverage together.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders
