@@ -69,6 +69,51 @@ auto dynamic_array_cleanup_obligation_state_report(
     return lines;
 }
 
+auto dynamic_array_cleanup_sequence_plan_state_report(
+    pipeline::DynamicArrayCleanupSequencePlanState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.plans.size());
+    for (auto index = std::size_t {0}; index < state.plans.size(); ++index) {
+        auto line = lowering::format_dynamic_array_cleanup_sequence_plan(state.plans[index]);
+        if (index < state.function_symbol_names.size() && !state.function_symbol_names[index].empty()) {
+            line = "function " + state.function_symbol_names[index] + " " + line;
+        }
+        lines.push_back(std::move(line));
+    }
+    return lines;
+}
+
+auto dynamic_array_cleanup_sequence_verification_state_report(
+    pipeline::DynamicArrayCleanupSequenceVerificationState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.verifications.size());
+    for (auto index = std::size_t {0}; index < state.verifications.size(); ++index) {
+        auto line = lowering::format_dynamic_array_cleanup_sequence_verification(state.verifications[index]);
+        if (index < state.function_symbol_names.size() && !state.function_symbol_names[index].empty()) {
+            line = "function " + state.function_symbol_names[index] + " " + line;
+        }
+        lines.push_back(std::move(line));
+    }
+    return lines;
+}
+
+auto dynamic_array_cleanup_emission_gate_state_report(
+    pipeline::DynamicArrayCleanupSequenceVerificationState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.verifications.size());
+    for (auto index = std::size_t {0}; index < state.verifications.size(); ++index) {
+        auto line = lowering::format_dynamic_array_cleanup_emission_gate(state.verifications[index]);
+        if (index < state.function_symbol_names.size() && !state.function_symbol_names[index].empty()) {
+            line = "function " + state.function_symbol_names[index] + " " + line;
+        }
+        lines.push_back(std::move(line));
+    }
+    return lines;
+}
+
 auto computed_cleanup_call_insertion_capability_report(
     pipeline::ComputedCleanupCallInsertionCapabilityState const& state
 ) -> std::vector<std::string> {

@@ -108,6 +108,9 @@ inventing semantics outside the spec/tour.
   pipeline report population performs the audit formatting.
 - Pipeline results now expose typed DynamicArray descriptor cleanup-plan and cleanup-obligation state. The driver renders
   those audit sections from typed state instead of appending the pipeline report vectors directly.
+- Pipeline results now expose typed DynamicArray cleanup sequence-plan and sequence-verification state. The driver
+  renders sequence-plan, sequence-verification, and emission-gate audit sections from typed state instead of appending
+  the pipeline report vectors directly.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

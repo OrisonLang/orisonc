@@ -202,18 +202,14 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.dynamic_array_cleanup_obligation_state =
             std::move(emitted_result.emitted_dynamic_array_cleanup_obligation_state);
     }
-    prefer_report_lines(
-        result.dynamic_array_cleanup_sequence_plan_report,
-        std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_plan_report)
-    );
-    prefer_report_lines(
-        result.dynamic_array_cleanup_sequence_verification_report,
-        std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_verification_report)
-    );
-    prefer_report_lines(
-        result.dynamic_array_cleanup_emission_gate_report,
-        std::move(emitted_result.emitted_dynamic_array_cleanup_emission_gate_report)
-    );
+    if (!emitted_result.emitted_dynamic_array_cleanup_sequence_plan_state.plans.empty()) {
+        result.dynamic_array_cleanup_sequence_plan_state =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_plan_state);
+    }
+    if (!emitted_result.emitted_dynamic_array_cleanup_sequence_verification_state.verifications.empty()) {
+        result.dynamic_array_cleanup_sequence_verification_state =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_verification_state);
+    }
     if (emitted_result.dynamic_array_cleanup_emission_capability_state.capability_metadata_available) {
         result.dynamic_array_cleanup_emission_capability_state =
             std::move(emitted_result.dynamic_array_cleanup_emission_capability_state);
@@ -295,9 +291,18 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, dynamic_array_cleanup_obligation_state_report(
         result.dynamic_array_cleanup_obligation_state
     ));
-    append_report_lines(report, result.dynamic_array_cleanup_sequence_plan_report);
-    append_report_lines(report, result.dynamic_array_cleanup_sequence_verification_report);
-    append_report_lines(report, result.dynamic_array_cleanup_emission_gate_report);
+    append_report_lines(
+        report,
+        dynamic_array_cleanup_sequence_plan_state_report(result.dynamic_array_cleanup_sequence_plan_state)
+    );
+    append_report_lines(
+        report,
+        dynamic_array_cleanup_sequence_verification_state_report(result.dynamic_array_cleanup_sequence_verification_state)
+    );
+    append_report_lines(
+        report,
+        dynamic_array_cleanup_emission_gate_state_report(result.dynamic_array_cleanup_sequence_verification_state)
+    );
     append_report_lines(
         report,
         dynamic_array_cleanup_emission_capability_state_report(
@@ -820,8 +825,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
-            [](auto const& result) -> auto const& {
-                return result.dynamic_array_cleanup_sequence_plan_report;
+            [](auto const& result) {
+                return dynamic_array_cleanup_sequence_plan_state_report(result.dynamic_array_cleanup_sequence_plan_state);
             }
         );
     }
@@ -830,8 +835,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
-            [](auto const& result) -> auto const& {
-                return result.dynamic_array_cleanup_sequence_verification_report;
+            [](auto const& result) {
+                return dynamic_array_cleanup_sequence_verification_state_report(
+                    result.dynamic_array_cleanup_sequence_verification_state
+                );
             }
         );
     }
@@ -840,8 +847,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
-            [](auto const& result) -> auto const& {
-                return result.dynamic_array_cleanup_emission_gate_report;
+            [](auto const& result) {
+                return dynamic_array_cleanup_emission_gate_state_report(
+                    result.dynamic_array_cleanup_sequence_verification_state
+                );
             }
         );
     }

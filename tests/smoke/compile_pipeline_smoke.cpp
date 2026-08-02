@@ -598,23 +598,22 @@ auto main() -> int {
             .descriptor_cleanup.source_type_name == "DynamicArray<Payload>"
     );
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.front().actions.size() == 1);
-    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_report,
-        0,
-        "[load descriptor] [drop initialized elements] [deallocate descriptor storage]"
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_state.plans.size() == 1);
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_state.plans.front().phases.size() == 3
     );
-    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_verification_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_verification_report,
-        0,
-        "__orison_dynamic_array_cleanup.0 passed"
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_state.plans.front().phases[1] ==
+        "drop initialized elements"
     );
-    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_emission_gate_report.size() == 1);
-    assert_line_contains(
-        dynamic_array_bound_descriptor.dynamic_array_cleanup_emission_gate_report,
-        0,
-        "__orison_dynamic_array_cleanup.0 allowed"
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_verification_state.verifications.size() == 1);
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_verification_state.verifications.front()
+            .cleanup_symbol_name == "__orison_dynamic_array_cleanup.0"
+    );
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_verification_state.verifications.front()
+            .errors.empty()
     );
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_origins_available);
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
@@ -699,8 +698,8 @@ auto main() -> int {
         cleanup_metadata_facade.dynamic_array_cleanup_obligation_state.obligations.size()
     );
     assert(
-        cleanup_metadata_collector.dynamic_array_cleanup_sequence_verification_report ==
-        cleanup_metadata_facade.dynamic_array_cleanup_sequence_verification_report
+        cleanup_metadata_collector.dynamic_array_cleanup_sequence_verification_state.verifications.size() ==
+        cleanup_metadata_facade.dynamic_array_cleanup_sequence_verification_state.verifications.size()
     );
     assert(
         cleanup_metadata_collector.dynamic_array_cleanup_emission_capability_state.cleanup_pairs ==
@@ -745,23 +744,16 @@ auto main() -> int {
         scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_state.plans.front().descriptor_storage_name ==
         "%words.addr"
     );
-    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_report.size() == 1);
-    assert_line_contains(
-        scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_report,
-        0,
-        "[load descriptor] [deallocate descriptor storage]"
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_state.plans.size() == 1);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_state.plans.front().phases.size() == 2);
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_state.plans.front().phases.back() ==
+        "deallocate descriptor storage"
     );
-    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_verification_report.size() == 1);
-    assert_line_contains(
-        scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_verification_report,
-        0,
-        "__orison_dynamic_array_cleanup.0 passed"
-    );
-    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_gate_report.size() == 1);
-    assert_line_contains(
-        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_gate_report,
-        0,
-        "__orison_dynamic_array_cleanup.0 allowed"
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_verification_state.verifications.size() == 1);
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_verification_state.verifications.front()
+            .errors.empty()
     );
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.proven);

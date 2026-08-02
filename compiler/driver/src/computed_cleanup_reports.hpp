@@ -15,6 +15,18 @@ auto dynamic_array_cleanup_obligation_state_report(
     pipeline::DynamicArrayCleanupObligationState const& state
 ) -> std::vector<std::string>;
 
+auto dynamic_array_cleanup_sequence_plan_state_report(
+    pipeline::DynamicArrayCleanupSequencePlanState const& state
+) -> std::vector<std::string>;
+
+auto dynamic_array_cleanup_sequence_verification_state_report(
+    pipeline::DynamicArrayCleanupSequenceVerificationState const& state
+) -> std::vector<std::string>;
+
+auto dynamic_array_cleanup_emission_gate_state_report(
+    pipeline::DynamicArrayCleanupSequenceVerificationState const& state
+) -> std::vector<std::string>;
+
 auto computed_cleanup_call_insertion_capability_report(
     pipeline::ComputedCleanupCallInsertionCapabilityState const& state
 ) -> std::vector<std::string>;

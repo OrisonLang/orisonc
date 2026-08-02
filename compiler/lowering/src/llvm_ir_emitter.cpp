@@ -2096,18 +2096,6 @@ auto LlvmIrEmissionResult::dynamic_array_construction_plan_report() const -> std
     return format_dynamic_array_construction_plan_report(dynamic_array_construction_plans);
 }
 
-auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_plan_report() const -> std::vector<std::string> {
-    return format_dynamic_array_cleanup_sequence_plan_report(dynamic_array_cleanup_sequence_plans);
-}
-
-auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_verification_report() const -> std::vector<std::string> {
-    return format_dynamic_array_cleanup_sequence_verification_report(dynamic_array_cleanup_sequence_verifications);
-}
-
-auto LlvmIrEmissionResult::dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string> {
-    return format_dynamic_array_cleanup_emission_gate_report(dynamic_array_cleanup_sequence_verifications);
-}
-
 auto LlvmIrEmissionResult::computed_dynamic_array_for_production_sequence_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_production_sequence_metadata_report(

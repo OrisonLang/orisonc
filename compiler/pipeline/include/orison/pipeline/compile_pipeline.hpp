@@ -51,6 +51,16 @@ struct DynamicArrayCleanupObligationState {
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
 };
 
+struct DynamicArrayCleanupSequencePlanState {
+    std::vector<std::string> function_symbol_names;
+    std::vector<lowering::DynamicArrayCleanupSequencePlan> plans;
+};
+
+struct DynamicArrayCleanupSequenceVerificationState {
+    std::vector<std::string> function_symbol_names;
+    std::vector<lowering::DynamicArrayCleanupSequenceVerification> verifications;
+};
+
 struct DynamicArrayCleanupProductionReadiness {
     std::vector<std::string> missing_element_drop_pairs;
     bool descriptor_origins_available = false;
@@ -465,18 +475,16 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_runtime_request_report;
     std::vector<std::string> dynamic_array_allocation_call_ir;
     DynamicArrayCleanupObligationState dynamic_array_cleanup_obligation_state;
-    std::vector<std::string> dynamic_array_cleanup_sequence_plan_report;
-    std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
+    DynamicArrayCleanupSequencePlanState dynamic_array_cleanup_sequence_plan_state;
+    DynamicArrayCleanupSequenceVerificationState dynamic_array_cleanup_sequence_verification_state;
     bool dynamic_array_cleanup_sequence_verification_passed = false;
-    std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
     bool dynamic_array_cleanup_capability_proven = false;
     std::vector<std::string> dynamic_array_cleanup_missing_element_drop_pairs;
     DynamicArrayCleanupEmissionCapabilityState dynamic_array_cleanup_emission_capability_state;
     DynamicArrayCleanupAvailability dynamic_array_cleanup_availability;
     DynamicArrayCleanupObligationState emitted_dynamic_array_cleanup_obligation_state;
-    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
+    DynamicArrayCleanupSequencePlanState emitted_dynamic_array_cleanup_sequence_plan_state;
+    DynamicArrayCleanupSequenceVerificationState emitted_dynamic_array_cleanup_sequence_verification_state;
     ComputedDynamicArrayForDescriptorRenderState computed_dynamic_array_for_descriptor_render_state;
     ComputedDynamicArrayForLoopControlRenderState computed_dynamic_array_for_loop_control_render_state;
     ComputedDynamicArrayForElementAddressRenderState computed_dynamic_array_for_element_address_render_state;

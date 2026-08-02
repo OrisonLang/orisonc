@@ -11,10 +11,6 @@ namespace orison::pipeline {
 
 namespace {
 
-auto prefixed_function_line(std::string const& function_symbol_name, std::string const& line) -> std::string {
-    return "function " + function_symbol_name + " " + line;
-}
-
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayDescriptorCleanupPlanState {
@@ -44,46 +40,46 @@ auto build_emitted_dynamic_array_cleanup_obligation_state(
     return state;
 }
 
-auto emitted_dynamic_array_cleanup_sequence_plan_report(
+auto build_dynamic_array_cleanup_sequence_plan_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> DynamicArrayCleanupSequencePlanState {
+    return DynamicArrayCleanupSequencePlanState {
+        .plans = emission.dynamic_array_cleanup_sequence_plans,
+    };
+}
+
+auto build_dynamic_array_cleanup_sequence_verification_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> DynamicArrayCleanupSequenceVerificationState {
+    return DynamicArrayCleanupSequenceVerificationState {
+        .verifications = emission.dynamic_array_cleanup_sequence_verifications,
+    };
+}
+
+auto build_emitted_dynamic_array_cleanup_sequence_plan_state(
     std::vector<lowering::DynamicArrayCleanupSequencePlanRecord> const& records
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    report.reserve(records.size());
+) -> DynamicArrayCleanupSequencePlanState {
+    auto state = DynamicArrayCleanupSequencePlanState {};
+    state.function_symbol_names.reserve(records.size());
+    state.plans.reserve(records.size());
     for (auto const& record : records) {
-        report.push_back(prefixed_function_line(
-            record.function_symbol_name,
-            lowering::format_dynamic_array_cleanup_sequence_plan(record.plan)
-        ));
+        state.function_symbol_names.push_back(record.function_symbol_name);
+        state.plans.push_back(record.plan);
     }
-    return report;
+    return state;
 }
 
-auto emitted_dynamic_array_cleanup_sequence_verification_report(
+auto build_emitted_dynamic_array_cleanup_sequence_verification_state(
     std::vector<lowering::DynamicArrayCleanupSequenceVerificationRecord> const& records
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    report.reserve(records.size());
+) -> DynamicArrayCleanupSequenceVerificationState {
+    auto state = DynamicArrayCleanupSequenceVerificationState {};
+    state.function_symbol_names.reserve(records.size());
+    state.verifications.reserve(records.size());
     for (auto const& record : records) {
-        report.push_back(prefixed_function_line(
-            record.function_symbol_name,
-            lowering::format_dynamic_array_cleanup_sequence_verification(record.verification)
-        ));
+        state.function_symbol_names.push_back(record.function_symbol_name);
+        state.verifications.push_back(record.verification);
     }
-    return report;
-}
-
-auto emitted_dynamic_array_cleanup_emission_gate_report(
-    std::vector<lowering::DynamicArrayCleanupSequenceVerificationRecord> const& records
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    report.reserve(records.size());
-    for (auto const& record : records) {
-        report.push_back(prefixed_function_line(
-            record.function_symbol_name,
-            lowering::format_dynamic_array_cleanup_emission_gate(record.verification)
-        ));
-    }
-    return report;
+    return state;
 }
 
 auto build_computed_dynamic_array_for_production_sequence_state(
@@ -899,17 +895,15 @@ void populate_lowering_emission_reports(
         build_dynamic_array_descriptor_cleanup_plan_state(emission);
     result.dynamic_array_cleanup_obligation_state =
         build_dynamic_array_cleanup_obligation_state(emission);
-    result.dynamic_array_cleanup_sequence_plan_report =
-        emission.dynamic_array_cleanup_sequence_plan_report();
-    result.dynamic_array_cleanup_sequence_verification_report =
-        emission.dynamic_array_cleanup_sequence_verification_report();
+    result.dynamic_array_cleanup_sequence_plan_state =
+        build_dynamic_array_cleanup_sequence_plan_state(emission);
+    result.dynamic_array_cleanup_sequence_verification_state =
+        build_dynamic_array_cleanup_sequence_verification_state(emission);
     result.dynamic_array_cleanup_sequence_verification_passed =
         !emission.dynamic_array_cleanup_sequence_verifications.empty() &&
         lowering::dynamic_array_cleanup_sequence_verification_report_passed(
             emission.dynamic_array_cleanup_sequence_verifications
         );
-    result.dynamic_array_cleanup_emission_gate_report =
-        emission.dynamic_array_cleanup_emission_gate_report();
     if (emission.dynamic_array_cleanup_emission_capability.has_value()) {
         result.dynamic_array_cleanup_capability_proven =
             lowering::dynamic_array_cleanup_emission_capability_proven(
@@ -931,14 +925,10 @@ void populate_lowering_emission_reports(
     };
     result.emitted_dynamic_array_cleanup_obligation_state =
         build_emitted_dynamic_array_cleanup_obligation_state(emission.emitted_dynamic_array_cleanup_obligations);
-    result.emitted_dynamic_array_cleanup_sequence_plan_report =
-        emitted_dynamic_array_cleanup_sequence_plan_report(emission.emitted_dynamic_array_cleanup_sequence_plans);
-    result.emitted_dynamic_array_cleanup_sequence_verification_report =
-        emitted_dynamic_array_cleanup_sequence_verification_report(
-            emission.emitted_dynamic_array_cleanup_sequence_verifications
-        );
-    result.emitted_dynamic_array_cleanup_emission_gate_report =
-        emitted_dynamic_array_cleanup_emission_gate_report(
+    result.emitted_dynamic_array_cleanup_sequence_plan_state =
+        build_emitted_dynamic_array_cleanup_sequence_plan_state(emission.emitted_dynamic_array_cleanup_sequence_plans);
+    result.emitted_dynamic_array_cleanup_sequence_verification_state =
+        build_emitted_dynamic_array_cleanup_sequence_verification_state(
             emission.emitted_dynamic_array_cleanup_sequence_verifications
         );
     result.computed_dynamic_array_for_descriptor_render_state =
