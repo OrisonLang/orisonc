@@ -54,8 +54,10 @@ struct ParameterSyntax {
 };
 
 struct WhereConstraintSyntax {
+    std::size_t line = 0;
     std::string parameter_name;
     std::vector<TypeSyntax> requirements;
+    std::vector<std::size_t> requirement_lines;
 };
 
 struct ForeignImportFunctionSyntax {
@@ -152,6 +154,7 @@ struct RecordSyntax {
     std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
+    std::vector<std::size_t> generic_parameter_lines;
     std::vector<FieldSyntax> fields;
 };
 
@@ -166,6 +169,7 @@ struct ChoiceSyntax {
     std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
+    std::vector<std::size_t> generic_parameter_lines;
     std::vector<ChoiceVariantSyntax> variants;
 };
 
@@ -173,6 +177,7 @@ struct InterfaceMethodSyntax {
     std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
+    std::vector<std::size_t> generic_parameter_lines;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
     std::vector<WhereConstraintSyntax> where_constraints;
@@ -183,6 +188,7 @@ struct InterfaceSyntax {
     std::size_t line = 0;
     std::string name;
     std::vector<std::string> generic_parameters;
+    std::vector<std::size_t> generic_parameter_lines;
     std::vector<InterfaceMethodSyntax> methods;
 };
 
@@ -194,6 +200,7 @@ struct FunctionSyntax {
     bool has_exclusive_receiver_parameter = false;
     std::string name;
     std::vector<std::string> generic_parameters;
+    std::vector<std::size_t> generic_parameter_lines;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
     std::vector<WhereConstraintSyntax> where_constraints;

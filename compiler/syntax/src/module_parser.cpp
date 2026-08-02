@@ -41,6 +41,11 @@ public:
     }
 
 private:
+    struct ParsedGenericParameters {
+        std::vector<std::string> names;
+        std::vector<std::size_t> lines;
+    };
+
     void parse_top_level_declaration(ParseResult& result) {
         if (current_starts_visibility_qualified_declaration()) {
             auto visibility = visibility_from_token(current().kind);
@@ -460,19 +465,21 @@ private:
         return named_type;
     }
 
-    auto parse_generic_parameter_names(ParseResult& result) -> std::vector<std::string> {
-        std::vector<std::string> parameters;
+    auto parse_generic_parameter_names(ParseResult& result) -> ParsedGenericParameters {
+        ParsedGenericParameters parameters;
         if (!is(TokenKind::less)) {
             return parameters;
         }
 
         advance();
         while (!is(TokenKind::eof)) {
+            auto line = current().line;
             auto parameter = expect_identifier(result, "generic parameter list requires a parameter name");
             if (parameter.empty()) {
                 break;
             }
-            parameters.push_back(std::move(parameter));
+            parameters.names.push_back(std::move(parameter));
+            parameters.lines.push_back(line);
 
             if (is(TokenKind::comma)) {
                 advance();
@@ -578,6 +585,7 @@ private:
 
             while (!is(TokenKind::newline) && !is(TokenKind::eof)) {
                 WhereConstraintSyntax constraint;
+                constraint.line = current().line;
                 constraint.parameter_name =
                     expect_identifier(result, "where clause requires a constrained generic parameter name");
                 if (constraint.parameter_name.empty()) {
@@ -591,11 +599,13 @@ private:
 
                 advance();
                 while (true) {
+                    auto requirement_line = current().line;
                     auto requirement = parse_type(result, "where clause requires an interface or constraint type");
                     if (requirement.name.empty()) {
                         break;
                     }
                     constraint.requirements.push_back(std::move(requirement));
+                    constraint.requirement_lines.push_back(requirement_line);
 
                     if (is(TokenKind::plus)) {
                         advance();
@@ -624,7 +634,8 @@ private:
         return InterfaceMethodSyntax {
             .line = line,
             .name = std::move(name),
-            .generic_parameters = std::move(generic_parameters),
+            .generic_parameters = std::move(generic_parameters.names),
+            .generic_parameter_lines = std::move(generic_parameters.lines),
             .parameters = std::move(parameters),
             .return_type = std::move(return_type),
             .where_constraints = std::move(where_constraints),
@@ -646,6 +657,7 @@ private:
             .is_unsafe = is_unsafe,
             .name = std::move(signature.name),
             .generic_parameters = std::move(signature.generic_parameters),
+            .generic_parameter_lines = std::move(signature.generic_parameter_lines),
             .parameters = std::move(signature.parameters),
             .return_type = std::move(signature.return_type),
             .where_constraints = std::move(signature.where_constraints),
@@ -1863,11 +1875,13 @@ private:
             return;
         }
 
+        auto generic_parameters = parse_generic_parameter_names(result);
         RecordSyntax record {
             .visibility = visibility,
             .line = line,
             .name = name,
-            .generic_parameters = parse_generic_parameter_names(result),
+            .generic_parameters = std::move(generic_parameters.names),
+            .generic_parameter_lines = std::move(generic_parameters.lines),
         };
 
         if (!consume_block_start(result, "record declaration requires an indented field block")) {
@@ -1921,11 +1935,13 @@ private:
             return;
         }
 
+        auto generic_parameters = parse_generic_parameter_names(result);
         ChoiceSyntax choice {
             .visibility = visibility,
             .line = line,
             .name = name,
-            .generic_parameters = parse_generic_parameter_names(result),
+            .generic_parameters = std::move(generic_parameters.names),
+            .generic_parameter_lines = std::move(generic_parameters.lines),
         };
         if (!consume_block_start(result, "choice declaration requires an indented variant block")) {
             skip_to_next_top_level();
@@ -2001,11 +2017,13 @@ private:
             return;
         }
 
+        auto generic_parameters = parse_generic_parameter_names(result);
         InterfaceSyntax interface_syntax {
             .visibility = visibility,
             .line = line,
             .name = name,
-            .generic_parameters = parse_generic_parameter_names(result),
+            .generic_parameters = std::move(generic_parameters.names),
+            .generic_parameter_lines = std::move(generic_parameters.lines),
             .methods = {},
         };
 

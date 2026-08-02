@@ -85,6 +85,7 @@ public:
         validate_duplicate_implementation_methods();
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
+        validate_duplicate_generic_parameters_and_constraints();
         collect_async_callable_names();
         collect_unsafe_callable_names();
         collect_callable_return_types();
@@ -3517,6 +3518,137 @@ private:
                     parameter.line,
                     callable_name + " parameter '" + parameter.name + "' is duplicated"
                 );
+            }
+        }
+    }
+
+    void validate_duplicate_generic_parameters_and_constraints() {
+        for (auto const& record : module_.records) {
+            validate_duplicate_generic_parameters(
+                record.generic_parameters,
+                record.generic_parameter_lines,
+                "record '" + record.name + "'"
+            );
+        }
+
+        for (auto const& choice : module_.choices) {
+            validate_duplicate_generic_parameters(
+                choice.generic_parameters,
+                choice.generic_parameter_lines,
+                "choice '" + choice.name + "'"
+            );
+        }
+
+        for (auto const& interface : module_.interfaces) {
+            validate_duplicate_generic_parameters(
+                interface.generic_parameters,
+                interface.generic_parameter_lines,
+                "interface '" + interface.name + "'"
+            );
+
+            for (auto const& method : interface.methods) {
+                auto method_name = "interface method '" + interface.name + "." + method.name + "'";
+                validate_duplicate_generic_parameters(
+                    method.generic_parameters,
+                    method.generic_parameter_lines,
+                    method_name
+                );
+                validate_duplicate_where_constraints(method.where_constraints, method_name);
+            }
+        }
+
+        for (auto const& function : module_.functions) {
+            validate_duplicate_function_generics_and_constraints(function, "function '" + function.name + "'");
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            auto interface_type_name = render_type_name(implementation.interface_type);
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                validate_duplicate_function_generics_and_constraints(
+                    method,
+                    "implementation method '" + interface_type_name + " for " +
+                        receiver_type_name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                validate_duplicate_function_generics_and_constraints(
+                    method,
+                    "extension method '" + receiver_type_name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            validate_duplicate_function_generics_and_constraints(
+                foreign_export.function,
+                "foreign export function '" + foreign_export.function.name + "'"
+            );
+        }
+    }
+
+    void validate_duplicate_function_generics_and_constraints(
+        syntax::FunctionSyntax const& function,
+        std::string const& callable_name
+    ) {
+        validate_duplicate_generic_parameters(
+            function.generic_parameters,
+            function.generic_parameter_lines,
+            callable_name
+        );
+        validate_duplicate_where_constraints(function.where_constraints, callable_name);
+    }
+
+    void validate_duplicate_generic_parameters(
+        std::vector<std::string> const& generic_parameters,
+        std::vector<std::size_t> const& generic_parameter_lines,
+        std::string const& declaration_name
+    ) {
+        std::unordered_set<std::string> seen_generic_parameters;
+
+        for (auto index = std::size_t {0}; index < generic_parameters.size(); ++index) {
+            auto const& generic_parameter = generic_parameters[index];
+            if (!seen_generic_parameters.insert(generic_parameter).second) {
+                auto line = index < generic_parameter_lines.size() ? generic_parameter_lines[index] : std::size_t {0};
+                diagnostics_.error(
+                    line,
+                    declaration_name + " generic parameter '" + generic_parameter + "' is duplicated"
+                );
+            }
+        }
+    }
+
+    void validate_duplicate_where_constraints(
+        std::vector<syntax::WhereConstraintSyntax> const& where_constraints,
+        std::string const& callable_name
+    ) {
+        std::unordered_set<std::string> seen_constraint_names;
+
+        for (auto const& constraint : where_constraints) {
+            if (!seen_constraint_names.insert(constraint.parameter_name).second) {
+                diagnostics_.error(
+                    constraint.line,
+                    callable_name + " where constraint for '" + constraint.parameter_name + "' is duplicated"
+                );
+            }
+
+            std::unordered_set<std::string> seen_requirement_names;
+            for (auto index = std::size_t {0}; index < constraint.requirements.size(); ++index) {
+                auto const& requirement = constraint.requirements[index];
+                if (!seen_requirement_names.insert(render_type_name(requirement)).second) {
+                    auto line = index < constraint.requirement_lines.size()
+                        ? constraint.requirement_lines[index]
+                        : constraint.line;
+                    diagnostics_.error(
+                        line,
+                        callable_name + " where constraint '" + constraint.parameter_name +
+                            "' requirement '" + render_type_name(requirement) + "' is duplicated"
+                    );
+                }
             }
         }
     }

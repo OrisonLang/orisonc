@@ -7503,6 +7503,84 @@ void test_duplicate_implementation_method_parameter_name_failure() {
     );
 }
 
+void test_duplicate_record_generic_parameter_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_record_generic_parameter_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "record Box<T, T>",
+            "    value: T",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 2, "record 'Box' generic parameter 'T' is duplicated");
+}
+
+void test_duplicate_function_generic_parameter_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_function_generic_parameter_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "function id<T, T>(value: T) -> T",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 2, "function 'id' generic parameter 'T' is duplicated");
+}
+
+void test_duplicate_interface_method_generic_parameter_name_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_duplicate_interface_method_generic_parameter_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Mapper",
+            "    function map<T, T>(this: shared This, value: T) -> T",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "interface method 'Mapper.map' generic parameter 'T' is duplicated");
+}
+
+void test_duplicate_where_constraint_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_where_constraint_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "function id<T>(value: T) -> T",
+            "where T: Shareable, T: Transferable",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "function 'id' where constraint for 'T' is duplicated");
+}
+
+void test_duplicate_where_requirement_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_where_requirement_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "function id<T>(value: T) -> T",
+            "where T: Shareable + Shareable",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "function 'id' where constraint 'T' requirement 'Shareable' is duplicated"
+    );
+}
+
 void test_duplicate_extension_method_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_extension_method_name_failure.or";
     write_concurrency_fixture(
@@ -13456,6 +13534,11 @@ int main() {
     test_duplicate_interface_method_parameter_name_failure();
     test_duplicate_extension_method_parameter_name_failure();
     test_duplicate_implementation_method_parameter_name_failure();
+    test_duplicate_record_generic_parameter_name_failure();
+    test_duplicate_function_generic_parameter_name_failure();
+    test_duplicate_interface_method_generic_parameter_name_failure();
+    test_duplicate_where_constraint_name_failure();
+    test_duplicate_where_requirement_name_failure();
     test_duplicate_extension_method_name_failure();
     test_duplicate_interface_method_name_failure();
     test_duplicate_implementation_method_name_failure();
