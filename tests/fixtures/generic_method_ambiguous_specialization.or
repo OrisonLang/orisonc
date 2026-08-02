@@ -1,0 +1,16 @@
+package tests.genericmethodambiguousspecialization
+
+record Box<T>
+    value: T
+
+extend Box<T>
+    function value(this: shared This) -> T
+        this.value
+
+extend Box<T>
+    function value(this: shared This) -> T
+        this.value
+
+function main() -> UInt32
+    let box: Box<UInt32> = Box(13 as UInt32)
+    box.value()

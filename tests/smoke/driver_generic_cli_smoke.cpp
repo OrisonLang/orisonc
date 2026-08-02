@@ -599,6 +599,11 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_generic_method_parameter.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "generic_method_ambiguous_specialization.or",
+        "ambiguous generic specialization: Box<UInt32>.value matches multiple generic method specializations: method.Box_UInt32_.value__UInt32, method.Box_UInt32_.value__UInt32"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_length.or"

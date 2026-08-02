@@ -761,17 +761,19 @@ void collect_generic_method_calls_from_expression(
                 auto already_recorded = std::ranges::any_of(
                     specializations,
                     [&](GenericMethodSpecialization const& existing) {
-                        return existing.symbol_name == symbol_name;
+                        return existing.symbol_name == symbol_name && existing.source_method == candidate.method;
                     }
                 );
-                if (!already_recorded) {
-                    specializations.push_back(GenericMethodSpecialization {
-                        .receiver_type_name = std::move(concrete_receiver_type_name),
-                        .method_name = candidate.method->name,
-                        .symbol_name = std::move(symbol_name),
-                        .method = std::make_shared<syntax::FunctionSyntax>(std::move(specialized)),
-                    });
+                if (already_recorded) {
+                    continue;
                 }
+                specializations.push_back(GenericMethodSpecialization {
+                    .receiver_type_name = std::move(concrete_receiver_type_name),
+                    .method_name = candidate.method->name,
+                    .symbol_name = std::move(symbol_name),
+                    .source_method = candidate.method,
+                    .method = std::make_shared<syntax::FunctionSyntax>(std::move(specialized)),
+                });
             }
         }
     }

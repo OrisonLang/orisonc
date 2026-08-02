@@ -267,6 +267,8 @@ representation.
   ordinary repeated generic-parameter conflicts without needing source syntax declarations.
 - Ambiguous generic specialization diagnostics now enumerate matching lowered candidate symbols for both function and
   method calls.
+- Duplicate generic extension method specializations are retained through collection so source fixtures can exercise the
+  ambiguous-specialization diagnostic at the CLI boundary.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the

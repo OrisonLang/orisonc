@@ -23,6 +23,7 @@ struct GenericMethodSpecialization {
     std::string receiver_type_name;
     std::string method_name;
     std::string symbol_name;
+    syntax::FunctionSyntax const* source_method = nullptr;
     std::shared_ptr<syntax::FunctionSyntax> method;
 };
 
