@@ -3,6 +3,7 @@
 #include "computed_cleanup_proof_model.hpp"
 
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
@@ -120,6 +121,31 @@ auto planned_drop_action_report(
     return orison::lowering::format_planned_drop_action_report(
         result.planned_drop_action_state.actions
     );
+}
+
+auto drop_cleanup_authorization_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto const& state = result.drop_cleanup_authorization_state;
+    for (auto index = std::size_t {0}; index < state.cleanups.size(); ++index) {
+        if (index >= state.authorizations.size()) {
+            break;
+        }
+        auto const& authorization = state.authorizations[index];
+        if (
+            authorization.authorized ||
+            (authorization.semantic_lowering_blockers.empty() && authorization.missing_declarations.empty())
+        ) {
+            continue;
+        }
+        auto cleanup_lines = orison::lowering::format_drop_cleanup_authorization_report(
+            state.cleanups[index],
+            authorization
+        );
+        lines.insert(lines.end(), cleanup_lines.begin(), cleanup_lines.end());
+    }
+    return lines;
 }
 
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
@@ -526,24 +552,26 @@ auto main() -> int {
         0,
         "dynamic_array0.element: Payload"
     );
-    assert(dynamic_array_drop_readiness.drop_cleanup_authorization_report.size() == 4);
+    auto dynamic_array_drop_readiness_authorization_report =
+        drop_cleanup_authorization_report(dynamic_array_drop_readiness);
+    assert(dynamic_array_drop_readiness_authorization_report.size() == 4);
     assert_line_contains(
-        dynamic_array_drop_readiness.drop_cleanup_authorization_report,
+        dynamic_array_drop_readiness_authorization_report,
         0,
         "drop cleanup authorization __orison_dynamic_array_cleanup.0 blocked"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness.drop_cleanup_authorization_report,
+        dynamic_array_drop_readiness_authorization_report,
         1,
         "semantic drop lowering blocked __orison_drop.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness.drop_cleanup_authorization_report,
+        dynamic_array_drop_readiness_authorization_report,
         2,
         "semantic drop unresolved __orison_drop.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness.drop_cleanup_authorization_report,
+        dynamic_array_drop_readiness_authorization_report,
         3,
         "missing drop declaration __orison_drop.Payload"
     );
@@ -5892,7 +5920,7 @@ auto main() -> int {
         0,
         "__orison_drop.Payload"
     );
-    assert(dynamic_array_authorized_readiness.drop_cleanup_authorization_report.empty());
+    assert(drop_cleanup_authorization_report(dynamic_array_authorized_readiness).empty());
     assert(dynamic_array_authorized_readiness.drop_readiness_snapshot.semantic_authorizations.size() == 1);
     assert(
         dynamic_array_authorized_readiness.drop_readiness_snapshot.semantic_authorizations.front().site.owner_name ==
@@ -5942,39 +5970,41 @@ auto main() -> int {
     assert(multi_drop_readiness.planned_drop_action_state.actions.size() == 2);
     assert_line_contains(multi_drop_readiness_action_report, 0, "capture payload: Payload");
     assert_line_contains(multi_drop_readiness_action_report, 1, "capture other: OtherPayload");
-    assert(multi_drop_readiness.drop_cleanup_authorization_report.size() == 7);
+    auto multi_drop_readiness_authorization_report =
+        drop_cleanup_authorization_report(multi_drop_readiness);
+    assert(multi_drop_readiness_authorization_report.size() == 7);
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[0].find(
+        multi_drop_readiness_authorization_report[0].find(
             "__orison_thread_cleanup.launch.20.0 blocked"
         ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[1].find(
+        multi_drop_readiness_authorization_report[1].find(
             "semantic drop lowering blocked __orison_drop.Payload"
         ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[2].find(
+        multi_drop_readiness_authorization_report[2].find(
             "semantic drop lowering blocked __orison_drop.OtherPayload"
         ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[3].find(
+        multi_drop_readiness_authorization_report[3].find(
             "semantic drop unresolved __orison_drop.Payload"
         ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[4].find(
+        multi_drop_readiness_authorization_report[4].find(
             "semantic drop unresolved __orison_drop.OtherPayload"
         ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[5].find(
+        multi_drop_readiness_authorization_report[5].find(
             "missing drop declaration __orison_drop.Payload"
         ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[6].find(
+        multi_drop_readiness_authorization_report[6].find(
             "missing drop declaration __orison_drop.OtherPayload"
         ) != std::string::npos
     );

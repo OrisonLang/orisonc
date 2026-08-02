@@ -3,10 +3,12 @@
 #include "computed_cleanup_reports.hpp"
 
 #include "orison/lowering/drop_metadata.hpp"
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/link/host_runner.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
 
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -44,6 +46,30 @@ auto planned_drop_action_state_report(
     pipeline::PlannedDropActionState const& state
 ) -> std::vector<std::string> {
     return lowering::format_planned_drop_action_report(state.actions);
+}
+
+auto drop_cleanup_authorization_state_report(
+    pipeline::DropCleanupAuthorizationState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto index = std::size_t {0}; index < state.cleanups.size(); ++index) {
+        if (index >= state.authorizations.size()) {
+            break;
+        }
+        auto const& authorization = state.authorizations[index];
+        if (
+            authorization.authorized ||
+            (authorization.semantic_lowering_blockers.empty() && authorization.missing_declarations.empty())
+        ) {
+            continue;
+        }
+        auto cleanup_lines = lowering::format_drop_cleanup_authorization_report(
+            state.cleanups[index],
+            authorization
+        );
+        lines.insert(lines.end(), cleanup_lines.begin(), cleanup_lines.end());
+    }
+    return lines;
 }
 
 auto usage_text() -> std::string {
@@ -783,8 +809,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-cleanup-authorization") {
-        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.drop_cleanup_authorization_report;
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return drop_cleanup_authorization_state_report(result.drop_cleanup_authorization_state);
         });
     }
 

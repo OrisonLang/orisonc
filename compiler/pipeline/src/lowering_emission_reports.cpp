@@ -62,6 +62,24 @@ auto build_planned_drop_action_state(
     };
 }
 
+auto build_drop_cleanup_authorization_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> DropCleanupAuthorizationState {
+    auto state = DropCleanupAuthorizationState {};
+    state.cleanups = emission.drop_cleanups;
+    state.authorizations.reserve(emission.drop_cleanups.size());
+    for (auto const& cleanup : emission.drop_cleanups) {
+        state.authorizations.push_back(
+            lowering::plan_drop_cleanup_authorization(
+                cleanup,
+                emission.planned_drop_declarations,
+                emission.semantic_drop_lowering_authorizations
+            )
+        );
+    }
+    return state;
+}
+
 auto build_dynamic_array_cleanup_obligation_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupObligationState {
@@ -1038,8 +1056,8 @@ void populate_lowering_emission_reports(
         build_planned_drop_declaration_state(emission);
     result.planned_drop_action_state =
         build_planned_drop_action_state(emission);
-    result.drop_cleanup_authorization_report =
-        emission.drop_cleanup_authorization_report();
+    result.drop_cleanup_authorization_state =
+        build_drop_cleanup_authorization_state(emission);
     result.drop_readiness_snapshot = emission.drop_readiness_snapshot();
     result.drop_readiness_snapshot_report =
         emission.drop_readiness_snapshot_report();

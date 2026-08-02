@@ -68,6 +68,11 @@ struct PlannedDropActionState {
     std::vector<lowering::PlannedDropAction> actions;
 };
 
+struct DropCleanupAuthorizationState {
+    std::vector<lowering::ConcurrencyDropCleanupPlan> cleanups;
+    std::vector<lowering::DropCleanupAuthorizationReport> authorizations;
+};
+
 struct DynamicArrayCleanupObligationState {
     std::vector<std::string> function_symbol_names;
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
@@ -536,7 +541,7 @@ struct CompilePipelineResult {
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     PlannedDropDeclarationState planned_drop_declaration_state;
     PlannedDropActionState planned_drop_action_state;
-    std::vector<std::string> drop_cleanup_authorization_report;
+    DropCleanupAuthorizationState drop_cleanup_authorization_state;
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     std::vector<std::string> drop_readiness_snapshot_report;
     lowering::DropReadinessSummary drop_readiness_summary;
