@@ -261,6 +261,8 @@ representation.
   generic record type; mismatched or unresolved arms remain unbound.
 - Mismatched ternary generic-constructor argument arms are pinned as an unresolved specialization boundary rather than
   being coerced to a common generic type.
+- The mismatched ternary boundary reports conflicting arm source types at the generic call argument site rather than
+  falling through to a blank return-type mismatch.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the

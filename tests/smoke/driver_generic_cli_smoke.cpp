@@ -571,7 +571,7 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "generic_function_ternary_constructor_argument_mismatch.or",
-        "call return type mismatch: value returns , expected i32"
+        "call argument lowering failed: value argument 1 has incompatible ternary arm source types: Box<UInt32> and Box<UInt64>"
     );
     auto generic_method_path = smoke_temp_root / "orison_cli_generic_method_specialization.or";
     write_lines(generic_method_path, generic_method_lines());

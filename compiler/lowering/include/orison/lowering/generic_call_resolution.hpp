@@ -31,6 +31,11 @@ auto source_type_name_for_generic_call_argument(
     GenericCallSourceResolver const& resolver
 ) -> std::optional<std::string>;
 
+auto generic_call_argument_inference_failure_detail(
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string>;
+
 auto bind_generic_function_call_substitutions(
     syntax::FunctionSyntax const& function,
     syntax::ExpressionSyntax const& call,

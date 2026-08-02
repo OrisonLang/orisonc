@@ -198,6 +198,35 @@ auto infer_generic_record_constructor_source_type(
     return render_source_type_name(concrete);
 }
 
+auto infer_generic_record_constructor_source_type_from_lowering_context(
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (resolver.lowering_context == nullptr ||
+        expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto generic_record = resolver.lowering_context->generic_record_parameters.find(expression.left->text);
+    if (generic_record == resolver.lowering_context->generic_record_parameters.end() ||
+        generic_record->second.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto concrete = syntax::TypeSyntax {.name = expression.left->text};
+    concrete.generic_arguments.reserve(expression.arguments.size());
+    for (auto const& argument : expression.arguments) {
+        auto argument_source_type = source_type_name_for_generic_call_argument(argument, resolver);
+        if (!argument_source_type.has_value()) {
+            return std::nullopt;
+        }
+        concrete.generic_arguments.push_back(parse_source_type_name(*argument_source_type));
+    }
+    return render_source_type_name(concrete);
+}
+
 }  // namespace
 
 auto generic_specialization_base_name(std::string_view symbol_name) -> std::optional<std::string> {
@@ -268,6 +297,11 @@ auto source_type_name_for_generic_call_argument(
         return record_constructor_type;
     }
 
+    if (auto record_constructor_type =
+            infer_generic_record_constructor_source_type_from_lowering_context(expression, resolver)) {
+        return record_constructor_type;
+    }
+
     if (resolver.generic_functions != nullptr) {
         auto generic_function = resolver.generic_functions->find(expression.left->text);
         if (generic_function != resolver.generic_functions->end()) {
@@ -290,6 +324,38 @@ auto source_type_name_for_generic_call_argument(
             return source_function->second.source_return_type_name;
         }
     }
+    return std::nullopt;
+}
+
+auto generic_call_argument_inference_failure_detail(
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& argument = expression.arguments[index];
+        if (argument.kind != syntax::ExpressionKind::ternary ||
+            argument.right == nullptr ||
+            argument.alternate == nullptr) {
+            continue;
+        }
+
+        auto then_source_type = source_type_name_for_generic_call_argument(*argument.right, resolver);
+        auto else_source_type = source_type_name_for_generic_call_argument(*argument.alternate, resolver);
+        if (then_source_type.has_value() &&
+            else_source_type.has_value() &&
+            *then_source_type != *else_source_type) {
+            return expression.left->text + " argument " + std::to_string(index + 1) +
+                " has incompatible ternary arm source types: " +
+                *then_source_type + " and " + *else_source_type;
+        }
+    }
+
     return std::nullopt;
 }
 

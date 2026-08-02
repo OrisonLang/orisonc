@@ -3834,6 +3834,18 @@ auto lowered_expression(
         }
 
         if (function_signature == nullptr) {
+            auto resolver = GenericCallSourceResolver {
+                .lowering_context = &context.lowering,
+                .state = &session.state,
+            };
+            if (auto detail = generic_call_argument_inference_failure_detail(expression, resolver)) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::call_argument_failure,
+                    *detail
+                );
+                return std::nullopt;
+            }
             if (auto detail = generic_record_constructor_inference_failure_detail(
                     expression,
                     context.lowering,
@@ -3854,6 +3866,18 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (function_signature->return_type != expected_llvm_type) {
+            auto resolver = GenericCallSourceResolver {
+                .lowering_context = &context.lowering,
+                .state = &session.state,
+            };
+            if (auto detail = generic_call_argument_inference_failure_detail(expression, resolver)) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::call_argument_failure,
+                    *detail
+                );
+                return std::nullopt;
+            }
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_return_type_mismatch,

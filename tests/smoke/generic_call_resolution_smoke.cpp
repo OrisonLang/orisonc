@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace {
 
@@ -69,6 +70,19 @@ auto call_expression(
     auto expression = call_expression(std::move(function_name));
     expression.arguments.push_back(std::move(first_argument));
     expression.arguments.push_back(std::move(second_argument));
+    return expression;
+}
+
+auto ternary_expression(
+    orison::syntax::ExpressionSyntax condition,
+    orison::syntax::ExpressionSyntax then_expression,
+    orison::syntax::ExpressionSyntax else_expression
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::ternary;
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(condition));
+    expression.right = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(then_expression));
+    expression.alternate = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(else_expression));
     return expression;
 }
 
@@ -177,10 +191,24 @@ int main() {
     };
     auto local_source_types = std::unordered_map<std::string, std::string> {};
     auto record_names = std::unordered_set<std::string> {"Payload"};
+    auto box_record = orison::syntax::RecordSyntax {
+        .name = "Box",
+        .generic_parameters = {"T"},
+        .fields = {
+            orison::syntax::FieldSyntax {
+                .name = "value",
+                .type = type("T"),
+            },
+        },
+    };
+    auto generic_records = std::unordered_map<std::string, orison::syntax::RecordSyntax const*> {
+        {"Box", &box_record},
+    };
     auto collector_resolver = orison::lowering::GenericCallSourceResolver {
         .generic_functions = &generic_functions,
         .functions = &functions,
         .local_source_types = &local_source_types,
+        .generic_records = &generic_records,
         .record_names = &record_names,
     };
 
@@ -238,6 +266,35 @@ int main() {
         collector_resolver
     );
     assert(!mismatched_substitutions.has_value());
+
+    auto mismatched_ternary_call = call_expression(
+        "consume",
+        ternary_expression(
+            name_expression("flag"),
+            call_expression("Box", cast_expression(integer_literal("13"), "UInt32")),
+            call_expression("Box", cast_expression(integer_literal("17"), "UInt64"))
+        )
+    );
+    auto mismatched_ternary_detail = orison::lowering::generic_call_argument_inference_failure_detail(
+        mismatched_ternary_call,
+        collector_resolver
+    );
+    assert(mismatched_ternary_detail.has_value());
+    assert(
+        *mismatched_ternary_detail ==
+        "consume argument 1 has incompatible ternary arm source types: Box<UInt32> and Box<UInt64>"
+    );
+    auto lowering_context_for_constructor_detail = orison::lowering::LoweringContext {};
+    lowering_context_for_constructor_detail.generic_record_parameters.emplace("Box", std::vector<std::string> {"T"});
+    auto lowering_context_resolver = orison::lowering::GenericCallSourceResolver {
+        .lowering_context = &lowering_context_for_constructor_detail,
+    };
+    auto lowering_context_detail = orison::lowering::generic_call_argument_inference_failure_detail(
+        mismatched_ternary_call,
+        lowering_context_resolver
+    );
+    assert(lowering_context_detail.has_value());
+    assert(*lowering_context_detail == *mismatched_ternary_detail);
 
     auto generic_pick = generic_function("pick", "value", type("T"), type("T"));
     generic_pick.parameters.insert(
