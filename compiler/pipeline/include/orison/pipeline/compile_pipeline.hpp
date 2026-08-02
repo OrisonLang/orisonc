@@ -510,7 +510,6 @@ struct CompilePipelineResult {
     DynamicArrayCleanupSequenceVerificationState dynamic_array_cleanup_sequence_verification_state;
     bool dynamic_array_cleanup_sequence_verification_passed = false;
     bool dynamic_array_cleanup_capability_proven = false;
-    std::vector<std::string> dynamic_array_cleanup_missing_element_drop_pairs;
     DynamicArrayCleanupEmissionCapabilityState dynamic_array_cleanup_emission_capability_state;
     DynamicArrayCleanupAvailability dynamic_array_cleanup_availability;
     DynamicArrayCleanupObligationState emitted_dynamic_array_cleanup_obligation_state;

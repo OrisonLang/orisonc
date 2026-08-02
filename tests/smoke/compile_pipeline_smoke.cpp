@@ -4540,7 +4540,6 @@ auto main() -> int {
             .missing_element_drop_pairs.front() ==
         "items:items.element:__orison_drop.Payload"
     );
-    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.size() == 1);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.cleanup_obligations_available);
@@ -4549,7 +4548,8 @@ auto main() -> int {
     assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.cleanup_capability_proven);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.missing_element_drop_pairs.size() == 1);
     assert(
-        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.front() ==
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability
+            .missing_element_drop_pairs.front() ==
         "items:items.element:__orison_drop.Payload"
     );
     assert(

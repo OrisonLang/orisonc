@@ -971,13 +971,12 @@ void populate_lowering_emission_reports(
             lowering::dynamic_array_cleanup_emission_capability_proven(
                 *emission.dynamic_array_cleanup_emission_capability
             );
-        result.dynamic_array_cleanup_missing_element_drop_pairs =
-            emission.dynamic_array_cleanup_emission_capability->missing_element_drop_pairs;
     }
     result.dynamic_array_cleanup_emission_capability_state =
         build_dynamic_array_cleanup_emission_capability_state(emission);
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
-        .missing_element_drop_pairs = result.dynamic_array_cleanup_missing_element_drop_pairs,
+        .missing_element_drop_pairs =
+            result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
         .descriptor_origins_available = !result.semantic_result.dynamic_array_descriptor_origins.empty(),
         .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),
         .cleanup_obligations_available = !emission.dynamic_array_cleanup_obligations.empty(),
