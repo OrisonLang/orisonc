@@ -544,7 +544,6 @@ struct CompilePipelineResult {
     DropCleanupAuthorizationState drop_cleanup_authorization_state;
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     lowering::DropReadinessSummary drop_readiness_summary;
-    std::vector<std::string> drop_readiness_relation_report;
     lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
     std::vector<std::string> drop_readiness_blocker_report;
     std::vector<std::string> drop_readiness_source_correlation_report;

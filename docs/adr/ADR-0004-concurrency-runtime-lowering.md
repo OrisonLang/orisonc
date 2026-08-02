@@ -111,8 +111,8 @@ drop/cleanup decisions.
   full compile pipeline. Pipeline smoke coverage now verifies report wiring rather than duplicating exact formatter
   matching cases.
 - Direct smoke coverage now pins drop readiness relation report formatting independently from the full compile
-  pipeline, including empty, blocked, authorized, and multi-action cleanup states. Pipeline smoke verifies the relation
-  report is wired and populated from fixture metadata without duplicating the exact formatter contract.
+  pipeline, including empty, blocked, authorized, and multi-action cleanup states. Pipeline smoke verifies typed
+  snapshot state rendered as relation text at the consumer edge.
 - Direct smoke coverage now pins drop cleanup authorization report formatting independently from the full compile
   pipeline, including unresolved semantic blockers, source-lowering gates, authorized cleanups, and multi-action blocked
   cleanups. Pipeline smoke verifies cleanup authorization reporting is wired and populated from fixture metadata.

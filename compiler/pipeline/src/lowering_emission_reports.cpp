@@ -1060,8 +1060,6 @@ void populate_lowering_emission_reports(
         build_drop_cleanup_authorization_state(emission);
     result.drop_readiness_snapshot = emission.drop_readiness_snapshot();
     result.drop_readiness_summary = emission.drop_readiness_summary();
-    result.drop_readiness_relation_report =
-        emission.drop_readiness_relation_report();
     result.drop_readiness_blocker_summary =
         lowering::summarize_drop_readiness_blockers(result.drop_readiness_snapshot);
     result.drop_readiness_blocker_report =

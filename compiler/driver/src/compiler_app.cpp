@@ -84,6 +84,12 @@ auto drop_readiness_snapshot_state_report(
     return lowering::format_drop_readiness_snapshot_report(snapshot);
 }
 
+auto drop_readiness_relation_state_report(
+    lowering::DropReadinessSnapshot const& snapshot
+) -> std::vector<std::string> {
+    return lowering::format_drop_readiness_relation_report(snapshot);
+}
+
 auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
@@ -839,8 +845,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-relations") {
-        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.drop_readiness_relation_report;
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return drop_readiness_relation_state_report(result.drop_readiness_snapshot);
         });
     }
 
