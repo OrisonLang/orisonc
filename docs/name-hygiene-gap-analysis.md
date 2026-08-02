@@ -16,15 +16,17 @@ gap analysis only; it does not define new language syntax.
   user-visible collision check.
 - Source functions and foreign import/export ABI aliases using the compiler-reserved `__orison_` prefix are rejected
   before LLVM module-prelude runtime declarations are emitted.
+- The lowering context has an initial module symbol registry that rejects foreign declaration symbols colliding with
+  generated generic function specialization symbols or generated method symbols before LLVM IR text is emitted.
 - Same-category duplicate diagnostics remain specific, so `function`/`function`, `type`/`type`, `import`/`import`, and
   source/foreign function conflicts keep targeted messages instead of cascading into broad namespace diagnostics.
 
 ## Remaining Risks
 
-- Lowered generic specialization symbols such as `value__UInt32` can still collide with source or foreign ABI symbols
-  that do not use the reserved `__orison_` prefix.
-- Lowered method symbols such as `method.Box_UInt32_.value` can still collide with foreign ABI aliases if the user
-  deliberately exports or imports the same external symbol.
+- Lowered generic specialization symbols such as `value__UInt32` can still collide with source function symbols that do
+  not use the reserved `__orison_` prefix.
+- Lowered method symbols such as `method.Box_UInt32_.value` can still collide with source or foreign export symbols if
+  the user deliberately emits the same external symbol.
 - Generated private concurrency thunk and cleanup symbols are deterministic and use reserved-looking names, but there is
   no central symbol registry that validates all generated names against all user-emitted external symbols.
 - DynamicArray cleanup helper symbols such as `__orison_dynamic_array_cleanup.0` are generated in lowering. The reserved
@@ -36,16 +38,12 @@ gap analysis only; it does not define new language syntax.
 
 ## Next Implementation Slice
 
-Add a lowering-level module symbol registry that records every emitted or declared LLVM symbol before module text is
-published. The registry should classify symbols as source function, foreign declaration, foreign export, method,
+Broaden the lowering-level module symbol registry so it records every emitted or declared LLVM symbol before module text
+is published. The registry should classify symbols as source function, foreign declaration, foreign export, method,
 generic specialization, runtime prelude declaration, generated thunk, generated cleanup helper, or planned drop
 declaration.
 
-The first useful implementation should reject collisions between user-emitted symbols and lowered generated symbols,
-then add smoke tests for:
-
-- foreign import alias colliding with a generic specialization symbol
+- source function symbol colliding with a generic specialization symbol
 - foreign export alias colliding with a lowered method symbol
 - generated concurrency thunk symbol colliding with any externally visible symbol in constructed lowering state
 - planned drop declaration symbol colliding with any non-drop user-emitted symbol in constructed lowering state
-

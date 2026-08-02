@@ -56,6 +56,8 @@
   prefix are now rejected before LLVM module-prelude runtime declarations can collide with user-emitted symbols.
 - 2026-08-02: semantic name hygiene versus lowering symbol collision risk is summarized in
   `docs/name-hygiene-gap-analysis.md`; the next implementation slice is a lowering-level module symbol registry.
+- 2026-08-02: the lowering context now has an initial module symbol registry that rejects C foreign declaration aliases
+  colliding with generated generic function specialization symbols or generated method symbols before IR emission.
 - 2026-08-02: import bindings and foreign import local function names now reject duplicates during semantic analysis
   before callable signature collection.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline

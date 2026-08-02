@@ -42,6 +42,42 @@ struct GenericMethodCandidate {
     syntax::FunctionSyntax const* method = nullptr;
     std::vector<std::string> generic_parameters;
 };
+
+struct ModuleSymbolBinding {
+    std::string category;
+};
+
+class ModuleSymbolRegistry {
+public:
+    void register_symbol(std::string const& symbol_name, std::string category) {
+        if (symbol_name.empty()) {
+            return;
+        }
+        symbols_.emplace(symbol_name, ModuleSymbolBinding {.category = std::move(category)});
+    }
+
+    auto validate_foreign_declaration(
+        std::string const& symbol_name,
+        std::size_t line,
+        diagnostics::DiagnosticBag& diagnostics
+    ) const -> bool {
+        auto existing = symbols_.find(symbol_name);
+        if (existing == symbols_.end()) {
+            return true;
+        }
+
+        diagnostics.error(
+            line,
+            "LLVM symbol '" + symbol_name + "' for foreign declaration collides with " +
+                existing->second.category
+        );
+        return false;
+    }
+
+private:
+    std::unordered_map<std::string, ModuleSymbolBinding> symbols_;
+};
+
 void collect_generic_method_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
     std::vector<GenericMethodCandidate> const& generic_methods,
@@ -71,6 +107,39 @@ auto unquoted_text(std::string_view text) -> std::string_view {
 auto is_receiver_self_type(syntax::TypeSyntax const& type) -> bool {
     return type.generic_arguments.empty() &&
         (type.name == "This" || type.name == "shared.This" || type.name == "exclusive.This");
+}
+
+auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) -> bool {
+    return !function.generic_parameters.empty();
+}
+
+auto is_generic_receiver_pattern(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::ModuleSyntax const& module
+) -> bool {
+    if (receiver_type.name == "DynamicArray" && receiver_type.generic_arguments.size() == 1) {
+        auto const& argument = receiver_type.generic_arguments.front();
+        return argument.generic_arguments.empty() && !argument.name.empty();
+    }
+
+    auto record = std::ranges::find_if(
+        module.records,
+        [&](syntax::RecordSyntax const& candidate) {
+            return candidate.name == receiver_type.name;
+        }
+    );
+    if (record == module.records.end() ||
+        record->generic_parameters.size() != receiver_type.generic_arguments.size()) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < receiver_type.generic_arguments.size(); ++index) {
+        auto const& argument = receiver_type.generic_arguments[index];
+        if (argument.generic_arguments.empty() && argument.name == record->generic_parameters[index]) {
+            return true;
+        }
+    }
+    return false;
 }
 
 auto has_exclusive_receiver_parameter(syntax::FunctionSyntax const& method) -> bool {
@@ -1786,6 +1855,7 @@ auto build_lowering_context(
         }
     }
     auto instantiated_types = collect_generic_type_instantiations(module, generic_records, generic_choices);
+    auto symbol_registry = ModuleSymbolRegistry {};
     for (auto const& type : instantiated_types) {
         if (generic_records.contains(type.name)) {
             record_names.insert(render_record_type_name(type));
@@ -1830,6 +1900,7 @@ auto build_lowering_context(
         if (!has_supported_function_signature_types(signature)) {
             continue;
         }
+        symbol_registry.register_symbol(signature.symbol_name, "generated generic function specialization");
         auto original_name = std::string {};
         auto delimiter = specialization.name.find("__");
         if (delimiter != std::string::npos) {
@@ -1844,26 +1915,36 @@ auto build_lowering_context(
     for (auto const& implementation : module.implementations) {
         auto receiver_type_name = render_source_type_name(implementation.receiver_type);
         for (auto const& method : implementation.methods) {
-            context.methods.push_back(collect_method_signature(
+            auto lowered_method = collect_method_signature(
                     implementation.receiver_type,
                     receiver_type_name,
                     method,
                     record_names,
                     context.choices
-            ));
+            );
+            if (!is_uninstantiated_generic_function(method) &&
+                !is_generic_receiver_pattern(implementation.receiver_type, module)) {
+                symbol_registry.register_symbol(lowered_method.signature.symbol_name, "generated method symbol");
+            }
+            context.methods.push_back(std::move(lowered_method));
         }
     }
 
     for (auto const& extension : module.extensions) {
         auto receiver_type_name = render_source_type_name(extension.receiver_type);
         for (auto const& method : extension.methods) {
-            context.methods.push_back(collect_method_signature(
+            auto lowered_method = collect_method_signature(
                     extension.receiver_type,
                     receiver_type_name,
                     method,
                     record_names,
                     context.choices
-            ));
+            );
+            if (!is_uninstantiated_generic_function(method) &&
+                !is_generic_receiver_pattern(extension.receiver_type, module)) {
+                symbol_registry.register_symbol(lowered_method.signature.symbol_name, "generated method symbol");
+            }
+            context.methods.push_back(std::move(lowered_method));
         }
     }
 
@@ -1884,6 +1965,7 @@ auto build_lowering_context(
         if (!has_supported_function_signature_types(signature)) {
             continue;
         }
+        symbol_registry.register_symbol(signature.symbol_name, "generated method symbol");
         context.methods.push_back(LoweredMethodSignature {
             .receiver_type_name = specialization.receiver_type_name,
             .method_name = specialization.method_name,
@@ -1900,6 +1982,9 @@ auto build_lowering_context(
             auto symbol_name = function.external_name.empty()
                 ? function.name
                 : std::string(unquoted_text(function.external_name));
+            if (!symbol_registry.validate_foreign_declaration(symbol_name, function.line, diagnostics)) {
+                continue;
+            }
             auto const* adapter = find_c_abi_adapter(symbol_name);
             auto signature =
                 lower_function_signature(function.return_type, function.parameters, std::move(symbol_name));

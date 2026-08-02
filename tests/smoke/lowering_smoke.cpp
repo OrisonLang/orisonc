@@ -12294,6 +12294,58 @@ void test_reject_printf_adapter_with_unsupported_trailing_type() {
     );
 }
 
+void test_reject_foreign_alias_colliding_with_generic_specialization_symbol() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_foreign_generic_symbol_collision.or";
+    auto result = lower_source(
+        path,
+        "package demo.symbols\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function host_id(value: UInt32) -> UInt32 as \"id__UInt32\"\n"
+        "\n"
+        "function id<T>(value: T) -> T\n"
+        "    return value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    id(1 as UInt32)\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "LLVM symbol 'id__UInt32' for foreign declaration collides with generated generic function specialization"
+    );
+}
+
+void test_reject_foreign_alias_colliding_with_method_symbol() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_foreign_method_symbol_collision.or";
+    auto result = lower_source(
+        path,
+        "package demo.symbols\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function host_read(box: UInt32) -> UInt32 as \"method.Box_UInt32_.read\"\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "extend Box<UInt32>\n"
+        "    function read(this: shared This) -> UInt32\n"
+        "        this.value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    Box(1 as UInt32).read()\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "LLVM symbol 'method.Box_UInt32_.read' for foreign declaration collides with generated method symbol"
+    );
+}
+
 void test_emit_fixed_arity_c_foreign_call() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_fixed_arity_c_foreign_call.or";
     auto result = lower_source(
@@ -14577,6 +14629,8 @@ auto main() -> int {
     test_emit_fixed_printf_adapter_with_float_promotion();
     test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_reject_printf_adapter_with_unsupported_trailing_type();
+    test_reject_foreign_alias_colliding_with_generic_specialization_symbol();
+    test_reject_foreign_alias_colliding_with_method_symbol();
     test_emit_fixed_arity_c_foreign_call();
     test_emit_unsafe_function_identity_return();
     test_reject_unsupported_return_expression();
