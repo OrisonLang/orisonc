@@ -78,9 +78,11 @@ public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
 
     auto analyze() -> SemanticAnalysisResult {
+        validate_duplicate_import_bindings();
         validate_duplicate_type_declarations();
         validate_duplicate_type_members();
         validate_duplicate_top_level_functions();
+        validate_duplicate_foreign_import_functions();
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
         validate_duplicate_extension_methods();
@@ -3330,6 +3332,17 @@ private:
         }
     }
 
+    void validate_duplicate_import_bindings() {
+        std::unordered_set<std::string> seen_import_bindings;
+
+        for (auto const& import : module_.imports) {
+            auto binding_name = import.alias.empty() ? import.name : import.alias;
+            if (!seen_import_bindings.insert(binding_name).second) {
+                diagnostics_.error(import.line, "import binding '" + binding_name + "' is duplicated");
+            }
+        }
+    }
+
     void validate_duplicate_type_declarations() {
         std::unordered_set<std::string> seen_type_names;
 
@@ -3400,6 +3413,25 @@ private:
                     function.line,
                     "top-level function '" + function.name + "' is duplicated"
                 );
+            }
+        }
+    }
+
+    void validate_duplicate_foreign_import_functions() {
+        std::unordered_set<std::string> seen_function_names;
+
+        for (auto const& function : module_.functions) {
+            seen_function_names.insert(function.name);
+        }
+
+        for (auto const& foreign_import : module_.foreign_imports) {
+            for (auto const& function : foreign_import.functions) {
+                if (!seen_function_names.insert(function.name).second) {
+                    diagnostics_.error(
+                        function.line,
+                        "foreign import function '" + function.name + "' is duplicated"
+                    );
+                }
             }
         }
     }

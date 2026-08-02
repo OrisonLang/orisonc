@@ -7314,6 +7314,68 @@ void test_duplicate_top_level_function_name_failure() {
     assert_fixture_single_diagnostic(path, 4, "top-level function 'id' is duplicated");
 }
 
+void test_duplicate_import_binding_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_import_binding_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.imports",
+        {
+            "import",
+            "    Logger from diagnostics.logger",
+            "    Logger from diagnostics.audit",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "import binding 'Logger' is duplicated");
+}
+
+void test_duplicate_import_alias_binding_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_import_alias_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.imports",
+        {
+            "import",
+            "    Logger as Log from diagnostics.logger",
+            "    AuditLogger as Log from diagnostics.audit",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "import binding 'Log' is duplicated");
+}
+
+void test_duplicate_foreign_import_function_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_foreign_import_function_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.foreign",
+        {
+            "package foreign \"c\"",
+            "    function puts(text: Pointer<Byte>) -> Int32",
+            "    function puts(text: Pointer<Byte>) -> Int32 as \"fputs\"",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "foreign import function 'puts' is duplicated");
+}
+
+void test_foreign_import_function_conflicts_with_source_function_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_foreign_import_source_function_conflict.or";
+    write_concurrency_fixture(
+        path,
+        "demo.foreign",
+        {
+            "function puts(text: Pointer<Byte>) -> Int32",
+            "    return 0",
+            "package foreign \"c\"",
+            "    function puts(text: Pointer<Byte>) -> Int32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 5, "foreign import function 'puts' is duplicated");
+}
+
 void test_duplicate_type_alias_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_type_alias_name_failure.or";
     write_concurrency_fixture(
@@ -13522,6 +13584,10 @@ int main() {
     test_unknown_constant_initializer_reference_failure();
     test_duplicate_top_level_constant_name_failure();
     test_duplicate_top_level_function_name_failure();
+    test_duplicate_import_binding_name_failure();
+    test_duplicate_import_alias_binding_name_failure();
+    test_duplicate_foreign_import_function_name_failure();
+    test_foreign_import_function_conflicts_with_source_function_failure();
     test_duplicate_type_alias_name_failure();
     test_duplicate_record_name_failure();
     test_duplicate_choice_name_failure();

@@ -1611,6 +1611,7 @@ private:
             }
 
             ImportSyntax import;
+            import.line = current().line;
             import.name = expect_identifier(result, "import entry requires a name");
             if (import.name.empty()) {
                 skip_to_next_line();
@@ -1652,6 +1653,7 @@ private:
             return std::nullopt;
         }
 
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "foreign import declaration requires a function name");
         if (name.empty()) {
@@ -1680,6 +1682,7 @@ private:
         }
 
         return ForeignImportFunctionSyntax {
+            .line = line,
             .name = std::move(name),
             .parameters = std::move(parameters),
             .return_type = std::move(return_type),
@@ -1688,6 +1691,7 @@ private:
     }
 
     void parse_foreign(ParseResult& result, Visibility visibility) {
+        auto line = current().line;
         advance();
         auto abi = expect_string_literal(result, "foreign declaration requires an ABI string literal");
         if (abi.empty()) {
@@ -1707,6 +1711,7 @@ private:
             }
 
             ForeignImportBlockSyntax foreign_import {
+                .line = line,
                 .abi = std::move(abi),
                 .library_name = std::move(library_name),
                 .functions = {},

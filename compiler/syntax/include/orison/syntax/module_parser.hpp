@@ -22,6 +22,7 @@ struct TypeSyntax {
 };
 
 struct ImportSyntax {
+    std::size_t line = 0;
     std::string name;
     std::string alias;
     std::string from_package;
@@ -61,6 +62,7 @@ struct WhereConstraintSyntax {
 };
 
 struct ForeignImportFunctionSyntax {
+    std::size_t line = 0;
     std::string name;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
@@ -68,6 +70,7 @@ struct ForeignImportFunctionSyntax {
 };
 
 struct ForeignImportBlockSyntax {
+    std::size_t line = 0;
     std::string abi;
     std::string library_name;
     std::vector<ForeignImportFunctionSyntax> functions;
