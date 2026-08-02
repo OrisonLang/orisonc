@@ -89,6 +89,14 @@ auto dynamic_array_construction_plan_report(
     );
 }
 
+auto dynamic_array_runtime_request_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::lowering::format_dynamic_array_runtime_request_report(
+        result.dynamic_array_runtime_request_state.operations
+    );
+}
+
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
         {
@@ -872,9 +880,11 @@ auto main() -> int {
         }
     );
     assert(!scalar_dynamic_array_parameter_index.has_errors());
-    assert(scalar_dynamic_array_parameter_index.dynamic_array_runtime_request_report.size() == 2);
+    auto scalar_dynamic_array_parameter_index_runtime_report =
+        dynamic_array_runtime_request_report(scalar_dynamic_array_parameter_index);
+    assert(scalar_dynamic_array_parameter_index.dynamic_array_runtime_request_state.operations.size() == 2);
     assert_line_contains(
-        scalar_dynamic_array_parameter_index.dynamic_array_runtime_request_report,
+        scalar_dynamic_array_parameter_index_runtime_report,
         0,
         "__orison_dynamic_array_bounds_failed"
     );
@@ -929,9 +939,11 @@ auto main() -> int {
         }
     );
     assert(!scalar_dynamic_array_parameter_for.has_errors());
-    assert(scalar_dynamic_array_parameter_for.dynamic_array_runtime_request_report.size() == 1);
+    auto scalar_dynamic_array_parameter_for_runtime_report =
+        dynamic_array_runtime_request_report(scalar_dynamic_array_parameter_for);
+    assert(scalar_dynamic_array_parameter_for.dynamic_array_runtime_request_state.operations.size() == 1);
     assert_line_contains(
-        scalar_dynamic_array_parameter_for.dynamic_array_runtime_request_report,
+        scalar_dynamic_array_parameter_for_runtime_report,
         0,
         "__orison_dynamic_array_deallocate"
     );
@@ -3026,8 +3038,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .dynamic_array_runtime_request_report.size() == 2
+            .dynamic_array_runtime_request_state.operations.size() == 2
     );
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_for_runtime_report =
+        dynamic_array_runtime_request_report(computed_dynamic_array_local_same_owner_inserted_cleanup_for);
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_call_insertion_capability_state.enabled
@@ -3045,12 +3059,12 @@ auto main() -> int {
             .computed_dynamic_array_for_production_readiness
     ));
     assert_line_contains(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for.dynamic_array_runtime_request_report,
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for_runtime_report,
         0,
         "__orison_dynamic_array_allocate"
     );
     assert_line_contains(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for.dynamic_array_runtime_request_report,
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for_runtime_report,
         1,
         "__orison_dynamic_array_deallocate"
     );
@@ -3463,14 +3477,16 @@ auto main() -> int {
         }
     );
     assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_run.has_errors());
-    assert(computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_report.size() == 3);
+    assert(computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_state.operations.size() == 3);
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_runtime_report =
+        dynamic_array_runtime_request_report(computed_dynamic_array_local_same_owner_inserted_cleanup_run);
     assert_line_contains(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_report,
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run_runtime_report,
         1,
         "__orison_dynamic_array_grow"
     );
     assert_line_contains(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_report,
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run_runtime_report,
         2,
         "__orison_dynamic_array_deallocate"
     );
@@ -4000,7 +4016,7 @@ auto main() -> int {
     }
     auto view_parameter_length = pipeline.emit_llvm(view_parameter_length_path);
     assert(!view_parameter_length.has_errors());
-    assert(view_parameter_length.dynamic_array_runtime_request_report.empty());
+    assert(view_parameter_length.dynamic_array_runtime_request_state.operations.empty());
     assert(
         view_parameter_length.ir_text.find("define i64 @count({ ptr, i64 } %values)") !=
         std::string::npos
@@ -4021,9 +4037,9 @@ auto main() -> int {
     }
     auto view_parameter_index = pipeline.emit_llvm(view_parameter_index_path);
     assert(!view_parameter_index.has_errors());
-    assert(view_parameter_index.dynamic_array_runtime_request_report.size() == 1);
+    assert(view_parameter_index.dynamic_array_runtime_request_state.operations.size() == 1);
     assert_line_contains(
-        view_parameter_index.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(view_parameter_index),
         0,
         "__orison_dynamic_array_bounds_failed"
     );
@@ -4053,7 +4069,7 @@ auto main() -> int {
     }
     auto view_parameter_for = pipeline.emit_llvm(view_parameter_for_path);
     assert(!view_parameter_for.has_errors());
-    assert(view_parameter_for.dynamic_array_runtime_request_report.empty());
+    assert(view_parameter_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         view_parameter_for.ir_text.find("define i32 @sum({ ptr, i64 } %values)") != std::string::npos
     );
@@ -4078,7 +4094,7 @@ auto main() -> int {
     }
     auto shared_view_parameter_length = pipeline.emit_llvm(shared_view_parameter_length_path);
     assert(!shared_view_parameter_length.has_errors());
-    assert(shared_view_parameter_length.dynamic_array_runtime_request_report.empty());
+    assert(shared_view_parameter_length.dynamic_array_runtime_request_state.operations.empty());
     assert(
         shared_view_parameter_length.ir_text.find("define i64 @count({ ptr, i64 } %values)") !=
         std::string::npos
@@ -4101,9 +4117,9 @@ auto main() -> int {
     }
     auto exclusive_view_parameter_index = pipeline.emit_llvm(exclusive_view_parameter_index_path);
     assert(!exclusive_view_parameter_index.has_errors());
-    assert(exclusive_view_parameter_index.dynamic_array_runtime_request_report.size() == 1);
+    assert(exclusive_view_parameter_index.dynamic_array_runtime_request_state.operations.size() == 1);
     assert_line_contains(
-        exclusive_view_parameter_index.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(exclusive_view_parameter_index),
         0,
         "__orison_dynamic_array_bounds_failed"
     );
@@ -4129,9 +4145,9 @@ auto main() -> int {
     }
     auto exclusive_view_parameter_assignment = pipeline.emit_llvm(exclusive_view_parameter_assignment_path);
     assert(!exclusive_view_parameter_assignment.has_errors());
-    assert(exclusive_view_parameter_assignment.dynamic_array_runtime_request_report.size() == 1);
+    assert(exclusive_view_parameter_assignment.dynamic_array_runtime_request_state.operations.size() == 1);
     assert_line_contains(
-        exclusive_view_parameter_assignment.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(exclusive_view_parameter_assignment),
         0,
         "__orison_dynamic_array_bounds_failed"
     );
@@ -4169,7 +4185,7 @@ auto main() -> int {
     }
     auto shared_view_parameter_for = pipeline.emit_llvm(shared_view_parameter_for_path);
     assert(!shared_view_parameter_for.has_errors());
-    assert(shared_view_parameter_for.dynamic_array_runtime_request_report.empty());
+    assert(shared_view_parameter_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         shared_view_parameter_for.ir_text.find(
             "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
@@ -4194,7 +4210,7 @@ auto main() -> int {
     }
     auto computed_shared_view_for = pipeline.emit_llvm(computed_shared_view_for_path);
     assert(!computed_shared_view_for.has_errors());
-    assert(computed_shared_view_for.dynamic_array_runtime_request_report.empty());
+    assert(computed_shared_view_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         computed_shared_view_for.ir_text.find(
             " = call { ptr, i64 } @forward({ ptr, i64 } %values)"
@@ -4227,7 +4243,7 @@ auto main() -> int {
     }
     auto method_returned_shared_view_for = pipeline.emit_llvm(method_returned_shared_view_for_path);
     assert(!method_returned_shared_view_for.has_errors());
-    assert(method_returned_shared_view_for.dynamic_array_runtime_request_report.empty());
+    assert(method_returned_shared_view_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         method_returned_shared_view_for.ir_text.find(
             " = call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
@@ -4276,7 +4292,7 @@ auto main() -> int {
     auto member_receiver_method_returned_shared_view_for =
         pipeline.emit_llvm(member_receiver_method_returned_shared_view_for_path);
     assert(!member_receiver_method_returned_shared_view_for.has_errors());
-    assert(member_receiver_method_returned_shared_view_for.dynamic_array_runtime_request_report.empty());
+    assert(member_receiver_method_returned_shared_view_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         member_receiver_method_returned_shared_view_for.ir_text.find(
             " = call { ptr, i64 } @method.Bucket.forward_view(%record.Bucket"
@@ -4554,9 +4570,9 @@ auto main() -> int {
         0,
         "requests __orison_dynamic_array_allocate"
     );
-    assert(dynamic_array_owned_construction_gate.dynamic_array_runtime_request_report.size() == 2);
+    assert(dynamic_array_owned_construction_gate.dynamic_array_runtime_request_state.operations.size() == 2);
     assert_any_line_contains(
-        dynamic_array_owned_construction_gate.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_owned_construction_gate),
         "__orison_dynamic_array_allocate"
     );
     assert(dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.size() == 1);
@@ -4619,9 +4635,9 @@ auto main() -> int {
         "dynamic array construction DynamicArray<UInt32> owner items element UInt32 lowers to i32 "
         "element_size 4 initial_capacity 0 requests __orison_dynamic_array_allocate (metadata only)"
     );
-    assert(dynamic_array_source_construction.dynamic_array_runtime_request_report.size() == 1);
+    assert(dynamic_array_source_construction.dynamic_array_runtime_request_state.operations.size() == 1);
     assert_line_contains(
-        dynamic_array_source_construction.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_source_construction),
         0,
         "__orison_dynamic_array_allocate"
     );
@@ -4692,14 +4708,14 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_local_cleanup.has_errors());
-    assert(dynamic_array_local_cleanup.dynamic_array_runtime_request_report.size() == 2);
+    assert(dynamic_array_local_cleanup.dynamic_array_runtime_request_state.operations.size() == 2);
     assert_line_contains(
-        dynamic_array_local_cleanup.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_local_cleanup),
         0,
         "__orison_dynamic_array_allocate"
     );
     assert_line_contains(
-        dynamic_array_local_cleanup.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_local_cleanup),
         1,
         "__orison_dynamic_array_deallocate"
     );
@@ -4740,9 +4756,9 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_local_index.has_errors());
-    assert(dynamic_array_local_index.dynamic_array_runtime_request_report.size() == 3);
+    assert(dynamic_array_local_index.dynamic_array_runtime_request_state.operations.size() == 3);
     assert_line_contains(
-        dynamic_array_local_index.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_local_index),
         1,
         "__orison_dynamic_array_bounds_failed"
     );
@@ -4800,9 +4816,9 @@ auto main() -> int {
     }
     auto dynamic_array_local_append = pipeline.emit_llvm(dynamic_array_local_append_path);
     assert(!dynamic_array_local_append.has_errors());
-    assert(dynamic_array_local_append.dynamic_array_runtime_request_report.size() == 3);
+    assert(dynamic_array_local_append.dynamic_array_runtime_request_state.operations.size() == 3);
     assert_line_contains(
-        dynamic_array_local_append.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_local_append),
         1,
         "__orison_dynamic_array_grow"
     );
@@ -4856,14 +4872,14 @@ auto main() -> int {
     }
     auto dynamic_array_append_index = pipeline.emit_llvm(dynamic_array_append_index_path);
     assert(!dynamic_array_append_index.has_errors());
-    assert(dynamic_array_append_index.dynamic_array_runtime_request_report.size() == 4);
+    assert(dynamic_array_append_index.dynamic_array_runtime_request_state.operations.size() == 4);
     assert_line_contains(
-        dynamic_array_append_index.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_append_index),
         1,
         "__orison_dynamic_array_bounds_failed"
     );
     assert_line_contains(
-        dynamic_array_append_index.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_append_index),
         2,
         "__orison_dynamic_array_grow"
     );
@@ -4914,9 +4930,9 @@ auto main() -> int {
     }
     auto dynamic_array_index_assignment = pipeline.emit_llvm(dynamic_array_index_assignment_path);
     assert(!dynamic_array_index_assignment.has_errors());
-    assert(dynamic_array_index_assignment.dynamic_array_runtime_request_report.size() == 4);
+    assert(dynamic_array_index_assignment.dynamic_array_runtime_request_state.operations.size() == 4);
     assert_line_contains(
-        dynamic_array_index_assignment.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_index_assignment),
         1,
         "__orison_dynamic_array_bounds_failed"
     );
@@ -4970,9 +4986,9 @@ auto main() -> int {
     }
     auto dynamic_array_append_length = pipeline.emit_llvm(dynamic_array_append_length_path);
     assert(!dynamic_array_append_length.has_errors());
-    assert(dynamic_array_append_length.dynamic_array_runtime_request_report.size() == 3);
+    assert(dynamic_array_append_length.dynamic_array_runtime_request_state.operations.size() == 3);
     assert_line_contains(
-        dynamic_array_append_length.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_append_length),
         1,
         "__orison_dynamic_array_grow"
     );
@@ -5028,7 +5044,7 @@ auto main() -> int {
     }
     auto dynamic_array_append_for = pipeline.emit_llvm(dynamic_array_append_for_path);
     assert(!dynamic_array_append_for.has_errors());
-    assert(dynamic_array_append_for.dynamic_array_runtime_request_report.size() == 3);
+    assert(dynamic_array_append_for.dynamic_array_runtime_request_state.operations.size() == 3);
     assert(dynamic_array_append_for.ir_text.find("for.condition.") != std::string::npos);
     assert(dynamic_array_append_for.ir_text.find("for.continue.") != std::string::npos);
     assert(
@@ -5081,7 +5097,7 @@ auto main() -> int {
     );
     assert(!dynamic_array_local_owned_cleanup.has_errors());
     assert(dynamic_array_local_owned_cleanup.semantic_drop_lowering_authorizations.size() == 2);
-    assert(dynamic_array_local_owned_cleanup.dynamic_array_runtime_request_report.size() == 2);
+    assert(dynamic_array_local_owned_cleanup.dynamic_array_runtime_request_state.operations.size() == 2);
     assert(
         dynamic_array_local_owned_cleanup.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
         std::string::npos
@@ -5764,9 +5780,9 @@ auto main() -> int {
     assert(!dynamic_array_owned_production_ready.has_errors());
     assert(dynamic_array_owned_production_ready.drop_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_owned_production_ready.drop_readiness_summary.cleanup_blocked == 0);
-    assert(dynamic_array_owned_production_ready.dynamic_array_runtime_request_report.size() == 1);
+    assert(dynamic_array_owned_production_ready.dynamic_array_runtime_request_state.operations.size() == 1);
     assert_line_contains(
-        dynamic_array_owned_production_ready.dynamic_array_runtime_request_report,
+        dynamic_array_runtime_request_report(dynamic_array_owned_production_ready),
         0,
         "dynamic array runtime __orison_dynamic_array_deallocate"
     );

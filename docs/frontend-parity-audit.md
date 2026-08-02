@@ -2130,5 +2130,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   inserted handoff verification with verified cleanup-call operands before formatting audit reports.
 - 2026-08-01: pipeline results now expose DynamicArray construction-plan state as typed lowering records, so smoke
   coverage renders exact construction-plan audit text from state instead of reading a pipeline report vector.
+- 2026-08-01: pipeline results now expose DynamicArray runtime-request state as typed runtime operation records, so
+  smoke coverage renders exact runtime request audit text from state instead of reading a pipeline report vector.
 - 2026-07-27: the computed cleanup-proof model is now a reusable private pipeline component instead of anonymous
   report-formatting state, so later lowering pipeline stages can consume the same typed proof bundle.
