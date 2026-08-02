@@ -54,6 +54,14 @@ auto build_planned_drop_declaration_state(
     };
 }
 
+auto build_planned_drop_action_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> PlannedDropActionState {
+    return PlannedDropActionState {
+        .actions = emission.planned_drop_actions,
+    };
+}
+
 auto build_dynamic_array_cleanup_obligation_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupObligationState {
@@ -1028,8 +1036,8 @@ void populate_lowering_emission_reports(
         plan_dynamic_array_cleanup_production_readiness(result, options);
     result.planned_drop_declaration_state =
         build_planned_drop_declaration_state(emission);
-    result.planned_drop_action_report =
-        emission.planned_drop_action_report();
+    result.planned_drop_action_state =
+        build_planned_drop_action_state(emission);
     result.drop_cleanup_authorization_report =
         emission.drop_cleanup_authorization_report();
     result.drop_readiness_snapshot = emission.drop_readiness_snapshot();

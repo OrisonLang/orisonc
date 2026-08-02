@@ -64,6 +64,10 @@ struct PlannedDropDeclarationState {
     std::vector<lowering::PlannedDropDeclaration> declarations;
 };
 
+struct PlannedDropActionState {
+    std::vector<lowering::PlannedDropAction> actions;
+};
+
 struct DynamicArrayCleanupObligationState {
     std::vector<std::string> function_symbol_names;
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
@@ -531,7 +535,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_production_sequence_module_ir;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     PlannedDropDeclarationState planned_drop_declaration_state;
-    std::vector<std::string> planned_drop_action_report;
+    PlannedDropActionState planned_drop_action_state;
     std::vector<std::string> drop_cleanup_authorization_report;
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     std::vector<std::string> drop_readiness_snapshot_report;

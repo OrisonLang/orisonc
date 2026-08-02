@@ -114,6 +114,14 @@ auto emitted_drop_declaration_report(
     );
 }
 
+auto planned_drop_action_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::lowering::format_planned_drop_action_report(
+        result.planned_drop_action_state.actions
+    );
+}
+
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
         {
@@ -510,9 +518,11 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_drop_readiness.has_errors());
-    assert(dynamic_array_drop_readiness.planned_drop_action_report.size() == 1);
+    auto dynamic_array_drop_readiness_action_report =
+        planned_drop_action_report(dynamic_array_drop_readiness);
+    assert(dynamic_array_drop_readiness.planned_drop_action_state.actions.size() == 1);
     assert_line_contains(
-        dynamic_array_drop_readiness.planned_drop_action_report,
+        dynamic_array_drop_readiness_action_report,
         0,
         "dynamic_array0.element: Payload"
     );
@@ -5890,8 +5900,10 @@ auto main() -> int {
     );
     assert(dynamic_array_authorized_readiness.drop_readiness_snapshot.emitted_declarations.size() == 1);
     assert(dynamic_array_authorized_readiness.drop_readiness_snapshot.cleanup_authorizations.size() == 1);
-    assert(dynamic_array_authorized_readiness.planned_drop_action_report.size() == 1);
-    assert_line_contains(dynamic_array_authorized_readiness.planned_drop_action_report, 0, "capture items.element");
+    auto dynamic_array_authorized_readiness_action_report =
+        planned_drop_action_report(dynamic_array_authorized_readiness);
+    assert(dynamic_array_authorized_readiness.planned_drop_action_state.actions.size() == 1);
+    assert_line_contains(dynamic_array_authorized_readiness_action_report, 0, "capture items.element");
     assert(dynamic_array_authorized_readiness.drop_readiness_summary.semantic_authorized == 1);
     assert(dynamic_array_authorized_readiness.drop_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_authorized_readiness.drop_readiness_summary.cleanup_blocked == 0);
@@ -5925,9 +5937,11 @@ auto main() -> int {
     assert(multi_drop_readiness.planned_drop_declaration_state.declarations.size() == 2);
     assert_line_contains(multi_drop_readiness_planned_report, 0, "__orison_drop.Payload");
     assert_line_contains(multi_drop_readiness_planned_report, 1, "__orison_drop.OtherPayload");
-    assert(multi_drop_readiness.planned_drop_action_report.size() == 2);
-    assert_line_contains(multi_drop_readiness.planned_drop_action_report, 0, "capture payload: Payload");
-    assert_line_contains(multi_drop_readiness.planned_drop_action_report, 1, "capture other: OtherPayload");
+    auto multi_drop_readiness_action_report =
+        planned_drop_action_report(multi_drop_readiness);
+    assert(multi_drop_readiness.planned_drop_action_state.actions.size() == 2);
+    assert_line_contains(multi_drop_readiness_action_report, 0, "capture payload: Payload");
+    assert_line_contains(multi_drop_readiness_action_report, 1, "capture other: OtherPayload");
     assert(multi_drop_readiness.drop_cleanup_authorization_report.size() == 7);
     assert(
         multi_drop_readiness.drop_cleanup_authorization_report[0].find(

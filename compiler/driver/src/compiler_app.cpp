@@ -40,6 +40,12 @@ auto emitted_drop_declaration_state_report(
     return lowering::format_emitted_drop_declaration_report(state.declarations);
 }
 
+auto planned_drop_action_state_report(
+    pipeline::PlannedDropActionState const& state
+) -> std::vector<std::string> {
+    return lowering::format_planned_drop_action_report(state.actions);
+}
+
 auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
@@ -765,8 +771,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--planned-drop-actions") {
-        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.planned_drop_action_report;
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return planned_drop_action_state_report(result.planned_drop_action_state);
         });
     }
 

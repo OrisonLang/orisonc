@@ -119,6 +119,8 @@ inventing semantics outside the spec/tour.
   instead of exposing allocation-call IR as a direct pipeline vector.
 - Pipeline results now expose planned drop declarations as typed state. Driver report commands render planned and
   emitted drop declaration reports from the declaration state instead of reading pre-rendered pipeline vectors.
+- Pipeline results now expose planned drop actions as typed state. Driver planned-drop action reports render from the
+  action state instead of reading a pre-rendered pipeline vector.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
