@@ -545,6 +545,7 @@ private:
             return std::nullopt;
         }
 
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "function declaration requires a name");
         if (name.empty()) {
@@ -619,6 +620,7 @@ private:
         }
 
         return InterfaceMethodSyntax {
+            .line = line,
             .name = std::move(name),
             .generic_parameters = std::move(generic_parameters),
             .parameters = std::move(parameters),

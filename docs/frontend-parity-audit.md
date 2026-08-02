@@ -38,6 +38,8 @@
 - 2026-08-02: duplicate top-level functions and duplicate extension receiver/method pairs are now rejected during
   semantic analysis before lowering; the lowerer ambiguity diagnostic remains an internal guard for constructed
   duplicate specialization state.
+- 2026-08-02: duplicate interface methods and duplicate implementation `(interface, receiver, method)` entries are now
+  rejected during semantic analysis before method signature collection can create ambiguous downstream state.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

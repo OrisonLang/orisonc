@@ -7334,6 +7334,61 @@ void test_duplicate_extension_method_name_failure() {
     assert_fixture_single_diagnostic(path, 8, "extension method 'Box<T>.value' is duplicated");
 }
 
+void test_duplicate_interface_method_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_interface_method_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.interfaces",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "    function read(this: shared This) -> UInt32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "interface method 'Reader.read' is duplicated");
+}
+
+void test_duplicate_implementation_method_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_implementation_method_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 1",
+            "    function read(this: shared This) -> UInt32",
+            "        return 2",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 7, "implementation method 'Reader for Buffer.read' is duplicated");
+}
+
+void test_duplicate_implementation_method_across_blocks_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_duplicate_implementation_method_across_blocks.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 1",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 2",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 8, "implementation method 'Reader for Buffer.read' is duplicated");
+}
+
 void test_direct_constant_initializer_cycle_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_direct_constant_cycle_failure.or";
     write_concurrency_fixture(
@@ -13201,6 +13256,9 @@ int main() {
     test_duplicate_top_level_constant_name_failure();
     test_duplicate_top_level_function_name_failure();
     test_duplicate_extension_method_name_failure();
+    test_duplicate_interface_method_name_failure();
+    test_duplicate_implementation_method_name_failure();
+    test_duplicate_implementation_method_across_blocks_failure();
     test_direct_constant_initializer_cycle_failure();
     test_indirect_constant_initializer_cycle_failure();
     test_constant_initializer_await_failure();

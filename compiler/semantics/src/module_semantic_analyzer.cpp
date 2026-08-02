@@ -79,6 +79,8 @@ public:
 
     auto analyze() -> SemanticAnalysisResult {
         validate_duplicate_top_level_functions();
+        validate_duplicate_interface_methods();
+        validate_duplicate_implementation_methods();
         validate_duplicate_extension_methods();
         collect_async_callable_names();
         collect_unsafe_callable_names();
@@ -3333,6 +3335,40 @@ private:
                     function.line,
                     "top-level function '" + function.name + "' is duplicated"
                 );
+            }
+        }
+    }
+
+    void validate_duplicate_interface_methods() {
+        for (auto const& interface : module_.interfaces) {
+            std::unordered_set<std::string> seen_method_names;
+
+            for (auto const& method : interface.methods) {
+                auto key = interface.name + "." + method.name;
+                if (!seen_method_names.insert(key).second) {
+                    diagnostics_.error(
+                        method.line,
+                        "interface method '" + key + "' is duplicated"
+                    );
+                }
+            }
+        }
+    }
+
+    void validate_duplicate_implementation_methods() {
+        std::unordered_set<std::string> seen_method_names;
+
+        for (auto const& implementation : module_.implementations) {
+            auto interface_type_name = render_type_name(implementation.interface_type);
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                auto key = interface_type_name + " for " + receiver_type_name + "." + method.name;
+                if (!seen_method_names.insert(key).second) {
+                    diagnostics_.error(
+                        method.line,
+                        "implementation method '" + key + "' is duplicated"
+                    );
+                }
             }
         }
     }
