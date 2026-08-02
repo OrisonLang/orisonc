@@ -109,6 +109,7 @@ struct ExpressionSyntax {
 };
 
 struct ConstantSyntax {
+    std::size_t line = 0;
     std::string name;
     TypeSyntax type;
     ExpressionSyntax initializer;

@@ -7344,6 +7344,68 @@ void test_duplicate_import_alias_binding_name_failure() {
     assert_fixture_single_diagnostic(path, 4, "import binding 'Log' is duplicated");
 }
 
+void test_import_function_top_level_name_collision_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_import_function_name_collision.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "import",
+            "    Logger from diagnostics.logger",
+            "function Logger() -> UInt32",
+            "    return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "top-level name 'Logger' is already used by import binding");
+}
+
+void test_import_alias_type_top_level_name_collision_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_import_alias_type_name_collision.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "import",
+            "    Logger as Buffer from diagnostics.logger",
+            "record Buffer",
+            "    value: UInt32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "top-level name 'Buffer' is already used by import binding");
+}
+
+void test_function_constant_top_level_name_collision_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_function_constant_name_collision.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "function status() -> UInt32",
+            "    return 0",
+            "const status: UInt32 = 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "top-level name 'status' is already used by function");
+}
+
+void test_type_constant_top_level_name_collision_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_type_constant_name_collision.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "record Buffer",
+            "    value: UInt32",
+            "const Buffer: UInt32 = 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "top-level name 'Buffer' is already used by type declaration");
+}
+
 void test_duplicate_foreign_import_function_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_foreign_import_function_failure.or";
     write_concurrency_fixture(
@@ -13586,6 +13648,10 @@ int main() {
     test_duplicate_top_level_function_name_failure();
     test_duplicate_import_binding_name_failure();
     test_duplicate_import_alias_binding_name_failure();
+    test_import_function_top_level_name_collision_failure();
+    test_import_alias_type_top_level_name_collision_failure();
+    test_function_constant_top_level_name_collision_failure();
+    test_type_constant_top_level_name_collision_failure();
     test_duplicate_foreign_import_function_name_failure();
     test_foreign_import_function_conflicts_with_source_function_failure();
     test_duplicate_type_alias_name_failure();

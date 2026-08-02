@@ -1818,6 +1818,7 @@ private:
     }
 
     void parse_constant(ParseResult& result) {
+        auto line = current().line;
         advance();
         auto name = expect_identifier(result, "constant declaration requires a name");
         if (name.empty()) {
@@ -1853,6 +1854,7 @@ private:
         }
 
         result.module.constants.push_back(ConstantSyntax {
+            .line = line,
             .name = std::move(name),
             .type = std::move(type),
             .initializer = std::move(initializer),

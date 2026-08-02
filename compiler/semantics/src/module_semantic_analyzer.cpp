@@ -46,6 +46,10 @@ struct MethodReturnSignature {
     syntax::TypeSyntax return_type;
 };
 
+struct TopLevelNameBinding {
+    std::string category;
+};
+
 struct CallableSignature {
     std::string name;
     std::vector<std::string> generic_parameters;
@@ -82,6 +86,7 @@ public:
         validate_duplicate_type_declarations();
         validate_duplicate_type_members();
         validate_duplicate_top_level_functions();
+        validate_top_level_name_collisions();
         validate_duplicate_foreign_import_functions();
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
@@ -3414,6 +3419,75 @@ private:
                     "top-level function '" + function.name + "' is duplicated"
                 );
             }
+        }
+    }
+
+    void validate_top_level_name_collisions() {
+        struct TopLevelNameEntry {
+            std::string name;
+            std::string category;
+            std::size_t line = 0;
+        };
+
+        std::vector<TopLevelNameEntry> entries;
+        std::unordered_map<std::string, TopLevelNameBinding> seen_names;
+        std::unordered_set<std::string> reported_names;
+
+        auto add_name = [&](std::string const& name, std::string category, std::size_t line) {
+            entries.push_back(TopLevelNameEntry {
+                .name = name,
+                .category = std::move(category),
+                .line = line,
+            });
+        };
+
+        for (auto const& import : module_.imports) {
+            add_name(
+                import.alias.empty() ? import.name : import.alias,
+                "import binding",
+                import.line
+            );
+        }
+
+        for (auto const& type_alias : module_.type_aliases) {
+            add_name(type_alias.name, "type declaration", type_alias.line);
+        }
+
+        for (auto const& record : module_.records) {
+            add_name(record.name, "type declaration", record.line);
+        }
+
+        for (auto const& choice : module_.choices) {
+            add_name(choice.name, "type declaration", choice.line);
+        }
+
+        for (auto const& interface : module_.interfaces) {
+            add_name(interface.name, "type declaration", interface.line);
+        }
+
+        for (auto const& constant : module_.constants) {
+            add_name(constant.name, "constant", constant.line);
+        }
+
+        for (auto const& function : module_.functions) {
+            add_name(function.name, "function", function.line);
+        }
+
+        std::sort(entries.begin(), entries.end(), [](TopLevelNameEntry const& left, TopLevelNameEntry const& right) {
+            return left.line < right.line;
+        });
+
+        for (auto const& entry : entries) {
+            auto const [existing, inserted] =
+                seen_names.emplace(entry.name, TopLevelNameBinding { .category = entry.category });
+            if (inserted || existing->second.category == entry.category || !reported_names.insert(entry.name).second) {
+                continue;
+            }
+
+            diagnostics_.error(
+                entry.line,
+                "top-level name '" + entry.name + "' is already used by " + existing->second.category
+            );
         }
     }
 
