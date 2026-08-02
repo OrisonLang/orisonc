@@ -1,0 +1,10 @@
+package tests.genericfunctionconstructorargument
+
+record Box<T>
+    value: T
+
+function value<T>(box: Box<T>) -> T
+    box.value
+
+function main() -> UInt32
+    value(Box(13 as UInt32)) - 13 as UInt32

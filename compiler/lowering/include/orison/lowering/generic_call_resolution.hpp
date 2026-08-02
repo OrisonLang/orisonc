@@ -18,6 +18,7 @@ struct GenericCallSourceResolver {
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const* generic_functions = nullptr;
     std::unordered_map<std::string, LoweredFunctionSignature> const* functions = nullptr;
     std::unordered_map<std::string, std::string> const* local_source_types = nullptr;
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const* generic_records = nullptr;
     std::unordered_set<std::string> const* record_names = nullptr;
     LoweringContext const* lowering_context = nullptr;
     FunctionLoweringState const* state = nullptr;

@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace orison::lowering {
@@ -153,6 +154,50 @@ auto unify_generic_type(
     return true;
 }
 
+auto infer_generic_record_constructor_source_type(
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (resolver.generic_records == nullptr ||
+        expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto record = resolver.generic_records->find(expression.left->text);
+    if (record == resolver.generic_records->end() ||
+        record->second->fields.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    auto parameters = generic_parameter_set(record->second->generic_parameters);
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto argument_source_type = source_type_name_for_generic_call_argument(expression.arguments[index], resolver);
+        if (!argument_source_type.has_value() ||
+            !unify_generic_type(
+                record->second->fields[index].type,
+                parse_source_type_name(*argument_source_type),
+                parameters,
+                substitutions
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    auto concrete = syntax::TypeSyntax {.name = record->second->name};
+    concrete.generic_arguments.reserve(record->second->generic_parameters.size());
+    for (auto const& parameter : record->second->generic_parameters) {
+        auto substitution = substitutions.find(parameter);
+        if (substitution == substitutions.end()) {
+            return std::nullopt;
+        }
+        concrete.generic_arguments.push_back(substitution->second);
+    }
+    return render_source_type_name(concrete);
+}
+
 }  // namespace
 
 auto generic_specialization_base_name(std::string_view symbol_name) -> std::optional<std::string> {
@@ -205,6 +250,10 @@ auto source_type_name_for_generic_call_argument(
     if (resolver.record_names != nullptr &&
         resolver.record_names->contains(expression.left->text)) {
         return expression.left->text;
+    }
+
+    if (auto record_constructor_type = infer_generic_record_constructor_source_type(expression, resolver)) {
+        return record_constructor_type;
     }
 
     if (resolver.generic_functions != nullptr) {

@@ -179,6 +179,17 @@ void assert_cli_emit_llvm_local_call_result_fixture_success(
     assert(output.find("call i32 @consume__UInt32(i32 %value)") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_generic_function_constructor_argument_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("%record.Box_UInt32_ = type { i32 }") != std::string::npos);
+    assert(output.find("define i32 @value__UInt32(%record.Box_UInt32_ %box)") != std::string::npos);
+    assert(output.find("call i32 @value__UInt32(%record.Box_UInt32_ %tmp") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_generic_method_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -528,6 +539,14 @@ auto main() -> int {
     assert_cli_emit_llvm_local_call_result_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_local_call_result_parameter.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "generic_function_constructor_argument.or"
+    );
+    assert_cli_emit_llvm_generic_function_constructor_argument_fixture_success(
+        executable,
+        fixtures / "generic_function_constructor_argument.or"
     );
     auto generic_method_path = smoke_temp_root / "orison_cli_generic_method_specialization.or";
     write_lines(generic_method_path, generic_method_lines());
