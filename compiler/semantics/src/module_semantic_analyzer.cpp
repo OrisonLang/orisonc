@@ -3473,6 +3473,12 @@ private:
             add_name(function.name, "function", function.line);
         }
 
+        for (auto const& foreign_import : module_.foreign_imports) {
+            for (auto const& function : foreign_import.functions) {
+                add_name(function.name, "function", function.line);
+            }
+        }
+
         std::sort(entries.begin(), entries.end(), [](TopLevelNameEntry const& left, TopLevelNameEntry const& right) {
             return left.line < right.line;
         });

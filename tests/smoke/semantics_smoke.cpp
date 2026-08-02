@@ -7406,6 +7406,37 @@ void test_type_constant_top_level_name_collision_failure() {
     assert_fixture_single_diagnostic(path, 4, "top-level name 'Buffer' is already used by type declaration");
 }
 
+void test_import_foreign_function_top_level_name_collision_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_import_foreign_name_collision.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "import",
+            "    puts from diagnostics.logger",
+            "package foreign \"c\"",
+            "    function puts(text: Pointer<Byte>) -> Int32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 5, "top-level name 'puts' is already used by import binding");
+}
+
+void test_foreign_function_constant_top_level_name_collision_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_foreign_constant_name_collision.or";
+    write_concurrency_fixture(
+        path,
+        "demo.names",
+        {
+            "package foreign \"c\"",
+            "    function errno() -> Int32",
+            "const errno: UInt32 = 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 4, "top-level name 'errno' is already used by function");
+}
+
 void test_duplicate_foreign_import_function_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_foreign_import_function_failure.or";
     write_concurrency_fixture(
@@ -13652,6 +13683,8 @@ int main() {
     test_import_alias_type_top_level_name_collision_failure();
     test_function_constant_top_level_name_collision_failure();
     test_type_constant_top_level_name_collision_failure();
+    test_import_foreign_function_top_level_name_collision_failure();
+    test_foreign_function_constant_top_level_name_collision_failure();
     test_duplicate_foreign_import_function_name_failure();
     test_foreign_import_function_conflicts_with_source_function_failure();
     test_duplicate_type_alias_name_failure();
