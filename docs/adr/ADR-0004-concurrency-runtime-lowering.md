@@ -117,8 +117,8 @@ drop/cleanup decisions.
   pipeline, including unresolved semantic blockers, source-lowering gates, authorized cleanups, and multi-action blocked
   cleanups. Pipeline smoke verifies cleanup authorization reporting is wired and populated from fixture metadata.
 - Direct smoke coverage now pins drop readiness snapshot and summary report formatting independently from the full
-  compile pipeline, including empty, blocked, authorized, and mixed readiness states. Pipeline smoke verifies snapshot
-  reporting plus typed summary state rendered at the consumer edge.
+  compile pipeline, including empty, blocked, authorized, and mixed readiness states. Pipeline smoke verifies typed
+  snapshot and summary state rendered at the consumer edge.
 - Driver smoke now treats drop-readiness and drop-cleanup report commands as CLI wiring checks, asserting successful
   command execution plus representative report fragments while dedicated formatter smokes own exact rendering.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
