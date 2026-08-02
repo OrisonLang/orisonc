@@ -166,6 +166,9 @@ auto render_expression_lowering_failure(
     case ExpressionLoweringFailureReason::unknown_function:
         prefix = "unknown lowered function";
         break;
+    case ExpressionLoweringFailureReason::ambiguous_generic_specialization:
+        prefix = "ambiguous generic specialization";
+        break;
     case ExpressionLoweringFailureReason::call_return_type_mismatch:
         prefix = "call return type mismatch";
         break;

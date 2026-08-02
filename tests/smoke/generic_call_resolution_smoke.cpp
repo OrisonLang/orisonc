@@ -502,6 +502,18 @@ int main() {
         state
     );
     assert(ambiguous == nullptr);
+    auto ambiguous_detail = orison::lowering::generic_specialization_ambiguity_detail(
+        "consume",
+        local_call,
+        "i32",
+        context,
+        state
+    );
+    assert(ambiguous_detail.has_value());
+    assert(
+        *ambiguous_detail ==
+        "consume matches multiple generic specializations: consume__UInt32, consume__UInt32_duplicate"
+    );
 
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Box<UInt32>",
@@ -564,6 +576,19 @@ int main() {
         state
     );
     assert(ambiguous_method == nullptr);
+    auto ambiguous_method_detail = orison::lowering::generic_method_specialization_ambiguity_detail(
+        "Box<UInt32>",
+        "pick",
+        method_call,
+        "i32",
+        context,
+        state
+    );
+    assert(ambiguous_method_detail.has_value());
+    assert(
+        *ambiguous_method_detail ==
+        "Box<UInt32>.pick matches multiple generic method specializations: method.Box_UInt32.pick, method.Box_UInt32.pick_duplicate"
+    );
 
     return 0;
 }

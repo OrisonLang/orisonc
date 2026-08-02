@@ -81,6 +81,7 @@ int main() {
         std::pair {ExpressionLoweringFailureReason::unsupported_choice_abi, "unsupported choice ABI"},
         std::pair {ExpressionLoweringFailureReason::unsupported_aggregate_path, "unsupported aggregate path"},
         std::pair {ExpressionLoweringFailureReason::unknown_function, "unknown lowered function"},
+        std::pair {ExpressionLoweringFailureReason::ambiguous_generic_specialization, "ambiguous generic specialization"},
         std::pair {ExpressionLoweringFailureReason::call_return_type_mismatch, "call return type mismatch"},
         std::pair {ExpressionLoweringFailureReason::call_arity_mismatch, "call arity mismatch"},
         std::pair {ExpressionLoweringFailureReason::call_argument_failure, "call argument lowering failed"},

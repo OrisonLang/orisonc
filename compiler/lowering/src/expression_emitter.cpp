@@ -3713,6 +3713,23 @@ auto lowered_expression(
             );
         }
 
+        if (method_signature == nullptr) {
+            if (auto detail = generic_method_specialization_ambiguity_detail(
+                    resolved.receiver.receiver_type_name,
+                    resolved.receiver.method_name,
+                    expression,
+                    expected_llvm_type,
+                    context.lowering,
+                    session.state
+                )) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    *detail
+                );
+                return std::nullopt;
+            }
+        }
         if (method_signature == nullptr && resolved.method.result == LoweredMethodLookupResult::not_found) {
             record_expression_lowering_failure(
                 failures,
@@ -3834,6 +3851,20 @@ auto lowered_expression(
         }
 
         if (function_signature == nullptr) {
+            if (auto detail = generic_specialization_ambiguity_detail(
+                    expression.left->text,
+                    expression,
+                    expected_llvm_type,
+                    context.lowering,
+                    session.state
+                )) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    *detail
+                );
+                return std::nullopt;
+            }
             auto resolver = GenericCallSourceResolver {
                 .lowering_context = &context.lowering,
                 .state = &session.state,
@@ -3866,6 +3897,20 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (function_signature->return_type != expected_llvm_type) {
+            if (auto detail = generic_specialization_ambiguity_detail(
+                    expression.left->text,
+                    expression,
+                    expected_llvm_type,
+                    context.lowering,
+                    session.state
+                )) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    *detail
+                );
+                return std::nullopt;
+            }
             auto resolver = GenericCallSourceResolver {
                 .lowering_context = &context.lowering,
                 .state = &session.state,

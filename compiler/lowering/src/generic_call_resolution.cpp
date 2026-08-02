@@ -9,6 +9,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace orison::lowering {
 namespace {
@@ -356,6 +357,17 @@ auto generic_binding_conflict_detail(
     );
 }
 
+auto join_candidate_symbols(std::vector<std::string> const& symbols) -> std::string {
+    auto joined = std::string {};
+    for (auto index = std::size_t {0}; index < symbols.size(); ++index) {
+        if (index > 0) {
+            joined += ", ";
+        }
+        joined += symbols[index];
+    }
+    return joined;
+}
+
 }  // namespace
 
 auto generic_specialization_base_name(std::string_view symbol_name) -> std::optional<std::string> {
@@ -677,6 +689,39 @@ auto find_matching_generic_specialization(
     return match;
 }
 
+auto generic_specialization_ambiguity_detail(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto resolver = GenericCallSourceResolver {
+        .lowering_context = &context,
+        .state = &state,
+    };
+    auto candidates = std::vector<std::string> {};
+    for (auto const& specialization : context.generic_function_specializations) {
+        auto base_name = generic_specialization_base_name(specialization->name);
+        if (!base_name.has_value() || *base_name != function_name) {
+            continue;
+        }
+        auto signature = context.functions.find(specialization->name);
+        if (signature == context.functions.end() ||
+            signature->second.return_type != expected_llvm_type ||
+            signature->second.parameter_types.size() != expression.arguments.size() ||
+            !call_arguments_match_source_types(expression, signature->second, resolver)) {
+            continue;
+        }
+        candidates.push_back(signature->second.symbol_name);
+    }
+    if (candidates.size() < 2) {
+        return std::nullopt;
+    }
+    return std::string {function_name} + " matches multiple generic specializations: " +
+        join_candidate_symbols(candidates);
+}
+
 auto find_matching_generic_method_specialization(
     std::string_view receiver_type_name,
     std::string_view method_name,
@@ -706,6 +751,38 @@ auto find_matching_generic_method_specialization(
         match = &method.signature;
     }
     return match;
+}
+
+auto generic_method_specialization_ambiguity_detail(
+    std::string_view receiver_type_name,
+    std::string_view method_name,
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto resolver = GenericCallSourceResolver {
+        .lowering_context = &context,
+        .state = &state,
+    };
+    auto candidates = std::vector<std::string> {};
+    for (auto const& method : context.methods) {
+        if (method.receiver_type_name != receiver_type_name ||
+            method.method_name != method_name ||
+            method.signature.return_type != expected_llvm_type ||
+            method.signature.parameter_types.size() != expression.arguments.size() + 1 ||
+            method.signature.parameter_source_type_names.empty() ||
+            method.signature.parameter_source_type_names.front() != receiver_type_name ||
+            !method_call_arguments_match_source_types(expression, method.signature, resolver)) {
+            continue;
+        }
+        candidates.push_back(method.signature.symbol_name);
+    }
+    if (candidates.size() < 2) {
+        return std::nullopt;
+    }
+    return std::string {receiver_type_name} + "." + std::string {method_name} +
+        " matches multiple generic method specializations: " + join_candidate_symbols(candidates);
 }
 
 }  // namespace orison::lowering

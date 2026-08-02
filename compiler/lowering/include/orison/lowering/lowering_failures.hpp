@@ -24,6 +24,7 @@ enum class ExpressionLoweringFailureReason {
     unsupported_choice_abi,
     unsupported_aggregate_path,
     unknown_function,
+    ambiguous_generic_specialization,
     call_return_type_mismatch,
     call_arity_mismatch,
     call_argument_failure,

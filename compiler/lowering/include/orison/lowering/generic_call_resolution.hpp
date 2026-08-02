@@ -63,6 +63,14 @@ auto find_matching_generic_specialization(
     FunctionLoweringState const& state
 ) -> LoweredFunctionSignature const*;
 
+auto generic_specialization_ambiguity_detail(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
 auto find_matching_generic_method_specialization(
     std::string_view receiver_type_name,
     std::string_view method_name,
@@ -71,5 +79,14 @@ auto find_matching_generic_method_specialization(
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> LoweredFunctionSignature const*;
+
+auto generic_method_specialization_ambiguity_detail(
+    std::string_view receiver_type_name,
+    std::string_view method_name,
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
 
 }  // namespace orison::lowering
