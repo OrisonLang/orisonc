@@ -1622,14 +1622,16 @@ void append_function_emission_reports(
         function_emission.emitted_dynamic_array_cleanup_emission_gate_report,
         function_emission.function_symbol_name
     );
-    append_function_report_lines(
-        result.emitted_dynamic_array_cleanup_emission_capability_report,
-        function_emission.emitted_dynamic_array_cleanup_emission_capability_report,
-        function_emission.function_symbol_name
+    result.emitted_dynamic_array_cleanup_emission_capabilities.reserve(
+        result.emitted_dynamic_array_cleanup_emission_capabilities.size() +
+        function_emission.emitted_dynamic_array_cleanup_emission_capabilities.size()
     );
-    if (!function_emission.emitted_dynamic_array_cleanup_emission_capability_report.empty()) {
-        result.emitted_dynamic_array_cleanup_emission_capability_function_symbols.push_back(
-            function_emission.function_symbol_name
+    for (auto const& capability : function_emission.emitted_dynamic_array_cleanup_emission_capabilities) {
+        result.emitted_dynamic_array_cleanup_emission_capabilities.push_back(
+            DynamicArrayCleanupEmissionCapabilityRecord {
+                .function_symbol_name = function_emission.function_symbol_name,
+                .capability = capability,
+            }
         );
     }
     result.aggregate_projection_access_plans.reserve(
@@ -2111,13 +2113,6 @@ auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_verification_report() 
 
 auto LlvmIrEmissionResult::dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string> {
     return format_dynamic_array_cleanup_emission_gate_report(dynamic_array_cleanup_sequence_verifications);
-}
-
-auto LlvmIrEmissionResult::dynamic_array_cleanup_emission_capability_report() const -> std::vector<std::string> {
-    if (!dynamic_array_cleanup_emission_capability.has_value()) {
-        return {};
-    }
-    return {format_dynamic_array_cleanup_emission_capability(*dynamic_array_cleanup_emission_capability)};
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_production_sequence_report() const

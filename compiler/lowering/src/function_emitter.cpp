@@ -1041,8 +1041,8 @@ void preserve_function_emission_metadata(
             state.emitted_dynamic_array_cleanup_sequence_verification_report;
         result->emitted_dynamic_array_cleanup_emission_gate_report =
             state.emitted_dynamic_array_cleanup_emission_gate_report;
-        result->emitted_dynamic_array_cleanup_emission_capability_report =
-            state.emitted_dynamic_array_cleanup_emission_capability_report;
+        result->emitted_dynamic_array_cleanup_emission_capabilities =
+            state.emitted_dynamic_array_cleanup_emission_capabilities;
         result->aggregate_projection_access_plans =
             state.aggregate_projection_access_plans;
         result->computed_dynamic_array_inserted_cleanup_handoffs =

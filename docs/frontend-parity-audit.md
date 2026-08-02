@@ -46,6 +46,8 @@
   exposing structured proof counters in the aggregate audit path.
 - 2026-08-01: DynamicArray cleanup emission-capability typed state now carries function symbols, and the full cleanup
   audit renders capability lines from typed state instead of the raw pipeline report vector.
+- 2026-08-01: lower-level emitted DynamicArray cleanup emission-capability metadata now travels as structured records
+  instead of formatted report strings; pipeline state derives function symbols from those records.
 - 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup handoffs from typed pipeline state at
   the driver edge instead of appending the inserted-cleanup transition report vector directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup calls and consumed cleanup descriptors

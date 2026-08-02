@@ -36,9 +36,13 @@ auto build_dynamic_array_cleanup_emission_capability_state(
     if (!capability.has_value()) {
         return {};
     }
+    auto function_symbol_names = std::vector<std::string> {};
+    function_symbol_names.reserve(emission.emitted_dynamic_array_cleanup_emission_capabilities.size());
+    for (auto const& emitted_capability : emission.emitted_dynamic_array_cleanup_emission_capabilities) {
+        function_symbol_names.push_back(emitted_capability.function_symbol_name);
+    }
     return DynamicArrayCleanupEmissionCapabilityState {
-        .function_symbol_names =
-            emission.emitted_dynamic_array_cleanup_emission_capability_function_symbols,
+        .function_symbol_names = std::move(function_symbol_names),
         .cleanup_pairs = capability->cleanup_pairs,
         .cleanup_operation_names = capability->cleanup_operation_names,
         .cleanup_owner_names = capability->cleanup_owner_names,

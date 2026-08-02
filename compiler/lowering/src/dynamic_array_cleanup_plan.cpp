@@ -253,9 +253,7 @@ void record_emitted_dynamic_array_cleanup_reports(
         gate_report.begin(),
         gate_report.end()
     );
-    session.state.emitted_dynamic_array_cleanup_emission_capability_report.push_back(
-        format_dynamic_array_cleanup_emission_capability(capability)
-    );
+    session.state.emitted_dynamic_array_cleanup_emission_capabilities.push_back(capability);
 }
 
 }  // namespace

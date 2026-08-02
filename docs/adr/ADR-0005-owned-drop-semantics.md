@@ -100,6 +100,9 @@ inventing semantics outside the spec/tour.
   capability lines from that typed state at the driver edge.
 - Pipeline results no longer expose raw DynamicArray cleanup emission-capability report strings; pipeline consumers use
   typed DynamicArray cleanup emission-capability state.
+- Lowering no longer carries emitted DynamicArray cleanup emission-capability lines as formatted strings. Function and
+  module emission results retain structured capability records, and pipeline state derives function symbols from those
+  records.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

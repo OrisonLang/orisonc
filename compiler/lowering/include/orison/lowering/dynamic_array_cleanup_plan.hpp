@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/dynamic_array_cleanup_capability.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
@@ -42,19 +43,6 @@ struct LocalDynamicArrayCleanupPlan {
     std::optional<std::string> element_drop_symbol_name;
     DynamicArrayCleanupSequencePlan sequence_plan;
     DynamicArrayCleanupSequenceVerification sequence_verification;
-};
-
-struct DynamicArrayCleanupEmissionCapability {
-    std::vector<std::string> cleanup_pairs;
-    std::vector<std::string> cleanup_operation_names;
-    std::vector<std::string> cleanup_owner_names;
-    std::vector<std::string> element_drop_pairs;
-    std::vector<std::string> missing_element_drop_pairs;
-    bool emission_enabled = false;
-    bool descriptor_storage_bound = false;
-    bool sequence_verified = false;
-    bool element_cleanup_authorized_or_not_required = false;
-    bool descriptor_deallocation_authorized = false;
 };
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
