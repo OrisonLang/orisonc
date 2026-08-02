@@ -94,6 +94,8 @@ inventing semantics outside the spec/tour.
   typed consumed descriptor finalization state.
 - Pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings. Pipeline consumers use
   typed DynamicArray cleanup production-readiness state.
+- Pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings. Pipeline consumers render
+  `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders

@@ -84,6 +84,14 @@ auto formatted_dynamic_array_cleanup_production_readiness_report(
     };
 }
 
+auto semantic_dynamic_array_descriptor_origin_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::semantics::format_dynamic_array_descriptor_origin_report(
+        result.semantic_result.dynamic_array_descriptor_origins
+    );
+}
+
 auto dynamic_array_construction_plan_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
@@ -689,9 +697,11 @@ auto main() -> int {
     auto dynamic_array_source_owner = pipeline.analyze(dynamic_array_source_owner_path);
     assert(!dynamic_array_source_owner.has_errors());
     assert(dynamic_array_source_owner.semantic_result.dynamic_array_descriptor_origins.size() == 1);
-    assert(dynamic_array_source_owner.semantic_dynamic_array_descriptor_origin_report.size() == 1);
+    auto dynamic_array_source_owner_descriptor_origin_report =
+        semantic_dynamic_array_descriptor_origin_report(dynamic_array_source_owner);
+    assert(dynamic_array_source_owner_descriptor_origin_report.size() == 1);
     assert(
-        dynamic_array_source_owner.semantic_dynamic_array_descriptor_origin_report.front() ==
+        dynamic_array_source_owner_descriptor_origin_report.front() ==
         "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 6 (metadata only)"
     );
     assert(dynamic_array_source_owner.semantic_planned_drop_report.size() == 2);

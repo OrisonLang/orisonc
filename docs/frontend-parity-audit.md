@@ -2,6 +2,8 @@
 
 - 2026-08-01: DynamicArray cleanup emission capability now has typed pipeline state, and the driver capability report
   renders from that state.
+- 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
+  consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline
   consumers use typed DynamicArray cleanup production-readiness state.
 - 2026-08-01: pipeline results no longer expose raw consumed descriptor finalization plan report strings; pipeline
