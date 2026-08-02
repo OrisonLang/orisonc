@@ -96,6 +96,9 @@ inventing semantics outside the spec/tour.
   typed DynamicArray cleanup production-readiness state.
 - Pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings. Pipeline consumers render
   `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
+- Pipeline results no longer expose raw semantic planned-drop, drop-implementation, drop-resolution, drop-diagnostic,
+  drop-lowering-authorization, or drop-summary report strings. Pipeline consumers render from `SemanticDropState`,
+  `SemanticAnalysisResult::planned_drop_sites`, and typed lowering authorizations.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders

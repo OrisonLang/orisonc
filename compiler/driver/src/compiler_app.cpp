@@ -109,6 +109,41 @@ auto semantic_dynamic_array_descriptor_origin_state_report(
     return semantics::format_dynamic_array_descriptor_origin_report(result.dynamic_array_descriptor_origins);
 }
 
+auto semantic_drop_implementations(
+    pipeline::SemanticDropState const& state
+) -> std::vector<semantics::DropImplementation> {
+    auto implementations = std::vector<semantics::DropImplementation> {};
+    implementations.reserve(state.discovered_implementations.size());
+    for (auto const& discovered : state.discovered_implementations) {
+        implementations.push_back(discovered.implementation);
+    }
+    return implementations;
+}
+
+auto semantic_drop_resolution_state_report(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return semantics::format_drop_implementation_resolution_report(
+        result.semantic_result.planned_drop_sites,
+        semantic_drop_implementations(result.semantic_drop_state)
+    );
+}
+
+auto semantic_drop_diagnostic_state_report(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return semantics::format_drop_implementation_diagnostic_report(
+        result.semantic_result.planned_drop_sites,
+        semantic_drop_implementations(result.semantic_drop_state)
+    );
+}
+
+auto semantic_drop_resolution_summary_state_report(
+    pipeline::SemanticDropState const& state
+) -> std::vector<std::string> {
+    return semantics::format_drop_implementation_resolution_summary_report(state.resolution_summaries);
+}
+
 auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
@@ -798,32 +833,34 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-planned-drops") {
-        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.semantic_planned_drop_report;
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-resolution") {
-        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.semantic_drop_resolution_report;
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return semantic_drop_resolution_state_report(result);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-diagnostics") {
-        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.semantic_drop_diagnostic_report;
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return semantic_drop_diagnostic_state_report(result);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-lowering-authorization") {
-        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.semantic_drop_lowering_authorization_report;
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return semantics::format_drop_lowering_authorization_report(
+                result.semantic_drop_lowering_authorizations
+            );
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-summary") {
-        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
-            return result.semantic_drop_resolution_summary_report;
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
+            return semantic_drop_resolution_summary_state_report(result.semantic_drop_state);
         });
     }
 

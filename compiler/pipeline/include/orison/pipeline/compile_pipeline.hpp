@@ -73,6 +73,16 @@ struct DropCleanupAuthorizationState {
     std::vector<lowering::DropCleanupAuthorizationReport> authorizations;
 };
 
+struct SemanticDropImplementationDiscovery {
+    semantics::DropImplementation implementation;
+    std::string discovery_name;
+};
+
+struct SemanticDropState {
+    std::vector<SemanticDropImplementationDiscovery> discovered_implementations;
+    std::vector<semantics::DropImplementationResolutionSummary> resolution_summaries;
+};
+
 struct DynamicArrayCleanupObligationState {
     std::vector<std::string> function_symbol_names;
     std::vector<lowering::DynamicArrayCleanupObligation> obligations;
@@ -489,13 +499,8 @@ struct CompilePipelineResult {
     semantics::SemanticAnalysisResult semantic_result;
     std::string ir_text;
     std::string object_bytes;
-    std::vector<std::string> semantic_planned_drop_report;
-    std::vector<std::string> semantic_drop_implementation_report;
-    std::vector<std::string> semantic_drop_resolution_report;
-    std::vector<std::string> semantic_drop_diagnostic_report;
+    SemanticDropState semantic_drop_state;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
-    std::vector<std::string> semantic_drop_lowering_authorization_report;
-    std::vector<std::string> semantic_drop_resolution_summary_report;
     DynamicArrayDescriptorCleanupPlanState dynamic_array_descriptor_cleanup_plan_state;
     DynamicArrayConstructionPlanState dynamic_array_construction_plan_state;
     DynamicArrayRuntimeRequestState dynamic_array_runtime_request_state;

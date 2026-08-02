@@ -92,6 +92,71 @@ auto semantic_dynamic_array_descriptor_origin_report(
     );
 }
 
+auto semantic_drop_implementations(
+    orison::pipeline::SemanticDropState const& state
+) -> std::vector<orison::semantics::DropImplementation> {
+    auto implementations = std::vector<orison::semantics::DropImplementation> {};
+    implementations.reserve(state.discovered_implementations.size());
+    for (auto const& discovered : state.discovered_implementations) {
+        implementations.push_back(discovered.implementation);
+    }
+    return implementations;
+}
+
+auto semantic_drop_implementation_discovery_report(
+    orison::pipeline::SemanticDropState const& state
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(state.discovered_implementations.size());
+    for (auto const& discovered : state.discovered_implementations) {
+        report.push_back(
+            orison::semantics::format_drop_implementation(discovered.implementation) +
+            " discovery " + discovered.discovery_name
+        );
+    }
+    return report;
+}
+
+auto semantic_planned_drop_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
+}
+
+auto semantic_drop_resolution_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::semantics::format_drop_implementation_resolution_report(
+        result.semantic_result.planned_drop_sites,
+        semantic_drop_implementations(result.semantic_drop_state)
+    );
+}
+
+auto semantic_drop_diagnostic_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::semantics::format_drop_implementation_diagnostic_report(
+        result.semantic_result.planned_drop_sites,
+        semantic_drop_implementations(result.semantic_drop_state)
+    );
+}
+
+auto semantic_drop_lowering_authorization_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::semantics::format_drop_lowering_authorization_report(
+        result.semantic_drop_lowering_authorizations
+    );
+}
+
+auto semantic_drop_resolution_summary_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return orison::semantics::format_drop_implementation_resolution_summary_report(
+        result.semantic_drop_state.resolution_summaries
+    );
+}
+
 auto dynamic_array_construction_plan_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
@@ -429,13 +494,13 @@ auto main() -> int {
     assert(analysis.source_file.has_value());
     assert(analysis.parse_result.module.package_name == "demo.minimal");
     assert(analysis.parse_result.module.functions.size() == 1);
-    assert(analysis.semantic_planned_drop_report.empty());
-    assert(analysis.semantic_drop_implementation_report.empty());
-    assert(analysis.semantic_drop_resolution_report.empty());
-    assert(analysis.semantic_drop_diagnostic_report.empty());
+    assert(semantic_planned_drop_report(analysis).empty());
+    assert(semantic_drop_implementation_discovery_report(analysis.semantic_drop_state).empty());
+    assert(semantic_drop_resolution_report(analysis).empty());
+    assert(semantic_drop_diagnostic_report(analysis).empty());
     assert(analysis.semantic_drop_lowering_authorizations.empty());
-    assert(analysis.semantic_drop_lowering_authorization_report.empty());
-    assert(analysis.semantic_drop_resolution_summary_report.empty());
+    assert(semantic_drop_lowering_authorization_report(analysis).empty());
+    assert(semantic_drop_resolution_summary_report(analysis).empty());
     assert(analysis.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
@@ -704,14 +769,16 @@ auto main() -> int {
         dynamic_array_source_owner_descriptor_origin_report.front() ==
         "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 6 (metadata only)"
     );
-    assert(dynamic_array_source_owner.semantic_planned_drop_report.size() == 2);
+    auto dynamic_array_source_owner_semantic_planned_drop_report =
+        semantic_planned_drop_report(dynamic_array_source_owner);
+    assert(dynamic_array_source_owner_semantic_planned_drop_report.size() == 2);
     assert_line_contains(
-        dynamic_array_source_owner.semantic_planned_drop_report,
+        dynamic_array_source_owner_semantic_planned_drop_report,
         0,
         "DynamicArray<Payload> owner items"
     );
     assert_line_contains(
-        dynamic_array_source_owner.semantic_planned_drop_report,
+        dynamic_array_source_owner_semantic_planned_drop_report,
         1,
         "Payload owner items.element"
     );
@@ -6296,27 +6363,32 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "semantic_planned_drop.or";
     auto semantic_drops = pipeline.analyze(semantic_drop_path);
     assert(!semantic_drops.has_errors());
-    assert(semantic_drops.semantic_planned_drop_report.size() == 2);
-    assert_line_contains(semantic_drops.semantic_planned_drop_report, 0, "owner input");
-    assert_line_contains(semantic_drops.semantic_planned_drop_report, 1, "owner local");
-    assert(semantic_drops.semantic_drop_resolution_report.size() == 2);
-    assert_line_contains(semantic_drops.semantic_drop_resolution_report, 0, "missing drop site");
-    assert_line_contains(semantic_drops.semantic_drop_resolution_report, 1, "owner local");
-    assert(semantic_drops.semantic_drop_diagnostic_report.size() == 2);
-    assert_line_contains(semantic_drops.semantic_drop_diagnostic_report, 0, "blocked no implementation discovered");
-    assert_line_contains(semantic_drops.semantic_drop_diagnostic_report, 1, "owner local");
-    assert(semantic_drops.semantic_drop_lowering_authorization_report.size() == 2);
+    auto semantic_drops_planned_report = semantic_planned_drop_report(semantic_drops);
+    auto semantic_drops_resolution_report = semantic_drop_resolution_report(semantic_drops);
+    auto semantic_drops_diagnostic_report = semantic_drop_diagnostic_report(semantic_drops);
+    auto semantic_drops_authorization_report = semantic_drop_lowering_authorization_report(semantic_drops);
+    auto semantic_drops_summary_report = semantic_drop_resolution_summary_report(semantic_drops);
+    assert(semantic_drops_planned_report.size() == 2);
+    assert_line_contains(semantic_drops_planned_report, 0, "owner input");
+    assert_line_contains(semantic_drops_planned_report, 1, "owner local");
+    assert(semantic_drops_resolution_report.size() == 2);
+    assert_line_contains(semantic_drops_resolution_report, 0, "missing drop site");
+    assert_line_contains(semantic_drops_resolution_report, 1, "owner local");
+    assert(semantic_drops_diagnostic_report.size() == 2);
+    assert_line_contains(semantic_drops_diagnostic_report, 0, "blocked no implementation discovered");
+    assert_line_contains(semantic_drops_diagnostic_report, 1, "owner local");
+    assert(semantic_drops_authorization_report.size() == 2);
     assert(semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
     assert_line_contains(
-        semantic_drops.semantic_drop_lowering_authorization_report,
+        semantic_drops_authorization_report,
         0,
         "semantic-unresolved lowering-blocked"
     );
-    assert(semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
-    assert_line_contains(semantic_drops.semantic_drop_resolution_summary_report, 0, "resolved 0 missing 2");
+    assert(semantic_drops_summary_report.size() == 1);
+    assert_line_contains(semantic_drops_summary_report, 0, "resolved 0 missing 2");
 
     auto parsed_drop_path = std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_candidate.or";
     {
@@ -6334,21 +6406,27 @@ auto main() -> int {
     }
     auto parsed_drop = pipeline.analyze(parsed_drop_path);
     assert(!parsed_drop.has_errors());
-    assert(parsed_drop.semantic_planned_drop_report.size() == 1);
-    assert_line_contains(parsed_drop.semantic_planned_drop_report, 0, "owner input");
-    assert(parsed_drop.semantic_drop_implementation_report.size() == 1);
-    assert_line_contains(parsed_drop.semantic_drop_implementation_report, 0, "parsed-candidate-collection");
-    assert(parsed_drop.semantic_drop_resolution_report.size() == 1);
-    assert_line_contains(parsed_drop.semantic_drop_resolution_report, 0, "resolved drop site");
-    assert(parsed_drop.semantic_drop_diagnostic_report.size() == 1);
-    assert_line_contains(parsed_drop.semantic_drop_diagnostic_report, 0, "resolved");
-    assert(parsed_drop.semantic_drop_lowering_authorization_report.size() == 1);
+    auto parsed_drop_planned_report = semantic_planned_drop_report(parsed_drop);
+    auto parsed_drop_implementation_report =
+        semantic_drop_implementation_discovery_report(parsed_drop.semantic_drop_state);
+    auto parsed_drop_resolution_report = semantic_drop_resolution_report(parsed_drop);
+    auto parsed_drop_diagnostic_report = semantic_drop_diagnostic_report(parsed_drop);
+    auto parsed_drop_authorization_report = semantic_drop_lowering_authorization_report(parsed_drop);
+    assert(parsed_drop_planned_report.size() == 1);
+    assert_line_contains(parsed_drop_planned_report, 0, "owner input");
+    assert(parsed_drop_implementation_report.size() == 1);
+    assert_line_contains(parsed_drop_implementation_report, 0, "parsed-candidate-collection");
+    assert(parsed_drop_resolution_report.size() == 1);
+    assert_line_contains(parsed_drop_resolution_report, 0, "resolved drop site");
+    assert(parsed_drop_diagnostic_report.size() == 1);
+    assert_line_contains(parsed_drop_diagnostic_report, 0, "resolved");
+    assert(parsed_drop_authorization_report.size() == 1);
     assert(parsed_drop.semantic_drop_lowering_authorizations.size() == 1);
     assert(parsed_drop.semantic_drop_lowering_authorizations.front().semantic_resolved);
     assert(!parsed_drop.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
     assert(!parsed_drop.semantic_drop_lowering_authorizations.front().authorized);
     assert_line_contains(
-        parsed_drop.semantic_drop_lowering_authorization_report,
+        parsed_drop_authorization_report,
         0,
         "semantic-resolved lowering-blocked"
     );
@@ -6447,26 +6525,33 @@ auto main() -> int {
         }
     );
     assert(!resolved_semantic_drops.has_errors());
-    assert(resolved_semantic_drops.semantic_drop_implementation_report.size() == 1);
-    assert_line_contains(resolved_semantic_drops.semantic_drop_implementation_report, 0, "discovery test-injection");
-    assert(resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
-    assert_line_contains(resolved_semantic_drops.semantic_drop_resolution_report, 0, "resolved drop site");
-    assert_line_contains(resolved_semantic_drops.semantic_drop_resolution_report, 1, "owner local");
-    assert(resolved_semantic_drops.semantic_drop_diagnostic_report.size() == 2);
-    assert_line_contains(resolved_semantic_drops.semantic_drop_diagnostic_report, 0, "resolved");
-    assert_line_contains(resolved_semantic_drops.semantic_drop_diagnostic_report, 1, "owner local");
-    assert(resolved_semantic_drops.semantic_drop_lowering_authorization_report.size() == 2);
+    auto resolved_semantic_drops_implementation_report =
+        semantic_drop_implementation_discovery_report(resolved_semantic_drops.semantic_drop_state);
+    auto resolved_semantic_drops_resolution_report = semantic_drop_resolution_report(resolved_semantic_drops);
+    auto resolved_semantic_drops_diagnostic_report = semantic_drop_diagnostic_report(resolved_semantic_drops);
+    auto resolved_semantic_drops_authorization_report =
+        semantic_drop_lowering_authorization_report(resolved_semantic_drops);
+    auto resolved_semantic_drops_summary_report = semantic_drop_resolution_summary_report(resolved_semantic_drops);
+    assert(resolved_semantic_drops_implementation_report.size() == 1);
+    assert_line_contains(resolved_semantic_drops_implementation_report, 0, "discovery test-injection");
+    assert(resolved_semantic_drops_resolution_report.size() == 2);
+    assert_line_contains(resolved_semantic_drops_resolution_report, 0, "resolved drop site");
+    assert_line_contains(resolved_semantic_drops_resolution_report, 1, "owner local");
+    assert(resolved_semantic_drops_diagnostic_report.size() == 2);
+    assert_line_contains(resolved_semantic_drops_diagnostic_report, 0, "resolved");
+    assert_line_contains(resolved_semantic_drops_diagnostic_report, 1, "owner local");
+    assert(resolved_semantic_drops_authorization_report.size() == 2);
     assert(resolved_semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
     assert(resolved_semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
     assert(!resolved_semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
     assert(!resolved_semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
     assert_line_contains(
-        resolved_semantic_drops.semantic_drop_lowering_authorization_report,
+        resolved_semantic_drops_authorization_report,
         0,
         "semantic-resolved lowering-blocked"
     );
-    assert(resolved_semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
-    assert_line_contains(resolved_semantic_drops.semantic_drop_resolution_summary_report, 0, "resolved 2 missing 0");
+    assert(resolved_semantic_drops_summary_report.size() == 1);
+    assert_line_contains(resolved_semantic_drops_summary_report, 0, "resolved 2 missing 0");
 
     auto candidate_resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
@@ -6488,18 +6573,24 @@ auto main() -> int {
         }
     );
     assert(!candidate_resolved_semantic_drops.has_errors());
-    assert(candidate_resolved_semantic_drops.semantic_drop_implementation_report.size() == 1);
+    auto candidate_resolved_semantic_drops_implementation_report =
+        semantic_drop_implementation_discovery_report(candidate_resolved_semantic_drops.semantic_drop_state);
+    auto candidate_resolved_semantic_drops_resolution_report =
+        semantic_drop_resolution_report(candidate_resolved_semantic_drops);
+    auto candidate_resolved_semantic_drops_summary_report =
+        semantic_drop_resolution_summary_report(candidate_resolved_semantic_drops);
+    assert(candidate_resolved_semantic_drops_implementation_report.size() == 1);
     assert_line_contains(
-        candidate_resolved_semantic_drops.semantic_drop_implementation_report,
+        candidate_resolved_semantic_drops_implementation_report,
         0,
         "discovery candidate-collection"
     );
-    assert(candidate_resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
-    assert_line_contains(candidate_resolved_semantic_drops.semantic_drop_resolution_report, 0, "resolved drop site");
-    assert_line_contains(candidate_resolved_semantic_drops.semantic_drop_resolution_report, 1, "owner local");
-    assert(candidate_resolved_semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
+    assert(candidate_resolved_semantic_drops_resolution_report.size() == 2);
+    assert_line_contains(candidate_resolved_semantic_drops_resolution_report, 0, "resolved drop site");
+    assert_line_contains(candidate_resolved_semantic_drops_resolution_report, 1, "owner local");
+    assert(candidate_resolved_semantic_drops_summary_report.size() == 1);
     assert_line_contains(
-        candidate_resolved_semantic_drops.semantic_drop_resolution_summary_report,
+        candidate_resolved_semantic_drops_summary_report,
         0,
         "resolved 2 missing 0"
     );
@@ -6517,12 +6608,14 @@ auto main() -> int {
         }
     );
     assert(!unproven_semantic_drops.has_errors());
-    assert(unproven_semantic_drops.semantic_drop_resolution_report.size() == 2);
-    assert_line_contains(unproven_semantic_drops.semantic_drop_resolution_report, 0, "missing drop site");
-    assert_line_contains(unproven_semantic_drops.semantic_drop_resolution_report, 1, "owner local");
-    assert(unproven_semantic_drops.semantic_drop_diagnostic_report.size() == 2);
-    assert_line_contains(unproven_semantic_drops.semantic_drop_diagnostic_report, 0, "discovered but unproven");
-    assert_line_contains(unproven_semantic_drops.semantic_drop_diagnostic_report, 1, "owner local");
+    auto unproven_semantic_drops_resolution_report = semantic_drop_resolution_report(unproven_semantic_drops);
+    auto unproven_semantic_drops_diagnostic_report = semantic_drop_diagnostic_report(unproven_semantic_drops);
+    assert(unproven_semantic_drops_resolution_report.size() == 2);
+    assert_line_contains(unproven_semantic_drops_resolution_report, 0, "missing drop site");
+    assert_line_contains(unproven_semantic_drops_resolution_report, 1, "owner local");
+    assert(unproven_semantic_drops_diagnostic_report.size() == 2);
+    assert_line_contains(unproven_semantic_drops_diagnostic_report, 0, "discovered but unproven");
+    assert_line_contains(unproven_semantic_drops_diagnostic_report, 1, "owner local");
 
     auto partial_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "semantic_partial_drop_resolution.or";
@@ -6541,14 +6634,16 @@ auto main() -> int {
         }
     );
     assert(!partial_semantic_drops.has_errors());
-    assert(partial_semantic_drops.semantic_drop_resolution_report.size() == 4);
-    assert_line_contains(partial_semantic_drops.semantic_drop_resolution_report, 0, "resolved drop site");
-    assert_line_contains(partial_semantic_drops.semantic_drop_resolution_report, 1, "__orison_drop.Resource");
-    assert_line_contains(partial_semantic_drops.semantic_drop_resolution_report, 2, "owner local_payload");
-    assert_line_contains(partial_semantic_drops.semantic_drop_resolution_report, 3, "owner local_resource");
-    assert(partial_semantic_drops.semantic_drop_resolution_summary_report.size() == 2);
-    assert_line_contains(partial_semantic_drops.semantic_drop_resolution_summary_report, 0, "resolved 2 missing 0");
-    assert_line_contains(partial_semantic_drops.semantic_drop_resolution_summary_report, 1, "resolved 0 missing 2");
+    auto partial_semantic_drops_resolution_report = semantic_drop_resolution_report(partial_semantic_drops);
+    auto partial_semantic_drops_summary_report = semantic_drop_resolution_summary_report(partial_semantic_drops);
+    assert(partial_semantic_drops_resolution_report.size() == 4);
+    assert_line_contains(partial_semantic_drops_resolution_report, 0, "resolved drop site");
+    assert_line_contains(partial_semantic_drops_resolution_report, 1, "__orison_drop.Resource");
+    assert_line_contains(partial_semantic_drops_resolution_report, 2, "owner local_payload");
+    assert_line_contains(partial_semantic_drops_resolution_report, 3, "owner local_resource");
+    assert(partial_semantic_drops_summary_report.size() == 2);
+    assert_line_contains(partial_semantic_drops_summary_report, 0, "resolved 2 missing 0");
+    assert_line_contains(partial_semantic_drops_summary_report, 1, "resolved 0 missing 2");
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
