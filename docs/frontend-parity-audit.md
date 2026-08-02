@@ -9,6 +9,8 @@
   vector; consumers use typed cleanup availability or cleanup emission capability state.
 - 2026-08-02: pipeline results expose computed DynamicArray production sequence module comment IR through a named
   artifact state instead of a bare top-level string vector.
+- 2026-08-02: DynamicArray allocation call rendered IR snippets now live under a named IR artifact state nested in the
+  allocation call emission state, keeping readiness/count fields separate from artifact text.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

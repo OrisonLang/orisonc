@@ -4780,7 +4780,7 @@ auto main() -> int {
     );
     assert(
         dynamic_array_owned_construction_gate
-            .dynamic_array_allocation_call_emission_state.rendered_ir_snippets.front() ==
+            .dynamic_array_allocation_call_emission_state.ir_artifact_state.rendered_ir_snippets.front() ==
         "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
         "  call void @__orison_dynamic_array_allocate("
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 8, i64 2)\n"
@@ -4854,7 +4854,7 @@ auto main() -> int {
     );
     assert(
         dynamic_array_source_construction
-            .dynamic_array_allocation_call_emission_state.rendered_ir_snippets.front() ==
+            .dynamic_array_allocation_call_emission_state.ir_artifact_state.rendered_ir_snippets.front() ==
         "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
         "  call void @__orison_dynamic_array_allocate("
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 0)\n"

@@ -103,6 +103,8 @@ inventing semantics outside the spec/tour.
   Consumers use typed cleanup availability or cleanup emission capability state.
 - Pipeline results expose computed DynamicArray production sequence module comment IR through a named artifact state
   instead of a bare top-level string vector.
+- DynamicArray allocation call rendered IR snippets live under a named IR artifact state nested in allocation call
+  emission state, keeping readiness/count fields separate from artifact text.
 - DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
   element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - DynamicArray cleanup emission capability typed state now carries function symbols, and the full cleanup audit renders

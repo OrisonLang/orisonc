@@ -54,8 +54,12 @@ struct DynamicArrayRuntimeRequestState {
     std::vector<lowering::DynamicArrayRuntimeOperation> operations;
 };
 
-struct DynamicArrayAllocationCallEmissionState {
+struct DynamicArrayAllocationCallIrArtifactState {
     std::vector<std::string> rendered_ir_snippets;
+};
+
+struct DynamicArrayAllocationCallEmissionState {
+    DynamicArrayAllocationCallIrArtifactState ir_artifact_state;
     bool allocation_calls_rendered = false;
     std::size_t rendered_call_count = 0;
 };

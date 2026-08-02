@@ -38,9 +38,11 @@ auto build_dynamic_array_allocation_call_emission_state(
     std::vector<std::string>&& rendered_ir_snippets
 ) -> DynamicArrayAllocationCallEmissionState {
     auto state = DynamicArrayAllocationCallEmissionState {
-        .rendered_ir_snippets = std::move(rendered_ir_snippets),
+        .ir_artifact_state = DynamicArrayAllocationCallIrArtifactState {
+            .rendered_ir_snippets = std::move(rendered_ir_snippets),
+        },
     };
-    state.rendered_call_count = state.rendered_ir_snippets.size();
+    state.rendered_call_count = state.ir_artifact_state.rendered_ir_snippets.size();
     state.allocation_calls_rendered = state.rendered_call_count > 0;
     return state;
 }
