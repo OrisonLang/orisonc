@@ -31,6 +31,8 @@
   unresolved and are pinned as a rejected generic specialization boundary.
 - 2026-08-02: that rejected boundary now reports the conflicting ternary arm source types directly instead of falling
   through to a blank generic call return-type mismatch.
+- 2026-08-02: generic call-resolution diagnostics now also report ordinary repeated generic-parameter conflicts, such as
+  `T` first binding to `UInt32` and later seeing `UInt64`.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
   consumers render `SemanticAnalysisResult::dynamic_array_descriptor_origins` at the reporting edge.
 - 2026-08-01: pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings; pipeline

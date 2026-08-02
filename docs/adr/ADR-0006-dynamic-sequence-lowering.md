@@ -263,6 +263,8 @@ representation.
   being coerced to a common generic type.
 - The mismatched ternary boundary reports conflicting arm source types at the generic call argument site rather than
   falling through to a blank return-type mismatch.
+- Generic call-resolution diagnostics now retain lowered generic parameter names so emit-time failures can report
+  ordinary repeated generic-parameter conflicts without needing source syntax declarations.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the

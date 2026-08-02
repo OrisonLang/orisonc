@@ -1802,6 +1802,7 @@ auto build_lowering_context(
             record_names,
             context.choices
         );
+        signature.generic_parameters = function.generic_parameters;
         context.functions.emplace(function.name, std::move(signature));
     }
 
@@ -1822,6 +1823,7 @@ auto build_lowering_context(
             record_names,
             context.choices
         );
+        signature.generic_parameters = specialization.generic_parameters;
         record_dynamic_array_descriptor_parameter_types(specialization, signature, true);
         if (!has_supported_function_signature_types(signature)) {
             continue;

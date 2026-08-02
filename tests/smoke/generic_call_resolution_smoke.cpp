@@ -266,6 +266,48 @@ int main() {
         collector_resolver
     );
     assert(!mismatched_substitutions.has_value());
+    auto mismatched_detail = orison::lowering::generic_call_argument_inference_failure_detail(
+        mismatched_generic_call,
+        collector_resolver
+    );
+    assert(mismatched_detail.has_value());
+    assert(
+        *mismatched_detail ==
+        "choose_same argument 2 conflicts with generic parameter 'T': expected UInt32, got UInt64"
+    );
+
+    auto lowered_generic_functions = std::unordered_map<std::string, orison::lowering::LoweredFunctionSignature> {
+        {
+            "same_lowered",
+            orison::lowering::LoweredFunctionSignature {
+                .source_return_type_name = "T",
+                .parameter_source_type_names = {"T", "T"},
+                .generic_parameters = {"T"},
+                .symbol_name = "same_lowered",
+            },
+        },
+        {
+            "make_u64",
+            orison::lowering::LoweredFunctionSignature {
+                .return_type = "i64",
+                .source_return_type_name = "UInt64",
+                .symbol_name = "make_u64",
+            },
+        },
+    };
+    auto lowered_resolver = orison::lowering::GenericCallSourceResolver {
+        .functions = &lowered_generic_functions,
+        .local_source_types = &local_source_types,
+    };
+    auto lowered_mismatched_detail = orison::lowering::generic_call_argument_inference_failure_detail(
+        call_expression("same_lowered", name_expression("value"), call_expression("make_u64")),
+        lowered_resolver
+    );
+    assert(lowered_mismatched_detail.has_value());
+    assert(
+        *lowered_mismatched_detail ==
+        "same_lowered argument 2 conflicts with generic parameter 'T': expected UInt32, got UInt64"
+    );
 
     auto mismatched_ternary_call = call_expression(
         "consume",

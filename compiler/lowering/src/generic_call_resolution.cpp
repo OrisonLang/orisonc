@@ -227,6 +227,135 @@ auto infer_generic_record_constructor_source_type_from_lowering_context(
     return render_source_type_name(concrete);
 }
 
+struct GenericBindingConflict {
+    std::string parameter_name;
+    std::string expected_source_type;
+    std::string actual_source_type;
+};
+
+auto unify_generic_type_with_conflict(
+    syntax::TypeSyntax const& pattern,
+    syntax::TypeSyntax const& actual,
+    std::unordered_set<std::string> const& generic_parameters,
+    std::unordered_map<std::string, syntax::TypeSyntax>& substitutions,
+    GenericBindingConflict& conflict
+) -> bool {
+    if (pattern.generic_arguments.empty() && generic_parameters.contains(pattern.name)) {
+        auto existing = substitutions.find(pattern.name);
+        if (existing == substitutions.end()) {
+            substitutions.emplace(pattern.name, actual);
+            return true;
+        }
+        auto existing_name = render_source_type_name(existing->second);
+        auto actual_name = render_source_type_name(actual);
+        if (existing_name == actual_name) {
+            return true;
+        }
+        conflict = GenericBindingConflict {
+            .parameter_name = pattern.name,
+            .expected_source_type = std::move(existing_name),
+            .actual_source_type = std::move(actual_name),
+        };
+        return false;
+    }
+
+    if (pattern.name != actual.name || pattern.generic_arguments.size() != actual.generic_arguments.size()) {
+        return false;
+    }
+    for (auto index = std::size_t {0}; index < pattern.generic_arguments.size(); ++index) {
+        if (!unify_generic_type_with_conflict(
+                pattern.generic_arguments[index],
+                actual.generic_arguments[index],
+                generic_parameters,
+                substitutions,
+                conflict
+            )) {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto generic_binding_conflict_detail(
+    std::string_view function_name,
+    std::vector<std::string_view> parameter_type_names,
+    std::vector<std::string> const& generic_parameter_names,
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (generic_parameter_names.empty() || parameter_type_names.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto generic_parameters = generic_parameter_set(generic_parameter_names);
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto source_type_name = source_type_name_for_generic_call_argument(expression.arguments[index], resolver);
+        if (!source_type_name.has_value()) {
+            continue;
+        }
+
+        auto conflict = GenericBindingConflict {};
+        if (!unify_generic_type_with_conflict(
+                parse_source_type_name(parameter_type_names[index]),
+                parse_source_type_name(*source_type_name),
+                generic_parameters,
+                substitutions,
+                conflict
+            )) {
+            if (conflict.parameter_name.empty()) {
+                continue;
+            }
+            return std::string {function_name} + " argument " + std::to_string(index + 1) +
+                " conflicts with generic parameter '" + conflict.parameter_name + "': expected " +
+                conflict.expected_source_type + ", got " + conflict.actual_source_type;
+        }
+    }
+
+    return std::nullopt;
+}
+
+auto generic_binding_conflict_detail(
+    syntax::FunctionSyntax const& function,
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    auto rendered_parameter_types = std::vector<std::string> {};
+    auto parameter_type_names = std::vector<std::string_view> {};
+    rendered_parameter_types.reserve(function.parameters.size());
+    parameter_type_names.reserve(function.parameters.size());
+    for (auto const& parameter : function.parameters) {
+        rendered_parameter_types.push_back(render_source_type_name(parameter.type));
+        parameter_type_names.push_back(rendered_parameter_types.back());
+    }
+    return generic_binding_conflict_detail(
+        function.name,
+        parameter_type_names,
+        function.generic_parameters,
+        expression,
+        resolver
+    );
+}
+
+auto generic_binding_conflict_detail(
+    LoweredFunctionSignature const& signature,
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    auto parameter_type_names = std::vector<std::string_view> {};
+    parameter_type_names.reserve(signature.parameter_source_type_names.size());
+    for (auto const& parameter_type_name : signature.parameter_source_type_names) {
+        parameter_type_names.push_back(parameter_type_name);
+    }
+    return generic_binding_conflict_detail(
+        signature.symbol_name,
+        parameter_type_names,
+        signature.generic_parameters,
+        expression,
+        resolver
+    );
+}
+
 }  // namespace
 
 auto generic_specialization_base_name(std::string_view symbol_name) -> std::optional<std::string> {
@@ -353,6 +482,33 @@ auto generic_call_argument_inference_failure_detail(
             return expression.left->text + " argument " + std::to_string(index + 1) +
                 " has incompatible ternary arm source types: " +
                 *then_source_type + " and " + *else_source_type;
+        }
+    }
+
+    if (resolver.generic_functions != nullptr) {
+        auto generic_function = resolver.generic_functions->find(expression.left->text);
+        if (generic_function != resolver.generic_functions->end()) {
+            if (auto detail = generic_binding_conflict_detail(*generic_function->second, expression, resolver)) {
+                return detail;
+            }
+        }
+    }
+
+    if (resolver.functions != nullptr) {
+        auto function = resolver.functions->find(expression.left->text);
+        if (function != resolver.functions->end()) {
+            if (auto detail = generic_binding_conflict_detail(function->second, expression, resolver)) {
+                return detail;
+            }
+        }
+    }
+
+    if (resolver.lowering_context != nullptr) {
+        auto function = resolver.lowering_context->functions.find(expression.left->text);
+        if (function != resolver.lowering_context->functions.end()) {
+            if (auto detail = generic_binding_conflict_detail(function->second, expression, resolver)) {
+                return detail;
+            }
         }
     }
 

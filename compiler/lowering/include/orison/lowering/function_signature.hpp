@@ -17,6 +17,7 @@ struct LoweredFunctionSignature {
     std::vector<std::string> parameter_types;
     std::vector<std::string> parameter_source_type_names;
     std::vector<IntegerSignedness> parameter_signedness;
+    std::vector<std::string> generic_parameters;
     std::string symbol_name;
     CAbiAdapterKind adapter = CAbiAdapterKind::none;
     std::size_t fixed_abi_parameter_count = 0;
