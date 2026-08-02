@@ -259,10 +259,9 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayCleanupSequencePlan> dynamic_array_cleanup_sequence_plans;
     std::vector<DynamicArrayCleanupSequenceVerification> dynamic_array_cleanup_sequence_verifications;
     std::optional<DynamicArrayCleanupEmissionCapability> dynamic_array_cleanup_emission_capability;
-    std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
+    std::vector<DynamicArrayCleanupObligationRecord> emitted_dynamic_array_cleanup_obligations;
+    std::vector<DynamicArrayCleanupSequencePlanRecord> emitted_dynamic_array_cleanup_sequence_plans;
+    std::vector<DynamicArrayCleanupSequenceVerificationRecord> emitted_dynamic_array_cleanup_sequence_verifications;
     std::vector<DynamicArrayCleanupEmissionCapabilityRecord> emitted_dynamic_array_cleanup_emission_capabilities;
     std::vector<AggregateProjectionAccessPlanRecord> aggregate_projection_access_plans;
     std::vector<ComputedDynamicArrayCleanupStateHandoff> computed_dynamic_array_inserted_cleanup_handoffs;

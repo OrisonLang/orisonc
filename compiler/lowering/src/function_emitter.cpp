@@ -1033,14 +1033,12 @@ void preserve_function_emission_metadata(
         return;
     }
     if (result != nullptr) {
-        result->emitted_dynamic_array_cleanup_obligation_report =
-            state.emitted_dynamic_array_cleanup_obligation_report;
-        result->emitted_dynamic_array_cleanup_sequence_plan_report =
-            state.emitted_dynamic_array_cleanup_sequence_plan_report;
-        result->emitted_dynamic_array_cleanup_sequence_verification_report =
-            state.emitted_dynamic_array_cleanup_sequence_verification_report;
-        result->emitted_dynamic_array_cleanup_emission_gate_report =
-            state.emitted_dynamic_array_cleanup_emission_gate_report;
+        result->emitted_dynamic_array_cleanup_obligations =
+            state.emitted_dynamic_array_cleanup_obligations;
+        result->emitted_dynamic_array_cleanup_sequence_plans =
+            state.emitted_dynamic_array_cleanup_sequence_plans;
+        result->emitted_dynamic_array_cleanup_sequence_verifications =
+            state.emitted_dynamic_array_cleanup_sequence_verifications;
         result->emitted_dynamic_array_cleanup_emission_capabilities =
             state.emitted_dynamic_array_cleanup_emission_capabilities;
         result->aggregate_projection_access_plans =

@@ -1583,45 +1583,46 @@ auto collect_dynamic_array_element_drop_cleanups(
     return cleanups;
 }
 
-void append_function_report_lines(
-    std::vector<std::string>& target,
-    std::vector<std::string> const& source,
-    std::string const& function_symbol_name
-) {
-    target.reserve(target.size() + source.size());
-    for (auto const& line : source) {
-        if (function_symbol_name.empty()) {
-            target.push_back(line);
-        } else {
-            target.push_back("function " + function_symbol_name + " " + line);
-        }
-    }
-}
-
 void append_function_emission_reports(
     LlvmIrEmissionResult& result,
     FunctionEmissionResult const& function_emission
 ) {
-    append_function_report_lines(
-        result.emitted_dynamic_array_cleanup_obligation_report,
-        function_emission.emitted_dynamic_array_cleanup_obligation_report,
-        function_emission.function_symbol_name
+    result.emitted_dynamic_array_cleanup_obligations.reserve(
+        result.emitted_dynamic_array_cleanup_obligations.size() +
+        function_emission.emitted_dynamic_array_cleanup_obligations.size()
     );
-    append_function_report_lines(
-        result.emitted_dynamic_array_cleanup_sequence_plan_report,
-        function_emission.emitted_dynamic_array_cleanup_sequence_plan_report,
-        function_emission.function_symbol_name
+    for (auto const& obligation : function_emission.emitted_dynamic_array_cleanup_obligations) {
+        result.emitted_dynamic_array_cleanup_obligations.push_back(
+            DynamicArrayCleanupObligationRecord {
+                .function_symbol_name = function_emission.function_symbol_name,
+                .obligation = obligation,
+            }
+        );
+    }
+    result.emitted_dynamic_array_cleanup_sequence_plans.reserve(
+        result.emitted_dynamic_array_cleanup_sequence_plans.size() +
+        function_emission.emitted_dynamic_array_cleanup_sequence_plans.size()
     );
-    append_function_report_lines(
-        result.emitted_dynamic_array_cleanup_sequence_verification_report,
-        function_emission.emitted_dynamic_array_cleanup_sequence_verification_report,
-        function_emission.function_symbol_name
+    for (auto const& plan : function_emission.emitted_dynamic_array_cleanup_sequence_plans) {
+        result.emitted_dynamic_array_cleanup_sequence_plans.push_back(
+            DynamicArrayCleanupSequencePlanRecord {
+                .function_symbol_name = function_emission.function_symbol_name,
+                .plan = plan,
+            }
+        );
+    }
+    result.emitted_dynamic_array_cleanup_sequence_verifications.reserve(
+        result.emitted_dynamic_array_cleanup_sequence_verifications.size() +
+        function_emission.emitted_dynamic_array_cleanup_sequence_verifications.size()
     );
-    append_function_report_lines(
-        result.emitted_dynamic_array_cleanup_emission_gate_report,
-        function_emission.emitted_dynamic_array_cleanup_emission_gate_report,
-        function_emission.function_symbol_name
-    );
+    for (auto const& verification : function_emission.emitted_dynamic_array_cleanup_sequence_verifications) {
+        result.emitted_dynamic_array_cleanup_sequence_verifications.push_back(
+            DynamicArrayCleanupSequenceVerificationRecord {
+                .function_symbol_name = function_emission.function_symbol_name,
+                .verification = verification,
+            }
+        );
+    }
     result.emitted_dynamic_array_cleanup_emission_capabilities.reserve(
         result.emitted_dynamic_array_cleanup_emission_capabilities.size() +
         function_emission.emitted_dynamic_array_cleanup_emission_capabilities.size()

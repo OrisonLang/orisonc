@@ -103,6 +103,9 @@ inventing semantics outside the spec/tour.
 - Lowering no longer carries emitted DynamicArray cleanup emission-capability lines as formatted strings. Function and
   module emission results retain structured capability records, and pipeline state derives function symbols from those
   records.
+- Lowering no longer carries emitted DynamicArray cleanup obligation, sequence-plan, sequence-verification, or
+  emission-gate lines as formatted strings. Function and module emission results retain structured cleanup records, and
+  pipeline report population performs the audit formatting.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

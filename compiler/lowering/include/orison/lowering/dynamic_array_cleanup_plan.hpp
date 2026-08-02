@@ -2,48 +2,17 @@
 
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/dynamic_array_cleanup_capability.hpp"
+#include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 
-#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
 
 namespace orison::lowering {
-
-struct DynamicArrayCleanupObligation {
-    std::string cleanup_symbol_name;
-    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
-    std::vector<PlannedDropAction> actions;
-    bool requires_descriptor_deallocation = true;
-};
-
-struct DynamicArrayCleanupSequencePlan {
-    DynamicArrayCleanupObligation obligation;
-    std::vector<std::string> phases;
-};
-
-struct DynamicArrayCleanupSequenceVerification {
-    std::string cleanup_symbol_name;
-    std::vector<std::string> errors;
-};
-
-struct BoundDynamicArrayParameterCleanupPlan {
-    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
-    std::optional<std::string> element_drop_symbol_name;
-    DynamicArrayCleanupSequencePlan sequence_plan;
-    DynamicArrayCleanupSequenceVerification sequence_verification;
-};
-
-struct LocalDynamicArrayCleanupPlan {
-    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
-    std::optional<std::string> element_drop_symbol_name;
-    DynamicArrayCleanupSequencePlan sequence_plan;
-    DynamicArrayCleanupSequenceVerification sequence_verification;
-};
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
     DynamicArrayDescriptorCleanupPlan const& plan,

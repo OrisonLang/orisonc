@@ -5,6 +5,7 @@
 #include "orison/lowering/computed_dynamic_array_cleanup_handoff.hpp"
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_cleanup_capability.hpp"
+#include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
@@ -66,10 +67,9 @@ struct FunctionLoweringState {
     std::vector<std::string> parameter_names;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_local_cleanup_plans;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_iterable_cleanup_owner_plans;
-    std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
-    std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
+    std::vector<DynamicArrayCleanupObligation> emitted_dynamic_array_cleanup_obligations;
+    std::vector<DynamicArrayCleanupSequencePlan> emitted_dynamic_array_cleanup_sequence_plans;
+    std::vector<DynamicArrayCleanupSequenceVerification> emitted_dynamic_array_cleanup_sequence_verifications;
     std::vector<DynamicArrayCleanupEmissionCapability> emitted_dynamic_array_cleanup_emission_capabilities;
     std::vector<AggregateProjectionAccessPlan> aggregate_projection_access_plans;
     std::vector<ComputedDynamicArrayCleanupStateHandoff> computed_dynamic_array_inserted_cleanup_handoffs;

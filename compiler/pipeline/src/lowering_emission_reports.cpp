@@ -11,6 +11,66 @@ namespace orison::pipeline {
 
 namespace {
 
+auto prefixed_function_line(std::string const& function_symbol_name, std::string const& line) -> std::string {
+    return "function " + function_symbol_name + " " + line;
+}
+
+auto emitted_dynamic_array_cleanup_obligation_report(
+    std::vector<lowering::DynamicArrayCleanupObligationRecord> const& records
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(records.size());
+    for (auto const& record : records) {
+        report.push_back(prefixed_function_line(
+            record.function_symbol_name,
+            lowering::format_dynamic_array_cleanup_obligation(record.obligation)
+        ));
+    }
+    return report;
+}
+
+auto emitted_dynamic_array_cleanup_sequence_plan_report(
+    std::vector<lowering::DynamicArrayCleanupSequencePlanRecord> const& records
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(records.size());
+    for (auto const& record : records) {
+        report.push_back(prefixed_function_line(
+            record.function_symbol_name,
+            lowering::format_dynamic_array_cleanup_sequence_plan(record.plan)
+        ));
+    }
+    return report;
+}
+
+auto emitted_dynamic_array_cleanup_sequence_verification_report(
+    std::vector<lowering::DynamicArrayCleanupSequenceVerificationRecord> const& records
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(records.size());
+    for (auto const& record : records) {
+        report.push_back(prefixed_function_line(
+            record.function_symbol_name,
+            lowering::format_dynamic_array_cleanup_sequence_verification(record.verification)
+        ));
+    }
+    return report;
+}
+
+auto emitted_dynamic_array_cleanup_emission_gate_report(
+    std::vector<lowering::DynamicArrayCleanupSequenceVerificationRecord> const& records
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(records.size());
+    for (auto const& record : records) {
+        report.push_back(prefixed_function_line(
+            record.function_symbol_name,
+            lowering::format_dynamic_array_cleanup_emission_gate(record.verification)
+        ));
+    }
+    return report;
+}
+
 auto build_computed_dynamic_array_for_production_sequence_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionSequenceState {
@@ -855,13 +915,17 @@ void populate_lowering_emission_reports(
         .cleanup_capability_proven = result.dynamic_array_cleanup_capability_proven,
     };
     result.emitted_dynamic_array_cleanup_obligation_report =
-        std::move(emission.emitted_dynamic_array_cleanup_obligation_report);
+        emitted_dynamic_array_cleanup_obligation_report(emission.emitted_dynamic_array_cleanup_obligations);
     result.emitted_dynamic_array_cleanup_sequence_plan_report =
-        std::move(emission.emitted_dynamic_array_cleanup_sequence_plan_report);
+        emitted_dynamic_array_cleanup_sequence_plan_report(emission.emitted_dynamic_array_cleanup_sequence_plans);
     result.emitted_dynamic_array_cleanup_sequence_verification_report =
-        std::move(emission.emitted_dynamic_array_cleanup_sequence_verification_report);
+        emitted_dynamic_array_cleanup_sequence_verification_report(
+            emission.emitted_dynamic_array_cleanup_sequence_verifications
+        );
     result.emitted_dynamic_array_cleanup_emission_gate_report =
-        std::move(emission.emitted_dynamic_array_cleanup_emission_gate_report);
+        emitted_dynamic_array_cleanup_emission_gate_report(
+            emission.emitted_dynamic_array_cleanup_sequence_verifications
+        );
     result.computed_dynamic_array_for_descriptor_render_state =
         build_computed_dynamic_array_for_descriptor_render_state(emission);
     result.computed_dynamic_array_for_loop_control_render_state =

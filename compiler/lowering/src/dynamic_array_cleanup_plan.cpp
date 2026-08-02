@@ -229,29 +229,20 @@ void record_emitted_dynamic_array_cleanup_reports(
         sequence_plans.push_back(plan.sequence_plan);
         verifications.push_back(plan.sequence_verification);
     }
-    auto obligation_report = format_dynamic_array_cleanup_obligation_report(obligations);
-    session.state.emitted_dynamic_array_cleanup_obligation_report.insert(
-        session.state.emitted_dynamic_array_cleanup_obligation_report.end(),
-        obligation_report.begin(),
-        obligation_report.end()
+    session.state.emitted_dynamic_array_cleanup_obligations.insert(
+        session.state.emitted_dynamic_array_cleanup_obligations.end(),
+        obligations.begin(),
+        obligations.end()
     );
-    auto sequence_report = format_dynamic_array_cleanup_sequence_plan_report(sequence_plans);
-    session.state.emitted_dynamic_array_cleanup_sequence_plan_report.insert(
-        session.state.emitted_dynamic_array_cleanup_sequence_plan_report.end(),
-        sequence_report.begin(),
-        sequence_report.end()
+    session.state.emitted_dynamic_array_cleanup_sequence_plans.insert(
+        session.state.emitted_dynamic_array_cleanup_sequence_plans.end(),
+        sequence_plans.begin(),
+        sequence_plans.end()
     );
-    auto verification_report = format_dynamic_array_cleanup_sequence_verification_report(verifications);
-    session.state.emitted_dynamic_array_cleanup_sequence_verification_report.insert(
-        session.state.emitted_dynamic_array_cleanup_sequence_verification_report.end(),
-        verification_report.begin(),
-        verification_report.end()
-    );
-    auto gate_report = format_dynamic_array_cleanup_emission_gate_report(verifications);
-    session.state.emitted_dynamic_array_cleanup_emission_gate_report.insert(
-        session.state.emitted_dynamic_array_cleanup_emission_gate_report.end(),
-        gate_report.begin(),
-        gate_report.end()
+    session.state.emitted_dynamic_array_cleanup_sequence_verifications.insert(
+        session.state.emitted_dynamic_array_cleanup_sequence_verifications.end(),
+        verifications.begin(),
+        verifications.end()
     );
     session.state.emitted_dynamic_array_cleanup_emission_capabilities.push_back(capability);
 }
