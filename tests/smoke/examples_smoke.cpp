@@ -634,6 +634,21 @@ auto main() -> int {
         "%buffer.Ready.values.choice_dynamic_array_cleanup0.cleanup.data",
         choice_distinct_switch
     );
+    auto choice_distinct_switch_call = choice_dynamic_array_distinct_payload.ir_text.find(
+        "define i32 @consume_switch_call({ i32, [24 x i8] } %buffer)"
+    );
+    auto choice_distinct_switch_call_take = choice_dynamic_array_distinct_payload.ir_text.find(
+        "call i32 @take({ ptr, i64, i64 } %tmp",
+        choice_distinct_switch_call
+    );
+    auto choice_distinct_switch_call_value_cleanup = choice_dynamic_array_distinct_payload.ir_text.find(
+        "%values.dynamic_array_cleanup",
+        choice_distinct_switch_call
+    );
+    auto choice_distinct_switch_call_parent_cleanup = choice_dynamic_array_distinct_payload.ir_text.find(
+        "%buffer.Ready.values.choice_dynamic_array_cleanup",
+        choice_distinct_switch_call
+    );
     assert(choice_distinct_tag_check != std::string::npos);
     assert(choice_distinct_payload_store != std::string::npos);
     assert(choice_distinct_descriptor_load != std::string::npos);
@@ -644,6 +659,10 @@ auto main() -> int {
     assert(choice_distinct_switch_drop != std::string::npos);
     assert(choice_distinct_switch_deallocate != std::string::npos);
     assert(choice_distinct_parent_deallocate_after_switch == std::string::npos);
+    assert(choice_distinct_switch_call != std::string::npos);
+    assert(choice_distinct_switch_call_take != std::string::npos);
+    assert(choice_distinct_switch_call_value_cleanup == std::string::npos);
+    assert(choice_distinct_switch_call_parent_cleanup == std::string::npos);
     assert(choice_distinct_tag_check < choice_distinct_payload_store);
     assert(choice_distinct_payload_store < choice_distinct_descriptor_load);
     assert(choice_distinct_descriptor_load < choice_distinct_drop);
@@ -651,6 +670,7 @@ auto main() -> int {
     assert(choice_distinct_deallocate < choice_distinct_return);
     assert(choice_distinct_switch < choice_distinct_switch_drop);
     assert(choice_distinct_switch_drop < choice_distinct_switch_deallocate);
+    assert(choice_distinct_switch_call < choice_distinct_switch_call_take);
 
     auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
         fixtures / "dynamic_array_owned_parameter_source_drop.or"

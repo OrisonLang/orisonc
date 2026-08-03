@@ -90,6 +90,19 @@ auto lower_nested_final_control_flow(
     return std::nullopt;
 }
 
+auto switch_case_payload_binding_names(syntax::ExpressionSyntax const& pattern) -> std::vector<std::string> {
+    auto names = std::vector<std::string> {};
+    if (pattern.kind != syntax::ExpressionKind::call) {
+        return names;
+    }
+    for (auto const& argument : pattern.arguments) {
+        if (argument.kind == syntax::ExpressionKind::name) {
+            names.push_back(argument.text);
+        }
+    }
+    return names;
+}
+
 auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -372,6 +385,7 @@ auto lower_final_switch_statement(
             },
             .lower_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
                 auto& current = *static_cast<CaseContext*>(opaque);
+                auto branch_local_payload_names = switch_case_payload_binding_names(planned_case.syntax->pattern);
                 auto value = lower_value_statement_block(
                     planned_case.syntax->statements,
                     current.expected_llvm_type,
@@ -392,6 +406,17 @@ auto lower_final_switch_statement(
                             static_cast<std::ptrdiff_t>(current.case_dynamic_array_cleanup_plan_depth),
                         saved_cleanup_plans.end(),
                     };
+                    for (auto cleanup_plan = scoped_cleanup_plans.begin();
+                         cleanup_plan != scoped_cleanup_plans.end();) {
+                        if (is_owned_binding_consumed(
+                                current.session.state.ownership_transfers,
+                                cleanup_plan->owner_name
+                            )) {
+                            cleanup_plan = scoped_cleanup_plans.erase(cleanup_plan);
+                            continue;
+                        }
+                        ++cleanup_plan;
+                    }
                     auto scoped_cleanup_exit_block = std::optional<std::string> {};
                     if (!scoped_cleanup_plans.empty()) {
                         auto const& final_cleanup_plan = scoped_cleanup_plans.back();
@@ -416,7 +441,11 @@ auto lower_final_switch_statement(
                     if (scoped_cleanup_exit_block.has_value()) {
                         current.session.state.current_block = std::move(*scoped_cleanup_exit_block);
                     }
-                    current.ownership_transfers_by_case.push_back(current.session.state.ownership_transfers);
+                    auto branch_transfers = current.session.state.ownership_transfers;
+                    for (auto const& name : branch_local_payload_names) {
+                        branch_transfers.consumed_owned_bindings.erase(name);
+                    }
+                    current.ownership_transfers_by_case.push_back(std::move(branch_transfers));
                 }
                 return value;
             },

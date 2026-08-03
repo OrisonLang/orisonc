@@ -24,5 +24,14 @@ function consume_switch(buffer: Buffered) -> UInt32
         Code(value) => value
         Empty => 0 as UInt32
 
+function take(values: DynamicArray<Payload>) -> UInt32
+    1 as UInt32
+
+function consume_switch_call(buffer: Buffered) -> UInt32
+    switch buffer
+        Ready(values) => take(values)
+        Code(value) => value
+        Empty => 0 as UInt32
+
 function make_buffer(values: DynamicArray<Payload>) -> Buffered
     Ready(values)
