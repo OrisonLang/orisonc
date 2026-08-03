@@ -1,0 +1,21 @@
+package tests.fixtures.choice_dynamic_array_owned_payload
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice Buffered
+    Ready(values: DynamicArray<Payload>)
+    Empty
+
+function consume(buffer: Buffered) -> UInt32
+    0 as UInt32
+
+function make_buffer(values: DynamicArray<Payload>) -> Buffered
+    Ready(values)

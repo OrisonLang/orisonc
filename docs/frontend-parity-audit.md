@@ -3,8 +3,12 @@
 - 2026-08-02: scalar/non-owning `DynamicArray<T>` choice payloads now lower through the finite descriptor ABI
   `{ ptr, i64, i64 }` at return, parameter, annotated `let`, and annotated `var` boundaries. The
   `choice_dynamic_array_payload*.or` fixtures pin the accepted `Buffered.Ready(values: DynamicArray<UInt32>)` ABI and
-  constructor payload moves now suppress source descriptor cleanup after insertion into the choice value. Owned-element
-  descriptor payload cleanup inside choices remains separate follow-up work.
+  constructor payload moves now suppress source descriptor cleanup after insertion into the choice value.
+- 2026-08-02: owned-element `DynamicArray<T>` choice payloads now lower through the same descriptor ABI for exact
+  descriptor payload variants, and addressable choice owners emit tag-guarded nested descriptor cleanup. The
+  `choice_dynamic_array_owned_payload.or` fixture pins `Buffered.Ready(values: DynamicArray<Payload>)` with
+  source-backed element drops followed by descriptor deallocation; distinct byte-buffer choice payload storage remains
+  outside this cleanup slice.
 - 2026-08-02: computed DynamicArray cleanup handoff metadata now records whether cleanup-call authorization came from
   the production local-cleanup plan or the explicit fixture seam, and pipeline audit state exposes counts for each
   origin.

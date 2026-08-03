@@ -4,6 +4,7 @@
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/drop_metadata.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
@@ -210,6 +211,26 @@ auto authorized_descriptor_element_drop_symbol_name(
         return std::nullopt;
     }
     return obligation.actions.front().symbol_name;
+}
+
+auto authorized_choice_payload_element_drop_symbol_name(
+    DynamicArrayCleanupObligation const& obligation,
+    LlvmIrEmissionOptions const& options
+) -> std::optional<std::string> {
+    auto authorized = authorized_descriptor_element_drop_symbol_name(obligation, options);
+    if (authorized.has_value() || obligation.actions.empty()) {
+        return authorized;
+    }
+
+    auto const& action = obligation.actions.front();
+    for (auto const& authorization : options.semantic_drop_lowering_authorizations) {
+        if (authorization.authorized &&
+            authorization.site.source_type_name == action.source_type_name &&
+            authorization.site.abi_symbol_name == action.symbol_name) {
+            return action.symbol_name;
+        }
+    }
+    return std::nullopt;
 }
 
 template <typename CleanupPlan>
@@ -812,6 +833,124 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
             output << emit_dynamic_array_descriptor_finalization(
                 finalization_plan.descriptor_storage_name
             );
+        }
+    }
+    return true;
+}
+
+auto emit_choice_dynamic_array_payload_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool {
+    if (!context.options.enable_dynamic_array_construction_lowering ||
+        !dynamic_array_cleanup_emission_enabled(context.options)) {
+        return true;
+    }
+
+    auto names = std::vector<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (context.lowering.choices.contains(source_type_name)) {
+            names.push_back(name);
+        }
+    }
+    std::ranges::sort(names);
+
+    for (auto const& name : names) {
+        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+            continue;
+        }
+        auto const source_type = session.state.source_type_names.find(name);
+        if (source_type == session.state.source_type_names.end()) {
+            continue;
+        }
+        auto const choice = context.lowering.choices.find(source_type->second);
+        if (choice == context.lowering.choices.end() || choice->second.llvm_type_name == "i32") {
+            continue;
+        }
+        auto storage = aggregate_storage_for_name(name, session.state);
+        if (!storage.has_value()) {
+            continue;
+        }
+
+        auto choice_value = "%" + name + ".choice_dynamic_array_cleanup" +
+            std::to_string(session.state.next_temporary_index++);
+        output << "  " << choice_value << " = load " << choice->second.llvm_type_name
+               << ", ptr " << *storage << "\n";
+        auto tag_value = "%" + name + ".choice_dynamic_array_cleanup" +
+            std::to_string(session.state.next_temporary_index++) + ".tag";
+        output << "  " << tag_value << " = extractvalue " << choice->second.llvm_type_name
+               << " " << choice_value << ", 0\n";
+
+        for (auto const& variant : choice->second.variants) {
+            for (auto const& payload : variant.payloads) {
+                if (payload.llvm_type != dynamic_array_descriptor_llvm_type() ||
+                    variant.lowered_payload_type != dynamic_array_descriptor_llvm_type()) {
+                    continue;
+                }
+                auto const owner_name = name + "." + variant.name + "." + payload.name;
+                auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+                    owner_name,
+                    payload.source_type_name,
+                    context.lowering
+                );
+                if (!cleanup_plan.has_value()) {
+                    return false;
+                }
+                cleanup_plan->descriptor_storage_name = *storage;
+                cleanup_plan->descriptor_storage_status =
+                    DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+                auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+                    *cleanup_plan,
+                    session.state.emitted_dynamic_array_cleanup_obligations.size()
+                );
+                auto drop_symbol_name = std::optional<std::string> {};
+                if (!obligation.actions.empty()) {
+                    drop_symbol_name = authorized_choice_payload_element_drop_symbol_name(
+                        obligation,
+                        context.options
+                    );
+                    if (!drop_symbol_name.has_value()) {
+                        return false;
+                    }
+                }
+
+                auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
+                auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
+                if (!dynamic_array_cleanup_sequence_verification_passed(sequence_verification)) {
+                    return false;
+                }
+
+                session.state.emitted_dynamic_array_cleanup_obligations.push_back(obligation);
+                session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(sequence_plan);
+                session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(sequence_verification);
+
+                auto tag_check = "%" + owner_name + ".choice_dynamic_array_cleanup" +
+                    std::to_string(session.state.next_temporary_index++) + ".is_active";
+                auto block_prefix = owner_name + ".choice_dynamic_array_cleanup" +
+                    std::to_string(next_llvm_block_index(session.state.next_block_index));
+                auto cleanup_block = block_prefix + ".cleanup.entry";
+                auto after_block = block_prefix + ".after";
+                output << "  " << tag_check << " = icmp eq i32 " << tag_value
+                       << ", " << variant.tag << "\n";
+                output << "  br i1 " << tag_check << ", label %" << cleanup_block
+                       << ", label %" << after_block << "\n";
+                output << cleanup_block << ":\n";
+                auto descriptor_value = "%" + owner_name + ".choice_dynamic_array_cleanup.descriptor";
+                output << "  " << descriptor_value << " = extractvalue "
+                       << choice->second.llvm_type_name << " " << choice_value << ", 1\n";
+                auto cleanup_prefix = "%" + block_prefix;
+                output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+                    *cleanup_plan,
+                    descriptor_value,
+                    cleanup_prefix,
+                    drop_symbol_name
+                );
+                output << "  br label %" << after_block << "\n";
+                output << after_block << ":\n";
+                session.state.current_block = after_block;
+            }
         }
     }
     return true;

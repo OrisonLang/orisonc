@@ -132,6 +132,12 @@ auto emit_local_dynamic_array_cleanups(
     std::ostream& output
 ) -> bool;
 
+auto emit_choice_dynamic_array_payload_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool;
+
 auto emit_bound_dynamic_array_parameter_cleanup_plans(
     DynamicArrayCleanupEmissionCapability const& capability,
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans,

@@ -571,6 +571,28 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto choice_dynamic_array_owned_payload =
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_owned_payload.or");
+    assert(!choice_dynamic_array_owned_payload.has_errors());
+    auto choice_owned_tag_check = choice_dynamic_array_owned_payload.ir_text.find(
+        "%buffer.Ready.values.choice_dynamic_array_cleanup2.is_active = icmp eq i32"
+    );
+    auto choice_owned_drop = choice_dynamic_array_owned_payload.ir_text.find(
+        "call void @__orison_drop.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
+    );
+    auto choice_owned_deallocate = choice_dynamic_array_owned_payload.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr "
+        "%buffer.Ready.values.choice_dynamic_array_cleanup0.cleanup.data"
+    );
+    auto choice_owned_return = choice_dynamic_array_owned_payload.ir_text.find("ret i32 0");
+    assert(choice_owned_tag_check != std::string::npos);
+    assert(choice_owned_drop != std::string::npos);
+    assert(choice_owned_deallocate != std::string::npos);
+    assert(choice_owned_return != std::string::npos);
+    assert(choice_owned_tag_check < choice_owned_drop);
+    assert(choice_owned_drop < choice_owned_deallocate);
+    assert(choice_owned_deallocate < choice_owned_return);
+
     auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
         fixtures / "dynamic_array_owned_parameter_source_drop.or"
     );

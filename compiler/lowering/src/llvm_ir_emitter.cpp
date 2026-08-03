@@ -889,6 +889,19 @@ auto has_view_index_read(
     return false;
 }
 
+auto has_dynamic_array_choice_payload(syntax::ModuleSyntax const& module) -> bool {
+    for (auto const& choice : module.choices) {
+        for (auto const& variant : choice.variants) {
+            for (auto const& payload : variant.payloads) {
+                if (dynamic_array_element_source_type_name(render_source_type_name(payload.type)).has_value()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 void push_dynamic_array_runtime_operation_once(
     std::vector<DynamicArrayRuntimeOperation>& operations,
     DynamicArrayRuntimeOperation operation
@@ -1711,6 +1724,9 @@ auto collect_dynamic_array_runtime_operations(
     if (dynamic_array_parameter_descriptors_enabled(options) &&
         dynamic_array_cleanup_emission_enabled(options) &&
         has_lowerable_dynamic_array_parameter(module, options)) {
+        push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
+    }
+    if (dynamic_array_cleanup_emission_enabled(options) && has_dynamic_array_choice_payload(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
     }
     if (

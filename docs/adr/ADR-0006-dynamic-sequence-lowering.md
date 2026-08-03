@@ -597,8 +597,12 @@ representation.
 - Scalar/non-owning `DynamicArray<T>` choice payloads now lower through the finite descriptor ABI
   `{ ptr, i64, i64 }` at return, parameter, annotated `let`, and annotated `var` boundaries. The
   `choice_dynamic_array_payload*.or` fixtures pin accepted `Buffered.Ready(values: DynamicArray<UInt32>)` ABI use, and
-  constructor payload moves now suppress source descriptor cleanup after insertion into the choice value. Owned-element
-  descriptor payload cleanup inside choices remains outside this accepted boundary.
+  constructor payload moves now suppress source descriptor cleanup after insertion into the choice value.
+- Owned-element `DynamicArray<T>` choice payloads now lower through the same descriptor ABI for exact descriptor
+  payload variants, and addressable choice owners emit tag-guarded nested descriptor cleanup. The
+  `choice_dynamic_array_owned_payload.or` fixture pins `Buffered.Ready(values: DynamicArray<Payload>)` with
+  source-backed element drops followed by descriptor deallocation. Distinct byte-buffer choice payload storage remains
+  outside this cleanup slice.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
