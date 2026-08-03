@@ -10,6 +10,7 @@ BranchBindingScope::BranchBindingScope(FunctionLoweringState& state)
       saved_mutable_bindings_(state.mutable_bindings),
       saved_addressable_bindings_(state.addressable_bindings),
       saved_source_type_names_(state.source_type_names),
+      saved_dynamic_array_local_cleanup_plans_(state.dynamic_array_local_cleanup_plans),
       saved_ownership_transfers_(state.ownership_transfers) {}
 
 BranchBindingScope::~BranchBindingScope() noexcept {
@@ -17,6 +18,7 @@ BranchBindingScope::~BranchBindingScope() noexcept {
     state_.mutable_bindings.swap(saved_mutable_bindings_);
     state_.addressable_bindings.swap(saved_addressable_bindings_);
     state_.source_type_names.swap(saved_source_type_names_);
+    state_.dynamic_array_local_cleanup_plans.swap(saved_dynamic_array_local_cleanup_plans_);
     std::swap(state_.ownership_transfers, saved_ownership_transfers_);
 }
 
@@ -25,6 +27,7 @@ void BranchBindingScope::reset() {
     state_.mutable_bindings = saved_mutable_bindings_;
     state_.addressable_bindings = saved_addressable_bindings_;
     state_.source_type_names = saved_source_type_names_;
+    state_.dynamic_array_local_cleanup_plans = saved_dynamic_array_local_cleanup_plans_;
     state_.ownership_transfers = saved_ownership_transfers_;
 }
 

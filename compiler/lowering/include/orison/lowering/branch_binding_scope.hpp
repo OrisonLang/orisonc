@@ -27,6 +27,7 @@ private:
     std::unordered_map<std::string, MutableBinding> saved_mutable_bindings_;
     std::unordered_map<std::string, AddressableBinding> saved_addressable_bindings_;
     std::unordered_map<std::string, std::string> saved_source_type_names_;
+    std::vector<DynamicArrayDescriptorCleanupPlan> saved_dynamic_array_local_cleanup_plans_;
     OwnershipTransferState saved_ownership_transfers_;
 };
 

@@ -606,6 +606,11 @@ representation.
   `{ i32, [N x i8] }` payload slot before tag-guarded nested cleanup. The
   `choice_dynamic_array_distinct_payload.or` fixture pins `Buffered.Ready(values: DynamicArray<Payload>)` alongside a
   distinct scalar variant and verifies source-backed element drops followed by descriptor deallocation.
+- Switch cases that bind an owned-element `DynamicArray<T>` choice payload now seed a scoped descriptor cleanup plan for
+  returning case bodies. Branch binding scopes restore temporary cleanup plans between cases, and consumed choice
+  payloads suppress parent nested cleanup so pattern extraction does not double-clean the moved descriptor.
+- Local DynamicArray cleanup planning now skips descriptors already finalized by computed cleanup handoff metadata,
+  preserving the single-deallocation invariant for computed `for` loops and final function cleanup.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

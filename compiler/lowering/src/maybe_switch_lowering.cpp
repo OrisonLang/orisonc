@@ -146,6 +146,36 @@ auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::option
     return field;
 }
 
+void seed_switch_payload_dynamic_array_cleanup(
+    std::string const& binding_name,
+    std::string const& source_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) {
+    if (!context.options.enable_dynamic_array_construction_lowering ||
+        !context.options.enable_dynamic_array_cleanup_emission ||
+        dynamic_array_element_source_type_name(source_type_name) == std::nullopt) {
+        return;
+    }
+
+    auto storage = aggregate_storage_for_name(binding_name, session.state);
+    if (!storage.has_value()) {
+        return;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        binding_name,
+        source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        return;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(*storage);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+}
+
 void bind_switch_payload_value(
     std::string const& binding_name,
     std::string const& payload_type,
@@ -182,6 +212,9 @@ void bind_switch_payload_value(
     };
     session.state.immutable_bindings[binding_name] = lowered_payload;
     bind_addressable_aggregate_value(binding_name, lowered_payload, session, output);
+    if (source_type_name.has_value()) {
+        seed_switch_payload_dynamic_array_cleanup(binding_name, *source_type_name, context, session);
+    }
 }
 
 void bind_switch_payload_field_value(
@@ -204,6 +237,12 @@ void bind_switch_payload_field_value(
     };
     session.state.immutable_bindings[binding.binding_name] = lowered_payload;
     bind_addressable_aggregate_value(binding.binding_name, lowered_payload, session, output);
+    seed_switch_payload_dynamic_array_cleanup(
+        binding.binding_name,
+        binding.source_type_name,
+        context,
+        session
+    );
 }
 
 void bind_choice_switch_payload_values(

@@ -202,6 +202,16 @@ auto synthetic_dynamic_array_parameter_cleanup_authorizations(
     return authorizations;
 }
 
+auto descriptor_storage_finalized_by_computed_cleanup(
+    FunctionLoweringState const& state,
+    std::string_view descriptor_storage_name
+) -> bool {
+    return std::ranges::any_of(state.computed_dynamic_array_cleanup_call_operands, [&](auto const& operands) {
+        return operands.descriptor_finalized &&
+            operands.descriptor_storage_name == descriptor_storage_name;
+    });
+}
+
 auto authorized_descriptor_element_drop_symbol_name(
     DynamicArrayCleanupObligation const& obligation,
     LlvmIrEmissionOptions const& options
@@ -696,6 +706,12 @@ auto plan_local_dynamic_array_cleanups(
         if (is_owned_binding_consumed(session.state.ownership_transfers, descriptor_cleanup.owner_name)) {
             continue;
         }
+        if (descriptor_storage_finalized_by_computed_cleanup(
+                session.state,
+                descriptor_cleanup.descriptor_storage_name
+            )) {
+            continue;
+        }
         auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
             descriptor_cleanup,
             plans.size()
@@ -903,6 +919,9 @@ auto emit_choice_dynamic_array_payload_cleanups(
                     continue;
                 }
                 auto const owner_name = name + "." + variant.name + "." + payload.name;
+                if (is_owned_binding_consumed(session.state.ownership_transfers, owner_name)) {
+                    continue;
+                }
                 auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
                     owner_name,
                     payload.source_type_name,

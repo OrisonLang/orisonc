@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -17,6 +18,7 @@
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unit_deferred_cleanup.hpp"
 
+#include <cstddef>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -331,6 +333,7 @@ auto lower_final_switch_statement(
         std::optional<std::string_view> expected_source_type_name;
         std::optional<std::string_view> subject_source_type_name;
         std::vector<OwnershipTransferState> ownership_transfers_by_case;
+        std::size_t case_dynamic_array_cleanup_plan_depth = 0;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,
@@ -355,6 +358,8 @@ auto lower_final_switch_statement(
             .before_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
                 auto& current = *static_cast<CaseContext*>(opaque);
                 current.binding_scope.reset();
+                current.case_dynamic_array_cleanup_plan_depth =
+                    current.session.state.dynamic_array_local_cleanup_plans.size();
                 bind_switch_payload(
                     planned_case,
                     current.subject_expression,
@@ -380,6 +385,37 @@ auto lower_final_switch_statement(
                     current.expected_source_type_name
                 );
                 if (value.has_value()) {
+                    auto saved_cleanup_plans = current.session.state.dynamic_array_local_cleanup_plans;
+                    auto const cleanup_ordinal_start = current.session.state.next_temporary_index;
+                    auto scoped_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {
+                        saved_cleanup_plans.begin() +
+                            static_cast<std::ptrdiff_t>(current.case_dynamic_array_cleanup_plan_depth),
+                        saved_cleanup_plans.end(),
+                    };
+                    auto scoped_cleanup_exit_block = std::optional<std::string> {};
+                    if (!scoped_cleanup_plans.empty()) {
+                        auto const& final_cleanup_plan = scoped_cleanup_plans.back();
+                        auto final_cleanup_ordinal = cleanup_ordinal_start + scoped_cleanup_plans.size() - 1;
+                        auto label_prefix = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
+                            std::to_string(final_cleanup_ordinal);
+                        scoped_cleanup_exit_block =
+                            is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
+                            ? label_prefix + ".cleanup.entry"
+                            : label_prefix + ".drop.done";
+                    }
+                    current.session.state.dynamic_array_local_cleanup_plans = std::move(scoped_cleanup_plans);
+                    if (!emit_local_dynamic_array_cleanups(
+                            current.context,
+                            current.session,
+                            current.output
+                        )) {
+                        current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+                        return std::optional<LoweredExpression> {};
+                    }
+                    current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+                    if (scoped_cleanup_exit_block.has_value()) {
+                        current.session.state.current_block = std::move(*scoped_cleanup_exit_block);
+                    }
                     current.ownership_transfers_by_case.push_back(current.session.state.ownership_transfers);
                 }
                 return value;
