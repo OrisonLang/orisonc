@@ -484,6 +484,8 @@ auto computed_inserted_cleanup_handoff_state_report(
     counts << " paired " << state.paired_count;
     counts << " blocked " << state.blocked_count;
     counts << " cleanup-blockers " << state.cleanup_call_blocker_count;
+    counts << " production-authorizations " << state.production_cleanup_call_authorization_count;
+    counts << " fixture-authorizations " << state.explicit_test_seam_cleanup_call_authorization_count;
     counts << (state.from_metadata ? " [metadata-backed]" : " [metadata-missing]");
     counts << (state.all_paired ? " [handoffs paired]" : " [handoffs blocked]");
     counts << (state.all_cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");

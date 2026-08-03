@@ -3,6 +3,8 @@
 - 2026-08-02: computed DynamicArray cleanup handoff metadata now records whether cleanup-call authorization came from
   the production local-cleanup plan or the explicit fixture seam, and pipeline audit state exposes counts for each
   origin.
+- 2026-08-02: the DynamicArray cleanup audit inserted-handoff summary now renders production and fixture authorization
+  counts so enabled cleanup calls can be traced to their proof origin.
 - 2026-08-01: DynamicArray cleanup emission capability now has typed pipeline state, and the driver capability report
   renders from that state.
 - 2026-08-02: pipeline results no longer expose raw semantic planned-drop, drop-implementation, drop-resolution,

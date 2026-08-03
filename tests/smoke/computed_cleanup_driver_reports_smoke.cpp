@@ -426,11 +426,37 @@ void assert_computed_inserted_cleanup_handoff_reports() {
             .verification_count = 1,
             .paired_count = 1,
             .blocked_count = 0,
+            .production_cleanup_call_authorization_count = 1,
         }
     );
     assert(paired_enabled.size() == 2);
-    assert(paired_enabled[0] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_enabled_report);
+    assert(
+        paired_enabled[0] ==
+        smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_production_enabled_report
+    );
     assert(paired_enabled[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report);
+
+    auto paired_fixture_enabled = driver::computed_inserted_cleanup_handoff_state_report(
+        pipeline::ComputedInsertedCleanupHandoffState {
+            .cleanup_owner_names = {"items"},
+            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .from_metadata = true,
+            .all_paired = true,
+            .all_cleanup_calls_enabled = true,
+            .transition_count = 1,
+            .verification_count = 1,
+            .paired_count = 1,
+            .blocked_count = 0,
+            .explicit_test_seam_cleanup_call_authorization_count = 1,
+        }
+    );
+    assert(paired_fixture_enabled.size() == 2);
+    assert(
+        paired_fixture_enabled[0] ==
+        smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_fixture_enabled_report
+    );
+    assert(paired_fixture_enabled[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report);
 }
 
 void assert_computed_cleanup_verification_and_emission_gate_reports() {
