@@ -614,6 +614,9 @@ representation.
 - Value-producing switch cases that bind owned-element `DynamicArray<T>` choice payloads now have fixture coverage for
   passing the bound descriptor onward to a callee. The case-local and parent choice cleanup plans remain suppressed
   after the transfer, preserving single ownership across the branch merge.
+- Final switch cases that return a bound owned-element `DynamicArray<T>` choice payload now mark the branch-local
+  payload binding consumed before scoped case cleanup. The `return_switch_payload` fixture pins descriptor phi return
+  without cleaning the returned payload alias or parent choice payload.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

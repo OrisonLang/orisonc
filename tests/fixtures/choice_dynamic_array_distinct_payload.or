@@ -15,6 +15,10 @@ choice Buffered
     Code(value: UInt32)
     Empty
 
+choice DualBuffered
+    Primary(values: DynamicArray<Payload>)
+    Secondary(values: DynamicArray<Payload>)
+
 function consume(buffer: Buffered) -> UInt32
     0 as UInt32
 
@@ -32,6 +36,11 @@ function consume_switch_call(buffer: Buffered) -> UInt32
         Ready(values) => take(values)
         Code(value) => value
         Empty => 0 as UInt32
+
+function return_switch_payload(buffer: DualBuffered) -> DynamicArray<Payload>
+    switch buffer
+        Primary(values) => values
+        Secondary(values) => values
 
 function make_buffer(values: DynamicArray<Payload>) -> Buffered
     Ready(values)

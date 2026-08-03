@@ -20,10 +20,13 @@ auto is_decimal_integer_text(std::string_view text) -> bool {
     return true;
 }
 
-auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<std::string> {
+auto lowered_function_type_for(
+    syntax::TypeSyntax const& type,
+    bool allow_owned_dynamic_array
+) -> std::optional<std::string> {
     if (type.name == "Array" && type.generic_arguments.size() == 2 &&
         is_decimal_integer_text(type.generic_arguments[1].name)) {
-        auto element_type = lowered_function_type_for(type.generic_arguments[0]);
+        auto element_type = lowered_function_type_for(type.generic_arguments[0], false);
         if (element_type.has_value() && *element_type != "void") {
             return "[" + type.generic_arguments[1].name + " x " + *element_type + "]";
         }
@@ -32,7 +35,7 @@ auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<
 
     if ((type.name == "View" || type.name == "shared.View" || type.name == "exclusive.View") &&
         type.generic_arguments.size() == 1) {
-        auto element_type = lowered_function_type_for(type.generic_arguments[0]);
+        auto element_type = lowered_function_type_for(type.generic_arguments[0], false);
         return element_type.has_value() && *element_type != "void"
             ? std::optional<std::string> {std::string {view_descriptor_llvm_type()}}
             : std::nullopt;
@@ -40,7 +43,7 @@ auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<
 
     if (type.name == "DynamicArray" && type.generic_arguments.size() == 1) {
         auto element_source_type = render_source_type_name(type.generic_arguments[0]);
-        return is_scalar_or_nonowning_source_type(element_source_type)
+        return allow_owned_dynamic_array || is_scalar_or_nonowning_source_type(element_source_type)
             ? std::optional<std::string> {std::string {dynamic_array_descriptor_llvm_type()}}
             : std::nullopt;
     }
@@ -66,13 +69,13 @@ auto lower_function_signature(
         .symbol_name = std::move(symbol_name),
     };
 
-    if (auto lowered_return_type = lowered_function_type_for(return_type)) {
+    if (auto lowered_return_type = lowered_function_type_for(return_type, true)) {
         signature.return_type = std::move(*lowered_return_type);
     }
     signature.parameter_types.reserve(parameters.size());
     signature.parameter_source_type_names.reserve(parameters.size());
     for (auto const& parameter : parameters) {
-        auto lowered_parameter_type = lowered_function_type_for(parameter.type);
+        auto lowered_parameter_type = lowered_function_type_for(parameter.type, false);
         signature.parameter_types.push_back(lowered_parameter_type.has_value()
                                                 ? std::move(*lowered_parameter_type)
                                                 : std::string {});

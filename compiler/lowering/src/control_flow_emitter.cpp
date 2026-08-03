@@ -103,6 +103,22 @@ auto switch_case_payload_binding_names(syntax::ExpressionSyntax const& pattern) 
     return names;
 }
 
+auto switch_case_final_expression(syntax::SwitchCaseSyntax const& syntax_case)
+    -> syntax::ExpressionSyntax const* {
+    if (syntax_case.statements.empty()) {
+        return nullptr;
+    }
+    auto const* statement = syntax_case.statements.back().get();
+    if (statement == nullptr) {
+        return nullptr;
+    }
+    if (statement->kind != syntax::StatementKind::return_statement &&
+        statement->kind != syntax::StatementKind::expression_statement) {
+        return nullptr;
+    }
+    return &statement->expression;
+}
+
 auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -399,6 +415,21 @@ auto lower_final_switch_statement(
                     current.expected_source_type_name
                 );
                 if (value.has_value()) {
+                    auto const* final_expression = switch_case_final_expression(*planned_case.syntax);
+                    if (final_expression != nullptr &&
+                        final_expression->kind == syntax::ExpressionKind::name &&
+                        current.expected_source_type_name.has_value() &&
+                        dynamic_array_element_source_type_name(*current.expected_source_type_name).has_value() &&
+                        value->type == std::string {dynamic_array_descriptor_llvm_type()}) {
+                        auto source_type = current.session.state.source_type_names.find(final_expression->text);
+                        if (source_type != current.session.state.source_type_names.end() &&
+                            source_type->second == *current.expected_source_type_name) {
+                            mark_owned_binding_consumed(
+                                current.session.state.ownership_transfers,
+                                final_expression->text
+                            );
+                        }
+                    }
                     auto saved_cleanup_plans = current.session.state.dynamic_array_local_cleanup_plans;
                     auto const cleanup_ordinal_start = current.session.state.next_temporary_index;
                     auto scoped_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {
