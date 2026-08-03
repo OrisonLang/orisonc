@@ -626,6 +626,9 @@ representation.
 - Aggregate assignment targets now carry deterministic cleanup-owner labels for member/index paths. The
   `dynamic_array_field_reassignment_run.or` fixture pins scalar `DynamicArray<UInt32>` record-field overwrite cleanup:
   the overwritten descriptor is deallocated before the replacement descriptor is stored.
+- Semantic Drop-site collection now derives direct record-field `DynamicArray<T>` element owners such as
+  `holder.values.element`. The `dynamic_array_owned_field_reassignment_run.or` fixture pins source-backed element drops
+  plus descriptor deallocation before an owned `DynamicArray<Payload>` field replacement is stored.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

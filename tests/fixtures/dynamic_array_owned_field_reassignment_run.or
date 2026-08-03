@@ -1,0 +1,32 @@
+package tests.fixtures.dynamic_array_owned_field_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Holder
+    values: DynamicArray<Payload>
+
+function make_pair() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(3 as UInt32))
+    values.push(Payload(5 as UInt32))
+    values
+
+function make_triple() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(7 as UInt32))
+    values.push(Payload(11 as UInt32))
+    values.push(Payload(13 as UInt32))
+    values
+
+function main() -> UInt32
+    var holder: Holder = Holder(make_pair())
+    holder.values = make_triple()
+    0 as UInt32
