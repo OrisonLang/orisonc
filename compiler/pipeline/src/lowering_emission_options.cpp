@@ -110,10 +110,10 @@ auto build_lowering_emission_options(
         options.collect_computed_dynamic_array_for_production_sequences;
     emission_options.emit_computed_dynamic_array_for_production_sequence_comments =
         options.emit_computed_dynamic_array_for_production_sequence_comments;
-    emission_options.test_only_authorize_computed_dynamic_array_cleanup_calls =
-        options.test_only_authorize_computed_dynamic_array_cleanup_calls;
-    emission_options.test_only_insert_computed_dynamic_array_cleanup_calls =
-        options.test_only_insert_computed_dynamic_array_cleanup_calls;
+    emission_options.fixture_authorize_computed_dynamic_array_cleanup_calls =
+        options.fixture_authorize_computed_dynamic_array_cleanup_calls;
+    emission_options.fixture_insert_computed_dynamic_array_cleanup_calls =
+        options.fixture_insert_computed_dynamic_array_cleanup_calls;
     emission_options.collect_aggregate_projection_access_metadata =
         options.collect_aggregate_projection_access_metadata;
     emission_options.enable_computed_dynamic_array_consumed_cleanup_descriptor_collection =
@@ -121,10 +121,10 @@ auto build_lowering_emission_options(
         dynamic_array_cleanup_emission_enabled(options);
     emission_options.enable_computed_dynamic_array_local_cleanup_call_insertion =
         options.computed_dynamic_array_local_cleanup_call_insertion_enabled;
-    emission_options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata =
-        options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata;
-    emission_options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata =
-        options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata;
+    emission_options.suppress_computed_dynamic_array_cleanup_handoff_metadata =
+        options.suppress_computed_dynamic_array_cleanup_handoff_metadata;
+    emission_options.suppress_computed_dynamic_array_cleanup_operand_metadata =
+        options.suppress_computed_dynamic_array_cleanup_operand_metadata;
     emission_options.enable_dynamic_array_descriptor_cleanup_planning =
         dynamic_array_descriptor_cleanup_planning_enabled(options);
     emission_options.enable_dynamic_array_parameter_descriptor_audit_bindings =

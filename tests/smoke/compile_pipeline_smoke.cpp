@@ -2964,7 +2964,7 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_operand_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = true,
+            .suppress_computed_dynamic_array_cleanup_operand_metadata = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
@@ -3022,7 +3022,7 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_authorized_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
+            .fixture_authorize_computed_dynamic_array_cleanup_calls = true,
             .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
@@ -3483,7 +3483,7 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = true,
+            .suppress_computed_dynamic_array_cleanup_operand_metadata = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
         }
@@ -3564,7 +3564,7 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_handoff_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = true,
+            .suppress_computed_dynamic_array_cleanup_handoff_metadata = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,

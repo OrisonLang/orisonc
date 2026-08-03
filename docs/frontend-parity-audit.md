@@ -9,6 +9,8 @@
   authorization/insertion seam flags; the remaining authorization-only fixture keeps the seam isolated.
 - 2026-08-02: test-only computed DynamicArray cleanup report commands now disable production local cleanup insertion
   so they exercise the explicit fixture seam while normal report commands prove the production origin.
+- 2026-08-02: internal computed DynamicArray cleanup option fields now use fixture- and metadata-suppression names
+  instead of broad `test_only_*` names; the explicit CLI report commands keep their test-only surface names.
 - 2026-08-01: DynamicArray cleanup emission capability now has typed pipeline state, and the driver capability report
   renders from that state.
 - 2026-08-02: pipeline results no longer expose raw semantic planned-drop, drop-implementation, drop-resolution,

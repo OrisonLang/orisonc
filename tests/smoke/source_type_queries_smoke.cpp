@@ -238,11 +238,11 @@ int main() {
     assert(!orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
         computed_cleanup_insertion_options
     ).enabled);
-    computed_cleanup_insertion_options.test_only_authorize_computed_dynamic_array_cleanup_calls = true;
+    computed_cleanup_insertion_options.fixture_authorize_computed_dynamic_array_cleanup_calls = true;
     assert(!orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
         computed_cleanup_insertion_options
     ).enabled);
-    computed_cleanup_insertion_options.test_only_insert_computed_dynamic_array_cleanup_calls = true;
+    computed_cleanup_insertion_options.fixture_insert_computed_dynamic_array_cleanup_calls = true;
     auto const computed_cleanup_insertion_capability =
         orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
             computed_cleanup_insertion_options

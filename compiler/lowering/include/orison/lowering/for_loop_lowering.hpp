@@ -385,7 +385,7 @@ auto lower_sequence_for_statement(
             auto const cleanup_call_authorization_origin =
                 production_local_cleanup_calls_enabled ?
                     ComputedDynamicArrayCleanupCallAuthorizationOrigin::production_local_cleanup_plan :
-                    (context.options.test_only_authorize_computed_dynamic_array_cleanup_calls ?
+                    (context.options.fixture_authorize_computed_dynamic_array_cleanup_calls ?
                          ComputedDynamicArrayCleanupCallAuthorizationOrigin::explicit_test_seam :
                          ComputedDynamicArrayCleanupCallAuthorizationOrigin::none);
             auto const computed_cleanup_calls_enabled =
@@ -408,7 +408,7 @@ auto lower_sequence_for_statement(
                 .cleanup_calls_blocked_reason = cleanup_calls_blocked_reason,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(acquisition_handoff);
-            if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
+            if (!context.options.suppress_computed_dynamic_array_cleanup_handoff_metadata) {
                 session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
                     std::move(acquisition_handoff)
                 );
@@ -470,7 +470,7 @@ auto lower_sequence_for_statement(
                 .cleanup_calls_blocked_reason = cleanup_calls_blocked_reason,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(resumption_handoff);
-            if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
+            if (!context.options.suppress_computed_dynamic_array_cleanup_handoff_metadata) {
                 session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
                     std::move(resumption_handoff)
                 );
@@ -559,7 +559,7 @@ auto lower_sequence_for_statement(
                 }
             }
             if (cleanup_call_operands.has_value() &&
-                !context.options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata) {
+                !context.options.suppress_computed_dynamic_array_cleanup_operand_metadata) {
                 session.state.computed_dynamic_array_cleanup_call_operands.push_back(
                     std::move(*cleanup_call_operands)
                 );

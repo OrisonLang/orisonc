@@ -486,11 +486,11 @@ struct CompilePipelineOptions {
     bool collect_computed_dynamic_array_for_production_emission_gates = false;
     bool collect_computed_dynamic_array_for_production_sequences = false;
     bool emit_computed_dynamic_array_for_production_sequence_comments = false;
-    bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
-    bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
+    bool fixture_authorize_computed_dynamic_array_cleanup_calls = false;
+    bool fixture_insert_computed_dynamic_array_cleanup_calls = false;
     bool collect_aggregate_projection_access_metadata = false;
-    bool test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
-    bool test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = false;
+    bool suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
+    bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;
     bool dynamic_array_production_signature_lowering_enabled = false;
