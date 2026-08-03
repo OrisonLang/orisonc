@@ -1,6 +1,8 @@
 #include "orison/semantics/module_semantic_analyzer.hpp"
 
 #include <algorithm>
+#include <limits>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -156,6 +158,11 @@ private:
         bool module_constant = false;
         std::size_t scope_depth = 0;
         std::size_t declaration_line = 0;
+    };
+
+    struct FixedArraySourceType {
+        std::string element_type_name;
+        std::size_t length = 0;
     };
 
     using ScopeSnapshot = std::vector<std::vector<Binding>>;
@@ -5804,6 +5811,43 @@ private:
         return first_generic_argument_type_name(type_name);
     }
 
+    auto parse_size_literal(std::string const& text) const -> std::optional<std::size_t> {
+        if (text.empty()) {
+            return std::nullopt;
+        }
+
+        auto value = std::size_t {0};
+        for (auto const character : text) {
+            if (character < '0' || character > '9') {
+                return std::nullopt;
+            }
+            auto const digit = static_cast<std::size_t>(character - '0');
+            if (value > (std::numeric_limits<std::size_t>::max() - digit) / 10) {
+                return std::nullopt;
+            }
+            value = value * 10 + digit;
+        }
+        return value;
+    }
+
+    auto fixed_array_source_type(std::string const& type_name) const -> std::optional<FixedArraySourceType> {
+        auto parsed_type = parse_rendered_type_name(type_name);
+        if (!parsed_type.has_value() || parsed_type->name != "Array" ||
+            parsed_type->generic_arguments.size() != 2) {
+            return std::nullopt;
+        }
+
+        auto length = parse_size_literal(parsed_type->generic_arguments[1].name);
+        if (!length.has_value()) {
+            return std::nullopt;
+        }
+
+        return FixedArraySourceType {
+            .element_type_name = render_type_name(parsed_type->generic_arguments.front()),
+            .length = *length,
+        };
+    }
+
     void collect_record_type_dynamic_array_drop_sites(
         std::string const& owner_name,
         std::string const& type_name,
@@ -5815,6 +5859,18 @@ private:
         }
 
         auto parsed_record_type = parse_rendered_type_name(type_name);
+        if (auto array = fixed_array_source_type(type_name)) {
+            for (auto index = std::size_t {0}; index < array->length; ++index) {
+                collect_record_type_dynamic_array_drop_sites(
+                    owner_name + ".element" + std::to_string(index),
+                    array->element_type_name,
+                    declaration_line,
+                    depth + 1
+                );
+            }
+            return;
+        }
+
         if (!parsed_record_type.has_value()) {
             return;
         }

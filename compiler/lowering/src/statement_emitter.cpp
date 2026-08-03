@@ -22,6 +22,7 @@
 #include "orison/semantics/drop_model.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -31,6 +32,11 @@
 
 namespace orison::lowering {
 namespace {
+
+struct FixedArraySourceType {
+    std::string element_source_type_name;
+    std::size_t length = 0;
+};
 
 auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
@@ -333,6 +339,123 @@ auto seed_dynamic_array_local_cleanup_plan(
     return true;
 }
 
+auto parse_size_literal(std::string const& text) -> std::optional<std::size_t> {
+    if (text.empty()) {
+        return std::nullopt;
+    }
+
+    auto value = std::size_t {0};
+    for (auto const character : text) {
+        if (character < '0' || character > '9') {
+            return std::nullopt;
+        }
+        auto const digit = static_cast<std::size_t>(character - '0');
+        if (value > (std::numeric_limits<std::size_t>::max() - digit) / 10) {
+            return std::nullopt;
+        }
+        value = value * 10 + digit;
+    }
+    return value;
+}
+
+auto fixed_array_source_type(std::string_view type_name) -> std::optional<FixedArraySourceType> {
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 2 || arguments[0].empty() || arguments[1].empty()) {
+        return std::nullopt;
+    }
+
+    auto length = parse_size_literal(arguments[1]);
+    if (!length.has_value()) {
+        return std::nullopt;
+    }
+
+    return FixedArraySourceType {
+        .element_source_type_name = std::move(arguments[0]),
+        .length = *length,
+    };
+}
+
+auto seed_dynamic_array_cleanup_plan_for_storage(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string descriptor_storage_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    auto existing = std::find_if(
+        session.state.dynamic_array_local_cleanup_plans.begin(),
+        session.state.dynamic_array_local_cleanup_plans.end(),
+        [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+            return plan.owner_name == owner_name &&
+                plan.source_type_name == source_type_name &&
+                plan.descriptor_storage_status == DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        }
+    );
+    if (existing != session.state.dynamic_array_local_cleanup_plans.end()) {
+        return true;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        diagnostics.error(source_line, "source nested dynamic array cleanup could not be planned");
+        return false;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(descriptor_storage_name);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    return true;
+}
+
+auto source_type_has_dynamic_array_cleanup_descendant(
+    std::string_view source_type_name,
+    LoweringEmissionContext const& context,
+    std::size_t depth = 0
+) -> bool {
+    if (depth > 16) {
+        return false;
+    }
+    if (is_dynamic_array_source_type(source_type_name)) {
+        return true;
+    }
+    if (auto array = fixed_array_source_type(source_type_name)) {
+        return source_type_has_dynamic_array_cleanup_descendant(
+            array->element_source_type_name,
+            context,
+            depth + 1
+        );
+    }
+    auto const record = context.lowering.records.find(std::string(source_type_name));
+    if (record == context.lowering.records.end()) {
+        return false;
+    }
+    return std::any_of(
+        record->second.fields.begin(),
+        record->second.fields.end(),
+        [&](LoweredRecordField const& field) {
+            return source_type_has_dynamic_array_cleanup_descendant(
+                field.source_type_name,
+                context,
+                depth + 1
+            );
+        }
+    );
+}
+
 auto seed_record_type_dynamic_array_local_cleanup_plans(
     std::string_view owner_name,
     std::string_view source_type_name,
@@ -347,6 +470,66 @@ auto seed_record_type_dynamic_array_local_cleanup_plans(
     if (depth > 16) {
         return true;
     }
+
+    if (auto array = fixed_array_source_type(source_type_name)) {
+        auto array_type = lowered_type_for_source_type_name(source_type_name, context.lowering);
+        auto element_type = lowered_type_for_source_type_name(array->element_source_type_name, context.lowering);
+        if (!array_type.has_value() || !element_type.has_value()) {
+            diagnostics.error(source_line, "source record-field array cleanup could not be planned");
+            return false;
+        }
+
+        auto const element_is_dynamic_array = is_dynamic_array_source_type(array->element_source_type_name);
+        auto const element_needs_cleanup = source_type_has_dynamic_array_cleanup_descendant(
+            array->element_source_type_name,
+            context,
+            depth + 1
+        );
+        if (!element_needs_cleanup) {
+            return true;
+        }
+
+        for (auto index = std::size_t {0}; index < array->length; ++index) {
+            auto element_owner_name = std::string {owner_name};
+            element_owner_name += ".element";
+            element_owner_name += std::to_string(index);
+            auto element_pointer = "%" + element_owner_name + ".addr" +
+                std::to_string(session.state.next_temporary_index++);
+            output << "  " << element_pointer << " = getelementptr " << array_type->type;
+            output << ", ptr " << storage_name << ", i64 0, i64 " << index << "\n";
+
+            if (element_is_dynamic_array) {
+                if (!seed_dynamic_array_cleanup_plan_for_storage(
+                        element_owner_name,
+                        array->element_source_type_name,
+                        element_pointer,
+                        source_line,
+                        context,
+                        session,
+                        diagnostics
+                    )) {
+                    return false;
+                }
+                continue;
+            }
+
+            if (!seed_record_type_dynamic_array_local_cleanup_plans(
+                    element_owner_name,
+                    array->element_source_type_name,
+                    element_pointer,
+                    source_line,
+                    context,
+                    session,
+                    diagnostics,
+                    output,
+                    depth + 1
+                )) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     auto const record = context.lowering.records.find(std::string(source_type_name));
     if (record == context.lowering.records.end()) {
         return true;
@@ -354,8 +537,12 @@ auto seed_record_type_dynamic_array_local_cleanup_plans(
 
     for (auto const& field : record->second.fields) {
         auto const field_is_dynamic_array = is_dynamic_array_source_type(field.source_type_name);
-        auto const field_is_record = context.lowering.records.contains(field.source_type_name);
-        if (!field_is_dynamic_array && !field_is_record) {
+        auto const field_needs_cleanup = source_type_has_dynamic_array_cleanup_descendant(
+            field.source_type_name,
+            context,
+            depth + 1
+        );
+        if (!field_needs_cleanup) {
             continue;
         }
 
@@ -368,33 +555,17 @@ auto seed_record_type_dynamic_array_local_cleanup_plans(
         output << ", ptr " << storage_name << ", i32 0, i32 " << field.index << "\n";
 
         if (field_is_dynamic_array) {
-            auto existing = std::find_if(
-                session.state.dynamic_array_local_cleanup_plans.begin(),
-                session.state.dynamic_array_local_cleanup_plans.end(),
-                [&](DynamicArrayDescriptorCleanupPlan const& plan) {
-                    return plan.owner_name == field_owner_name &&
-                        plan.source_type_name == field.source_type_name &&
-                        plan.descriptor_storage_status ==
-                            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-                }
-            );
-            if (existing != session.state.dynamic_array_local_cleanup_plans.end()) {
-                continue;
-            }
-
-            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-                field_owner_name,
-                field.source_type_name,
-                context.lowering
-            );
-            if (!cleanup_plan.has_value()) {
-                diagnostics.error(source_line, "source record-field dynamic array cleanup could not be planned");
+            if (!seed_dynamic_array_cleanup_plan_for_storage(
+                    field_owner_name,
+                    field.source_type_name,
+                    field_pointer,
+                    source_line,
+                    context,
+                    session,
+                    diagnostics
+                )) {
                 return false;
             }
-            cleanup_plan->descriptor_storage_name = field_pointer;
-            cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-            cleanup_plan->source_line = source_line;
-            session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
             continue;
         }
 

@@ -459,6 +459,58 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture
     assert(deallocate < return_value);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto items_address = output.find("%outer.items.addr");
+    auto first_item_address = output.find("%outer.items.element0.addr");
+    auto first_field_address = output.find("%outer.items.element0.values.addr");
+    auto first_cleanup = output.find("%outer.items.element0.values.dynamic_array_cleanup");
+    auto first_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_cleanup"
+    );
+    auto first_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_cleanup"
+    );
+    auto second_item_address = output.find("%outer.items.element1.addr");
+    auto second_field_address = output.find("%outer.items.element1.values.addr");
+    auto second_cleanup = output.find("%outer.items.element1.values.dynamic_array_cleanup");
+    auto second_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %outer.items.element1.values.dynamic_array_cleanup"
+    );
+    auto second_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element1.values.dynamic_array_cleanup"
+    );
+    auto return_value = output.find("ret i32 0");
+    assert(items_address != std::string::npos);
+    assert(first_item_address != std::string::npos);
+    assert(first_field_address != std::string::npos);
+    assert(first_cleanup != std::string::npos);
+    assert(first_drop != std::string::npos);
+    assert(first_deallocate != std::string::npos);
+    assert(second_item_address != std::string::npos);
+    assert(second_field_address != std::string::npos);
+    assert(second_cleanup != std::string::npos);
+    assert(second_drop != std::string::npos);
+    assert(second_deallocate != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(items_address < first_item_address);
+    assert(first_item_address < first_field_address);
+    assert(first_field_address < second_item_address);
+    assert(second_item_address < second_field_address);
+    assert(second_field_address < first_cleanup);
+    assert(first_field_address < first_cleanup);
+    assert(first_cleanup < first_drop);
+    assert(first_drop < first_deallocate);
+    assert(first_deallocate < second_cleanup);
+    assert(second_cleanup < second_drop);
+    assert(second_drop < second_deallocate);
+    assert(second_deallocate < return_value);
+}
+
 auto generic_method_lines() -> std::vector<std::string> {
     return {
         "package demo.cli",
@@ -801,6 +853,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_nested_field_scope_cleanup_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_indexed_field_scope_cleanup_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_indexed_field_scope_cleanup_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
