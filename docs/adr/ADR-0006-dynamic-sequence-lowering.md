@@ -647,6 +647,9 @@ representation.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
+- The same reassignment cleanup recursion is now pinned for multi-dimensional fixed arrays. The
+  `dynamic_array_owned_multidimensional_record_field_reassignment_run.or` fixture covers
+  `Holder.grid[row][column].values` cleanup before replacement storage.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
