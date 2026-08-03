@@ -1,0 +1,27 @@
+package tests.fixtures.choice_dynamic_array_return_payload_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice DualBuffered
+    Primary(values: DynamicArray<Payload>)
+    Secondary(values: DynamicArray<Payload>)
+
+function return_switch_payload(buffer: DualBuffered) -> DynamicArray<Payload>
+    switch buffer
+        Primary(values) => values
+        Secondary(values) => values
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(7 as UInt32))
+    values.push(Payload(11 as UInt32))
+    let returned: DynamicArray<Payload> = return_switch_payload(Primary(values))
+    returned.length() == 2 ? 0 as UInt32 : 1 as UInt32

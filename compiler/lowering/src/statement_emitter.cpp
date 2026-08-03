@@ -21,6 +21,7 @@
 
 #include "orison/semantics/drop_model.hpp"
 
+#include <algorithm>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -282,6 +283,52 @@ auto lower_dynamic_array_default_construction(
     cleanup_plan->descriptor_storage_name = std::move(storage_name);
     cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
     cleanup_plan->source_line = statement.line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    return true;
+}
+
+auto seed_dynamic_array_local_cleanup_plan(
+    std::string_view owner_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    auto const source_type = session.state.source_type_names.find(std::string(owner_name));
+    if (source_type == session.state.source_type_names.end() ||
+        !is_dynamic_array_source_type(source_type->second)) {
+        return true;
+    }
+    if (auto existing = std::find_if(
+            session.state.dynamic_array_local_cleanup_plans.begin(),
+            session.state.dynamic_array_local_cleanup_plans.end(),
+            [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+                return plan.owner_name == owner_name &&
+                    plan.source_type_name == source_type->second &&
+                    plan.descriptor_storage_status ==
+                        DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+            }
+        ); existing != session.state.dynamic_array_local_cleanup_plans.end()) {
+        return true;
+    }
+
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        return true;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        source_type->second,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        diagnostics.error(source_line, "source dynamic array cleanup could not be planned");
+        return false;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(*storage);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
     session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     return true;
 }
@@ -1563,7 +1610,13 @@ auto lower_let_statement(
                    )) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
-    return true;
+    return seed_dynamic_array_local_cleanup_plan(
+        statement.name,
+        statement.line,
+        context,
+        session,
+        diagnostics
+    );
 }
 
 auto lower_var_statement(
@@ -1669,7 +1722,13 @@ auto lower_var_statement(
                    )) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
-    return true;
+    return seed_dynamic_array_local_cleanup_plan(
+        statement.name,
+        statement.line,
+        context,
+        session,
+        diagnostics
+    );
 }
 
 auto lower_assignment_statement(

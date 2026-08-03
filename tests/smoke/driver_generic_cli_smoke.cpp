@@ -325,6 +325,32 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_choice_dynamic_array_return_payload_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto function_start = output.find(
+        "define { ptr, i64, i64 } @return_switch_payload({ i32, { ptr, i64, i64 } } %buffer)"
+    );
+    auto function_end = output.find("define i32 @main()", function_start);
+    auto payload_phi = output.find("phi { ptr, i64, i64 }", function_start);
+    auto case_cleanup = output.find("%values.dynamic_array_cleanup", function_start);
+    auto parent_cleanup = output.find("%buffer.Primary.values.choice_dynamic_array_cleanup", function_start);
+    assert(function_start != std::string::npos);
+    assert(function_end != std::string::npos);
+    assert(payload_phi != std::string::npos);
+    assert(case_cleanup == std::string::npos || function_end < case_cleanup);
+    assert(parent_cleanup == std::string::npos || function_end < parent_cleanup);
+    assert(output.find("%returned.dynamic_array_length") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %returned.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.dynamic_array_cleanup") !=
+        std::string::npos);
+}
+
 auto generic_method_lines() -> std::vector<std::string> {
     return {
         "package demo.cli",
@@ -627,6 +653,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         executable,
         fixtures / "dynamic_array_complete_contract.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "choice_dynamic_array_return_payload_run.or"
+    );
+    assert_cli_emit_llvm_choice_dynamic_array_return_payload_fixture_success(
+        executable,
+        fixtures / "choice_dynamic_array_return_payload_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

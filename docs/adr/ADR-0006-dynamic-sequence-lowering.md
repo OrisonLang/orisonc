@@ -617,6 +617,9 @@ representation.
 - Final switch cases that return a bound owned-element `DynamicArray<T>` choice payload now mark the branch-local
   payload binding consumed before scoped case cleanup. The `return_switch_payload` fixture pins descriptor phi return
   without cleaning the returned payload alias or parent choice payload.
+- The `choice_dynamic_array_return_payload_run.or` fixture now links and runs the same owned-element payload return
+  transfer. It constructs a non-empty `DualBuffered.Primary`, returns the descriptor through `switch`, observes
+  `.length()`, and lets the returned local own final element/drop cleanup.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
