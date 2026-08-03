@@ -7,6 +7,8 @@
   counts so enabled cleanup calls can be traced to their proof origin.
 - 2026-08-02: production-capable computed DynamicArray cleanup pipeline smokes no longer opt into explicit
   authorization/insertion seam flags; the remaining authorization-only fixture keeps the seam isolated.
+- 2026-08-02: test-only computed DynamicArray cleanup report commands now disable production local cleanup insertion
+  so they exercise the explicit fixture seam while normal report commands prove the production origin.
 - 2026-08-01: DynamicArray cleanup emission capability now has typed pipeline state, and the driver capability report
   renders from that state.
 - 2026-08-02: pipeline results no longer expose raw semantic planned-drop, drop-implementation, drop-resolution,

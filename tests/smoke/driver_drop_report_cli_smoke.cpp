@@ -1359,7 +1359,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_test_only_inserted_cleanup_handoffs,
         {
-            smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_production_enabled_report,
+            smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_fixture_enabled_report,
             smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report,
         }
     );
