@@ -570,6 +570,45 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassig
     assert(second_spare_deallocate < replacement_store);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_multi_field_nested_record_reassignment_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto inner_address = output.find("%outer.inner.addr");
+    auto values_cleanup = output.find("%outer.inner.values.dynamic_array_reassign_cleanup");
+    auto values_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
+    );
+    auto values_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
+    );
+    auto spare_cleanup = output.find("%outer.inner.spare.dynamic_array_reassign_cleanup");
+    auto spare_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %outer.inner.spare.dynamic_array_reassign_cleanup"
+    );
+    auto spare_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.spare.dynamic_array_reassign_cleanup"
+    );
+    auto replacement_store = output.find("store %record.Inner %tmp", spare_deallocate);
+    assert(inner_address != std::string::npos);
+    assert(values_cleanup != std::string::npos);
+    assert(values_drop != std::string::npos);
+    assert(values_deallocate != std::string::npos);
+    assert(spare_cleanup != std::string::npos);
+    assert(spare_drop != std::string::npos);
+    assert(spare_deallocate != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(inner_address < values_cleanup);
+    assert(values_cleanup < values_drop);
+    assert(values_drop < values_deallocate);
+    assert(values_deallocate < spare_cleanup);
+    assert(spare_cleanup < spare_drop);
+    assert(spare_drop < spare_deallocate);
+    assert(spare_deallocate < replacement_store);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_multidimensional_record_field_reassignment_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1133,6 +1172,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassignment_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_multi_field_indexed_record_reassignment_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_multi_field_nested_record_reassignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_multi_field_nested_record_reassignment_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_multi_field_nested_record_reassignment_run.or"
     );
     assert_cli_run_fixture_success(
         executable,
