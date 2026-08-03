@@ -1214,37 +1214,44 @@ auto lower_assignment_target(
     };
 }
 
-auto emit_dynamic_array_assignment_target_cleanup(
-    LoweredAssignmentTarget const& target,
+auto emit_dynamic_array_assignment_storage_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
+auto emit_dynamic_array_descriptor_assignment_storage_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name,
     std::size_t source_line,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    if (!target.owner_name.has_value() ||
-        !target.source_type_name.has_value() ||
-        !is_dynamic_array_source_type(*target.source_type_name)) {
-        return true;
-    }
-
     auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-        *target.owner_name,
-        *target.source_type_name,
+        owner_name,
+        source_type_name,
         context.lowering
     );
     if (!cleanup_plan.has_value()) {
         diagnostics.error(source_line, "source dynamic array cleanup could not be planned");
         return false;
     }
-    cleanup_plan->descriptor_storage_name = target.pointer;
+    cleanup_plan->descriptor_storage_name = std::string {descriptor_storage_name};
     cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
     cleanup_plan->source_line = source_line;
 
     auto element_drop_symbol_name = std::optional<std::string> {};
     if (!is_scalar_or_nonowning_source_type(cleanup_plan->element_source_type_name)) {
         element_drop_symbol_name = authorized_dynamic_array_element_drop_symbol_name(
-            *target.owner_name,
+            owner_name,
             cleanup_plan->element_source_type_name,
             context
         );
@@ -1257,7 +1264,7 @@ auto emit_dynamic_array_assignment_target_cleanup(
         }
     }
 
-    auto prefix = "%" + *target.owner_name + ".dynamic_array_reassign_cleanup" +
+    auto prefix = "%" + std::string {owner_name} + ".dynamic_array_reassign_cleanup" +
         std::to_string(session.state.next_temporary_index++);
     auto const label_prefix = prefix.substr(1);
     output << "  br label %" << label_prefix << ".cleanup.entry\n";
@@ -1308,6 +1315,90 @@ auto emit_dynamic_array_assignment_target_cleanup(
         ? label_prefix + ".drop.done"
         : label_prefix + ".cleanup.entry";
     return true;
+}
+
+auto emit_dynamic_array_assignment_storage_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (is_dynamic_array_source_type(source_type_name)) {
+        return emit_dynamic_array_descriptor_assignment_storage_cleanup(
+            owner_name,
+            source_type_name,
+            descriptor_storage_name,
+            source_line,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+    }
+
+    if (auto array = fixed_array_source_type(source_type_name)) {
+        if (!source_type_has_dynamic_array_cleanup_descendant(array->element_source_type_name, context)) {
+            return true;
+        }
+
+        auto array_type = lowered_type_for_source_type_name(source_type_name, context.lowering);
+        if (!array_type.has_value()) {
+            diagnostics.error(source_line, "source fixed-array dynamic array cleanup could not be planned");
+            return false;
+        }
+
+        for (auto index = std::size_t {0}; index < array->length; ++index) {
+            auto element_owner_name = std::string {owner_name};
+            element_owner_name += ".element";
+            element_owner_name += std::to_string(index);
+            auto element_pointer = "%" + element_owner_name + ".reassign.addr" +
+                std::to_string(session.state.next_temporary_index++);
+            output << "  " << element_pointer << " = getelementptr " << array_type->type;
+            output << ", ptr " << descriptor_storage_name << ", i64 0, i64 " << index << "\n";
+            if (!emit_dynamic_array_assignment_storage_cleanup(
+                    element_owner_name,
+                    array->element_source_type_name,
+                    element_pointer,
+                    source_line,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                )) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+auto emit_dynamic_array_assignment_target_cleanup(
+    LoweredAssignmentTarget const& target,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (!target.owner_name.has_value() || !target.source_type_name.has_value()) {
+        return true;
+    }
+
+    return emit_dynamic_array_assignment_storage_cleanup(
+        *target.owner_name,
+        *target.source_type_name,
+        target.pointer,
+        source_line,
+        context,
+        session,
+        diagnostics,
+        output
+    );
 }
 
 auto deferred_cleanup_block_for(

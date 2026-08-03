@@ -408,6 +408,52 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success
     assert(deallocate < replacement_store);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto values_address = output.find("%holder.values.addr");
+    auto first_element_address = output.find("%holder.values.element0.reassign.addr");
+    auto first_cleanup = output.find("%holder.values.element0.dynamic_array_reassign_cleanup");
+    auto first_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
+    );
+    auto first_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
+    );
+    auto second_element_address = output.find("%holder.values.element1.reassign.addr");
+    auto second_cleanup = output.find("%holder.values.element1.dynamic_array_reassign_cleanup");
+    auto second_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %holder.values.element1.dynamic_array_reassign_cleanup"
+    );
+    auto second_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element1.dynamic_array_reassign_cleanup"
+    );
+    auto replacement_store = output.find("store [2 x { ptr, i64, i64 }] %tmp", second_deallocate);
+    assert(values_address != std::string::npos);
+    assert(first_element_address != std::string::npos);
+    assert(first_cleanup != std::string::npos);
+    assert(first_drop != std::string::npos);
+    assert(first_deallocate != std::string::npos);
+    assert(second_element_address != std::string::npos);
+    assert(second_cleanup != std::string::npos);
+    assert(second_drop != std::string::npos);
+    assert(second_deallocate != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(values_address < first_element_address);
+    assert(first_element_address < first_cleanup);
+    assert(first_cleanup < first_drop);
+    assert(first_drop < first_deallocate);
+    assert(first_deallocate < second_element_address);
+    assert(second_element_address < second_cleanup);
+    assert(first_deallocate < second_cleanup);
+    assert(second_cleanup < second_drop);
+    assert(second_drop < second_deallocate);
+    assert(second_deallocate < replacement_store);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -882,6 +928,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_field_reassignment_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_direct_indexed_field_reassignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_direct_indexed_field_reassignment_run.or"
     );
     assert_cli_run_fixture_success(
         executable,
