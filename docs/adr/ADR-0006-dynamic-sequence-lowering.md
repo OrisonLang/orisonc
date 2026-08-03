@@ -601,8 +601,11 @@ representation.
 - Owned-element `DynamicArray<T>` choice payloads now lower through the same descriptor ABI for exact descriptor
   payload variants, and addressable choice owners emit tag-guarded nested descriptor cleanup. The
   `choice_dynamic_array_owned_payload.or` fixture pins `Buffered.Ready(values: DynamicArray<Payload>)` with
-  source-backed element drops followed by descriptor deallocation. Distinct byte-buffer choice payload storage remains
-  outside this cleanup slice.
+  source-backed element drops followed by descriptor deallocation.
+- Distinct byte-buffer choice payload storage now reloads owned-element `DynamicArray<T>` descriptors from the finite
+  `{ i32, [N x i8] }` payload slot before tag-guarded nested cleanup. The
+  `choice_dynamic_array_distinct_payload.or` fixture pins `Buffered.Ready(values: DynamicArray<Payload>)` alongside a
+  distinct scalar variant and verifies source-backed element drops followed by descriptor deallocation.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

@@ -593,6 +593,45 @@ auto main() -> int {
     assert(choice_owned_drop < choice_owned_deallocate);
     assert(choice_owned_deallocate < choice_owned_return);
 
+    auto choice_dynamic_array_distinct_payload =
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_distinct_payload.or");
+    assert(!choice_dynamic_array_distinct_payload.has_errors());
+    assert(
+        choice_dynamic_array_distinct_payload.ir_text.find(
+            "define { i32, [24 x i8] } @make_buffer({ ptr, i64, i64 } %values)"
+        ) != std::string::npos
+    );
+    auto choice_distinct_tag_check = choice_dynamic_array_distinct_payload.ir_text.find(
+        "%buffer.Ready.values.choice_dynamic_array_cleanup2.is_active = icmp eq i32"
+    );
+    auto choice_distinct_payload_store = choice_dynamic_array_distinct_payload.ir_text.find(
+        "store [24 x i8] %buffer.Ready.values.choice_dynamic_array_cleanup.payload.storage.value, "
+        "ptr %buffer.Ready.values.choice_dynamic_array_cleanup.payload.storage.addr, align 8"
+    );
+    auto choice_distinct_descriptor_load = choice_dynamic_array_distinct_payload.ir_text.find(
+        "%buffer.Ready.values.choice_dynamic_array_cleanup.descriptor = load { ptr, i64, i64 }, "
+        "ptr %buffer.Ready.values.choice_dynamic_array_cleanup.payload.storage.addr, align 8"
+    );
+    auto choice_distinct_drop = choice_dynamic_array_distinct_payload.ir_text.find(
+        "call void @__orison_drop.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
+    );
+    auto choice_distinct_deallocate = choice_dynamic_array_distinct_payload.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr "
+        "%buffer.Ready.values.choice_dynamic_array_cleanup0.cleanup.data"
+    );
+    auto choice_distinct_return = choice_dynamic_array_distinct_payload.ir_text.find("ret i32 0");
+    assert(choice_distinct_tag_check != std::string::npos);
+    assert(choice_distinct_payload_store != std::string::npos);
+    assert(choice_distinct_descriptor_load != std::string::npos);
+    assert(choice_distinct_drop != std::string::npos);
+    assert(choice_distinct_deallocate != std::string::npos);
+    assert(choice_distinct_return != std::string::npos);
+    assert(choice_distinct_tag_check < choice_distinct_payload_store);
+    assert(choice_distinct_payload_store < choice_distinct_descriptor_load);
+    assert(choice_distinct_descriptor_load < choice_distinct_drop);
+    assert(choice_distinct_drop < choice_distinct_deallocate);
+    assert(choice_distinct_deallocate < choice_distinct_return);
+
     auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
         fixtures / "dynamic_array_owned_parameter_source_drop.or"
     );

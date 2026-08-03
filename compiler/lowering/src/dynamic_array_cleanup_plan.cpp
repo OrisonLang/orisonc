@@ -128,6 +128,17 @@ auto emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
     return output.str();
 }
 
+auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::optional<std::string_view> {
+    auto type = std::string_view {layout.llvm_type_name};
+    if (type == "i32") {
+        return std::nullopt;
+    }
+    if (!type.starts_with("{ i32, ") || !type.ends_with(" }")) {
+        return std::nullopt;
+    }
+    return type.substr(7, type.size() - 9);
+}
+
 auto authorized_element_drop_symbol_name(
     std::string_view name,
     DynamicArrayDescriptorCleanupPlan const& plan,
@@ -885,7 +896,9 @@ auto emit_choice_dynamic_array_payload_cleanups(
 
         for (auto const& variant : choice->second.variants) {
             for (auto const& payload : variant.payloads) {
-                if (payload.llvm_type != dynamic_array_descriptor_llvm_type() ||
+                auto const payload_field_type = choice_payload_field_type(choice->second);
+                if (!payload_field_type.has_value() ||
+                    payload.llvm_type != dynamic_array_descriptor_llvm_type() ||
                     variant.lowered_payload_type != dynamic_array_descriptor_llvm_type()) {
                     continue;
                 }
@@ -938,8 +951,24 @@ auto emit_choice_dynamic_array_payload_cleanups(
                        << ", label %" << after_block << "\n";
                 output << cleanup_block << ":\n";
                 auto descriptor_value = "%" + owner_name + ".choice_dynamic_array_cleanup.descriptor";
-                output << "  " << descriptor_value << " = extractvalue "
-                       << choice->second.llvm_type_name << " " << choice_value << ", 1\n";
+                if (*payload_field_type == variant.lowered_payload_type) {
+                    output << "  " << descriptor_value << " = extractvalue "
+                           << choice->second.llvm_type_name << " " << choice_value << ", 1\n";
+                } else {
+                    auto payload_storage_value =
+                        "%" + owner_name + ".choice_dynamic_array_cleanup.payload.storage.value";
+                    auto payload_storage_addr =
+                        "%" + owner_name + ".choice_dynamic_array_cleanup.payload.storage.addr";
+                    output << "  " << payload_storage_value << " = extractvalue "
+                           << choice->second.llvm_type_name << " " << choice_value << ", 1\n";
+                    output << "  " << payload_storage_addr << " = alloca " << *payload_field_type
+                           << ", align 8\n";
+                    output << "  store " << *payload_field_type << " " << payload_storage_value
+                           << ", ptr " << payload_storage_addr << ", align 8\n";
+                    output << "  " << descriptor_value << " = load "
+                           << variant.lowered_payload_type << ", ptr " << payload_storage_addr
+                           << ", align 8\n";
+                }
                 auto cleanup_prefix = "%" + block_prefix;
                 output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
                     *cleanup_plan,
