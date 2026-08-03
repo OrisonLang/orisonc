@@ -186,6 +186,24 @@ int main() {
             ChoiceVariantSyntax {.name = "Empty"},
         },
     });
+    module.choices.push_back(ChoiceSyntax {
+        .name = "Buffered",
+        .variants = {
+            ChoiceVariantSyntax {
+                .name = "Ready",
+                .payloads = {
+                    NamedTypeSyntax {
+                        .name = "values",
+                        .type = TypeSyntax {
+                            .name = "DynamicArray",
+                            .generic_arguments = {TypeSyntax {.name = "UInt32"}},
+                        },
+                    },
+                },
+            },
+            ChoiceVariantSyntax {.name = "Empty"},
+        },
+    });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
         .receiver_type = TypeSyntax {.name = "Device"},
@@ -252,7 +270,7 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 4);
     assert(context.records.size() == 9);
-    assert(context.choices.size() == 3);
+    assert(context.choices.size() == 4);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
     assert(context.generic_record_parameters.size() == 1);
@@ -382,6 +400,19 @@ int main() {
     assert(status_layout.variants[1].name == "Empty");
     assert(status_layout.variants[1].tag == 1);
     assert(status_layout.variants[1].payloads.empty());
+    assert(context.choices.contains("Buffered"));
+    auto const& buffered_layout = context.choices.at("Buffered");
+    assert(buffered_layout.name == "Buffered");
+    assert(buffered_layout.source_type_name == "Buffered");
+    assert(buffered_layout.llvm_type_name == "{ i32, { ptr, i64, i64 } }");
+    assert(buffered_layout.unsupported_abi_reason.empty());
+    assert(buffered_layout.variants.size() == 2);
+    assert(buffered_layout.variants[0].name == "Ready");
+    assert(buffered_layout.variants[0].lowered_payload_type == "{ ptr, i64, i64 }");
+    assert(buffered_layout.variants[0].payloads.size() == 1);
+    assert(buffered_layout.variants[0].payloads[0].name == "values");
+    assert(buffered_layout.variants[0].payloads[0].source_type_name == "DynamicArray<UInt32>");
+    assert(buffered_layout.variants[0].payloads[0].llvm_type == "{ ptr, i64, i64 }");
     assert(context.functions.at("make_status").return_type == "{ i32, i32 }");
     assert(context.functions.at("make_status").return_signedness == orison::lowering::IntegerSignedness::not_integer);
     assert(context.methods[0].receiver_type_name == "Device");

@@ -532,42 +532,42 @@ auto main() -> int {
     );
 
     auto choice_dynamic_array_payload =
-        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_rejected.or");
-    assert(choice_dynamic_array_payload.has_errors());
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload.or");
+    assert(!choice_dynamic_array_payload.has_errors());
     assert(
-        choice_dynamic_array_payload.error_text.find(
-            "lowering does not yet support Buffered as function return type: choice payload type "
-            "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+        choice_dynamic_array_payload.ir_text.find(
+            "define { i32, { ptr, i64, i64 } } @make_buffer({ ptr, i64, i64 } %values)"
         ) != std::string::npos
+    );
+    assert(
+        choice_dynamic_array_payload.ir_text.find("call void @__orison_dynamic_array_deallocate") ==
+        std::string::npos
     );
 
     auto choice_dynamic_array_payload_parameter =
-        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_parameter_rejected.or");
-    assert(choice_dynamic_array_payload_parameter.has_errors());
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_parameter.or");
+    assert(!choice_dynamic_array_payload_parameter.has_errors());
     assert(
-        choice_dynamic_array_payload_parameter.error_text.find(
-            "lowering does not yet support Buffered as function parameter type: choice payload type "
-            "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+        choice_dynamic_array_payload_parameter.ir_text.find(
+            "define i32 @consume({ i32, { ptr, i64, i64 } } %buffer)"
         ) != std::string::npos
     );
 
     auto choice_dynamic_array_payload_let =
-        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_let_rejected.or");
-    assert(choice_dynamic_array_payload_let.has_errors());
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_let.or");
+    assert(!choice_dynamic_array_payload_let.has_errors());
     assert(
-        choice_dynamic_array_payload_let.error_text.find(
-            "lowering does not yet support Buffered as let binding type: choice payload type "
-            "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+        choice_dynamic_array_payload_let.ir_text.find(
+            "%buffer.addr = alloca { i32, { ptr, i64, i64 } }"
         ) != std::string::npos
     );
 
     auto choice_dynamic_array_payload_var =
-        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_var_rejected.or");
-    assert(choice_dynamic_array_payload_var.has_errors());
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_var.or");
+    assert(!choice_dynamic_array_payload_var.has_errors());
     assert(
-        choice_dynamic_array_payload_var.error_text.find(
-            "lowering does not yet support Buffered as var binding type: choice payload type "
-            "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+        choice_dynamic_array_payload_var.ir_text.find(
+            "%buffer.addr = alloca { i32, { ptr, i64, i64 } }"
         ) != std::string::npos
     );
 

@@ -1510,7 +1510,11 @@ int main() {
     auto view_type = orison::lowering::llvm_type_for_source_type_name("shared.View<UInt32>", context);
     assert(view_type.has_value());
     assert(*view_type == std::string {orison::lowering::view_descriptor_llvm_type()});
-    assert(!orison::lowering::llvm_type_for_source_type_name("DynamicArray<UInt32>", context).has_value());
+    auto dynamic_array_type =
+        orison::lowering::llvm_type_for_source_type_name("DynamicArray<UInt32>", context);
+    assert(dynamic_array_type.has_value());
+    assert(*dynamic_array_type == std::string {orison::lowering::dynamic_array_descriptor_llvm_type()});
+    assert(!orison::lowering::llvm_type_for_source_type_name("DynamicArray<Bucket>", context).has_value());
 
     assert(!orison::lowering::llvm_type_for_source_type_name("Maybe<Unit>", context).has_value());
 

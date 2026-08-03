@@ -1526,6 +1526,12 @@ auto llvm_field_type_for(
     if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
         return std::string {*lowered_type};
     }
+    if (type.name == "DynamicArray" && type.generic_arguments.size() == 1) {
+        auto element_source_type = render_source_type_name(type.generic_arguments[0]);
+        if (is_scalar_or_nonowning_source_type(element_source_type)) {
+            return std::string {dynamic_array_descriptor_llvm_type()};
+        }
+    }
     auto source_type_name = render_record_type_name(type);
     if (record_names.contains(source_type_name)) {
         return lowered_record_type_name(source_type_name);

@@ -1,4 +1,4 @@
-package tests.fixtures.choice_dynamic_array_payload_parameter_rejected
+package tests.fixtures.choice_dynamic_array_payload_parameter
 
 choice Buffered
     Ready(values: DynamicArray<UInt32>)

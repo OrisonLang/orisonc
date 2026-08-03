@@ -227,7 +227,7 @@ int main() {
         .source_type_name = "Buffered",
         .llvm_type_name = "{ i32 }",
         .unsupported_abi_reason =
-            "choice payload type 'DynamicArray<UInt32>' does not yet have a lowered choice ABI",
+            "choice payload type 'OpaqueHandle' does not yet have a lowered choice ABI",
         .variants = {
             orison::lowering::LoweredChoiceVariant {
                 .name = "Ready",
@@ -235,7 +235,7 @@ int main() {
                 .payloads = {
                     orison::lowering::LoweredChoicePayload {
                         .name = "values",
-                        .source_type_name = "DynamicArray<UInt32>",
+                        .source_type_name = "OpaqueHandle",
                         .llvm_type = "ptr",
                         .index = 0,
                     },
@@ -292,7 +292,7 @@ int main() {
             unsupported_choice_session.failures.expression
         ) ==
         "unsupported choice ABI: choice constructor 'Ready' for 'Buffered': choice payload type "
-        "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+        "'OpaqueHandle' does not yet have a lowered choice ABI"
     );
 
     auto null_safe_lowering = orison::lowering::LoweringContext {};

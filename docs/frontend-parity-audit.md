@@ -1,5 +1,10 @@
 # Frontend Parity Audit
 
+- 2026-08-02: scalar/non-owning `DynamicArray<T>` choice payloads now lower through the finite descriptor ABI
+  `{ ptr, i64, i64 }` at return, parameter, annotated `let`, and annotated `var` boundaries. The
+  `choice_dynamic_array_payload*.or` fixtures pin the accepted `Buffered.Ready(values: DynamicArray<UInt32>)` ABI and
+  constructor payload moves now suppress source descriptor cleanup after insertion into the choice value. Owned-element
+  descriptor payload cleanup inside choices remains separate follow-up work.
 - 2026-08-02: computed DynamicArray cleanup handoff metadata now records whether cleanup-call authorization came from
   the production local-cleanup plan or the explicit fixture seam, and pipeline audit state exposes counts for each
   origin.
@@ -534,16 +539,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   and statement emitters. Return, parameter, annotated `let`, and annotated `var` boundaries keep the same pinned
   diagnostics; assignment/reassignment cannot yet reach an unsupported choice ABI value because those boundary checks
   reject the value before mutable storage exists.
-- 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for annotated local `let` and `var` bindings
-  too. The `choice_dynamic_array_payload_let_rejected.or` and
-  `choice_dynamic_array_payload_var_rejected.or` fixtures confirm `Buffered` locals explain that
-  `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
-- 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for function parameter boundaries too. The
-  `choice_dynamic_array_payload_parameter_rejected.or` fixture confirms `Buffered` parameters explain that
-  `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
-- 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for descriptor-backed payloads. The
-  `choice_dynamic_array_payload_rejected.or` fixture confirms `Buffered.Ready(values: DynamicArray<UInt32>)` fails
-  explicitly as a function return type because `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
+- 2026-07-24: unsupported choice payload ABI diagnostics were pinned for descriptor-backed payloads at return,
+  parameter, annotated `let`, and annotated `var` boundaries. This historical rejection was superseded on 2026-08-02
+  for scalar/non-owning `DynamicArray<T>` descriptor payloads; owned-element descriptor payload cleanup inside choices
+  remains outside the accepted boundary.
 - 2026-07-24: nested fixed arrays of records containing multi-payload choice fields are now pinned through nested
   array literals, multi-level indexed record-field assignment, calls, and downstream indexed field-read payload
   recovery. `local_result_multi_payload_choice_nested_array_record.or` exercises `Array<Array<Holder, 2>, 2>` where

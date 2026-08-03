@@ -269,6 +269,46 @@ void release_returned_dynamic_array_local_cleanup(
     }
 }
 
+void release_returned_choice_dynamic_array_payload_cleanup(
+    syntax::ExpressionSyntax const& expression,
+    std::optional<std::string_view> return_source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) {
+    if (!return_source_type_name.has_value() ||
+        expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return;
+    }
+
+    auto choice = context.choices.find(std::string {*return_source_type_name});
+    if (choice == context.choices.end()) {
+        return;
+    }
+
+    auto const& variant_name = expression.left->text;
+    for (auto const& variant : choice->second.variants) {
+        if (variant.name != variant_name || variant.payloads.size() != expression.arguments.size()) {
+            continue;
+        }
+        for (auto index = std::size_t {0}; index < variant.payloads.size(); ++index) {
+            auto const& argument = expression.arguments[index];
+            auto const& payload = variant.payloads[index];
+            if (argument.kind != syntax::ExpressionKind::name ||
+                dynamic_array_element_source_type_name(payload.source_type_name) == std::nullopt) {
+                continue;
+            }
+            auto source_type = state.source_type_names.find(argument.text);
+            if (source_type != state.source_type_names.end() &&
+                source_type->second == payload.source_type_name) {
+                mark_owned_binding_consumed(state.ownership_transfers, argument.text);
+            }
+        }
+        return;
+    }
+}
+
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -717,6 +757,12 @@ auto lower_guard_return_statement(
     }
 
     release_returned_dynamic_array_local_cleanup(statement.expression, return_source_type_name, session.state);
+    release_returned_choice_dynamic_array_payload_cleanup(
+        statement.expression,
+        return_source_type_name,
+        context.lowering,
+        session.state
+    );
     if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return StatementFlow::failed;
     }
@@ -1570,6 +1616,12 @@ void emit_function_body(
 
     if (expression != nullptr) {
         release_returned_dynamic_array_local_cleanup(*expression, return_source_type_name, session.state);
+        release_returned_choice_dynamic_array_payload_cleanup(
+            *expression,
+            return_source_type_name,
+            context.lowering,
+            session.state
+        );
     }
     if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return;

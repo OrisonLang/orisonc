@@ -2162,6 +2162,13 @@ auto lowered_type_for_source_type_name(
             .signedness = IntegerSignedness::not_integer,
         };
     }
+    if (auto element_type = dynamic_array_element_source_type_name(type_name);
+        element_type.has_value() && is_scalar_or_nonowning_source_type(*element_type)) {
+        return LoweredType {
+            .type = std::string {dynamic_array_descriptor_llvm_type()},
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
 
     auto type = syntax::TypeSyntax {.name = std::string(type_name)};
     if (auto lowered = llvm_type_for(type); lowered.has_value() && *lowered != "void") {

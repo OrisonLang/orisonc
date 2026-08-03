@@ -1,0 +1,8 @@
+package tests.fixtures.choice_dynamic_array_payload
+
+choice Buffered
+    Ready(values: DynamicArray<UInt32>)
+    Empty
+
+function make_buffer(values: DynamicArray<UInt32>) -> Buffered
+    Ready(values)

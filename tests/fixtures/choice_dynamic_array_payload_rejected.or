@@ -1,8 +1,0 @@
-package tests.fixtures.choice_dynamic_array_payload_rejected
-
-choice Buffered
-    Ready(values: DynamicArray<UInt32>)
-    Empty
-
-function make_buffer() -> Buffered
-    Empty

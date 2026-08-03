@@ -594,15 +594,11 @@ representation.
 - Nested fixed arrays of records containing multi-payload choice fields now have checked-in backend coverage through
   nested array literals, multi-level indexed record-field assignment, calls, and indexed field-read payload recovery.
   `local_result_multi_payload_choice_nested_array_record.or` pins `Array<Array<Holder, 2>, 2>`.
-- Unsupported choice payload ABI diagnostics are now pinned for descriptor-backed payloads. The
-  `choice_dynamic_array_payload_rejected.or` fixture confirms `Buffered.Ready(values: DynamicArray<UInt32>)` fails
-  explicitly as a function return type because `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
-- Unsupported choice payload ABI diagnostics are now also pinned for function parameter boundaries. The
-  `choice_dynamic_array_payload_parameter_rejected.or` fixture confirms `Buffered` parameters explain that
-  `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
-- Unsupported choice payload ABI diagnostics are now also pinned for annotated local `let` and `var` bindings. The
-  `choice_dynamic_array_payload_let_rejected.or` and `choice_dynamic_array_payload_var_rejected.or` fixtures confirm
-  `Buffered` locals explain that `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
+- Scalar/non-owning `DynamicArray<T>` choice payloads now lower through the finite descriptor ABI
+  `{ ptr, i64, i64 }` at return, parameter, annotated `let`, and annotated `var` boundaries. The
+  `choice_dynamic_array_payload*.or` fixtures pin accepted `Buffered.Ready(values: DynamicArray<UInt32>)` ABI use, and
+  constructor payload moves now suppress source descriptor cleanup after insertion into the choice value. Owned-element
+  descriptor payload cleanup inside choices remains outside this accepted boundary.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
