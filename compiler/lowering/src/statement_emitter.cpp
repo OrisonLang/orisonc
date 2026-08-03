@@ -333,6 +333,95 @@ auto seed_dynamic_array_local_cleanup_plan(
     return true;
 }
 
+auto seed_record_field_dynamic_array_local_cleanup_plans(
+    std::string_view owner_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto const source_type = session.state.source_type_names.find(std::string(owner_name));
+    if (source_type == session.state.source_type_names.end()) {
+        return true;
+    }
+    auto const record = context.lowering.records.find(source_type->second);
+    if (record == context.lowering.records.end()) {
+        return true;
+    }
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        return true;
+    }
+
+    for (auto const& field : record->second.fields) {
+        if (!is_dynamic_array_source_type(field.source_type_name)) {
+            continue;
+        }
+
+        auto field_owner_name = std::string {owner_name};
+        field_owner_name += ".";
+        field_owner_name += field.name;
+        auto existing = std::find_if(
+            session.state.dynamic_array_local_cleanup_plans.begin(),
+            session.state.dynamic_array_local_cleanup_plans.end(),
+            [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+                return plan.owner_name == field_owner_name &&
+                    plan.source_type_name == field.source_type_name &&
+                    plan.descriptor_storage_status ==
+                        DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+            }
+        );
+        if (existing != session.state.dynamic_array_local_cleanup_plans.end()) {
+            continue;
+        }
+
+        auto field_pointer = "%" + field_owner_name + ".addr" +
+            std::to_string(session.state.next_temporary_index++);
+        output << "  " << field_pointer << " = getelementptr " << record->second.llvm_type_name;
+        output << ", ptr " << *storage << ", i32 0, i32 " << field.index << "\n";
+
+        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+            field_owner_name,
+            field.source_type_name,
+            context.lowering
+        );
+        if (!cleanup_plan.has_value()) {
+            diagnostics.error(source_line, "source record-field dynamic array cleanup could not be planned");
+            return false;
+        }
+        cleanup_plan->descriptor_storage_name = std::move(field_pointer);
+        cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        cleanup_plan->source_line = source_line;
+        session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    }
+    return true;
+}
+
+auto seed_local_cleanup_plans(
+    std::string_view owner_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    return seed_dynamic_array_local_cleanup_plan(
+        owner_name,
+        source_line,
+        context,
+        session,
+        diagnostics
+    ) && seed_record_field_dynamic_array_local_cleanup_plans(
+        owner_name,
+        source_line,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+}
+
 auto binary_instruction_for_assignment_operator(
     std::string const& assignment_operator,
     IntegerSignedness signedness
@@ -1713,12 +1802,13 @@ auto lower_let_statement(
                    )) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
-    return seed_dynamic_array_local_cleanup_plan(
+    return seed_local_cleanup_plans(
         statement.name,
         statement.line,
         context,
         session,
-        diagnostics
+        diagnostics,
+        output
     );
 }
 
@@ -1825,12 +1915,13 @@ auto lower_var_statement(
                    )) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
-    return seed_dynamic_array_local_cleanup_plan(
+    return seed_local_cleanup_plans(
         statement.name,
         statement.line,
         context,
         session,
-        diagnostics
+        diagnostics,
+        output
     );
 }
 

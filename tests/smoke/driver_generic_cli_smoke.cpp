@@ -408,6 +408,30 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success
     assert(deallocate < replacement_store);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto field_address = output.find("%holder.values.addr");
+    auto cleanup = output.find("%holder.values.dynamic_array_cleanup");
+    auto drop = output.find("call void @__orison_drop.Payload(ptr %holder.values.dynamic_array_cleanup");
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.dynamic_array_cleanup"
+    );
+    auto return_value = output.find("ret i32 0");
+    assert(field_address != std::string::npos);
+    assert(cleanup != std::string::npos);
+    assert(drop != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(field_address < cleanup);
+    assert(cleanup < drop);
+    assert(drop < deallocate);
+    assert(deallocate < return_value);
+}
+
 auto generic_method_lines() -> std::vector<std::string> {
     return {
         "package demo.cli",
@@ -734,6 +758,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_field_reassignment_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_field_scope_cleanup_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_field_scope_cleanup_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
