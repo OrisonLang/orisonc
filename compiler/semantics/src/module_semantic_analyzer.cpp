@@ -5804,8 +5804,17 @@ private:
         return first_generic_argument_type_name(type_name);
     }
 
-    void collect_record_field_dynamic_array_drop_sites(Binding const& binding) {
-        auto parsed_record_type = parse_rendered_type_name(binding.type_name);
+    void collect_record_type_dynamic_array_drop_sites(
+        std::string const& owner_name,
+        std::string const& type_name,
+        std::size_t declaration_line,
+        std::size_t depth = 0
+    ) {
+        if (depth > 16) {
+            return;
+        }
+
+        auto parsed_record_type = parse_rendered_type_name(type_name);
         if (!parsed_record_type.has_value()) {
             return;
         }
@@ -5822,25 +5831,38 @@ private:
             }
 
             auto field_type_name = render_type_name(substitute_generic_type_bindings(signature.field_type, bindings));
+            auto field_owner_name = owner_name + "." + signature.field_name;
             auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(field_type_name);
-            if (element_type_name.empty()) {
-                continue;
+            if (!element_type_name.empty()) {
+                dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
+                    .owner_name = field_owner_name,
+                    .source_type_name = field_type_name,
+                    .element_source_type_name = element_type_name,
+                    .line = declaration_line,
+                });
+                planned_drop_sites_.push_back(PlannedDropSite {
+                    .source_type_name = element_type_name,
+                    .abi_symbol_name = drop_abi_symbol_name(element_type_name),
+                    .owner_name = field_owner_name + ".element",
+                    .site_line = declaration_line,
+                });
             }
 
-            auto field_owner_name = binding.name + "." + signature.field_name;
-            dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
-                .owner_name = field_owner_name,
-                .source_type_name = field_type_name,
-                .element_source_type_name = element_type_name,
-                .line = binding.declaration_line,
-            });
-            planned_drop_sites_.push_back(PlannedDropSite {
-                .source_type_name = element_type_name,
-                .abi_symbol_name = drop_abi_symbol_name(element_type_name),
-                .owner_name = field_owner_name + ".element",
-                .site_line = binding.declaration_line,
-            });
+            collect_record_type_dynamic_array_drop_sites(
+                field_owner_name,
+                field_type_name,
+                declaration_line,
+                depth + 1
+            );
         }
+    }
+
+    void collect_record_field_dynamic_array_drop_sites(Binding const& binding) {
+        collect_record_type_dynamic_array_drop_sites(
+            binding.name,
+            binding.type_name,
+            binding.declaration_line
+        );
     }
 
     void collect_planned_drop_sites(std::vector<Binding> const& bindings) {

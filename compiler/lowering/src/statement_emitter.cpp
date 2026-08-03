@@ -333,6 +333,88 @@ auto seed_dynamic_array_local_cleanup_plan(
     return true;
 }
 
+auto seed_record_type_dynamic_array_local_cleanup_plans(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string_view storage_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    std::size_t depth = 0
+) -> bool {
+    if (depth > 16) {
+        return true;
+    }
+    auto const record = context.lowering.records.find(std::string(source_type_name));
+    if (record == context.lowering.records.end()) {
+        return true;
+    }
+
+    for (auto const& field : record->second.fields) {
+        auto const field_is_dynamic_array = is_dynamic_array_source_type(field.source_type_name);
+        auto const field_is_record = context.lowering.records.contains(field.source_type_name);
+        if (!field_is_dynamic_array && !field_is_record) {
+            continue;
+        }
+
+        auto field_owner_name = std::string {owner_name};
+        field_owner_name += ".";
+        field_owner_name += field.name;
+        auto field_pointer = "%" + field_owner_name + ".addr" +
+            std::to_string(session.state.next_temporary_index++);
+        output << "  " << field_pointer << " = getelementptr " << record->second.llvm_type_name;
+        output << ", ptr " << storage_name << ", i32 0, i32 " << field.index << "\n";
+
+        if (field_is_dynamic_array) {
+            auto existing = std::find_if(
+                session.state.dynamic_array_local_cleanup_plans.begin(),
+                session.state.dynamic_array_local_cleanup_plans.end(),
+                [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+                    return plan.owner_name == field_owner_name &&
+                        plan.source_type_name == field.source_type_name &&
+                        plan.descriptor_storage_status ==
+                            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+                }
+            );
+            if (existing != session.state.dynamic_array_local_cleanup_plans.end()) {
+                continue;
+            }
+
+            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+                field_owner_name,
+                field.source_type_name,
+                context.lowering
+            );
+            if (!cleanup_plan.has_value()) {
+                diagnostics.error(source_line, "source record-field dynamic array cleanup could not be planned");
+                return false;
+            }
+            cleanup_plan->descriptor_storage_name = field_pointer;
+            cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+            cleanup_plan->source_line = source_line;
+            session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+            continue;
+        }
+
+        if (!seed_record_type_dynamic_array_local_cleanup_plans(
+                field_owner_name,
+                field.source_type_name,
+                field_pointer,
+                source_line,
+                context,
+                session,
+                diagnostics,
+                output,
+                depth + 1
+            )) {
+            return false;
+        }
+    }
+    return true;
+}
+
 auto seed_record_field_dynamic_array_local_cleanup_plans(
     std::string_view owner_name,
     std::size_t source_line,
@@ -345,57 +427,21 @@ auto seed_record_field_dynamic_array_local_cleanup_plans(
     if (source_type == session.state.source_type_names.end()) {
         return true;
     }
-    auto const record = context.lowering.records.find(source_type->second);
-    if (record == context.lowering.records.end()) {
-        return true;
-    }
     auto storage = aggregate_storage_for_name(owner_name, session.state);
     if (!storage.has_value()) {
         return true;
     }
 
-    for (auto const& field : record->second.fields) {
-        if (!is_dynamic_array_source_type(field.source_type_name)) {
-            continue;
-        }
-
-        auto field_owner_name = std::string {owner_name};
-        field_owner_name += ".";
-        field_owner_name += field.name;
-        auto existing = std::find_if(
-            session.state.dynamic_array_local_cleanup_plans.begin(),
-            session.state.dynamic_array_local_cleanup_plans.end(),
-            [&](DynamicArrayDescriptorCleanupPlan const& plan) {
-                return plan.owner_name == field_owner_name &&
-                    plan.source_type_name == field.source_type_name &&
-                    plan.descriptor_storage_status ==
-                        DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-            }
-        );
-        if (existing != session.state.dynamic_array_local_cleanup_plans.end()) {
-            continue;
-        }
-
-        auto field_pointer = "%" + field_owner_name + ".addr" +
-            std::to_string(session.state.next_temporary_index++);
-        output << "  " << field_pointer << " = getelementptr " << record->second.llvm_type_name;
-        output << ", ptr " << *storage << ", i32 0, i32 " << field.index << "\n";
-
-        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-            field_owner_name,
-            field.source_type_name,
-            context.lowering
-        );
-        if (!cleanup_plan.has_value()) {
-            diagnostics.error(source_line, "source record-field dynamic array cleanup could not be planned");
-            return false;
-        }
-        cleanup_plan->descriptor_storage_name = std::move(field_pointer);
-        cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        cleanup_plan->source_line = source_line;
-        session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
-    }
-    return true;
+    return seed_record_type_dynamic_array_local_cleanup_plans(
+        owner_name,
+        source_type->second,
+        *storage,
+        source_line,
+        context,
+        session,
+        diagnostics,
+        output
+    );
 }
 
 auto seed_local_cleanup_plans(
