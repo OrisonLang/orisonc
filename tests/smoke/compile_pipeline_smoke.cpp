@@ -663,8 +663,8 @@ auto main() -> int {
     auto dynamic_array_drop_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
                     .initial_capacity = 2,
                 },
@@ -4752,8 +4752,8 @@ auto main() -> int {
                     .authorized = true,
                 },
             },
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
                     .owner_name = "items",
                     .initial_capacity = 2,
@@ -6052,8 +6052,8 @@ auto main() -> int {
                     .authorized = true,
                 },
             },
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
                     .owner_name = "items",
                     .initial_capacity = 2,

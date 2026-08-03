@@ -336,7 +336,7 @@ void test_emit_constant_uint32_return() {
     assert(result.ir_text == expected);
 }
 
-void test_collects_test_only_dynamic_array_construction_metadata() {
+void test_collects_fixture_dynamic_array_construction_metadata() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_dynamic_array_construction_metadata.or";
     auto result = lower_source(
         path,
@@ -345,8 +345,8 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "function main() -> UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<UInt32>",
                     .initial_capacity = 4,
                 },
@@ -657,8 +657,8 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "function main() -> UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<UInt32>",
                     .initial_capacity = 4,
                 },
@@ -1239,8 +1239,8 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
         "function main() -> UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
                     .initial_capacity = 2,
                 },
@@ -3665,8 +3665,8 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
         source,
         orison::lowering::LlvmIrEmissionOptions {
             .test_only_declared_drop_source_type_allowlist = {"Payload"},
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
                     .initial_capacity = 2,
                 },
@@ -3694,8 +3694,8 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
         path,
         source,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_dynamic_array_construction_requests = {
-                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+            .fixture_dynamic_array_construction_requests = {
+                orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
                     .initial_capacity = 2,
                 },
@@ -14400,7 +14400,7 @@ auto main() -> int {
 
     test_collects_aggregate_projection_access_plan_records();
     test_emit_constant_uint32_return();
-    test_collects_test_only_dynamic_array_construction_metadata();
+    test_collects_fixture_dynamic_array_construction_metadata();
     test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
     test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();

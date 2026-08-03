@@ -466,7 +466,7 @@ struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
     std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
     std::vector<semantics::DropLoweringAuthorization> test_only_semantic_drop_lowering_authorizations;
-    std::vector<lowering::TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
+    std::vector<lowering::FixtureDynamicArrayConstructionRequest> fixture_dynamic_array_construction_requests;
     bool test_only_enable_source_drop_lowering = false;
     bool source_drop_lowering_enabled = false;
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;

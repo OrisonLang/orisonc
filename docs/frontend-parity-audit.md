@@ -144,7 +144,9 @@
   records through lowering/pipeline boundaries; only the explicit CLI report command renders text.
 - 2026-07-30: computed owned `DynamicArray<T>` `for` audit collectors now reserve production audit naming for result
   metadata and helper functions. The remaining broad `test_only_dynamic_array_*` snippet fields are classified as
-  fixture-only renderers gated by explicit test-only options.
+  fixture-only renderers, while fixture construction requests use intent-named fields.
+- 2026-08-02: DynamicArray fixture construction request fields now use fixture-named internal API surface instead of
+  the prior broad test-only construction-request naming.
 - 2026-07-30: `examples/local_dynamic_array_computed_for.or` now pins computed same-owner `DynamicArray<UInt32>` `for`
   iteration with final-use cleanup through normal CLI run/build coverage.
 - 2026-07-30: the computed DynamicArray example smoke now also asserts CLI LLVM/object emission, including computed

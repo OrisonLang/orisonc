@@ -8,7 +8,7 @@
 
 namespace orison::lowering {
 
-struct TestOnlyDynamicArrayConstructionRequest {
+struct FixtureDynamicArrayConstructionRequest {
     std::string_view source_type_name;
     std::string_view owner_name;
     std::size_t initial_capacity = 0;
@@ -17,7 +17,7 @@ struct TestOnlyDynamicArrayConstructionRequest {
 struct LlvmIrEmissionOptions {
     // Test seam only. Do not expose this as user/compiler-driver surface.
     std::vector<std::string_view> test_only_declared_drop_source_type_allowlist;
-    std::vector<TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
+    std::vector<FixtureDynamicArrayConstructionRequest> fixture_dynamic_array_construction_requests;
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool enable_dynamic_array_descriptor_cleanup_planning = false;
     bool test_only_enable_dynamic_array_parameter_descriptors = false;

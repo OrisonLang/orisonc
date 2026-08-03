@@ -84,8 +84,8 @@ auto build_lowering_emission_options(
         result.semantic_drop_lowering_authorizations.end()
     );
     authorize_dynamic_array_owned_element_source_drops(emission_options.semantic_drop_lowering_authorizations);
-    emission_options.test_only_dynamic_array_construction_requests =
-        options.test_only_dynamic_array_construction_requests;
+    emission_options.fixture_dynamic_array_construction_requests =
+        options.fixture_dynamic_array_construction_requests;
     emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =
         options.test_only_derive_dynamic_array_cleanup_from_semantics;
     emission_options.collect_computed_dynamic_array_for_descriptor_renders =

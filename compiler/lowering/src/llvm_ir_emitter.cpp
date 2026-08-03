@@ -1723,7 +1723,7 @@ auto collect_dynamic_array_runtime_operations(
     if (has_view_index_read(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
     }
-    for (auto const& request : options.test_only_dynamic_array_construction_requests) {
+    for (auto const& request : options.fixture_dynamic_array_construction_requests) {
         auto plan = plan_dynamic_array_construction(
             request.source_type_name,
             request.initial_capacity,
@@ -1790,7 +1790,7 @@ auto dynamic_array_element_drop_cleanup(
 
 auto collect_dynamic_array_element_drop_cleanups(
     std::vector<DynamicArrayConstructionPlan> const& plans,
-    std::vector<TestOnlyDynamicArrayConstructionRequest> const& requests
+    std::vector<FixtureDynamicArrayConstructionRequest> const& requests
 ) -> std::vector<ConcurrencyDropCleanupPlan> {
     auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
     for (auto index = std::size_t {0}; index < plans.size(); ++index) {
@@ -2687,7 +2687,7 @@ auto emit_module(
         auto dynamic_array_drop_cleanups =
             collect_dynamic_array_element_drop_cleanups(
                 result.dynamic_array_construction_plans,
-                options.test_only_dynamic_array_construction_requests
+                options.fixture_dynamic_array_construction_requests
             );
         auto dynamic_array_descriptor_drop_cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
         dynamic_array_descriptor_drop_cleanups.reserve(result.dynamic_array_cleanup_obligations.size());
