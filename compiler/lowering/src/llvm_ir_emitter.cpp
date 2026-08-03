@@ -9,6 +9,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/module_prelude.hpp"
+#include "orison/lowering/module_symbol_registry.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/syntax_traversal.hpp"
@@ -183,6 +184,162 @@ auto collect_source_drop_definition_symbols(
         symbols.push_back(implementation.abi_symbol_name);
     }
     return symbols;
+}
+
+auto register_unique_module_symbol(
+    ModuleSymbolRegistry& registry,
+    std::unordered_set<std::string>& emitted_symbols,
+    std::string const& symbol_name,
+    std::string category,
+    std::size_t line,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    if (symbol_name.empty()) {
+        return true;
+    }
+    if (emitted_symbols.contains(symbol_name)) {
+        return true;
+    }
+    emitted_symbols.insert(symbol_name);
+    return registry.register_symbol(symbol_name, std::move(category), line, diagnostics);
+}
+
+auto validate_prelude_module_symbols(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
+    std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
+    std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations,
+    std::vector<std::string> const& source_defined_drop_symbols,
+    ModuleSymbolRegistry& registry,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    auto emitted_symbols = std::unordered_set<std::string> {};
+    for (auto const& function : module.functions) {
+        if (is_uninstantiated_generic_function(function)) {
+            continue;
+        }
+        auto signature = context.functions.find(function.name);
+        if (signature == context.functions.end()) {
+            continue;
+        }
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            signature->second.symbol_name,
+            "source function symbol",
+            function.line,
+            diagnostics
+        );
+    }
+    for (auto const& function_ptr : context.generic_function_specializations) {
+        auto const& function = *function_ptr;
+        auto signature = context.functions.find(function.name);
+        if (signature == context.functions.end()) {
+            continue;
+        }
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            signature->second.symbol_name,
+            "generated generic function specialization",
+            function.line,
+            diagnostics
+        );
+    }
+    for (auto const& method : context.methods) {
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            method.signature.symbol_name,
+            "generated method symbol",
+            1,
+            diagnostics
+        );
+    }
+    for (auto const& specialization : context.generic_method_specializations) {
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            specialization.symbol_name,
+            "generated method symbol",
+            specialization.source_method == nullptr ? 1 : specialization.source_method->line,
+            diagnostics
+        );
+    }
+    for (auto const& declaration : context.foreign_declarations) {
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            declaration.symbol_name,
+            "foreign declaration",
+            1,
+            diagnostics
+        );
+    }
+    for (auto operation : concurrency_runtime_operations) {
+        auto runtime_call = concurrency_runtime_call(operation);
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            std::string {runtime_call.symbol_name},
+            "runtime prelude declaration",
+            1,
+            diagnostics
+        );
+    }
+    for (auto operation : dynamic_array_runtime_operations) {
+        auto runtime_call = dynamic_array_runtime_call(operation);
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            std::string {runtime_call.symbol_name},
+            "dynamic array runtime prelude declaration",
+            1,
+            diagnostics
+        );
+    }
+    for (auto const& symbol_name : source_defined_drop_symbols) {
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            symbol_name,
+            "source drop definition",
+            1,
+            diagnostics
+        );
+    }
+    for (auto const& declaration : planned_drop_declarations) {
+        if (!declaration.emit_declaration ||
+            emitted_symbols.contains(declaration.symbol_name)) {
+            continue;
+        }
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            declaration.symbol_name,
+            "planned drop declaration",
+            declaration.discovery_line,
+            diagnostics
+        );
+    }
+    return !diagnostics.has_errors();
+}
+
+auto validate_generated_definition_symbols(
+    std::vector<GeneratedModuleSymbol> const& generated_symbols,
+    ModuleSymbolRegistry& registry,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    for (auto const& symbol : generated_symbols) {
+        registry.register_symbol(
+            symbol.symbol_name,
+            symbol.category,
+            symbol.line,
+            diagnostics
+        );
+    }
+    return !diagnostics.has_errors();
 }
 
 auto has_authorized_dynamic_array_owned_element_cleanup(
@@ -1587,6 +1744,11 @@ void append_function_emission_reports(
     LlvmIrEmissionResult& result,
     FunctionEmissionResult const& function_emission
 ) {
+    result.generated_module_symbols.insert(
+        result.generated_module_symbols.end(),
+        function_emission.generated_module_symbols.begin(),
+        function_emission.generated_module_symbols.end()
+    );
     result.emitted_dynamic_array_cleanup_obligations.reserve(
         result.emitted_dynamic_array_cleanup_obligations.size() +
         function_emission.emitted_dynamic_array_cleanup_obligations.size()
@@ -2478,6 +2640,11 @@ auto emit_module(
                 result.planned_drop_declarations,
                 cleanup.actions
             );
+            result.generated_module_symbols.push_back(GeneratedModuleSymbol {
+                .symbol_name = cleanup.cleanup_symbol_name,
+                .category = "generated dynamic array cleanup helper",
+                .line = cleanup.actions.empty() ? 1 : cleanup.actions.front().discovery_line,
+            });
             result.drop_cleanups.push_back(std::move(cleanup));
         }
     }
@@ -2756,10 +2923,24 @@ auto emit_module(
     }
     auto source_defined_drop_symbols =
         collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations);
+    auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
+    auto module_symbol_registry = ModuleSymbolRegistry {};
+    if (!validate_prelude_module_symbols(
+            module,
+            context,
+            concurrency_runtime_operations,
+            result.planned_drop_declarations,
+            result.dynamic_array_runtime_operations,
+            source_defined_drop_symbols,
+            module_symbol_registry,
+            result.diagnostics
+        )) {
+        return result;
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,
-        collect_concurrency_runtime_operations(module),
+        concurrency_runtime_operations,
         result.planned_drop_declarations,
         result.dynamic_array_runtime_operations,
         source_defined_drop_symbols
@@ -2883,6 +3064,14 @@ auto emit_module(
 
     for (auto const& line : result.computed_dynamic_array_for_production_sequence_module_ir) {
         output << line;
+    }
+
+    if (!validate_generated_definition_symbols(
+            result.generated_module_symbols,
+            module_symbol_registry,
+            result.diagnostics
+        )) {
+        return result;
     }
 
     if (!result.has_errors()) {

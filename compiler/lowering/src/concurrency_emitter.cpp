@@ -201,11 +201,26 @@ auto queue_concurrency_function_definitions(
     ConcurrencyExpressionPlan const& plan,
     std::string entry_thunk_definition,
     std::string cleanup_definition,
+    std::size_t line,
     FunctionLoweringState& state
 ) -> void {
     state.pending_function_definitions.push_back(std::move(entry_thunk_definition));
+    if (!plan.thunk_symbol_name.empty()) {
+        state.pending_generated_module_symbols.push_back(GeneratedModuleSymbol {
+            .symbol_name = plan.thunk_symbol_name,
+            .category = "generated concurrency thunk",
+            .line = line,
+        });
+    }
     if (!plan.captures.empty()) {
         state.pending_function_definitions.push_back(std::move(cleanup_definition));
+        if (!plan.cleanup_symbol_name.empty()) {
+            state.pending_generated_module_symbols.push_back(GeneratedModuleSymbol {
+                .symbol_name = plan.cleanup_symbol_name,
+                .category = "generated concurrency cleanup",
+                .line = line,
+            });
+        }
     }
 }
 

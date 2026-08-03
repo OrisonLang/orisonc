@@ -88,6 +88,7 @@ auto queue_concurrency_function_definitions(
     ConcurrencyExpressionPlan const& plan,
     std::string entry_thunk_definition,
     std::string cleanup_definition,
+    std::size_t line,
     FunctionLoweringState& state
 ) -> void;
 

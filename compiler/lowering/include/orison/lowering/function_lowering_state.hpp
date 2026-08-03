@@ -8,6 +8,7 @@
 #include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/lowered_value.hpp"
+#include "orison/lowering/module_symbol_registry.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 
 #include <cstddef>
@@ -81,6 +82,7 @@ struct FunctionLoweringState {
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;
     std::vector<std::string> pending_function_definitions;
+    std::vector<GeneratedModuleSymbol> pending_generated_module_symbols;
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
     std::size_t next_concurrency_ordinal = 0;

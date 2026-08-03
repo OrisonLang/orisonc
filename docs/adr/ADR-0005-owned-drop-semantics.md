@@ -157,6 +157,8 @@ inventing semantics outside the spec/tour.
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI
   behavior or source-language surface.
+- Module emission now validates planned drop declarations and generated DynamicArray cleanup helper symbols through the
+  shared lowering module symbol registry before generated LLVM IR is accepted.
 
 ## Consequences
 

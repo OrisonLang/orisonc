@@ -20,6 +20,8 @@ namespace {
 
 auto scalar_capture_plan(std::string llvm_type = "i64") -> orison::lowering::ConcurrencyExpressionPlan {
     return orison::lowering::ConcurrencyExpressionPlan {
+        .thunk_symbol_name = "__orison_thread_thunk.test.12.0",
+        .cleanup_symbol_name = "__orison_thread_cleanup.test.12.0",
         .environment_layout = orison::lowering::ConcurrencyEnvironmentLayout {
             .llvm_type = "{ i64 }",
         },
@@ -155,21 +157,31 @@ auto test_queue_concurrency_function_definitions() -> void {
         captured_plan,
         "define private void @entry() {}\n",
         "define private void @cleanup() {}\n",
+        12,
         state
     );
     assert(state.pending_function_definitions.size() == 2);
     assert(state.pending_function_definitions[0] == "define private void @entry() {}\n");
     assert(state.pending_function_definitions[1] == "define private void @cleanup() {}\n");
+    assert(state.pending_generated_module_symbols.size() == 2);
+    assert(state.pending_generated_module_symbols[0].symbol_name == captured_plan.thunk_symbol_name);
+    assert(state.pending_generated_module_symbols[0].category == "generated concurrency thunk");
+    assert(state.pending_generated_module_symbols[0].line == 12);
+    assert(state.pending_generated_module_symbols[1].symbol_name == captured_plan.cleanup_symbol_name);
+    assert(state.pending_generated_module_symbols[1].category == "generated concurrency cleanup");
+    assert(state.pending_generated_module_symbols[1].line == 12);
 
     auto empty_capture_plan = orison::lowering::ConcurrencyExpressionPlan {};
     orison::lowering::queue_concurrency_function_definitions(
         empty_capture_plan,
         "define private void @entry.no_capture() {}\n",
         "define private void @cleanup.no_capture() {}\n",
+        14,
         state
     );
     assert(state.pending_function_definitions.size() == 3);
     assert(state.pending_function_definitions[2] == "define private void @entry.no_capture() {}\n");
+    assert(state.pending_generated_module_symbols.size() == 2);
 }
 
 auto test_result_completion_emitters() -> void {

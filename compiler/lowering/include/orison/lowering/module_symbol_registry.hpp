@@ -8,6 +8,12 @@
 
 namespace orison::lowering {
 
+struct GeneratedModuleSymbol {
+    std::string symbol_name;
+    std::string category;
+    std::size_t line = 0;
+};
+
 class ModuleSymbolRegistry {
 public:
     auto register_symbol(

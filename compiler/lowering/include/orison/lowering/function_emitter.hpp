@@ -10,6 +10,7 @@
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_options.hpp"
+#include "orison/lowering/module_symbol_registry.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -30,6 +31,7 @@ struct FunctionEmissionResult {
     std::vector<ComputedDynamicArrayCleanupStateHandoff> computed_dynamic_array_inserted_cleanup_handoffs;
     std::vector<ComputedDynamicArrayCleanupCallOperands> computed_dynamic_array_cleanup_call_operands;
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
+    std::vector<GeneratedModuleSymbol> generated_module_symbols;
 };
 
 auto emit_function_with_metadata(

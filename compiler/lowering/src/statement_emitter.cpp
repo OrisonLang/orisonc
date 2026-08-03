@@ -426,6 +426,7 @@ auto lower_thread_let_statement(
         *plan,
         std::move(*thunk_definition),
         std::move(cleanup_definition),
+        statement.line,
         session.state
     );
     return true;

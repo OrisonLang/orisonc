@@ -1262,6 +1262,9 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     assert(result.drop_cleanups.size() == 1);
     assert(result.drop_cleanups.front().cleanup_symbol_name == "__orison_dynamic_array_cleanup.0");
     assert(!orison::lowering::drop_calls_enabled(result.drop_cleanups.front()));
+    assert(result.generated_module_symbols.size() == 1);
+    assert(result.generated_module_symbols.front().symbol_name == "__orison_dynamic_array_cleanup.0");
+    assert(result.generated_module_symbols.front().category == "generated dynamic array cleanup helper");
     auto action_report = result.planned_drop_action_report();
     assert(action_report.size() == 1);
     assert(
@@ -12557,6 +12560,13 @@ void test_emit_scalar_thread_join_expression() {
     assert(result.ir_text.find("load i64, ptr %worker.thread.result") != std::string::npos);
     assert(result.ir_text.find("call void @__orison_concurrency_handle_destroy(ptr %worker)") != std::string::npos);
     assert(result.ir_text.find("ret i64 %tmp") != std::string::npos);
+    assert(result.generated_module_symbols.size() == 2);
+    assert(result.generated_module_symbols[0].symbol_name == "__orison_thread_thunk.on_thread.4.0");
+    assert(result.generated_module_symbols[0].category == "generated concurrency thunk");
+    assert(result.generated_module_symbols[0].line == 4);
+    assert(result.generated_module_symbols[1].symbol_name == "__orison_thread_cleanup.on_thread.4.0");
+    assert(result.generated_module_symbols[1].category == "generated concurrency cleanup");
+    assert(result.generated_module_symbols[1].line == 4);
 }
 
 void test_emit_abandoned_scalar_thread_cleanup() {

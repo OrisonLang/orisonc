@@ -124,6 +124,8 @@ drop/cleanup decisions.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
+- Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
+  thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 
 ## Follow-up work
 

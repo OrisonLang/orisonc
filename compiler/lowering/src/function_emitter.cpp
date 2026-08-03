@@ -1076,6 +1076,8 @@ void preserve_function_emission_metadata(
             state.computed_dynamic_array_inserted_cleanup_handoffs;
         result->computed_dynamic_array_cleanup_call_operands =
             state.computed_dynamic_array_cleanup_call_operands;
+        result->generated_module_symbols =
+            state.pending_generated_module_symbols;
     }
     consumed_descriptor_finalization_plans->insert(
         consumed_descriptor_finalization_plans->end(),

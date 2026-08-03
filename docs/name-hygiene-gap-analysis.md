@@ -23,6 +23,9 @@ gap analysis only; it does not define new language syntax.
 - The module symbol registry is now a reusable lowering component with constructed-state smoke coverage for generated
   concurrency thunk symbols, generated concurrency cleanup symbols, and planned drop declaration symbols colliding with
   already registered LLVM symbols.
+- Production module emission now uses the shared registry to validate source functions, foreign declarations, runtime
+  prelude declarations, source drop definitions, planned drop declarations, generated concurrency thunks/cleanups, and
+  generated DynamicArray cleanup helpers before generated LLVM IR is accepted.
 - Same-category duplicate diagnostics remain specific, so `function`/`function`, `type`/`type`, `import`/`import`, and
   source/foreign function conflicts keep targeted messages instead of cascading into broad namespace diagnostics.
 
@@ -31,8 +34,7 @@ gap analysis only; it does not define new language syntax.
 - Lowered method symbols such as `method.Box_UInt32_.value` can still collide with source symbols only if future source
   syntax permits method-shaped global symbol names.
 - Generated private concurrency thunk and cleanup symbols are deterministic and use reserved-looking names. Constructed
-  collision states are now validated by the shared registry, while production emission still needs the registry threaded
-  through every generated symbol site.
+  collision states and production generated-symbol metadata are now validated by the shared registry.
 - DynamicArray cleanup helper symbols such as `__orison_dynamic_array_cleanup.0` are generated in lowering. The reserved
   prefix semantic guard blocks user source aliases from occupying that space, but direct lowerer tests can still create
   constructed collision states.
@@ -42,10 +44,8 @@ gap analysis only; it does not define new language syntax.
 
 ## Next Implementation Slice
 
-Thread the reusable lowering-level module symbol registry through every emitted or declared LLVM symbol before module
-text is published. The registry should classify symbols as source function, foreign declaration, foreign export, method,
-generic specialization, runtime prelude declaration, generated thunk, generated cleanup helper, or planned drop
-declaration.
+Thread the reusable lowering-level module symbol registry through the remaining record/type symbols and any future
+backend helper definitions before module text is published.
 
-- generated concurrency thunk symbol colliding with any externally visible symbol in constructed lowering state
-- planned drop declaration symbol colliding with any non-drop user-emitted symbol in constructed lowering state
+- record/type-symbol declarations colliding with future user-emitted external symbols in constructed lowering state
+- future backend helper definitions colliding with any externally visible symbol in constructed lowering state

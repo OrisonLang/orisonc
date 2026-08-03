@@ -62,6 +62,9 @@
   specialization symbols and C foreign export aliases colliding with generated method symbols.
 - 2026-08-02: the lowering symbol registry is now a reusable component with constructed-state smoke coverage for
   generated concurrency thunk, generated concurrency cleanup, and planned drop declaration collisions.
+- 2026-08-02: production module emission now validates runtime prelude declarations, planned drop declarations,
+  generated concurrency thunk/cleanup symbols, and generated DynamicArray cleanup helper symbols through the shared
+  lowering module symbol registry before accepting generated LLVM IR.
 - 2026-08-02: import bindings and foreign import local function names now reject duplicates during semantic analysis
   before callable signature collection.
 - 2026-08-01: pipeline results no longer expose raw semantic DynamicArray descriptor-origin report strings; pipeline
