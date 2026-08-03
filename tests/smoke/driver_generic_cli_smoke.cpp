@@ -334,16 +334,32 @@ void assert_cli_emit_llvm_choice_dynamic_array_return_payload_fixture_success(
     auto function_start = output.find(
         "define { ptr, i64, i64 } @return_switch_payload({ i32, { ptr, i64, i64 } } %buffer)"
     );
-    auto function_end = output.find("define i32 @main()", function_start);
+    auto function_end = output.find("define { ptr, i64, i64 } @make_primary()", function_start);
     auto payload_phi = output.find("phi { ptr, i64, i64 }", function_start);
     auto case_cleanup = output.find("%values.dynamic_array_cleanup", function_start);
-    auto parent_cleanup = output.find("%buffer.Primary.values.choice_dynamic_array_cleanup", function_start);
+    auto primary_parent_cleanup = output.find(
+        "%buffer.Primary.values.choice_dynamic_array_cleanup",
+        function_start
+    );
+    auto secondary_parent_cleanup = output.find(
+        "%buffer.Secondary.values.choice_dynamic_array_cleanup",
+        function_start
+    );
     assert(function_start != std::string::npos);
     assert(function_end != std::string::npos);
     assert(payload_phi != std::string::npos);
     assert(case_cleanup == std::string::npos || function_end < case_cleanup);
-    assert(parent_cleanup == std::string::npos || function_end < parent_cleanup);
+    assert(primary_parent_cleanup == std::string::npos || function_end < primary_parent_cleanup);
+    assert(secondary_parent_cleanup == std::string::npos || function_end < secondary_parent_cleanup);
+    assert(output.find("call { ptr, i64, i64 } @return_switch_payload({ i32, { ptr, i64, i64 } } %tmp6)") !=
+        std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @return_switch_payload({ i32, { ptr, i64, i64 } } %tmp8)") !=
+        std::string::npos);
     assert(output.find("%returned.dynamic_array_length") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %returned.dynamic_array_reassign_cleanup") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.dynamic_array_reassign_cleanup") !=
         std::string::npos);
     assert(output.find("call void @__orison_drop.Payload(ptr %returned.dynamic_array_cleanup") !=
         std::string::npos);

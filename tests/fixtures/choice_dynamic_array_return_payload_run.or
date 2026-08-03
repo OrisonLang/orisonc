@@ -19,9 +19,22 @@ function return_switch_payload(buffer: DualBuffered) -> DynamicArray<Payload>
         Primary(values) => values
         Secondary(values) => values
 
-function main() -> UInt32
+function make_primary() -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
     values.push(Payload(7 as UInt32))
     values.push(Payload(11 as UInt32))
-    let returned: DynamicArray<Payload> = return_switch_payload(Primary(values))
-    returned.length() == 2 ? 0 as UInt32 : 1 as UInt32
+    return_switch_payload(Primary(values))
+
+function make_secondary() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(13 as UInt32))
+    values.push(Payload(17 as UInt32))
+    values.push(Payload(19 as UInt32))
+    return_switch_payload(Secondary(values))
+
+function main() -> UInt32
+    var returned: DynamicArray<Payload> = make_primary()
+    let primary_count: IntSize = returned.length()
+    returned = make_secondary()
+    let secondary_count: IntSize = returned.length()
+    primary_count == 2 and secondary_count == 3 ? 0 as UInt32 : 1 as UInt32

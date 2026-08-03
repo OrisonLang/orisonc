@@ -483,6 +483,7 @@ struct LoweredAssignmentTarget {
     LoweredType type;
     std::string pointer;
     std::optional<std::string> source_type_name;
+    std::optional<std::string> owner_name;
     bool consumes_owned_value_on_store = false;
 };
 
@@ -737,6 +738,7 @@ auto lower_assignment_target(
                 }
                 return source_type->second;
             }(),
+            .owner_name = target.text,
         };
     }
 
@@ -899,6 +901,102 @@ auto lower_assignment_target(
         .pointer = std::move(cursor->pointer),
         .source_type_name = cursor->source_type_name,
     };
+}
+
+auto emit_dynamic_array_assignment_target_cleanup(
+    LoweredAssignmentTarget const& target,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (!target.owner_name.has_value() ||
+        !target.source_type_name.has_value() ||
+        !is_dynamic_array_source_type(*target.source_type_name)) {
+        return true;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        *target.owner_name,
+        *target.source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        diagnostics.error(source_line, "source dynamic array cleanup could not be planned");
+        return false;
+    }
+    cleanup_plan->descriptor_storage_name = target.pointer;
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+
+    auto element_drop_symbol_name = std::optional<std::string> {};
+    if (!is_scalar_or_nonowning_source_type(cleanup_plan->element_source_type_name)) {
+        element_drop_symbol_name = authorized_dynamic_array_element_drop_symbol_name(
+            *target.owner_name,
+            cleanup_plan->element_source_type_name,
+            context
+        );
+        if (!element_drop_symbol_name.has_value()) {
+            diagnostics.error(
+                source_line,
+                "lowering DynamicArray assignment target cleanup requires authorized element drop"
+            );
+            return false;
+        }
+    }
+
+    auto prefix = "%" + *target.owner_name + ".dynamic_array_reassign_cleanup" +
+        std::to_string(session.state.next_temporary_index++);
+    auto const label_prefix = prefix.substr(1);
+    output << "  br label %" << label_prefix << ".cleanup.entry\n";
+    output << label_prefix << ".cleanup.entry:\n";
+    output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", cleanup_plan->descriptor_storage_name);
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.capacity",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::capacity
+    );
+    if (element_drop_symbol_name.has_value()) {
+        output << "  br label %" << label_prefix << ".drop.walk\n";
+        output << label_prefix << ".drop.walk:\n";
+        output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix
+               << ".cleanup.entry ], [ " << prefix << ".drop.next, %" << label_prefix
+               << ".drop.body ]\n";
+        output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix
+               << ".drop.index, " << prefix << ".cleanup.length\n";
+        output << "  br i1 " << prefix << ".drop.more, label %" << label_prefix
+               << ".drop.body, label %" << label_prefix << ".drop.done\n";
+        output << label_prefix << ".drop.body:\n";
+        output << emit_dynamic_array_element_address(
+            *cleanup_plan,
+            prefix + ".drop.element.addr",
+            prefix + ".cleanup.data",
+            prefix + ".drop.index"
+        );
+        output << "  call void @" << *element_drop_symbol_name << "(ptr "
+               << prefix << ".drop.element.addr)\n";
+        output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+        output << "  br label %" << label_prefix << ".drop.walk\n";
+        output << label_prefix << ".drop.done:\n";
+    }
+    output << "  call void @__orison_dynamic_array_deallocate(ptr ";
+    output << prefix << ".cleanup.data, i64 " << cleanup_plan->element_size_bytes;
+    output << ", i64 " << prefix << ".cleanup.capacity)\n";
+    session.state.current_block = element_drop_symbol_name.has_value()
+        ? label_prefix + ".drop.done"
+        : label_prefix + ".cleanup.entry";
+    return true;
 }
 
 auto deferred_cleanup_block_for(
@@ -1818,6 +1916,16 @@ auto lower_assignment_statement(
         return false;
     }
 
+    if (!emit_dynamic_array_assignment_target_cleanup(
+            *target,
+            statement.line,
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return false;
+    }
     output << "  store " << target->type.type << " " << lowered->value
            << ", ptr " << target->pointer << "\n";
     if (target->consumes_owned_value_on_store && target->source_type_name.has_value()) {
