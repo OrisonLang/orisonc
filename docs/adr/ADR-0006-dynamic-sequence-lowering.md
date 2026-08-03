@@ -623,6 +623,9 @@ representation.
 - The same fixture now covers both `DualBuffered.Primary` and `DualBuffered.Secondary` return paths plus mutable
   reassignment of a returned `DynamicArray<Payload>` owner. Reassignment emits source-backed element drops and
   descriptor deallocation for the overwritten descriptor before storing the replacement descriptor.
+- Aggregate assignment targets now carry deterministic cleanup-owner labels for member/index paths. The
+  `dynamic_array_field_reassignment_run.or` fixture pins scalar `DynamicArray<UInt32>` record-field overwrite cleanup:
+  the overwritten descriptor is deallocated before the replacement descriptor is stored.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

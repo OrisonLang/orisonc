@@ -785,6 +785,7 @@ auto lower_assignment_target(
 
     auto current_source_type_name = source_type->second;
     auto current_pointer = std::string {};
+    auto cleanup_owner_name = base_expression.text;
     if (auto pointee_source_type = pointer_pointee_source_type_name(current_source_type_name)) {
         auto lowered_base = lower_expression(
             base_expression,
@@ -840,6 +841,8 @@ auto lower_assignment_target(
                 );
                 return std::nullopt;
             }
+            cleanup_owner_name += ".";
+            cleanup_owner_name += step.field_name;
             continue;
         }
 
@@ -888,6 +891,7 @@ auto lower_assignment_target(
             );
             return std::nullopt;
         }
+        cleanup_owner_name += ".element";
     }
 
     auto lowered_type = lowered_type_for_source_type_name(cursor->source_type_name, context.lowering);
@@ -900,6 +904,7 @@ auto lower_assignment_target(
         .type = std::move(*lowered_type),
         .pointer = std::move(cursor->pointer),
         .source_type_name = cursor->source_type_name,
+        .owner_name = std::move(cleanup_owner_name),
     };
 }
 

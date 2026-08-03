@@ -1,0 +1,22 @@
+package tests.fixtures.dynamic_array_field_reassignment_run
+
+record Holder
+    values: DynamicArray<UInt32>
+
+function make_pair() -> DynamicArray<UInt32>
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(3 as UInt32)
+    values.push(5 as UInt32)
+    values
+
+function make_triple() -> DynamicArray<UInt32>
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(7 as UInt32)
+    values.push(11 as UInt32)
+    values.push(13 as UInt32)
+    values
+
+function main() -> UInt32
+    var holder: Holder = Holder(make_pair())
+    holder.values = make_triple()
+    0 as UInt32
