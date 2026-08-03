@@ -382,9 +382,14 @@ auto lower_sequence_for_statement(
                     session.state,
                     context.options
                 );
+            auto const cleanup_call_authorization_origin =
+                production_local_cleanup_calls_enabled ?
+                    ComputedDynamicArrayCleanupCallAuthorizationOrigin::production_local_cleanup_plan :
+                    (context.options.test_only_authorize_computed_dynamic_array_cleanup_calls ?
+                         ComputedDynamicArrayCleanupCallAuthorizationOrigin::explicit_test_seam :
+                         ComputedDynamicArrayCleanupCallAuthorizationOrigin::none);
             auto const computed_cleanup_calls_enabled =
-                context.options.test_only_authorize_computed_dynamic_array_cleanup_calls ||
-                production_local_cleanup_calls_enabled;
+                cleanup_call_authorization_origin != ComputedDynamicArrayCleanupCallAuthorizationOrigin::none;
             auto const cleanup_calls_blocked_reason = computed_cleanup_calls_enabled ? std::string {} :
                 computed_dynamic_array_local_cleanup_call_insertion_blocked_reason(
                     cleanup_sequence_plan.cleanup_owner_name,
@@ -399,6 +404,7 @@ auto lower_sequence_for_statement(
                 .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
                 .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
                 .cleanup_calls_enabled = computed_cleanup_calls_enabled,
+                .cleanup_call_authorization_origin = cleanup_call_authorization_origin,
                 .cleanup_calls_blocked_reason = cleanup_calls_blocked_reason,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(acquisition_handoff);
@@ -460,6 +466,7 @@ auto lower_sequence_for_statement(
                 .source_owner_name = loop_exit_plan.loop_entry_cleanup_owner_name,
                 .target_owner_name = loop_exit_plan.loop_exit_cleanup_owner_name,
                 .cleanup_calls_enabled = computed_cleanup_calls_enabled,
+                .cleanup_call_authorization_origin = cleanup_call_authorization_origin,
                 .cleanup_calls_blocked_reason = cleanup_calls_blocked_reason,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(resumption_handoff);

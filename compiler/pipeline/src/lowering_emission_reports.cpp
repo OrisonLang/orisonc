@@ -838,6 +838,18 @@ auto build_computed_inserted_cleanup_handoff_state(
         state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
         state.acquire_operation_names.push_back(event.acquisition.operation_name);
         state.resume_operation_names.push_back(event.resumption.operation_name);
+        if (event.acquisition.cleanup_call_authorization_origin ==
+                lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin::production_local_cleanup_plan &&
+            event.resumption.cleanup_call_authorization_origin ==
+                lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin::production_local_cleanup_plan) {
+            ++state.production_cleanup_call_authorization_count;
+        }
+        if (event.acquisition.cleanup_call_authorization_origin ==
+                lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin::explicit_test_seam &&
+            event.resumption.cleanup_call_authorization_origin ==
+                lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin::explicit_test_seam) {
+            ++state.explicit_test_seam_cleanup_call_authorization_count;
+        }
         auto const cleanup_calls_enabled =
             event.acquisition.cleanup_calls_enabled && event.resumption.cleanup_calls_enabled;
         state.all_cleanup_calls_enabled = state.all_cleanup_calls_enabled && cleanup_calls_enabled;

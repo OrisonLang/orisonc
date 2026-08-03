@@ -178,6 +178,8 @@ auto parse_inserted_cleanup_operation(
                            suffix_position - target_separator - std::string_view {" to "}.size())
         },
         .cleanup_calls_enabled = cleanup_calls_enabled,
+        .cleanup_call_authorization_origin =
+            lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin::none,
         .cleanup_calls_blocked_reason = std::move(cleanup_calls_blocked_reason),
     };
 }
@@ -192,6 +194,7 @@ auto inserted_cleanup_operation_from_metadata(
         .source_owner_name = handoff.source_owner_name,
         .target_owner_name = handoff.target_owner_name,
         .cleanup_calls_enabled = handoff.cleanup_calls_enabled,
+        .cleanup_call_authorization_origin = handoff.cleanup_call_authorization_origin,
         .cleanup_calls_blocked_reason = handoff.cleanup_calls_blocked_reason,
     };
 }

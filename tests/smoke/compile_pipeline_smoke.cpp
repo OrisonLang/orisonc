@@ -2479,6 +2479,16 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state
+            .production_cleanup_call_authorization_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state
+            .explicit_test_seam_cleanup_call_authorization_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
             .computed_dynamic_array_for_inserted_cleanup_state_verification_state.verification_count == 1
     );
     assert(
@@ -3080,6 +3090,16 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state
+            .production_cleanup_call_authorization_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state
+            .explicit_test_seam_cleanup_call_authorization_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for

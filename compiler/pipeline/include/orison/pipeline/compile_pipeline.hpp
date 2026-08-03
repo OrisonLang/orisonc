@@ -409,6 +409,8 @@ struct ComputedInsertedCleanupHandoffState {
     std::size_t paired_count = 0;
     std::size_t blocked_count = 0;
     std::size_t cleanup_call_blocker_count = 0;
+    std::size_t production_cleanup_call_authorization_count = 0;
+    std::size_t explicit_test_seam_cleanup_call_authorization_count = 0;
 };
 
 struct ComputedInsertedCleanupTransitionState {

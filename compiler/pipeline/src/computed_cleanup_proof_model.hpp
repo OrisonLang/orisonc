@@ -20,6 +20,8 @@ struct InsertedCleanupOperation {
     std::string source_owner_name;
     std::string target_owner_name;
     bool cleanup_calls_enabled = false;
+    lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin cleanup_call_authorization_origin =
+        lowering::ComputedDynamicArrayCleanupCallAuthorizationOrigin::none;
     std::string cleanup_calls_blocked_reason;
 };
 
