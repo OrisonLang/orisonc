@@ -1374,6 +1374,35 @@ auto emit_dynamic_array_assignment_storage_cleanup(
         }
     }
 
+    auto const record = context.lowering.records.find(std::string(source_type_name));
+    if (record != context.lowering.records.end()) {
+        for (auto const& field : record->second.fields) {
+            if (!source_type_has_dynamic_array_cleanup_descendant(field.source_type_name, context)) {
+                continue;
+            }
+
+            auto field_owner_name = std::string {owner_name};
+            field_owner_name += ".";
+            field_owner_name += field.name;
+            auto field_pointer = "%" + field_owner_name + ".reassign.addr" +
+                std::to_string(session.state.next_temporary_index++);
+            output << "  " << field_pointer << " = getelementptr " << record->second.llvm_type_name;
+            output << ", ptr " << descriptor_storage_name << ", i32 0, i32 " << field.index << "\n";
+            if (!emit_dynamic_array_assignment_storage_cleanup(
+                    field_owner_name,
+                    field.source_type_name,
+                    field_pointer,
+                    source_line,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                )) {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 

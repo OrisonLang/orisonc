@@ -644,6 +644,9 @@ representation.
 - Fixed-array record-field reassignment now cleans direct `DynamicArray<T>` descriptor elements before storing the
   replacement array. The `dynamic_array_owned_direct_indexed_field_reassignment_run.or` fixture pins per-element
   source-backed drops and descriptor deallocation before the replacement `Holder.values` store.
+- Fixed-array record-field reassignment now also descends through record elements. The
+  `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
+  cleanup before storing the replacement `Holder.items` array.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

@@ -1,0 +1,46 @@
+package tests.fixtures.dynamic_array_owned_indexed_record_field_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Item
+    values: DynamicArray<Payload>
+
+record Holder
+    items: Array<Item, 2>
+
+function make_left() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(1 as UInt32))
+    values.push(Payload(2 as UInt32))
+    values
+
+function make_right() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(3 as UInt32))
+    values.push(Payload(5 as UInt32))
+    values
+
+function make_replacement_left() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(8 as UInt32))
+    values.push(Payload(13 as UInt32))
+    values
+
+function make_replacement_right() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(21 as UInt32))
+    values.push(Payload(34 as UInt32))
+    values
+
+function main() -> UInt32
+    var holder: Holder = Holder([Item(make_left()), Item(make_right())])
+    holder.items = [Item(make_replacement_left()), Item(make_replacement_right())]
+    0 as UInt32
