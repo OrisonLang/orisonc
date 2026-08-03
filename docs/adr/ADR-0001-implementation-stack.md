@@ -176,6 +176,8 @@ analysis, and lowering components.
   LLVM array parsing, record field lookup, lowered source-type mapping, pointer pointee extraction, expression source
   recovery, and function/method return recovery; member-call receiver inference and aggregate/array emission consume
   the same model instead of carrying parallel copies.
+- Module emission now validates emitted record LLVM type identifiers such as `%record.Payload` through the shared
+  lowering module symbol registry's type-symbol namespace before generated LLVM IR is accepted.
 - Aggregate path collection and LLVM `getelementptr` cursor advancement now live in a shared lowering helper for
   member/index chains over records and fixed arrays; `address_of(...)` and aggregate assignment keep their own
   diagnostics and index-expression lowering, but no longer duplicate traversal state.

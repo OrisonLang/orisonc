@@ -42,12 +42,20 @@ public:
         diagnostics::DiagnosticBag& diagnostics
     ) const -> bool;
 
+    auto register_type_symbol(
+        std::string const& symbol_name,
+        std::string category,
+        std::size_t line,
+        diagnostics::DiagnosticBag& diagnostics
+    ) -> bool;
+
 private:
     struct Binding {
         std::string category;
     };
 
     std::unordered_map<std::string, Binding> symbols_;
+    std::unordered_map<std::string, Binding> type_symbols_;
 };
 
 }  // namespace orison::lowering

@@ -101,6 +101,30 @@ void non_colliding_generated_symbols_pass() {
     assert(diagnostics.entries().empty());
 }
 
+void lowered_type_symbol_collisions_are_diagnosed_separately() {
+    auto registry = orison::lowering::ModuleSymbolRegistry {};
+    auto diagnostics = orison::diagnostics::DiagnosticBag {};
+    assert(registry.register_type_symbol("%record.Payload", "lowered record type", 4, diagnostics));
+
+    assert(!registry.register_type_symbol(
+        "%record.Payload",
+        "lowered instantiated record type",
+        10,
+        diagnostics
+    ));
+    assert(single_message(diagnostics) ==
+        "LLVM type symbol '%record.Payload' for lowered instantiated record type collides with lowered record type");
+}
+
+void global_and_type_symbol_names_are_independent() {
+    auto registry = orison::lowering::ModuleSymbolRegistry {};
+    auto diagnostics = orison::diagnostics::DiagnosticBag {};
+
+    assert(registry.register_symbol("%record.Payload", "source function symbol", 4, diagnostics));
+    assert(registry.register_type_symbol("%record.Payload", "lowered record type", 4, diagnostics));
+    assert(diagnostics.entries().empty());
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -108,4 +132,6 @@ auto main() -> int {
     generated_concurrency_cleanup_collisions_are_diagnosed();
     planned_drop_declaration_collisions_are_diagnosed();
     non_colliding_generated_symbols_pass();
+    lowered_type_symbol_collisions_are_diagnosed_separately();
+    global_and_type_symbol_names_are_independent();
 }

@@ -1265,6 +1265,10 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     assert(result.generated_module_symbols.size() == 1);
     assert(result.generated_module_symbols.front().symbol_name == "__orison_dynamic_array_cleanup.0");
     assert(result.generated_module_symbols.front().category == "generated dynamic array cleanup helper");
+    assert(result.generated_module_type_symbols.size() == 1);
+    assert(result.generated_module_type_symbols.front().symbol_name == "%record.Payload");
+    assert(result.generated_module_type_symbols.front().category == "lowered record type");
+    assert(result.generated_module_type_symbols.front().line == 3);
     auto action_report = result.planned_drop_action_report();
     assert(action_report.size() == 1);
     assert(

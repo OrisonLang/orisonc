@@ -320,6 +320,7 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
     std::vector<GeneratedModuleSymbol> generated_module_symbols;
+    std::vector<GeneratedModuleSymbol> generated_module_type_symbols;
 
     auto has_errors() const -> bool;
     auto render(std::string_view path) const -> std::string;

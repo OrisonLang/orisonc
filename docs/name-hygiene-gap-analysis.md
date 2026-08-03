@@ -26,6 +26,9 @@ gap analysis only; it does not define new language syntax.
 - Production module emission now uses the shared registry to validate source functions, foreign declarations, runtime
   prelude declarations, source drop definitions, planned drop declarations, generated concurrency thunks/cleanups, and
   generated DynamicArray cleanup helpers before generated LLVM IR is accepted.
+- Production module emission now also validates emitted record LLVM type identifiers in a separate type-symbol
+  namespace, so `%record.*` names cannot collide with other lowered type identifiers while remaining independent from
+  global `@` symbols.
 - Same-category duplicate diagnostics remain specific, so `function`/`function`, `type`/`type`, `import`/`import`, and
   source/foreign function conflicts keep targeted messages instead of cascading into broad namespace diagnostics.
 
@@ -44,8 +47,8 @@ gap analysis only; it does not define new language syntax.
 
 ## Next Implementation Slice
 
-Thread the reusable lowering-level module symbol registry through the remaining record/type symbols and any future
-backend helper definitions before module text is published.
+Thread the reusable lowering-level module symbol registry through any future backend helper definitions and future
+named choice/type identifiers before module text is published.
 
-- record/type-symbol declarations colliding with future user-emitted external symbols in constructed lowering state
 - future backend helper definitions colliding with any externally visible symbol in constructed lowering state
+- future named choice/type identifiers colliding with existing record type identifiers in constructed lowering state

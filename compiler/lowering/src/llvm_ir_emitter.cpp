@@ -92,6 +92,53 @@ auto emit_record_layouts(
     return output.str();
 }
 
+auto collect_emitted_record_type_symbols(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<GeneratedModuleSymbol> {
+    auto symbols = std::vector<GeneratedModuleSymbol> {};
+    auto emitted_record_names = std::unordered_set<std::string> {};
+    for (auto const& record : module.records) {
+        auto layout = context.records.find(record.name);
+        if (layout == context.records.end() || !can_emit_record_layout(record, layout->second)) {
+            continue;
+        }
+        symbols.push_back(GeneratedModuleSymbol {
+            .symbol_name = layout->second.llvm_type_name,
+            .category = "lowered record type",
+            .line = record.line,
+        });
+        emitted_record_names.insert(record.name);
+    }
+
+    auto instantiated_record_names = std::vector<std::string> {};
+    for (auto const& [record_name, layout] : context.records) {
+        if (emitted_record_names.contains(record_name)) {
+            continue;
+        }
+        auto can_emit_layout = true;
+        for (auto const& field : layout.fields) {
+            if (field.llvm_type.empty() || field.llvm_type == "void") {
+                can_emit_layout = false;
+                break;
+            }
+        }
+        if (can_emit_layout) {
+            instantiated_record_names.push_back(record_name);
+        }
+    }
+    std::ranges::sort(instantiated_record_names);
+    for (auto const& record_name : instantiated_record_names) {
+        auto const& layout = context.records.at(record_name);
+        symbols.push_back(GeneratedModuleSymbol {
+            .symbol_name = layout.llvm_type_name,
+            .category = "lowered instantiated record type",
+            .line = 1,
+        });
+    }
+    return symbols;
+}
+
 auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) -> bool {
     return !function.generic_parameters.empty();
 }
@@ -333,6 +380,22 @@ auto validate_generated_definition_symbols(
 ) -> bool {
     for (auto const& symbol : generated_symbols) {
         registry.register_symbol(
+            symbol.symbol_name,
+            symbol.category,
+            symbol.line,
+            diagnostics
+        );
+    }
+    return !diagnostics.has_errors();
+}
+
+auto validate_generated_type_symbols(
+    std::vector<GeneratedModuleSymbol> const& generated_symbols,
+    ModuleSymbolRegistry& registry,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    for (auto const& symbol : generated_symbols) {
+        registry.register_type_symbol(
             symbol.symbol_name,
             symbol.category,
             symbol.line,
@@ -2470,6 +2533,15 @@ auto emit_module(
             options.test_only_declared_drop_source_type_allowlist
         );
     }
+    result.generated_module_type_symbols = collect_emitted_record_type_symbols(module, context);
+    auto module_symbol_registry = ModuleSymbolRegistry {};
+    if (!validate_generated_type_symbols(
+            result.generated_module_type_symbols,
+            module_symbol_registry,
+            result.diagnostics
+        )) {
+        return result;
+    }
     output << emit_record_layouts(module, context);
     result.dynamic_array_runtime_operations = collect_dynamic_array_runtime_operations(
         options,
@@ -2924,7 +2996,6 @@ auto emit_module(
     auto source_defined_drop_symbols =
         collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations);
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
-    auto module_symbol_registry = ModuleSymbolRegistry {};
     if (!validate_prelude_module_symbols(
             module,
             context,

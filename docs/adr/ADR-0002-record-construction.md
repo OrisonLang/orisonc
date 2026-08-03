@@ -20,6 +20,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
 - The syntax reuses the existing call expression shape and avoids a parser AST change for named arguments.
 - Semantics validate constructor arity and field value types in constant initializers and ordinary expressions.
 - Declaration-order construction is compact but less self-documenting than named fields.
+- Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
+  namespace before generated LLVM IR is accepted.
 
 ## Follow-up work
 

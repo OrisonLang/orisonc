@@ -68,4 +68,29 @@ auto ModuleSymbolRegistry::validate_foreign_export(
     return validate_symbol(symbol_name, "foreign export", line, diagnostics);
 }
 
+auto ModuleSymbolRegistry::register_type_symbol(
+    std::string const& symbol_name,
+    std::string category,
+    std::size_t line,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    if (symbol_name.empty()) {
+        return true;
+    }
+
+    auto attempted_category = std::move(category);
+    auto [existing, inserted] =
+        type_symbols_.emplace(symbol_name, Binding {.category = attempted_category});
+    if (inserted) {
+        return true;
+    }
+
+    diagnostics.error(
+        line,
+        "LLVM type symbol '" + symbol_name + "' for " + attempted_category +
+            " collides with " + existing->second.category
+    );
+    return false;
+}
+
 }  // namespace orison::lowering
