@@ -187,7 +187,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             fixtures / "dynamic_array_computed_iterable_rejected.or",
             orison::pipeline::CompilePipelineOptions {
-                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+                .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             }
         );
     assert(computed_dynamic_array_iterable.has_errors());

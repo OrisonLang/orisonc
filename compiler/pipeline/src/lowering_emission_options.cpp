@@ -67,7 +67,7 @@ auto source_drop_lowering_enabled(CompilePipelineOptions const& options) -> bool
 
 auto dynamic_array_descriptor_cleanup_planning_enabled(CompilePipelineOptions const& options) -> bool {
     return options.dynamic_array_descriptor_cleanup_planning_enabled ||
-        options.test_only_derive_dynamic_array_cleanup_from_semantics;
+        options.fixture_derive_dynamic_array_cleanup_from_semantics;
 }
 
 auto build_lowering_emission_options(
@@ -86,8 +86,8 @@ auto build_lowering_emission_options(
     authorize_dynamic_array_owned_element_source_drops(emission_options.semantic_drop_lowering_authorizations);
     emission_options.fixture_dynamic_array_construction_requests =
         options.fixture_dynamic_array_construction_requests;
-    emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =
-        options.test_only_derive_dynamic_array_cleanup_from_semantics;
+    emission_options.fixture_derive_dynamic_array_cleanup_from_semantics =
+        options.fixture_derive_dynamic_array_cleanup_from_semantics;
     emission_options.collect_computed_dynamic_array_for_descriptor_renders =
         options.collect_computed_dynamic_array_for_descriptor_renders;
     emission_options.collect_computed_dynamic_array_for_loop_control_renders =
@@ -137,8 +137,8 @@ auto build_lowering_emission_options(
         dynamic_array_cleanup_emission_enabled(options);
 
     if (mode == LoweringEmissionMode::full_ir) {
-        emission_options.test_only_enable_dynamic_array_parameter_descriptors =
-            options.test_only_enable_dynamic_array_parameter_descriptors;
+        emission_options.fixture_enable_dynamic_array_parameter_descriptors =
+            options.fixture_enable_dynamic_array_parameter_descriptors;
         emission_options.enable_dynamic_array_index_lowering =
             dynamic_array_index_lowering_enabled(options);
         emission_options.enable_dynamic_array_length_lowering =
@@ -147,8 +147,8 @@ auto build_lowering_emission_options(
             dynamic_array_for_lowering_enabled(options);
         emission_options.enable_dynamic_array_append_lowering =
             dynamic_array_append_lowering_enabled(options);
-        emission_options.test_only_emit_bound_dynamic_array_parameter_cleanups =
-            options.test_only_emit_bound_dynamic_array_parameter_cleanups;
+        emission_options.fixture_emit_bound_dynamic_array_parameter_cleanups =
+            options.fixture_emit_bound_dynamic_array_parameter_cleanups;
         emission_options.test_only_render_dynamic_array_element_drop_walks =
             options.test_only_render_dynamic_array_element_drop_walks;
     }

@@ -302,6 +302,9 @@ representation.
 - Computed dynamic-array `for` audit collectors use production audit names for collected result metadata and helper
   functions. Fixture construction requests now use intent-named fields, while the older `test_only_dynamic_array_*`
   allocation/grow/deallocation snippet fields remain fixture-only renderers driven by explicit test-only options.
+- Dynamic-array cleanup derivation, fixture parameter descriptors, and fixture bound-parameter cleanup emission use
+  fixture-named internal option fields. Production descriptor cleanup planning, parameter descriptors, and cleanup
+  emission keep separate production enablement fields.
 
 ## Consequences
 

@@ -1344,7 +1344,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         source,
         semantic_result,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
         }
@@ -1430,7 +1430,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         source,
         semantic_result,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
@@ -1489,7 +1489,7 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         source,
         semantic_result,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
         }
@@ -1605,7 +1605,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         path,
         source,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
         }
     );
@@ -1634,7 +1634,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         path,
         owned_parameter_source,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
         }
     );
@@ -1650,8 +1650,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         path,
         source,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
             .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
         }
@@ -1696,7 +1696,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         path,
         source,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_cleanup_emission = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
@@ -1742,7 +1742,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "function use_words(words: DynamicArray<UInt32>) -> IntSize\n"
         "    words.length()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_length_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -1779,7 +1779,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "function use_words(words: DynamicArray<UInt32>) -> UInt32\n"
         "    words[0]\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_index_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -1822,7 +1822,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "        total = total + word\n"
         "    total\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -1881,7 +1881,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "        total = total + word\n"
         "    total\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -1992,7 +1992,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "        total = total + word\n"
         "    total\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -2037,7 +2037,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "        total = total + word\n"
         "    total\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -2086,7 +2086,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "        total = total + word\n"
         "    total\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
@@ -2956,9 +2956,9 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         "    1 as UInt32\n"
     };
     auto options = orison::lowering::LlvmIrEmissionOptions {
-        .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-        .test_only_enable_dynamic_array_parameter_descriptors = true,
-        .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+        .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+        .fixture_enable_dynamic_array_parameter_descriptors = true,
+        .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
     };
 
     auto unauthorized = lower_source(path, source, options);
@@ -3029,7 +3029,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     assert(descriptor_clear < return_instruction);
 
     auto production_options = orison::lowering::LlvmIrEmissionOptions {
-        .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         .enable_dynamic_array_parameter_descriptors = true,
         .enable_dynamic_array_cleanup_emission = true,
         .semantic_drop_lowering_authorizations = options.semantic_drop_lowering_authorizations,
@@ -3141,9 +3141,9 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
         "        return 7 as UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
@@ -3203,9 +3203,9 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
         "        return 7 as UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
@@ -3263,9 +3263,9 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
         "        return\n"
         "    return\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
@@ -3328,9 +3328,9 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
         "            default => return 9 as UInt32\n"
         "    return 1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
@@ -3394,9 +3394,9 @@ void test_emits_dynamic_array_parameter_cleanup_on_explicit_unit_returns() {
         "        return\n"
         "    return\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
 
@@ -3437,9 +3437,9 @@ void test_emits_dynamic_array_parameter_cleanup_on_guard_failure_return() {
         "        return 7 as UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
 
@@ -3485,9 +3485,9 @@ void test_emits_dynamic_array_parameter_cleanup_after_if_arm_defer_return() {
         "        return 7 as UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
 
@@ -3531,9 +3531,9 @@ void test_emits_dynamic_array_parameter_cleanup_after_switch_case_defer_return()
         "            default => return 9 as UInt32\n"
         "    return 1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
 
@@ -3581,9 +3581,9 @@ void test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_break() {
         "    while flag\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
 
@@ -3625,9 +3625,9 @@ void test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_continue() {
         "    while false\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
 

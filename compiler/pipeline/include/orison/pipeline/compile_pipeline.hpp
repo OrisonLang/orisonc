@@ -469,11 +469,11 @@ struct CompilePipelineOptions {
     std::vector<lowering::FixtureDynamicArrayConstructionRequest> fixture_dynamic_array_construction_requests;
     bool test_only_enable_source_drop_lowering = false;
     bool source_drop_lowering_enabled = false;
-    bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
+    bool fixture_derive_dynamic_array_cleanup_from_semantics = false;
     bool dynamic_array_descriptor_cleanup_planning_enabled = false;
-    bool test_only_enable_dynamic_array_parameter_descriptors = false;
+    bool fixture_enable_dynamic_array_parameter_descriptors = false;
     bool dynamic_array_parameter_descriptor_audit_bindings_enabled = false;
-    bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
+    bool fixture_emit_bound_dynamic_array_parameter_cleanups = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
     bool collect_computed_dynamic_array_for_descriptor_renders = false;
     bool collect_computed_dynamic_array_for_loop_control_renders = false;

@@ -428,7 +428,7 @@ auto can_lower_dynamic_array_parameter_descriptor(
     DynamicSequenceSourceType const& sequence,
     LlvmIrEmissionOptions const& options
 ) -> bool {
-    return options.test_only_enable_dynamic_array_parameter_descriptors ||
+    return options.fixture_enable_dynamic_array_parameter_descriptors ||
         is_scalar_or_nonowning_source_type(sequence.element_source_type_name) ||
         has_authorized_dynamic_array_owned_element_cleanup(
             parameter.name,

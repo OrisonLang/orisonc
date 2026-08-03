@@ -786,8 +786,8 @@ auto main() -> int {
     auto dynamic_array_bound_descriptor = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
             .dynamic_array_parameter_lowering_enabled = false,
         }
     );
@@ -842,7 +842,7 @@ auto main() -> int {
     auto dynamic_array_owned_production_signature_descriptor = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .dynamic_array_parameter_lowering_enabled = true,
         }
     );
@@ -857,8 +857,8 @@ auto main() -> int {
     auto dynamic_array_source_correlated_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
             .dynamic_array_parameter_lowering_enabled = false,
         }
@@ -947,7 +947,7 @@ auto main() -> int {
     auto scalar_dynamic_array_cleanup = pipeline.emit_llvm(
         scalar_dynamic_array_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         }
     );
     assert(!scalar_dynamic_array_cleanup.has_errors());
@@ -1008,7 +1008,7 @@ auto main() -> int {
     auto scalar_dynamic_array_production_signature = pipeline.emit_llvm(
         scalar_dynamic_array_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         }
     );
     assert(!scalar_dynamic_array_production_signature.has_errors());
@@ -1037,7 +1037,7 @@ auto main() -> int {
     auto scalar_dynamic_array_parameter_length = pipeline.emit_llvm(
         scalar_dynamic_array_parameter_length_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         }
     );
     assert(!scalar_dynamic_array_parameter_length.has_errors());
@@ -1071,7 +1071,7 @@ auto main() -> int {
     auto scalar_dynamic_array_parameter_index = pipeline.emit_llvm(
         scalar_dynamic_array_parameter_index_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         }
     );
     assert(!scalar_dynamic_array_parameter_index.has_errors());
@@ -1130,7 +1130,7 @@ auto main() -> int {
     auto scalar_dynamic_array_parameter_for = pipeline.emit_llvm(
         scalar_dynamic_array_parameter_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         }
     );
     assert(!scalar_dynamic_array_parameter_for.has_errors());
@@ -1177,7 +1177,7 @@ auto main() -> int {
     auto computed_dynamic_array_parameter_for = pipeline.emit_llvm(
         computed_dynamic_array_parameter_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         }
     );
     assert(computed_dynamic_array_parameter_for.has_errors());
@@ -4528,9 +4528,9 @@ auto main() -> int {
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_parameter_lowering_enabled = false,
         }
     );
@@ -4600,7 +4600,7 @@ auto main() -> int {
     auto dynamic_array_owned_production_signature_rejected = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .dynamic_array_parameter_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
         }
@@ -4629,9 +4629,9 @@ auto main() -> int {
                     .authorized = true,
                 },
             },
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_parameter_lowering_enabled = false,
         }
     );
@@ -4711,9 +4711,9 @@ auto main() -> int {
                     .authorized = true,
                 },
             },
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
@@ -4759,9 +4759,9 @@ auto main() -> int {
                     .initial_capacity = 2,
                 },
             },
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
@@ -5994,7 +5994,7 @@ auto main() -> int {
                     .authorized = true,
                 },
             },
-            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .dynamic_array_parameter_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,

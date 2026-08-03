@@ -407,7 +407,7 @@ auto dynamic_array_owned_parameter_has_drop_proof(
         is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
         return true;
     }
-    if (options.test_only_enable_dynamic_array_parameter_descriptors) {
+    if (options.fixture_enable_dynamic_array_parameter_descriptors) {
         return true;
     }
 

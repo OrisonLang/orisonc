@@ -147,6 +147,8 @@
   fixture-only renderers, while fixture construction requests use intent-named fields.
 - 2026-08-02: DynamicArray fixture construction request fields now use fixture-named internal API surface instead of
   the prior broad test-only construction-request naming.
+- 2026-08-02: DynamicArray cleanup derivation, fixture parameter descriptors, and fixture bound-parameter cleanup
+  emission options now use fixture-named internal fields while production enablement keeps production names.
 - 2026-07-30: `examples/local_dynamic_array_computed_for.or` now pins computed same-owner `DynamicArray<UInt32>` `for`
   iteration with final-use cleanup through normal CLI run/build coverage.
 - 2026-07-30: the computed DynamicArray example smoke now also asserts CLI LLVM/object emission, including computed

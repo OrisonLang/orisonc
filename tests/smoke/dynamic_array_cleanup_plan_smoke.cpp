@@ -194,8 +194,8 @@ void test_suppresses_unauthorized_owned_element_cleanup() {
         .lowering = lowering,
         .string_constants = strings,
         .options = orison::lowering::LlvmIrEmissionOptions {
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
         },
     };
 
@@ -220,8 +220,8 @@ void test_authorizes_owned_element_cleanup() {
         .lowering = lowering,
         .string_constants = strings,
         .options = orison::lowering::LlvmIrEmissionOptions {
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
@@ -353,8 +353,8 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
         .lowering = lowering,
         .string_constants = strings,
         .options = orison::lowering::LlvmIrEmissionOptions {
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .fixture_enable_dynamic_array_parameter_descriptors = true,
+            .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
