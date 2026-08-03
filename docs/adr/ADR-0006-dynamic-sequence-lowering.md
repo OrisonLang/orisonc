@@ -647,6 +647,9 @@ representation.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
+- Fixed-array record-field reassignment now also covers multiple owned descriptors per record element. The
+  `dynamic_array_owned_multi_field_indexed_record_reassignment_run.or` fixture pins old
+  `Holder.items[N].values` and `Holder.items[N].spare` cleanup before replacement storage.
 - The same reassignment cleanup recursion is now pinned for multi-dimensional fixed arrays. The
   `dynamic_array_owned_multidimensional_record_field_reassignment_run.or` fixture covers
   `Holder.grid[row][column].values` cleanup before replacement storage.
