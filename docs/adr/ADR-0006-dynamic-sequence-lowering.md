@@ -638,6 +638,9 @@ representation.
 - Local record-field cleanup seeding now also unrolls fixed arrays of records. The
   `dynamic_array_owned_indexed_field_scope_cleanup_run.or` fixture pins final-scope element drops and descriptor
   deallocation for `Outer.items[0].values` and `Outer.items[1].values`.
+- Fixed-array record fields can now contain direct `DynamicArray<T>` descriptor elements. The
+  `dynamic_array_owned_direct_indexed_scope_cleanup_run.or` fixture pins source-backed element drops and descriptor
+  deallocation for each `Holder.values` element.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.

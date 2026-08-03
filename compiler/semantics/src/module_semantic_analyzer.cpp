@@ -5858,6 +5858,23 @@ private:
             return;
         }
 
+        auto direct_element_type_name = dynamic_array_element_owned_drop_candidate_type_name(type_name);
+        if (!direct_element_type_name.empty()) {
+            dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
+                .owner_name = owner_name,
+                .source_type_name = type_name,
+                .element_source_type_name = direct_element_type_name,
+                .line = declaration_line,
+            });
+            planned_drop_sites_.push_back(PlannedDropSite {
+                .source_type_name = direct_element_type_name,
+                .abi_symbol_name = drop_abi_symbol_name(direct_element_type_name),
+                .owner_name = owner_name + ".element",
+                .site_line = declaration_line,
+            });
+            return;
+        }
+
         auto parsed_record_type = parse_rendered_type_name(type_name);
         if (auto array = fixed_array_source_type(type_name)) {
             for (auto index = std::size_t {0}; index < array->length; ++index) {
@@ -5902,6 +5919,7 @@ private:
                     .owner_name = field_owner_name + ".element",
                     .site_line = declaration_line,
                 });
+                continue;
             }
 
             collect_record_type_dynamic_array_drop_sites(
@@ -5954,7 +5972,9 @@ private:
                     .site_line = binding.declaration_line,
                 });
             }
-            collect_record_field_dynamic_array_drop_sites(binding);
+            if (element_type_name.empty()) {
+                collect_record_field_dynamic_array_drop_sites(binding);
+            }
         }
     }
 
