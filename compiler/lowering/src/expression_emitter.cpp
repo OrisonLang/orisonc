@@ -121,19 +121,56 @@ void mark_record_constructor_owned_argument_cleanup_consumed(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) {
-    if (argument.kind != syntax::ExpressionKind::name ||
-        !is_owned_transfer_source_type(expected_source_type, context.lowering)) {
+    if (!is_owned_transfer_source_type(expected_source_type, context.lowering)) {
         return;
     }
 
-    auto actual_source_type = session.state.source_type_names.find(argument.text);
-    if (actual_source_type == session.state.source_type_names.end() ||
-        actual_source_type->second != expected_source_type) {
+    if (argument.kind == syntax::ExpressionKind::name) {
+        auto actual_source_type = session.state.source_type_names.find(argument.text);
+        if (actual_source_type == session.state.source_type_names.end() ||
+            actual_source_type->second != expected_source_type) {
+            return;
+        }
+
+        mark_seeded_dynamic_array_cleanup_descendants_consumed(
+            argument.text,
+            session.state,
+            session.state.ownership_transfers
+        );
+        return;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return;
+    }
+
+    auto field_names = std::vector<std::string> {};
+    field_names.reserve(path->steps.size());
+    for (auto const& step : path->steps) {
+        if (step.kind != AggregatePathStepKind::member) {
+            return;
+        }
+        field_names.push_back(step.field_name);
+    }
+
+    auto owner_source_type = session.state.source_type_names.find(path->base_expression->text);
+    if (owner_source_type == session.state.source_type_names.end()) {
+        return;
+    }
+
+    auto transfer = owned_record_member_path_transfer(
+        path->base_expression->text,
+        owner_source_type->second,
+        field_names,
+        context.lowering
+    );
+    if (!transfer.has_value() || transfer->source_type_name != expected_source_type) {
         return;
     }
 
     mark_seeded_dynamic_array_cleanup_descendants_consumed(
-        argument.text,
+        transfer->binding_name,
         session.state,
         session.state.ownership_transfers
     );

@@ -692,6 +692,9 @@ representation.
   cleanup under `outer.items.elementN`.
 - Return lowering now relies on the same general record-constructor expression transfer path. The returned nested and
   fixed-array record fixtures continue to pin callee cleanup suppression without a return-specific constructor helper.
+- Record constructor argument cleanup transfer now accepts member-only owned aggregate paths. The
+  `dynamic_array_owned_constructor_member_path_move_run.or` fixture pins `Outer(holder.items)` without stale cleanup
+  under `holder.items.elementN`, while retaining replacement and final cleanup under `outer.items.elementN`.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
