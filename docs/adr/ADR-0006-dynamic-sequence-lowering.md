@@ -660,6 +660,11 @@ representation.
   for Drop authorization while keeping source type and ABI symbol checks exact. The
   `dynamic_array_owned_computed_index_nested_record_sibling_field_reassignment_run.or` fixture pins
   `Holder.items[index].inner.spare` cleanup before storing the replacement field descriptor.
+- DynamicArray-indexed record-field reassignment now projects the selected owned element through descriptor load,
+  bounds check, and element address lowering before field cleanup. Semantic Drop-site collection records nested
+  descriptor fields below owned DynamicArray element records, and the
+  `dynamic_array_owned_dynamic_index_record_field_reassignment_run.or` fixture pins
+  `items[index].values` cleanup before replacement storage.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

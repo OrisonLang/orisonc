@@ -5872,6 +5872,12 @@ private:
                 .owner_name = owner_name + ".element",
                 .site_line = declaration_line,
             });
+            collect_record_type_dynamic_array_drop_sites(
+                owner_name + ".element",
+                direct_element_type_name,
+                declaration_line,
+                depth + 1
+            );
             return;
         }
 
@@ -5971,6 +5977,11 @@ private:
                     .owner_name = binding.name + ".element",
                     .site_line = binding.declaration_line,
                 });
+                collect_record_type_dynamic_array_drop_sites(
+                    binding.name + ".element",
+                    element_type_name,
+                    binding.declaration_line
+                );
             }
             if (element_type_name.empty()) {
                 collect_record_field_dynamic_array_drop_sites(binding);

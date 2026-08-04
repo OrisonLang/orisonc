@@ -1,0 +1,35 @@
+package tests.fixtures.dynamic_array_owned_dynamic_index_record_field_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Item
+    values: DynamicArray<Payload>
+
+implements Drop for Item
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_item(seed: UInt32) -> Item
+    Item(make_values(seed))
+
+function main() -> UInt32
+    var items: DynamicArray<Item> = DynamicArray()
+    items.push(make_item(1 as UInt32))
+    items.push(make_item(3 as UInt32))
+    let index: UInt64 = 1 as UInt64
+    items[index].values = make_values(11 as UInt32)
+    0 as UInt32
