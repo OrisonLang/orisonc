@@ -115,7 +115,7 @@ void mark_seeded_dynamic_array_cleanup_descendants_consumed(
     }
 }
 
-void mark_record_constructor_owned_argument_cleanup_consumed(
+void mark_constructor_owned_argument_cleanup_consumed(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
     LoweringEmissionContext const& context,
@@ -1099,7 +1099,7 @@ auto lower_record_constructor_expression(
                << aggregate_value << ", " << field.llvm_type << " " << lowered_field->value << ", "
                << index << "\n";
         aggregate_value = std::move(aggregate_name);
-        mark_record_constructor_owned_argument_cleanup_consumed(
+        mark_constructor_owned_argument_cleanup_consumed(
             expression.arguments[index],
             field.source_type_name,
             context,
@@ -1176,20 +1176,6 @@ auto record_unsupported_aggregate_path_failure(
         ExpressionLoweringFailureReason::unsupported_aggregate_path,
         std::string(operation) + ": " + std::string(render_aggregate_path_error(error))
     );
-}
-
-void mark_choice_constructor_payload_consumed(
-    syntax::ExpressionSyntax const& argument,
-    LoweredChoicePayload const& payload,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session
-) {
-    auto const transfers_descriptor = dynamic_array_element_source_type_name(payload.source_type_name).has_value();
-    if (argument.kind != syntax::ExpressionKind::name ||
-        (!transfers_descriptor && !is_owned_transfer_source_type(payload.source_type_name, context.lowering))) {
-        return;
-    }
-    mark_owned_binding_consumed(session.state.ownership_transfers, argument.text);
 }
 
 struct ChoiceConstructorLayoutLookup {
@@ -1332,7 +1318,12 @@ auto lower_choice_constructor_expression(
             if (!lowered_payload.has_value()) {
                 return std::nullopt;
             }
-            mark_choice_constructor_payload_consumed(arguments->front(), payload, context, session);
+            mark_constructor_owned_argument_cleanup_consumed(
+                arguments->front(),
+                payload.source_type_name,
+                context,
+                session
+            );
             payload_value = lowered_payload->value;
         } else {
             payload_value = "undef";
@@ -1362,7 +1353,12 @@ auto lower_choice_constructor_expression(
                 if (!lowered_payload.has_value()) {
                     return std::nullopt;
                 }
-                mark_choice_constructor_payload_consumed((*arguments)[index], payload, context, session);
+                mark_constructor_owned_argument_cleanup_consumed(
+                    (*arguments)[index],
+                    payload.source_type_name,
+                    context,
+                    session
+                );
                 auto payload_part_name = next_llvm_temporary_name(session.state.next_temporary_index);
                 output << "  " << payload_part_name << " = insertvalue " << variant->lowered_payload_type
                        << " " << payload_value << ", " << payload.llvm_type << " "

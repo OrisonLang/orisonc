@@ -707,6 +707,12 @@ representation.
 - Choice constructor payload ownership moves share the same indexed-source rejection boundary. The
   `choice_constructor_indexed_member_path_move_rejected.or` fixture pins `Some(holder.items[0])` with
   `indexed constructor ownership move requires explicit partial ownership support`.
+- Choice constructor payload cleanup transfer now accepts member-only owned aggregate paths for directly lowered
+  dynamic-array payloads. The `choice_constructor_member_path_move_run.or` fixture pins `Some(holder.values)` cleanup
+  handoff to `selected.Some.values`, and the paired rejected fixture pins `use after move: holder.values`.
+- Choice payloads that contain nested owned descriptors through fixed arrays or records still need recursive cleanup
+  emission under the choice payload owner. `Some(holder.items)` can suppress stale source cleanup, but final cleanup
+  under the choice payload is not yet emitted for `Array<RecordWithDynamicArray, N>`.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

@@ -1066,6 +1066,32 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
     assert(final_second_values_cleanup < final_second_spare_cleanup);
 }
 
+void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto stale_member_cleanup = output.find("%holder.values.dynamic_array_cleanup", main_start);
+    auto selected_cleanup = output.find("%selected.Some.values.choice_dynamic_array_cleanup", main_start);
+    auto selected_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %selected.Some.values.choice_dynamic_array_cleanup",
+        selected_cleanup
+    );
+    auto selected_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %selected.Some.values.choice_dynamic_array_cleanup",
+        selected_drop
+    );
+    assert(main_start != std::string::npos);
+    assert(stale_member_cleanup == std::string::npos);
+    assert(selected_cleanup != std::string::npos);
+    assert(selected_drop != std::string::npos);
+    assert(selected_deallocate != std::string::npos);
+    assert(selected_cleanup < selected_drop);
+    assert(selected_drop < selected_deallocate);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_move_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2015,10 +2041,23 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_owned_constructor_member_path_move_run.or"
     );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "choice_constructor_member_path_move_run.or"
+    );
+    assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
+        executable,
+        fixtures / "choice_constructor_member_path_move_run.or"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_owned_constructor_member_path_reuse_rejected.or",
         "use after move: holder.items"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "choice_constructor_member_path_reuse_rejected.or",
+        "use after move: holder.values"
     );
     assert_cli_run_fixture_success(
         executable,
