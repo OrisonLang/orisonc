@@ -942,6 +942,74 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_
     assert(final_second_values_cleanup < final_second_spare_cleanup);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_field_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto stale_initial_first_values_cleanup = output.find("%items.element0.values.dynamic_array_cleanup", main_start);
+    auto stale_initial_first_spare_cleanup = output.find("%items.element0.spare.dynamic_array_cleanup", main_start);
+    auto stale_initial_second_values_cleanup = output.find("%items.element1.values.dynamic_array_cleanup", main_start);
+    auto stale_initial_second_spare_cleanup = output.find("%items.element1.spare.dynamic_array_cleanup", main_start);
+    auto stale_replacement_first_values_cleanup =
+        output.find("%replacement_items.element0.values.dynamic_array_cleanup", main_start);
+    auto stale_replacement_first_spare_cleanup =
+        output.find("%replacement_items.element0.spare.dynamic_array_cleanup", main_start);
+    auto stale_replacement_second_values_cleanup =
+        output.find("%replacement_items.element1.values.dynamic_array_cleanup", main_start);
+    auto stale_replacement_second_spare_cleanup =
+        output.find("%replacement_items.element1.spare.dynamic_array_cleanup", main_start);
+    auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
+    auto replacement_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
+        replacement_cleanup
+    );
+    auto replacement_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
+        replacement_drop
+    );
+    auto final_first_values_cleanup = output.find(
+        "%outer.items.element0.values.dynamic_array_cleanup",
+        replacement_deallocate
+    );
+    auto final_first_spare_cleanup = output.find(
+        "%outer.items.element0.spare.dynamic_array_cleanup",
+        final_first_values_cleanup
+    );
+    auto final_second_values_cleanup = output.find(
+        "%outer.items.element1.values.dynamic_array_cleanup",
+        final_first_spare_cleanup
+    );
+    auto final_second_spare_cleanup = output.find(
+        "%outer.items.element1.spare.dynamic_array_cleanup",
+        final_second_values_cleanup
+    );
+    assert(main_start != std::string::npos);
+    assert(stale_initial_first_values_cleanup == std::string::npos);
+    assert(stale_initial_first_spare_cleanup == std::string::npos);
+    assert(stale_initial_second_values_cleanup == std::string::npos);
+    assert(stale_initial_second_spare_cleanup == std::string::npos);
+    assert(stale_replacement_first_values_cleanup == std::string::npos);
+    assert(stale_replacement_first_spare_cleanup == std::string::npos);
+    assert(stale_replacement_second_values_cleanup == std::string::npos);
+    assert(stale_replacement_second_spare_cleanup == std::string::npos);
+    assert(replacement_cleanup != std::string::npos);
+    assert(replacement_drop != std::string::npos);
+    assert(replacement_deallocate != std::string::npos);
+    assert(final_first_values_cleanup != std::string::npos);
+    assert(final_first_spare_cleanup != std::string::npos);
+    assert(final_second_values_cleanup != std::string::npos);
+    assert(final_second_spare_cleanup != std::string::npos);
+    assert(replacement_cleanup < replacement_drop);
+    assert(replacement_drop < replacement_deallocate);
+    assert(replacement_deallocate < final_first_values_cleanup);
+    assert(final_first_values_cleanup < final_first_spare_cleanup);
+    assert(final_first_spare_cleanup < final_second_values_cleanup);
+    assert(final_second_values_cleanup < final_second_spare_cleanup);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassignment_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1814,6 +1882,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_move_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_returned_fixed_array_record_field_move_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_field_move_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or"
     );
     assert_cli_run_fixture_success(
         executable,

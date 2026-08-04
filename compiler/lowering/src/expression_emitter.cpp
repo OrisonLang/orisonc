@@ -100,6 +100,45 @@ auto consumed_owned_record_member_path_name(
     return std::nullopt;
 }
 
+void mark_seeded_dynamic_array_cleanup_descendants_consumed(
+    std::string_view owner_name,
+    FunctionLoweringState const& state,
+    OwnershipTransferState& transfers
+) {
+    auto owner_prefix = std::string {owner_name};
+    owner_prefix += ".";
+    for (auto const& cleanup_plan : state.dynamic_array_local_cleanup_plans) {
+        if (cleanup_plan.owner_name == owner_name ||
+            cleanup_plan.owner_name.starts_with(owner_prefix)) {
+            mark_owned_binding_consumed(transfers, cleanup_plan.owner_name);
+        }
+    }
+}
+
+void mark_record_constructor_owned_argument_cleanup_consumed(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) {
+    if (argument.kind != syntax::ExpressionKind::name ||
+        !is_owned_transfer_source_type(expected_source_type, context.lowering)) {
+        return;
+    }
+
+    auto actual_source_type = session.state.source_type_names.find(argument.text);
+    if (actual_source_type == session.state.source_type_names.end() ||
+        actual_source_type->second != expected_source_type) {
+        return;
+    }
+
+    mark_seeded_dynamic_array_cleanup_descendants_consumed(
+        argument.text,
+        session.state,
+        session.state.ownership_transfers
+    );
+}
+
 auto digit_value_for_base(char character, int base) -> std::optional<std::uint64_t> {
     auto value = std::optional<std::uint64_t> {};
     if (character >= '0' && character <= '9') {
@@ -990,6 +1029,12 @@ auto lower_record_constructor_expression(
                << aggregate_value << ", " << field.llvm_type << " " << lowered_field->value << ", "
                << index << "\n";
         aggregate_value = std::move(aggregate_name);
+        mark_record_constructor_owned_argument_cleanup_consumed(
+            expression.arguments[index],
+            field.source_type_name,
+            context,
+            session
+        );
     }
 
     return LoweredExpression {
