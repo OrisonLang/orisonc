@@ -717,6 +717,9 @@ representation.
   `choice_constructor_multi_payload_nested_member_path_move_run.or` fixture pins
   `Ready(holder.items, 7 as UInt32)` cleanup handoff under `selected.Ready.items.elementN.field` while preserving the
   scalar payload slot.
+- Multi-payload choice constructor reuse diagnostics now cover moved nested payloads. The
+  `choice_constructor_multi_payload_nested_member_path_reuse_rejected.or` fixture pins a second
+  `Ready(holder.items, 11 as UInt32)` with `use after move: holder.items`.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

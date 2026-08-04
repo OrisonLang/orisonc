@@ -2153,6 +2153,11 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "choice_constructor_multi_payload_nested_member_path_reuse_rejected.or",
+        "use after move: holder.items"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "dynamic_array_owned_constructor_member_path_reuse_rejected.or",
         "use after move: holder.items"
     );
