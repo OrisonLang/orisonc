@@ -690,6 +690,8 @@ representation.
   The `dynamic_array_owned_constructor_fixed_array_record_field_move_run.or` fixture pins both local initialization and
   assignment with `Outer(items)` without later cleanup under moved source owners, while preserving replacement and final
   cleanup under `outer.items.elementN`.
+- Return lowering now relies on the same general record-constructor expression transfer path. The returned nested and
+  fixed-array record fixtures continue to pin callee cleanup suppression without a return-specific constructor helper.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

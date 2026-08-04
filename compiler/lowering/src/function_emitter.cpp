@@ -312,102 +312,6 @@ void release_returned_choice_dynamic_array_payload_cleanup(
     }
 }
 
-void mark_dynamic_array_cleanup_descendants_consumed(
-    std::string_view owner_name,
-    std::string_view source_type_name,
-    LoweringContext const& context,
-    OwnershipTransferState& transfers,
-    std::size_t depth = 0
-) {
-    if (depth > 16) {
-        return;
-    }
-
-    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
-        mark_owned_binding_consumed(transfers, std::string {owner_name});
-        return;
-    }
-
-    auto record = context.records.find(std::string {source_type_name});
-    if (record == context.records.end()) {
-        return;
-    }
-
-    for (auto const& field : record->second.fields) {
-        auto field_owner_name = std::string {owner_name};
-        field_owner_name += ".";
-        field_owner_name += field.name;
-        mark_dynamic_array_cleanup_descendants_consumed(
-            field_owner_name,
-            field.source_type_name,
-            context,
-            transfers,
-            depth + 1
-        );
-    }
-}
-
-void mark_seeded_dynamic_array_cleanup_descendants_consumed(
-    std::string_view owner_name,
-    FunctionLoweringState const& state,
-    OwnershipTransferState& transfers
-) {
-    auto owner_prefix = std::string {owner_name};
-    owner_prefix += ".";
-    for (auto const& cleanup_plan : state.dynamic_array_local_cleanup_plans) {
-        if (cleanup_plan.owner_name == owner_name ||
-            cleanup_plan.owner_name.starts_with(owner_prefix)) {
-            mark_owned_binding_consumed(transfers, cleanup_plan.owner_name);
-        }
-    }
-}
-
-void release_returned_record_constructor_dynamic_array_field_cleanups(
-    syntax::ExpressionSyntax const& expression,
-    std::optional<std::string_view> return_source_type_name,
-    LoweringContext const& context,
-    FunctionLoweringState& state
-) {
-    if (!return_source_type_name.has_value() ||
-        expression.kind != syntax::ExpressionKind::call ||
-        expression.left == nullptr ||
-        expression.left->kind != syntax::ExpressionKind::name) {
-        return;
-    }
-
-    auto record = context.records.find(std::string {*return_source_type_name});
-    if (record == context.records.end() ||
-        record->second.name != expression.left->text ||
-        record->second.fields.size() != expression.arguments.size()) {
-        return;
-    }
-
-    for (auto index = std::size_t {0}; index < record->second.fields.size(); ++index) {
-        auto const& argument = expression.arguments[index];
-        auto const& field = record->second.fields[index];
-        if (argument.kind != syntax::ExpressionKind::name ||
-            !is_owned_transfer_source_type(field.source_type_name, context)) {
-            continue;
-        }
-
-        auto source_type = state.source_type_names.find(argument.text);
-        if (source_type != state.source_type_names.end() &&
-            source_type->second == field.source_type_name) {
-            mark_dynamic_array_cleanup_descendants_consumed(
-                argument.text,
-                field.source_type_name,
-                context,
-                state.ownership_transfers
-            );
-            mark_seeded_dynamic_array_cleanup_descendants_consumed(
-                argument.text,
-                state,
-                state.ownership_transfers
-            );
-        }
-    }
-}
-
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -857,12 +761,6 @@ auto lower_guard_return_statement(
 
     release_returned_dynamic_array_local_cleanup(statement.expression, return_source_type_name, session.state);
     release_returned_choice_dynamic_array_payload_cleanup(
-        statement.expression,
-        return_source_type_name,
-        context.lowering,
-        session.state
-    );
-    release_returned_record_constructor_dynamic_array_field_cleanups(
         statement.expression,
         return_source_type_name,
         context.lowering,
@@ -1722,12 +1620,6 @@ void emit_function_body(
     if (expression != nullptr) {
         release_returned_dynamic_array_local_cleanup(*expression, return_source_type_name, session.state);
         release_returned_choice_dynamic_array_payload_cleanup(
-            *expression,
-            return_source_type_name,
-            context.lowering,
-            session.state
-        );
-        release_returned_record_constructor_dynamic_array_field_cleanups(
             *expression,
             return_source_type_name,
             context.lowering,
