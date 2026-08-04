@@ -710,9 +710,11 @@ representation.
 - Choice constructor payload cleanup transfer now accepts member-only owned aggregate paths for directly lowered
   dynamic-array payloads. The `choice_constructor_member_path_move_run.or` fixture pins `Some(holder.values)` cleanup
   handoff to `selected.Some.values`, and the paired rejected fixture pins `use after move: holder.values`.
-- Choice payloads that contain nested owned descriptors through fixed arrays or records still need recursive cleanup
-  emission under the choice payload owner. `Some(holder.items)` can suppress stale source cleanup, but final cleanup
-  under the choice payload is not yet emitted for `Array<RecordWithDynamicArray, N>`.
+- Choice payload cleanup emission now recurses through fixed arrays and records. The
+  `choice_constructor_nested_member_path_move_run.or` fixture pins `Some(holder.items)` cleanup handoff for
+  `Array<RecordWithDynamicArray, N>` payloads under `selected.Some.items.elementN.field`.
+- Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
+  recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

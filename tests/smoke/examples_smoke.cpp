@@ -608,9 +608,14 @@ auto main() -> int {
         "store [24 x i8] %buffer.Ready.values.choice_dynamic_array_cleanup.payload.storage.value, "
         "ptr %buffer.Ready.values.choice_dynamic_array_cleanup.payload.storage.addr, align 8"
     );
-    auto choice_distinct_descriptor_load = choice_dynamic_array_distinct_payload.ir_text.find(
-        "%buffer.Ready.values.choice_dynamic_array_cleanup.descriptor = load { ptr, i64, i64 }, "
+    auto choice_distinct_payload_load = choice_dynamic_array_distinct_payload.ir_text.find(
+        "%buffer.Ready.values.choice_dynamic_array_cleanup.payload = load { ptr, i64, i64 }, "
         "ptr %buffer.Ready.values.choice_dynamic_array_cleanup.payload.storage.addr, align 8"
+    );
+    auto choice_distinct_descriptor_projection = choice_dynamic_array_distinct_payload.ir_text.find(
+        "%buffer.Ready.values.choice_dynamic_array_cleanup0.cleanup.data = extractvalue { ptr, i64, i64 } "
+        "%buffer.Ready.values.choice_dynamic_array_cleanup.payload, 0",
+        choice_distinct_payload_load
     );
     auto choice_distinct_drop = choice_dynamic_array_distinct_payload.ir_text.find(
         "call void @__orison_drop.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
@@ -670,7 +675,8 @@ auto main() -> int {
     );
     assert(choice_distinct_tag_check != std::string::npos);
     assert(choice_distinct_payload_store != std::string::npos);
-    assert(choice_distinct_descriptor_load != std::string::npos);
+    assert(choice_distinct_payload_load != std::string::npos);
+    assert(choice_distinct_descriptor_projection != std::string::npos);
     assert(choice_distinct_drop != std::string::npos);
     assert(choice_distinct_deallocate != std::string::npos);
     assert(choice_distinct_return != std::string::npos);
@@ -690,8 +696,9 @@ auto main() -> int {
     assert(choice_return_switch_payload_parent_cleanup == std::string::npos ||
            choice_return_switch_payload_end < choice_return_switch_payload_parent_cleanup);
     assert(choice_distinct_tag_check < choice_distinct_payload_store);
-    assert(choice_distinct_payload_store < choice_distinct_descriptor_load);
-    assert(choice_distinct_descriptor_load < choice_distinct_drop);
+    assert(choice_distinct_payload_store < choice_distinct_payload_load);
+    assert(choice_distinct_payload_load < choice_distinct_descriptor_projection);
+    assert(choice_distinct_descriptor_projection < choice_distinct_drop);
     assert(choice_distinct_drop < choice_distinct_deallocate);
     assert(choice_distinct_deallocate < choice_distinct_return);
     assert(choice_distinct_switch < choice_distinct_switch_drop);
