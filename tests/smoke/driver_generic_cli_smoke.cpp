@@ -928,6 +928,28 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
     assert(deallocate < replacement_store);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_mixed_multidimensional_record_field_reassignment_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string const& owner_prefix
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto cleanup = output.find("%" + owner_prefix + ".dynamic_array_reassign_cleanup");
+    auto drop = output.find("call void @__orison_drop.Payload(ptr %" + owner_prefix + ".dynamic_array_reassign_cleanup");
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %" + owner_prefix + ".dynamic_array_reassign_cleanup"
+    );
+    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp", deallocate);
+    assert(cleanup != std::string::npos);
+    assert(drop != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(cleanup < drop);
+    assert(drop < deallocate);
+    assert(deallocate < replacement_store);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1498,6 +1520,24 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_field_reassignment_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_computed_multidimensional_record_field_reassignment_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_literal_computed_multidimensional_record_field_reassignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_mixed_multidimensional_record_field_reassignment_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_literal_computed_multidimensional_record_field_reassignment_run.or",
+        "holder.grid.element0.element.values"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_computed_literal_multidimensional_record_field_reassignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_mixed_multidimensional_record_field_reassignment_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_computed_literal_multidimensional_record_field_reassignment_run.or",
+        "holder.grid.element.element0.values"
     );
     assert_cli_run_fixture_success(
         executable,

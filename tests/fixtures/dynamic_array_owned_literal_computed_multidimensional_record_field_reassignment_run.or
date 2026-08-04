@@ -1,0 +1,29 @@
+package tests.fixtures.dynamic_array_owned_literal_computed_multidimensional_record_field_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Item
+    values: DynamicArray<Payload>
+
+record Holder
+    grid: Array<Array<Item, 2>, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function main() -> UInt32
+    var holder: Holder = Holder([[Item(make_values(1 as UInt32)), Item(make_values(3 as UInt32))], [Item(make_values(5 as UInt32)), Item(make_values(7 as UInt32))]])
+    let col: UInt64 = 1 as UInt64
+    holder.grid[0][col].values = make_values(11 as UInt32)
+    0 as UInt32

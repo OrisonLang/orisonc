@@ -679,6 +679,11 @@ representation.
   owner labels across both computed indexes. The
   `dynamic_array_owned_computed_multidimensional_record_field_reassignment_run.or` fixture pins
   `Holder.grid[row][col].values` cleanup before storing the replacement field descriptor.
+- Mixed literal/computed multi-dimensional fixed-array indexed record-field reassignment now has explicit coverage for
+  both partial owner-label forms. The
+  `dynamic_array_owned_literal_computed_multidimensional_record_field_reassignment_run.or` and
+  `dynamic_array_owned_computed_literal_multidimensional_record_field_reassignment_run.or` fixtures pin
+  `Holder.grid[0][col].values` and `Holder.grid[row][0].values` cleanup before replacement storage.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
