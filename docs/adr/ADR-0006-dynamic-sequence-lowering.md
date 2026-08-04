@@ -678,6 +678,10 @@ representation.
   `dynamic_array_owned_nested_dynamic_index_multi_field_record_reassignment_run.or` fixture also runs end to end now
   that record-constructor returns consume local `DynamicArray<T>` field arguments instead of cleaning moved descriptors
   in the callee.
+- Returned record constructors now also consume nested owned record arguments that contain DynamicArray descriptors.
+  The `dynamic_array_owned_returned_nested_record_field_move_run.or` fixture pins `Outer(inner)` without stale
+  `inner.values` or `inner.spare` cleanup in the callee, while retaining cleanup under the receiving `outer.inner`
+  owner.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

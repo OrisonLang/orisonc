@@ -312,6 +312,41 @@ void release_returned_choice_dynamic_array_payload_cleanup(
     }
 }
 
+void mark_dynamic_array_cleanup_descendants_consumed(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    OwnershipTransferState& transfers,
+    std::size_t depth = 0
+) {
+    if (depth > 16) {
+        return;
+    }
+
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        mark_owned_binding_consumed(transfers, std::string {owner_name});
+        return;
+    }
+
+    auto record = context.records.find(std::string {source_type_name});
+    if (record == context.records.end()) {
+        return;
+    }
+
+    for (auto const& field : record->second.fields) {
+        auto field_owner_name = std::string {owner_name};
+        field_owner_name += ".";
+        field_owner_name += field.name;
+        mark_dynamic_array_cleanup_descendants_consumed(
+            field_owner_name,
+            field.source_type_name,
+            context,
+            transfers,
+            depth + 1
+        );
+    }
+}
+
 void release_returned_record_constructor_dynamic_array_field_cleanups(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
@@ -336,14 +371,19 @@ void release_returned_record_constructor_dynamic_array_field_cleanups(
         auto const& argument = expression.arguments[index];
         auto const& field = record->second.fields[index];
         if (argument.kind != syntax::ExpressionKind::name ||
-            dynamic_array_element_source_type_name(field.source_type_name) == std::nullopt) {
+            !is_owned_transfer_source_type(field.source_type_name, context)) {
             continue;
         }
 
         auto source_type = state.source_type_names.find(argument.text);
         if (source_type != state.source_type_names.end() &&
             source_type->second == field.source_type_name) {
-            mark_owned_binding_consumed(state.ownership_transfers, argument.text);
+            mark_dynamic_array_cleanup_descendants_consumed(
+                argument.text,
+                field.source_type_name,
+                context,
+                state.ownership_transfers
+            );
         }
     }
 }
