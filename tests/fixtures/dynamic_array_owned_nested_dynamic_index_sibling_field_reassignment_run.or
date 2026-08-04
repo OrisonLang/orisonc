@@ -1,0 +1,50 @@
+package tests.fixtures.dynamic_array_owned_nested_dynamic_index_sibling_field_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Item
+    values: DynamicArray<Payload>
+    spare: DynamicArray<Payload>
+
+implements Drop for Item
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Group
+    items: DynamicArray<Item>
+
+implements Drop for Group
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_item(seed: UInt32) -> Item
+    Item(make_values(seed), make_values(seed + 10 as UInt32))
+
+function make_group(seed: UInt32) -> Group
+    var items: DynamicArray<Item> = DynamicArray()
+    items.push(make_item(seed))
+    items.push(make_item(seed + 2 as UInt32))
+    Group(items)
+
+function main() -> UInt32
+    var groups: DynamicArray<Group> = DynamicArray()
+    groups.push(make_group(1 as UInt32))
+    groups.push(make_group(5 as UInt32))
+    let group_index: UInt64 = 1 as UInt64
+    let item_index: UInt64 = 0 as UInt64
+    groups[group_index].items[item_index].spare = make_values(40 as UInt32)
+    0 as UInt32
