@@ -653,6 +653,9 @@ representation.
 - Nested record-field reassignment now covers multiple owned descriptor descendants. The
   `dynamic_array_owned_multi_field_nested_record_reassignment_run.or` fixture pins old
   `Outer.inner.values` and `Outer.inner.spare` cleanup before storing the replacement `Outer.inner`.
+- Fixed-array record-field reassignment now also covers nested records with multiple owned descriptor descendants. The
+  `dynamic_array_owned_indexed_nested_multi_field_reassignment_run.or` fixture pins old
+  `Holder.items[N].inner.values` and `Holder.items[N].inner.spare` cleanup before replacement storage.
 - The same reassignment cleanup recursion is now pinned for multi-dimensional fixed arrays. The
   `dynamic_array_owned_multidimensional_record_field_reassignment_run.or` fixture covers
   `Holder.grid[row][column].values` cleanup before replacement storage.

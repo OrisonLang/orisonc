@@ -1,0 +1,35 @@
+package tests.fixtures.dynamic_array_owned_indexed_nested_multi_field_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Inner
+    values: DynamicArray<Payload>
+    spare: DynamicArray<Payload>
+
+record Item
+    inner: Inner
+
+record Holder
+    items: Array<Item, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_item(left: UInt32, right: UInt32) -> Item
+    Item(Inner(make_values(left), make_values(right)))
+
+function main() -> UInt32
+    var holder: Holder = Holder([make_item(1 as UInt32, 11 as UInt32), make_item(20 as UInt32, 30 as UInt32)])
+    holder.items = [make_item(40 as UInt32, 50 as UInt32), make_item(60 as UInt32, 70 as UInt32)]
+    0 as UInt32
