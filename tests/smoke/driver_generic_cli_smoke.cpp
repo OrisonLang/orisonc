@@ -1958,7 +1958,7 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_owned_constructor_member_path_reuse_rejected.or",
-        "use after move: holder.items.element0.spare"
+        "use after move: holder.items"
     );
     assert_cli_run_fixture_success(
         executable,

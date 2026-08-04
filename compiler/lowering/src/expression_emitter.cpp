@@ -169,6 +169,7 @@ void mark_record_constructor_owned_argument_cleanup_consumed(
         return;
     }
 
+    mark_owned_binding_consumed(session.state.ownership_transfers, transfer->binding_name);
     mark_seeded_dynamic_array_cleanup_descendants_consumed(
         transfer->binding_name,
         session.state,
