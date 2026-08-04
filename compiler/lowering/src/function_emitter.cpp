@@ -312,6 +312,42 @@ void release_returned_choice_dynamic_array_payload_cleanup(
     }
 }
 
+void release_returned_record_constructor_dynamic_array_field_cleanups(
+    syntax::ExpressionSyntax const& expression,
+    std::optional<std::string_view> return_source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) {
+    if (!return_source_type_name.has_value() ||
+        expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return;
+    }
+
+    auto record = context.records.find(std::string {*return_source_type_name});
+    if (record == context.records.end() ||
+        record->second.name != expression.left->text ||
+        record->second.fields.size() != expression.arguments.size()) {
+        return;
+    }
+
+    for (auto index = std::size_t {0}; index < record->second.fields.size(); ++index) {
+        auto const& argument = expression.arguments[index];
+        auto const& field = record->second.fields[index];
+        if (argument.kind != syntax::ExpressionKind::name ||
+            dynamic_array_element_source_type_name(field.source_type_name) == std::nullopt) {
+            continue;
+        }
+
+        auto source_type = state.source_type_names.find(argument.text);
+        if (source_type != state.source_type_names.end() &&
+            source_type->second == field.source_type_name) {
+            mark_owned_binding_consumed(state.ownership_transfers, argument.text);
+        }
+    }
+}
+
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -761,6 +797,12 @@ auto lower_guard_return_statement(
 
     release_returned_dynamic_array_local_cleanup(statement.expression, return_source_type_name, session.state);
     release_returned_choice_dynamic_array_payload_cleanup(
+        statement.expression,
+        return_source_type_name,
+        context.lowering,
+        session.state
+    );
+    release_returned_record_constructor_dynamic_array_field_cleanups(
         statement.expression,
         return_source_type_name,
         context.lowering,
@@ -1620,6 +1662,12 @@ void emit_function_body(
     if (expression != nullptr) {
         release_returned_dynamic_array_local_cleanup(*expression, return_source_type_name, session.state);
         release_returned_choice_dynamic_array_payload_cleanup(
+            *expression,
+            return_source_type_name,
+            context.lowering,
+            session.state
+        );
+        release_returned_record_constructor_dynamic_array_field_cleanups(
             *expression,
             return_source_type_name,
             context.lowering,

@@ -675,8 +675,9 @@ representation.
   `groups[group_index].items[item_index].spare` cleanup before replacement storage.
 - Nested DynamicArray-indexed whole-record reassignment now pins cleanup of every owned descriptor field inside the
   replaced element before storing the replacement record. The
-  `dynamic_array_owned_nested_dynamic_index_multi_field_record_reassignment_run.or` fixture is LLVM-emission-only
-  until record values containing `DynamicArray<T>` descriptors have proven move/drop semantics for executable copies.
+  `dynamic_array_owned_nested_dynamic_index_multi_field_record_reassignment_run.or` fixture also runs end to end now
+  that record-constructor returns consume local `DynamicArray<T>` field arguments instead of cleaning moved descriptors
+  in the callee.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
