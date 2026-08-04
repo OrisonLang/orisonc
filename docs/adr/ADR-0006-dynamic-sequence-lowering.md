@@ -682,6 +682,10 @@ representation.
   The `dynamic_array_owned_returned_nested_record_field_move_run.or` fixture pins `Outer(inner)` without stale
   `inner.values` or `inner.spare` cleanup in the callee, while retaining cleanup under the receiving `outer.inner`
   owner.
+- Returned record constructors now also consume fixed-array descendants below owned record arguments. The
+  `dynamic_array_owned_returned_fixed_array_record_field_move_run.or` fixture pins `Outer(items)` without stale
+  `items.elementN.values` or `items.elementN.spare` cleanup in the callee, while retaining cleanup under the receiving
+  `outer.items.elementN` owner.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

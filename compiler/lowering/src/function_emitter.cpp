@@ -347,6 +347,21 @@ void mark_dynamic_array_cleanup_descendants_consumed(
     }
 }
 
+void mark_seeded_dynamic_array_cleanup_descendants_consumed(
+    std::string_view owner_name,
+    FunctionLoweringState const& state,
+    OwnershipTransferState& transfers
+) {
+    auto owner_prefix = std::string {owner_name};
+    owner_prefix += ".";
+    for (auto const& cleanup_plan : state.dynamic_array_local_cleanup_plans) {
+        if (cleanup_plan.owner_name == owner_name ||
+            cleanup_plan.owner_name.starts_with(owner_prefix)) {
+            mark_owned_binding_consumed(transfers, cleanup_plan.owner_name);
+        }
+    }
+}
+
 void release_returned_record_constructor_dynamic_array_field_cleanups(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
@@ -382,6 +397,11 @@ void release_returned_record_constructor_dynamic_array_field_cleanups(
                 argument.text,
                 field.source_type_name,
                 context,
+                state.ownership_transfers
+            );
+            mark_seeded_dynamic_array_cleanup_descendants_consumed(
+                argument.text,
+                state,
                 state.ownership_transfers
             );
         }
