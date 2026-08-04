@@ -701,6 +701,9 @@ representation.
 - Record constructor argument cleanup transfer now has explicit nested member-path coverage. The
   `dynamic_array_owned_constructor_nested_member_path_move_run.or` fixture pins `Outer(nested.holder.items)` cleanup
   handoff, and the paired rejected fixture pins `use after move: nested.holder.items`.
+- Indexed constructor ownership moves remain rejected until partial-element ownership is modeled explicitly. The
+  `dynamic_array_owned_constructor_indexed_member_path_move_rejected.or` fixture pins `Outer(holder.items[0])` with
+  `indexed constructor ownership move requires explicit partial ownership support`.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.

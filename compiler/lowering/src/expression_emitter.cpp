@@ -177,6 +177,25 @@ void mark_record_constructor_owned_argument_cleanup_consumed(
     );
 }
 
+auto is_indexed_owned_record_constructor_argument(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringContext const& context
+) -> bool {
+    if (!is_owned_transfer_source_type(expected_source_type, context)) {
+        return false;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value()) {
+        return false;
+    }
+
+    return std::ranges::any_of(path->steps, [](AggregatePathStep const& step) {
+        return step.kind == AggregatePathStepKind::index;
+    });
+}
+
 auto digit_value_for_base(char character, int base) -> std::optional<std::uint64_t> {
     auto value = std::optional<std::uint64_t> {};
     if (character >= '0' && character <= '9') {
@@ -1043,6 +1062,19 @@ auto lower_record_constructor_expression(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 "record constructor field layout"
+            );
+            return std::nullopt;
+        }
+
+        if (is_indexed_owned_record_constructor_argument(
+                expression.arguments[index],
+                field.source_type_name,
+                context.lowering
+            )) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "indexed constructor ownership move requires explicit partial ownership support"
             );
             return std::nullopt;
         }
