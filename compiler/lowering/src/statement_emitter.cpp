@@ -1198,6 +1198,9 @@ auto lower_assignment_target(
             return std::nullopt;
         }
         cleanup_owner_name += ".element";
+        if (step.index_expression->kind == syntax::ExpressionKind::integer_literal) {
+            cleanup_owner_name += step.index_expression->text;
+        }
     }
 
     auto lowered_type = lowered_type_for_source_type_name(cursor->source_type_name, context.lowering);

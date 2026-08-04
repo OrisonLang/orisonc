@@ -1,0 +1,25 @@
+package tests.fixtures.dynamic_array_owned_direct_indexed_element_reassignment_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Holder
+    values: Array<DynamicArray<Payload>, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function main() -> UInt32
+    var holder: Holder = Holder([make_values(1 as UInt32), make_values(10 as UInt32)])
+    holder.values[0] = make_values(20 as UInt32)
+    0 as UInt32

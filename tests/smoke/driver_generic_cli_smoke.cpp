@@ -454,6 +454,32 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_
     assert(second_deallocate < replacement_store);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_element_reassignment_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto element_address = output.find("%holder.values.element0.addr");
+    auto cleanup = output.find("%holder.values.element0.dynamic_array_reassign_cleanup");
+    auto drop = output.find(
+        "call void @__orison_drop.Payload(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
+    );
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
+    );
+    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp", deallocate);
+    assert(element_address != std::string::npos);
+    assert(cleanup != std::string::npos);
+    assert(drop != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(element_address < cleanup);
+    assert(cleanup < drop);
+    assert(drop < deallocate);
+    assert(deallocate < replacement_store);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_field_reassignment_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1221,6 +1247,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_direct_indexed_field_reassignment_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_direct_indexed_element_reassignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_element_reassignment_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_direct_indexed_element_reassignment_run.or"
     );
     assert_cli_run_fixture_success(
         executable,

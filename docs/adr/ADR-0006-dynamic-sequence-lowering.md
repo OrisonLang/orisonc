@@ -644,6 +644,9 @@ representation.
 - Fixed-array record-field reassignment now cleans direct `DynamicArray<T>` descriptor elements before storing the
   replacement array. The `dynamic_array_owned_direct_indexed_field_reassignment_run.or` fixture pins per-element
   source-backed drops and descriptor deallocation before the replacement `Holder.values` store.
+- Fixed-array indexed element reassignment now has direct owned-descriptor coverage. The
+  `dynamic_array_owned_direct_indexed_element_reassignment_run.or` fixture pins old `Holder.values[0]` descriptor
+  cleanup before storing the replacement element descriptor.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
