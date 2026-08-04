@@ -5925,6 +5925,12 @@ private:
                     .owner_name = field_owner_name + ".element",
                     .site_line = declaration_line,
                 });
+                collect_record_type_dynamic_array_drop_sites(
+                    field_owner_name + ".element",
+                    element_type_name,
+                    declaration_line,
+                    depth + 1
+                );
                 continue;
             }
 

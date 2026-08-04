@@ -665,6 +665,10 @@ representation.
   descriptor fields below owned DynamicArray element records, and the
   `dynamic_array_owned_dynamic_index_record_field_reassignment_run.or` fixture pins
   `items[index].values` cleanup before replacement storage.
+- Nested DynamicArray-indexed record-field reassignment now recurses through descriptor fields below owned DynamicArray
+  element records nested inside other owned DynamicArray element records. The
+  `dynamic_array_owned_nested_dynamic_index_record_field_reassignment_run.or` fixture pins
+  `groups[group_index].items[item_index].values` cleanup before replacement storage.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
