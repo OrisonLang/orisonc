@@ -22,6 +22,7 @@
 #include "orison/semantics/drop_model.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <limits>
 #include <optional>
 #include <span>
@@ -163,6 +164,34 @@ auto consumed_owned_push_argument_name(
     return transfer->binding_name;
 }
 
+auto normalize_fixed_array_element_owner_name(std::string_view owner_name) -> std::string {
+    auto output = std::string {};
+    output.reserve(owner_name.size());
+
+    for (auto index = std::size_t {0}; index < owner_name.size();) {
+        auto const segment_start = index == 0 || owner_name[index - 1] == '.';
+        if (segment_start && owner_name.substr(index, 7) == "element") {
+            auto cursor = index + 7;
+            auto saw_digit = false;
+            while (cursor < owner_name.size() &&
+                   std::isdigit(static_cast<unsigned char>(owner_name[cursor])) != 0) {
+                saw_digit = true;
+                ++cursor;
+            }
+            if (saw_digit && (cursor == owner_name.size() || owner_name[cursor] == '.')) {
+                output += "element";
+                index = cursor;
+                continue;
+            }
+        }
+
+        output.push_back(owner_name[index]);
+        ++index;
+    }
+
+    return output;
+}
+
 auto authorized_dynamic_array_element_drop_symbol_name(
     std::string_view owner_name,
     std::string_view element_source_type_name,
@@ -171,11 +200,14 @@ auto authorized_dynamic_array_element_drop_symbol_name(
     auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
     auto element_owner_name = std::string {owner_name};
     element_owner_name += ".element";
+    auto const normalized_element_owner_name = normalize_fixed_array_element_owner_name(element_owner_name);
     for (auto const& authorization : context.options.semantic_drop_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.source_type_name == element_source_type_name &&
             authorization.site.abi_symbol_name == symbol_name &&
-            (authorization.site.owner_name == element_owner_name || owner_name == "this")) {
+            (authorization.site.owner_name == element_owner_name ||
+             normalize_fixed_array_element_owner_name(authorization.site.owner_name) == normalized_element_owner_name ||
+             owner_name == "this")) {
             return symbol_name;
         }
     }

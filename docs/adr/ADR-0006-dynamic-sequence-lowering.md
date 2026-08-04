@@ -656,6 +656,10 @@ representation.
 - Fixed-array indexed nested record sibling-field reassignment now pins the same path for a second owned descriptor.
   The `dynamic_array_owned_indexed_nested_record_sibling_field_reassignment_run.or` fixture covers
   `Holder.items[0].inner.spare` cleanup before storing the replacement field descriptor.
+- Computed fixed-array indexed nested record sibling-field reassignment now normalizes fixed-array element owner labels
+  for Drop authorization while keeping source type and ABI symbol checks exact. The
+  `dynamic_array_owned_computed_index_nested_record_sibling_field_reassignment_run.or` fixture pins
+  `Holder.items[index].inner.spare` cleanup before storing the replacement field descriptor.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
