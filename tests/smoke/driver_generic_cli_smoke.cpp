@@ -2038,6 +2038,11 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_rejected.or",
         "indexed constructor ownership move requires explicit partial ownership support"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "choice_constructor_indexed_member_path_move_rejected.or",
+        "indexed constructor ownership move requires explicit partial ownership support"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_multi_field_indexed_record_reassignment_run.or"

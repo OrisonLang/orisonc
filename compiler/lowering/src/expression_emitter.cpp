@@ -177,7 +177,7 @@ void mark_record_constructor_owned_argument_cleanup_consumed(
     );
 }
 
-auto is_indexed_owned_record_constructor_argument(
+auto is_indexed_owned_constructor_argument(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
     LoweringContext const& context
@@ -1066,7 +1066,7 @@ auto lower_record_constructor_expression(
             return std::nullopt;
         }
 
-        if (is_indexed_owned_record_constructor_argument(
+        if (is_indexed_owned_constructor_argument(
                 expression.arguments[index],
                 field.source_type_name,
                 context.lowering
@@ -1308,6 +1308,19 @@ auto lower_choice_constructor_expression(
         auto payload_value = std::string {};
         if (variant->payloads.size() == 1) {
             auto const& payload = variant->payloads.front();
+            if (is_indexed_owned_constructor_argument(
+                    arguments->front(),
+                    payload.source_type_name,
+                    context.lowering
+                )) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    "indexed constructor ownership move requires explicit partial ownership support"
+                );
+                return std::nullopt;
+            }
+
             auto lowered_payload = lowered_expression(
                 arguments->front(),
                 payload.llvm_type,
@@ -1325,6 +1338,19 @@ auto lower_choice_constructor_expression(
             payload_value = "undef";
             for (auto index = std::size_t {0}; index < variant->payloads.size(); ++index) {
                 auto const& payload = variant->payloads[index];
+                if (is_indexed_owned_constructor_argument(
+                        (*arguments)[index],
+                        payload.source_type_name,
+                        context.lowering
+                    )) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::unsupported_expression,
+                        "indexed constructor ownership move requires explicit partial ownership support"
+                    );
+                    return std::nullopt;
+                }
+
                 auto lowered_payload = lowered_expression(
                     (*arguments)[index],
                     payload.llvm_type,
