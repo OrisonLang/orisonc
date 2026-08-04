@@ -560,6 +560,38 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_element_field_reass
     assert(deallocate < replacement_store);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_record_field_reassignment_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto element_address = output.find("%holder.items.element0.addr");
+    auto inner_address = output.find("%holder.items.element0.inner.addr");
+    auto field_address = output.find("%holder.items.element0.inner.values.addr");
+    auto cleanup = output.find("%holder.items.element0.inner.values.dynamic_array_reassign_cleanup");
+    auto drop = output.find(
+        "call void @__orison_drop.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
+    );
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
+    );
+    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp", deallocate);
+    assert(element_address != std::string::npos);
+    assert(inner_address != std::string::npos);
+    assert(field_address != std::string::npos);
+    assert(cleanup != std::string::npos);
+    assert(drop != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(element_address < inner_address);
+    assert(inner_address < field_address);
+    assert(field_address < cleanup);
+    assert(cleanup < drop);
+    assert(drop < deallocate);
+    assert(deallocate < replacement_store);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassignment_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1300,6 +1332,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_indexed_record_element_field_reassignment_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_indexed_record_element_field_reassignment_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_indexed_nested_record_field_reassignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_record_field_reassignment_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_indexed_nested_record_field_reassignment_run.or"
     );
     assert_cli_run_fixture_success(
         executable,

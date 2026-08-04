@@ -650,6 +650,9 @@ representation.
 - Fixed-array indexed record-element field reassignment now uses the same literal-index owner labels. The
   `dynamic_array_owned_indexed_record_element_field_reassignment_run.or` fixture pins old
   `Holder.items[0].values` descriptor cleanup before storing the replacement field descriptor.
+- Fixed-array indexed nested record-field reassignment now preserves literal-index owner labels through deeper member
+  paths. The `dynamic_array_owned_indexed_nested_record_field_reassignment_run.or` fixture pins old
+  `Holder.items[0].inner.values` descriptor cleanup before storing the replacement field descriptor.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
