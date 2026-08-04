@@ -1955,6 +1955,11 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_owned_constructor_member_path_move_run.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_owned_constructor_member_path_reuse_rejected.or",
+        "use after move: holder.items.element0.spare"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_multi_field_indexed_record_reassignment_run.or"

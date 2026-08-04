@@ -695,6 +695,9 @@ representation.
 - Record constructor argument cleanup transfer now accepts member-only owned aggregate paths. The
   `dynamic_array_owned_constructor_member_path_move_run.or` fixture pins `Outer(holder.items)` without stale cleanup
   under `holder.items.elementN`, while retaining replacement and final cleanup under `outer.items.elementN`.
+- Constructor member-path move diagnostics now reject reusing `holder.items` after `Outer(holder.items)`. The
+  `dynamic_array_owned_constructor_member_path_reuse_rejected.or` fixture pins the descendant-specific
+  `use after move: holder.items.element0.spare` diagnostic.
 - Fixed-array record-field reassignment now also descends through record elements. The
   `dynamic_array_owned_indexed_record_field_reassignment_run.or` fixture pins old `Holder.items[N].values` descriptor
   cleanup before storing the replacement `Holder.items` array.
