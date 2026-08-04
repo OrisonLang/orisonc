@@ -713,6 +713,10 @@ representation.
 - Choice payload cleanup emission now recurses through fixed arrays and records. The
   `choice_constructor_nested_member_path_move_run.or` fixture pins `Some(holder.items)` cleanup handoff for
   `Array<RecordWithDynamicArray, N>` payloads under `selected.Some.items.elementN.field`.
+- Multi-payload choice constructor cleanup now has explicit tuple-payload extraction coverage. The
+  `choice_constructor_multi_payload_nested_member_path_move_run.or` fixture pins
+  `Ready(holder.items, 7 as UInt32)` cleanup handoff under `selected.Ready.items.elementN.field` while preserving the
+  scalar payload slot.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
