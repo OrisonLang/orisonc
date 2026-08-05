@@ -75,10 +75,12 @@ auto record_runtime_indexed_partial_owner(
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
     auto gate = runtime_indexed_cleanup_proof_gate(plan);
     auto sketch = runtime_indexed_cleanup_emission_sketch(gate);
+    auto capability = runtime_indexed_cleanup_capability(gate, sketch);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
     state.runtime_indexed_cleanup_proof_gates.push_back(std::move(gate));
     state.runtime_indexed_cleanup_emission_sketches.push_back(std::move(sketch));
+    state.runtime_indexed_cleanup_capabilities.push_back(std::move(capability));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -200,6 +202,39 @@ auto runtime_indexed_cleanup_emission_sketch_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_capability(
+    RuntimeIndexedCleanupProofGate const& gate,
+    RuntimeIndexedCleanupEmissionSketch const& sketch
+) -> RuntimeIndexedCleanupCapability {
+    auto proof_ready = gate.prerequisites_met && !gate.lowering_enabled;
+    auto sketch_ready = sketch.report_only &&
+        !sketch.production_emission_enabled &&
+        !sketch.snippets.empty();
+    return RuntimeIndexedCleanupCapability {
+        .owner_name = gate.owner_name,
+        .index_expression_text = gate.index_expression_text,
+        .element_source_type_name = gate.element_source_type_name,
+        .proof_ready = proof_ready,
+        .sketch_ready = sketch_ready,
+        .prerequisites_ready = proof_ready && sketch_ready,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_cleanup_capability_report(
+    RuntimeIndexedCleanupCapability const& capability
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup capability owner " << capability.owner_name
+           << " index " << capability.index_expression_text
+           << " element " << capability.element_source_type_name
+           << " proof-ready " << (capability.proof_ready ? "true" : "false")
+           << " sketch-ready " << (capability.sketch_ready ? "true" : "false")
+           << " prerequisites " << (capability.prerequisites_ready ? "ready" : "blocked")
+           << " production " << (capability.production_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
 auto is_owned_binding_consumed(
     OwnershipTransferState const& state,
     std::string_view binding_name
@@ -280,7 +315,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_cleanup_proof_gates !=
                 merged.runtime_indexed_cleanup_proof_gates ||
             branch_states[index].runtime_indexed_cleanup_emission_sketches !=
-                merged.runtime_indexed_cleanup_emission_sketches) {
+                merged.runtime_indexed_cleanup_emission_sketches ||
+            branch_states[index].runtime_indexed_cleanup_capabilities !=
+                merged.runtime_indexed_cleanup_capabilities) {
             return std::nullopt;
         }
     }

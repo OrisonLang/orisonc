@@ -61,6 +61,7 @@ int main() {
     assert(runtime_indexed.runtime_indexed_cleanup_skip_plans.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_proof_gates.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_sketches.size() == 1);
+    assert(runtime_indexed.runtime_indexed_cleanup_capabilities.size() == 1);
     assert(
         orison::lowering::runtime_indexed_partial_owner_report(
             runtime_indexed.runtime_indexed_partial_owners.front()
@@ -108,6 +109,21 @@ int main() {
         "snippet drop-live-element holder.items[cleanup_index] as Inner "
         "snippet deallocate-owner holder.items"
     );
+    assert(runtime_indexed.runtime_indexed_cleanup_capabilities.front().prerequisites_ready);
+    assert(!runtime_indexed.runtime_indexed_cleanup_capabilities.front().production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_cleanup_capability_report(
+            runtime_indexed.runtime_indexed_cleanup_capabilities.front()
+        ) ==
+        "runtime-index cleanup capability owner holder.items index index element Inner "
+        "proof-ready true sketch-ready true prerequisites ready production disabled"
+    );
+    auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
+        missing_index_gate,
+        missing_index_sketch
+    );
+    assert(!missing_index_capability.prerequisites_ready);
+    assert(!missing_index_capability.production_enabled);
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -117,6 +133,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_cleanup_skip_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_proof_gates.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_sketches.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_cleanup_capabilities.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
@@ -146,6 +163,13 @@ int main() {
         different_emission_sketch,
     });
     assert(!mismatched_emission_sketch.has_value());
+    auto different_capability = runtime_indexed;
+    different_capability.runtime_indexed_cleanup_capabilities.front().production_enabled = true;
+    auto mismatched_capability = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        different_capability,
+    });
+    assert(!mismatched_capability.has_value());
 
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace(

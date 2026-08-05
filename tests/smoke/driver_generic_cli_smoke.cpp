@@ -2718,7 +2718,9 @@ auto main() -> int {
         "report-only true production-emission disabled snippet load-length holder.items "
         "snippet loop-cleanup-index 0..<length snippet skip-cleanup-index index "
         "snippet drop-live-element holder.items[cleanup_index] as Inner "
-        "snippet deallocate-owner holder.items"
+        "snippet deallocate-owner holder.items: "
+        "runtime-index cleanup capability owner holder.items index index element Inner "
+        "proof-ready true sketch-ready true prerequisites ready production disabled"
     );
     assert_cli_run_fixture_success(
         executable,
