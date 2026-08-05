@@ -1451,6 +1451,11 @@ auto lower_choice_constructor_expression(
                     arguments->front(),
                     payload.source_type_name,
                     context.lowering
+                ) && !has_owned_literal_indexed_constructor_argument_transfer(
+                    arguments->front(),
+                    payload.source_type_name,
+                    context.lowering,
+                    session.state
                 )) {
                 record_expression_lowering_failure(
                     failures,

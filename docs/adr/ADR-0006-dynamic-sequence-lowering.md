@@ -707,9 +707,12 @@ representation.
 - Record constructor computed indexed ownership moves remain rejected until runtime-index partial ownership is modeled.
   The `dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or` fixture pins
   `Outer(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
-- Choice constructor payload ownership moves share the same indexed-source rejection boundary. The
-  `choice_constructor_indexed_member_path_move_rejected.or` fixture pins `Some(holder.items[0])` with
-  `indexed constructor ownership move requires explicit partial ownership support`.
+- Single-payload choice constructor indexed ownership moves now support fixed-array decimal literal element transfers.
+  The `choice_constructor_indexed_member_path_move_run.or` fixture pins `Some(holder.items[0])` cleanup handoff to
+  `selected.Some.item` while preserving sibling cleanup under `holder.items.element1`.
+- Single-payload choice constructor computed indexed ownership moves remain rejected until runtime-index partial
+  ownership is modeled. The `choice_constructor_computed_index_member_path_move_rejected.or` fixture pins
+  `Some(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
 - Choice constructor payload cleanup transfer now accepts member-only owned aggregate paths for directly lowered
   dynamic-array payloads. The `choice_constructor_member_path_move_run.or` fixture pins `Some(holder.values)` cleanup
   handoff to `selected.Some.values`, and the paired rejected fixture pins `use after move: holder.values`.
@@ -738,9 +741,10 @@ representation.
 - Multi-variant choice constructor reuse diagnostics now remain constructor-agnostic after a nested payload move. The
   `choice_constructor_multi_variant_nested_member_path_reuse_rejected.or` fixture pins `Secondary(holder.items)`
   followed by `Primary(holder.items)` with `use after move: holder.items`.
-- Multi-variant choice constructor indexed payload moves share the partial-ownership rejection boundary. The
-  `choice_constructor_multi_variant_indexed_member_path_move_rejected.or` fixture pins
-  `Secondary(holder.items[0])` with `indexed constructor ownership move requires explicit partial ownership support`.
+- Multi-variant single-payload choice constructor indexed ownership moves now share the fixed-array decimal literal
+  element transfer path. The `choice_constructor_multi_variant_indexed_member_path_move_run.or` fixture pins
+  `Secondary(holder.items[0])` cleanup handoff under the active variant while preserving sibling cleanup under
+  `holder.items.element1`.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

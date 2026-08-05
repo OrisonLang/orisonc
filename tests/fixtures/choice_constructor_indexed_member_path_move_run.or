@@ -1,4 +1,4 @@
-package tests.fixtures.choice_constructor_multi_variant_indexed_member_path_move_rejected
+package tests.fixtures.choice_constructor_indexed_member_path_move_run
 
 record Payload
     value: UInt32
@@ -25,10 +25,9 @@ implements Drop for Holder
     function drop(this: exclusive This) -> Unit
         return
 
-choice TaggedInner
+choice MaybeInner
     Empty
-    Primary(item: Inner)
-    Secondary(item: Inner)
+    Some(item: Inner)
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
@@ -42,5 +41,5 @@ function make_inner(seed: UInt32) -> Inner
 function main() -> UInt32
     var items: Array<Inner, 2> = [make_inner(1 as UInt32), make_inner(20 as UInt32)]
     var holder: Holder = Holder(items)
-    var selected: TaggedInner = Secondary(holder.items[0])
+    var selected: MaybeInner = Some(holder.items[0])
     0 as UInt32

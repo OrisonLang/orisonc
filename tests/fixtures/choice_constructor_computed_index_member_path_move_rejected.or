@@ -1,4 +1,4 @@
-package tests.fixtures.choice_constructor_indexed_member_path_move_rejected
+package tests.fixtures.choice_constructor_computed_index_member_path_move_rejected
 
 record Payload
     value: UInt32
@@ -41,5 +41,6 @@ function make_inner(seed: UInt32) -> Inner
 function main() -> UInt32
     var items: Array<Inner, 2> = [make_inner(1 as UInt32), make_inner(20 as UInt32)]
     var holder: Holder = Holder(items)
-    var selected: MaybeInner = Some(holder.items[0])
+    let index: UInt64 = 0 as UInt64
+    var selected: MaybeInner = Some(holder.items[index])
     0 as UInt32
