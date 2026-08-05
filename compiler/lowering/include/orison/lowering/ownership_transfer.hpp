@@ -33,10 +33,27 @@ struct RuntimeIndexedCleanupSkipPlan {
     auto operator==(RuntimeIndexedCleanupSkipPlan const&) const -> bool = default;
 };
 
+struct RuntimeIndexedCleanupProofGate {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::string cleanup_operation;
+    bool owner_known = false;
+    bool index_known = false;
+    bool type_match = false;
+    bool operation_supported = false;
+    bool prerequisites_met = false;
+    bool lowering_enabled = false;
+
+    auto operator==(RuntimeIndexedCleanupProofGate const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
     std::vector<RuntimeIndexedCleanupSkipPlan> runtime_indexed_cleanup_skip_plans;
+    std::vector<RuntimeIndexedCleanupProofGate> runtime_indexed_cleanup_proof_gates;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -66,6 +83,14 @@ auto runtime_indexed_cleanup_skip_plan(
 
 auto runtime_indexed_cleanup_skip_plan_report(
     RuntimeIndexedCleanupSkipPlan const& plan
+) -> std::string;
+
+auto runtime_indexed_cleanup_proof_gate(
+    RuntimeIndexedCleanupSkipPlan const& plan
+) -> RuntimeIndexedCleanupProofGate;
+
+auto runtime_indexed_cleanup_proof_gate_report(
+    RuntimeIndexedCleanupProofGate const& gate
 ) -> std::string;
 
 auto is_owned_binding_consumed(

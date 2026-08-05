@@ -2710,7 +2710,10 @@ auto main() -> int {
         "runtime-index partial owner owner holder.items index index element Inner moved Inner "
         "cleanup skip-moved-element constructor-move disabled: "
         "runtime-index cleanup-skip plan owner holder.items index index element Inner moved Inner "
-        "operation skip-moved-element production-cleanup disabled"
+        "operation skip-moved-element production-cleanup disabled: "
+        "runtime-index cleanup proof owner holder.items index index element Inner moved Inner "
+        "operation skip-moved-element owner-known true index-known true type-match true "
+        "operation-supported true prerequisites met lowering disabled"
     );
     assert_cli_run_fixture_success(
         executable,

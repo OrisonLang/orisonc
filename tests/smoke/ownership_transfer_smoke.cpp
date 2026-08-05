@@ -59,6 +59,7 @@ int main() {
     );
     assert(runtime_indexed.runtime_indexed_partial_owners.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_skip_plans.size() == 1);
+    assert(runtime_indexed.runtime_indexed_cleanup_proof_gates.size() == 1);
     assert(
         orison::lowering::runtime_indexed_partial_owner_report(
             runtime_indexed.runtime_indexed_partial_owners.front()
@@ -73,6 +74,21 @@ int main() {
         "runtime-index cleanup-skip plan owner holder.items index index element Inner moved Inner "
         "operation skip-moved-element production-cleanup disabled"
     );
+    assert(runtime_indexed.runtime_indexed_cleanup_proof_gates.front().prerequisites_met);
+    assert(!runtime_indexed.runtime_indexed_cleanup_proof_gates.front().lowering_enabled);
+    assert(
+        orison::lowering::runtime_indexed_cleanup_proof_gate_report(
+            runtime_indexed.runtime_indexed_cleanup_proof_gates.front()
+        ) ==
+        "runtime-index cleanup proof owner holder.items index index element Inner moved Inner "
+        "operation skip-moved-element owner-known true index-known true type-match true "
+        "operation-supported true prerequisites met lowering disabled"
+    );
+    auto missing_index_plan = runtime_indexed.runtime_indexed_cleanup_skip_plans.front();
+    missing_index_plan.index_expression_text = "<computed>";
+    auto missing_index_gate = orison::lowering::runtime_indexed_cleanup_proof_gate(missing_index_plan);
+    assert(!missing_index_gate.prerequisites_met);
+    assert(!missing_index_gate.index_known);
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -80,6 +96,7 @@ int main() {
     assert(matching_runtime_indexed.has_value());
     assert(matching_runtime_indexed->runtime_indexed_partial_owners.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_skip_plans.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_cleanup_proof_gates.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
@@ -94,6 +111,13 @@ int main() {
         different_cleanup_plan,
     });
     assert(!mismatched_cleanup_plan.has_value());
+    auto different_proof_gate = runtime_indexed;
+    different_proof_gate.runtime_indexed_cleanup_proof_gates.front().lowering_enabled = true;
+    auto mismatched_proof_gate = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        different_proof_gate,
+    });
+    assert(!mismatched_proof_gate.has_value());
 
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace(

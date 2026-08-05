@@ -777,6 +777,9 @@ representation.
 - Runtime-index cleanup-skip planning now derives from the partial-owner metadata and records the owner, index
   expression, element source type, moved source type, skip operation, and disabled production-cleanup status. The same
   computed-index fixture pins the rendered plan while constructor moves remain rejected.
+- Runtime-index cleanup proof gates now validate owner, index expression, matching element/moved types, and supported
+  skip operation. The gate can report complete prerequisites while lowering remains disabled, preserving the rejection
+  boundary until runtime-index cleanup emission exists.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

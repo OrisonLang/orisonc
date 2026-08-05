@@ -462,6 +462,10 @@ auto unsupported_indexed_constructor_ownership_detail(
     detail += runtime_indexed_cleanup_skip_plan_report(
         session.state.ownership_transfers.runtime_indexed_cleanup_skip_plans.back()
     );
+    detail += ": ";
+    detail += runtime_indexed_cleanup_proof_gate_report(
+        session.state.ownership_transfers.runtime_indexed_cleanup_proof_gates.back()
+    );
     return detail;
 }
 

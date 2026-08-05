@@ -73,8 +73,10 @@ auto record_runtime_indexed_partial_owner(
     RuntimeIndexedPartialOwner owner
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
+    auto gate = runtime_indexed_cleanup_proof_gate(plan);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
+    state.runtime_indexed_cleanup_proof_gates.push_back(std::move(gate));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -113,6 +115,47 @@ auto runtime_indexed_cleanup_skip_plan_report(
            << " moved " << plan.moved_source_type_name
            << " operation " << plan.cleanup_operation
            << " production-cleanup " << (plan.production_cleanup_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
+auto runtime_indexed_cleanup_proof_gate(
+    RuntimeIndexedCleanupSkipPlan const& plan
+) -> RuntimeIndexedCleanupProofGate {
+    auto owner_known = !plan.owner_name.empty();
+    auto index_known = !plan.index_expression_text.empty() && plan.index_expression_text != "<computed>";
+    auto type_match = !plan.element_source_type_name.empty() &&
+        plan.element_source_type_name == plan.moved_source_type_name;
+    auto operation_supported = plan.cleanup_operation == "skip-moved-element";
+    return RuntimeIndexedCleanupProofGate {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .cleanup_operation = plan.cleanup_operation,
+        .owner_known = owner_known,
+        .index_known = index_known,
+        .type_match = type_match,
+        .operation_supported = operation_supported,
+        .prerequisites_met = owner_known && index_known && type_match && operation_supported,
+        .lowering_enabled = false,
+    };
+}
+
+auto runtime_indexed_cleanup_proof_gate_report(
+    RuntimeIndexedCleanupProofGate const& gate
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup proof owner " << gate.owner_name
+           << " index " << gate.index_expression_text
+           << " element " << gate.element_source_type_name
+           << " moved " << gate.moved_source_type_name
+           << " operation " << gate.cleanup_operation
+           << " owner-known " << (gate.owner_known ? "true" : "false")
+           << " index-known " << (gate.index_known ? "true" : "false")
+           << " type-match " << (gate.type_match ? "true" : "false")
+           << " operation-supported " << (gate.operation_supported ? "true" : "false")
+           << " prerequisites " << (gate.prerequisites_met ? "met" : "missing")
+           << " lowering " << (gate.lowering_enabled ? "enabled" : "disabled");
     return report.str();
 }
 
@@ -192,7 +235,9 @@ auto merge_ownership_transfer_states(
         if (branch_states[index].consumed_owned_bindings != merged.consumed_owned_bindings ||
             branch_states[index].runtime_indexed_partial_owners != merged.runtime_indexed_partial_owners ||
             branch_states[index].runtime_indexed_cleanup_skip_plans !=
-                merged.runtime_indexed_cleanup_skip_plans) {
+                merged.runtime_indexed_cleanup_skip_plans ||
+            branch_states[index].runtime_indexed_cleanup_proof_gates !=
+                merged.runtime_indexed_cleanup_proof_gates) {
             return std::nullopt;
         }
     }
