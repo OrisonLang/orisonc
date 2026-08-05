@@ -74,9 +74,11 @@ auto record_runtime_indexed_partial_owner(
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
     auto gate = runtime_indexed_cleanup_proof_gate(plan);
+    auto sketch = runtime_indexed_cleanup_emission_sketch(gate);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
     state.runtime_indexed_cleanup_proof_gates.push_back(std::move(gate));
+    state.runtime_indexed_cleanup_emission_sketches.push_back(std::move(sketch));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -159,6 +161,45 @@ auto runtime_indexed_cleanup_proof_gate_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_emission_sketch(
+    RuntimeIndexedCleanupProofGate const& gate
+) -> RuntimeIndexedCleanupEmissionSketch {
+    auto snippets = std::vector<std::string> {};
+    if (gate.prerequisites_met) {
+        snippets.push_back("load-length " + gate.owner_name);
+        snippets.push_back("loop-cleanup-index 0..<length");
+        snippets.push_back("skip-cleanup-index " + gate.index_expression_text);
+        snippets.push_back(
+            "drop-live-element " + gate.owner_name + "[cleanup_index] as " + gate.element_source_type_name
+        );
+        snippets.push_back("deallocate-owner " + gate.owner_name);
+    }
+    return RuntimeIndexedCleanupEmissionSketch {
+        .owner_name = gate.owner_name,
+        .index_expression_text = gate.index_expression_text,
+        .element_source_type_name = gate.element_source_type_name,
+        .snippets = std::move(snippets),
+        .report_only = true,
+        .production_emission_enabled = false,
+    };
+}
+
+auto runtime_indexed_cleanup_emission_sketch_report(
+    RuntimeIndexedCleanupEmissionSketch const& sketch
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup emission-sketch owner " << sketch.owner_name
+           << " index " << sketch.index_expression_text
+           << " element " << sketch.element_source_type_name
+           << " snippets " << sketch.snippets.size()
+           << " report-only " << (sketch.report_only ? "true" : "false")
+           << " production-emission " << (sketch.production_emission_enabled ? "enabled" : "disabled");
+    for (auto const& snippet : sketch.snippets) {
+        report << " snippet " << snippet;
+    }
+    return report.str();
+}
+
 auto is_owned_binding_consumed(
     OwnershipTransferState const& state,
     std::string_view binding_name
@@ -237,7 +278,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_cleanup_skip_plans !=
                 merged.runtime_indexed_cleanup_skip_plans ||
             branch_states[index].runtime_indexed_cleanup_proof_gates !=
-                merged.runtime_indexed_cleanup_proof_gates) {
+                merged.runtime_indexed_cleanup_proof_gates ||
+            branch_states[index].runtime_indexed_cleanup_emission_sketches !=
+                merged.runtime_indexed_cleanup_emission_sketches) {
             return std::nullopt;
         }
     }

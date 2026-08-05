@@ -60,6 +60,7 @@ int main() {
     assert(runtime_indexed.runtime_indexed_partial_owners.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_skip_plans.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_proof_gates.size() == 1);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_sketches.size() == 1);
     assert(
         orison::lowering::runtime_indexed_partial_owner_report(
             runtime_indexed.runtime_indexed_partial_owners.front()
@@ -89,6 +90,24 @@ int main() {
     auto missing_index_gate = orison::lowering::runtime_indexed_cleanup_proof_gate(missing_index_plan);
     assert(!missing_index_gate.prerequisites_met);
     assert(!missing_index_gate.index_known);
+    auto missing_index_sketch = orison::lowering::runtime_indexed_cleanup_emission_sketch(
+        missing_index_gate
+    );
+    assert(missing_index_sketch.snippets.empty());
+    assert(!missing_index_sketch.production_emission_enabled);
+    assert(
+        runtime_indexed.runtime_indexed_cleanup_emission_sketches.front().snippets.size() == 5
+    );
+    assert(
+        orison::lowering::runtime_indexed_cleanup_emission_sketch_report(
+            runtime_indexed.runtime_indexed_cleanup_emission_sketches.front()
+        ) ==
+        "runtime-index cleanup emission-sketch owner holder.items index index element Inner snippets 5 "
+        "report-only true production-emission disabled snippet load-length holder.items "
+        "snippet loop-cleanup-index 0..<length snippet skip-cleanup-index index "
+        "snippet drop-live-element holder.items[cleanup_index] as Inner "
+        "snippet deallocate-owner holder.items"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -97,6 +116,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_partial_owners.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_skip_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_proof_gates.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_sketches.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
@@ -118,6 +138,14 @@ int main() {
         different_proof_gate,
     });
     assert(!mismatched_proof_gate.has_value());
+    auto different_emission_sketch = runtime_indexed;
+    different_emission_sketch.runtime_indexed_cleanup_emission_sketches.front()
+        .production_emission_enabled = true;
+    auto mismatched_emission_sketch = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        different_emission_sketch,
+    });
+    assert(!mismatched_emission_sketch.has_value());
 
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace(

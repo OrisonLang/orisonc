@@ -780,6 +780,9 @@ representation.
 - Runtime-index cleanup proof gates now validate owner, index expression, matching element/moved types, and supported
   skip operation. The gate can report complete prerequisites while lowering remains disabled, preserving the rejection
   boundary until runtime-index cleanup emission exists.
+- Runtime-index cleanup emission sketches now derive from complete proof gates and render the intended report-only
+  sequence: load owner length, iterate cleanup indexes, skip the moved runtime index, drop live elements, then
+  deallocate the owner. Production emission remains disabled.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

@@ -2713,7 +2713,12 @@ auto main() -> int {
         "operation skip-moved-element production-cleanup disabled: "
         "runtime-index cleanup proof owner holder.items index index element Inner moved Inner "
         "operation skip-moved-element owner-known true index-known true type-match true "
-        "operation-supported true prerequisites met lowering disabled"
+        "operation-supported true prerequisites met lowering disabled: "
+        "runtime-index cleanup emission-sketch owner holder.items index index element Inner snippets 5 "
+        "report-only true production-emission disabled snippet load-length holder.items "
+        "snippet loop-cleanup-index 0..<length snippet skip-cleanup-index index "
+        "snippet drop-live-element holder.items[cleanup_index] as Inner "
+        "snippet deallocate-owner holder.items"
     );
     assert_cli_run_fixture_success(
         executable,
