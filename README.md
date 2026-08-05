@@ -116,3 +116,22 @@ paths. The focused `orison_minimal_demo_smoke` target owns the smallest `example
 ## Status
 
 This repository currently captures the initial language design and development conventions needed to begin implementation.
+
+## Implementation Gap Analysis - 2026-08-05
+
+- `orisonc` has a working C++23/LLVM pipeline for the current tested subset: parse, semantic analysis, LLVM IR
+  emission, object emission, host linking, `run`, examples, and smoke/regression coverage.
+- Core syntax coverage is partial. Packages, records, choices, functions, generics, casts, calls, control flow,
+  unsafe blocks, loops, `defer`, FFI declarations, arrays, and `DynamicArray<T>` are covered through fixtures, but not
+  yet as a complete spec-conformance matrix.
+- Ownership and cleanup lowering are the strongest active area. Record/choice constructor moves, reassignment cleanup,
+  owned-element `DynamicArray<T>` cleanup, and fixed literal indexed partial moves are covered; runtime-index partial
+  ownership and generic descriptor-backed choice payload cleanup remain open.
+- Type-system enforcement is still incomplete. Full interface/`implements` checking, access-control enforcement,
+  borrow/exclusivity validation, and concurrency safety rules need dedicated semantic passes and negative tests.
+- Backend support can emit and link native programs for the supported subset, but full ABI coverage, dynamic C binding
+  IR generation, portable target validation, and complete runtime/standard-library integration remain unfinished.
+- Tooling beyond `orisonc` is mostly future work. `orisonfmt`, `orisonls`, package/workspace tooling, and richer
+  diagnostics should reuse the shared frontend and semantic model as they come online.
+- Next highest-value implementation work is to finish partial-ownership proof coverage: reject reuse of moved literal
+  indexed elements, prove sibling element access remains valid, then extend the model toward computed indexes.
