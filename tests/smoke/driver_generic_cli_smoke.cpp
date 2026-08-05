@@ -1385,6 +1385,80 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member
     assert(selected_values_cleanup < selected_spare_cleanup);
 }
 
+void assert_cli_emit_llvm_choice_constructor_multi_payload_indexed_member_path_sibling_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto stale_first_values_cleanup =
+        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
+    auto stale_first_spare_cleanup =
+        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
+    auto stale_second_values_cleanup =
+        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
+    auto stale_second_spare_cleanup =
+        output.find("%holder.items.element1.spare.dynamic_array_cleanup", main_start);
+    auto selected_values_cleanup =
+        output.find("%selected.Ready.item.values.choice_dynamic_array_cleanup", main_start);
+    auto selected_spare_cleanup =
+        output.find("%selected.Ready.item.spare.choice_dynamic_array_cleanup", selected_values_cleanup);
+    auto sibling_values_cleanup =
+        output.find("%sibling.Ready.item.values.choice_dynamic_array_cleanup", selected_spare_cleanup);
+    auto sibling_spare_cleanup =
+        output.find("%sibling.Ready.item.spare.choice_dynamic_array_cleanup", sibling_values_cleanup);
+    assert(main_start != std::string::npos);
+    assert(stale_first_values_cleanup == std::string::npos);
+    assert(stale_first_spare_cleanup == std::string::npos);
+    assert(stale_second_values_cleanup == std::string::npos);
+    assert(stale_second_spare_cleanup == std::string::npos);
+    assert(selected_values_cleanup != std::string::npos);
+    assert(selected_spare_cleanup != std::string::npos);
+    assert(sibling_values_cleanup != std::string::npos);
+    assert(sibling_spare_cleanup != std::string::npos);
+    assert(selected_values_cleanup < selected_spare_cleanup);
+    assert(selected_spare_cleanup < sibling_values_cleanup);
+    assert(sibling_values_cleanup < sibling_spare_cleanup);
+}
+
+void assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member_path_sibling_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto stale_first_values_cleanup =
+        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
+    auto stale_first_spare_cleanup =
+        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
+    auto stale_second_values_cleanup =
+        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
+    auto stale_second_spare_cleanup =
+        output.find("%holder.items.element1.spare.dynamic_array_cleanup", main_start);
+    auto selected_values_cleanup =
+        output.find("%selected.Ready.item.values.choice_dynamic_array_cleanup", main_start);
+    auto selected_spare_cleanup =
+        output.find("%selected.Ready.item.spare.choice_dynamic_array_cleanup", selected_values_cleanup);
+    auto sibling_values_cleanup =
+        output.find("%sibling.Ready.item.values.choice_dynamic_array_cleanup", selected_spare_cleanup);
+    auto sibling_spare_cleanup =
+        output.find("%sibling.Ready.item.spare.choice_dynamic_array_cleanup", sibling_values_cleanup);
+    assert(main_start != std::string::npos);
+    assert(stale_first_values_cleanup == std::string::npos);
+    assert(stale_first_spare_cleanup == std::string::npos);
+    assert(stale_second_values_cleanup == std::string::npos);
+    assert(stale_second_spare_cleanup == std::string::npos);
+    assert(selected_values_cleanup != std::string::npos);
+    assert(selected_spare_cleanup != std::string::npos);
+    assert(sibling_values_cleanup != std::string::npos);
+    assert(sibling_spare_cleanup != std::string::npos);
+    assert(selected_values_cleanup < selected_spare_cleanup);
+    assert(selected_spare_cleanup < sibling_values_cleanup);
+    assert(sibling_values_cleanup < sibling_spare_cleanup);
+}
+
 void assert_cli_emit_llvm_choice_constructor_multi_variant_nested_member_path_move_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2521,6 +2595,27 @@ auto main() -> int {
     assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member_path_move_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_payload_second_indexed_member_path_move_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_payload_indexed_member_path_sibling_move_run.or"
+    );
+    assert_cli_emit_llvm_choice_constructor_multi_payload_indexed_member_path_sibling_move_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_payload_indexed_member_path_sibling_move_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_payload_second_indexed_member_path_sibling_move_run.or"
+    );
+    assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member_path_sibling_move_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_payload_second_indexed_member_path_sibling_move_run.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "choice_constructor_multi_payload_indexed_member_path_reuse_rejected.or",
+        "use after move: holder.items.element0"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

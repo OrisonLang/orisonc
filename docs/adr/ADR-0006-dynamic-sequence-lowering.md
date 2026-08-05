@@ -730,6 +730,10 @@ representation.
   the first payload slot. The `choice_constructor_multi_payload_indexed_member_path_move_run.or` fixture pins
   `Ready(holder.items[0], 7 as UInt32)` cleanup handoff to `selected.Ready.item` while preserving sibling cleanup under
   `holder.items.element1`.
+- Multi-payload choice constructor literal-index partial ownership now has same-element and sibling proof coverage. The
+  `choice_constructor_multi_payload_indexed_member_path_reuse_rejected.or` fixture pins
+  `use after move: holder.items.element0`, while sibling run fixtures pin moving `holder.items[1]` after
+  `holder.items[0]` in both payload positions.
 - Multi-payload choice constructor computed indexed ownership moves remain rejected until runtime-index partial
   ownership is modeled. The `choice_constructor_multi_payload_computed_index_member_path_move_rejected.or` fixture pins
   `Ready(holder.items[index], 7 as UInt32)` with `indexed constructor ownership move requires explicit partial

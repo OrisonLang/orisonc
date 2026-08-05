@@ -210,11 +210,14 @@ auto consumed_owned_aggregate_path_name(
         return consumed_owned_record_member_path_name(path, base_source_type_name, context, state);
     }
 
+    if (is_owned_binding_consumed(state.ownership_transfers, transfer->binding_name)) {
+        return transfer->binding_name;
+    }
+
     auto transfer_descendant_prefix = transfer->binding_name + ".";
     for (auto const& consumed_name : state.ownership_transfers.consumed_owned_bindings) {
         auto consumed_descendant_prefix = consumed_name + ".";
-        if (consumed_name == transfer->binding_name ||
-            consumed_name.starts_with(transfer_descendant_prefix) ||
+        if (consumed_name.starts_with(transfer_descendant_prefix) ||
             transfer->binding_name.starts_with(consumed_descendant_prefix)) {
             return consumed_name;
         }
