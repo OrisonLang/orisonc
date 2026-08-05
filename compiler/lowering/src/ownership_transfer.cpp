@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <sstream>
 #include <string_view>
 #include <unordered_set>
 #include <utility>
@@ -65,6 +66,26 @@ auto mark_owned_binding_consumed(
     std::string binding_name
 ) -> void {
     state.consumed_owned_bindings.insert(std::move(binding_name));
+}
+
+auto record_runtime_indexed_partial_owner(
+    OwnershipTransferState& state,
+    RuntimeIndexedPartialOwner owner
+) -> void {
+    state.runtime_indexed_partial_owners.push_back(std::move(owner));
+}
+
+auto runtime_indexed_partial_owner_report(
+    RuntimeIndexedPartialOwner const& owner
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index partial owner owner " << owner.owner_name
+           << " index " << owner.index_expression_text
+           << " element " << owner.element_source_type_name
+           << " moved " << owner.moved_source_type_name
+           << " cleanup " << owner.cleanup_strategy
+           << " constructor-move " << (owner.constructor_move_enabled ? "enabled" : "disabled");
+    return report.str();
 }
 
 auto is_owned_binding_consumed(
@@ -140,7 +161,8 @@ auto merge_ownership_transfer_states(
 
     auto merged = branch_states.front();
     for (auto index = std::size_t {1}; index < branch_states.size(); ++index) {
-        if (branch_states[index].consumed_owned_bindings != merged.consumed_owned_bindings) {
+        if (branch_states[index].consumed_owned_bindings != merged.consumed_owned_bindings ||
+            branch_states[index].runtime_indexed_partial_owners != merged.runtime_indexed_partial_owners) {
             return std::nullopt;
         }
     }

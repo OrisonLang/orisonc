@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <span>
@@ -277,7 +278,8 @@ void mark_constructor_owned_argument_cleanup_consumed(
 
     auto field_names = std::vector<std::string> {};
     field_names.reserve(path->steps.size());
-    for (auto const& step : path->steps) {
+    for (auto step_index = std::size_t {0}; step_index < path->steps.size(); ++step_index) {
+        auto const& step = path->steps[step_index];
         if (step.kind != AggregatePathStepKind::member) {
             return;
         }
@@ -326,6 +328,137 @@ auto has_owned_literal_indexed_constructor_argument_transfer(
     return transfer.has_value() &&
         transfer->contains_index &&
         transfer->source_type_name == expected_source_type;
+}
+
+auto runtime_indexed_partial_owner_for_constructor_argument(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<RuntimeIndexedPartialOwner> {
+    if (!is_owned_transfer_source_type(expected_source_type, context)) {
+        return std::nullopt;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto owner_source_type = state.source_type_names.find(path->base_expression->text);
+    if (owner_source_type == state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto owner_name = path->base_expression->text;
+    auto current_source_type_name = owner_source_type->second;
+    auto moved_source_type_name = std::optional<std::string> {};
+    for (auto step_index = std::size_t {0}; step_index < path->steps.size(); ++step_index) {
+        auto const& step = path->steps[step_index];
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.records.find(current_source_type_name);
+            if (record == context.records.end()) {
+                return std::nullopt;
+            }
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr) {
+                return std::nullopt;
+            }
+            owner_name += ".";
+            owner_name += step.field_name;
+            current_source_type_name = field->source_type_name;
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+
+        auto element_source_type = array_element_source_type_name(current_source_type_name);
+        if (!element_source_type.has_value()) {
+            return std::nullopt;
+        }
+        auto runtime_index_element_source_type_name = *element_source_type;
+
+        if (auto element_segment = decimal_index_owner_segment(*step.index_expression)) {
+            owner_name += ".";
+            owner_name += *element_segment;
+            current_source_type_name = std::move(*element_source_type);
+            continue;
+        }
+
+        moved_source_type_name = *element_source_type;
+        current_source_type_name = std::move(*element_source_type);
+        auto const index_expression_text = step.index_expression->text.empty()
+            ? std::string {"<computed>"}
+            : step.index_expression->text;
+        for (auto remaining_step_index = step_index + 1;
+             remaining_step_index < path->steps.size();
+             ++remaining_step_index) {
+            auto const& remaining_step = path->steps[remaining_step_index];
+            if (remaining_step.kind == AggregatePathStepKind::member) {
+                auto record = context.records.find(current_source_type_name);
+                if (record == context.records.end()) {
+                    return std::nullopt;
+                }
+                auto const* field = find_record_field(record->second, remaining_step.field_name);
+                if (field == nullptr) {
+                    return std::nullopt;
+                }
+                current_source_type_name = field->source_type_name;
+                moved_source_type_name = current_source_type_name;
+                continue;
+            }
+
+            if (remaining_step.index_expression == nullptr) {
+                return std::nullopt;
+            }
+            auto nested_element_source_type = array_element_source_type_name(current_source_type_name);
+            if (!nested_element_source_type.has_value()) {
+                return std::nullopt;
+            }
+            current_source_type_name = std::move(*nested_element_source_type);
+            moved_source_type_name = current_source_type_name;
+        }
+
+        if (!moved_source_type_name.has_value() || *moved_source_type_name != expected_source_type) {
+            return std::nullopt;
+        }
+        return RuntimeIndexedPartialOwner {
+            .owner_name = std::move(owner_name),
+            .index_expression_text = index_expression_text,
+            .element_source_type_name = std::move(runtime_index_element_source_type_name),
+            .moved_source_type_name = std::move(*moved_source_type_name),
+            .cleanup_strategy = "skip-moved-element",
+            .constructor_move_enabled = false,
+        };
+    }
+
+    return std::nullopt;
+}
+
+auto unsupported_indexed_constructor_ownership_detail(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) -> std::string {
+    auto detail = std::string {
+        "indexed constructor ownership move requires explicit partial ownership support"
+    };
+    auto owner = runtime_indexed_partial_owner_for_constructor_argument(
+        argument,
+        expected_source_type,
+        context.lowering,
+        session.state
+    );
+    if (!owner.has_value()) {
+        return detail;
+    }
+    record_runtime_indexed_partial_owner(session.state.ownership_transfers, *owner);
+    detail += ": ";
+    detail += runtime_indexed_partial_owner_report(*owner);
+    return detail;
 }
 
 auto is_indexed_owned_constructor_argument(
@@ -1230,7 +1363,12 @@ auto lower_record_constructor_expression(
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
-                "indexed constructor ownership move requires explicit partial ownership support"
+                unsupported_indexed_constructor_ownership_detail(
+                    expression.arguments[index],
+                    field.source_type_name,
+                    context,
+                    session
+                )
             );
             return std::nullopt;
         }
@@ -1463,7 +1601,12 @@ auto lower_choice_constructor_expression(
                 record_expression_lowering_failure(
                     failures,
                     ExpressionLoweringFailureReason::unsupported_expression,
-                    "indexed constructor ownership move requires explicit partial ownership support"
+                    unsupported_indexed_constructor_ownership_detail(
+                        arguments->front(),
+                        payload.source_type_name,
+                        context,
+                        session
+                    )
                 );
                 return std::nullopt;
             }
@@ -1503,7 +1646,12 @@ auto lower_choice_constructor_expression(
                     record_expression_lowering_failure(
                         failures,
                         ExpressionLoweringFailureReason::unsupported_expression,
-                        "indexed constructor ownership move requires explicit partial ownership support"
+                        unsupported_indexed_constructor_ownership_detail(
+                            (*arguments)[index],
+                            payload.source_type_name,
+                            context,
+                            session
+                        )
                     );
                     return std::nullopt;
                 }

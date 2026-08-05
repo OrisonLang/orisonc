@@ -45,6 +45,40 @@ int main() {
     assert(empty.has_value());
     assert(!orison::lowering::is_owned_binding_consumed(*empty, "items"));
 
+    auto runtime_indexed = orison::lowering::OwnershipTransferState {};
+    orison::lowering::record_runtime_indexed_partial_owner(
+        runtime_indexed,
+        orison::lowering::RuntimeIndexedPartialOwner {
+            .owner_name = "holder.items",
+            .index_expression_text = "index",
+            .element_source_type_name = "Inner",
+            .moved_source_type_name = "Inner",
+            .cleanup_strategy = "skip-moved-element",
+            .constructor_move_enabled = false,
+        }
+    );
+    assert(runtime_indexed.runtime_indexed_partial_owners.size() == 1);
+    assert(
+        orison::lowering::runtime_indexed_partial_owner_report(
+            runtime_indexed.runtime_indexed_partial_owners.front()
+        ) ==
+        "runtime-index partial owner owner holder.items index index element Inner moved Inner "
+        "cleanup skip-moved-element constructor-move disabled"
+    );
+    auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        runtime_indexed,
+    });
+    assert(matching_runtime_indexed.has_value());
+    assert(matching_runtime_indexed->runtime_indexed_partial_owners.size() == 1);
+    auto different_runtime_indexed = runtime_indexed;
+    different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
+    auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        different_runtime_indexed,
+    });
+    assert(!mismatched_runtime_indexed.has_value());
+
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace(
         "Payload",

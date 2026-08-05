@@ -11,8 +11,20 @@ namespace orison::lowering {
 
 struct LoweringContext;
 
+struct RuntimeIndexedPartialOwner {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::string cleanup_strategy;
+    bool constructor_move_enabled = false;
+
+    auto operator==(RuntimeIndexedPartialOwner const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
+    std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -26,6 +38,15 @@ auto mark_owned_binding_consumed(
     OwnershipTransferState& state,
     std::string binding_name
 ) -> void;
+
+auto record_runtime_indexed_partial_owner(
+    OwnershipTransferState& state,
+    RuntimeIndexedPartialOwner owner
+) -> void;
+
+auto runtime_indexed_partial_owner_report(
+    RuntimeIndexedPartialOwner const& owner
+) -> std::string;
 
 auto is_owned_binding_consumed(
     OwnershipTransferState const& state,
