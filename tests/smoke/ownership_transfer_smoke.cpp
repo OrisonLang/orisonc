@@ -44,6 +44,12 @@ int main() {
     auto empty = orison::lowering::merge_ownership_transfer_states({});
     assert(empty.has_value());
     assert(!orison::lowering::is_owned_binding_consumed(*empty, "items"));
+    auto empty_runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(*empty);
+    assert(empty_runtime_indexed_audit.size() == 1);
+    assert(
+        empty_runtime_indexed_audit.front() ==
+        "runtime-index cleanup audit: no runtime-index cleanup metadata"
+    );
 
     auto runtime_indexed = orison::lowering::OwnershipTransferState {};
     orison::lowering::record_runtime_indexed_partial_owner(
@@ -118,6 +124,24 @@ int main() {
         "runtime-index cleanup capability owner holder.items index index element Inner "
         "proof-ready true sketch-ready true prerequisites ready production disabled"
     );
+    auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
+    assert(runtime_indexed_audit.size() == 6);
+    assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
+    assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
+        runtime_indexed.runtime_indexed_partial_owners.front()
+    ));
+    assert(runtime_indexed_audit[2] == orison::lowering::runtime_indexed_cleanup_skip_plan_report(
+        runtime_indexed.runtime_indexed_cleanup_skip_plans.front()
+    ));
+    assert(runtime_indexed_audit[3] == orison::lowering::runtime_indexed_cleanup_proof_gate_report(
+        runtime_indexed.runtime_indexed_cleanup_proof_gates.front()
+    ));
+    assert(runtime_indexed_audit[4] == orison::lowering::runtime_indexed_cleanup_emission_sketch_report(
+        runtime_indexed.runtime_indexed_cleanup_emission_sketches.front()
+    ));
+    assert(runtime_indexed_audit[5] == orison::lowering::runtime_indexed_cleanup_capability_report(
+        runtime_indexed.runtime_indexed_cleanup_capabilities.front()
+    ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch

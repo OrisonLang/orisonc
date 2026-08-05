@@ -135,6 +135,10 @@ auto runtime_indexed_cleanup_capability_report(
     RuntimeIndexedCleanupCapability const& capability
 ) -> std::string;
 
+auto runtime_indexed_cleanup_audit_report(
+    OwnershipTransferState const& state
+) -> std::vector<std::string>;
+
 auto is_owned_binding_consumed(
     OwnershipTransferState const& state,
     std::string_view binding_name
