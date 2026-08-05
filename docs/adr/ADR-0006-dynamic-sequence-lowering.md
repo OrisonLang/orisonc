@@ -767,6 +767,10 @@ representation.
 - Multi-variant choice constructor literal-index partial ownership now mirrors the single-variant path. Reusing
   `holder.items[0]` after `Secondary(holder.items[0])` reports `use after move: holder.items.element0`, while moving
   `holder.items[1]` into `Primary(...)` remains valid.
+- Computed-index constructor ownership moves remain intentionally rejected across record, single-payload choice,
+  multi-payload choice, and multi-variant choice constructors. Supporting `holder.items[index]` safely requires a
+  runtime-index partial-owner model plus cleanup lowering that skips the moved element while still cleaning every
+  remaining element; the multi-variant computed-index fixture pins the current rejection boundary.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

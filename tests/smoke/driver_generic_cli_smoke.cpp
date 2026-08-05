@@ -2704,6 +2704,11 @@ auto main() -> int {
         fixtures / "choice_constructor_multi_variant_indexed_member_path_reuse_rejected.or",
         "use after move: holder.items.element0"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or",
+        "indexed constructor ownership move requires explicit partial ownership support"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_payload_indexed_member_path_move_run.or"
