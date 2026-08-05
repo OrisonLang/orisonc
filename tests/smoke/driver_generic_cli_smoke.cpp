@@ -1178,6 +1178,48 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_nested_member_path_mo
     assert(selected_second_values_cleanup < selected_second_spare_cleanup);
 }
 
+void assert_cli_emit_llvm_choice_constructor_multi_payload_second_nested_member_path_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto scalar_payload = output.find(
+        "insertvalue { i32, [2 x %record.Inner] } undef, i32 7, 0",
+        main_start
+    );
+    auto payload_tuple_extract = output.find(
+        "%selected.Ready.items.element0.values.choice_dynamic_array_cleanup.payload.value = "
+        "extractvalue { i32, [2 x %record.Inner] }",
+        main_start
+    );
+    auto stale_first_values_cleanup =
+        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
+    auto selected_first_values_cleanup = output.find(
+        "%selected.Ready.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract",
+        payload_tuple_extract
+    );
+    auto selected_first_spare_cleanup =
+        output.find("%selected.Ready.items.element0.spare.choice_dynamic_array_cleanup", selected_first_values_cleanup);
+    auto selected_second_values_cleanup =
+        output.find("%selected.Ready.items.element1.values.choice_dynamic_array_cleanup", selected_first_spare_cleanup);
+    auto selected_second_spare_cleanup =
+        output.find("%selected.Ready.items.element1.spare.choice_dynamic_array_cleanup", selected_second_values_cleanup);
+    assert(main_start != std::string::npos);
+    assert(scalar_payload != std::string::npos);
+    assert(payload_tuple_extract != std::string::npos);
+    assert(stale_first_values_cleanup == std::string::npos);
+    assert(selected_first_values_cleanup != std::string::npos);
+    assert(selected_first_spare_cleanup != std::string::npos);
+    assert(selected_second_values_cleanup != std::string::npos);
+    assert(selected_second_spare_cleanup != std::string::npos);
+    assert(payload_tuple_extract < selected_first_values_cleanup);
+    assert(selected_first_values_cleanup < selected_first_spare_cleanup);
+    assert(selected_first_spare_cleanup < selected_second_values_cleanup);
+    assert(selected_second_values_cleanup < selected_second_spare_cleanup);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_move_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2151,6 +2193,14 @@ auto main() -> int {
         executable,
         fixtures / "choice_constructor_multi_payload_nested_member_path_move_run.or"
     );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_payload_second_nested_member_path_move_run.or"
+    );
+    assert_cli_emit_llvm_choice_constructor_multi_payload_second_nested_member_path_move_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_payload_second_nested_member_path_move_run.or"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "choice_constructor_multi_payload_indexed_member_path_move_rejected.or",
@@ -2158,7 +2208,17 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "choice_constructor_multi_payload_second_indexed_member_path_move_rejected.or",
+        "indexed constructor ownership move requires explicit partial ownership support"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "choice_constructor_multi_payload_nested_member_path_reuse_rejected.or",
+        "use after move: holder.items"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "choice_constructor_multi_payload_second_nested_member_path_reuse_rejected.or",
         "use after move: holder.items"
     );
     assert_cli_emit_llvm_existing_fixture_failure(

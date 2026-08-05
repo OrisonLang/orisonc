@@ -724,6 +724,11 @@ representation.
   `choice_constructor_multi_payload_indexed_member_path_move_rejected.or` fixture pins
   `Ready(holder.items[0], 7 as UInt32)` with
   `indexed constructor ownership move requires explicit partial ownership support`.
+- Multi-payload choice constructor cleanup now has symmetric payload-index coverage. The
+  `choice_constructor_multi_payload_second_nested_member_path_move_run.or`,
+  `choice_constructor_multi_payload_second_nested_member_path_reuse_rejected.or`, and
+  `choice_constructor_multi_payload_second_indexed_member_path_move_rejected.or` fixtures pin
+  `Ready(7 as UInt32, holder.items)` transfer, reuse, and indexed partial-ownership behavior.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
