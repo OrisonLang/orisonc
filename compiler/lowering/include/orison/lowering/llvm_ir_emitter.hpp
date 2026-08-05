@@ -11,6 +11,7 @@
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/lowering/module_symbol_registry.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -319,6 +320,7 @@ struct LlvmIrEmissionResult {
         computed_dynamic_array_for_production_emission_gates;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
+    std::vector<RuntimeIndexedCleanupCapability> runtime_indexed_cleanup_capabilities;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<GeneratedModuleSymbol> generated_module_symbols;
     std::vector<GeneratedModuleSymbol> generated_module_type_symbols;

@@ -6465,6 +6465,43 @@ auto main() -> int {
         std::string::npos
     );
 
+    auto runtime_indexed_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or";
+    auto runtime_indexed_cleanup = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+        }
+    );
+    assert(runtime_indexed_cleanup.has_errors());
+    assert(
+        runtime_indexed_cleanup.error_text.find(
+            "indexed constructor ownership move requires explicit partial ownership support"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state
+            .capability_metadata_available
+    );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.capability_count == 1);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.all_prerequisites_ready);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.any_production_enabled);
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.capabilities.front()
+            .owner_name == "holder.items"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.capabilities.front()
+            .index_expression_text == "index"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.capabilities.front()
+            .element_source_type_name == "Inner"
+    );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 6);
+
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
     {

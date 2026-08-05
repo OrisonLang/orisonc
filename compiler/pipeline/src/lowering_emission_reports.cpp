@@ -192,6 +192,23 @@ auto build_dynamic_array_cleanup_emission_capability_state(
     };
 }
 
+auto build_runtime_indexed_cleanup_capability_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> RuntimeIndexedCleanupCapabilityState {
+    auto state = RuntimeIndexedCleanupCapabilityState {
+        .capabilities = emission.runtime_indexed_cleanup_capabilities,
+        .capability_metadata_available = !emission.runtime_indexed_cleanup_capabilities.empty(),
+        .all_prerequisites_ready = !emission.runtime_indexed_cleanup_capabilities.empty(),
+        .any_production_enabled = false,
+        .capability_count = emission.runtime_indexed_cleanup_capabilities.size(),
+    };
+    for (auto const& capability : emission.runtime_indexed_cleanup_capabilities) {
+        state.all_prerequisites_ready = state.all_prerequisites_ready && capability.prerequisites_ready;
+        state.any_production_enabled = state.any_production_enabled || capability.production_enabled;
+    }
+    return state;
+}
+
 auto build_aggregate_projection_access_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> AggregateProjectionAccessPlanState {
@@ -1074,6 +1091,8 @@ void populate_lowering_emission_reports(
     result.drop_readiness_summary = emission.drop_readiness_summary();
     result.drop_readiness_blocker_summary =
         lowering::summarize_drop_readiness_blockers(result.drop_readiness_snapshot);
+    result.runtime_indexed_cleanup_capability_state =
+        build_runtime_indexed_cleanup_capability_state(emission);
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);

@@ -1833,6 +1833,11 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_cleanup_audit_lines.begin(),
         function_emission.runtime_indexed_cleanup_audit_lines.end()
     );
+    result.runtime_indexed_cleanup_capabilities.insert(
+        result.runtime_indexed_cleanup_capabilities.end(),
+        function_emission.runtime_indexed_cleanup_capabilities.begin(),
+        function_emission.runtime_indexed_cleanup_capabilities.end()
+    );
     result.emitted_dynamic_array_cleanup_obligations.reserve(
         result.emitted_dynamic_array_cleanup_obligations.size() +
         function_emission.emitted_dynamic_array_cleanup_obligations.size()

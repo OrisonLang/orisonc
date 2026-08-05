@@ -791,6 +791,8 @@ representation.
 - Runtime-index cleanup audit metadata now flows through function emission, LLVM emission, pipeline results, and the
   `--runtime-indexed-cleanup-audit` driver command. The command exits successfully for the computed-index rejection
   fixture and prints the structured report without relying on the ordinary lowering diagnostic text.
+- Runtime-index cleanup capability metadata now also flows as typed pipeline state: capability count, prerequisite
+  readiness, production-enable status, and the underlying capability records are available without parsing report text.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

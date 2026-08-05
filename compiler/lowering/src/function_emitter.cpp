@@ -1127,6 +1127,8 @@ void preserve_function_emission_metadata(
             state.computed_dynamic_array_cleanup_call_operands;
         result->generated_module_symbols =
             state.pending_generated_module_symbols;
+        result->runtime_indexed_cleanup_capabilities =
+            state.ownership_transfers.runtime_indexed_cleanup_capabilities;
         if (!state.ownership_transfers.runtime_indexed_partial_owners.empty() ||
             !state.ownership_transfers.runtime_indexed_cleanup_skip_plans.empty() ||
             !state.ownership_transfers.runtime_indexed_cleanup_proof_gates.empty() ||

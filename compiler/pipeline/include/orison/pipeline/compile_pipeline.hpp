@@ -4,6 +4,7 @@
 #include "orison/lowering/aggregate_projection_access_plan.hpp"
 #include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -126,6 +127,14 @@ struct ComputedDynamicArrayForProductionSequenceState {
 
 struct ComputedDynamicArrayForProductionSequenceModuleIrArtifactState {
     std::vector<std::string> comment_ir_lines;
+};
+
+struct RuntimeIndexedCleanupCapabilityState {
+    std::vector<lowering::RuntimeIndexedCleanupCapability> capabilities;
+    bool capability_metadata_available = false;
+    bool all_prerequisites_ready = false;
+    bool any_production_enabled = false;
+    std::size_t capability_count = 0;
 };
 
 struct ComputedDynamicArrayForDescriptorRenderState {
@@ -560,6 +569,7 @@ struct CompilePipelineResult {
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     lowering::DropReadinessSummary drop_readiness_summary;
     lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
+    RuntimeIndexedCleanupCapabilityState runtime_indexed_cleanup_capability_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;
