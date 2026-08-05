@@ -1127,6 +1127,14 @@ void preserve_function_emission_metadata(
             state.computed_dynamic_array_cleanup_call_operands;
         result->generated_module_symbols =
             state.pending_generated_module_symbols;
+        if (!state.ownership_transfers.runtime_indexed_partial_owners.empty() ||
+            !state.ownership_transfers.runtime_indexed_cleanup_skip_plans.empty() ||
+            !state.ownership_transfers.runtime_indexed_cleanup_proof_gates.empty() ||
+            !state.ownership_transfers.runtime_indexed_cleanup_emission_sketches.empty() ||
+            !state.ownership_transfers.runtime_indexed_cleanup_capabilities.empty()) {
+            result->runtime_indexed_cleanup_audit_lines =
+                runtime_indexed_cleanup_audit_report(state.ownership_transfers);
+        }
     }
     consumed_descriptor_finalization_plans->insert(
         consumed_descriptor_finalization_plans->end(),
@@ -1413,6 +1421,11 @@ void emit_function_body(
                     diagnostics,
                     output
                 )) {
+                preserve_function_emission_metadata(
+                    state,
+                    result,
+                    consumed_descriptor_finalization_plans
+                );
                 return;
             }
             continue;
@@ -1613,6 +1626,11 @@ void emit_function_body(
                 "lowering does not yet support this return expression",
                 failures.expression
             )
+        );
+        preserve_function_emission_metadata(
+            state,
+            result,
+            consumed_descriptor_finalization_plans
         );
         return;
     }

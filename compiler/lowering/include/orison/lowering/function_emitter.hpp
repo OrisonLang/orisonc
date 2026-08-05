@@ -32,6 +32,7 @@ struct FunctionEmissionResult {
     std::vector<ComputedDynamicArrayCleanupCallOperands> computed_dynamic_array_cleanup_call_operands;
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
     std::vector<GeneratedModuleSymbol> generated_module_symbols;
+    std::vector<std::string> runtime_indexed_cleanup_audit_lines;
 };
 
 auto emit_function_with_metadata(

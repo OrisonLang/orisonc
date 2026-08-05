@@ -1828,6 +1828,11 @@ void append_function_emission_reports(
         function_emission.generated_module_symbols.begin(),
         function_emission.generated_module_symbols.end()
     );
+    result.runtime_indexed_cleanup_audit_lines.insert(
+        result.runtime_indexed_cleanup_audit_lines.end(),
+        function_emission.runtime_indexed_cleanup_audit_lines.begin(),
+        function_emission.runtime_indexed_cleanup_audit_lines.end()
+    );
     result.emitted_dynamic_array_cleanup_obligations.reserve(
         result.emitted_dynamic_array_cleanup_obligations.size() +
         function_emission.emitted_dynamic_array_cleanup_obligations.size()

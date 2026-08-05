@@ -489,6 +489,7 @@ struct CompilePipelineOptions {
     bool fixture_authorize_computed_dynamic_array_cleanup_calls = false;
     bool fixture_insert_computed_dynamic_array_cleanup_calls = false;
     bool collect_aggregate_projection_access_metadata = false;
+    bool collect_runtime_indexed_cleanup_audit = false;
     bool suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;
     bool dynamic_array_local_lowering_enabled = true;
@@ -559,6 +560,7 @@ struct CompilePipelineResult {
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     lowering::DropReadinessSummary drop_readiness_summary;
     lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
+    std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;
 

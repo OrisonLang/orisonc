@@ -1074,6 +1074,8 @@ void populate_lowering_emission_reports(
     result.drop_readiness_summary = emission.drop_readiness_summary();
     result.drop_readiness_blocker_summary =
         lowering::summarize_drop_readiness_blockers(result.drop_readiness_snapshot);
+    result.runtime_indexed_cleanup_audit_lines =
+        std::move(emission.runtime_indexed_cleanup_audit_lines);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
 }
 

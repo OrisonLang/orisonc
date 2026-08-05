@@ -788,6 +788,9 @@ representation.
 - Runtime-index cleanup audit reports now render partial-owner metadata, cleanup-skip plans, proof gates, emission
   sketches, and disabled capabilities from `OwnershipTransferState`, giving future pipeline/driver integration a
   structured report hook outside the rejection diagnostic.
+- Runtime-index cleanup audit metadata now flows through function emission, LLVM emission, pipeline results, and the
+  `--runtime-indexed-cleanup-audit` driver command. The command exits successfully for the computed-index rejection
+  fixture and prints the structured report without relying on the ordinary lowering diagnostic text.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

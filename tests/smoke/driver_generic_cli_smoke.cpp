@@ -104,6 +104,20 @@ void assert_cli_emit_llvm_existing_fixture_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("runtime-index cleanup audit entries 1") != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup capability owner holder.items index index element Inner "
+        "proof-ready true sketch-ready true prerequisites ready production disabled"
+    ) != std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2721,6 +2735,10 @@ auto main() -> int {
         "snippet deallocate-owner holder.items: "
         "runtime-index cleanup capability owner holder.items index index element Inner "
         "proof-ready true sketch-ready true prerequisites ready production disabled"
+    );
+    assert_cli_runtime_indexed_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
     );
     assert_cli_run_fixture_success(
         executable,

@@ -173,6 +173,7 @@ auto usage_text() -> std::string {
            "--test-only-computed-dynamic-array-cleanup-proof-summary <file> | "
            "--test-only-aggregate-projection-access-plans <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
+           "--runtime-indexed-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
@@ -255,6 +256,13 @@ auto computed_cleanup_call_insertion_readiness_options() -> pipeline::CompilePip
     auto options = dynamic_array_cleanup_report_options();
     options.dynamic_array_production_construction_lowering_enabled = true;
     options.dynamic_array_production_for_lowering_enabled = true;
+    return options;
+}
+
+auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions {
+    auto options = pipeline::CompilePipelineOptions {};
+    options.source_drop_lowering_enabled = true;
+    options.collect_runtime_indexed_cleanup_audit = true;
     return options;
 }
 
@@ -595,6 +603,19 @@ auto dynamic_array_cleanup_audit(
     return CompileResult {
         .exit_code = 0,
         .stdout_text = render_report_lines(dynamic_array_cleanup_audit_report(result)),
+    };
+}
+
+auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.emit_llvm(source_path, runtime_indexed_cleanup_audit_options());
+    auto lines = result.runtime_indexed_cleanup_audit_lines;
+    if (lines.empty()) {
+        lines.push_back("runtime-index cleanup audit: no runtime-index cleanup metadata");
+    }
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = render_report_lines(lines),
     };
 }
 
@@ -1174,6 +1195,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             std::filesystem::path(args[2]),
             computed_cleanup_call_insertion_readiness_options()
         );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--runtime-indexed-cleanup-audit") {
+        return runtime_indexed_cleanup_audit(std::filesystem::path(args[2]));
     }
 
     if (args.size() == command_index + 4 && std::string_view(args[command_index]) == "--emit-object" &&

@@ -81,6 +81,12 @@ The checked-in report-only fixture for the dynamic-array cleanup audit chain is
 build/tools/orisonc/orisonc --dynamic-array-cleanup-audit tests/fixtures/dynamic_array_cleanup_audit.or
 ```
 
+The runtime-index partial-owner cleanup metadata for the current computed-index rejection boundary can be inspected with:
+
+```sh
+build/tools/orisonc/orisonc --runtime-indexed-cleanup-audit tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_rejected.or
+```
+
 This prints semantic descriptor origins, descriptor cleanup plans, cleanup obligations, sequence plans, verification,
 emission gate, capability proof, and production-readiness status in order. It does not enable production
 `DynamicArray<T>` cleanup by default.
