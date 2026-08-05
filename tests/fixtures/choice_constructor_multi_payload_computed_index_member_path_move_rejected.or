@@ -1,4 +1,4 @@
-package tests.fixtures.choice_constructor_multi_payload_second_indexed_member_path_move_rejected
+package tests.fixtures.choice_constructor_multi_payload_computed_index_member_path_move_rejected
 
 record Payload
     value: UInt32
@@ -27,7 +27,7 @@ implements Drop for Holder
 
 choice TaggedInner
     Empty
-    Ready(tag: UInt32, item: Inner)
+    Ready(item: Inner, tag: UInt32)
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
@@ -41,5 +41,6 @@ function make_inner(seed: UInt32) -> Inner
 function main() -> UInt32
     var items: Array<Inner, 2> = [make_inner(1 as UInt32), make_inner(20 as UInt32)]
     var holder: Holder = Holder(items)
-    var selected: TaggedInner = Ready(7 as UInt32, holder.items[0])
+    let index: UInt64 = 0 as UInt64
+    var selected: TaggedInner = Ready(holder.items[index], 7 as UInt32)
     0 as UInt32

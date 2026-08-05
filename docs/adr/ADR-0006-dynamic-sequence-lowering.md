@@ -726,15 +726,25 @@ representation.
 - Multi-payload choice constructor reuse diagnostics now cover moved nested payloads. The
   `choice_constructor_multi_payload_nested_member_path_reuse_rejected.or` fixture pins a second
   `Ready(holder.items, 11 as UInt32)` with `use after move: holder.items`.
-- Multi-payload choice constructor indexed ownership moves share the partial-ownership rejection boundary. The
-  `choice_constructor_multi_payload_indexed_member_path_move_rejected.or` fixture pins
-  `Ready(holder.items[0], 7 as UInt32)` with
-  `indexed constructor ownership move requires explicit partial ownership support`.
+- Multi-payload choice constructor indexed ownership moves now support fixed-array decimal literal element transfers in
+  the first payload slot. The `choice_constructor_multi_payload_indexed_member_path_move_run.or` fixture pins
+  `Ready(holder.items[0], 7 as UInt32)` cleanup handoff to `selected.Ready.item` while preserving sibling cleanup under
+  `holder.items.element1`.
+- Multi-payload choice constructor computed indexed ownership moves remain rejected until runtime-index partial
+  ownership is modeled. The `choice_constructor_multi_payload_computed_index_member_path_move_rejected.or` fixture pins
+  `Ready(holder.items[index], 7 as UInt32)` with `indexed constructor ownership move requires explicit partial
+  ownership support`.
 - Multi-payload choice constructor cleanup now has symmetric payload-index coverage. The
   `choice_constructor_multi_payload_second_nested_member_path_move_run.or`,
   `choice_constructor_multi_payload_second_nested_member_path_reuse_rejected.or`, and
-  `choice_constructor_multi_payload_second_indexed_member_path_move_rejected.or` fixtures pin
-  `Ready(7 as UInt32, holder.items)` transfer, reuse, and indexed partial-ownership behavior.
+  `choice_constructor_multi_payload_second_indexed_member_path_move_run.or` fixtures pin
+  `Ready(7 as UInt32, holder.items)` transfer, reuse, and `Ready(7 as UInt32, holder.items[0])` indexed transfer
+  behavior.
+- Multi-payload choice constructor second-slot computed indexed ownership moves remain rejected until runtime-index
+  partial ownership is modeled. The
+  `choice_constructor_multi_payload_second_computed_index_member_path_move_rejected.or` fixture pins
+  `Ready(7 as UInt32, holder.items[index])` with `indexed constructor ownership move requires explicit partial
+  ownership support`.
 - Multi-variant choice constructor cleanup now has explicit tag-gated nested payload coverage. The
   `choice_constructor_multi_variant_nested_member_path_move_run.or` fixture pins `Secondary(holder.items)` cleanup
   handoff while retaining inactive `Primary(...)` cleanup blocks behind their own tag checks.
