@@ -732,6 +732,9 @@ representation.
 - Multi-variant choice constructor cleanup now has explicit tag-gated nested payload coverage. The
   `choice_constructor_multi_variant_nested_member_path_move_run.or` fixture pins `Secondary(holder.items)` cleanup
   handoff while retaining inactive `Primary(...)` cleanup blocks behind their own tag checks.
+- Multi-variant choice constructor reuse diagnostics now remain constructor-agnostic after a nested payload move. The
+  `choice_constructor_multi_variant_nested_member_path_reuse_rejected.or` fixture pins `Secondary(holder.items)`
+  followed by `Primary(holder.items)` with `use after move: holder.items`.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
