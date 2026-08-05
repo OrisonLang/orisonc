@@ -774,6 +774,9 @@ representation.
 - Runtime-index partial-owner metadata now exists behind that rejection boundary. The model records owner, index
   expression, element source type, moved source type, cleanup strategy, and disabled constructor-move status, and the
   multi-variant computed-index fixture pins the rendered diagnostic metadata without enabling the move.
+- Runtime-index cleanup-skip planning now derives from the partial-owner metadata and records the owner, index
+  expression, element source type, moved source type, skip operation, and disabled production-cleanup status. The same
+  computed-index fixture pins the rendered plan while constructor moves remain rejected.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

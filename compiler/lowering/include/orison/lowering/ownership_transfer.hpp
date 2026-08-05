@@ -22,9 +22,21 @@ struct RuntimeIndexedPartialOwner {
     auto operator==(RuntimeIndexedPartialOwner const&) const -> bool = default;
 };
 
+struct RuntimeIndexedCleanupSkipPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::string cleanup_operation;
+    bool production_cleanup_enabled = false;
+
+    auto operator==(RuntimeIndexedCleanupSkipPlan const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
+    std::vector<RuntimeIndexedCleanupSkipPlan> runtime_indexed_cleanup_skip_plans;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -46,6 +58,14 @@ auto record_runtime_indexed_partial_owner(
 
 auto runtime_indexed_partial_owner_report(
     RuntimeIndexedPartialOwner const& owner
+) -> std::string;
+
+auto runtime_indexed_cleanup_skip_plan(
+    RuntimeIndexedPartialOwner const& owner
+) -> RuntimeIndexedCleanupSkipPlan;
+
+auto runtime_indexed_cleanup_skip_plan_report(
+    RuntimeIndexedCleanupSkipPlan const& plan
 ) -> std::string;
 
 auto is_owned_binding_consumed(

@@ -58,6 +58,7 @@ int main() {
         }
     );
     assert(runtime_indexed.runtime_indexed_partial_owners.size() == 1);
+    assert(runtime_indexed.runtime_indexed_cleanup_skip_plans.size() == 1);
     assert(
         orison::lowering::runtime_indexed_partial_owner_report(
             runtime_indexed.runtime_indexed_partial_owners.front()
@@ -65,12 +66,20 @@ int main() {
         "runtime-index partial owner owner holder.items index index element Inner moved Inner "
         "cleanup skip-moved-element constructor-move disabled"
     );
+    assert(
+        orison::lowering::runtime_indexed_cleanup_skip_plan_report(
+            runtime_indexed.runtime_indexed_cleanup_skip_plans.front()
+        ) ==
+        "runtime-index cleanup-skip plan owner holder.items index index element Inner moved Inner "
+        "operation skip-moved-element production-cleanup disabled"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
     });
     assert(matching_runtime_indexed.has_value());
     assert(matching_runtime_indexed->runtime_indexed_partial_owners.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_cleanup_skip_plans.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
@@ -78,6 +87,13 @@ int main() {
         different_runtime_indexed,
     });
     assert(!mismatched_runtime_indexed.has_value());
+    auto different_cleanup_plan = runtime_indexed;
+    different_cleanup_plan.runtime_indexed_cleanup_skip_plans.front().cleanup_operation = "other-operation";
+    auto mismatched_cleanup_plan = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        different_cleanup_plan,
+    });
+    assert(!mismatched_cleanup_plan.has_value());
 
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace(

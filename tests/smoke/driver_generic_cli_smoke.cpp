@@ -2708,7 +2708,9 @@ auto main() -> int {
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or",
         "runtime-index partial owner owner holder.items index index element Inner moved Inner "
-        "cleanup skip-moved-element constructor-move disabled"
+        "cleanup skip-moved-element constructor-move disabled: "
+        "runtime-index cleanup-skip plan owner holder.items index index element Inner moved Inner "
+        "operation skip-moved-element production-cleanup disabled"
     );
     assert_cli_run_fixture_success(
         executable,

@@ -72,7 +72,9 @@ auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
     RuntimeIndexedPartialOwner owner
 ) -> void {
+    auto plan = runtime_indexed_cleanup_skip_plan(owner);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
+    state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -85,6 +87,32 @@ auto runtime_indexed_partial_owner_report(
            << " moved " << owner.moved_source_type_name
            << " cleanup " << owner.cleanup_strategy
            << " constructor-move " << (owner.constructor_move_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
+auto runtime_indexed_cleanup_skip_plan(
+    RuntimeIndexedPartialOwner const& owner
+) -> RuntimeIndexedCleanupSkipPlan {
+    return RuntimeIndexedCleanupSkipPlan {
+        .owner_name = owner.owner_name,
+        .index_expression_text = owner.index_expression_text,
+        .element_source_type_name = owner.element_source_type_name,
+        .moved_source_type_name = owner.moved_source_type_name,
+        .cleanup_operation = owner.cleanup_strategy,
+        .production_cleanup_enabled = false,
+    };
+}
+
+auto runtime_indexed_cleanup_skip_plan_report(
+    RuntimeIndexedCleanupSkipPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup-skip plan owner " << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " moved " << plan.moved_source_type_name
+           << " operation " << plan.cleanup_operation
+           << " production-cleanup " << (plan.production_cleanup_enabled ? "enabled" : "disabled");
     return report.str();
 }
 
@@ -162,7 +190,9 @@ auto merge_ownership_transfer_states(
     auto merged = branch_states.front();
     for (auto index = std::size_t {1}; index < branch_states.size(); ++index) {
         if (branch_states[index].consumed_owned_bindings != merged.consumed_owned_bindings ||
-            branch_states[index].runtime_indexed_partial_owners != merged.runtime_indexed_partial_owners) {
+            branch_states[index].runtime_indexed_partial_owners != merged.runtime_indexed_partial_owners ||
+            branch_states[index].runtime_indexed_cleanup_skip_plans !=
+                merged.runtime_indexed_cleanup_skip_plans) {
             return std::nullopt;
         }
     }

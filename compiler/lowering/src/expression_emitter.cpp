@@ -458,6 +458,10 @@ auto unsupported_indexed_constructor_ownership_detail(
     record_runtime_indexed_partial_owner(session.state.ownership_transfers, *owner);
     detail += ": ";
     detail += runtime_indexed_partial_owner_report(*owner);
+    detail += ": ";
+    detail += runtime_indexed_cleanup_skip_plan_report(
+        session.state.ownership_transfers.runtime_indexed_cleanup_skip_plans.back()
+    );
     return detail;
 }
 
