@@ -704,12 +704,17 @@ representation.
 - Record constructor indexed ownership moves now support fixed-array decimal literal element transfers. The
   `dynamic_array_owned_constructor_indexed_member_path_move_run.or` fixture pins `Outer(holder.items[0])` cleanup
   handoff to `outer.item` while preserving sibling cleanup under `holder.items.element1`.
+- Record constructor literal-index partial ownership now has same-element and sibling proof coverage. Reusing
+  `holder.items[0]` after transfer reports `use after move: holder.items.element0`, while moving `holder.items[1]`
+  after `holder.items[0]` remains valid.
 - Record constructor computed indexed ownership moves remain rejected until runtime-index partial ownership is modeled.
   The `dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or` fixture pins
   `Outer(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
 - Single-payload choice constructor indexed ownership moves now support fixed-array decimal literal element transfers.
   The `choice_constructor_indexed_member_path_move_run.or` fixture pins `Some(holder.items[0])` cleanup handoff to
   `selected.Some.item` while preserving sibling cleanup under `holder.items.element1`.
+- Single-payload choice constructor literal-index partial ownership now mirrors record constructor coverage: same-element
+  reuse reports `use after move: holder.items.element0`, and sibling transfer cleanup moves under `sibling.Some.item`.
 - Single-payload choice constructor computed indexed ownership moves remain rejected until runtime-index partial
   ownership is modeled. The `choice_constructor_computed_index_member_path_move_rejected.or` fixture pins
   `Some(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
@@ -759,6 +764,9 @@ representation.
   element transfer path. The `choice_constructor_multi_variant_indexed_member_path_move_run.or` fixture pins
   `Secondary(holder.items[0])` cleanup handoff under the active variant while preserving sibling cleanup under
   `holder.items.element1`.
+- Multi-variant choice constructor literal-index partial ownership now mirrors the single-variant path. Reusing
+  `holder.items[0]` after `Secondary(holder.items[0])` reports `use after move: holder.items.element0`, while moving
+  `holder.items[1]` into `Primary(...)` remains valid.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
