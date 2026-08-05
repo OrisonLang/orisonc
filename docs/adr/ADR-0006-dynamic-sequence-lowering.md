@@ -735,6 +735,9 @@ representation.
 - Multi-variant choice constructor reuse diagnostics now remain constructor-agnostic after a nested payload move. The
   `choice_constructor_multi_variant_nested_member_path_reuse_rejected.or` fixture pins `Secondary(holder.items)`
   followed by `Primary(holder.items)` with `use after move: holder.items`.
+- Multi-variant choice constructor indexed payload moves share the partial-ownership rejection boundary. The
+  `choice_constructor_multi_variant_indexed_member_path_move_rejected.or` fixture pins
+  `Secondary(holder.items[0])` with `indexed constructor ownership move requires explicit partial ownership support`.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

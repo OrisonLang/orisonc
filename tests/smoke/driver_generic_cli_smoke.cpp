@@ -2288,6 +2288,11 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "choice_constructor_multi_variant_indexed_member_path_move_rejected.or",
+        "indexed constructor ownership move requires explicit partial ownership support"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "choice_constructor_multi_payload_indexed_member_path_move_rejected.or",
         "indexed constructor ownership move requires explicit partial ownership support"
     );
