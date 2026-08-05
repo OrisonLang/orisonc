@@ -115,6 +115,113 @@ void mark_seeded_dynamic_array_cleanup_descendants_consumed(
     }
 }
 
+auto decimal_index_owner_segment(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::integer_literal || expression.text.empty()) {
+        return std::nullopt;
+    }
+    if (!std::ranges::all_of(expression.text, [](char character) {
+            return std::isdigit(static_cast<unsigned char>(character)) != 0;
+        })) {
+        return std::nullopt;
+    }
+    return "element" + expression.text;
+}
+
+struct OwnedAggregatePathTransfer {
+    std::string binding_name;
+    std::string source_type_name;
+    bool contains_index = false;
+};
+
+auto owned_named_aggregate_path_transfer(
+    AggregatePath const& path,
+    std::string_view base_source_type_name,
+    LoweringContext const& context
+) -> std::optional<OwnedAggregatePathTransfer> {
+    if (path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name ||
+        path.steps.empty()) {
+        return std::nullopt;
+    }
+
+    auto binding_name = path.base_expression->text;
+    auto current_source_type_name = std::string {base_source_type_name};
+    auto contains_index = false;
+    for (auto const& step : path.steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.records.find(current_source_type_name);
+            if (record == context.records.end()) {
+                return std::nullopt;
+            }
+
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr) {
+                return std::nullopt;
+            }
+            binding_name += ".";
+            binding_name += step.field_name;
+            current_source_type_name = field->source_type_name;
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+        auto element_source_type = array_element_source_type_name(current_source_type_name);
+        auto element_segment = decimal_index_owner_segment(*step.index_expression);
+        if (!element_source_type.has_value() || !element_segment.has_value()) {
+            return std::nullopt;
+        }
+        binding_name += ".";
+        binding_name += *element_segment;
+        current_source_type_name = std::move(*element_source_type);
+        contains_index = true;
+    }
+
+    if (!is_owned_transfer_source_type(current_source_type_name, context)) {
+        return std::nullopt;
+    }
+
+    return OwnedAggregatePathTransfer {
+        .binding_name = std::move(binding_name),
+        .source_type_name = std::move(current_source_type_name),
+        .contains_index = contains_index,
+    };
+}
+
+auto consumed_owned_aggregate_path_name(
+    AggregatePath const& path,
+    std::string_view base_source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+    if (is_owned_binding_consumed(state.ownership_transfers, path.base_expression->text)) {
+        return path.base_expression->text;
+    }
+
+    auto transfer = owned_named_aggregate_path_transfer(path, base_source_type_name, context);
+    if (!transfer.has_value()) {
+        return consumed_owned_record_member_path_name(path, base_source_type_name, context, state);
+    }
+
+    auto transfer_descendant_prefix = transfer->binding_name + ".";
+    for (auto const& consumed_name : state.ownership_transfers.consumed_owned_bindings) {
+        auto consumed_descendant_prefix = consumed_name + ".";
+        if (consumed_name == transfer->binding_name ||
+            consumed_name.starts_with(transfer_descendant_prefix) ||
+            transfer->binding_name.starts_with(consumed_descendant_prefix)) {
+            return consumed_name;
+        }
+    }
+    return std::nullopt;
+}
+
 void mark_constructor_owned_argument_cleanup_consumed(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
@@ -145,6 +252,26 @@ void mark_constructor_owned_argument_cleanup_consumed(
         return;
     }
 
+    auto owner_source_type = session.state.source_type_names.find(path->base_expression->text);
+    if (owner_source_type == session.state.source_type_names.end()) {
+        return;
+    }
+
+    auto aggregate_transfer = owned_named_aggregate_path_transfer(
+        *path,
+        owner_source_type->second,
+        context.lowering
+    );
+    if (aggregate_transfer.has_value() && aggregate_transfer->source_type_name == expected_source_type) {
+        mark_owned_binding_consumed(session.state.ownership_transfers, aggregate_transfer->binding_name);
+        mark_seeded_dynamic_array_cleanup_descendants_consumed(
+            aggregate_transfer->binding_name,
+            session.state,
+            session.state.ownership_transfers
+        );
+        return;
+    }
+
     auto field_names = std::vector<std::string> {};
     field_names.reserve(path->steps.size());
     for (auto const& step : path->steps) {
@@ -152,11 +279,6 @@ void mark_constructor_owned_argument_cleanup_consumed(
             return;
         }
         field_names.push_back(step.field_name);
-    }
-
-    auto owner_source_type = session.state.source_type_names.find(path->base_expression->text);
-    if (owner_source_type == session.state.source_type_names.end()) {
-        return;
     }
 
     auto transfer = owned_record_member_path_transfer(
@@ -175,6 +297,32 @@ void mark_constructor_owned_argument_cleanup_consumed(
         session.state,
         session.state.ownership_transfers
     );
+}
+
+auto has_owned_literal_indexed_constructor_argument_transfer(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    if (!is_owned_transfer_source_type(expected_source_type, context)) {
+        return false;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return false;
+    }
+
+    auto owner_source_type = state.source_type_names.find(path->base_expression->text);
+    if (owner_source_type == state.source_type_names.end()) {
+        return false;
+    }
+
+    auto transfer = owned_named_aggregate_path_transfer(*path, owner_source_type->second, context);
+    return transfer.has_value() &&
+        transfer->contains_index &&
+        transfer->source_type_name == expected_source_type;
 }
 
 auto is_indexed_owned_constructor_argument(
@@ -1070,6 +1218,11 @@ auto lower_record_constructor_expression(
                 expression.arguments[index],
                 field.source_type_name,
                 context.lowering
+            ) && !has_owned_literal_indexed_constructor_argument_transfer(
+                expression.arguments[index],
+                field.source_type_name,
+                context.lowering,
+                session.state
             )) {
             record_expression_lowering_failure(
                 failures,
@@ -1841,7 +1994,7 @@ auto lower_aggregate_path_read_from_storage(
         return std::nullopt;
     }
 
-    if (auto moved_member_name = consumed_owned_record_member_path_name(
+    if (auto moved_member_name = consumed_owned_aggregate_path_name(
             path,
             base_source_type_name,
             context.lowering,
@@ -3173,7 +3326,7 @@ auto lowered_expression(
                 ? source_type_name_for_expression(*path->base_expression, context, state)
                 : std::optional<std::string> {};
             if (path_base_source_type.has_value()) {
-                if (auto moved_member_name = consumed_owned_record_member_path_name(
+                if (auto moved_member_name = consumed_owned_aggregate_path_name(
                         *path,
                         *path_base_source_type,
                         context.lowering,

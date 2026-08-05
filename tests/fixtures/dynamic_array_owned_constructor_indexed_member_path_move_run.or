@@ -1,4 +1,4 @@
-package tests.fixtures.dynamic_array_owned_constructor_indexed_member_path_move_rejected
+package tests.fixtures.dynamic_array_owned_constructor_indexed_member_path_move_run
 
 record Payload
     value: UInt32

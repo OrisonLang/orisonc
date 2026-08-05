@@ -701,9 +701,12 @@ representation.
 - Record constructor argument cleanup transfer now has explicit nested member-path coverage. The
   `dynamic_array_owned_constructor_nested_member_path_move_run.or` fixture pins `Outer(nested.holder.items)` cleanup
   handoff, and the paired rejected fixture pins `use after move: nested.holder.items`.
-- Indexed constructor ownership moves remain rejected until partial-element ownership is modeled explicitly. The
-  `dynamic_array_owned_constructor_indexed_member_path_move_rejected.or` fixture pins `Outer(holder.items[0])` with
-  `indexed constructor ownership move requires explicit partial ownership support`.
+- Record constructor indexed ownership moves now support fixed-array decimal literal element transfers. The
+  `dynamic_array_owned_constructor_indexed_member_path_move_run.or` fixture pins `Outer(holder.items[0])` cleanup
+  handoff to `outer.item` while preserving sibling cleanup under `holder.items.element1`.
+- Record constructor computed indexed ownership moves remain rejected until runtime-index partial ownership is modeled.
+  The `dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or` fixture pins
+  `Outer(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
 - Choice constructor payload ownership moves share the same indexed-source rejection boundary. The
   `choice_constructor_indexed_member_path_move_rejected.or` fixture pins `Some(holder.items[0])` with
   `indexed constructor ownership move requires explicit partial ownership support`.

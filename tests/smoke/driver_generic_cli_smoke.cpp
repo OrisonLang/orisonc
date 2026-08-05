@@ -1066,6 +1066,43 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
     assert(final_second_values_cleanup < final_second_spare_cleanup);
 }
 
+void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto moved_source_values_cleanup =
+        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
+    auto moved_source_spare_cleanup =
+        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
+    auto sibling_values_cleanup =
+        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
+    auto sibling_spare_cleanup =
+        output.find("%holder.items.element1.spare.dynamic_array_cleanup", sibling_values_cleanup);
+    auto outer_values_cleanup =
+        output.find("%outer.item.values.dynamic_array_cleanup", sibling_spare_cleanup);
+    auto outer_spare_cleanup =
+        output.find("%outer.item.spare.dynamic_array_cleanup", outer_values_cleanup);
+    auto final_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.item.spare.dynamic_array_cleanup",
+        outer_spare_cleanup
+    );
+    assert(main_start != std::string::npos);
+    assert(moved_source_values_cleanup == std::string::npos);
+    assert(moved_source_spare_cleanup == std::string::npos);
+    assert(sibling_values_cleanup != std::string::npos);
+    assert(sibling_spare_cleanup != std::string::npos);
+    assert(outer_values_cleanup != std::string::npos);
+    assert(outer_spare_cleanup != std::string::npos);
+    assert(final_deallocate != std::string::npos);
+    assert(sibling_values_cleanup < sibling_spare_cleanup);
+    assert(sibling_spare_cleanup < outer_values_cleanup);
+    assert(outer_values_cleanup < outer_spare_cleanup);
+    assert(outer_spare_cleanup < final_deallocate);
+}
+
 void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2334,9 +2371,17 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_constructor_nested_member_path_reuse_rejected.or",
         "use after move: nested.holder.items"
     );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_move_fixture_success(
+        executable,
+        fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_run.or"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
-        fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_rejected.or",
+        fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or",
         "indexed constructor ownership move requires explicit partial ownership support"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
