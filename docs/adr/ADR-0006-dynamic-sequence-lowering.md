@@ -729,6 +729,9 @@ representation.
   `choice_constructor_multi_payload_second_nested_member_path_reuse_rejected.or`, and
   `choice_constructor_multi_payload_second_indexed_member_path_move_rejected.or` fixtures pin
   `Ready(7 as UInt32, holder.items)` transfer, reuse, and indexed partial-ownership behavior.
+- Multi-variant choice constructor cleanup now has explicit tag-gated nested payload coverage. The
+  `choice_constructor_multi_variant_nested_member_path_move_run.or` fixture pins `Secondary(holder.items)` cleanup
+  handoff while retaining inactive `Primary(...)` cleanup blocks behind their own tag checks.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

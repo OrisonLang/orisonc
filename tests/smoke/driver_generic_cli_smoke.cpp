@@ -1220,6 +1220,78 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_second_nested_member_
     assert(selected_second_values_cleanup < selected_second_spare_cleanup);
 }
 
+void assert_cli_emit_llvm_choice_constructor_multi_variant_nested_member_path_move_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto main_start = output.find("define i32 @main");
+    auto secondary_constructor_tag = output.find(
+        "insertvalue { i32, [2 x %record.Inner] } undef, i32 2, 0",
+        main_start
+    );
+    auto stale_first_values_cleanup =
+        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
+    auto primary_tag_check = output.find(
+        "%selected.Primary.items.element0.values.choice_dynamic_array_cleanup",
+        main_start
+    );
+    auto primary_active_check = output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", primary_tag_check);
+    auto primary_expected_tag = output.find(", 1", primary_active_check);
+    auto primary_cleanup_entry = output.find(
+        "selected.Primary.items.element0.values.choice_dynamic_array_cleanup0.cleanup.entry",
+        primary_tag_check
+    );
+    auto secondary_tag_check = output.find(
+        "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup",
+        primary_cleanup_entry
+    );
+    auto secondary_active_check =
+        output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", secondary_tag_check);
+    auto secondary_expected_tag = output.find(", 2", secondary_active_check);
+    auto secondary_first_values_cleanup = output.find(
+        "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract",
+        secondary_tag_check
+    );
+    auto secondary_first_spare_cleanup =
+        output.find("%selected.Secondary.items.element0.spare.choice_dynamic_array_cleanup", secondary_first_values_cleanup);
+    auto secondary_second_values_cleanup =
+        output.find("%selected.Secondary.items.element1.values.choice_dynamic_array_cleanup", secondary_first_spare_cleanup);
+    auto secondary_second_spare_cleanup =
+        output.find("%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup", secondary_second_values_cleanup);
+    auto secondary_final_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr "
+            "%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup7.cleanup.data",
+        secondary_second_spare_cleanup
+    );
+    auto main_return = output.find("ret i32 0", secondary_final_deallocate);
+    assert(main_start != std::string::npos);
+    assert(secondary_constructor_tag != std::string::npos);
+    assert(stale_first_values_cleanup == std::string::npos);
+    assert(primary_tag_check != std::string::npos);
+    assert(primary_active_check != std::string::npos);
+    assert(primary_expected_tag != std::string::npos);
+    assert(primary_cleanup_entry != std::string::npos);
+    assert(secondary_tag_check != std::string::npos);
+    assert(secondary_active_check != std::string::npos);
+    assert(secondary_expected_tag != std::string::npos);
+    assert(secondary_first_values_cleanup != std::string::npos);
+    assert(secondary_first_spare_cleanup != std::string::npos);
+    assert(secondary_second_values_cleanup != std::string::npos);
+    assert(secondary_second_spare_cleanup != std::string::npos);
+    assert(secondary_final_deallocate != std::string::npos);
+    assert(main_return != std::string::npos);
+    assert(primary_tag_check < primary_cleanup_entry);
+    assert(primary_cleanup_entry < secondary_tag_check);
+    assert(secondary_tag_check < secondary_first_values_cleanup);
+    assert(secondary_first_values_cleanup < secondary_first_spare_cleanup);
+    assert(secondary_first_spare_cleanup < secondary_second_values_cleanup);
+    assert(secondary_second_values_cleanup < secondary_second_spare_cleanup);
+    assert(secondary_second_spare_cleanup < secondary_final_deallocate);
+    assert(secondary_final_deallocate < main_return);
+}
+
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_move_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2200,6 +2272,14 @@ auto main() -> int {
     assert_cli_emit_llvm_choice_constructor_multi_payload_second_nested_member_path_move_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_payload_second_nested_member_path_move_run.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_variant_nested_member_path_move_run.or"
+    );
+    assert_cli_emit_llvm_choice_constructor_multi_variant_nested_member_path_move_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_variant_nested_member_path_move_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
