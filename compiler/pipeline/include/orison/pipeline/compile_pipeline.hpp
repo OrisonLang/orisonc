@@ -191,6 +191,15 @@ struct RuntimeIndexedCleanupModuleIrInsertionPreviewState {
     std::size_t projected_module_line_count = 0;
 };
 
+struct RuntimeIndexedCleanupModuleIrCandidateState {
+    std::string candidate_ir_text;
+    bool candidate_available = false;
+    bool separate_from_module_ir = true;
+    std::size_t original_module_line_count = 0;
+    std::size_t candidate_module_line_count = 0;
+    std::size_t inserted_ir_line_count = 0;
+};
+
 struct ComputedDynamicArrayForDescriptorRenderState {
     std::vector<std::string> enclosing_function_names;
     std::vector<std::string> cleanup_owner_names;
@@ -631,6 +640,7 @@ struct CompilePipelineResult {
     RuntimeIndexedCleanupModuleIrArtifactState runtime_indexed_cleanup_module_ir_artifact_state;
     RuntimeIndexedCleanupModuleIrInsertionGateState runtime_indexed_cleanup_module_ir_insertion_gate_state;
     RuntimeIndexedCleanupModuleIrInsertionPreviewState runtime_indexed_cleanup_module_ir_insertion_preview_state;
+    RuntimeIndexedCleanupModuleIrCandidateState runtime_indexed_cleanup_module_ir_candidate_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;

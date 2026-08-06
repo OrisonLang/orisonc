@@ -826,6 +826,8 @@ representation.
   until actual module insertion is implemented.
 - Runtime-index cleanup insertion now exposes a non-mutating module-IR preview. The preview records the append-point
   line index and projected module line count while leaving module `ir_text` unchanged.
+- Runtime-index cleanup insertion now produces a separate candidate module-IR string when the preview is enabled. The
+  candidate contains the rendered cleanup lines, while the emitted module `ir_text` remains unchanged.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
