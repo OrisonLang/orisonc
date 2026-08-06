@@ -166,6 +166,13 @@ struct RuntimeIndexedCleanupIrRenderState {
     std::size_t rendered_ir_line_count = 0;
 };
 
+struct RuntimeIndexedCleanupModuleIrArtifactState {
+    std::vector<std::string> rendered_ir_lines;
+    bool artifact_available = false;
+    bool separate_from_module_ir = true;
+    std::size_t rendered_ir_line_count = 0;
+};
+
 struct ComputedDynamicArrayForDescriptorRenderState {
     std::vector<std::string> enclosing_function_names;
     std::vector<std::string> cleanup_owner_names;
@@ -602,6 +609,7 @@ struct CompilePipelineResult {
     RuntimeIndexedCleanupCapabilityState runtime_indexed_cleanup_capability_state;
     RuntimeIndexedCleanupEmissionPlanState runtime_indexed_cleanup_emission_plan_state;
     RuntimeIndexedCleanupIrRenderState runtime_indexed_cleanup_ir_render_state;
+    RuntimeIndexedCleanupModuleIrArtifactState runtime_indexed_cleanup_module_ir_artifact_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;

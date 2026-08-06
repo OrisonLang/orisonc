@@ -320,6 +320,25 @@ auto build_runtime_indexed_cleanup_ir_render_state(
     return state;
 }
 
+auto build_runtime_indexed_cleanup_module_ir_artifact_state(
+    RuntimeIndexedCleanupIrRenderState const& render_state
+) -> RuntimeIndexedCleanupModuleIrArtifactState {
+    auto artifact_state = RuntimeIndexedCleanupModuleIrArtifactState {
+        .artifact_available = render_state.render_metadata_available &&
+            render_state.all_structured_plans_complete &&
+            render_state.all_rendered_lines_match_artifact &&
+            !render_state.rendered_ir_lines.empty(),
+        .separate_from_module_ir = true,
+    };
+    if (!artifact_state.artifact_available) {
+        return artifact_state;
+    }
+
+    artifact_state.rendered_ir_lines = render_state.rendered_ir_lines;
+    artifact_state.rendered_ir_line_count = artifact_state.rendered_ir_lines.size();
+    return artifact_state;
+}
+
 auto build_computed_dynamic_array_for_descriptor_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForDescriptorRenderState {
@@ -1170,6 +1189,10 @@ void populate_lowering_emission_reports(
         build_runtime_indexed_cleanup_emission_plan_state(emission);
     result.runtime_indexed_cleanup_ir_render_state =
         build_runtime_indexed_cleanup_ir_render_state(emission);
+    result.runtime_indexed_cleanup_module_ir_artifact_state =
+        build_runtime_indexed_cleanup_module_ir_artifact_state(
+            result.runtime_indexed_cleanup_ir_render_state
+        );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
