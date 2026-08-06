@@ -6,9 +6,25 @@
 #include "dynamic_array_cleanup_readiness.hpp"
 #include "computed_cleanup_proof_model.hpp"
 
+#include <algorithm>
+
 namespace orison::pipeline {
 
 namespace {
+
+auto logical_line_count(std::string const& text) -> std::size_t {
+    if (text.empty()) {
+        return 0;
+    }
+
+    auto line_count = static_cast<std::size_t>(
+        std::count(text.begin(), text.end(), '\n')
+    );
+    if (text.back() != '\n') {
+        ++line_count;
+    }
+    return line_count;
+}
 
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
@@ -353,6 +369,30 @@ auto build_runtime_indexed_cleanup_module_ir_insertion_gate_state(
             render_state.all_rendered_lines_match_artifact,
         .remains_separate_from_module_ir = true,
     };
+}
+
+auto build_runtime_indexed_cleanup_module_ir_insertion_preview_state(
+    std::string const& ir_text,
+    RuntimeIndexedCleanupModuleIrArtifactState const& artifact_state,
+    RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state
+) -> RuntimeIndexedCleanupModuleIrInsertionPreviewState {
+    auto original_module_line_count = logical_line_count(ir_text);
+    auto preview_state = RuntimeIndexedCleanupModuleIrInsertionPreviewState {
+        .preview_available = insertion_gate_state.insertion_enabled,
+        .insertion_point_found = insertion_gate_state.insertion_enabled,
+        .would_modify_module_ir = false,
+        .insertion_line_index = original_module_line_count,
+        .original_module_line_count = original_module_line_count,
+    };
+    if (!preview_state.preview_available) {
+        preview_state.projected_module_line_count = original_module_line_count;
+        return preview_state;
+    }
+
+    preview_state.inserted_ir_line_count = artifact_state.rendered_ir_line_count;
+    preview_state.projected_module_line_count =
+        original_module_line_count + preview_state.inserted_ir_line_count;
+    return preview_state;
 }
 
 auto build_computed_dynamic_array_for_descriptor_render_state(
@@ -1214,6 +1254,12 @@ void populate_lowering_emission_reports(
             result.runtime_indexed_cleanup_ir_render_state,
             result.runtime_indexed_cleanup_module_ir_artifact_state,
             options
+        );
+    result.runtime_indexed_cleanup_module_ir_insertion_preview_state =
+        build_runtime_indexed_cleanup_module_ir_insertion_preview_state(
+            result.ir_text,
+            result.runtime_indexed_cleanup_module_ir_artifact_state,
+            result.runtime_indexed_cleanup_module_ir_insertion_gate_state
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);

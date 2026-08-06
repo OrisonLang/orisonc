@@ -824,6 +824,8 @@ representation.
 - Runtime-index cleanup module-IR artifact insertion now has an explicit pipeline gate. The gate can prove insertion
   readiness from artifact availability and render parity, but rendered lines still remain separate from module `ir_text`
   until actual module insertion is implemented.
+- Runtime-index cleanup insertion now exposes a non-mutating module-IR preview. The preview records the append-point
+  line index and projected module line count while leaving module `ir_text` unchanged.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

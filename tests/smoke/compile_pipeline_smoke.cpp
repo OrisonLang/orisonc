@@ -12,6 +12,7 @@
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <cstddef>
@@ -27,6 +28,20 @@
 namespace {
 
 namespace smoke = orison::tests::smoke;
+
+auto logical_line_count(std::string const& text) -> std::size_t {
+    if (text.empty()) {
+        return 0;
+    }
+
+    auto line_count = static_cast<std::size_t>(
+        std::count(text.begin(), text.end(), '\n')
+    );
+    if (text.back() != '\n') {
+        ++line_count;
+    }
+    return line_count;
+}
 
 void assert_line_contains(
     std::vector<std::string> const& lines,
@@ -6557,6 +6572,28 @@ auto main() -> int {
             .remains_separate_from_module_ir
     );
     assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .preview_available
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .insertion_point_found
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .would_modify_module_ir
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count == logical_line_count(runtime_indexed_cleanup.ir_text)
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .projected_module_line_count ==
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count
+    );
+    assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
     );
@@ -6712,6 +6749,28 @@ auto main() -> int {
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
             .remains_separate_from_module_ir
     );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .preview_available
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .insertion_point_found
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .would_modify_module_ir
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count == logical_line_count(runtime_indexed_cleanup_gate_on.ir_text)
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .projected_module_line_count ==
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count
+    );
 
     auto runtime_indexed_cleanup_insertion_gate_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
@@ -6742,6 +6801,39 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
             .remains_separate_from_module_ir
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .preview_available
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .insertion_point_found
+    );
+    assert(
+        !runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .would_modify_module_ir
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count ==
+        logical_line_count(runtime_indexed_cleanup_insertion_gate_on.ir_text)
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .insertion_line_index ==
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .inserted_ir_line_count == 17
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .projected_module_line_count ==
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
+            .original_module_line_count + 17
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.ir_text.find(
