@@ -163,6 +163,7 @@ int main() {
     assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().live_element_drop_slice_lowerable);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().owner_deallocation_planned);
     assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().cleanup_tail_slice_lowerable);
+    assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().ir_plan.complete);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().gated_ir_slice_lines.empty());
     assert(
         orison::lowering::runtime_indexed_cleanup_emission_plan_report(
@@ -172,7 +173,8 @@ int main() {
         "operations 5 prerequisites ready production-gate blocked production disabled "
         "length-load planned length-load-slice blocked loop planned loop-block-slice blocked "
         "skip planned skip-branch-slice blocked live-drop planned live-drop-slice blocked "
-        "deallocate planned cleanup-tail-slice blocked comment-ir-preview-lines 5 gated-ir-slice-lines 0 "
+        "deallocate planned cleanup-tail-slice blocked structured-ir-plan blocked "
+        "comment-ir-preview-lines 5 gated-ir-slice-lines 0 "
         "operation load-length operation loop-cleanup-index "
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
@@ -230,6 +232,23 @@ int main() {
     assert(enabled_emission_plan.skip_branch_slice_lowerable);
     assert(enabled_emission_plan.live_element_drop_slice_lowerable);
     assert(enabled_emission_plan.cleanup_tail_slice_lowerable);
+    assert(enabled_emission_plan.ir_plan.complete);
+    assert(enabled_emission_plan.ir_plan.labels_ready);
+    assert(enabled_emission_plan.ir_plan.operands_ready);
+    assert(enabled_emission_plan.ir_plan.calls_ready);
+    assert(enabled_emission_plan.ir_plan.owner_name == "holder.items");
+    assert(enabled_emission_plan.ir_plan.index_expression_text == "index");
+    assert(enabled_emission_plan.ir_plan.element_source_type_name == "Inner");
+    assert(enabled_emission_plan.ir_plan.length_value_name == "%holder.items.runtime_cleanup.length");
+    assert(enabled_emission_plan.ir_plan.condition_block_name == "holder.items.runtime_cleanup.condition");
+    assert(enabled_emission_plan.ir_plan.cleanup_index_name == "%holder.items.runtime_cleanup.index");
+    assert(enabled_emission_plan.ir_plan.skip_block_name == "holder.items.runtime_cleanup.skip");
+    assert(enabled_emission_plan.ir_plan.drop_block_name == "holder.items.runtime_cleanup.drop");
+    assert(enabled_emission_plan.ir_plan.element_address_name == "%holder.items.runtime_cleanup.element.addr");
+    assert(enabled_emission_plan.ir_plan.drop_callee_name == "__orison_drop.Inner");
+    assert(enabled_emission_plan.ir_plan.continue_block_name == "holder.items.runtime_cleanup.continue");
+    assert(enabled_emission_plan.ir_plan.exit_block_name == "holder.items.runtime_cleanup.exit");
+    assert(enabled_emission_plan.ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate");
     assert(enabled_emission_plan.gated_ir_slice_line_count == 17);
     assert(
         enabled_emission_plan.gated_ir_slice_lines.front() ==

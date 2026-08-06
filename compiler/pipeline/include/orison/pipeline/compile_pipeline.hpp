@@ -148,10 +148,12 @@ struct RuntimeIndexedCleanupEmissionPlanState {
     bool any_skip_branch_slice_lowerable = false;
     bool any_live_element_drop_slice_lowerable = false;
     bool any_cleanup_tail_slice_lowerable = false;
+    bool any_structured_ir_plan_complete = false;
     std::size_t plan_count = 0;
     std::size_t operation_count = 0;
     std::size_t comment_ir_preview_line_count = 0;
     std::size_t gated_ir_slice_line_count = 0;
+    std::size_t structured_ir_plan_count = 0;
 };
 
 struct ComputedDynamicArrayForDescriptorRenderState {

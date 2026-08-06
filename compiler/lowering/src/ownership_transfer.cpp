@@ -287,6 +287,28 @@ auto runtime_indexed_cleanup_emission_plan(
     };
     plan.comment_ir_preview_line_count = plan.comment_ir_preview_lines.size();
     if (plan.production_enabled) {
+        plan.ir_plan = RuntimeIndexedCleanupIrPlan {
+            .owner_name = plan.owner_name,
+            .index_expression_text = plan.index_expression_text,
+            .element_source_type_name = plan.element_source_type_name,
+            .length_value_name = "%" + plan.owner_name + ".runtime_cleanup.length",
+            .condition_block_name = plan.owner_name + ".runtime_cleanup.condition",
+            .cleanup_index_name = "%" + plan.owner_name + ".runtime_cleanup.index",
+            .bounds_check_name = "%" + plan.owner_name + ".runtime_cleanup.more",
+            .skip_check_name = "%" + plan.owner_name + ".runtime_cleanup.skip_moved",
+            .skip_block_name = plan.owner_name + ".runtime_cleanup.skip",
+            .drop_block_name = plan.owner_name + ".runtime_cleanup.drop",
+            .element_address_name = "%" + plan.owner_name + ".runtime_cleanup.element.addr",
+            .drop_callee_name = "__orison_drop." + plan.element_source_type_name,
+            .continue_block_name = plan.owner_name + ".runtime_cleanup.continue",
+            .next_index_name = "%" + plan.owner_name + ".runtime_cleanup.next_index",
+            .exit_block_name = plan.owner_name + ".runtime_cleanup.exit",
+            .deallocate_callee_name = "__orison_dynamic_array_deallocate",
+            .labels_ready = true,
+            .operands_ready = true,
+            .calls_ready = true,
+            .complete = true,
+        };
         plan.gated_ir_slice_lines = {
             "  %" + plan.owner_name + ".runtime_cleanup.length = load i64, ptr %" +
                 plan.owner_name + ".length\n",
@@ -351,6 +373,7 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " live-drop-slice " << (plan.live_element_drop_slice_lowerable ? "lowerable" : "blocked")
            << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing")
            << " cleanup-tail-slice " << (plan.cleanup_tail_slice_lowerable ? "lowerable" : "blocked")
+           << " structured-ir-plan " << (plan.ir_plan.complete ? "complete" : "blocked")
            << " comment-ir-preview-lines " << plan.comment_ir_preview_line_count
            << " gated-ir-slice-lines " << plan.gated_ir_slice_line_count;
     for (auto const& operation_name : plan.operation_names) {

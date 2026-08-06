@@ -73,6 +73,31 @@ struct RuntimeIndexedCleanupCapability {
     auto operator==(RuntimeIndexedCleanupCapability const&) const -> bool = default;
 };
 
+struct RuntimeIndexedCleanupIrPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string length_value_name;
+    std::string condition_block_name;
+    std::string cleanup_index_name;
+    std::string bounds_check_name;
+    std::string skip_check_name;
+    std::string skip_block_name;
+    std::string drop_block_name;
+    std::string element_address_name;
+    std::string drop_callee_name;
+    std::string continue_block_name;
+    std::string next_index_name;
+    std::string exit_block_name;
+    std::string deallocate_callee_name;
+    bool labels_ready = false;
+    bool operands_ready = false;
+    bool calls_ready = false;
+    bool complete = false;
+
+    auto operator==(RuntimeIndexedCleanupIrPlan const&) const -> bool = default;
+};
+
 struct RuntimeIndexedCleanupEmissionPlan {
     std::string owner_name;
     std::string index_expression_text;
@@ -80,6 +105,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     std::vector<std::string> operation_names;
     std::vector<std::string> comment_ir_preview_lines;
     std::vector<std::string> gated_ir_slice_lines;
+    RuntimeIndexedCleanupIrPlan ir_plan;
     bool prerequisites_ready = false;
     bool production_gate_requested = false;
     bool production_enabled = false;

@@ -6517,7 +6517,9 @@ auto main() -> int {
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_skip_branch_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_live_element_drop_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_cleanup_tail_slice_lowerable);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_structured_ir_plan_complete);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.gated_ir_slice_line_count == 0);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.structured_ir_plan_count == 0);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
@@ -6557,6 +6559,10 @@ auto main() -> int {
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .cleanup_tail_slice_lowerable
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.complete
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6604,7 +6610,35 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .any_structured_ir_plan_complete
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
             .gated_ir_slice_line_count == 17
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .structured_ir_plan_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.complete
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.length_value_name == "%holder.items.runtime_cleanup.length"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.condition_block_name == "holder.items.runtime_cleanup.condition"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.drop_callee_name == "__orison_drop.Inner"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()

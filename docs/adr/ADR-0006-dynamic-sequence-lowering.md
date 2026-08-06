@@ -810,6 +810,9 @@ representation.
   source Drop call planning are visible behind the explicit gate while normal compilation stays rejected.
 - Runtime-index cleanup gated IR metadata now includes the cleanup tail: convergence to the continue block, next-index
   increment, loop backedge, exit block, and descriptor deallocation intent remain behind the explicit gate.
+- Runtime-index cleanup emission now carries a structured IR plan with named blocks, SSA values, callees, readiness
+  flags, and pipeline counts. Rendered gated lines remain a verification artifact rather than the only bridge to future
+  emitter integration.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
