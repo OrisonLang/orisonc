@@ -6512,6 +6512,8 @@ auto main() -> int {
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.all_prerequisites_ready);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_gate_requested);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_enabled);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_length_load_slice_lowerable);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.gated_ir_slice_line_count == 0);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
@@ -6533,11 +6535,46 @@ auto main() -> int {
             .owner_deallocation_planned
     );
     assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .length_load_slice_lowerable
+    );
+    assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 7);
+
+    auto runtime_indexed_cleanup_gate_on = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+        }
+    );
+    assert(runtime_indexed_cleanup_gate_on.has_errors());
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .any_production_gate_requested
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .any_production_enabled
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .any_length_load_slice_lowerable
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .gated_ir_slice_line_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines.front() ==
+        "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"
+    );
 
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";

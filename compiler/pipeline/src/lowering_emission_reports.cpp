@@ -218,6 +218,7 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
         .all_prerequisites_ready = !emission.runtime_indexed_cleanup_emission_plans.empty(),
         .any_production_gate_requested = false,
         .any_production_enabled = false,
+        .any_length_load_slice_lowerable = false,
         .plan_count = emission.runtime_indexed_cleanup_emission_plans.size(),
     };
     for (auto const& plan : emission.runtime_indexed_cleanup_emission_plans) {
@@ -225,8 +226,11 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
         state.any_production_gate_requested =
             state.any_production_gate_requested || plan.production_gate_requested;
         state.any_production_enabled = state.any_production_enabled || plan.production_enabled;
+        state.any_length_load_slice_lowerable =
+            state.any_length_load_slice_lowerable || plan.length_load_slice_lowerable;
         state.operation_count += plan.operation_count;
         state.comment_ir_preview_line_count += plan.comment_ir_preview_line_count;
+        state.gated_ir_slice_line_count += plan.gated_ir_slice_line_count;
     }
     return state;
 }

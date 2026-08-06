@@ -154,18 +154,21 @@ int main() {
         "; runtime-index cleanup preview deallocate-owner holder.items\n"
     );
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().length_load_planned);
+    assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().length_load_slice_lowerable);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().loop_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().skip_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().live_element_drop_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().owner_deallocation_planned);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().gated_ir_slice_lines.empty());
     assert(
         orison::lowering::runtime_indexed_cleanup_emission_plan_report(
             runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
         ) ==
         "runtime-index cleanup emission-plan owner holder.items index index element Inner "
         "operations 5 prerequisites ready production-gate blocked production disabled "
-        "length-load planned loop planned skip planned live-drop planned deallocate planned "
-        "comment-ir-preview-lines 5 operation load-length operation loop-cleanup-index "
+        "length-load planned length-load-slice blocked loop planned skip planned live-drop planned "
+        "deallocate planned comment-ir-preview-lines 5 gated-ir-slice-lines 0 "
+        "operation load-length operation loop-cleanup-index "
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
@@ -217,6 +220,12 @@ int main() {
     assert(enabled_emission_plan.production_gate_requested);
     assert(enabled_emission_plan.production_enabled);
     assert(enabled_emission_plan.comment_ir_preview_line_count == 5);
+    assert(enabled_emission_plan.length_load_slice_lowerable);
+    assert(enabled_emission_plan.gated_ir_slice_line_count == 1);
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines.front() ==
+        "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,

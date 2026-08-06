@@ -286,6 +286,14 @@ auto runtime_indexed_cleanup_emission_plan(
         "; runtime-index cleanup preview deallocate-owner " + plan.owner_name + "\n",
     };
     plan.comment_ir_preview_line_count = plan.comment_ir_preview_lines.size();
+    if (plan.production_enabled) {
+        plan.gated_ir_slice_lines = {
+            "  %" + plan.owner_name + ".runtime_cleanup.length = load i64, ptr %" +
+                plan.owner_name + ".length\n",
+        };
+        plan.length_load_slice_lowerable = true;
+        plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
+    }
     return plan;
 }
 
@@ -301,11 +309,13 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " production-gate " << (plan.production_gate_requested ? "requested" : "blocked")
            << " production " << (plan.production_enabled ? "enabled" : "disabled")
            << " length-load " << (plan.length_load_planned ? "planned" : "missing")
+           << " length-load-slice " << (plan.length_load_slice_lowerable ? "lowerable" : "blocked")
            << " loop " << (plan.loop_planned ? "planned" : "missing")
            << " skip " << (plan.skip_planned ? "planned" : "missing")
            << " live-drop " << (plan.live_element_drop_planned ? "planned" : "missing")
            << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing")
-           << " comment-ir-preview-lines " << plan.comment_ir_preview_line_count;
+           << " comment-ir-preview-lines " << plan.comment_ir_preview_line_count
+           << " gated-ir-slice-lines " << plan.gated_ir_slice_line_count;
     for (auto const& operation_name : plan.operation_names) {
         report << " operation " << operation_name;
     }

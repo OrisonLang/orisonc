@@ -79,16 +79,19 @@ struct RuntimeIndexedCleanupEmissionPlan {
     std::string element_source_type_name;
     std::vector<std::string> operation_names;
     std::vector<std::string> comment_ir_preview_lines;
+    std::vector<std::string> gated_ir_slice_lines;
     bool prerequisites_ready = false;
     bool production_gate_requested = false;
     bool production_enabled = false;
     bool length_load_planned = false;
+    bool length_load_slice_lowerable = false;
     bool loop_planned = false;
     bool skip_planned = false;
     bool live_element_drop_planned = false;
     bool owner_deallocation_planned = false;
     std::size_t operation_count = 0;
     std::size_t comment_ir_preview_line_count = 0;
+    std::size_t gated_ir_slice_line_count = 0;
 
     auto operator==(RuntimeIndexedCleanupEmissionPlan const&) const -> bool = default;
 };
