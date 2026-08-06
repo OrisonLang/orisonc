@@ -290,8 +290,17 @@ auto runtime_indexed_cleanup_emission_plan(
         plan.gated_ir_slice_lines = {
             "  %" + plan.owner_name + ".runtime_cleanup.length = load i64, ptr %" +
                 plan.owner_name + ".length\n",
+            "  br label %" + plan.owner_name + ".runtime_cleanup.condition\n",
+            plan.owner_name + ".runtime_cleanup.condition:\n",
+            "  %" + plan.owner_name + ".runtime_cleanup.index = phi i64 [ 0, %" +
+                plan.owner_name + ".runtime_cleanup.entry ], [ %" + plan.owner_name +
+                ".runtime_cleanup.next_index, %" + plan.owner_name + ".runtime_cleanup.continue ]\n",
+            "  %" + plan.owner_name + ".runtime_cleanup.more = icmp ult i64 %" +
+                plan.owner_name + ".runtime_cleanup.index, %" + plan.owner_name +
+                ".runtime_cleanup.length\n",
         };
         plan.length_load_slice_lowerable = true;
+        plan.loop_block_slice_lowerable = true;
         plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
     }
     return plan;
@@ -311,6 +320,7 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " length-load " << (plan.length_load_planned ? "planned" : "missing")
            << " length-load-slice " << (plan.length_load_slice_lowerable ? "lowerable" : "blocked")
            << " loop " << (plan.loop_planned ? "planned" : "missing")
+           << " loop-block-slice " << (plan.loop_block_slice_lowerable ? "lowerable" : "blocked")
            << " skip " << (plan.skip_planned ? "planned" : "missing")
            << " live-drop " << (plan.live_element_drop_planned ? "planned" : "missing")
            << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing")

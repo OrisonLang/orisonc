@@ -86,6 +86,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     bool length_load_planned = false;
     bool length_load_slice_lowerable = false;
     bool loop_planned = false;
+    bool loop_block_slice_lowerable = false;
     bool skip_planned = false;
     bool live_element_drop_planned = false;
     bool owner_deallocation_planned = false;

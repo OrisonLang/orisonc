@@ -802,6 +802,8 @@ representation.
 - Runtime-index cleanup emission plans now expose the first gated IR slice for length loading. The slice appears only
   when the explicit production gate is requested and prerequisites are ready, while the computed-index constructor move
   rejection boundary remains in place.
+- Runtime-index cleanup gated IR metadata now extends through the cleanup-loop block skeleton: entry branch, condition
+  block, cleanup index PHI, and length bounds comparison are visible behind the explicit gate.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
