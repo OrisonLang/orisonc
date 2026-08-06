@@ -6537,6 +6537,26 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_artifact_state.rendered_ir_lines.empty()
     );
     assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .insertion_requested
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .artifact_available
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .render_parity_verified
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .insertion_enabled
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .remains_separate_from_module_ir
+    );
+    assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
     );
@@ -6669,6 +6689,63 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_gate_on.ir_text.find(
             runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_artifact_state
+                .rendered_ir_lines.front()
+        ) == std::string::npos
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .insertion_requested
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .artifact_available
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .render_parity_verified
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .insertion_enabled
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .remains_separate_from_module_ir
+    );
+
+    auto runtime_indexed_cleanup_insertion_gate_on = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+        }
+    );
+    assert(runtime_indexed_cleanup_insertion_gate_on.has_errors());
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .insertion_requested
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .artifact_available
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .render_parity_verified
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .insertion_enabled
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_gate_state
+            .remains_separate_from_module_ir
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on.ir_text.find(
+            runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_artifact_state
                 .rendered_ir_lines.front()
         ) == std::string::npos
     );

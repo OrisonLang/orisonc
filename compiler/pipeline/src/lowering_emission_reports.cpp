@@ -339,6 +339,22 @@ auto build_runtime_indexed_cleanup_module_ir_artifact_state(
     return artifact_state;
 }
 
+auto build_runtime_indexed_cleanup_module_ir_insertion_gate_state(
+    RuntimeIndexedCleanupIrRenderState const& render_state,
+    RuntimeIndexedCleanupModuleIrArtifactState const& artifact_state,
+    CompilePipelineOptions const& options
+) -> RuntimeIndexedCleanupModuleIrInsertionGateState {
+    return RuntimeIndexedCleanupModuleIrInsertionGateState {
+        .insertion_requested = options.runtime_indexed_cleanup_module_ir_insertion_enabled,
+        .artifact_available = artifact_state.artifact_available,
+        .render_parity_verified = render_state.all_rendered_lines_match_artifact,
+        .insertion_enabled = options.runtime_indexed_cleanup_module_ir_insertion_enabled &&
+            artifact_state.artifact_available &&
+            render_state.all_rendered_lines_match_artifact,
+        .remains_separate_from_module_ir = true,
+    };
+}
+
 auto build_computed_dynamic_array_for_descriptor_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForDescriptorRenderState {
@@ -1192,6 +1208,12 @@ void populate_lowering_emission_reports(
     result.runtime_indexed_cleanup_module_ir_artifact_state =
         build_runtime_indexed_cleanup_module_ir_artifact_state(
             result.runtime_indexed_cleanup_ir_render_state
+        );
+    result.runtime_indexed_cleanup_module_ir_insertion_gate_state =
+        build_runtime_indexed_cleanup_module_ir_insertion_gate_state(
+            result.runtime_indexed_cleanup_ir_render_state,
+            result.runtime_indexed_cleanup_module_ir_artifact_state,
+            options
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);
