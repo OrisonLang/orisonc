@@ -291,6 +291,35 @@ auto build_aggregate_projection_access_plan_state(
     return state;
 }
 
+auto build_runtime_indexed_cleanup_ir_render_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> RuntimeIndexedCleanupIrRenderState {
+    auto state = RuntimeIndexedCleanupIrRenderState {
+        .render_metadata_available = !emission.runtime_indexed_cleanup_emission_plans.empty(),
+        .all_structured_plans_complete = !emission.runtime_indexed_cleanup_emission_plans.empty(),
+        .all_rendered_lines_match_artifact = !emission.runtime_indexed_cleanup_emission_plans.empty(),
+        .plan_count = emission.runtime_indexed_cleanup_emission_plans.size(),
+    };
+    for (auto const& plan : emission.runtime_indexed_cleanup_emission_plans) {
+        auto rendered_lines = lowering::render_runtime_indexed_cleanup_ir_plan(plan.ir_plan);
+        state.all_structured_plans_complete =
+            state.all_structured_plans_complete && plan.ir_plan.complete;
+        state.all_rendered_lines_match_artifact =
+            state.all_rendered_lines_match_artifact &&
+            rendered_lines == plan.gated_ir_slice_lines;
+        if (!rendered_lines.empty()) {
+            ++state.rendered_plan_count;
+        }
+        state.rendered_ir_line_count += rendered_lines.size();
+        state.rendered_ir_lines.insert(
+            state.rendered_ir_lines.end(),
+            rendered_lines.begin(),
+            rendered_lines.end()
+        );
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_descriptor_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForDescriptorRenderState {
@@ -1139,6 +1168,8 @@ void populate_lowering_emission_reports(
         build_runtime_indexed_cleanup_capability_state(emission);
     result.runtime_indexed_cleanup_emission_plan_state =
         build_runtime_indexed_cleanup_emission_plan_state(emission);
+    result.runtime_indexed_cleanup_ir_render_state =
+        build_runtime_indexed_cleanup_ir_render_state(emission);
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);

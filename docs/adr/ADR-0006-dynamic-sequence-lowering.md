@@ -815,6 +815,9 @@ representation.
   emitter integration.
 - Runtime-index cleanup now has an emitter-facing renderer that consumes the structured IR plan and reproduces the
   gated verification artifact. Future production integration can replace artifact comparison with real module emission.
+- Runtime-index cleanup IR rendering now flows through pipeline state from the structured plan. The pipeline still
+  compares the rendered output with the gated artifact field, keeping the artifact as a regression guard while
+  production-facing consumers read the structured renderer output.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

@@ -6520,6 +6520,13 @@ auto main() -> int {
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_structured_ir_plan_complete);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.gated_ir_slice_line_count == 0);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.structured_ir_plan_count == 0);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.render_metadata_available);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.plan_count == 1);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.rendered_plan_count == 0);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.rendered_ir_line_count == 0);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.rendered_ir_lines.empty());
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.all_structured_plans_complete);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.all_rendered_lines_match_artifact);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
@@ -6619,6 +6626,20 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
             .structured_ir_plan_count == 1
+    );
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.render_metadata_available);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.plan_count == 1);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.rendered_plan_count == 1);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.rendered_ir_line_count == 17);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.all_structured_plans_complete);
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state
+            .all_rendered_lines_match_artifact
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.rendered_ir_lines ==
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
