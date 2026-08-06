@@ -813,6 +813,8 @@ representation.
 - Runtime-index cleanup emission now carries a structured IR plan with named blocks, SSA values, callees, readiness
   flags, and pipeline counts. Rendered gated lines remain a verification artifact rather than the only bridge to future
   emitter integration.
+- Runtime-index cleanup now has an emitter-facing renderer that consumes the structured IR plan and reproduces the
+  gated verification artifact. Future production integration can replace artifact comparison with real module emission.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

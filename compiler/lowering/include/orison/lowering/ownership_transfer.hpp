@@ -198,6 +198,10 @@ auto runtime_indexed_cleanup_emission_plan(
     bool production_cleanup_emission_enabled = false
 ) -> RuntimeIndexedCleanupEmissionPlan;
 
+auto render_runtime_indexed_cleanup_ir_plan(
+    RuntimeIndexedCleanupIrPlan const& plan
+) -> std::vector<std::string>;
+
 auto runtime_indexed_cleanup_emission_plan_report(
     RuntimeIndexedCleanupEmissionPlan const& plan
 ) -> std::string;

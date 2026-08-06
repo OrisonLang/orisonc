@@ -309,39 +309,7 @@ auto runtime_indexed_cleanup_emission_plan(
             .calls_ready = true,
             .complete = true,
         };
-        plan.gated_ir_slice_lines = {
-            "  %" + plan.owner_name + ".runtime_cleanup.length = load i64, ptr %" +
-                plan.owner_name + ".length\n",
-            "  br label %" + plan.owner_name + ".runtime_cleanup.condition\n",
-            plan.owner_name + ".runtime_cleanup.condition:\n",
-            "  %" + plan.owner_name + ".runtime_cleanup.index = phi i64 [ 0, %" +
-                plan.owner_name + ".runtime_cleanup.entry ], [ %" + plan.owner_name +
-                ".runtime_cleanup.next_index, %" + plan.owner_name + ".runtime_cleanup.continue ]\n",
-            "  %" + plan.owner_name + ".runtime_cleanup.more = icmp ult i64 %" +
-                plan.owner_name + ".runtime_cleanup.index, %" + plan.owner_name +
-                ".runtime_cleanup.length\n",
-            "  %" + plan.owner_name + ".runtime_cleanup.skip_moved = icmp eq i64 %" +
-                plan.owner_name + ".runtime_cleanup.index, %" + plan.index_expression_text + "\n",
-            "  br i1 %" + plan.owner_name + ".runtime_cleanup.skip_moved, label %" +
-                plan.owner_name + ".runtime_cleanup.skip, label %" + plan.owner_name +
-                ".runtime_cleanup.drop\n",
-            plan.owner_name + ".runtime_cleanup.skip:\n",
-            plan.owner_name + ".runtime_cleanup.drop:\n",
-            "  %" + plan.owner_name + ".runtime_cleanup.element.addr = getelementptr " +
-                plan.element_source_type_name + ", ptr %" + plan.owner_name +
-                ".data, i64 %" + plan.owner_name + ".runtime_cleanup.index\n",
-            "  call void @__orison_drop." + plan.element_source_type_name + "(ptr %" +
-                plan.owner_name + ".runtime_cleanup.element.addr)\n",
-            "  br label %" + plan.owner_name + ".runtime_cleanup.continue\n",
-            plan.owner_name + ".runtime_cleanup.continue:\n",
-            "  %" + plan.owner_name + ".runtime_cleanup.next_index = add i64 %" +
-                plan.owner_name + ".runtime_cleanup.index, 1\n",
-            "  br i1 %" + plan.owner_name + ".runtime_cleanup.more, label %" +
-                plan.owner_name + ".runtime_cleanup.condition, label %" + plan.owner_name +
-                ".runtime_cleanup.exit\n",
-            plan.owner_name + ".runtime_cleanup.exit:\n",
-            "  call void @__orison_dynamic_array_deallocate(ptr %" + plan.owner_name + ")\n",
-        };
+        plan.gated_ir_slice_lines = render_runtime_indexed_cleanup_ir_plan(plan.ir_plan);
         plan.length_load_slice_lowerable = true;
         plan.loop_block_slice_lowerable = true;
         plan.skip_branch_slice_lowerable = true;
@@ -350,6 +318,42 @@ auto runtime_indexed_cleanup_emission_plan(
         plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
     }
     return plan;
+}
+
+auto render_runtime_indexed_cleanup_ir_plan(
+    RuntimeIndexedCleanupIrPlan const& plan
+) -> std::vector<std::string> {
+    if (!plan.complete) {
+        return {};
+    }
+
+    return {
+        "  " + plan.length_value_name + " = load i64, ptr %" + plan.owner_name + ".length\n",
+        "  br label %" + plan.condition_block_name + "\n",
+        plan.condition_block_name + ":\n",
+        "  " + plan.cleanup_index_name + " = phi i64 [ 0, %" + plan.owner_name +
+            ".runtime_cleanup.entry ], [ " + plan.next_index_name + ", %" +
+            plan.continue_block_name + " ]\n",
+        "  " + plan.bounds_check_name + " = icmp ult i64 " + plan.cleanup_index_name +
+            ", " + plan.length_value_name + "\n",
+        "  " + plan.skip_check_name + " = icmp eq i64 " + plan.cleanup_index_name +
+            ", %" + plan.index_expression_text + "\n",
+        "  br i1 " + plan.skip_check_name + ", label %" + plan.skip_block_name +
+            ", label %" + plan.drop_block_name + "\n",
+        plan.skip_block_name + ":\n",
+        plan.drop_block_name + ":\n",
+        "  " + plan.element_address_name + " = getelementptr " +
+            plan.element_source_type_name + ", ptr %" + plan.owner_name +
+            ".data, i64 " + plan.cleanup_index_name + "\n",
+        "  call void @" + plan.drop_callee_name + "(ptr " + plan.element_address_name + ")\n",
+        "  br label %" + plan.continue_block_name + "\n",
+        plan.continue_block_name + ":\n",
+        "  " + plan.next_index_name + " = add i64 " + plan.cleanup_index_name + ", 1\n",
+        "  br i1 " + plan.bounds_check_name + ", label %" + plan.condition_block_name +
+            ", label %" + plan.exit_block_name + "\n",
+        plan.exit_block_name + ":\n",
+        "  call void @" + plan.deallocate_callee_name + "(ptr %" + plan.owner_name + ")\n",
+    };
 }
 
 auto runtime_indexed_cleanup_emission_plan_report(

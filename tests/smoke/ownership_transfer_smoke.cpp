@@ -214,6 +214,11 @@ int main() {
     assert(!missing_index_emission_plan.production_enabled);
     assert(missing_index_emission_plan.operation_names.empty());
     assert(missing_index_emission_plan.comment_ir_preview_lines.empty());
+    assert(
+        orison::lowering::render_runtime_indexed_cleanup_ir_plan(
+            missing_index_emission_plan.ir_plan
+        ).empty()
+    );
     auto enabled_capability = orison::lowering::runtime_indexed_cleanup_capability(
         runtime_indexed.runtime_indexed_cleanup_proof_gates.front(),
         runtime_indexed.runtime_indexed_cleanup_emission_sketches.front(),
@@ -250,6 +255,11 @@ int main() {
     assert(enabled_emission_plan.ir_plan.exit_block_name == "holder.items.runtime_cleanup.exit");
     assert(enabled_emission_plan.ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate");
     assert(enabled_emission_plan.gated_ir_slice_line_count == 17);
+    assert(
+        orison::lowering::render_runtime_indexed_cleanup_ir_plan(
+            enabled_emission_plan.ir_plan
+        ) == enabled_emission_plan.gated_ir_slice_lines
+    );
     assert(
         enabled_emission_plan.gated_ir_slice_lines.front() ==
         "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"

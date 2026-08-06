@@ -6641,6 +6641,14 @@ auto main() -> int {
             .ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate"
     );
     assert(
+        orison::lowering::render_runtime_indexed_cleanup_ir_plan(
+            runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+                .ir_plan
+        ) ==
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines
+    );
+    assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines.front() ==
         "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"
