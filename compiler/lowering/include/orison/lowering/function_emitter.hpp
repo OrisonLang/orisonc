@@ -34,6 +34,7 @@ struct FunctionEmissionResult {
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
     std::vector<GeneratedModuleSymbol> generated_module_symbols;
     std::vector<RuntimeIndexedCleanupCapability> runtime_indexed_cleanup_capabilities;
+    std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
 };
 

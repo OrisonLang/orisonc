@@ -76,11 +76,13 @@ auto record_runtime_indexed_partial_owner(
     auto gate = runtime_indexed_cleanup_proof_gate(plan);
     auto sketch = runtime_indexed_cleanup_emission_sketch(gate);
     auto capability = runtime_indexed_cleanup_capability(gate, sketch);
+    auto emission_plan = runtime_indexed_cleanup_emission_plan(capability, sketch);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
     state.runtime_indexed_cleanup_proof_gates.push_back(std::move(gate));
     state.runtime_indexed_cleanup_emission_sketches.push_back(std::move(sketch));
     state.runtime_indexed_cleanup_capabilities.push_back(std::move(capability));
+    state.runtime_indexed_cleanup_emission_plans.push_back(std::move(emission_plan));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -235,6 +237,58 @@ auto runtime_indexed_cleanup_capability_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_emission_plan(
+    RuntimeIndexedCleanupCapability const& capability,
+    RuntimeIndexedCleanupEmissionSketch const& sketch
+) -> RuntimeIndexedCleanupEmissionPlan {
+    auto plan = RuntimeIndexedCleanupEmissionPlan {
+        .owner_name = capability.owner_name,
+        .index_expression_text = capability.index_expression_text,
+        .element_source_type_name = capability.element_source_type_name,
+        .prerequisites_ready = capability.prerequisites_ready && sketch.snippets.size() == 5,
+        .production_enabled = false,
+    };
+    if (!plan.prerequisites_ready) {
+        return plan;
+    }
+
+    plan.operation_names = {
+        "load-length",
+        "loop-cleanup-index",
+        "skip-cleanup-index",
+        "drop-live-element",
+        "deallocate-owner",
+    };
+    plan.length_load_planned = true;
+    plan.loop_planned = true;
+    plan.skip_planned = true;
+    plan.live_element_drop_planned = true;
+    plan.owner_deallocation_planned = true;
+    plan.operation_count = plan.operation_names.size();
+    return plan;
+}
+
+auto runtime_indexed_cleanup_emission_plan_report(
+    RuntimeIndexedCleanupEmissionPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup emission-plan owner " << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " operations " << plan.operation_count
+           << " prerequisites " << (plan.prerequisites_ready ? "ready" : "blocked")
+           << " production " << (plan.production_enabled ? "enabled" : "disabled")
+           << " length-load " << (plan.length_load_planned ? "planned" : "missing")
+           << " loop " << (plan.loop_planned ? "planned" : "missing")
+           << " skip " << (plan.skip_planned ? "planned" : "missing")
+           << " live-drop " << (plan.live_element_drop_planned ? "planned" : "missing")
+           << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing");
+    for (auto const& operation_name : plan.operation_names) {
+        report << " operation " << operation_name;
+    }
+    return report.str();
+}
+
 auto runtime_indexed_cleanup_audit_report(
     OwnershipTransferState const& state
 ) -> std::vector<std::string> {
@@ -243,7 +297,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_cleanup_skip_plans.empty() &&
         state.runtime_indexed_cleanup_proof_gates.empty() &&
         state.runtime_indexed_cleanup_emission_sketches.empty() &&
-        state.runtime_indexed_cleanup_capabilities.empty()) {
+        state.runtime_indexed_cleanup_capabilities.empty() &&
+        state.runtime_indexed_cleanup_emission_plans.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -265,6 +320,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& capability : state.runtime_indexed_cleanup_capabilities) {
         report.push_back(runtime_indexed_cleanup_capability_report(capability));
+    }
+    for (auto const& plan : state.runtime_indexed_cleanup_emission_plans) {
+        report.push_back(runtime_indexed_cleanup_emission_plan_report(plan));
     }
     return report;
 }
@@ -351,7 +409,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_cleanup_emission_sketches !=
                 merged.runtime_indexed_cleanup_emission_sketches ||
             branch_states[index].runtime_indexed_cleanup_capabilities !=
-                merged.runtime_indexed_cleanup_capabilities) {
+                merged.runtime_indexed_cleanup_capabilities ||
+            branch_states[index].runtime_indexed_cleanup_emission_plans !=
+                merged.runtime_indexed_cleanup_emission_plans) {
             return std::nullopt;
         }
     }

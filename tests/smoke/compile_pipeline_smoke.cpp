@@ -6500,7 +6500,26 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_capability_state.capabilities.front()
             .element_source_type_name == "Inner"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 6);
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plan_metadata_available
+    );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plan_count == 1);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.operation_count == 5);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.all_prerequisites_ready);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_enabled);
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .owner_name == "holder.items"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .operation_names.size() == 5
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .owner_deallocation_planned
+    );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 7);
 
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";

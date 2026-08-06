@@ -321,6 +321,7 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
     std::vector<RuntimeIndexedCleanupCapability> runtime_indexed_cleanup_capabilities;
+    std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<GeneratedModuleSymbol> generated_module_symbols;
     std::vector<GeneratedModuleSymbol> generated_module_type_symbols;

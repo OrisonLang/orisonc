@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <span>
 #include <string>
@@ -72,6 +73,23 @@ struct RuntimeIndexedCleanupCapability {
     auto operator==(RuntimeIndexedCleanupCapability const&) const -> bool = default;
 };
 
+struct RuntimeIndexedCleanupEmissionPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::vector<std::string> operation_names;
+    bool prerequisites_ready = false;
+    bool production_enabled = false;
+    bool length_load_planned = false;
+    bool loop_planned = false;
+    bool skip_planned = false;
+    bool live_element_drop_planned = false;
+    bool owner_deallocation_planned = false;
+    std::size_t operation_count = 0;
+
+    auto operator==(RuntimeIndexedCleanupEmissionPlan const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -79,6 +97,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedCleanupProofGate> runtime_indexed_cleanup_proof_gates;
     std::vector<RuntimeIndexedCleanupEmissionSketch> runtime_indexed_cleanup_emission_sketches;
     std::vector<RuntimeIndexedCleanupCapability> runtime_indexed_cleanup_capabilities;
+    std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -133,6 +152,15 @@ auto runtime_indexed_cleanup_capability(
 
 auto runtime_indexed_cleanup_capability_report(
     RuntimeIndexedCleanupCapability const& capability
+) -> std::string;
+
+auto runtime_indexed_cleanup_emission_plan(
+    RuntimeIndexedCleanupCapability const& capability,
+    RuntimeIndexedCleanupEmissionSketch const& sketch
+) -> RuntimeIndexedCleanupEmissionPlan;
+
+auto runtime_indexed_cleanup_emission_plan_report(
+    RuntimeIndexedCleanupEmissionPlan const& plan
 ) -> std::string;
 
 auto runtime_indexed_cleanup_audit_report(

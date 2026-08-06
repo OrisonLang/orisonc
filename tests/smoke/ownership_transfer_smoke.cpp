@@ -68,6 +68,7 @@ int main() {
     assert(runtime_indexed.runtime_indexed_cleanup_proof_gates.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_sketches.size() == 1);
     assert(runtime_indexed.runtime_indexed_cleanup_capabilities.size() == 1);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.size() == 1);
     assert(
         orison::lowering::runtime_indexed_partial_owner_report(
             runtime_indexed.runtime_indexed_partial_owners.front()
@@ -124,8 +125,27 @@ int main() {
         "runtime-index cleanup capability owner holder.items index index element Inner "
         "proof-ready true sketch-ready true prerequisites ready production disabled"
     );
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().prerequisites_ready);
+    assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().production_enabled);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().operation_count == 5);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().operation_names.size() == 5);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().length_load_planned);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().loop_planned);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().skip_planned);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().live_element_drop_planned);
+    assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().owner_deallocation_planned);
+    assert(
+        orison::lowering::runtime_indexed_cleanup_emission_plan_report(
+            runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+        ) ==
+        "runtime-index cleanup emission-plan owner holder.items index index element Inner "
+        "operations 5 prerequisites ready production disabled length-load planned loop planned "
+        "skip planned live-drop planned deallocate planned operation load-length "
+        "operation loop-cleanup-index operation skip-cleanup-index operation drop-live-element "
+        "operation deallocate-owner"
+    );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 6);
+    assert(runtime_indexed_audit.size() == 7);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -142,12 +162,22 @@ int main() {
     assert(runtime_indexed_audit[5] == orison::lowering::runtime_indexed_cleanup_capability_report(
         runtime_indexed.runtime_indexed_cleanup_capabilities.front()
     ));
+    assert(runtime_indexed_audit[6] == orison::lowering::runtime_indexed_cleanup_emission_plan_report(
+        runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+    ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch
     );
     assert(!missing_index_capability.prerequisites_ready);
     assert(!missing_index_capability.production_enabled);
+    auto missing_index_emission_plan = orison::lowering::runtime_indexed_cleanup_emission_plan(
+        missing_index_capability,
+        missing_index_sketch
+    );
+    assert(!missing_index_emission_plan.prerequisites_ready);
+    assert(!missing_index_emission_plan.production_enabled);
+    assert(missing_index_emission_plan.operation_names.empty());
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -158,6 +188,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_cleanup_proof_gates.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_sketches.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_capabilities.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_plans.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
@@ -194,6 +225,13 @@ int main() {
         different_capability,
     });
     assert(!mismatched_capability.has_value());
+    auto different_emission_plan = runtime_indexed;
+    different_emission_plan.runtime_indexed_cleanup_emission_plans.front().production_enabled = true;
+    auto mismatched_emission_plan = orison::lowering::merge_ownership_transfer_states({
+        runtime_indexed,
+        different_emission_plan,
+    });
+    assert(!mismatched_emission_plan.has_value());
 
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace(

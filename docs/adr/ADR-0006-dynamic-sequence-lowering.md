@@ -793,6 +793,8 @@ representation.
   fixture and prints the structured report without relying on the ordinary lowering diagnostic text.
 - Runtime-index cleanup capability metadata now also flows as typed pipeline state: capability count, prerequisite
   readiness, production-enable status, and the underlying capability records are available without parsing report text.
+- Runtime-index cleanup emission planning is now typed separately from the report sketch. The plan records five named
+  operations, prerequisite readiness, and disabled production status for future IR emission.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

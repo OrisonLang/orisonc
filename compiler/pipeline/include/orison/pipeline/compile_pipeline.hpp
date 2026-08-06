@@ -137,6 +137,15 @@ struct RuntimeIndexedCleanupCapabilityState {
     std::size_t capability_count = 0;
 };
 
+struct RuntimeIndexedCleanupEmissionPlanState {
+    std::vector<lowering::RuntimeIndexedCleanupEmissionPlan> plans;
+    bool plan_metadata_available = false;
+    bool all_prerequisites_ready = false;
+    bool any_production_enabled = false;
+    std::size_t plan_count = 0;
+    std::size_t operation_count = 0;
+};
+
 struct ComputedDynamicArrayForDescriptorRenderState {
     std::vector<std::string> enclosing_function_names;
     std::vector<std::string> cleanup_owner_names;
@@ -570,6 +579,7 @@ struct CompilePipelineResult {
     lowering::DropReadinessSummary drop_readiness_summary;
     lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
     RuntimeIndexedCleanupCapabilityState runtime_indexed_cleanup_capability_state;
+    RuntimeIndexedCleanupEmissionPlanState runtime_indexed_cleanup_emission_plan_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;
