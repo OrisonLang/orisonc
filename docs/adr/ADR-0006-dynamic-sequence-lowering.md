@@ -806,6 +806,8 @@ representation.
   block, cleanup index PHI, and length bounds comparison are visible behind the explicit gate.
 - Runtime-index cleanup gated IR metadata now includes the moved-index skip decision: cleanup index comparison,
   branch-to-skip/drop labels, and typed pipeline readiness are exposed without accepting computed-index moves.
+- Runtime-index cleanup gated IR metadata now includes live-element drop intent: element address calculation and
+  source Drop call planning are visible behind the explicit gate while normal compilation stays rejected.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

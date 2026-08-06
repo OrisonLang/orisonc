@@ -305,10 +305,16 @@ auto runtime_indexed_cleanup_emission_plan(
                 ".runtime_cleanup.drop\n",
             plan.owner_name + ".runtime_cleanup.skip:\n",
             plan.owner_name + ".runtime_cleanup.drop:\n",
+            "  %" + plan.owner_name + ".runtime_cleanup.element.addr = getelementptr " +
+                plan.element_source_type_name + ", ptr %" + plan.owner_name +
+                ".data, i64 %" + plan.owner_name + ".runtime_cleanup.index\n",
+            "  call void @__orison_drop." + plan.element_source_type_name + "(ptr %" +
+                plan.owner_name + ".runtime_cleanup.element.addr)\n",
         };
         plan.length_load_slice_lowerable = true;
         plan.loop_block_slice_lowerable = true;
         plan.skip_branch_slice_lowerable = true;
+        plan.live_element_drop_slice_lowerable = true;
         plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
     }
     return plan;
@@ -332,6 +338,7 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " skip " << (plan.skip_planned ? "planned" : "missing")
            << " skip-branch-slice " << (plan.skip_branch_slice_lowerable ? "lowerable" : "blocked")
            << " live-drop " << (plan.live_element_drop_planned ? "planned" : "missing")
+           << " live-drop-slice " << (plan.live_element_drop_slice_lowerable ? "lowerable" : "blocked")
            << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing")
            << " comment-ir-preview-lines " << plan.comment_ir_preview_line_count
            << " gated-ir-slice-lines " << plan.gated_ir_slice_line_count;
