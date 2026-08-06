@@ -216,11 +216,14 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
         .plans = emission.runtime_indexed_cleanup_emission_plans,
         .plan_metadata_available = !emission.runtime_indexed_cleanup_emission_plans.empty(),
         .all_prerequisites_ready = !emission.runtime_indexed_cleanup_emission_plans.empty(),
+        .any_production_gate_requested = false,
         .any_production_enabled = false,
         .plan_count = emission.runtime_indexed_cleanup_emission_plans.size(),
     };
     for (auto const& plan : emission.runtime_indexed_cleanup_emission_plans) {
         state.all_prerequisites_ready = state.all_prerequisites_ready && plan.prerequisites_ready;
+        state.any_production_gate_requested =
+            state.any_production_gate_requested || plan.production_gate_requested;
         state.any_production_enabled = state.any_production_enabled || plan.production_enabled;
         state.operation_count += plan.operation_count;
         state.comment_ir_preview_line_count += plan.comment_ir_preview_line_count;

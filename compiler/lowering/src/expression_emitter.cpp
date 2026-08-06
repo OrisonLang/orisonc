@@ -455,7 +455,11 @@ auto unsupported_indexed_constructor_ownership_detail(
     if (!owner.has_value()) {
         return detail;
     }
-    record_runtime_indexed_partial_owner(session.state.ownership_transfers, *owner);
+    record_runtime_indexed_partial_owner(
+        session.state.ownership_transfers,
+        *owner,
+        context.options.enable_runtime_indexed_cleanup_emission
+    );
     detail += ": ";
     detail += runtime_indexed_partial_owner_report(*owner);
     detail += ": ";

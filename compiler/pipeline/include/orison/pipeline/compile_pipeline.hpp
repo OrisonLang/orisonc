@@ -141,6 +141,7 @@ struct RuntimeIndexedCleanupEmissionPlanState {
     std::vector<lowering::RuntimeIndexedCleanupEmissionPlan> plans;
     bool plan_metadata_available = false;
     bool all_prerequisites_ready = false;
+    bool any_production_gate_requested = false;
     bool any_production_enabled = false;
     std::size_t plan_count = 0;
     std::size_t operation_count = 0;
@@ -509,6 +510,7 @@ struct CompilePipelineOptions {
     bool fixture_insert_computed_dynamic_array_cleanup_calls = false;
     bool collect_aggregate_projection_access_metadata = false;
     bool collect_runtime_indexed_cleanup_audit = false;
+    bool runtime_indexed_cleanup_emission_enabled = false;
     bool suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;
     bool dynamic_array_local_lowering_enabled = true;

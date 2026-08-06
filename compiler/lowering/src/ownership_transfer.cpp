@@ -70,13 +70,22 @@ auto mark_owned_binding_consumed(
 
 auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
-    RuntimeIndexedPartialOwner owner
+    RuntimeIndexedPartialOwner owner,
+    bool production_cleanup_emission_enabled
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
     auto gate = runtime_indexed_cleanup_proof_gate(plan);
     auto sketch = runtime_indexed_cleanup_emission_sketch(gate);
-    auto capability = runtime_indexed_cleanup_capability(gate, sketch);
-    auto emission_plan = runtime_indexed_cleanup_emission_plan(capability, sketch);
+    auto capability = runtime_indexed_cleanup_capability(
+        gate,
+        sketch,
+        production_cleanup_emission_enabled
+    );
+    auto emission_plan = runtime_indexed_cleanup_emission_plan(
+        capability,
+        sketch,
+        production_cleanup_emission_enabled
+    );
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
     state.runtime_indexed_cleanup_proof_gates.push_back(std::move(gate));
@@ -206,7 +215,8 @@ auto runtime_indexed_cleanup_emission_sketch_report(
 
 auto runtime_indexed_cleanup_capability(
     RuntimeIndexedCleanupProofGate const& gate,
-    RuntimeIndexedCleanupEmissionSketch const& sketch
+    RuntimeIndexedCleanupEmissionSketch const& sketch,
+    bool production_cleanup_emission_enabled
 ) -> RuntimeIndexedCleanupCapability {
     auto proof_ready = gate.prerequisites_met && !gate.lowering_enabled;
     auto sketch_ready = sketch.report_only &&
@@ -219,7 +229,7 @@ auto runtime_indexed_cleanup_capability(
         .proof_ready = proof_ready,
         .sketch_ready = sketch_ready,
         .prerequisites_ready = proof_ready && sketch_ready,
-        .production_enabled = false,
+        .production_enabled = production_cleanup_emission_enabled && proof_ready && sketch_ready,
     };
 }
 
@@ -239,14 +249,16 @@ auto runtime_indexed_cleanup_capability_report(
 
 auto runtime_indexed_cleanup_emission_plan(
     RuntimeIndexedCleanupCapability const& capability,
-    RuntimeIndexedCleanupEmissionSketch const& sketch
+    RuntimeIndexedCleanupEmissionSketch const& sketch,
+    bool production_cleanup_emission_enabled
 ) -> RuntimeIndexedCleanupEmissionPlan {
     auto plan = RuntimeIndexedCleanupEmissionPlan {
         .owner_name = capability.owner_name,
         .index_expression_text = capability.index_expression_text,
         .element_source_type_name = capability.element_source_type_name,
         .prerequisites_ready = capability.prerequisites_ready && sketch.snippets.size() == 5,
-        .production_enabled = false,
+        .production_gate_requested = production_cleanup_emission_enabled,
+        .production_enabled = production_cleanup_emission_enabled && capability.production_enabled,
     };
     if (!plan.prerequisites_ready) {
         return plan;
@@ -286,6 +298,7 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " element " << plan.element_source_type_name
            << " operations " << plan.operation_count
            << " prerequisites " << (plan.prerequisites_ready ? "ready" : "blocked")
+           << " production-gate " << (plan.production_gate_requested ? "requested" : "blocked")
            << " production " << (plan.production_enabled ? "enabled" : "disabled")
            << " length-load " << (plan.length_load_planned ? "planned" : "missing")
            << " loop " << (plan.loop_planned ? "planned" : "missing")

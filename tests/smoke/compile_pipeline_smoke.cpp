@@ -6510,10 +6510,19 @@ auto main() -> int {
             .comment_ir_preview_line_count == 5
     );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.all_prerequisites_ready);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_gate_requested);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_enabled);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .production_gate_requested
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .production_enabled
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()

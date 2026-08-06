@@ -797,6 +797,8 @@ representation.
   operations, prerequisite readiness, and disabled production status for future IR emission.
 - Runtime-index cleanup emission plans now carry five comment-only IR preview lines. The preview is exposed as typed
   metadata and is not appended to module IR while production emission remains disabled.
+- Runtime-index cleanup production emission now has an explicit disabled-by-default pipeline/lowering gate. Pipeline
+  state reports whether the gate was requested, so complete preview metadata still proves emission is blocked by policy.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

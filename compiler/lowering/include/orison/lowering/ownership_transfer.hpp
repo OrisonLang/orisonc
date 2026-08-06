@@ -80,6 +80,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     std::vector<std::string> operation_names;
     std::vector<std::string> comment_ir_preview_lines;
     bool prerequisites_ready = false;
+    bool production_gate_requested = false;
     bool production_enabled = false;
     bool length_load_planned = false;
     bool loop_planned = false;
@@ -116,7 +117,8 @@ auto mark_owned_binding_consumed(
 
 auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
-    RuntimeIndexedPartialOwner owner
+    RuntimeIndexedPartialOwner owner,
+    bool production_cleanup_emission_enabled = false
 ) -> void;
 
 auto runtime_indexed_partial_owner_report(
@@ -149,7 +151,8 @@ auto runtime_indexed_cleanup_emission_sketch_report(
 
 auto runtime_indexed_cleanup_capability(
     RuntimeIndexedCleanupProofGate const& gate,
-    RuntimeIndexedCleanupEmissionSketch const& sketch
+    RuntimeIndexedCleanupEmissionSketch const& sketch,
+    bool production_cleanup_emission_enabled = false
 ) -> RuntimeIndexedCleanupCapability;
 
 auto runtime_indexed_cleanup_capability_report(
@@ -158,7 +161,8 @@ auto runtime_indexed_cleanup_capability_report(
 
 auto runtime_indexed_cleanup_emission_plan(
     RuntimeIndexedCleanupCapability const& capability,
-    RuntimeIndexedCleanupEmissionSketch const& sketch
+    RuntimeIndexedCleanupEmissionSketch const& sketch,
+    bool production_cleanup_emission_enabled = false
 ) -> RuntimeIndexedCleanupEmissionPlan;
 
 auto runtime_indexed_cleanup_emission_plan_report(
