@@ -78,6 +78,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     std::string index_expression_text;
     std::string element_source_type_name;
     std::vector<std::string> operation_names;
+    std::vector<std::string> comment_ir_preview_lines;
     bool prerequisites_ready = false;
     bool production_enabled = false;
     bool length_load_planned = false;
@@ -86,6 +87,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     bool live_element_drop_planned = false;
     bool owner_deallocation_planned = false;
     std::size_t operation_count = 0;
+    std::size_t comment_ir_preview_line_count = 0;
 
     auto operator==(RuntimeIndexedCleanupEmissionPlan const&) const -> bool = default;
 };

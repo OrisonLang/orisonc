@@ -129,6 +129,29 @@ int main() {
     assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().production_enabled);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().operation_count == 5);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().operation_names.size() == 5);
+    assert(
+        runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+            .comment_ir_preview_line_count == 5
+    );
+    assert(
+        runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+            .comment_ir_preview_lines.size() == 5
+    );
+    assert(
+        runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+            .comment_ir_preview_lines[0] ==
+        "; runtime-index cleanup preview load-length owner holder.items\n"
+    );
+    assert(
+        runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+            .comment_ir_preview_lines[2] ==
+        "; runtime-index cleanup preview skip-cleanup-index index\n"
+    );
+    assert(
+        runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+            .comment_ir_preview_lines[4] ==
+        "; runtime-index cleanup preview deallocate-owner holder.items\n"
+    );
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().length_load_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().loop_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().skip_planned);
@@ -140,9 +163,9 @@ int main() {
         ) ==
         "runtime-index cleanup emission-plan owner holder.items index index element Inner "
         "operations 5 prerequisites ready production disabled length-load planned loop planned "
-        "skip planned live-drop planned deallocate planned operation load-length "
-        "operation loop-cleanup-index operation skip-cleanup-index operation drop-live-element "
-        "operation deallocate-owner"
+        "skip planned live-drop planned deallocate planned comment-ir-preview-lines 5 "
+        "operation load-length operation loop-cleanup-index operation skip-cleanup-index "
+        "operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
     assert(runtime_indexed_audit.size() == 7);
@@ -178,6 +201,7 @@ int main() {
     assert(!missing_index_emission_plan.prerequisites_ready);
     assert(!missing_index_emission_plan.production_enabled);
     assert(missing_index_emission_plan.operation_names.empty());
+    assert(missing_index_emission_plan.comment_ir_preview_lines.empty());
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,

@@ -6505,6 +6505,10 @@ auto main() -> int {
     );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plan_count == 1);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.operation_count == 5);
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state
+            .comment_ir_preview_line_count == 5
+    );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.all_prerequisites_ready);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_enabled);
     assert(
@@ -6518,6 +6522,11 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_deallocation_planned
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .comment_ir_preview_lines.front() ==
+        "; runtime-index cleanup preview load-length owner holder.items\n"
     );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 7);
 

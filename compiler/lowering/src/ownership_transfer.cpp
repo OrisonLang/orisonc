@@ -265,6 +265,15 @@ auto runtime_indexed_cleanup_emission_plan(
     plan.live_element_drop_planned = true;
     plan.owner_deallocation_planned = true;
     plan.operation_count = plan.operation_names.size();
+    plan.comment_ir_preview_lines = {
+        "; runtime-index cleanup preview load-length owner " + plan.owner_name + "\n",
+        "; runtime-index cleanup preview loop-cleanup-index owner " + plan.owner_name + "\n",
+        "; runtime-index cleanup preview skip-cleanup-index " + plan.index_expression_text + "\n",
+        "; runtime-index cleanup preview drop-live-element owner " + plan.owner_name +
+            " element " + plan.element_source_type_name + "\n",
+        "; runtime-index cleanup preview deallocate-owner " + plan.owner_name + "\n",
+    };
+    plan.comment_ir_preview_line_count = plan.comment_ir_preview_lines.size();
     return plan;
 }
 
@@ -282,7 +291,8 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " loop " << (plan.loop_planned ? "planned" : "missing")
            << " skip " << (plan.skip_planned ? "planned" : "missing")
            << " live-drop " << (plan.live_element_drop_planned ? "planned" : "missing")
-           << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing");
+           << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing")
+           << " comment-ir-preview-lines " << plan.comment_ir_preview_line_count;
     for (auto const& operation_name : plan.operation_names) {
         report << " operation " << operation_name;
     }

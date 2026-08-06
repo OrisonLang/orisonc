@@ -223,6 +223,7 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
         state.all_prerequisites_ready = state.all_prerequisites_ready && plan.prerequisites_ready;
         state.any_production_enabled = state.any_production_enabled || plan.production_enabled;
         state.operation_count += plan.operation_count;
+        state.comment_ir_preview_line_count += plan.comment_ir_preview_line_count;
     }
     return state;
 }
