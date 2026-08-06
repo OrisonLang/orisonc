@@ -145,6 +145,7 @@ struct RuntimeIndexedCleanupEmissionPlanState {
     bool any_production_enabled = false;
     bool any_length_load_slice_lowerable = false;
     bool any_loop_block_slice_lowerable = false;
+    bool any_skip_branch_slice_lowerable = false;
     std::size_t plan_count = 0;
     std::size_t operation_count = 0;
     std::size_t comment_ir_preview_line_count = 0;

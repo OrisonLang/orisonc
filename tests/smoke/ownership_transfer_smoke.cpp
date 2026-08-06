@@ -158,6 +158,7 @@ int main() {
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().loop_planned);
     assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().loop_block_slice_lowerable);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().skip_planned);
+    assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().skip_branch_slice_lowerable);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().live_element_drop_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().owner_deallocation_planned);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().gated_ir_slice_lines.empty());
@@ -168,8 +169,8 @@ int main() {
         "runtime-index cleanup emission-plan owner holder.items index index element Inner "
         "operations 5 prerequisites ready production-gate blocked production disabled "
         "length-load planned length-load-slice blocked loop planned loop-block-slice blocked "
-        "skip planned live-drop planned deallocate planned comment-ir-preview-lines 5 "
-        "gated-ir-slice-lines 0 "
+        "skip planned skip-branch-slice blocked live-drop planned deallocate planned "
+        "comment-ir-preview-lines 5 gated-ir-slice-lines 0 "
         "operation load-length operation loop-cleanup-index "
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
@@ -224,7 +225,8 @@ int main() {
     assert(enabled_emission_plan.comment_ir_preview_line_count == 5);
     assert(enabled_emission_plan.length_load_slice_lowerable);
     assert(enabled_emission_plan.loop_block_slice_lowerable);
-    assert(enabled_emission_plan.gated_ir_slice_line_count == 5);
+    assert(enabled_emission_plan.skip_branch_slice_lowerable);
+    assert(enabled_emission_plan.gated_ir_slice_line_count == 9);
     assert(
         enabled_emission_plan.gated_ir_slice_lines.front() ==
         "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"
@@ -241,6 +243,20 @@ int main() {
         enabled_emission_plan.gated_ir_slice_lines[4] ==
         "  %holder.items.runtime_cleanup.more = icmp ult i64 %holder.items.runtime_cleanup.index, "
         "%holder.items.runtime_cleanup.length\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[5] ==
+        "  %holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
+        "%holder.items.runtime_cleanup.index, %index\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[6] ==
+        "  br i1 %holder.items.runtime_cleanup.skip_moved, label "
+        "%holder.items.runtime_cleanup.skip, label %holder.items.runtime_cleanup.drop\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[8] ==
+        "holder.items.runtime_cleanup.drop:\n"
     );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,

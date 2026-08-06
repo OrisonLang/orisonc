@@ -298,9 +298,17 @@ auto runtime_indexed_cleanup_emission_plan(
             "  %" + plan.owner_name + ".runtime_cleanup.more = icmp ult i64 %" +
                 plan.owner_name + ".runtime_cleanup.index, %" + plan.owner_name +
                 ".runtime_cleanup.length\n",
+            "  %" + plan.owner_name + ".runtime_cleanup.skip_moved = icmp eq i64 %" +
+                plan.owner_name + ".runtime_cleanup.index, %" + plan.index_expression_text + "\n",
+            "  br i1 %" + plan.owner_name + ".runtime_cleanup.skip_moved, label %" +
+                plan.owner_name + ".runtime_cleanup.skip, label %" + plan.owner_name +
+                ".runtime_cleanup.drop\n",
+            plan.owner_name + ".runtime_cleanup.skip:\n",
+            plan.owner_name + ".runtime_cleanup.drop:\n",
         };
         plan.length_load_slice_lowerable = true;
         plan.loop_block_slice_lowerable = true;
+        plan.skip_branch_slice_lowerable = true;
         plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
     }
     return plan;
@@ -322,6 +330,7 @@ auto runtime_indexed_cleanup_emission_plan_report(
            << " loop " << (plan.loop_planned ? "planned" : "missing")
            << " loop-block-slice " << (plan.loop_block_slice_lowerable ? "lowerable" : "blocked")
            << " skip " << (plan.skip_planned ? "planned" : "missing")
+           << " skip-branch-slice " << (plan.skip_branch_slice_lowerable ? "lowerable" : "blocked")
            << " live-drop " << (plan.live_element_drop_planned ? "planned" : "missing")
            << " deallocate " << (plan.owner_deallocation_planned ? "planned" : "missing")
            << " comment-ir-preview-lines " << plan.comment_ir_preview_line_count

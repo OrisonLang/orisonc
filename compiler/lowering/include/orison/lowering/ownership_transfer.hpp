@@ -88,6 +88,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     bool loop_planned = false;
     bool loop_block_slice_lowerable = false;
     bool skip_planned = false;
+    bool skip_branch_slice_lowerable = false;
     bool live_element_drop_planned = false;
     bool owner_deallocation_planned = false;
     std::size_t operation_count = 0;

@@ -6514,6 +6514,7 @@ auto main() -> int {
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_production_enabled);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_length_load_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_loop_block_slice_lowerable);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_skip_branch_slice_lowerable);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.gated_ir_slice_line_count == 0);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6542,6 +6543,10 @@ auto main() -> int {
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .loop_block_slice_lowerable
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .skip_branch_slice_lowerable
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6577,7 +6582,11 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
-            .gated_ir_slice_line_count == 5
+            .any_skip_branch_slice_lowerable
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .gated_ir_slice_line_count == 9
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6594,6 +6603,18 @@ auto main() -> int {
             .gated_ir_slice_lines[4] ==
         "  %holder.items.runtime_cleanup.more = icmp ult i64 %holder.items.runtime_cleanup.index, "
         "%holder.items.runtime_cleanup.length\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[5] ==
+        "  %holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
+        "%holder.items.runtime_cleanup.index, %index\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[6] ==
+        "  br i1 %holder.items.runtime_cleanup.skip_moved, label "
+        "%holder.items.runtime_cleanup.skip, label %holder.items.runtime_cleanup.drop\n"
     );
 
     auto parsed_drop_readiness_path =
