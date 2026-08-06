@@ -92,6 +92,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     bool live_element_drop_planned = false;
     bool live_element_drop_slice_lowerable = false;
     bool owner_deallocation_planned = false;
+    bool cleanup_tail_slice_lowerable = false;
     std::size_t operation_count = 0;
     std::size_t comment_ir_preview_line_count = 0;
     std::size_t gated_ir_slice_line_count = 0;

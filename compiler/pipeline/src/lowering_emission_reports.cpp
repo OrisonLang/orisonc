@@ -222,6 +222,7 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
         .any_loop_block_slice_lowerable = false,
         .any_skip_branch_slice_lowerable = false,
         .any_live_element_drop_slice_lowerable = false,
+        .any_cleanup_tail_slice_lowerable = false,
         .plan_count = emission.runtime_indexed_cleanup_emission_plans.size(),
     };
     for (auto const& plan : emission.runtime_indexed_cleanup_emission_plans) {
@@ -237,6 +238,8 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
             state.any_skip_branch_slice_lowerable || plan.skip_branch_slice_lowerable;
         state.any_live_element_drop_slice_lowerable =
             state.any_live_element_drop_slice_lowerable || plan.live_element_drop_slice_lowerable;
+        state.any_cleanup_tail_slice_lowerable =
+            state.any_cleanup_tail_slice_lowerable || plan.cleanup_tail_slice_lowerable;
         state.operation_count += plan.operation_count;
         state.comment_ir_preview_line_count += plan.comment_ir_preview_line_count;
         state.gated_ir_slice_line_count += plan.gated_ir_slice_line_count;

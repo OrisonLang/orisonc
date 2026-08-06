@@ -162,6 +162,7 @@ int main() {
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().live_element_drop_planned);
     assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().live_element_drop_slice_lowerable);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().owner_deallocation_planned);
+    assert(!runtime_indexed.runtime_indexed_cleanup_emission_plans.front().cleanup_tail_slice_lowerable);
     assert(runtime_indexed.runtime_indexed_cleanup_emission_plans.front().gated_ir_slice_lines.empty());
     assert(
         orison::lowering::runtime_indexed_cleanup_emission_plan_report(
@@ -171,7 +172,7 @@ int main() {
         "operations 5 prerequisites ready production-gate blocked production disabled "
         "length-load planned length-load-slice blocked loop planned loop-block-slice blocked "
         "skip planned skip-branch-slice blocked live-drop planned live-drop-slice blocked "
-        "deallocate planned comment-ir-preview-lines 5 gated-ir-slice-lines 0 "
+        "deallocate planned cleanup-tail-slice blocked comment-ir-preview-lines 5 gated-ir-slice-lines 0 "
         "operation load-length operation loop-cleanup-index "
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
@@ -228,7 +229,8 @@ int main() {
     assert(enabled_emission_plan.loop_block_slice_lowerable);
     assert(enabled_emission_plan.skip_branch_slice_lowerable);
     assert(enabled_emission_plan.live_element_drop_slice_lowerable);
-    assert(enabled_emission_plan.gated_ir_slice_line_count == 11);
+    assert(enabled_emission_plan.cleanup_tail_slice_lowerable);
+    assert(enabled_emission_plan.gated_ir_slice_line_count == 17);
     assert(
         enabled_emission_plan.gated_ir_slice_lines.front() ==
         "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"
@@ -268,6 +270,23 @@ int main() {
     assert(
         enabled_emission_plan.gated_ir_slice_lines[10] ==
         "  call void @__orison_drop.Inner(ptr %holder.items.runtime_cleanup.element.addr)\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[11] ==
+        "  br label %holder.items.runtime_cleanup.continue\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[12] ==
+        "holder.items.runtime_cleanup.continue:\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[13] ==
+        "  %holder.items.runtime_cleanup.next_index = add i64 "
+        "%holder.items.runtime_cleanup.index, 1\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[16] ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %holder.items)\n"
     );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,

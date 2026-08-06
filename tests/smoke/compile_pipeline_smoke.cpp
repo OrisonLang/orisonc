@@ -6516,6 +6516,7 @@ auto main() -> int {
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_loop_block_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_skip_branch_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_live_element_drop_slice_lowerable);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_cleanup_tail_slice_lowerable);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.gated_ir_slice_line_count == 0);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6552,6 +6553,10 @@ auto main() -> int {
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .live_element_drop_slice_lowerable
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .cleanup_tail_slice_lowerable
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6595,7 +6600,11 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
-            .gated_ir_slice_line_count == 11
+            .any_cleanup_tail_slice_lowerable
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .gated_ir_slice_line_count == 17
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -6635,6 +6644,22 @@ auto main() -> int {
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[10] ==
         "  call void @__orison_drop.Inner(ptr %holder.items.runtime_cleanup.element.addr)\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[12] ==
+        "holder.items.runtime_cleanup.continue:\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[13] ==
+        "  %holder.items.runtime_cleanup.next_index = add i64 "
+        "%holder.items.runtime_cleanup.index, 1\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[16] ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %holder.items)\n"
     );
 
     auto parsed_drop_readiness_path =
