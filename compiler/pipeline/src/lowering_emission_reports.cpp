@@ -26,6 +26,23 @@ auto logical_line_count(std::string const& text) -> std::size_t {
     return line_count;
 }
 
+auto occurrence_count(
+    std::string const& text,
+    std::string const& needle
+) -> std::size_t {
+    if (text.empty() || needle.empty()) {
+        return 0;
+    }
+
+    auto count = std::size_t {0};
+    auto position = std::string::size_type {0};
+    while ((position = text.find(needle, position)) != std::string::npos) {
+        ++count;
+        position += needle.size();
+    }
+    return count;
+}
+
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayDescriptorCleanupPlanState {
@@ -423,6 +440,34 @@ auto build_runtime_indexed_cleanup_module_ir_candidate_state(
     candidate_state.candidate_module_line_count =
         logical_line_count(candidate_state.candidate_ir_text);
     return candidate_state;
+}
+
+auto build_runtime_indexed_cleanup_module_ir_candidate_verification_state(
+    std::string const& ir_text,
+    RuntimeIndexedCleanupModuleIrArtifactState const& artifact_state,
+    RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state
+) -> RuntimeIndexedCleanupModuleIrCandidateVerificationState {
+    auto verification_state = RuntimeIndexedCleanupModuleIrCandidateVerificationState {
+        .verification_available = candidate_state.candidate_available &&
+            !artifact_state.rendered_ir_lines.empty(),
+    };
+    if (!verification_state.verification_available) {
+        return verification_state;
+    }
+
+    auto const& cleanup_block_anchor = artifact_state.rendered_ir_lines.front();
+    verification_state.candidate_cleanup_block_count =
+        occurrence_count(candidate_state.candidate_ir_text, cleanup_block_anchor);
+    verification_state.emitted_module_cleanup_block_count =
+        occurrence_count(ir_text, cleanup_block_anchor);
+    verification_state.candidate_contains_cleanup_block_once =
+        verification_state.candidate_cleanup_block_count == 1;
+    verification_state.emitted_module_excludes_cleanup_block =
+        verification_state.emitted_module_cleanup_block_count == 0;
+    verification_state.verified =
+        verification_state.candidate_contains_cleanup_block_once &&
+        verification_state.emitted_module_excludes_cleanup_block;
+    return verification_state;
 }
 
 auto build_computed_dynamic_array_for_descriptor_render_state(
@@ -1296,6 +1341,12 @@ void populate_lowering_emission_reports(
             result.ir_text,
             result.runtime_indexed_cleanup_module_ir_artifact_state,
             result.runtime_indexed_cleanup_module_ir_insertion_preview_state
+        );
+    result.runtime_indexed_cleanup_module_ir_candidate_verification_state =
+        build_runtime_indexed_cleanup_module_ir_candidate_verification_state(
+            result.ir_text,
+            result.runtime_indexed_cleanup_module_ir_artifact_state,
+            result.runtime_indexed_cleanup_module_ir_candidate_state
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);

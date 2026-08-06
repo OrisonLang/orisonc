@@ -6603,6 +6603,14 @@ auto main() -> int {
             .original_module_line_count
     );
     assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .verification_available
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .verified
+    );
+    assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
     );
@@ -6789,6 +6797,14 @@ auto main() -> int {
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
             .original_module_line_count
     );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .verification_available
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .verified
+    );
 
     auto runtime_indexed_cleanup_insertion_gate_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
@@ -6887,6 +6903,36 @@ auto main() -> int {
                 runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_artifact_state
                     .rendered_ir_lines.front()
             ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .verification_available
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .candidate_contains_cleanup_block_once
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .emitted_module_excludes_cleanup_block
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .candidate_cleanup_block_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .emitted_module_cleanup_block_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_candidate_verification_state
+            .verified
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.ir_text.find(
