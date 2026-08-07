@@ -340,6 +340,57 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
     std::size_t verified_count = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidate {
+    std::string function_symbol_name;
+    std::string candidate_module_ir_text;
+    bool rewrite_requested = false;
+    bool function_candidate_verified = false;
+    bool candidate_available = false;
+    bool separate_from_module_ir = true;
+    bool module_ir_changed = false;
+    std::size_t original_module_line_count = 0;
+    std::size_t candidate_module_line_count = 0;
+    std::size_t function_replacement_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState {
+    std::vector<RuntimeIndexedCleanupFunctionIrModuleRewriteCandidate> candidates;
+    bool rewrite_requested = false;
+    bool metadata_available = false;
+    bool any_candidate_available = false;
+    bool all_candidates_separate_from_module_ir = true;
+    bool any_module_ir_changed = false;
+    std::size_t candidate_count = 0;
+    std::size_t available_candidate_count = 0;
+    std::size_t original_module_line_count = 0;
+    std::size_t candidate_module_line_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
+    std::string function_symbol_name;
+    bool verification_available = false;
+    bool candidate_function_found = false;
+    bool candidate_function_matches_verified_candidate = false;
+    bool replacement_target_unique = false;
+    bool module_ir_changed = false;
+    bool separate_from_module_ir = false;
+    bool verified = false;
+    std::size_t function_replacement_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
+    std::vector<RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification> verifications;
+    bool verification_metadata_available = false;
+    bool all_candidate_functions_found = false;
+    bool all_candidate_functions_match_verified_candidates = false;
+    bool all_replacement_targets_unique = false;
+    bool all_module_ir_changed = false;
+    bool all_candidates_separate_from_module_ir = false;
+    bool all_verified = false;
+    std::size_t verification_count = 0;
+    std::size_t verified_count = 0;
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -715,6 +766,7 @@ struct CompilePipelineOptions {
     bool runtime_indexed_cleanup_emission_enabled = false;
     bool runtime_indexed_cleanup_module_ir_insertion_enabled = false;
     bool runtime_indexed_cleanup_module_ir_mutation_enabled = false;
+    bool runtime_indexed_cleanup_function_ir_module_rewrite_enabled = false;
     bool runtime_indexed_constructor_move_enabled = false;
     bool suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;
@@ -805,6 +857,10 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_function_ir_rewrite_candidate_state;
     RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState
         runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state;
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState
+        runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state;
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState
+        runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;

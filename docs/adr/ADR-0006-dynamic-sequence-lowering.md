@@ -1273,6 +1273,10 @@ representation.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.
+- Runtime-index cleanup function-module integration now has a disabled-by-default candidate gate. When explicitly
+  requested, the pipeline swaps the verified target-function candidate into a separate candidate module string and
+  verifies that the candidate module contains the verified function body exactly once while production readiness remains
+  blocked.
 
 ## Follow-up work
 
