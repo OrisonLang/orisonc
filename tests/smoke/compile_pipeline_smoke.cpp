@@ -7229,7 +7229,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .inserted_cfg_line_count == 19
+            .inserted_cfg_line_count == 18
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
@@ -7720,6 +7720,7 @@ auto main() -> int {
     assert(runtime_indexed_cleanup_function_candidate.candidate_available);
     assert(runtime_indexed_cleanup_function_candidate.separate_from_module_ir);
     assert(runtime_indexed_cleanup_function_candidate.function_ir_changed);
+    assert(runtime_indexed_cleanup_function_candidate.predecessor_terminator_replaced);
     assert(runtime_indexed_cleanup_function_candidate.original_function_line_count > 0);
     assert(
         runtime_indexed_cleanup_function_candidate.candidate_function_line_count ==
@@ -7748,6 +7749,18 @@ auto main() -> int {
         ) == 1
     );
     assert(
+        occurrence_count(
+            runtime_indexed_cleanup_function_candidate.original_function_ir_text,
+            "  ret i32 0\n"
+        ) == 1
+    );
+    assert(
+        occurrence_count(
+            runtime_indexed_cleanup_function_candidate.candidate_function_ir_text,
+            "  br label %holder.items.runtime_cleanup.entry\n"
+        ) == 1
+    );
+    assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
             .verification_metadata_available
     );
@@ -7766,6 +7779,18 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
             .all_candidates_contain_continuation_once
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_original_predecessor_terminators_found
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_candidates_route_predecessors_to_cleanup
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_predecessor_terminators_replaced
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state

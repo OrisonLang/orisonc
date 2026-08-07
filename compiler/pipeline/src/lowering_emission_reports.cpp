@@ -92,8 +92,102 @@ auto joined_lines(std::vector<std::string> const& lines) -> std::string {
     return text;
 }
 
-auto append_cfg_before_function_close(
+auto block_start_position(
     std::string const& function_ir,
+    std::string const& block_name
+) -> std::string::size_type {
+    if (function_ir.empty() || block_name.empty()) {
+        return std::string::npos;
+    }
+
+    auto const label = "\n" + block_name + ":\n";
+    auto const label_position = function_ir.find(label);
+    if (label_position == std::string::npos) {
+        return std::string::npos;
+    }
+    return label_position + 1;
+}
+
+auto block_end_position(
+    std::string const& function_ir,
+    std::string::size_type block_start
+) -> std::string::size_type {
+    if (function_ir.empty() || block_start == std::string::npos) {
+        return std::string::npos;
+    }
+
+    auto search_position = function_ir.find('\n', block_start);
+    if (search_position == std::string::npos) {
+        return std::string::npos;
+    }
+    ++search_position;
+    while (search_position < function_ir.size()) {
+        auto const line_end = function_ir.find('\n', search_position);
+        if (line_end == std::string::npos) {
+            return function_ir.size();
+        }
+        auto const line = function_ir.substr(search_position, line_end - search_position);
+        if (!line.empty() && line.front() != ' ' && line.back() == ':') {
+            return search_position;
+        }
+        if (line == "}") {
+            return search_position;
+        }
+        search_position = line_end + 1;
+    }
+    return function_ir.size();
+}
+
+auto predecessor_branch_pattern(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& branch_text
+) -> std::string {
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos) {
+        return {};
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    auto const branch_pattern = "  " + branch_text + "\n";
+    if (block_text.find(branch_pattern) == std::string::npos) {
+        return {};
+    }
+    return branch_pattern;
+}
+
+auto predecessor_terminator_pattern(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name
+) -> std::string {
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos) {
+        return {};
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    auto search_position = std::string::size_type {0};
+    auto terminator = std::string {};
+    while (search_position < block_text.size()) {
+        auto const line_end = block_text.find('\n', search_position);
+        if (line_end == std::string::npos) {
+            break;
+        }
+        auto const line = block_text.substr(search_position, line_end - search_position);
+        if (line.rfind("  br ", 0) == 0 || line.rfind("  ret ", 0) == 0) {
+            terminator = line + "\n";
+        }
+        search_position = line_end + 1;
+    }
+    return terminator;
+}
+
+auto rewrite_predecessor_terminator_and_insert_cfg(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& inserted_branch_text,
     std::vector<std::string> const& candidate_cfg_lines
 ) -> std::string {
     if (function_ir.empty() || candidate_cfg_lines.empty()) {
@@ -105,8 +199,39 @@ auto append_cfg_before_function_close(
         return {};
     }
 
-    auto candidate = function_ir.substr(0, closing_position + 1);
-    candidate += joined_lines(candidate_cfg_lines);
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos) {
+        return {};
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    auto const replaced_branch = predecessor_terminator_pattern(function_ir, predecessor_block_name);
+    auto const inserted_branch = "  " + inserted_branch_text + "\n";
+    if (replaced_branch.empty()) {
+        return {};
+    }
+    auto const terminator_position_in_block = block_text.find(replaced_branch);
+    if (terminator_position_in_block == std::string::npos ||
+        occurrence_count(block_text, replaced_branch) != 1) {
+        return {};
+    }
+
+    auto const terminator_position = block_start + terminator_position_in_block;
+    auto rewritten_function = function_ir.substr(0, terminator_position);
+    rewritten_function += inserted_branch;
+    rewritten_function += function_ir.substr(terminator_position + replaced_branch.size());
+
+    auto const rewritten_closing_position = rewritten_function.rfind("\n}\n");
+    if (rewritten_closing_position == std::string::npos) {
+        return {};
+    }
+
+    auto candidate = rewritten_function.substr(0, rewritten_closing_position + 1);
+    for (auto line_index = std::size_t {1}; line_index < candidate_cfg_lines.size(); ++line_index) {
+        candidate += candidate_cfg_lines[line_index];
+    }
+    candidate += replaced_branch;
     candidate += "}\n";
     return candidate;
 }
@@ -740,17 +865,30 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
     for (auto const& rewrite_plan : rewrite_plan_state.plans) {
         auto candidate = RuntimeIndexedCleanupFunctionIrRewriteCandidate {
             .function_symbol_name = rewrite_plan.function_symbol_name,
+            .predecessor_block_name = rewrite_plan.predecessor_block_name,
             .insertion_block_name = rewrite_plan.insertion_block_name,
             .continuation_block_name = rewrite_plan.continuation_block_name,
+            .replaced_terminator_text = rewrite_plan.replaced_terminator_text,
+            .inserted_branch_text = rewrite_plan.inserted_branch_text,
             .original_function_ir_text = function_ir_slice(ir_text, rewrite_plan.function_symbol_name),
             .separate_from_module_ir = true,
-            .inserted_cfg_line_count = rewrite_plan.candidate_cfg_line_count,
         };
         candidate.original_function_line_count =
             logical_line_count(candidate.original_function_ir_text);
-        candidate.candidate_function_ir_text =
-            append_cfg_before_function_close(
+        auto const original_predecessor_terminator =
+            predecessor_terminator_pattern(
                 candidate.original_function_ir_text,
+                candidate.predecessor_block_name
+            );
+        if (!original_predecessor_terminator.empty()) {
+            candidate.replaced_terminator_text =
+                original_predecessor_terminator.substr(2, original_predecessor_terminator.size() - 3);
+        }
+        candidate.candidate_function_ir_text =
+            rewrite_predecessor_terminator_and_insert_cfg(
+                candidate.original_function_ir_text,
+                rewrite_plan.predecessor_block_name,
+                rewrite_plan.inserted_branch_text,
                 rewrite_plan.candidate_cfg_lines
             );
         candidate.candidate_available =
@@ -760,11 +898,25 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
         candidate.function_ir_changed =
             candidate.candidate_available &&
             candidate.candidate_function_ir_text != candidate.original_function_ir_text;
+        candidate.predecessor_terminator_replaced =
+            candidate.candidate_available &&
+            !original_predecessor_terminator.empty() &&
+            predecessor_branch_pattern(
+                candidate.candidate_function_ir_text,
+                candidate.predecessor_block_name,
+                candidate.inserted_branch_text
+            ) == "  " + candidate.inserted_branch_text + "\n";
         if (!candidate.candidate_available) {
             candidate.candidate_function_ir_text.clear();
         }
         candidate.candidate_function_line_count =
             logical_line_count(candidate.candidate_function_ir_text);
+        if (candidate.candidate_available) {
+            candidate.inserted_cfg_line_count =
+                candidate.candidate_function_line_count - candidate.original_function_line_count;
+        } else if (rewrite_plan.candidate_cfg_line_count > 0) {
+            candidate.inserted_cfg_line_count = rewrite_plan.candidate_cfg_line_count - 1;
+        }
 
         state.any_candidate_available =
             state.any_candidate_available || candidate.candidate_available;
@@ -791,6 +943,9 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
         .all_original_functions_exclude_cleanup_cfg = candidate_state.metadata_available,
         .all_candidates_contain_cleanup_cfg_once = candidate_state.metadata_available,
         .all_candidates_contain_continuation_once = candidate_state.metadata_available,
+        .all_candidates_route_predecessors_to_cleanup = candidate_state.metadata_available,
+        .all_original_predecessor_terminators_found = candidate_state.metadata_available,
+        .all_predecessor_terminators_replaced = candidate_state.metadata_available,
         .all_candidate_functions_changed = candidate_state.metadata_available,
         .all_candidates_separate_from_module_ir = candidate_state.metadata_available,
         .all_verified = candidate_state.metadata_available,
@@ -800,12 +955,25 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
     for (auto const& candidate : candidate_state.candidates) {
         auto const insertion_label = candidate.insertion_block_name + ":\n";
         auto const continuation_label = candidate.continuation_block_name + ":\n";
+        auto const original_predecessor_branch =
+            predecessor_terminator_pattern(
+                candidate.original_function_ir_text,
+                candidate.predecessor_block_name
+            );
+        auto const candidate_predecessor_branch =
+            predecessor_branch_pattern(
+                candidate.candidate_function_ir_text,
+                candidate.predecessor_block_name,
+                candidate.inserted_branch_text
+            );
         auto verification = RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
             .function_symbol_name = candidate.function_symbol_name,
+            .predecessor_block_name = candidate.predecessor_block_name,
             .insertion_block_name = candidate.insertion_block_name,
             .continuation_block_name = candidate.continuation_block_name,
             .verification_available = candidate.candidate_available,
             .candidate_function_changed = candidate.function_ir_changed,
+            .predecessor_terminator_replaced = candidate.predecessor_terminator_replaced,
             .separate_from_module_ir = candidate.separate_from_module_ir,
             .original_cleanup_block_count =
                 occurrence_count(candidate.original_function_ir_text, insertion_label),
@@ -813,6 +981,10 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
                 occurrence_count(candidate.candidate_function_ir_text, insertion_label),
             .candidate_continuation_block_count =
                 occurrence_count(candidate.candidate_function_ir_text, continuation_label),
+            .original_predecessor_terminator_count =
+                original_predecessor_branch.empty() ? std::size_t {0} : std::size_t {1},
+            .candidate_predecessor_cleanup_branch_count =
+                candidate_predecessor_branch.empty() ? std::size_t {0} : std::size_t {1},
         };
         verification.original_function_excludes_cleanup_cfg =
             verification.original_cleanup_block_count == 0;
@@ -820,11 +992,18 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
             verification.candidate_cleanup_block_count == 1;
         verification.candidate_contains_continuation_once =
             verification.candidate_continuation_block_count == 1;
+        verification.original_predecessor_terminator_found =
+            verification.original_predecessor_terminator_count == 1;
+        verification.candidate_routes_predecessor_to_cleanup =
+            verification.candidate_predecessor_cleanup_branch_count == 1;
         verification.verified =
             verification.verification_available &&
             verification.original_function_excludes_cleanup_cfg &&
             verification.candidate_contains_cleanup_cfg_once &&
             verification.candidate_contains_continuation_once &&
+            verification.original_predecessor_terminator_found &&
+            verification.candidate_routes_predecessor_to_cleanup &&
+            verification.predecessor_terminator_replaced &&
             verification.candidate_function_changed &&
             verification.separate_from_module_ir;
 
@@ -837,6 +1016,15 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
         state.all_candidates_contain_continuation_once =
             state.all_candidates_contain_continuation_once &&
             verification.candidate_contains_continuation_once;
+        state.all_original_predecessor_terminators_found =
+            state.all_original_predecessor_terminators_found &&
+            verification.original_predecessor_terminator_found;
+        state.all_candidates_route_predecessors_to_cleanup =
+            state.all_candidates_route_predecessors_to_cleanup &&
+            verification.candidate_routes_predecessor_to_cleanup;
+        state.all_predecessor_terminators_replaced =
+            state.all_predecessor_terminators_replaced &&
+            verification.predecessor_terminator_replaced;
         state.all_candidate_functions_changed =
             state.all_candidate_functions_changed && verification.candidate_function_changed;
         state.all_candidates_separate_from_module_ir =

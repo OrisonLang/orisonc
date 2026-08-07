@@ -1277,6 +1277,9 @@ representation.
   requested, the pipeline swaps the verified target-function candidate into a separate candidate module string and
   verifies that the candidate module contains the verified function body exactly once while production readiness remains
   blocked.
+- Runtime-index cleanup function candidates now perform a real predecessor-terminator rewrite. The candidate replaces
+  the predecessor branch to the continuation block with a branch to the cleanup entry, appends only the cleanup CFG
+  block lines inside the function, and verifies the predecessor now routes through cleanup.
 
 ## Follow-up work
 
