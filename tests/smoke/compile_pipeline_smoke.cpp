@@ -7896,12 +7896,32 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .all_verified
+            .any_llvm_verifier_ran
+    );
+    assert(
+        !runtime_indexed_cleanup_function_module_rewrite_on
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_llvm_verifier_passed
+    );
+    assert(
+        !runtime_indexed_cleanup_function_module_rewrite_on
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_verified
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .verified_count == 1
+            .verified_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verified_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verifier_diagnostic_count > 0
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
@@ -7912,6 +7932,26 @@ auto main() -> int {
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
             .all_replacement_targets_unique
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verifications.front().llvm_verifier_ran
+    );
+    assert(
+        !runtime_indexed_cleanup_function_module_rewrite_on
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .verifications.front().llvm_verifier_passed
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verifications.front().llvm_verifier_diagnostic_count > 0
+    );
+    assert(
+        !runtime_indexed_cleanup_function_module_rewrite_on
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .verifications.front().llvm_verifier_diagnostic_text.empty()
     );
     assert(
         !runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state

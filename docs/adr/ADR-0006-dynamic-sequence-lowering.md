@@ -1280,6 +1280,9 @@ representation.
 - Runtime-index cleanup function candidates now perform a real predecessor-terminator rewrite. The candidate replaces
   the predecessor branch to the continuation block with a branch to the cleanup entry, appends only the cleanup CFG
   block lines inside the function, and verifies the predecessor now routes through cleanup.
+- Runtime-index cleanup function-module candidates now run the existing LLVM IR verifier. Structural replacement can
+  succeed while LLVM verification still blocks candidate verification and production readiness until the candidate
+  module is verifier-clean.
 
 ## Follow-up work
 

@@ -2,6 +2,7 @@
 
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/aggregate_path.hpp"
+#include "orison/lowering/llvm_ir_verifier.hpp"
 
 #include "dynamic_array_cleanup_readiness.hpp"
 #include "computed_cleanup_proof_model.hpp"
@@ -1107,6 +1108,7 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
         .all_replacement_targets_unique = module_candidate_state.metadata_available,
         .all_module_ir_changed = module_candidate_state.metadata_available,
         .all_candidates_separate_from_module_ir = module_candidate_state.metadata_available,
+        .all_llvm_verifier_passed = module_candidate_state.metadata_available,
         .all_verified = module_candidate_state.metadata_available,
         .verification_count = module_candidate_state.candidate_count,
     };
@@ -1119,8 +1121,15 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
                 module_candidate.candidate_module_ir_text,
                 module_candidate.function_symbol_name
             );
+        auto verifier_diagnostics = diagnostics::DiagnosticBag {};
+        if (module_candidate.candidate_available) {
+            verifier_diagnostics =
+                lowering::LlvmIrVerifier {}.verify(module_candidate.candidate_module_ir_text);
+        }
         auto verification = RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
             .function_symbol_name = module_candidate.function_symbol_name,
+            .llvm_verifier_diagnostic_text =
+                verifier_diagnostics.render("<runtime-indexed-cleanup-function-module-candidate>"),
             .verification_available = module_candidate.candidate_available,
             .candidate_function_found = !candidate_function_ir.empty(),
             .candidate_function_matches_verified_candidate =
@@ -1128,7 +1137,11 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             .replacement_target_unique = module_candidate.function_replacement_count == 1,
             .module_ir_changed = module_candidate.module_ir_changed,
             .separate_from_module_ir = module_candidate.separate_from_module_ir,
+            .llvm_verifier_ran = module_candidate.candidate_available,
+            .llvm_verifier_passed =
+                module_candidate.candidate_available && !verifier_diagnostics.has_errors(),
             .function_replacement_count = module_candidate.function_replacement_count,
+            .llvm_verifier_diagnostic_count = verifier_diagnostics.entries().size(),
         };
         verification.verified =
             verification.verification_available &&
@@ -1136,7 +1149,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             verification.candidate_function_matches_verified_candidate &&
             verification.replacement_target_unique &&
             verification.module_ir_changed &&
-            verification.separate_from_module_ir;
+            verification.separate_from_module_ir &&
+            verification.llvm_verifier_passed;
 
         state.all_candidate_functions_found =
             state.all_candidate_functions_found && verification.candidate_function_found;
@@ -1149,10 +1163,18 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             state.all_module_ir_changed && verification.module_ir_changed;
         state.all_candidates_separate_from_module_ir =
             state.all_candidates_separate_from_module_ir && verification.separate_from_module_ir;
+        state.any_llvm_verifier_ran =
+            state.any_llvm_verifier_ran || verification.llvm_verifier_ran;
+        state.all_llvm_verifier_passed =
+            state.all_llvm_verifier_passed && verification.llvm_verifier_passed;
         state.all_verified = state.all_verified && verification.verified;
         if (verification.verified) {
             ++state.verified_count;
         }
+        if (verification.llvm_verifier_passed) {
+            ++state.llvm_verified_count;
+        }
+        state.llvm_verifier_diagnostic_count += verification.llvm_verifier_diagnostic_count;
         state.verifications.push_back(std::move(verification));
     }
     return state;
