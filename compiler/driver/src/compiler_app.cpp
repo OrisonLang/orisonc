@@ -263,7 +263,23 @@ auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions
     auto options = pipeline::CompilePipelineOptions {};
     options.source_drop_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
+    options.runtime_indexed_cleanup_emission_enabled = true;
+    options.runtime_indexed_cleanup_module_ir_insertion_enabled = true;
     return options;
+}
+
+auto runtime_indexed_cleanup_module_ir_production_readiness_report(
+    pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup module-ir production-readiness "
+           << "insertion-gate " << (state.insertion_gate_ready ? "ready" : "blocked")
+           << " insertion-preview " << (state.insertion_preview_ready ? "ready" : "blocked")
+           << " candidate " << (state.candidate_ready ? "ready" : "blocked")
+           << " candidate-verification " << (state.candidate_verified ? "verified" : "blocked")
+           << " module-mutation " << (state.module_mutation_enabled ? "enabled" : "disabled")
+           << " production " << (state.production_ready ? "ready" : "blocked");
+    return report.str();
 }
 
 auto dynamic_array_cleanup_report(
@@ -612,6 +628,10 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
     auto lines = result.runtime_indexed_cleanup_audit_lines;
     if (lines.empty()) {
         lines.push_back("runtime-index cleanup audit: no runtime-index cleanup metadata");
+    } else {
+        lines.push_back(runtime_indexed_cleanup_module_ir_production_readiness_report(
+            result.runtime_indexed_cleanup_module_ir_production_readiness_state
+        ));
     }
     return CompileResult {
         .exit_code = 0,
