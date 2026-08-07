@@ -7906,29 +7906,29 @@ auto main() -> int {
             .any_llvm_verifier_ran
     );
     assert(
-        !runtime_indexed_cleanup_function_module_rewrite_on
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_llvm_verifier_passed
-    );
-    assert(
-        !runtime_indexed_cleanup_function_module_rewrite_on
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_verified
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_llvm_verifier_passed
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .verified_count == 0
+            .all_verified
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .llvm_verified_count == 0
+            .verified_count == 1
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .llvm_verifier_diagnostic_count > 0
+            .llvm_verified_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verifier_diagnostic_count == 0
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
@@ -7946,19 +7946,19 @@ auto main() -> int {
             .verifications.front().llvm_verifier_ran
     );
     assert(
-        !runtime_indexed_cleanup_function_module_rewrite_on
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .verifications.front().llvm_verifier_passed
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verifications.front().llvm_verifier_passed
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .verifications.front().llvm_verifier_diagnostic_count > 0
+            .verifications.front().llvm_verifier_diagnostic_count == 0
     );
     assert(
-        !runtime_indexed_cleanup_function_module_rewrite_on
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .verifications.front().llvm_verifier_diagnostic_text.empty()
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verifications.front().llvm_verifier_diagnostic_text.empty()
     );
     assert(
         !runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
@@ -8013,6 +8013,22 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.element_llvm_type_name == "%record.Inner"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.owner_llvm_type_name == "[2 x %record.Inner]"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.owner_address_name == "%holder.items.runtime_cleanup.owner.addr"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .ir_plan.static_length_value == "2"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .ir_plan.drop_callee_name == "__orison_drop.Inner"
     );
     assert(
@@ -8030,7 +8046,8 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines.front() ==
-        "  %holder.items.runtime_cleanup.length = load i64, ptr %holder.items.length\n"
+        "  %holder.items.runtime_cleanup.owner.addr = getelementptr %record.Holder, ptr "
+        "%holder.addr, i32 0, i32 0\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -8040,8 +8057,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[4] ==
-        "  %holder.items.runtime_cleanup.more = icmp ult i64 %holder.items.runtime_cleanup.index, "
-        "%holder.items.runtime_cleanup.length\n"
+        "  %holder.items.runtime_cleanup.more = icmp ult i64 %holder.items.runtime_cleanup.index, 2\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -8058,29 +8074,34 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[9] ==
-        "  %holder.items.runtime_cleanup.element.addr = getelementptr Inner, ptr "
-        "%holder.items.data, i64 %holder.items.runtime_cleanup.index\n"
+        "holder.items.runtime_cleanup.drop:\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[10] ==
+        "  %holder.items.runtime_cleanup.element.addr = getelementptr [2 x %record.Inner], ptr "
+        "%holder.items.runtime_cleanup.owner.addr, i64 0, i64 %holder.items.runtime_cleanup.index\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[11] ==
         "  call void @__orison_drop.Inner(ptr %holder.items.runtime_cleanup.element.addr)\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .gated_ir_slice_lines[12] ==
+            .gated_ir_slice_lines[13] ==
         "holder.items.runtime_cleanup.continue:\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .gated_ir_slice_lines[13] ==
+            .gated_ir_slice_lines[14] ==
         "  %holder.items.runtime_cleanup.next_index = add i64 "
         "%holder.items.runtime_cleanup.index, 1\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[16] ==
-        "  call void @__orison_dynamic_array_deallocate(ptr %holder.items)\n"
+        "holder.items.runtime_cleanup.exit:\n"
     );
 
     auto parsed_drop_readiness_path =

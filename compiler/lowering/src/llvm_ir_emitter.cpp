@@ -233,6 +233,31 @@ auto collect_source_drop_definition_symbols(
     return symbols;
 }
 
+auto declared_drop_declarations_for_runtime_indexed_cleanup(
+    syntax::ModuleSyntax const& module
+) -> std::vector<PlannedDropDeclaration> {
+    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto declarations = std::vector<PlannedDropDeclaration> {};
+    for (auto const& implementation : implementations) {
+        if (implementation.origin != semantics::DropImplementationOrigin::source_derived ||
+            !implementation.proven ||
+            !implementation.body.finite) {
+            continue;
+        }
+        add_planned_drop_declaration(
+            declarations,
+            PlannedDropDeclaration {
+                .symbol_name = implementation.abi_symbol_name,
+                .source_type_name = implementation.source_type_name,
+                .discovery_line = implementation.declaration_line,
+                .emit_declaration = true,
+            }
+        );
+    }
+    return declarations;
+}
+
 auto register_unique_module_symbol(
     ModuleSymbolRegistry& registry,
     std::unordered_set<std::string>& emitted_symbols,
@@ -2566,6 +2591,11 @@ auto emit_module(
                  result.semantic_drop_lowering_authorizations
              )) {
             add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
+        }
+        if (options.enable_runtime_indexed_cleanup_emission) {
+            for (auto declaration : declared_drop_declarations_for_runtime_indexed_cleanup(module)) {
+                add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
+            }
         }
     } else {
         result.planned_drop_declarations = declared_drop_declarations_for_allowed_source_types(

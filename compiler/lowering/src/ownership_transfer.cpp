@@ -114,6 +114,11 @@ auto runtime_indexed_cleanup_skip_plan(
         .owner_name = owner.owner_name,
         .index_expression_text = owner.index_expression_text,
         .element_source_type_name = owner.element_source_type_name,
+        .element_llvm_type_name = owner.element_llvm_type_name,
+        .owner_llvm_type_name = owner.owner_llvm_type_name,
+        .owner_address_name = owner.owner_address_name,
+        .owner_address_ir_lines = owner.owner_address_ir_lines,
+        .static_length_value = owner.static_length_value,
         .moved_source_type_name = owner.moved_source_type_name,
         .cleanup_operation = owner.cleanup_strategy,
         .production_cleanup_enabled = false,
@@ -139,12 +144,18 @@ auto runtime_indexed_cleanup_proof_gate(
     auto owner_known = !plan.owner_name.empty();
     auto index_known = !plan.index_expression_text.empty() && plan.index_expression_text != "<computed>";
     auto type_match = !plan.element_source_type_name.empty() &&
+        !plan.element_llvm_type_name.empty() &&
         plan.element_source_type_name == plan.moved_source_type_name;
     auto operation_supported = plan.cleanup_operation == "skip-moved-element";
     return RuntimeIndexedCleanupProofGate {
         .owner_name = plan.owner_name,
         .index_expression_text = plan.index_expression_text,
         .element_source_type_name = plan.element_source_type_name,
+        .element_llvm_type_name = plan.element_llvm_type_name,
+        .owner_llvm_type_name = plan.owner_llvm_type_name,
+        .owner_address_name = plan.owner_address_name,
+        .owner_address_ir_lines = plan.owner_address_ir_lines,
+        .static_length_value = plan.static_length_value,
         .moved_source_type_name = plan.moved_source_type_name,
         .cleanup_operation = plan.cleanup_operation,
         .owner_known = owner_known,
@@ -191,6 +202,11 @@ auto runtime_indexed_cleanup_emission_sketch(
         .owner_name = gate.owner_name,
         .index_expression_text = gate.index_expression_text,
         .element_source_type_name = gate.element_source_type_name,
+        .element_llvm_type_name = gate.element_llvm_type_name,
+        .owner_llvm_type_name = gate.owner_llvm_type_name,
+        .owner_address_name = gate.owner_address_name,
+        .owner_address_ir_lines = gate.owner_address_ir_lines,
+        .static_length_value = gate.static_length_value,
         .snippets = std::move(snippets),
         .report_only = true,
         .production_emission_enabled = false,
@@ -226,6 +242,11 @@ auto runtime_indexed_cleanup_capability(
         .owner_name = gate.owner_name,
         .index_expression_text = gate.index_expression_text,
         .element_source_type_name = gate.element_source_type_name,
+        .element_llvm_type_name = gate.element_llvm_type_name,
+        .owner_llvm_type_name = gate.owner_llvm_type_name,
+        .owner_address_name = gate.owner_address_name,
+        .owner_address_ir_lines = gate.owner_address_ir_lines,
+        .static_length_value = gate.static_length_value,
         .proof_ready = proof_ready,
         .sketch_ready = sketch_ready,
         .prerequisites_ready = proof_ready && sketch_ready,
@@ -256,6 +277,11 @@ auto runtime_indexed_cleanup_emission_plan(
         .owner_name = capability.owner_name,
         .index_expression_text = capability.index_expression_text,
         .element_source_type_name = capability.element_source_type_name,
+        .element_llvm_type_name = capability.element_llvm_type_name,
+        .owner_llvm_type_name = capability.owner_llvm_type_name,
+        .owner_address_name = capability.owner_address_name,
+        .owner_address_ir_lines = capability.owner_address_ir_lines,
+        .static_length_value = capability.static_length_value,
         .prerequisites_ready = capability.prerequisites_ready && sketch.snippets.size() == 5,
         .production_gate_requested = production_cleanup_emission_enabled,
         .production_enabled = production_cleanup_emission_enabled && capability.production_enabled,
@@ -286,11 +312,19 @@ auto runtime_indexed_cleanup_emission_plan(
         "; runtime-index cleanup preview deallocate-owner " + plan.owner_name + "\n",
     };
     plan.comment_ir_preview_line_count = plan.comment_ir_preview_lines.size();
-    if (plan.production_enabled) {
+    auto concrete_owner_ready = !plan.owner_llvm_type_name.empty() &&
+        !plan.owner_address_name.empty() &&
+        !plan.static_length_value.empty();
+    if (plan.production_enabled && concrete_owner_ready) {
         plan.ir_plan = RuntimeIndexedCleanupIrPlan {
             .owner_name = plan.owner_name,
             .index_expression_text = plan.index_expression_text,
             .element_source_type_name = plan.element_source_type_name,
+            .element_llvm_type_name = plan.element_llvm_type_name,
+            .owner_llvm_type_name = plan.owner_llvm_type_name,
+            .owner_address_name = plan.owner_address_name,
+            .owner_address_ir_lines = plan.owner_address_ir_lines,
+            .static_length_value = plan.static_length_value,
             .entry_block_name = plan.owner_name + ".runtime_cleanup.entry",
             .length_value_name = "%" + plan.owner_name + ".runtime_cleanup.length",
             .condition_block_name = plan.owner_name + ".runtime_cleanup.condition",
@@ -305,6 +339,9 @@ auto runtime_indexed_cleanup_emission_plan(
             .next_index_name = "%" + plan.owner_name + ".runtime_cleanup.next_index",
             .exit_block_name = plan.owner_name + ".runtime_cleanup.exit",
             .deallocate_callee_name = "__orison_dynamic_array_deallocate",
+            .owner_address_ready = true,
+            .static_length_ready = true,
+            .owner_deallocation_required = false,
             .labels_ready = true,
             .operands_ready = true,
             .calls_ready = true,
@@ -328,24 +365,36 @@ auto render_runtime_indexed_cleanup_ir_plan(
         return {};
     }
 
-    return {
-        "  " + plan.length_value_name + " = load i64, ptr %" + plan.owner_name + ".length\n",
+    auto lines = std::vector<std::string> {};
+    lines.insert(
+        lines.end(),
+        plan.owner_address_ir_lines.begin(),
+        plan.owner_address_ir_lines.end()
+    );
+    if (!plan.static_length_ready) {
+        lines.push_back("  " + plan.length_value_name + " = load i64, ptr %" + plan.owner_name + ".length\n");
+    }
+    auto const length_operand = plan.static_length_ready
+        ? plan.static_length_value
+        : plan.length_value_name;
+    lines.insert(lines.end(), {
         "  br label %" + plan.condition_block_name + "\n",
         plan.condition_block_name + ":\n",
         "  " + plan.cleanup_index_name + " = phi i64 [ 0, %" + plan.entry_block_name +
             " ], [ " + plan.next_index_name + ", %" +
             plan.continue_block_name + " ]\n",
         "  " + plan.bounds_check_name + " = icmp ult i64 " + plan.cleanup_index_name +
-            ", " + plan.length_value_name + "\n",
+            ", " + length_operand + "\n",
         "  " + plan.skip_check_name + " = icmp eq i64 " + plan.cleanup_index_name +
             ", %" + plan.index_expression_text + "\n",
         "  br i1 " + plan.skip_check_name + ", label %" + plan.skip_block_name +
             ", label %" + plan.drop_block_name + "\n",
         plan.skip_block_name + ":\n",
+        "  br label %" + plan.continue_block_name + "\n",
         plan.drop_block_name + ":\n",
         "  " + plan.element_address_name + " = getelementptr " +
-            plan.element_source_type_name + ", ptr %" + plan.owner_name +
-            ".data, i64 " + plan.cleanup_index_name + "\n",
+            plan.owner_llvm_type_name + ", ptr " + plan.owner_address_name +
+            ", i64 0, i64 " + plan.cleanup_index_name + "\n",
         "  call void @" + plan.drop_callee_name + "(ptr " + plan.element_address_name + ")\n",
         "  br label %" + plan.continue_block_name + "\n",
         plan.continue_block_name + ":\n",
@@ -353,8 +402,11 @@ auto render_runtime_indexed_cleanup_ir_plan(
         "  br i1 " + plan.bounds_check_name + ", label %" + plan.condition_block_name +
             ", label %" + plan.exit_block_name + "\n",
         plan.exit_block_name + ":\n",
-        "  call void @" + plan.deallocate_callee_name + "(ptr %" + plan.owner_name + ")\n",
-    };
+    });
+    if (plan.owner_deallocation_required) {
+        lines.push_back("  call void @" + plan.deallocate_callee_name + "(ptr %" + plan.owner_name + ")\n");
+    }
+    return lines;
 }
 
 auto runtime_indexed_cleanup_emission_plan_report(

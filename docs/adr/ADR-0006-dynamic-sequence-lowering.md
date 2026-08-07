@@ -1285,6 +1285,10 @@ representation.
   module is verifier-clean.
 - Runtime-index cleanup function-module candidates now use the pre-pseudo-mutation module snapshot as their base. The
   verifier input contains the real function-integrated cleanup CFG only, not the older appended module artifact.
+- Runtime-index cleanup function-module candidates now carry fixed-array owner address metadata into the rendered slice.
+  The checked `holder.items[index]` path projects `%holder.addr` to the `[2 x %record.Inner]` owner, renders a
+  verifier-readable element GEP, omits dynamic descriptor deallocation for the fixed array, and declares source Drop
+  ABI callees needed by the candidate verifier.
 
 ## Follow-up work
 
@@ -1293,3 +1297,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
+- Tighten the runtime-index cleanup loop CFG so the bounds check branches to exit before skip/drop evaluation and then
+  extend the same owner-address model to `DynamicArray<T>` descriptor owners.

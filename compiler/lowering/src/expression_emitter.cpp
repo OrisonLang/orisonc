@@ -130,6 +130,36 @@ auto decimal_index_owner_segment(
     return "element" + expression.text;
 }
 
+auto fixed_array_length_value(std::string_view source_type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (!source_type_name.starts_with(prefix) || !source_type_name.ends_with(">")) {
+        return std::nullopt;
+    }
+
+    auto length_text = source_type_name.substr(
+        prefix.size(),
+        source_type_name.size() - prefix.size() - 1
+    );
+    auto const separator = length_text.rfind(',');
+    if (separator == std::string_view::npos) {
+        return std::nullopt;
+    }
+
+    length_text.remove_prefix(separator + 1);
+    while (!length_text.empty() && length_text.front() == ' ') {
+        length_text.remove_prefix(1);
+    }
+    while (!length_text.empty() && length_text.back() == ' ') {
+        length_text.remove_suffix(1);
+    }
+    if (length_text.empty() || !std::ranges::all_of(length_text, [](char character) {
+            return std::isdigit(static_cast<unsigned char>(character)) != 0;
+        })) {
+        return std::nullopt;
+    }
+    return std::string {length_text};
+}
+
 struct OwnedAggregatePathTransfer {
     std::string binding_name;
     std::string source_type_name;
@@ -398,6 +428,9 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
     }
 
     auto owner_name = path->base_expression->text;
+    auto owner_storage = aggregate_storage_for_name(path->base_expression->text, state);
+    auto owner_address_name = owner_storage.value_or(std::string {});
+    auto owner_address_ir_lines = std::vector<std::string> {};
     auto current_source_type_name = owner_source_type->second;
     auto moved_source_type_name = std::optional<std::string> {};
     for (auto step_index = std::size_t {0}; step_index < path->steps.size(); ++step_index) {
@@ -413,6 +446,15 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
             }
             owner_name += ".";
             owner_name += step.field_name;
+            if (!owner_address_name.empty()) {
+                auto projected_owner_address_name = "%" + owner_name + ".runtime_cleanup.owner.addr";
+                owner_address_ir_lines.push_back(
+                    "  " + projected_owner_address_name + " = getelementptr " +
+                    record->second.llvm_type_name + ", ptr " + owner_address_name +
+                    ", i32 0, i32 " + std::to_string(field->index) + "\n"
+                );
+                owner_address_name = std::move(projected_owner_address_name);
+            }
             current_source_type_name = field->source_type_name;
             continue;
         }
@@ -425,11 +467,25 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
         if (!element_source_type.has_value()) {
             return std::nullopt;
         }
+        auto runtime_index_owner_source_type_name = current_source_type_name;
         auto runtime_index_element_source_type_name = *element_source_type;
 
         if (auto element_segment = decimal_index_owner_segment(*step.index_expression)) {
             owner_name += ".";
             owner_name += *element_segment;
+            auto current_llvm_type = llvm_type_for_source_type_name(current_source_type_name, context);
+            if (!current_llvm_type.has_value()) {
+                return std::nullopt;
+            }
+            if (!owner_address_name.empty()) {
+                auto projected_owner_address_name = "%" + owner_name + ".runtime_cleanup.owner.addr";
+                owner_address_ir_lines.push_back(
+                    "  " + projected_owner_address_name + " = getelementptr " +
+                    *current_llvm_type + ", ptr " + owner_address_name +
+                    ", i64 0, i64 " + *element_segment + "\n"
+                );
+                owner_address_name = std::move(projected_owner_address_name);
+            }
             current_source_type_name = std::move(*element_source_type);
             continue;
         }
@@ -471,10 +527,25 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
         if (!moved_source_type_name.has_value() || *moved_source_type_name != expected_source_type) {
             return std::nullopt;
         }
+        auto element_llvm_type_name =
+            llvm_type_for_source_type_name(runtime_index_element_source_type_name, context);
+        if (!element_llvm_type_name.has_value()) {
+            return std::nullopt;
+        }
+        auto owner_llvm_type_name =
+            llvm_type_for_source_type_name(runtime_index_owner_source_type_name, context);
+        auto owner_static_length_value = fixed_array_length_value(runtime_index_owner_source_type_name);
         return RuntimeIndexedPartialOwner {
             .owner_name = std::move(owner_name),
             .index_expression_text = index_expression_text,
             .element_source_type_name = std::move(runtime_index_element_source_type_name),
+            .element_llvm_type_name = std::move(*element_llvm_type_name),
+            .owner_llvm_type_name =
+                owner_llvm_type_name.has_value() ? std::move(*owner_llvm_type_name) : std::string {},
+            .owner_address_name = std::move(owner_address_name),
+            .owner_address_ir_lines = std::move(owner_address_ir_lines),
+            .static_length_value =
+                owner_static_length_value.has_value() ? std::move(*owner_static_length_value) : std::string {},
             .moved_source_type_name = std::move(*moved_source_type_name),
             .cleanup_strategy = "skip-moved-element",
             .constructor_move_enabled = false,
