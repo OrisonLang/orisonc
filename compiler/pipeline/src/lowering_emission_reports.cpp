@@ -2085,6 +2085,7 @@ void populate_lowering_emission_reports(
             result.runtime_indexed_cleanup_module_ir_artifact_state,
             result.runtime_indexed_cleanup_module_ir_candidate_state
         );
+    auto const runtime_indexed_cleanup_function_module_base_ir_text = result.ir_text;
     result.runtime_indexed_cleanup_module_ir_mutation_state =
         apply_runtime_indexed_cleanup_module_ir_mutation(
             options,
@@ -2099,12 +2100,12 @@ void populate_lowering_emission_reports(
         );
     result.runtime_indexed_cleanup_function_cfg_rewrite_verification_state =
         build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
-            result.ir_text,
+            runtime_indexed_cleanup_function_module_base_ir_text,
             result.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
         );
     result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state =
         build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
-            result.ir_text,
+            runtime_indexed_cleanup_function_module_base_ir_text,
             result.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
         );
     result.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state =
@@ -2114,7 +2115,7 @@ void populate_lowering_emission_reports(
     result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state =
         build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state(
             options,
-            result.ir_text,
+            runtime_indexed_cleanup_function_module_base_ir_text,
             result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state,
             result.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
         );

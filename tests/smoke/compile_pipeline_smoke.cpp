@@ -7894,6 +7894,13 @@ auto main() -> int {
         ) == 1
     );
     assert(
+        occurrence_count(
+            runtime_indexed_cleanup_function_module_candidate.candidate_module_ir_text,
+            runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_artifact_state
+                .rendered_ir_lines.front()
+        ) == 1
+    );
+    assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
             .any_llvm_verifier_ran

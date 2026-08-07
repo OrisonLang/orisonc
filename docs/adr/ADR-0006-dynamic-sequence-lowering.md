@@ -1283,6 +1283,8 @@ representation.
 - Runtime-index cleanup function-module candidates now run the existing LLVM IR verifier. Structural replacement can
   succeed while LLVM verification still blocks candidate verification and production readiness until the candidate
   module is verifier-clean.
+- Runtime-index cleanup function-module candidates now use the pre-pseudo-mutation module snapshot as their base. The
+  verifier input contains the real function-integrated cleanup CFG only, not the older appended module artifact.
 
 ## Follow-up work
 
