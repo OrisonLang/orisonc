@@ -2789,6 +2789,32 @@ auto main() -> int {
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_reuse_rejected.or",
         "use after move: holder.items[index]"
     );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_sibling_run.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_reuse_rejected.or",
+        "use after move: holder.items[index]"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_run.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_sibling_run.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_reuse_rejected.or",
+        "use after move: holder.items[index]"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_payload_indexed_member_path_move_run.or"

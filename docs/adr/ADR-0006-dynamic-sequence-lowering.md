@@ -848,6 +848,9 @@ representation.
   reads the same owner/index pair under the gated constructor-move workflow.
 - Runtime-index partial-owner sibling access now has a gated run fixture proving `holder.items[1]` remains readable
   after moving `holder.items[index]` when `index` is `0`.
+- Runtime-index gated constructor-move smoke coverage now spans record constructors, single-payload choice
+  constructors, and multi-variant choice constructors, including accepted moves, sibling reads, and same-index reuse
+  rejection.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
