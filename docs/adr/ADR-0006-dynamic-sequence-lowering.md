@@ -863,6 +863,9 @@ representation.
 - Runtime-index cleanup CFG rewrite candidates now have function-local verification. The verifier checks the target
   function body for the predecessor block, confirms the cleanup insertion block is absent, and keeps verification
   blocked until the continuation block exists in function IR.
+- Runtime-index cleanup CFG rewrite candidates now render non-mutating candidate CFG lines. The candidate includes the
+  proposed branch plus cleanup slice and can verify insertion and continuation labels before emitted function IR is
+  rewritten.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

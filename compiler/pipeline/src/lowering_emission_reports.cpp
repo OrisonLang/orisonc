@@ -84,6 +84,14 @@ auto block_label_found(
         function_ir.find("\n" + block_name + ":\n") != std::string::npos;
 }
 
+auto joined_lines(std::vector<std::string> const& lines) -> std::string {
+    auto text = std::string {};
+    for (auto const& line : lines) {
+        text += line;
+    }
+    return text;
+}
+
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayDescriptorCleanupPlanState {
@@ -576,14 +584,36 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_plan_state(
                 "br label %" + rewrite_plan.continuation_block_name;
             rewrite_plan.inserted_branch_text =
                 "br label %" + rewrite_plan.insertion_block_name;
+            rewrite_plan.continuation_block_text =
+                rewrite_plan.continuation_block_name + ":\n";
+            rewrite_plan.candidate_cfg_lines.push_back(
+                "  " + rewrite_plan.inserted_branch_text + "\n"
+            );
+            rewrite_plan.candidate_cfg_lines.push_back(
+                rewrite_plan.insertion_block_name + ":\n"
+            );
+            rewrite_plan.candidate_cfg_lines.insert(
+                rewrite_plan.candidate_cfg_lines.end(),
+                emission_plan.gated_ir_slice_lines.begin(),
+                emission_plan.gated_ir_slice_lines.end()
+            );
+            rewrite_plan.continuation_block_generated =
+                joined_lines(rewrite_plan.candidate_cfg_lines).find(
+                    rewrite_plan.continuation_block_text
+                ) != std::string::npos;
+            rewrite_plan.candidate_cfg_line_count =
+                rewrite_plan.candidate_cfg_lines.size();
         }
         state.all_targets_known = state.all_targets_known && rewrite_plan.target_known;
         state.any_rewrite_candidate_available =
             state.any_rewrite_candidate_available || rewrite_plan.rewrite_candidate_available;
+        state.any_continuation_block_generated =
+            state.any_continuation_block_generated || rewrite_plan.continuation_block_generated;
         if (rewrite_plan.rewrite_candidate_available) {
             ++state.rewrite_candidate_count;
         }
         state.cleanup_slice_line_count += rewrite_plan.cleanup_slice_line_count;
+        state.candidate_cfg_line_count += rewrite_plan.candidate_cfg_line_count;
         state.plans.push_back(std::move(rewrite_plan));
     }
     return state;
@@ -599,12 +629,16 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
         .all_predecessor_blocks_found = rewrite_plan_state.metadata_available,
         .all_insertion_blocks_absent = rewrite_plan_state.metadata_available,
         .all_continuation_blocks_found = rewrite_plan_state.metadata_available,
+        .all_candidate_insertion_blocks_found = rewrite_plan_state.metadata_available,
+        .all_candidate_continuation_blocks_found = rewrite_plan_state.metadata_available,
+        .all_candidates_verified = rewrite_plan_state.metadata_available,
         .all_verified = rewrite_plan_state.metadata_available,
         .verification_count = rewrite_plan_state.plan_count,
     };
     state.verifications.reserve(rewrite_plan_state.plans.size());
     for (auto const& rewrite_plan : rewrite_plan_state.plans) {
         auto const function_ir = function_ir_slice(ir_text, rewrite_plan.function_symbol_name);
+        auto const candidate_cfg_text = joined_lines(rewrite_plan.candidate_cfg_lines);
         auto verification = RuntimeIndexedCleanupFunctionCfgRewriteVerification {
             .function_symbol_name = rewrite_plan.function_symbol_name,
             .predecessor_block_name = rewrite_plan.predecessor_block_name,
@@ -615,7 +649,15 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
             .predecessor_block_found = block_label_found(function_ir, rewrite_plan.predecessor_block_name),
             .insertion_block_absent = !block_label_found(function_ir, rewrite_plan.insertion_block_name),
             .continuation_block_found = block_label_found(function_ir, rewrite_plan.continuation_block_name),
+            .candidate_insertion_block_found =
+                block_label_found(candidate_cfg_text, rewrite_plan.insertion_block_name),
+            .candidate_continuation_block_found =
+                block_label_found(candidate_cfg_text, rewrite_plan.continuation_block_name),
         };
+        verification.candidate_verified =
+            verification.verification_available &&
+            verification.candidate_insertion_block_found &&
+            verification.candidate_continuation_block_found;
         verification.verified =
             verification.verification_available &&
             verification.function_found &&
@@ -629,7 +671,16 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
             state.all_insertion_blocks_absent && verification.insertion_block_absent;
         state.all_continuation_blocks_found =
             state.all_continuation_blocks_found && verification.continuation_block_found;
+        state.all_candidate_insertion_blocks_found =
+            state.all_candidate_insertion_blocks_found && verification.candidate_insertion_block_found;
+        state.all_candidate_continuation_blocks_found =
+            state.all_candidate_continuation_blocks_found && verification.candidate_continuation_block_found;
+        state.all_candidates_verified =
+            state.all_candidates_verified && verification.candidate_verified;
         state.all_verified = state.all_verified && verification.verified;
+        if (verification.candidate_verified) {
+            ++state.candidate_verified_count;
+        }
         if (verification.verified) {
             ++state.verified_count;
         }
