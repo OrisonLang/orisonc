@@ -206,6 +206,53 @@ auto consumed_owned_aggregate_path_name(
         return path.base_expression->text;
     }
 
+    auto runtime_owner_name = path.base_expression->text;
+    auto runtime_current_source_type_name = std::string {base_source_type_name};
+    for (auto const& step : path.steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.records.find(runtime_current_source_type_name);
+            if (record == context.records.end()) {
+                break;
+            }
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr) {
+                break;
+            }
+            runtime_owner_name += ".";
+            runtime_owner_name += step.field_name;
+            runtime_current_source_type_name = field->source_type_name;
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            break;
+        }
+        auto const index_expression_text = step.index_expression->text.empty()
+            ? std::string {"<computed>"}
+            : step.index_expression->text;
+        for (auto const& owner : state.ownership_transfers.runtime_indexed_partial_owners) {
+            if (owner.constructor_move_enabled &&
+                owner.owner_name == runtime_owner_name &&
+                owner.index_expression_text == index_expression_text) {
+                return runtime_owner_name + "[" + index_expression_text + "]";
+            }
+        }
+
+        auto element_source_type = array_element_source_type_name(runtime_current_source_type_name);
+        if (!element_source_type.has_value()) {
+            break;
+        }
+        runtime_current_source_type_name = std::move(*element_source_type);
+        if (auto element_segment = decimal_index_owner_segment(*step.index_expression)) {
+            runtime_owner_name += ".";
+            runtime_owner_name += *element_segment;
+        } else {
+            runtime_owner_name += "[";
+            runtime_owner_name += index_expression_text;
+            runtime_owner_name += "]";
+        }
+    }
+
     auto transfer = owned_named_aggregate_path_transfer(path, base_source_type_name, context);
     if (!transfer.has_value()) {
         return consumed_owned_record_member_path_name(path, base_source_type_name, context, state);

@@ -844,6 +844,8 @@ representation.
 - A gated executable smoke fixture now exercises the accepted multi-variant computed-index constructor move path through
   `--test-only-runtime-indexed-constructor-move-run`; the command remains a compiler test seam rather than user syntax
   and does not enable the pseudo module-mutation artifact.
+- Runtime-index partial-owner reuse now reports `use after move: holder.items[index]` when the accepted move path later
+  reads the same owner/index pair under the gated constructor-move workflow.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
