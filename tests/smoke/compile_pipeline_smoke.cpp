@@ -6636,6 +6636,51 @@ auto main() -> int {
             .inserted_branch_text.empty()
     );
     assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verification_metadata_available
+    );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verification_count == 1);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.all_functions_found);
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_predecessor_blocks_found
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_insertion_blocks_absent
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .all_continuation_blocks_found
+    );
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.all_verified);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verified_count == 0);
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+             .front()
+             .verification_available
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .function_found
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .predecessor_block_found
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .insertion_block_absent
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+             .front()
+             .continuation_block_found
+    );
+    assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
             .insertion_gate_ready
     );
@@ -6983,6 +7028,85 @@ auto main() -> int {
             .function_ir_unchanged
     );
     assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verification_metadata_available
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verification_count == 1
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_functions_found
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_predecessor_blocks_found
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_insertion_blocks_absent
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .all_continuation_blocks_found
+    );
+    assert(!runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.all_verified);
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verified_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .verification_available
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .function_symbol_name == "main"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .predecessor_block_name == "entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .insertion_block_name == "holder.items.runtime_cleanup.entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .continuation_block_name == "holder.items.runtime_cleanup.exit"
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .function_found
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .predecessor_block_found
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+            .front()
+            .insertion_block_absent
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+             .front()
+             .continuation_block_found
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.verifications
+             .front()
+             .verified
+    );
+    assert(
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .insertion_gate_ready
     );
@@ -7277,6 +7401,19 @@ auto main() -> int {
         !runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
+    assert(
+        !runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_functions_found
+    );
+    assert(
+        !runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .all_predecessor_blocks_found
+    );
+    assert(
+        !runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .all_continuation_blocks_found
+    );
+    assert(!runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state.all_verified);
 
     auto runtime_indexed_cleanup_constructor_move_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
@@ -7302,6 +7439,42 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_mutation_state
             .mutation_applied
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_functions_found
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_predecessor_blocks_found
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .all_insertion_blocks_absent
+    );
+    assert(
+        !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .all_continuation_blocks_found
+    );
+    assert(
+        !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .all_verified
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verifications.front().function_found
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verifications.front().predecessor_block_found
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+            .verifications.front().insertion_block_absent
+    );
+    assert(
+        !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
+             .verifications.front().continuation_block_found
     );
     assert(
         !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state

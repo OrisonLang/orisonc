@@ -43,6 +43,47 @@ auto occurrence_count(
     return count;
 }
 
+auto function_ir_slice(
+    std::string const& ir_text,
+    std::string const& function_symbol_name
+) -> std::string {
+    if (ir_text.empty() || function_symbol_name.empty()) {
+        return {};
+    }
+
+    auto const define_marker = "define ";
+    auto const symbol_marker = "@" + function_symbol_name + "(";
+    auto search_position = std::string::size_type {0};
+    while (true) {
+        auto const define_position = ir_text.find(define_marker, search_position);
+        if (define_position == std::string::npos) {
+            return {};
+        }
+        auto const line_end = ir_text.find('\n', define_position);
+        if (line_end == std::string::npos) {
+            return {};
+        }
+        auto const header = ir_text.substr(define_position, line_end - define_position);
+        if (header.find(symbol_marker) != std::string::npos) {
+            auto const function_end = ir_text.find("\n}\n", line_end);
+            if (function_end == std::string::npos) {
+                return ir_text.substr(define_position);
+            }
+            return ir_text.substr(define_position, function_end + 3 - define_position);
+        }
+        search_position = line_end + 1;
+    }
+}
+
+auto block_label_found(
+    std::string const& function_ir,
+    std::string const& block_name
+) -> bool {
+    return !function_ir.empty() &&
+        !block_name.empty() &&
+        function_ir.find("\n" + block_name + ":\n") != std::string::npos;
+}
+
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayDescriptorCleanupPlanState {
@@ -544,6 +585,55 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_plan_state(
         }
         state.cleanup_slice_line_count += rewrite_plan.cleanup_slice_line_count;
         state.plans.push_back(std::move(rewrite_plan));
+    }
+    return state;
+}
+
+auto build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
+    std::string const& ir_text,
+    RuntimeIndexedCleanupFunctionCfgRewritePlanState const& rewrite_plan_state
+) -> RuntimeIndexedCleanupFunctionCfgRewriteVerificationState {
+    auto state = RuntimeIndexedCleanupFunctionCfgRewriteVerificationState {
+        .verification_metadata_available = rewrite_plan_state.metadata_available,
+        .all_functions_found = rewrite_plan_state.metadata_available,
+        .all_predecessor_blocks_found = rewrite_plan_state.metadata_available,
+        .all_insertion_blocks_absent = rewrite_plan_state.metadata_available,
+        .all_continuation_blocks_found = rewrite_plan_state.metadata_available,
+        .all_verified = rewrite_plan_state.metadata_available,
+        .verification_count = rewrite_plan_state.plan_count,
+    };
+    state.verifications.reserve(rewrite_plan_state.plans.size());
+    for (auto const& rewrite_plan : rewrite_plan_state.plans) {
+        auto const function_ir = function_ir_slice(ir_text, rewrite_plan.function_symbol_name);
+        auto verification = RuntimeIndexedCleanupFunctionCfgRewriteVerification {
+            .function_symbol_name = rewrite_plan.function_symbol_name,
+            .predecessor_block_name = rewrite_plan.predecessor_block_name,
+            .insertion_block_name = rewrite_plan.insertion_block_name,
+            .continuation_block_name = rewrite_plan.continuation_block_name,
+            .verification_available = rewrite_plan.rewrite_candidate_available,
+            .function_found = !function_ir.empty(),
+            .predecessor_block_found = block_label_found(function_ir, rewrite_plan.predecessor_block_name),
+            .insertion_block_absent = !block_label_found(function_ir, rewrite_plan.insertion_block_name),
+            .continuation_block_found = block_label_found(function_ir, rewrite_plan.continuation_block_name),
+        };
+        verification.verified =
+            verification.verification_available &&
+            verification.function_found &&
+            verification.predecessor_block_found &&
+            verification.insertion_block_absent &&
+            verification.continuation_block_found;
+        state.all_functions_found = state.all_functions_found && verification.function_found;
+        state.all_predecessor_blocks_found =
+            state.all_predecessor_blocks_found && verification.predecessor_block_found;
+        state.all_insertion_blocks_absent =
+            state.all_insertion_blocks_absent && verification.insertion_block_absent;
+        state.all_continuation_blocks_found =
+            state.all_continuation_blocks_found && verification.continuation_block_found;
+        state.all_verified = state.all_verified && verification.verified;
+        if (verification.verified) {
+            ++state.verified_count;
+        }
+        state.verifications.push_back(std::move(verification));
     }
     return state;
 }
@@ -1464,6 +1554,11 @@ void populate_lowering_emission_reports(
     result.runtime_indexed_cleanup_function_cfg_rewrite_plan_state =
         build_runtime_indexed_cleanup_function_cfg_rewrite_plan_state(
             result.runtime_indexed_cleanup_emission_plan_state
+        );
+    result.runtime_indexed_cleanup_function_cfg_rewrite_verification_state =
+        build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
+            result.ir_text,
+            result.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
         );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
         build_runtime_indexed_cleanup_module_ir_production_readiness_state(

@@ -246,6 +246,31 @@ struct RuntimeIndexedCleanupFunctionCfgRewritePlanState {
     std::size_t cleanup_slice_line_count = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionCfgRewriteVerification {
+    std::string function_symbol_name;
+    std::string predecessor_block_name;
+    std::string insertion_block_name;
+    std::string continuation_block_name;
+    bool verification_available = false;
+    bool function_found = false;
+    bool predecessor_block_found = false;
+    bool insertion_block_absent = false;
+    bool continuation_block_found = false;
+    bool verified = false;
+};
+
+struct RuntimeIndexedCleanupFunctionCfgRewriteVerificationState {
+    std::vector<RuntimeIndexedCleanupFunctionCfgRewriteVerification> verifications;
+    bool verification_metadata_available = false;
+    bool all_functions_found = false;
+    bool all_predecessor_blocks_found = false;
+    bool all_insertion_blocks_absent = false;
+    bool all_continuation_blocks_found = false;
+    bool all_verified = false;
+    std::size_t verification_count = 0;
+    std::size_t verified_count = 0;
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -705,6 +730,8 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_module_ir_mutation_state;
     RuntimeIndexedCleanupFunctionCfgRewritePlanState
         runtime_indexed_cleanup_function_cfg_rewrite_plan_state;
+    RuntimeIndexedCleanupFunctionCfgRewriteVerificationState
+        runtime_indexed_cleanup_function_cfg_rewrite_verification_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
