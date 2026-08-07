@@ -834,6 +834,8 @@ representation.
   candidate as ready while keeping production readiness blocked until module mutation is explicitly implemented.
 - The `--runtime-indexed-cleanup-audit` driver report now includes the aggregate module-IR production-readiness line,
   exposing insertion gate, preview, candidate, verification, and module-mutation status.
+- Driver smoke coverage now pins the runtime-index cleanup emission-plan audit line, including lowerable slices,
+  structured-plan completion, and the gated IR line count.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

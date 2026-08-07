@@ -116,6 +116,14 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         "proof-ready true sketch-ready true prerequisites ready production enabled"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index cleanup emission-plan owner holder.items index index element Inner "
+        "operations 5 prerequisites ready production-gate requested production enabled "
+        "length-load planned length-load-slice lowerable loop planned loop-block-slice lowerable "
+        "skip planned skip-branch-slice lowerable live-drop planned live-drop-slice lowerable "
+        "deallocate planned cleanup-tail-slice lowerable structured-ir-plan complete "
+        "comment-ir-preview-lines 5 gated-ir-slice-lines 17"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation disabled production blocked"
