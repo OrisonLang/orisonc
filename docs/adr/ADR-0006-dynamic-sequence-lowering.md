@@ -841,6 +841,9 @@ representation.
 - Runtime-index computed constructor moves now have an explicit disabled-by-default acceptance gate. Ordinary emission
   still rejects the move, while the audit workflow can enable constructor-move acceptance only alongside cleanup
   emission, module insertion, and module mutation.
+- A gated executable smoke fixture now exercises the accepted multi-variant computed-index constructor move path through
+  `--test-only-runtime-indexed-constructor-move-run`; the command remains a compiler test seam rather than user syntax
+  and does not enable the pseudo module-mutation artifact.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

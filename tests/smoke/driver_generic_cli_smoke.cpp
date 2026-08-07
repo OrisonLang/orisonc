@@ -144,6 +144,15 @@ void assert_cli_run_fixture_success(
     assert(output.empty());
 }
 
+void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --test-only-runtime-indexed-constructor-move-run " + path.string();
+    auto output = read_command_output(command);
+    assert(output.empty());
+}
+
 void assert_cli_emit_llvm_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2756,6 +2765,10 @@ auto main() -> int {
     assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_run.or"
     );
     assert_cli_run_fixture_success(
         executable,

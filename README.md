@@ -92,6 +92,10 @@ emission gate, capability proof, and production-readiness status in order. Ordin
 constructor moves rejected; this audit command explicitly enables the runtime-index constructor-move, cleanup-emission,
 module-insertion, and module-mutation gates for inspection.
 
+The gated executable smoke path uses `tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_run.or`
+with `--test-only-runtime-indexed-constructor-move-run`. That command is a compiler test seam, not user-facing
+language syntax; it validates constructor-move acceptance without enabling the pseudo module-mutation artifact.
+
 ## Repository expectations
 
 The repository should evolve toward a layout similar to:
