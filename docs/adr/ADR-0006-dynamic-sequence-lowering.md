@@ -830,6 +830,8 @@ representation.
   candidate contains the rendered cleanup lines, while the emitted module `ir_text` remains unchanged.
 - Runtime-index cleanup candidate IR now has a verifier that checks the rendered cleanup anchor appears exactly once in
   the candidate and remains absent from emitted module `ir_text`.
+- Runtime-index cleanup module insertion now has an aggregate production-readiness signal. It can report a verified
+  candidate as ready while keeping production readiness blocked until module mutation is explicitly implemented.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

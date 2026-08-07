@@ -470,6 +470,29 @@ auto build_runtime_indexed_cleanup_module_ir_candidate_verification_state(
     return verification_state;
 }
 
+auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
+    RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
+    RuntimeIndexedCleanupModuleIrInsertionPreviewState const& preview_state,
+    RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state,
+    RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state
+) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
+    auto readiness_state = RuntimeIndexedCleanupModuleIrProductionReadinessState {
+        .insertion_gate_ready = insertion_gate_state.insertion_enabled,
+        .insertion_preview_ready = preview_state.preview_available &&
+            preview_state.insertion_point_found,
+        .candidate_ready = candidate_state.candidate_available,
+        .candidate_verified = verification_state.verified,
+        .module_mutation_enabled = false,
+    };
+    readiness_state.production_ready =
+        readiness_state.insertion_gate_ready &&
+        readiness_state.insertion_preview_ready &&
+        readiness_state.candidate_ready &&
+        readiness_state.candidate_verified &&
+        readiness_state.module_mutation_enabled;
+    return readiness_state;
+}
+
 auto build_computed_dynamic_array_for_descriptor_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForDescriptorRenderState {
@@ -1347,6 +1370,13 @@ void populate_lowering_emission_reports(
             result.ir_text,
             result.runtime_indexed_cleanup_module_ir_artifact_state,
             result.runtime_indexed_cleanup_module_ir_candidate_state
+        );
+    result.runtime_indexed_cleanup_module_ir_production_readiness_state =
+        build_runtime_indexed_cleanup_module_ir_production_readiness_state(
+            result.runtime_indexed_cleanup_module_ir_insertion_gate_state,
+            result.runtime_indexed_cleanup_module_ir_insertion_preview_state,
+            result.runtime_indexed_cleanup_module_ir_candidate_state,
+            result.runtime_indexed_cleanup_module_ir_candidate_verification_state
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);
