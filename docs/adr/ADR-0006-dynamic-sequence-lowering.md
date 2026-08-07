@@ -1270,6 +1270,9 @@ representation.
   non-cleaned-up method receiver, and runs successfully. A fuller checked contract fixture currently records the next
   gap: owned-element `DynamicArray<Payload>.append_value(...)` is not yet collected/lowered as a receiver
   specialization.
+- Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
+  splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
+  exactly once, and leaves module `ir_text` unchanged by this function-candidate path.
 
 ## Follow-up work
 

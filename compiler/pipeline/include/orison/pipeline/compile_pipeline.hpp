@@ -284,6 +284,62 @@ struct RuntimeIndexedCleanupFunctionCfgRewriteVerificationState {
     std::size_t verified_count = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
+    std::string function_symbol_name;
+    std::string insertion_block_name;
+    std::string continuation_block_name;
+    std::string original_function_ir_text;
+    std::string candidate_function_ir_text;
+    bool candidate_available = false;
+    bool separate_from_module_ir = true;
+    bool function_ir_changed = false;
+    std::size_t original_function_line_count = 0;
+    std::size_t candidate_function_line_count = 0;
+    std::size_t inserted_cfg_line_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate> candidates;
+    bool metadata_available = false;
+    bool any_candidate_available = false;
+    bool all_candidates_separate_from_module_ir = true;
+    bool any_function_ir_changed = false;
+    std::size_t candidate_count = 0;
+    std::size_t available_candidate_count = 0;
+    std::size_t original_function_line_count = 0;
+    std::size_t candidate_function_line_count = 0;
+    std::size_t inserted_cfg_line_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
+    std::string function_symbol_name;
+    std::string insertion_block_name;
+    std::string continuation_block_name;
+    bool verification_available = false;
+    bool original_function_excludes_cleanup_cfg = false;
+    bool candidate_contains_cleanup_cfg_once = false;
+    bool candidate_contains_continuation_once = false;
+    bool candidate_function_changed = false;
+    bool separate_from_module_ir = false;
+    bool verified = false;
+    std::size_t original_cleanup_block_count = 0;
+    std::size_t candidate_cleanup_block_count = 0;
+    std::size_t candidate_continuation_block_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification> verifications;
+    bool verification_metadata_available = false;
+    bool all_original_functions_exclude_cleanup_cfg = false;
+    bool all_candidates_contain_cleanup_cfg_once = false;
+    bool all_candidates_contain_continuation_once = false;
+    bool all_candidate_functions_changed = false;
+    bool all_candidates_separate_from_module_ir = false;
+    bool all_verified = false;
+    std::size_t verification_count = 0;
+    std::size_t verified_count = 0;
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -745,6 +801,10 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_function_cfg_rewrite_plan_state;
     RuntimeIndexedCleanupFunctionCfgRewriteVerificationState
         runtime_indexed_cleanup_function_cfg_rewrite_verification_state;
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateState
+        runtime_indexed_cleanup_function_ir_rewrite_candidate_state;
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState
+        runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;

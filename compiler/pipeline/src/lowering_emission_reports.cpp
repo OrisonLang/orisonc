@@ -92,6 +92,25 @@ auto joined_lines(std::vector<std::string> const& lines) -> std::string {
     return text;
 }
 
+auto append_cfg_before_function_close(
+    std::string const& function_ir,
+    std::vector<std::string> const& candidate_cfg_lines
+) -> std::string {
+    if (function_ir.empty() || candidate_cfg_lines.empty()) {
+        return {};
+    }
+
+    auto const closing_position = function_ir.rfind("\n}\n");
+    if (closing_position == std::string::npos) {
+        return {};
+    }
+
+    auto candidate = function_ir.substr(0, closing_position + 1);
+    candidate += joined_lines(candidate_cfg_lines);
+    candidate += "}\n";
+    return candidate;
+}
+
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayDescriptorCleanupPlanState {
@@ -681,6 +700,129 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
         if (verification.candidate_verified) {
             ++state.candidate_verified_count;
         }
+        if (verification.verified) {
+            ++state.verified_count;
+        }
+        state.verifications.push_back(std::move(verification));
+    }
+    return state;
+}
+
+auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
+    std::string const& ir_text,
+    RuntimeIndexedCleanupFunctionCfgRewritePlanState const& rewrite_plan_state
+) -> RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
+    auto state = RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
+        .metadata_available = rewrite_plan_state.metadata_available,
+        .all_candidates_separate_from_module_ir = rewrite_plan_state.metadata_available,
+        .candidate_count = rewrite_plan_state.plan_count,
+    };
+    state.candidates.reserve(rewrite_plan_state.plans.size());
+    for (auto const& rewrite_plan : rewrite_plan_state.plans) {
+        auto candidate = RuntimeIndexedCleanupFunctionIrRewriteCandidate {
+            .function_symbol_name = rewrite_plan.function_symbol_name,
+            .insertion_block_name = rewrite_plan.insertion_block_name,
+            .continuation_block_name = rewrite_plan.continuation_block_name,
+            .original_function_ir_text = function_ir_slice(ir_text, rewrite_plan.function_symbol_name),
+            .separate_from_module_ir = true,
+            .inserted_cfg_line_count = rewrite_plan.candidate_cfg_line_count,
+        };
+        candidate.original_function_line_count =
+            logical_line_count(candidate.original_function_ir_text);
+        candidate.candidate_function_ir_text =
+            append_cfg_before_function_close(
+                candidate.original_function_ir_text,
+                rewrite_plan.candidate_cfg_lines
+            );
+        candidate.candidate_available =
+            rewrite_plan.rewrite_candidate_available &&
+            !candidate.original_function_ir_text.empty() &&
+            !candidate.candidate_function_ir_text.empty();
+        candidate.function_ir_changed =
+            candidate.candidate_available &&
+            candidate.candidate_function_ir_text != candidate.original_function_ir_text;
+        if (!candidate.candidate_available) {
+            candidate.candidate_function_ir_text.clear();
+        }
+        candidate.candidate_function_line_count =
+            logical_line_count(candidate.candidate_function_ir_text);
+
+        state.any_candidate_available =
+            state.any_candidate_available || candidate.candidate_available;
+        state.any_function_ir_changed =
+            state.any_function_ir_changed || candidate.function_ir_changed;
+        state.all_candidates_separate_from_module_ir =
+            state.all_candidates_separate_from_module_ir && candidate.separate_from_module_ir;
+        if (candidate.candidate_available) {
+            ++state.available_candidate_count;
+        }
+        state.original_function_line_count += candidate.original_function_line_count;
+        state.candidate_function_line_count += candidate.candidate_function_line_count;
+        state.inserted_cfg_line_count += candidate.inserted_cfg_line_count;
+        state.candidates.push_back(std::move(candidate));
+    }
+    return state;
+}
+
+auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state(
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateState const& candidate_state
+) -> RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
+    auto state = RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
+        .verification_metadata_available = candidate_state.metadata_available,
+        .all_original_functions_exclude_cleanup_cfg = candidate_state.metadata_available,
+        .all_candidates_contain_cleanup_cfg_once = candidate_state.metadata_available,
+        .all_candidates_contain_continuation_once = candidate_state.metadata_available,
+        .all_candidate_functions_changed = candidate_state.metadata_available,
+        .all_candidates_separate_from_module_ir = candidate_state.metadata_available,
+        .all_verified = candidate_state.metadata_available,
+        .verification_count = candidate_state.candidate_count,
+    };
+    state.verifications.reserve(candidate_state.candidates.size());
+    for (auto const& candidate : candidate_state.candidates) {
+        auto const insertion_label = candidate.insertion_block_name + ":\n";
+        auto const continuation_label = candidate.continuation_block_name + ":\n";
+        auto verification = RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
+            .function_symbol_name = candidate.function_symbol_name,
+            .insertion_block_name = candidate.insertion_block_name,
+            .continuation_block_name = candidate.continuation_block_name,
+            .verification_available = candidate.candidate_available,
+            .candidate_function_changed = candidate.function_ir_changed,
+            .separate_from_module_ir = candidate.separate_from_module_ir,
+            .original_cleanup_block_count =
+                occurrence_count(candidate.original_function_ir_text, insertion_label),
+            .candidate_cleanup_block_count =
+                occurrence_count(candidate.candidate_function_ir_text, insertion_label),
+            .candidate_continuation_block_count =
+                occurrence_count(candidate.candidate_function_ir_text, continuation_label),
+        };
+        verification.original_function_excludes_cleanup_cfg =
+            verification.original_cleanup_block_count == 0;
+        verification.candidate_contains_cleanup_cfg_once =
+            verification.candidate_cleanup_block_count == 1;
+        verification.candidate_contains_continuation_once =
+            verification.candidate_continuation_block_count == 1;
+        verification.verified =
+            verification.verification_available &&
+            verification.original_function_excludes_cleanup_cfg &&
+            verification.candidate_contains_cleanup_cfg_once &&
+            verification.candidate_contains_continuation_once &&
+            verification.candidate_function_changed &&
+            verification.separate_from_module_ir;
+
+        state.all_original_functions_exclude_cleanup_cfg =
+            state.all_original_functions_exclude_cleanup_cfg &&
+            verification.original_function_excludes_cleanup_cfg;
+        state.all_candidates_contain_cleanup_cfg_once =
+            state.all_candidates_contain_cleanup_cfg_once &&
+            verification.candidate_contains_cleanup_cfg_once;
+        state.all_candidates_contain_continuation_once =
+            state.all_candidates_contain_continuation_once &&
+            verification.candidate_contains_continuation_once;
+        state.all_candidate_functions_changed =
+            state.all_candidate_functions_changed && verification.candidate_function_changed;
+        state.all_candidates_separate_from_module_ir =
+            state.all_candidates_separate_from_module_ir && verification.separate_from_module_ir;
+        state.all_verified = state.all_verified && verification.verified;
         if (verification.verified) {
             ++state.verified_count;
         }
@@ -1610,6 +1752,15 @@ void populate_lowering_emission_reports(
         build_runtime_indexed_cleanup_function_cfg_rewrite_verification_state(
             result.ir_text,
             result.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
+        );
+    result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state =
+        build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
+            result.ir_text,
+            result.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
+        );
+    result.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state =
+        build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state(
+            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
         );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
         build_runtime_indexed_cleanup_module_ir_production_readiness_state(
