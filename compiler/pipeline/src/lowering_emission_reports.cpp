@@ -257,6 +257,8 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
         .any_live_element_drop_slice_lowerable = false,
         .any_cleanup_tail_slice_lowerable = false,
         .any_structured_ir_plan_complete = false,
+        .all_function_insertion_targets_known = !emission.runtime_indexed_cleanup_emission_plans.empty(),
+        .any_function_insertion_planned = false,
         .plan_count = emission.runtime_indexed_cleanup_emission_plans.size(),
     };
     for (auto const& plan : emission.runtime_indexed_cleanup_emission_plans) {
@@ -276,8 +278,15 @@ auto build_runtime_indexed_cleanup_emission_plan_state(
             state.any_cleanup_tail_slice_lowerable || plan.cleanup_tail_slice_lowerable;
         state.any_structured_ir_plan_complete =
             state.any_structured_ir_plan_complete || plan.ir_plan.complete;
+        state.all_function_insertion_targets_known =
+            state.all_function_insertion_targets_known && plan.function_insertion_target_known;
+        state.any_function_insertion_planned =
+            state.any_function_insertion_planned || plan.function_insertion_planned;
         if (plan.ir_plan.complete) {
             ++state.structured_ir_plan_count;
+        }
+        if (plan.function_insertion_planned) {
+            ++state.function_insertion_plan_count;
         }
         state.operation_count += plan.operation_count;
         state.comment_ir_preview_line_count += plan.comment_ir_preview_line_count;

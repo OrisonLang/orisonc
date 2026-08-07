@@ -1838,11 +1838,20 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_cleanup_capabilities.begin(),
         function_emission.runtime_indexed_cleanup_capabilities.end()
     );
-    result.runtime_indexed_cleanup_emission_plans.insert(
-        result.runtime_indexed_cleanup_emission_plans.end(),
-        function_emission.runtime_indexed_cleanup_emission_plans.begin(),
-        function_emission.runtime_indexed_cleanup_emission_plans.end()
-    );
+    for (auto plan : function_emission.runtime_indexed_cleanup_emission_plans) {
+        plan.function_symbol_name = function_emission.function_symbol_name;
+        plan.function_insertion_block_name = plan.ir_plan.entry_block_name;
+        plan.function_predecessor_block_name = "entry";
+        plan.function_continuation_block_name = plan.ir_plan.exit_block_name;
+        plan.function_insertion_target_known =
+            !plan.function_symbol_name.empty() &&
+            !plan.function_insertion_block_name.empty() &&
+            !plan.function_predecessor_block_name.empty() &&
+            !plan.function_continuation_block_name.empty();
+        plan.function_insertion_planned =
+            plan.ir_plan.complete && plan.function_insertion_target_known;
+        result.runtime_indexed_cleanup_emission_plans.push_back(std::move(plan));
+    }
     result.emitted_dynamic_array_cleanup_obligations.reserve(
         result.emitted_dynamic_array_cleanup_obligations.size() +
         function_emission.emitted_dynamic_array_cleanup_obligations.size()

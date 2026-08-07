@@ -77,6 +77,7 @@ struct RuntimeIndexedCleanupIrPlan {
     std::string owner_name;
     std::string index_expression_text;
     std::string element_source_type_name;
+    std::string entry_block_name;
     std::string length_value_name;
     std::string condition_block_name;
     std::string cleanup_index_name;
@@ -99,9 +100,13 @@ struct RuntimeIndexedCleanupIrPlan {
 };
 
 struct RuntimeIndexedCleanupEmissionPlan {
+    std::string function_symbol_name;
     std::string owner_name;
     std::string index_expression_text;
     std::string element_source_type_name;
+    std::string function_insertion_block_name;
+    std::string function_predecessor_block_name;
+    std::string function_continuation_block_name;
     std::vector<std::string> operation_names;
     std::vector<std::string> comment_ir_preview_lines;
     std::vector<std::string> gated_ir_slice_lines;
@@ -119,6 +124,8 @@ struct RuntimeIndexedCleanupEmissionPlan {
     bool live_element_drop_slice_lowerable = false;
     bool owner_deallocation_planned = false;
     bool cleanup_tail_slice_lowerable = false;
+    bool function_insertion_target_known = false;
+    bool function_insertion_planned = false;
     std::size_t operation_count = 0;
     std::size_t comment_ir_preview_line_count = 0;
     std::size_t gated_ir_slice_line_count = 0;

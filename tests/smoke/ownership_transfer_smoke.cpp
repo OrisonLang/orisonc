@@ -244,6 +244,7 @@ int main() {
     assert(enabled_emission_plan.ir_plan.owner_name == "holder.items");
     assert(enabled_emission_plan.ir_plan.index_expression_text == "index");
     assert(enabled_emission_plan.ir_plan.element_source_type_name == "Inner");
+    assert(enabled_emission_plan.ir_plan.entry_block_name == "holder.items.runtime_cleanup.entry");
     assert(enabled_emission_plan.ir_plan.length_value_name == "%holder.items.runtime_cleanup.length");
     assert(enabled_emission_plan.ir_plan.condition_block_name == "holder.items.runtime_cleanup.condition");
     assert(enabled_emission_plan.ir_plan.cleanup_index_name == "%holder.items.runtime_cleanup.index");

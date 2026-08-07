@@ -6533,8 +6533,11 @@ auto main() -> int {
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_live_element_drop_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_cleanup_tail_slice_lowerable);
     assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_structured_ir_plan_complete);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.all_function_insertion_targets_known);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.any_function_insertion_planned);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.gated_ir_slice_line_count == 0);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.structured_ir_plan_count == 0);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.function_insertion_plan_count == 0);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.render_metadata_available);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.plan_count == 1);
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_ir_render_state.rendered_plan_count == 0);
@@ -6708,6 +6711,22 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_symbol_name == "main"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_insertion_block_name.empty()
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_insertion_target_known
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_insertion_planned
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
@@ -6756,11 +6775,47 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .all_function_insertion_targets_known
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .any_function_insertion_planned
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
             .gated_ir_slice_line_count == 17
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
             .structured_ir_plan_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
+            .function_insertion_plan_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_symbol_name == "main"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_insertion_block_name == "holder.items.runtime_cleanup.entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_predecessor_block_name == "entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_continuation_block_name == "holder.items.runtime_cleanup.exit"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_insertion_target_known
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .function_insertion_planned
     );
     assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.render_metadata_available);
     assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.plan_count == 1);

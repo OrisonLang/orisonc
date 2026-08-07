@@ -291,6 +291,7 @@ auto runtime_indexed_cleanup_emission_plan(
             .owner_name = plan.owner_name,
             .index_expression_text = plan.index_expression_text,
             .element_source_type_name = plan.element_source_type_name,
+            .entry_block_name = plan.owner_name + ".runtime_cleanup.entry",
             .length_value_name = "%" + plan.owner_name + ".runtime_cleanup.length",
             .condition_block_name = plan.owner_name + ".runtime_cleanup.condition",
             .cleanup_index_name = "%" + plan.owner_name + ".runtime_cleanup.index",
@@ -331,8 +332,8 @@ auto render_runtime_indexed_cleanup_ir_plan(
         "  " + plan.length_value_name + " = load i64, ptr %" + plan.owner_name + ".length\n",
         "  br label %" + plan.condition_block_name + "\n",
         plan.condition_block_name + ":\n",
-        "  " + plan.cleanup_index_name + " = phi i64 [ 0, %" + plan.owner_name +
-            ".runtime_cleanup.entry ], [ " + plan.next_index_name + ", %" +
+        "  " + plan.cleanup_index_name + " = phi i64 [ 0, %" + plan.entry_block_name +
+            " ], [ " + plan.next_index_name + ", %" +
             plan.continue_block_name + " ]\n",
         "  " + plan.bounds_check_name + " = icmp ult i64 " + plan.cleanup_index_name +
             ", " + plan.length_value_name + "\n",
