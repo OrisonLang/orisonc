@@ -6613,6 +6613,28 @@ auto main() -> int {
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_candidate_verification_state
             .verified
     );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.metadata_available);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plan_count == 1);
+    assert(!runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.all_targets_known);
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
+            .any_rewrite_candidate_available
+    );
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.function_ir_unchanged);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.rewrite_candidate_count == 0);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.cleanup_slice_line_count == 0);
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .function_symbol_name == "main"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .replaced_terminator_text.empty()
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .inserted_branch_text.empty()
+    );
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
             .insertion_gate_ready
@@ -6911,6 +6933,54 @@ auto main() -> int {
     assert(
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_candidate_verification_state
             .verified
+    );
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.metadata_available);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plan_count == 1);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.all_targets_known);
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
+            .any_rewrite_candidate_available
+    );
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.function_ir_unchanged);
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
+            .rewrite_candidate_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
+            .cleanup_slice_line_count == 17
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .function_symbol_name == "main"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .owner_name == "holder.items"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .predecessor_block_name == "entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .insertion_block_name == "holder.items.runtime_cleanup.entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .continuation_block_name == "holder.items.runtime_cleanup.exit"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .replaced_terminator_text == "br label %holder.items.runtime_cleanup.exit"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .inserted_branch_text == "br label %holder.items.runtime_cleanup.entry"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
+            .function_ir_unchanged
     );
     assert(
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state

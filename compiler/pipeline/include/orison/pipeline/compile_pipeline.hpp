@@ -221,6 +221,31 @@ struct RuntimeIndexedCleanupModuleIrMutationState {
     std::size_t final_module_line_count = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionCfgRewritePlan {
+    std::string function_symbol_name;
+    std::string owner_name;
+    std::string predecessor_block_name;
+    std::string insertion_block_name;
+    std::string continuation_block_name;
+    std::string replaced_terminator_text;
+    std::string inserted_branch_text;
+    bool target_known = false;
+    bool rewrite_candidate_available = false;
+    bool function_ir_unchanged = true;
+    std::size_t cleanup_slice_line_count = 0;
+};
+
+struct RuntimeIndexedCleanupFunctionCfgRewritePlanState {
+    std::vector<RuntimeIndexedCleanupFunctionCfgRewritePlan> plans;
+    bool metadata_available = false;
+    bool all_targets_known = false;
+    bool any_rewrite_candidate_available = false;
+    bool function_ir_unchanged = true;
+    std::size_t plan_count = 0;
+    std::size_t rewrite_candidate_count = 0;
+    std::size_t cleanup_slice_line_count = 0;
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -678,6 +703,8 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_module_ir_candidate_verification_state;
     RuntimeIndexedCleanupModuleIrMutationState
         runtime_indexed_cleanup_module_ir_mutation_state;
+    RuntimeIndexedCleanupFunctionCfgRewritePlanState
+        runtime_indexed_cleanup_function_cfg_rewrite_plan_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;

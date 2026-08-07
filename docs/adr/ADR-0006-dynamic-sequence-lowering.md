@@ -857,6 +857,9 @@ representation.
 - Runtime-index cleanup emission plans now carry typed owner-function insertion targets. The module emitter stamps the
   owning function symbol plus insertion, predecessor, and continuation block names while function integration remains
   blocked until CFG placement is implemented.
+- Runtime-index cleanup function integration now has a non-mutating CFG rewrite candidate model. The pipeline records
+  the owning function, predecessor, inserted branch, replaced terminator, continuation block, and cleanup slice line
+  count while keeping function IR unchanged.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
