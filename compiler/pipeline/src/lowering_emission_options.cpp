@@ -118,6 +118,8 @@ auto build_lowering_emission_options(
         options.collect_aggregate_projection_access_metadata;
     emission_options.enable_runtime_indexed_cleanup_emission =
         options.runtime_indexed_cleanup_emission_enabled;
+    emission_options.enable_runtime_indexed_constructor_move =
+        options.runtime_indexed_constructor_move_enabled;
     emission_options.enable_computed_dynamic_array_consumed_cleanup_descriptor_collection =
         options.dynamic_array_production_for_lowering_enabled &&
         dynamic_array_cleanup_emission_enabled(options);

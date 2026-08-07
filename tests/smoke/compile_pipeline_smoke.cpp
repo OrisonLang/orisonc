@@ -7135,6 +7135,59 @@ auto main() -> int {
         runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
+
+    auto runtime_indexed_cleanup_constructor_move_on = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_cleanup_constructor_move_on.has_errors());
+    assert(runtime_indexed_cleanup_constructor_move_on.error_text.empty());
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_capability_state
+            .capability_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_emission_plan_state
+            .any_structured_ir_plan_complete
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_applied
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .production_ready
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .final_module_cleanup_block_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.ir_text.find(
+            runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_artifact_state
+                .rendered_ir_lines.front()
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .production_enabled
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_capability_state.capabilities.front()
+            .production_enabled
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_audit_lines[1].find(
+            "constructor-move enabled"
+        ) != std::string::npos
+    );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .ir_plan.complete

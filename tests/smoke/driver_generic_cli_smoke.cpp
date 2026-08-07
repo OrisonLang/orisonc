@@ -112,6 +112,10 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     auto output = read_command_output(command);
     assert(output.find("runtime-index cleanup audit entries 1") != std::string::npos);
     assert(output.find(
+        "runtime-index partial owner owner holder.items index index element Inner moved Inner "
+        "cleanup skip-moved-element constructor-move enabled"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index cleanup capability owner holder.items index index element Inner "
         "proof-ready true sketch-ready true prerequisites ready production enabled"
     ) != std::string::npos);

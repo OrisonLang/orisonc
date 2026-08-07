@@ -437,6 +437,48 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
     return std::nullopt;
 }
 
+auto record_runtime_indexed_constructor_ownership(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    bool constructor_move_enabled
+) -> bool {
+    auto owner = runtime_indexed_partial_owner_for_constructor_argument(
+        argument,
+        expected_source_type,
+        context.lowering,
+        session.state
+    );
+    if (!owner.has_value()) {
+        return false;
+    }
+    owner->constructor_move_enabled = constructor_move_enabled;
+    record_runtime_indexed_partial_owner(
+        session.state.ownership_transfers,
+        *owner,
+        context.options.enable_runtime_indexed_cleanup_emission
+    );
+    return true;
+}
+
+auto runtime_indexed_constructor_move_enabled(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) -> bool {
+    return context.options.enable_runtime_indexed_cleanup_emission &&
+        context.options.enable_runtime_indexed_constructor_move &&
+        record_runtime_indexed_constructor_ownership(
+            argument,
+            expected_source_type,
+            context,
+            session,
+            true
+        );
+}
+
 auto unsupported_indexed_constructor_ownership_detail(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
@@ -446,22 +488,19 @@ auto unsupported_indexed_constructor_ownership_detail(
     auto detail = std::string {
         "indexed constructor ownership move requires explicit partial ownership support"
     };
-    auto owner = runtime_indexed_partial_owner_for_constructor_argument(
-        argument,
-        expected_source_type,
-        context.lowering,
-        session.state
-    );
-    if (!owner.has_value()) {
+    if (!record_runtime_indexed_constructor_ownership(
+            argument,
+            expected_source_type,
+            context,
+            session,
+            false
+        )) {
         return detail;
     }
-    record_runtime_indexed_partial_owner(
-        session.state.ownership_transfers,
-        *owner,
-        context.options.enable_runtime_indexed_cleanup_emission
-    );
     detail += ": ";
-    detail += runtime_indexed_partial_owner_report(*owner);
+    detail += runtime_indexed_partial_owner_report(
+        session.state.ownership_transfers.runtime_indexed_partial_owners.back()
+    );
     detail += ": ";
     detail += runtime_indexed_cleanup_skip_plan_report(
         session.state.ownership_transfers.runtime_indexed_cleanup_skip_plans.back()
@@ -1379,6 +1418,11 @@ auto lower_record_constructor_expression(
                 field.source_type_name,
                 context.lowering,
                 session.state
+            ) && !runtime_indexed_constructor_move_enabled(
+                expression.arguments[index],
+                field.source_type_name,
+                context,
+                session
             )) {
             record_expression_lowering_failure(
                 failures,
@@ -1617,6 +1661,11 @@ auto lower_choice_constructor_expression(
                     payload.source_type_name,
                     context.lowering,
                     session.state
+                ) && !runtime_indexed_constructor_move_enabled(
+                    arguments->front(),
+                    payload.source_type_name,
+                    context,
+                    session
                 )) {
                 record_expression_lowering_failure(
                     failures,
@@ -1662,6 +1711,11 @@ auto lower_choice_constructor_expression(
                         payload.source_type_name,
                         context.lowering,
                         session.state
+                    ) && !runtime_indexed_constructor_move_enabled(
+                        (*arguments)[index],
+                        payload.source_type_name,
+                        context,
+                        session
                     )) {
                     record_expression_lowering_failure(
                         failures,

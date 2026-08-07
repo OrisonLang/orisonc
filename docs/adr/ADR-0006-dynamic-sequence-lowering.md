@@ -838,6 +838,9 @@ representation.
   structured-plan completion, and the gated IR line count.
 - Runtime-index cleanup module mutation now has an explicit disabled-by-default pipeline gate. When enabled after
   candidate verification, it copies the verified candidate into module `ir_text` and marks production readiness ready.
+- Runtime-index computed constructor moves now have an explicit disabled-by-default acceptance gate. Ordinary emission
+  still rejects the move, while the audit workflow can enable constructor-move acceptance only alongside cleanup
+  emission, module insertion, and module mutation.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
