@@ -265,6 +265,7 @@ auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions
     options.collect_runtime_indexed_cleanup_audit = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_module_ir_insertion_enabled = true;
+    options.runtime_indexed_cleanup_module_ir_mutation_enabled = true;
     return options;
 }
 

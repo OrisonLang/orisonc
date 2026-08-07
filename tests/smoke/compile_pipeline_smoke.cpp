@@ -6635,6 +6635,30 @@ auto main() -> int {
             .production_ready
     );
     assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_requested
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
+            .candidate_verified
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_applied
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
+            .module_matches_candidate
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
+            .final_module_cleanup_block_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
+            .final_module_line_count == logical_line_count(runtime_indexed_cleanup.ir_text)
+    );
+    assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .owner_name == "holder.items"
     );
@@ -6853,6 +6877,22 @@ auto main() -> int {
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_requested
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .candidate_verified
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_applied
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .module_matches_candidate
+    );
 
     auto runtime_indexed_cleanup_insertion_gate_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
@@ -7013,10 +7053,87 @@ auto main() -> int {
              .production_ready
     );
     assert(
+        !runtime_indexed_cleanup_insertion_gate_on
+             .runtime_indexed_cleanup_module_ir_mutation_state
+             .mutation_requested
+    );
+    assert(
+        runtime_indexed_cleanup_insertion_gate_on
+            .runtime_indexed_cleanup_module_ir_mutation_state
+            .candidate_verified
+    );
+    assert(
+        !runtime_indexed_cleanup_insertion_gate_on
+             .runtime_indexed_cleanup_module_ir_mutation_state
+             .mutation_applied
+    );
+    assert(
+        !runtime_indexed_cleanup_insertion_gate_on
+             .runtime_indexed_cleanup_module_ir_mutation_state
+             .module_matches_candidate
+    );
+    assert(
         runtime_indexed_cleanup_insertion_gate_on.ir_text.find(
             runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_artifact_state
                 .rendered_ir_lines.front()
         ) == std::string::npos
+    );
+
+    auto runtime_indexed_cleanup_mutation_on = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+        }
+    );
+    assert(runtime_indexed_cleanup_mutation_on.has_errors());
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_requested
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .candidate_verified
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .mutation_applied
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .module_matches_candidate
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .final_module_cleanup_block_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_mutation_state
+            .final_module_line_count ==
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_candidate_state
+            .candidate_module_line_count
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.ir_text ==
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_candidate_state
+            .candidate_ir_text
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.ir_text.find(
+            runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_artifact_state
+                .rendered_ir_lines.front()
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .module_mutation_enabled
+    );
+    assert(
+        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .production_ready
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()

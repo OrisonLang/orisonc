@@ -470,11 +470,40 @@ auto build_runtime_indexed_cleanup_module_ir_candidate_verification_state(
     return verification_state;
 }
 
+auto apply_runtime_indexed_cleanup_module_ir_mutation(
+    CompilePipelineOptions const& options,
+    RuntimeIndexedCleanupModuleIrArtifactState const& artifact_state,
+    RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state,
+    RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state,
+    std::string& ir_text
+) -> RuntimeIndexedCleanupModuleIrMutationState {
+    auto mutation_state = RuntimeIndexedCleanupModuleIrMutationState {
+        .mutation_requested = options.runtime_indexed_cleanup_module_ir_mutation_enabled,
+        .candidate_verified = verification_state.verified,
+    };
+    if (mutation_state.mutation_requested && mutation_state.candidate_verified) {
+        ir_text = candidate_state.candidate_ir_text;
+        mutation_state.mutation_applied = true;
+    }
+
+    mutation_state.module_matches_candidate =
+        mutation_state.mutation_applied &&
+        candidate_state.candidate_available &&
+        ir_text == candidate_state.candidate_ir_text;
+    mutation_state.final_module_line_count = logical_line_count(ir_text);
+    if (!artifact_state.rendered_ir_lines.empty()) {
+        mutation_state.final_module_cleanup_block_count =
+            occurrence_count(ir_text, artifact_state.rendered_ir_lines.front());
+    }
+    return mutation_state;
+}
+
 auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
     RuntimeIndexedCleanupModuleIrInsertionPreviewState const& preview_state,
     RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state,
-    RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state
+    RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state,
+    RuntimeIndexedCleanupModuleIrMutationState const& mutation_state
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
     auto readiness_state = RuntimeIndexedCleanupModuleIrProductionReadinessState {
         .insertion_gate_ready = insertion_gate_state.insertion_enabled,
@@ -482,7 +511,8 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             preview_state.insertion_point_found,
         .candidate_ready = candidate_state.candidate_available,
         .candidate_verified = verification_state.verified,
-        .module_mutation_enabled = false,
+        .module_mutation_enabled = mutation_state.mutation_applied &&
+            mutation_state.module_matches_candidate,
     };
     readiness_state.production_ready =
         readiness_state.insertion_gate_ready &&
@@ -1371,12 +1401,21 @@ void populate_lowering_emission_reports(
             result.runtime_indexed_cleanup_module_ir_artifact_state,
             result.runtime_indexed_cleanup_module_ir_candidate_state
         );
+    result.runtime_indexed_cleanup_module_ir_mutation_state =
+        apply_runtime_indexed_cleanup_module_ir_mutation(
+            options,
+            result.runtime_indexed_cleanup_module_ir_artifact_state,
+            result.runtime_indexed_cleanup_module_ir_candidate_state,
+            result.runtime_indexed_cleanup_module_ir_candidate_verification_state,
+            result.ir_text
+        );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
         build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             result.runtime_indexed_cleanup_module_ir_insertion_gate_state,
             result.runtime_indexed_cleanup_module_ir_insertion_preview_state,
             result.runtime_indexed_cleanup_module_ir_candidate_state,
-            result.runtime_indexed_cleanup_module_ir_candidate_verification_state
+            result.runtime_indexed_cleanup_module_ir_candidate_verification_state,
+            result.runtime_indexed_cleanup_module_ir_mutation_state
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);

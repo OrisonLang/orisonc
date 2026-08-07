@@ -836,6 +836,8 @@ representation.
   exposing insertion gate, preview, candidate, verification, and module-mutation status.
 - Driver smoke coverage now pins the runtime-index cleanup emission-plan audit line, including lowerable slices,
   structured-plan completion, and the gated IR line count.
+- Runtime-index cleanup module mutation now has an explicit disabled-by-default pipeline gate. When enabled after
+  candidate verification, it copies the verified candidate into module `ir_text` and marks production readiness ready.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The
