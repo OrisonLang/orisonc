@@ -130,7 +130,7 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled production ready"
+        "module-mutation enabled function-integration blocked production blocked"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }

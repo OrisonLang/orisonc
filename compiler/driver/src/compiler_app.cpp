@@ -290,6 +290,7 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
            << " candidate " << (state.candidate_ready ? "ready" : "blocked")
            << " candidate-verification " << (state.candidate_verified ? "verified" : "blocked")
            << " module-mutation " << (state.module_mutation_enabled ? "enabled" : "disabled")
+           << " function-integration " << (state.function_integration_ready ? "ready" : "blocked")
            << " production " << (state.production_ready ? "ready" : "blocked");
     return report.str();
 }

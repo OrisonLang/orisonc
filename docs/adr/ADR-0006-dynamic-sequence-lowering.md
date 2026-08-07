@@ -851,6 +851,9 @@ representation.
 - Runtime-index gated constructor-move smoke coverage now spans record constructors, single-payload choice
   constructors, and multi-variant choice constructors, including accepted moves, sibling reads, and same-index reuse
   rejection.
+- Runtime-index module-IR production readiness now includes an explicit function-integration gate. Candidate module
+  mutation can still be verified, but production readiness remains blocked until the cleanup slice is inserted into the
+  owning function control flow rather than appended as an artifact.
 - Choice payload cleanup still handles concrete record and fixed-array paths only; generic payload shapes need the same
   recursive descriptor collection once their runtime layout is materialized in the lowering context.
 - Fixed-array record-field reassignment now also descends through record elements. The

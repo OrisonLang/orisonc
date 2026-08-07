@@ -513,13 +513,15 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         .candidate_verified = verification_state.verified,
         .module_mutation_enabled = mutation_state.mutation_applied &&
             mutation_state.module_matches_candidate,
+        .function_integration_ready = false,
     };
     readiness_state.production_ready =
         readiness_state.insertion_gate_ready &&
         readiness_state.insertion_preview_ready &&
         readiness_state.candidate_ready &&
         readiness_state.candidate_verified &&
-        readiness_state.module_mutation_enabled;
+        readiness_state.module_mutation_enabled &&
+        readiness_state.function_integration_ready;
     return readiness_state;
 }
 

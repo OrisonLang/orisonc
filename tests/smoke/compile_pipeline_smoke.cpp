@@ -6632,6 +6632,10 @@ auto main() -> int {
     );
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
     assert(
@@ -6875,6 +6879,10 @@ auto main() -> int {
     );
     assert(
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
     assert(
@@ -7050,6 +7058,11 @@ auto main() -> int {
     assert(
         !runtime_indexed_cleanup_insertion_gate_on
              .runtime_indexed_cleanup_module_ir_production_readiness_state
+             .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_cleanup_insertion_gate_on
+             .runtime_indexed_cleanup_module_ir_production_readiness_state
              .production_ready
     );
     assert(
@@ -7132,7 +7145,11 @@ auto main() -> int {
             .module_mutation_enabled
     );
     assert(
-        runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+        !runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_cleanup_mutation_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
 
@@ -7162,7 +7179,11 @@ auto main() -> int {
             .mutation_applied
     );
     assert(
-        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+        !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
     );
     assert(

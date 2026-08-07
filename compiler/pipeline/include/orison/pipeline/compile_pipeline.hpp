@@ -224,6 +224,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool candidate_ready = false;
     bool candidate_verified = false;
     bool module_mutation_enabled = false;
+    bool function_integration_ready = false;
     bool production_ready = false;
 };
 
