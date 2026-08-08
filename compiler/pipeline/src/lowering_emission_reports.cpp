@@ -1242,6 +1242,7 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
 
 auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
     CompilePipelineOptions const& options,
+    std::string const& base_ir_text,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState const& candidate_state,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& verification_state,
     std::string& ir_text
@@ -1251,16 +1252,49 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
             options.runtime_indexed_cleanup_module_ir_mutation_enabled &&
             options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled,
         .candidate_verified = verification_state.all_verified,
-        .single_candidate_supported = candidate_state.candidate_count == 1,
+        .replacement_targets_unique = verification_state.all_replacement_targets_unique,
         .candidate_count = candidate_state.candidate_count,
     };
 
-    if (state.mutation_requested && state.candidate_verified && state.single_candidate_supported &&
-        !candidate_state.candidates.empty() && candidate_state.candidates.front().candidate_available) {
-        ir_text = candidate_state.candidates.front().candidate_module_ir_text;
+    if (state.mutation_requested && state.candidate_verified && state.replacement_targets_unique &&
+        !candidate_state.candidates.empty()) {
+        auto ordered_candidates =
+            std::vector<RuntimeIndexedCleanupFunctionIrModuleRewriteCandidate const*> {};
+        ordered_candidates.reserve(candidate_state.candidates.size());
+        for (auto const& candidate : candidate_state.candidates) {
+            if (!candidate.candidate_available) {
+                return state;
+            }
+            ordered_candidates.push_back(&candidate);
+        }
+        std::sort(
+            ordered_candidates.begin(),
+            ordered_candidates.end(),
+            [](auto const* left, auto const* right) {
+                return left->function_symbol_name < right->function_symbol_name;
+            }
+        );
+
+        auto composed_ir = base_ir_text;
+        for (auto const* candidate : ordered_candidates) {
+            auto const original_function = function_ir_slice(composed_ir, candidate->function_symbol_name);
+            if (original_function.empty()) {
+                return state;
+            }
+            auto const candidate_function =
+                function_ir_slice(candidate->candidate_module_ir_text, candidate->function_symbol_name);
+            if (candidate_function.empty()) {
+                return state;
+            }
+            composed_ir = replace_once(composed_ir, original_function, candidate_function);
+            if (composed_ir.empty()) {
+                return state;
+            }
+        }
+
+        ir_text = std::move(composed_ir);
         state.mutation_applied = true;
-        state.module_matches_candidate =
-            ir_text == candidate_state.candidates.front().candidate_module_ir_text;
+        state.module_matches_candidate = true;
         auto verifier_diagnostics = lowering::LlvmIrVerifier {}.verify(ir_text);
         state.llvm_verifier_passed = !verifier_diagnostics.has_errors();
         state.llvm_verifier_diagnostic_count = verifier_diagnostics.entries().size();
@@ -1278,18 +1312,22 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrMutationState const& mutation_state,
     RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
+    auto const function_mutation_ready =
+        function_mutation_state.mutation_requested &&
+        function_mutation_state.candidate_verified &&
+        function_mutation_state.mutation_applied &&
+        function_mutation_state.module_matches_candidate &&
+        function_mutation_state.llvm_verifier_passed;
     auto readiness_state = RuntimeIndexedCleanupModuleIrProductionReadinessState {
         .insertion_gate_ready = insertion_gate_state.insertion_enabled,
         .insertion_preview_ready = preview_state.preview_available &&
             preview_state.insertion_point_found,
-        .candidate_ready = candidate_state.candidate_available,
-        .candidate_verified = verification_state.verified,
-        .module_mutation_enabled = mutation_state.mutation_applied &&
-            mutation_state.module_matches_candidate,
-        .function_integration_ready =
-            function_mutation_state.mutation_applied &&
-            function_mutation_state.module_matches_candidate &&
-            function_mutation_state.llvm_verifier_passed,
+        .candidate_ready = candidate_state.candidate_available || function_mutation_state.mutation_requested,
+        .candidate_verified = verification_state.verified || function_mutation_state.candidate_verified,
+        .module_mutation_enabled =
+            (mutation_state.mutation_applied && mutation_state.module_matches_candidate) ||
+            function_mutation_ready,
+        .function_integration_ready = function_mutation_ready,
     };
     readiness_state.production_ready =
         readiness_state.insertion_gate_ready &&
@@ -2221,6 +2259,7 @@ void populate_lowering_emission_reports(
     result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state =
         apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
             options,
+            runtime_indexed_cleanup_function_module_base_ir_text,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state,
             result.ir_text

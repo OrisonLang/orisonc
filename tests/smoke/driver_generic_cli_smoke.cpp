@@ -135,7 +135,8 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
-        "single-candidate true mutation-applied true module-matches-candidate true llvm-passed true diagnostics 0"
+        "replacement-targets unique mutation-applied true module-matches-candidate true "
+        "llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -172,7 +173,8 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
-        "single-candidate true mutation-applied true module-matches-candidate true llvm-passed true diagnostics 0"
+        "replacement-targets unique mutation-applied true module-matches-candidate true "
+        "llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -196,12 +198,13 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
-        "single-candidate false mutation-applied false module-matches-candidate false llvm-passed false diagnostics 0"
+        "replacement-targets unique mutation-applied true module-matches-candidate true "
+        "llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
-        "insertion-preview ready candidate ready candidate-verification blocked "
-        "module-mutation disabled function-integration blocked production blocked"
+        "insertion-preview ready candidate ready candidate-verification verified "
+        "module-mutation enabled function-integration ready production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }

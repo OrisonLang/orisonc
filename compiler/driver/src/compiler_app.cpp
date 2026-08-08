@@ -327,7 +327,7 @@ auto runtime_indexed_cleanup_function_module_mutation_report(
     report << "runtime-index cleanup function-module mutation "
            << "requested " << (state.mutation_requested ? "true" : "false")
            << " candidate-verified " << (state.candidate_verified ? "true" : "false")
-           << " single-candidate " << (state.single_candidate_supported ? "true" : "false")
+           << " replacement-targets " << (state.replacement_targets_unique ? "unique" : "blocked")
            << " mutation-applied " << (state.mutation_applied ? "true" : "false")
            << " module-matches-candidate " << (state.module_matches_candidate ? "true" : "false")
            << " llvm-passed " << (state.llvm_verifier_passed ? "true" : "false")

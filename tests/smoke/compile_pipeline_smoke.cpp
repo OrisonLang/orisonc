@@ -7973,7 +7973,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .single_candidate_supported
+            .replacement_targets_unique
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
@@ -8274,7 +8274,7 @@ auto main() -> int {
     assert(
         runtime_indexed_dynamic_array_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .single_candidate_supported
+            .replacement_targets_unique
     );
     assert(
         runtime_indexed_dynamic_array_cleanup
@@ -8385,9 +8385,9 @@ auto main() -> int {
             .candidate_verified
     );
     assert(
-        !runtime_indexed_multi_candidate_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .single_candidate_supported
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .replacement_targets_unique
     );
     assert(
         runtime_indexed_multi_candidate_cleanup
@@ -8395,29 +8395,34 @@ auto main() -> int {
             .candidate_count == 2
     );
     assert(
-        !runtime_indexed_multi_candidate_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .mutation_applied
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_applied
     );
     assert(
-        !runtime_indexed_multi_candidate_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .module_matches_candidate
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .module_matches_candidate
     );
     assert(
-        !runtime_indexed_multi_candidate_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .llvm_verifier_passed
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_passed
     );
     assert(
-        !runtime_indexed_multi_candidate_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .function_integration_ready
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_diagnostic_count == 0
     );
     assert(
-        !runtime_indexed_multi_candidate_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .production_ready
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .production_ready
     );
 
     auto parsed_drop_readiness_path =

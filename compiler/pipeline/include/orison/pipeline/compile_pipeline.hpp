@@ -415,7 +415,7 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
 struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     bool mutation_requested = false;
     bool candidate_verified = false;
-    bool single_candidate_supported = false;
+    bool replacement_targets_unique = false;
     bool mutation_applied = false;
     bool module_matches_candidate = false;
     bool llvm_verifier_passed = false;
