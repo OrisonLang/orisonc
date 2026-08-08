@@ -1289,6 +1289,9 @@ representation.
   The checked `holder.items[index]` path projects `%holder.addr` to the `[2 x %record.Inner]` owner, renders a
   verifier-readable element GEP, omits dynamic descriptor deallocation for the fixed array, and declares source Drop
   ABI callees needed by the candidate verifier.
+- Runtime-index cleanup rendered CFG now exits before moved-index skip/drop evaluation when the cleanup index is outside
+  the fixed-array length. The condition block branches to a live-check block only when the index is in bounds; the
+  continue block then unconditionally loops back to the condition.
 
 ## Follow-up work
 
@@ -1297,5 +1300,4 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Tighten the runtime-index cleanup loop CFG so the bounds check branches to exit before skip/drop evaluation and then
-  extend the same owner-address model to `DynamicArray<T>` descriptor owners.
+- Extend the fixed-array runtime-index cleanup owner-address model to `DynamicArray<T>` descriptor owners.

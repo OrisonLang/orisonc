@@ -260,6 +260,7 @@ int main() {
     assert(enabled_emission_plan.ir_plan.length_value_name == "%holder.items.runtime_cleanup.length");
     assert(enabled_emission_plan.ir_plan.condition_block_name == "holder.items.runtime_cleanup.condition");
     assert(enabled_emission_plan.ir_plan.cleanup_index_name == "%holder.items.runtime_cleanup.index");
+    assert(enabled_emission_plan.ir_plan.live_check_block_name == "holder.items.runtime_cleanup.check_live");
     assert(enabled_emission_plan.ir_plan.skip_block_name == "holder.items.runtime_cleanup.skip");
     assert(enabled_emission_plan.ir_plan.drop_block_name == "holder.items.runtime_cleanup.drop");
     assert(enabled_emission_plan.ir_plan.element_address_name == "%holder.items.runtime_cleanup.element.addr");
@@ -267,7 +268,7 @@ int main() {
     assert(enabled_emission_plan.ir_plan.continue_block_name == "holder.items.runtime_cleanup.continue");
     assert(enabled_emission_plan.ir_plan.exit_block_name == "holder.items.runtime_cleanup.exit");
     assert(enabled_emission_plan.ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate");
-    assert(enabled_emission_plan.gated_ir_slice_line_count == 17);
+    assert(enabled_emission_plan.gated_ir_slice_line_count == 19);
     assert(
         orison::lowering::render_runtime_indexed_cleanup_ir_plan(
             enabled_emission_plan.ir_plan
@@ -292,46 +293,59 @@ int main() {
     );
     assert(
         enabled_emission_plan.gated_ir_slice_lines[5] ==
+        "  br i1 %holder.items.runtime_cleanup.more, label %holder.items.runtime_cleanup.check_live, "
+        "label %holder.items.runtime_cleanup.exit\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[6] ==
+        "holder.items.runtime_cleanup.check_live:\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[7] ==
         "  %holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
         "%holder.items.runtime_cleanup.index, %index\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[6] ==
+        enabled_emission_plan.gated_ir_slice_lines[8] ==
         "  br i1 %holder.items.runtime_cleanup.skip_moved, label "
         "%holder.items.runtime_cleanup.skip, label %holder.items.runtime_cleanup.drop\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[8] ==
+        enabled_emission_plan.gated_ir_slice_lines[10] ==
         "  br label %holder.items.runtime_cleanup.continue\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[9] ==
+        enabled_emission_plan.gated_ir_slice_lines[11] ==
         "holder.items.runtime_cleanup.drop:\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[10] ==
+        enabled_emission_plan.gated_ir_slice_lines[12] ==
         "  %holder.items.runtime_cleanup.element.addr = getelementptr [2 x %record.Inner], ptr "
         "%holder.items.runtime_cleanup.owner.addr, i64 0, i64 %holder.items.runtime_cleanup.index\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[11] ==
+        enabled_emission_plan.gated_ir_slice_lines[13] ==
         "  call void @__orison_drop.Inner(ptr %holder.items.runtime_cleanup.element.addr)\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[12] ==
+        enabled_emission_plan.gated_ir_slice_lines[14] ==
         "  br label %holder.items.runtime_cleanup.continue\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[13] ==
+        enabled_emission_plan.gated_ir_slice_lines[15] ==
         "holder.items.runtime_cleanup.continue:\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[14] ==
+        enabled_emission_plan.gated_ir_slice_lines[16] ==
         "  %holder.items.runtime_cleanup.next_index = add i64 "
         "%holder.items.runtime_cleanup.index, 1\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[16] ==
+        enabled_emission_plan.gated_ir_slice_lines[17] ==
+        "  br label %holder.items.runtime_cleanup.condition\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[18] ==
         "holder.items.runtime_cleanup.exit:\n"
     );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

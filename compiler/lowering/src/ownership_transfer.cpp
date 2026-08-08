@@ -330,6 +330,7 @@ auto runtime_indexed_cleanup_emission_plan(
             .condition_block_name = plan.owner_name + ".runtime_cleanup.condition",
             .cleanup_index_name = "%" + plan.owner_name + ".runtime_cleanup.index",
             .bounds_check_name = "%" + plan.owner_name + ".runtime_cleanup.more",
+            .live_check_block_name = plan.owner_name + ".runtime_cleanup.check_live",
             .skip_check_name = "%" + plan.owner_name + ".runtime_cleanup.skip_moved",
             .skip_block_name = plan.owner_name + ".runtime_cleanup.skip",
             .drop_block_name = plan.owner_name + ".runtime_cleanup.drop",
@@ -385,6 +386,9 @@ auto render_runtime_indexed_cleanup_ir_plan(
             plan.continue_block_name + " ]\n",
         "  " + plan.bounds_check_name + " = icmp ult i64 " + plan.cleanup_index_name +
             ", " + length_operand + "\n",
+        "  br i1 " + plan.bounds_check_name + ", label %" + plan.live_check_block_name +
+            ", label %" + plan.exit_block_name + "\n",
+        plan.live_check_block_name + ":\n",
         "  " + plan.skip_check_name + " = icmp eq i64 " + plan.cleanup_index_name +
             ", %" + plan.index_expression_text + "\n",
         "  br i1 " + plan.skip_check_name + ", label %" + plan.skip_block_name +
@@ -399,8 +403,7 @@ auto render_runtime_indexed_cleanup_ir_plan(
         "  br label %" + plan.continue_block_name + "\n",
         plan.continue_block_name + ":\n",
         "  " + plan.next_index_name + " = add i64 " + plan.cleanup_index_name + ", 1\n",
-        "  br i1 " + plan.bounds_check_name + ", label %" + plan.condition_block_name +
-            ", label %" + plan.exit_block_name + "\n",
+        "  br label %" + plan.condition_block_name + "\n",
         plan.exit_block_name + ":\n",
     });
     if (plan.owner_deallocation_required) {

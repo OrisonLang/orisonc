@@ -112,6 +112,7 @@ struct RuntimeIndexedCleanupIrPlan {
     std::string condition_block_name;
     std::string cleanup_index_name;
     std::string bounds_check_name;
+    std::string live_check_block_name;
     std::string skip_check_name;
     std::string skip_block_name;
     std::string drop_block_name;
