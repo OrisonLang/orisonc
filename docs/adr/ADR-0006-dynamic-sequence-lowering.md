@@ -1296,6 +1296,9 @@ representation.
   loads the descriptor, projects data/length/capacity, drops every live element except the moved runtime index, and
   renders the finite `__orison_dynamic_array_deallocate(ptr, i64, i64)` call while ordinary computed-index ownership
   moves remain rejected by default.
+- Runtime-index cleanup audit now requests the function-module rewrite verifier and reports compact verification gates.
+  Fixed-array candidates reach LLVM verification and pass; descriptor-backed `DynamicArray<T>` candidates currently
+  block before LLVM verification at candidate-function availability and replacement-target uniqueness.
 
 ## Follow-up work
 

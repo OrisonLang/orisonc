@@ -267,6 +267,7 @@ auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions
     options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_module_ir_insertion_enabled = true;
     options.runtime_indexed_cleanup_module_ir_mutation_enabled = true;
+    options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
     options.dynamic_array_production_construction_lowering_enabled = true;
     options.dynamic_array_production_append_lowering_enabled = true;
@@ -295,6 +296,27 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
            << " module-mutation " << (state.module_mutation_enabled ? "enabled" : "disabled")
            << " function-integration " << (state.function_integration_ready ? "ready" : "blocked")
            << " production " << (state.production_ready ? "ready" : "blocked");
+    return report.str();
+}
+
+auto runtime_indexed_cleanup_function_module_verification_report(
+    pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& state
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup function-module verification "
+           << "metadata " << (state.verification_metadata_available ? "available" : "missing")
+           << " verifications " << state.verification_count
+           << " candidate-functions " << (state.all_candidate_functions_found ? "found" : "blocked")
+           << " candidate-match " << (state.all_candidate_functions_match_verified_candidates ? "true" : "false")
+           << " replacement-targets " << (state.all_replacement_targets_unique ? "unique" : "blocked")
+           << " module-changed " << (state.all_module_ir_changed ? "true" : "false")
+           << " separate-module " << (state.all_candidates_separate_from_module_ir ? "true" : "false")
+           << " llvm-ran " << (state.any_llvm_verifier_ran ? "true" : "false")
+           << " llvm-passed " << (state.all_llvm_verifier_passed ? "true" : "false")
+           << " verified " << (state.all_verified ? "true" : "false")
+           << " verified-count " << state.verified_count
+           << " llvm-verified-count " << state.llvm_verified_count
+           << " diagnostics " << state.llvm_verifier_diagnostic_count;
     return report.str();
 }
 
@@ -645,6 +667,9 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
     if (lines.empty()) {
         lines.push_back("runtime-index cleanup audit: no runtime-index cleanup metadata");
     } else {
+        lines.push_back(runtime_indexed_cleanup_function_module_verification_report(
+            result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+        ));
         lines.push_back(runtime_indexed_cleanup_module_ir_production_readiness_report(
             result.runtime_indexed_cleanup_module_ir_production_readiness_state
         ));

@@ -8134,6 +8134,7 @@ auto main() -> int {
             .runtime_indexed_cleanup_emission_enabled = true,
             .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
             .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
             .runtime_indexed_constructor_move_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_index_lowering_enabled = true,
@@ -8184,6 +8185,36 @@ auto main() -> int {
         runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[22] ==
         "  call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)\n"
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verification_metadata_available
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verification_count == 1
+    );
+    assert(
+        !runtime_indexed_dynamic_array_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_candidate_functions_found
+    );
+    assert(
+        !runtime_indexed_dynamic_array_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_replacement_targets_unique
+    );
+    assert(
+        !runtime_indexed_dynamic_array_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .any_llvm_verifier_ran
+    );
+    assert(
+        !runtime_indexed_dynamic_array_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_verified
     );
 
     auto parsed_drop_readiness_path =
