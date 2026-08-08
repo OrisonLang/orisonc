@@ -1866,7 +1866,9 @@ void append_function_emission_reports(
     for (auto plan : function_emission.runtime_indexed_cleanup_emission_plans) {
         plan.function_symbol_name = function_emission.function_symbol_name;
         plan.function_insertion_block_name = plan.ir_plan.entry_block_name;
-        plan.function_predecessor_block_name = function_emission.final_block_name;
+        if (plan.function_predecessor_block_name.empty()) {
+            plan.function_predecessor_block_name = function_emission.final_block_name;
+        }
         plan.function_continuation_block_name = plan.ir_plan.exit_block_name;
         plan.function_insertion_target_known =
             !plan.function_symbol_name.empty() &&

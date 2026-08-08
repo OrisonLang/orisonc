@@ -1316,6 +1316,10 @@ representation.
   terminator replaced by each cleanup branch. The same-function two-candidate fixture proves the current pair targets
   the same terminator range, so module mutation stays blocked until overlapping splice ranges have an explicit
   composition or rejection rule.
+- Runtime-index cleanup plans now preserve the predecessor block active when each runtime-index ownership move is
+  recorded. The same-function non-overlap fixture uses ordinary early-return branches to place two cleanup candidates
+  in distinct predecessor blocks; typed splice metadata recognizes the ordered, non-overlapping ranges while duplicate
+  function-symbol module mutation remains blocked.
 
 ## Follow-up work
 
@@ -1325,5 +1329,5 @@ representation.
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
 - Extend runtime-index cleanup function-module mutation with ordered intra-function splice composition using the typed
-  splice ranges, then add a non-overlapping same-function fixture before enabling any broader same-function cleanup
-  composition.
+  non-overlapping splice ranges, while keeping overlapping same-function ranges rejected until a separate composition
+  rule exists.

@@ -1,0 +1,60 @@
+package tests.fixtures.runtime_indexed_cleanup_same_function_non_overlapping_candidates
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Inner
+    values: DynamicArray<Payload>
+    spare: DynamicArray<Payload>
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Holder
+    items: Array<Inner, 2>
+
+implements Drop for Holder
+    function drop(this: exclusive This) -> Unit
+        return
+
+record SelectedInner
+    item: Inner
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_inner(seed: UInt32) -> Inner
+    Inner(make_values(seed), make_values(seed + 10 as UInt32))
+
+function select_both(skip_first: Bool, skip_second: Bool) -> UInt32
+    if skip_first
+        return 1 as UInt32
+
+    var first_items: Array<Inner, 2> = [make_inner(1 as UInt32), make_inner(20 as UInt32)]
+    var first_holder: Holder = Holder(first_items)
+    let first_index: UInt64 = 0 as UInt64
+    var first_selected: SelectedInner = SelectedInner(first_holder.items[first_index])
+
+    if skip_second
+        return 2 as UInt32
+
+    var second_items: Array<Inner, 2> = [make_inner(100 as UInt32), make_inner(200 as UInt32)]
+    var second_holder: Holder = Holder(second_items)
+    let second_index: UInt64 = 1 as UInt64
+    var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])
+
+    0 as UInt32
+
+function main() -> UInt32
+    select_both(false, false)

@@ -7743,7 +7743,7 @@ auto main() -> int {
             runtime_indexed_cleanup_function_candidate.splice_start_offset,
             runtime_indexed_cleanup_function_candidate.splice_end_offset -
                 runtime_indexed_cleanup_function_candidate.splice_start_offset
-        ) == "  ret i32 0\n"
+        ) == "  " + runtime_indexed_cleanup_function_candidate.replaced_terminator_text + "\n"
     );
     assert(runtime_indexed_cleanup_function_candidate.original_function_line_count > 0);
     assert(
@@ -8611,6 +8611,104 @@ auto main() -> int {
     );
     assert(
         !runtime_indexed_same_function_cleanup
+             .runtime_indexed_cleanup_module_ir_production_readiness_state
+             .production_ready
+    );
+
+    auto runtime_indexed_same_function_non_overlap_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or";
+    auto runtime_indexed_same_function_non_overlap_cleanup = pipeline.emit_llvm(
+        runtime_indexed_same_function_non_overlap_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_same_function_non_overlap_cleanup.has_errors());
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 2
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidate_count == 2
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .all_splice_ranges_available
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_ordered
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_non_overlapping
+    );
+    auto const& non_overlap_first_candidate =
+        runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidates[0];
+    auto const& non_overlap_second_candidate =
+        runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidates[1];
+    assert(non_overlap_first_candidate.function_symbol_name == non_overlap_second_candidate.function_symbol_name);
+    assert(non_overlap_first_candidate.splice_range_available);
+    assert(non_overlap_second_candidate.splice_range_available);
+    assert(non_overlap_first_candidate.splice_end_offset <= non_overlap_second_candidate.splice_start_offset);
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_verified
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
+            .candidate_count == 2
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
+            .available_candidate_count == 2
+    );
+    assert(
+        !runtime_indexed_same_function_non_overlap_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_replacement_targets_unique
+    );
+    assert(
+        !runtime_indexed_same_function_non_overlap_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .all_verified
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verified_count == 2
+    );
+    assert(
+        !runtime_indexed_same_function_non_overlap_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+             .mutation_applied
+    );
+    assert(
+        !runtime_indexed_same_function_non_overlap_cleanup
+             .runtime_indexed_cleanup_module_ir_production_readiness_state
+             .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_same_function_non_overlap_cleanup
              .runtime_indexed_cleanup_module_ir_production_readiness_state
              .production_ready
     );

@@ -586,6 +586,7 @@ auto record_runtime_indexed_constructor_ownership(
     record_runtime_indexed_partial_owner(
         session.state.ownership_transfers,
         *owner,
+        session.state.current_block,
         context.options.enable_runtime_indexed_cleanup_emission
     );
     return true;

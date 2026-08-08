@@ -208,6 +208,7 @@ auto mark_owned_binding_consumed(
 auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
     RuntimeIndexedPartialOwner owner,
+    std::string function_predecessor_block_name = {},
     bool production_cleanup_emission_enabled = false
 ) -> void;
 

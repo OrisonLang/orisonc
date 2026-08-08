@@ -71,6 +71,7 @@ auto mark_owned_binding_consumed(
 auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
     RuntimeIndexedPartialOwner owner,
+    std::string function_predecessor_block_name,
     bool production_cleanup_emission_enabled
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
@@ -86,6 +87,7 @@ auto record_runtime_indexed_partial_owner(
         sketch,
         production_cleanup_emission_enabled
     );
+    emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
     state.runtime_indexed_cleanup_proof_gates.push_back(std::move(gate));
