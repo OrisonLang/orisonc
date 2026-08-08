@@ -1176,6 +1176,15 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
     for (auto index = std::size_t {0}; index < module_candidate_state.candidates.size(); ++index) {
         auto const& module_candidate = module_candidate_state.candidates[index];
         auto const& function_candidate = function_candidate_state.candidates[index];
+        auto const function_target_count = static_cast<std::size_t>(
+            std::count_if(
+                module_candidate_state.candidates.begin(),
+                module_candidate_state.candidates.end(),
+                [&](auto const& candidate) {
+                    return candidate.function_symbol_name == module_candidate.function_symbol_name;
+                }
+            )
+        );
         auto const candidate_function_ir =
             function_ir_slice(
                 module_candidate.candidate_module_ir_text,
@@ -1194,7 +1203,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             .candidate_function_found = !candidate_function_ir.empty(),
             .candidate_function_matches_verified_candidate =
                 candidate_function_ir == function_candidate.candidate_function_ir_text,
-            .replacement_target_unique = module_candidate.function_replacement_count == 1,
+            .replacement_target_unique =
+                module_candidate.function_replacement_count == 1 && function_target_count == 1,
             .module_ir_changed = module_candidate.module_ir_changed,
             .separate_from_module_ir = module_candidate.separate_from_module_ir,
             .llvm_verifier_ran = module_candidate.candidate_available,

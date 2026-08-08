@@ -1308,6 +1308,10 @@ representation.
   are unique. The `runtime_indexed_cleanup_two_function_candidates.or` fixture produces two function rewrites, applies
   them in deterministic function-symbol order, reruns LLVM verification on the composed module, and reports production
   readiness after the final verifier passes.
+- Runtime-index cleanup function-module replacement-target uniqueness now treats duplicate function symbols as
+  conflicting targets. The `runtime_indexed_cleanup_same_function_two_candidates.or` fixture keeps two verifier-clean
+  same-function candidates blocked before mutation, preventing one function candidate from overwriting another until an
+  ordered intra-function splice model exists.
 
 ## Follow-up work
 
@@ -1316,5 +1320,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Extend runtime-index cleanup function-module mutation with same-function multi-candidate conflict fixtures before
-  accepting overlapping rewrite targets.
+- Extend runtime-index cleanup function-module mutation with ordered intra-function splice composition only after
+  overlapping and non-overlapping same-function rewrite ranges are modeled and verified independently.
