@@ -8123,6 +8123,68 @@ auto main() -> int {
             .gated_ir_slice_lines[18] ==
         "holder.items.runtime_cleanup.exit:\n"
     );
+    auto runtime_indexed_dynamic_array_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or";
+    auto runtime_indexed_dynamic_array_cleanup = pipeline.emit_llvm(
+        runtime_indexed_dynamic_array_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(runtime_indexed_dynamic_array_cleanup.has_errors());
+    assert(
+        runtime_indexed_dynamic_array_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 1
+    );
+    auto const& runtime_indexed_dynamic_array_plan =
+        runtime_indexed_dynamic_array_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front();
+    assert(runtime_indexed_dynamic_array_plan.owner_name == "items");
+    assert(runtime_indexed_dynamic_array_plan.element_source_type_name == "Inner");
+    assert(runtime_indexed_dynamic_array_plan.element_llvm_type_name == "%record.Inner");
+    assert(runtime_indexed_dynamic_array_plan.owner_llvm_type_name == "{ ptr, i64, i64 }");
+    assert(runtime_indexed_dynamic_array_plan.owner_address_name == "%items.addr");
+    assert(runtime_indexed_dynamic_array_plan.element_size_value == "4");
+    assert(runtime_indexed_dynamic_array_plan.gated_ir_slice_line_count == 23);
+    assert(runtime_indexed_dynamic_array_plan.ir_plan.complete);
+    assert(runtime_indexed_dynamic_array_plan.ir_plan.descriptor_owner_ready);
+    assert(runtime_indexed_dynamic_array_plan.ir_plan.owner_deallocation_required);
+    assert(
+        runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[0] ==
+        "  %items.runtime_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[1] ==
+        "  %items.runtime_cleanup.data = extractvalue { ptr, i64, i64 } "
+        "%items.runtime_cleanup.descriptor, 0\n"
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[2] ==
+        "  %items.runtime_cleanup.length = extractvalue { ptr, i64, i64 } "
+        "%items.runtime_cleanup.descriptor, 1\n"
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[3] ==
+        "  %items.runtime_cleanup.capacity = extractvalue { ptr, i64, i64 } "
+        "%items.runtime_cleanup.descriptor, 2\n"
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[15] ==
+        "  %items.runtime_cleanup.element.addr = getelementptr %record.Inner, ptr "
+        "%items.runtime_cleanup.data, i64 %items.runtime_cleanup.index\n"
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[22] ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)\n"
+    );
 
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";

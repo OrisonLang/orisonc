@@ -348,6 +348,75 @@ int main() {
         enabled_emission_plan.gated_ir_slice_lines[18] ==
         "holder.items.runtime_cleanup.exit:\n"
     );
+    auto descriptor_owner = orison::lowering::RuntimeIndexedPartialOwner {
+        .owner_name = "items",
+        .index_expression_text = "index",
+        .element_source_type_name = "Inner",
+        .element_llvm_type_name = "%record.Inner",
+        .owner_llvm_type_name = "{ ptr, i64, i64 }",
+        .owner_address_name = "%items.addr",
+        .element_size_value = "4",
+        .moved_source_type_name = "Inner",
+        .cleanup_strategy = "skip-moved-element",
+        .constructor_move_enabled = false,
+    };
+    auto descriptor_skip = orison::lowering::runtime_indexed_cleanup_skip_plan(descriptor_owner);
+    auto descriptor_gate = orison::lowering::runtime_indexed_cleanup_proof_gate(descriptor_skip);
+    auto descriptor_sketch = orison::lowering::runtime_indexed_cleanup_emission_sketch(descriptor_gate);
+    auto descriptor_capability = orison::lowering::runtime_indexed_cleanup_capability(
+        descriptor_gate,
+        descriptor_sketch,
+        true
+    );
+    auto descriptor_emission_plan = orison::lowering::runtime_indexed_cleanup_emission_plan(
+        descriptor_capability,
+        descriptor_sketch,
+        true
+    );
+    assert(descriptor_emission_plan.production_enabled);
+    assert(descriptor_emission_plan.ir_plan.complete);
+    assert(descriptor_emission_plan.ir_plan.descriptor_owner_ready);
+    assert(!descriptor_emission_plan.ir_plan.static_length_ready);
+    assert(descriptor_emission_plan.ir_plan.owner_deallocation_required);
+    assert(descriptor_emission_plan.ir_plan.descriptor_value_name == "%items.runtime_cleanup.descriptor");
+    assert(descriptor_emission_plan.ir_plan.descriptor_data_value_name == "%items.runtime_cleanup.data");
+    assert(descriptor_emission_plan.ir_plan.length_value_name == "%items.runtime_cleanup.length");
+    assert(descriptor_emission_plan.ir_plan.descriptor_capacity_value_name == "%items.runtime_cleanup.capacity");
+    assert(descriptor_emission_plan.gated_ir_slice_line_count == 23);
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[0] ==
+        "  %items.runtime_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[1] ==
+        "  %items.runtime_cleanup.data = extractvalue { ptr, i64, i64 } "
+        "%items.runtime_cleanup.descriptor, 0\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[2] ==
+        "  %items.runtime_cleanup.length = extractvalue { ptr, i64, i64 } "
+        "%items.runtime_cleanup.descriptor, 1\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[3] ==
+        "  %items.runtime_cleanup.capacity = extractvalue { ptr, i64, i64 } "
+        "%items.runtime_cleanup.descriptor, 2\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[7] ==
+        "  %items.runtime_cleanup.more = icmp ult i64 %items.runtime_cleanup.index, "
+        "%items.runtime_cleanup.length\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[15] ==
+        "  %items.runtime_cleanup.element.addr = getelementptr %record.Inner, ptr "
+        "%items.runtime_cleanup.data, i64 %items.runtime_cleanup.index\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[22] ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)\n"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,

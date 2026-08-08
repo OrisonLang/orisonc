@@ -135,6 +135,33 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("runtime-index cleanup audit entries 1") != std::string::npos);
+    assert(output.find(
+        "runtime-index partial owner owner items index index element Inner moved Inner "
+        "cleanup skip-moved-element constructor-move enabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup emission-plan owner items index index element Inner "
+        "operations 5 prerequisites ready production-gate requested production enabled "
+        "length-load planned length-load-slice lowerable loop planned loop-block-slice lowerable "
+        "skip planned skip-branch-slice lowerable live-drop planned live-drop-slice lowerable "
+        "deallocate planned cleanup-tail-slice lowerable structured-ir-plan complete "
+        "comment-ir-preview-lines 5 gated-ir-slice-lines 23"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+        "insertion-preview ready candidate ready candidate-verification verified "
+        "module-mutation enabled function-integration blocked production blocked"
+    ) != std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2776,6 +2803,10 @@ auto main() -> int {
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
     );
+    assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_run.or"
@@ -2919,6 +2950,11 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or",
+        "indexed constructor ownership move requires explicit partial ownership support"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
         "indexed constructor ownership move requires explicit partial ownership support"
     );
     assert_cli_run_fixture_success(

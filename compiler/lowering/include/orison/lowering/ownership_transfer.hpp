@@ -21,6 +21,7 @@ struct RuntimeIndexedPartialOwner {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
     std::string moved_source_type_name;
     std::string cleanup_strategy;
     bool constructor_move_enabled = false;
@@ -37,6 +38,7 @@ struct RuntimeIndexedCleanupSkipPlan {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
     std::string moved_source_type_name;
     std::string cleanup_operation;
     bool production_cleanup_enabled = false;
@@ -53,6 +55,7 @@ struct RuntimeIndexedCleanupProofGate {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
     std::string moved_source_type_name;
     std::string cleanup_operation;
     bool owner_known = false;
@@ -74,6 +77,7 @@ struct RuntimeIndexedCleanupEmissionSketch {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
     std::vector<std::string> snippets;
     bool report_only = true;
     bool production_emission_enabled = false;
@@ -90,6 +94,7 @@ struct RuntimeIndexedCleanupCapability {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
     bool proof_ready = false;
     bool sketch_ready = false;
     bool prerequisites_ready = false;
@@ -107,6 +112,10 @@ struct RuntimeIndexedCleanupIrPlan {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
+    std::string descriptor_value_name;
+    std::string descriptor_data_value_name;
+    std::string descriptor_capacity_value_name;
     std::string entry_block_name;
     std::string length_value_name;
     std::string condition_block_name;
@@ -124,6 +133,7 @@ struct RuntimeIndexedCleanupIrPlan {
     std::string deallocate_callee_name;
     bool owner_address_ready = false;
     bool static_length_ready = false;
+    bool descriptor_owner_ready = false;
     bool owner_deallocation_required = true;
     bool labels_ready = false;
     bool operands_ready = false;
@@ -143,6 +153,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     std::string owner_address_name;
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
+    std::string element_size_value;
     std::string function_insertion_block_name;
     std::string function_predecessor_block_name;
     std::string function_continuation_block_name;

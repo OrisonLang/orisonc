@@ -119,6 +119,7 @@ auto runtime_indexed_cleanup_skip_plan(
         .owner_address_name = owner.owner_address_name,
         .owner_address_ir_lines = owner.owner_address_ir_lines,
         .static_length_value = owner.static_length_value,
+        .element_size_value = owner.element_size_value,
         .moved_source_type_name = owner.moved_source_type_name,
         .cleanup_operation = owner.cleanup_strategy,
         .production_cleanup_enabled = false,
@@ -156,6 +157,7 @@ auto runtime_indexed_cleanup_proof_gate(
         .owner_address_name = plan.owner_address_name,
         .owner_address_ir_lines = plan.owner_address_ir_lines,
         .static_length_value = plan.static_length_value,
+        .element_size_value = plan.element_size_value,
         .moved_source_type_name = plan.moved_source_type_name,
         .cleanup_operation = plan.cleanup_operation,
         .owner_known = owner_known,
@@ -207,6 +209,7 @@ auto runtime_indexed_cleanup_emission_sketch(
         .owner_address_name = gate.owner_address_name,
         .owner_address_ir_lines = gate.owner_address_ir_lines,
         .static_length_value = gate.static_length_value,
+        .element_size_value = gate.element_size_value,
         .snippets = std::move(snippets),
         .report_only = true,
         .production_emission_enabled = false,
@@ -247,6 +250,7 @@ auto runtime_indexed_cleanup_capability(
         .owner_address_name = gate.owner_address_name,
         .owner_address_ir_lines = gate.owner_address_ir_lines,
         .static_length_value = gate.static_length_value,
+        .element_size_value = gate.element_size_value,
         .proof_ready = proof_ready,
         .sketch_ready = sketch_ready,
         .prerequisites_ready = proof_ready && sketch_ready,
@@ -282,6 +286,7 @@ auto runtime_indexed_cleanup_emission_plan(
         .owner_address_name = capability.owner_address_name,
         .owner_address_ir_lines = capability.owner_address_ir_lines,
         .static_length_value = capability.static_length_value,
+        .element_size_value = capability.element_size_value,
         .prerequisites_ready = capability.prerequisites_ready && sketch.snippets.size() == 5,
         .production_gate_requested = production_cleanup_emission_enabled,
         .production_enabled = production_cleanup_emission_enabled && capability.production_enabled,
@@ -312,10 +317,14 @@ auto runtime_indexed_cleanup_emission_plan(
         "; runtime-index cleanup preview deallocate-owner " + plan.owner_name + "\n",
     };
     plan.comment_ir_preview_line_count = plan.comment_ir_preview_lines.size();
-    auto concrete_owner_ready = !plan.owner_llvm_type_name.empty() &&
+    auto fixed_array_owner_ready = !plan.owner_llvm_type_name.empty() &&
         !plan.owner_address_name.empty() &&
         !plan.static_length_value.empty();
-    if (plan.production_enabled && concrete_owner_ready) {
+    auto descriptor_owner_ready =
+        plan.owner_llvm_type_name == dynamic_array_descriptor_llvm_type() &&
+        !plan.owner_address_name.empty() &&
+        !plan.element_size_value.empty();
+    if (plan.production_enabled && (fixed_array_owner_ready || descriptor_owner_ready)) {
         plan.ir_plan = RuntimeIndexedCleanupIrPlan {
             .owner_name = plan.owner_name,
             .index_expression_text = plan.index_expression_text,
@@ -325,6 +334,10 @@ auto runtime_indexed_cleanup_emission_plan(
             .owner_address_name = plan.owner_address_name,
             .owner_address_ir_lines = plan.owner_address_ir_lines,
             .static_length_value = plan.static_length_value,
+            .element_size_value = plan.element_size_value,
+            .descriptor_value_name = "%" + plan.owner_name + ".runtime_cleanup.descriptor",
+            .descriptor_data_value_name = "%" + plan.owner_name + ".runtime_cleanup.data",
+            .descriptor_capacity_value_name = "%" + plan.owner_name + ".runtime_cleanup.capacity",
             .entry_block_name = plan.owner_name + ".runtime_cleanup.entry",
             .length_value_name = "%" + plan.owner_name + ".runtime_cleanup.length",
             .condition_block_name = plan.owner_name + ".runtime_cleanup.condition",
@@ -341,8 +354,9 @@ auto runtime_indexed_cleanup_emission_plan(
             .exit_block_name = plan.owner_name + ".runtime_cleanup.exit",
             .deallocate_callee_name = "__orison_dynamic_array_deallocate",
             .owner_address_ready = true,
-            .static_length_ready = true,
-            .owner_deallocation_required = false,
+            .static_length_ready = fixed_array_owner_ready,
+            .descriptor_owner_ready = descriptor_owner_ready,
+            .owner_deallocation_required = descriptor_owner_ready,
             .labels_ready = true,
             .operands_ready = true,
             .calls_ready = true,
@@ -372,7 +386,18 @@ auto render_runtime_indexed_cleanup_ir_plan(
         plan.owner_address_ir_lines.begin(),
         plan.owner_address_ir_lines.end()
     );
-    if (!plan.static_length_ready) {
+    if (plan.descriptor_owner_ready) {
+        lines.insert(lines.end(), {
+            "  " + plan.descriptor_value_name + " = load " + plan.owner_llvm_type_name +
+                ", ptr " + plan.owner_address_name + "\n",
+            "  " + plan.descriptor_data_value_name + " = extractvalue " + plan.owner_llvm_type_name +
+                " " + plan.descriptor_value_name + ", 0\n",
+            "  " + plan.length_value_name + " = extractvalue " + plan.owner_llvm_type_name +
+                " " + plan.descriptor_value_name + ", 1\n",
+            "  " + plan.descriptor_capacity_value_name + " = extractvalue " + plan.owner_llvm_type_name +
+                " " + plan.descriptor_value_name + ", 2\n",
+        });
+    } else if (!plan.static_length_ready) {
         lines.push_back("  " + plan.length_value_name + " = load i64, ptr %" + plan.owner_name + ".length\n");
     }
     auto const length_operand = plan.static_length_ready
@@ -396,9 +421,13 @@ auto render_runtime_indexed_cleanup_ir_plan(
         plan.skip_block_name + ":\n",
         "  br label %" + plan.continue_block_name + "\n",
         plan.drop_block_name + ":\n",
-        "  " + plan.element_address_name + " = getelementptr " +
-            plan.owner_llvm_type_name + ", ptr " + plan.owner_address_name +
-            ", i64 0, i64 " + plan.cleanup_index_name + "\n",
+        plan.descriptor_owner_ready
+            ? "  " + plan.element_address_name + " = getelementptr " +
+                plan.element_llvm_type_name + ", ptr " + plan.descriptor_data_value_name +
+                ", i64 " + plan.cleanup_index_name + "\n"
+            : "  " + plan.element_address_name + " = getelementptr " +
+                plan.owner_llvm_type_name + ", ptr " + plan.owner_address_name +
+                ", i64 0, i64 " + plan.cleanup_index_name + "\n",
         "  call void @" + plan.drop_callee_name + "(ptr " + plan.element_address_name + ")\n",
         "  br label %" + plan.continue_block_name + "\n",
         plan.continue_block_name + ":\n",
@@ -407,7 +436,11 @@ auto render_runtime_indexed_cleanup_ir_plan(
         plan.exit_block_name + ":\n",
     });
     if (plan.owner_deallocation_required) {
-        lines.push_back("  call void @" + plan.deallocate_callee_name + "(ptr %" + plan.owner_name + ")\n");
+        lines.push_back(
+            "  call void @" + plan.deallocate_callee_name + "(ptr " +
+            plan.descriptor_data_value_name + ", i64 " + plan.element_size_value +
+            ", i64 " + plan.descriptor_capacity_value_name + ")\n"
+        );
     }
     return lines;
 }

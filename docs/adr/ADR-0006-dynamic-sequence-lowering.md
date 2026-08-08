@@ -1292,6 +1292,10 @@ representation.
 - Runtime-index cleanup rendered CFG now exits before moved-index skip/drop evaluation when the cleanup index is outside
   the fixed-array length. The condition block branches to a live-check block only when the index is in bounds; the
   continue block then unconditionally loops back to the condition.
+- Runtime-index cleanup plans now support direct `DynamicArray<T>` descriptor owners as an audit-gated path. The plan
+  loads the descriptor, projects data/length/capacity, drops every live element except the moved runtime index, and
+  renders the finite `__orison_dynamic_array_deallocate(ptr, i64, i64)` call while ordinary computed-index ownership
+  moves remain rejected by default.
 
 ## Follow-up work
 
@@ -1300,4 +1304,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Extend the fixed-array runtime-index cleanup owner-address model to `DynamicArray<T>` descriptor owners.
+- Integrate the descriptor-backed runtime-index cleanup slice into the owning function CFG after the existing
+  function-integration gate is promoted from verified candidate to production mutation.

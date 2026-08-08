@@ -18,6 +18,7 @@
 #include "orison/lowering/null_safe_plan.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -463,31 +464,37 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
             return std::nullopt;
         }
 
-        auto element_source_type = array_element_source_type_name(current_source_type_name);
+        auto dynamic_array_element_source_type =
+            dynamic_array_element_source_type_name(current_source_type_name);
+        auto element_source_type = dynamic_array_element_source_type.has_value()
+            ? dynamic_array_element_source_type
+            : array_element_source_type_name(current_source_type_name);
         if (!element_source_type.has_value()) {
             return std::nullopt;
         }
         auto runtime_index_owner_source_type_name = current_source_type_name;
         auto runtime_index_element_source_type_name = *element_source_type;
 
-        if (auto element_segment = decimal_index_owner_segment(*step.index_expression)) {
-            owner_name += ".";
-            owner_name += *element_segment;
-            auto current_llvm_type = llvm_type_for_source_type_name(current_source_type_name, context);
-            if (!current_llvm_type.has_value()) {
-                return std::nullopt;
+        if (!dynamic_array_element_source_type.has_value()) {
+            if (auto element_segment = decimal_index_owner_segment(*step.index_expression)) {
+                owner_name += ".";
+                owner_name += *element_segment;
+                auto current_llvm_type = llvm_type_for_source_type_name(current_source_type_name, context);
+                if (!current_llvm_type.has_value()) {
+                    return std::nullopt;
+                }
+                if (!owner_address_name.empty()) {
+                    auto projected_owner_address_name = "%" + owner_name + ".runtime_cleanup.owner.addr";
+                    owner_address_ir_lines.push_back(
+                        "  " + projected_owner_address_name + " = getelementptr " +
+                        *current_llvm_type + ", ptr " + owner_address_name +
+                        ", i64 0, i64 " + *element_segment + "\n"
+                    );
+                    owner_address_name = std::move(projected_owner_address_name);
+                }
+                current_source_type_name = std::move(*element_source_type);
+                continue;
             }
-            if (!owner_address_name.empty()) {
-                auto projected_owner_address_name = "%" + owner_name + ".runtime_cleanup.owner.addr";
-                owner_address_ir_lines.push_back(
-                    "  " + projected_owner_address_name + " = getelementptr " +
-                    *current_llvm_type + ", ptr " + owner_address_name +
-                    ", i64 0, i64 " + *element_segment + "\n"
-                );
-                owner_address_name = std::move(projected_owner_address_name);
-            }
-            current_source_type_name = std::move(*element_source_type);
-            continue;
         }
 
         moved_source_type_name = *element_source_type;
@@ -535,6 +542,7 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
         auto owner_llvm_type_name =
             llvm_type_for_source_type_name(runtime_index_owner_source_type_name, context);
         auto owner_static_length_value = fixed_array_length_value(runtime_index_owner_source_type_name);
+        auto element_size_bytes = lowered_type_size_bytes(*element_llvm_type_name, context);
         return RuntimeIndexedPartialOwner {
             .owner_name = std::move(owner_name),
             .index_expression_text = index_expression_text,
@@ -546,6 +554,9 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
             .owner_address_ir_lines = std::move(owner_address_ir_lines),
             .static_length_value =
                 owner_static_length_value.has_value() ? std::move(*owner_static_length_value) : std::string {},
+            .element_size_value = element_size_bytes.has_value()
+                ? std::to_string(*element_size_bytes)
+                : std::string {},
             .moved_source_type_name = std::move(*moved_source_type_name),
             .cleanup_strategy = "skip-moved-element",
             .constructor_move_enabled = false,
