@@ -1300,6 +1300,10 @@ representation.
   Fixed-array candidates reach LLVM verification and pass; descriptor-backed `DynamicArray<T>` audit emission now
   completes, produces function-module candidates, retargets interposed PHI predecessors, inserts after runtime-index
   value definition, and passes LLVM verification.
+- Runtime-index cleanup function-module mutation is now enabled under the explicit audit gates for the current
+  single-candidate path. The mutation replaces module IR with the verified function-integrated candidate, reruns LLVM
+  verification on the final module, and reports function integration plus production readiness only when that final
+  verifier passes.
 
 ## Follow-up work
 
@@ -1308,5 +1312,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Promote the runtime-index cleanup function-integration gate from verified candidate to production mutation after the
-  CFG rewrite path is ready to mutate emitted function IR directly.
+- Extend runtime-index cleanup function-module mutation beyond the current single-candidate path only after ordering,
+  conflict detection, and multi-candidate replacement tests are in place.

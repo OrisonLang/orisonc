@@ -412,6 +412,18 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
+    bool mutation_requested = false;
+    bool candidate_verified = false;
+    bool single_candidate_supported = false;
+    bool mutation_applied = false;
+    bool module_matches_candidate = false;
+    bool llvm_verifier_passed = false;
+    std::size_t candidate_count = 0;
+    std::size_t final_module_line_count = 0;
+    std::size_t llvm_verifier_diagnostic_count = 0;
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -882,6 +894,8 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state;
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState
         runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state;
+    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState
+        runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;

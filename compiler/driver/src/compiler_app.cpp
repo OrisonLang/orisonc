@@ -320,6 +320,22 @@ auto runtime_indexed_cleanup_function_module_verification_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_function_module_mutation_report(
+    pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& state
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup function-module mutation "
+           << "requested " << (state.mutation_requested ? "true" : "false")
+           << " candidate-verified " << (state.candidate_verified ? "true" : "false")
+           << " single-candidate " << (state.single_candidate_supported ? "true" : "false")
+           << " mutation-applied " << (state.mutation_applied ? "true" : "false")
+           << " module-matches-candidate " << (state.module_matches_candidate ? "true" : "false")
+           << " llvm-passed " << (state.llvm_verifier_passed ? "true" : "false")
+           << " diagnostics " << state.llvm_verifier_diagnostic_count
+           << " final-lines " << state.final_module_line_count;
+    return report.str();
+}
+
 auto runtime_indexed_cleanup_function_module_verification_detail_report(
     pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification const& verification
 ) -> std::string {
@@ -694,6 +710,9 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
                 lines.push_back(runtime_indexed_cleanup_function_module_verification_detail_report(verification));
             }
         }
+        lines.push_back(runtime_indexed_cleanup_function_module_mutation_report(
+            result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+        ));
         lines.push_back(runtime_indexed_cleanup_module_ir_production_readiness_report(
             result.runtime_indexed_cleanup_module_ir_production_readiness_state
         ));

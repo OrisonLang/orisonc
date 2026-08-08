@@ -7880,7 +7880,7 @@ auto main() -> int {
     assert(runtime_indexed_cleanup_function_module_candidate.module_ir_changed);
     assert(runtime_indexed_cleanup_function_module_candidate.function_replacement_count == 1);
     assert(
-        runtime_indexed_cleanup_function_module_candidate.candidate_module_ir_text !=
+        runtime_indexed_cleanup_function_module_candidate.candidate_module_ir_text ==
         runtime_indexed_cleanup_function_module_rewrite_on.ir_text
     );
     assert(
@@ -7961,12 +7961,47 @@ auto main() -> int {
             .verifications.front().llvm_verifier_diagnostic_text.empty()
     );
     assert(
-        !runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
-             .function_integration_ready
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_requested
     );
     assert(
-        !runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
-             .production_ready
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .candidate_verified
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .single_candidate_supported
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_applied
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .module_matches_candidate
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_passed
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_diagnostic_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .production_ready
     );
     assert(
         !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
@@ -8225,6 +8260,51 @@ auto main() -> int {
         runtime_indexed_dynamic_array_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
             .all_verified
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_requested
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .candidate_verified
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .single_candidate_supported
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_applied
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .module_matches_candidate
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_passed
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_diagnostic_count == 0
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .production_ready
     );
 
     auto parsed_drop_readiness_path =
