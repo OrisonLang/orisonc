@@ -1312,6 +1312,10 @@ representation.
   conflicting targets. The `runtime_indexed_cleanup_same_function_two_candidates.or` fixture keeps two verifier-clean
   same-function candidates blocked before mutation, preventing one function candidate from overwriting another until an
   ordered intra-function splice model exists.
+- Runtime-index cleanup function IR candidates now carry original-function splice ranges for the predecessor
+  terminator replaced by each cleanup branch. The same-function two-candidate fixture proves the current pair targets
+  the same terminator range, so module mutation stays blocked until overlapping splice ranges have an explicit
+  composition or rejection rule.
 
 ## Follow-up work
 
@@ -1320,5 +1324,6 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Extend runtime-index cleanup function-module mutation with ordered intra-function splice composition only after
-  overlapping and non-overlapping same-function rewrite ranges are modeled and verified independently.
+- Extend runtime-index cleanup function-module mutation with ordered intra-function splice composition using the typed
+  splice ranges, then add a non-overlapping same-function fixture before enabling any broader same-function cleanup
+  composition.

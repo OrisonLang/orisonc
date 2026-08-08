@@ -185,6 +185,24 @@ auto predecessor_terminator_pattern(
     return terminator;
 }
 
+auto predecessor_terminator_position(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& terminator
+) -> std::string::size_type {
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos || terminator.empty()) {
+        return std::string::npos;
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    if (occurrence_count(block_text, terminator) != 1) {
+        return std::string::npos;
+    }
+    return block_start + block_text.find(terminator);
+}
+
 auto trailing_label_name(std::vector<std::string> const& lines) -> std::string {
     for (auto line = lines.rbegin(); line != lines.rend(); ++line) {
         if (line->empty() || line->back() != '\n') {
@@ -941,9 +959,20 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
                 candidate.original_function_ir_text,
                 candidate.predecessor_block_name
             );
+        auto const terminator_position =
+            predecessor_terminator_position(
+                candidate.original_function_ir_text,
+                candidate.predecessor_block_name,
+                original_predecessor_terminator
+            );
         if (!original_predecessor_terminator.empty()) {
             candidate.replaced_terminator_text =
                 original_predecessor_terminator.substr(2, original_predecessor_terminator.size() - 3);
+        }
+        if (terminator_position != std::string::npos) {
+            candidate.splice_range_available = true;
+            candidate.splice_start_offset = terminator_position;
+            candidate.splice_end_offset = terminator_position + original_predecessor_terminator.size();
         }
         candidate.candidate_function_ir_text =
             rewrite_predecessor_terminator_and_insert_cfg(
@@ -985,6 +1014,8 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
             state.any_function_ir_changed || candidate.function_ir_changed;
         state.all_candidates_separate_from_module_ir =
             state.all_candidates_separate_from_module_ir && candidate.separate_from_module_ir;
+        state.all_splice_ranges_available =
+            state.all_splice_ranges_available && candidate.splice_range_available;
         if (candidate.candidate_available) {
             ++state.available_candidate_count;
         }
@@ -992,6 +1023,26 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
         state.candidate_function_line_count += candidate.candidate_function_line_count;
         state.inserted_cfg_line_count += candidate.inserted_cfg_line_count;
         state.candidates.push_back(std::move(candidate));
+    }
+    for (auto left_index = std::size_t {0}; left_index < state.candidates.size(); ++left_index) {
+        for (auto right_index = left_index + 1; right_index < state.candidates.size(); ++right_index) {
+            auto const& left = state.candidates[left_index];
+            auto const& right = state.candidates[right_index];
+            if (left.function_symbol_name != right.function_symbol_name) {
+                continue;
+            }
+            auto const ordered =
+                left.splice_range_available &&
+                right.splice_range_available &&
+                left.splice_start_offset <= right.splice_start_offset;
+            auto const non_overlapping =
+                ordered &&
+                left.splice_end_offset <= right.splice_start_offset;
+            state.same_function_splice_ranges_ordered =
+                state.same_function_splice_ranges_ordered && ordered;
+            state.same_function_splice_ranges_non_overlapping =
+                state.same_function_splice_ranges_non_overlapping && non_overlapping;
+        }
     }
     return state;
 }
@@ -1009,6 +1060,10 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
         .all_predecessor_terminators_replaced = candidate_state.metadata_available,
         .all_candidate_functions_changed = candidate_state.metadata_available,
         .all_candidates_separate_from_module_ir = candidate_state.metadata_available,
+        .all_splice_ranges_available = candidate_state.metadata_available,
+        .same_function_splice_ranges_ordered = candidate_state.same_function_splice_ranges_ordered,
+        .same_function_splice_ranges_non_overlapping =
+            candidate_state.same_function_splice_ranges_non_overlapping,
         .all_verified = candidate_state.metadata_available,
         .verification_count = candidate_state.candidate_count,
     };
@@ -1035,6 +1090,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
             .verification_available = candidate.candidate_available,
             .candidate_function_changed = candidate.function_ir_changed,
             .predecessor_terminator_replaced = candidate.predecessor_terminator_replaced,
+            .splice_range_available = candidate.splice_range_available,
             .separate_from_module_ir = candidate.separate_from_module_ir,
             .original_cleanup_block_count =
                 occurrence_count(candidate.original_function_ir_text, insertion_label),
@@ -1046,6 +1102,8 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
                 original_predecessor_branch.empty() ? std::size_t {0} : std::size_t {1},
             .candidate_predecessor_cleanup_branch_count =
                 candidate_predecessor_branch.empty() ? std::size_t {0} : std::size_t {1},
+            .splice_start_offset = candidate.splice_start_offset,
+            .splice_end_offset = candidate.splice_end_offset,
         };
         verification.original_function_excludes_cleanup_cfg =
             verification.original_cleanup_block_count == 0;
@@ -1065,6 +1123,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
             verification.original_predecessor_terminator_found &&
             verification.candidate_routes_predecessor_to_cleanup &&
             verification.predecessor_terminator_replaced &&
+            verification.splice_range_available &&
             verification.candidate_function_changed &&
             verification.separate_from_module_ir;
 
@@ -1090,6 +1149,8 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
             state.all_candidate_functions_changed && verification.candidate_function_changed;
         state.all_candidates_separate_from_module_ir =
             state.all_candidates_separate_from_module_ir && verification.separate_from_module_ir;
+        state.all_splice_ranges_available =
+            state.all_splice_ranges_available && verification.splice_range_available;
         state.all_verified = state.all_verified && verification.verified;
         if (verification.verified) {
             ++state.verified_count;

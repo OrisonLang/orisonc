@@ -297,9 +297,12 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     bool separate_from_module_ir = true;
     bool function_ir_changed = false;
     bool predecessor_terminator_replaced = false;
+    bool splice_range_available = false;
     std::size_t original_function_line_count = 0;
     std::size_t candidate_function_line_count = 0;
     std::size_t inserted_cfg_line_count = 0;
+    std::size_t splice_start_offset = 0;
+    std::size_t splice_end_offset = 0;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
@@ -307,6 +310,9 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
     bool metadata_available = false;
     bool any_candidate_available = false;
     bool all_candidates_separate_from_module_ir = true;
+    bool all_splice_ranges_available = true;
+    bool same_function_splice_ranges_ordered = true;
+    bool same_function_splice_ranges_non_overlapping = true;
     bool any_function_ir_changed = false;
     std::size_t candidate_count = 0;
     std::size_t available_candidate_count = 0;
@@ -328,6 +334,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
     bool original_predecessor_terminator_found = false;
     bool candidate_function_changed = false;
     bool predecessor_terminator_replaced = false;
+    bool splice_range_available = false;
     bool separate_from_module_ir = false;
     bool verified = false;
     std::size_t original_cleanup_block_count = 0;
@@ -335,6 +342,8 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
     std::size_t candidate_continuation_block_count = 0;
     std::size_t original_predecessor_terminator_count = 0;
     std::size_t candidate_predecessor_cleanup_branch_count = 0;
+    std::size_t splice_start_offset = 0;
+    std::size_t splice_end_offset = 0;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
@@ -348,6 +357,9 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
     bool all_predecessor_terminators_replaced = false;
     bool all_candidate_functions_changed = false;
     bool all_candidates_separate_from_module_ir = false;
+    bool all_splice_ranges_available = false;
+    bool same_function_splice_ranges_ordered = false;
+    bool same_function_splice_ranges_non_overlapping = false;
     bool all_verified = false;
     std::size_t verification_count = 0;
     std::size_t verified_count = 0;

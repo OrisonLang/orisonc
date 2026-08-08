@@ -7708,6 +7708,18 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .all_splice_ranges_available
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_ordered
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_non_overlapping
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
             .any_function_ir_changed
     );
     assert(
@@ -7721,6 +7733,18 @@ auto main() -> int {
     assert(runtime_indexed_cleanup_function_candidate.separate_from_module_ir);
     assert(runtime_indexed_cleanup_function_candidate.function_ir_changed);
     assert(runtime_indexed_cleanup_function_candidate.predecessor_terminator_replaced);
+    assert(runtime_indexed_cleanup_function_candidate.splice_range_available);
+    assert(
+        runtime_indexed_cleanup_function_candidate.splice_start_offset <
+        runtime_indexed_cleanup_function_candidate.splice_end_offset
+    );
+    assert(
+        runtime_indexed_cleanup_function_candidate.original_function_ir_text.substr(
+            runtime_indexed_cleanup_function_candidate.splice_start_offset,
+            runtime_indexed_cleanup_function_candidate.splice_end_offset -
+                runtime_indexed_cleanup_function_candidate.splice_start_offset
+        ) == "  ret i32 0\n"
+    );
     assert(runtime_indexed_cleanup_function_candidate.original_function_line_count > 0);
     assert(
         runtime_indexed_cleanup_function_candidate.candidate_function_line_count ==
@@ -7799,6 +7823,18 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
             .all_candidates_separate_from_module_ir
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_splice_ranges_available
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .same_function_splice_ranges_ordered
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .same_function_splice_ranges_non_overlapping
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
@@ -8336,8 +8372,28 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .all_splice_ranges_available
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_ordered
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_non_overlapping
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
             .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
             .all_verified
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_splice_ranges_available
     );
     assert(
         runtime_indexed_multi_candidate_cleanup
@@ -8447,6 +8503,37 @@ auto main() -> int {
     assert(
         runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 2
     );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidate_count == 2
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .all_splice_ranges_available
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_ordered
+    );
+    assert(
+        !runtime_indexed_same_function_cleanup
+             .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+             .same_function_splice_ranges_non_overlapping
+    );
+    auto const& same_function_first_candidate =
+        runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidates[0];
+    auto const& same_function_second_candidate =
+        runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidates[1];
+    assert(same_function_first_candidate.function_symbol_name == same_function_second_candidate.function_symbol_name);
+    assert(same_function_first_candidate.splice_range_available);
+    assert(same_function_second_candidate.splice_range_available);
+    assert(same_function_first_candidate.splice_start_offset == same_function_second_candidate.splice_start_offset);
+    assert(same_function_first_candidate.splice_end_offset == same_function_second_candidate.splice_end_offset);
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
