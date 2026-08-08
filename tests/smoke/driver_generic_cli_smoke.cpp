@@ -162,9 +162,9 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 1 "
-        "candidate-functions blocked candidate-match true replacement-targets blocked module-changed false "
-        "separate-module true llvm-ran false llvm-passed false verified false verified-count 0 "
-        "llvm-verified-count 0 diagnostics 0"
+        "candidate-functions found candidate-match true replacement-targets unique module-changed true "
+        "separate-module true llvm-ran true llvm-passed false verified false verified-count 0 "
+        "llvm-verified-count 0 diagnostics 1"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "

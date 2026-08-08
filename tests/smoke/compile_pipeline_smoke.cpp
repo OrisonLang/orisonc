@@ -8141,7 +8141,7 @@ auto main() -> int {
             .dynamic_array_production_append_lowering_enabled = true,
         }
     );
-    assert(runtime_indexed_dynamic_array_cleanup.has_errors());
+    assert(!runtime_indexed_dynamic_array_cleanup.has_errors());
     assert(
         runtime_indexed_dynamic_array_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 1
     );
@@ -8197,19 +8197,29 @@ auto main() -> int {
             .verification_count == 1
     );
     assert(
-        !runtime_indexed_dynamic_array_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_candidate_functions_found
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_candidate_functions_found
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_replacement_targets_unique
+    );
+    assert(
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .any_llvm_verifier_ran
     );
     assert(
         !runtime_indexed_dynamic_array_cleanup
              .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_replacement_targets_unique
+             .all_llvm_verifier_passed
     );
     assert(
-        !runtime_indexed_dynamic_array_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .any_llvm_verifier_ran
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verifier_diagnostic_count == 1
     );
     assert(
         !runtime_indexed_dynamic_array_cleanup

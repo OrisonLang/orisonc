@@ -2559,7 +2559,21 @@ auto lower_dynamic_array_index_read(
     if (!element_source_type.has_value()) {
         return std::nullopt;
     }
-    if (is_owned_transfer_source_type(*element_source_type, context.lowering)) {
+    auto const index_expression_text = expression.arguments.front().text.empty()
+        ? std::string {"<computed>"}
+        : expression.arguments.front().text;
+    auto const runtime_index_constructor_move_recorded =
+        std::ranges::any_of(
+            session.state.ownership_transfers.runtime_indexed_partial_owners,
+            [&](RuntimeIndexedPartialOwner const& owner) {
+                return owner.constructor_move_enabled &&
+                    owner.owner_name == owner_name &&
+                    owner.index_expression_text == index_expression_text &&
+                    owner.element_source_type_name == *element_source_type;
+            }
+        );
+    if (is_owned_transfer_source_type(*element_source_type, context.lowering) &&
+        !runtime_index_constructor_move_recorded) {
         record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,

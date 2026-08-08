@@ -1297,8 +1297,9 @@ representation.
   renders the finite `__orison_dynamic_array_deallocate(ptr, i64, i64)` call while ordinary computed-index ownership
   moves remain rejected by default.
 - Runtime-index cleanup audit now requests the function-module rewrite verifier and reports compact verification gates.
-  Fixed-array candidates reach LLVM verification and pass; descriptor-backed `DynamicArray<T>` candidates currently
-  block before LLVM verification at candidate-function availability and replacement-target uniqueness.
+  Fixed-array candidates reach LLVM verification and pass; descriptor-backed `DynamicArray<T>` audit emission now
+  completes, produces function-module candidates, and reaches LLVM verification, where one remaining verifier
+  diagnostic blocks readiness.
 
 ## Follow-up work
 
@@ -1307,5 +1308,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Integrate the descriptor-backed runtime-index cleanup slice into the owning function CFG after the existing
-  function-integration gate is promoted from verified candidate to production mutation.
+- Make the descriptor-backed runtime-index cleanup function-module candidate LLVM-verifier clean, then promote the
+  function-integration gate from verified candidate to production mutation.
