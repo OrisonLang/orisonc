@@ -1111,6 +1111,7 @@ void preserve_function_emission_metadata(
         return;
     }
     if (result != nullptr) {
+        result->final_block_name = state.current_block;
         result->emitted_dynamic_array_cleanup_obligations =
             state.emitted_dynamic_array_cleanup_obligations;
         result->emitted_dynamic_array_cleanup_sequence_plans =

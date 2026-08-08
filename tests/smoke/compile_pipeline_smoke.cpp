@@ -8212,19 +8212,19 @@ auto main() -> int {
             .any_llvm_verifier_ran
     );
     assert(
-        !runtime_indexed_dynamic_array_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_llvm_verifier_passed
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_llvm_verifier_passed
     );
     assert(
         runtime_indexed_dynamic_array_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .llvm_verifier_diagnostic_count == 1
+            .llvm_verifier_diagnostic_count == 0
     );
     assert(
-        !runtime_indexed_dynamic_array_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_verified
+        runtime_indexed_dynamic_array_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_verified
     );
 
     auto parsed_drop_readiness_path =

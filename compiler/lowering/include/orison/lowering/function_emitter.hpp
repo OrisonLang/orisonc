@@ -23,6 +23,7 @@ namespace orison::lowering {
 
 struct FunctionEmissionResult {
     std::string function_symbol_name;
+    std::string final_block_name;
     std::string ir_text;
     std::vector<DynamicArrayCleanupObligation> emitted_dynamic_array_cleanup_obligations;
     std::vector<DynamicArrayCleanupSequencePlan> emitted_dynamic_array_cleanup_sequence_plans;

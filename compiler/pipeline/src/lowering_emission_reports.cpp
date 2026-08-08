@@ -185,6 +185,57 @@ auto predecessor_terminator_pattern(
     return terminator;
 }
 
+auto trailing_label_name(std::vector<std::string> const& lines) -> std::string {
+    for (auto line = lines.rbegin(); line != lines.rend(); ++line) {
+        if (line->empty() || line->back() != '\n') {
+            continue;
+        }
+        auto label = line->substr(0, line->size() - 1);
+        if (!label.empty() && label.back() == ':') {
+            label.pop_back();
+            return label;
+        }
+    }
+    return {};
+}
+
+auto retarget_phi_incoming_predecessor(
+    std::string const& function_ir,
+    std::string const& old_predecessor_name,
+    std::string const& new_predecessor_name
+) -> std::string {
+    if (old_predecessor_name.empty() || new_predecessor_name.empty()) {
+        return {};
+    }
+
+    auto rewritten = std::string {};
+    auto search_position = std::string::size_type {0};
+    auto const old_incoming = ", %" + old_predecessor_name + " ]";
+    auto const new_incoming = ", %" + new_predecessor_name + " ]";
+    while (search_position < function_ir.size()) {
+        auto const line_end = function_ir.find('\n', search_position);
+        auto const line =
+            line_end == std::string::npos
+                ? function_ir.substr(search_position)
+                : function_ir.substr(search_position, line_end - search_position);
+        auto next_line = line;
+        if (next_line.find(" = phi ") != std::string::npos) {
+            auto incoming_position = std::string::size_type {0};
+            while ((incoming_position = next_line.find(old_incoming, incoming_position)) != std::string::npos) {
+                next_line.replace(incoming_position, old_incoming.size(), new_incoming);
+                incoming_position += new_incoming.size();
+            }
+        }
+        rewritten += next_line;
+        if (line_end == std::string::npos) {
+            break;
+        }
+        rewritten += '\n';
+        search_position = line_end + 1;
+    }
+    return rewritten;
+}
+
 auto rewrite_predecessor_terminator_and_insert_cfg(
     std::string const& function_ir,
     std::string const& predecessor_block_name,
@@ -234,7 +285,16 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
     }
     candidate += replaced_branch;
     candidate += "}\n";
-    return candidate;
+    auto const cleanup_exit_block_name = trailing_label_name(candidate_cfg_lines);
+    auto phi_retargeted_candidate = retarget_phi_incoming_predecessor(
+        candidate,
+        predecessor_block_name,
+        cleanup_exit_block_name
+    );
+    if (phi_retargeted_candidate.empty()) {
+        return {};
+    }
+    return phi_retargeted_candidate;
 }
 
 auto replace_once(

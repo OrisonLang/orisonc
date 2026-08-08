@@ -320,6 +320,24 @@ auto runtime_indexed_cleanup_function_module_verification_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_function_module_verification_detail_report(
+    pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification const& verification
+) -> std::string {
+    auto diagnostic_text = verification.llvm_verifier_diagnostic_text;
+    for (auto& character : diagnostic_text) {
+        if (character == '\n' || character == '\r' || character == '\t') {
+            character = ' ';
+        }
+    }
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup function-module verification detail "
+           << "function " << verification.function_symbol_name
+           << " llvm-passed " << (verification.llvm_verifier_passed ? "true" : "false")
+           << " diagnostics " << verification.llvm_verifier_diagnostic_count
+           << " text " << diagnostic_text;
+    return report.str();
+}
+
 auto dynamic_array_cleanup_report(
     std::filesystem::path const& source_path,
     pipeline::CompilePipelineOptions const& options,
@@ -670,6 +688,12 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
         lines.push_back(runtime_indexed_cleanup_function_module_verification_report(
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
         ));
+        for (auto const& verification :
+             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state.verifications) {
+            if (!verification.llvm_verifier_passed && verification.llvm_verifier_diagnostic_count > 0) {
+                lines.push_back(runtime_indexed_cleanup_function_module_verification_detail_report(verification));
+            }
+        }
         lines.push_back(runtime_indexed_cleanup_module_ir_production_readiness_report(
             result.runtime_indexed_cleanup_module_ir_production_readiness_state
         ));
