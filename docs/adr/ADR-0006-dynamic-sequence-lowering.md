@@ -1304,6 +1304,9 @@ representation.
   single-candidate path. The mutation replaces module IR with the verified function-integrated candidate, reruns LLVM
   verification on the final module, and reports function integration plus production readiness only when that final
   verifier passes.
+- Multi-candidate runtime-index cleanup is now pinned as a verified-but-blocked mutation boundary. The
+  `runtime_indexed_cleanup_two_function_candidates.or` fixture produces two verifier-clean function-module candidates,
+  but mutation remains blocked until ordering and conflict detection are proven.
 
 ## Follow-up work
 
@@ -1312,5 +1315,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Extend runtime-index cleanup function-module mutation beyond the current single-candidate path only after ordering,
-  conflict detection, and multi-candidate replacement tests are in place.
+- Extend runtime-index cleanup function-module mutation beyond the current single-candidate path only after ordering and
+  conflict detection can compose multiple verified candidates into one final module rewrite.

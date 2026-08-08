@@ -182,6 +182,30 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup function-module verification metadata available verifications 2 "
+        "candidate-functions found candidate-match true replacement-targets unique module-changed true "
+        "separate-module true llvm-ran true llvm-passed true verified true verified-count 2 "
+        "llvm-verified-count 2 diagnostics 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup function-module mutation requested true candidate-verified true "
+        "single-candidate false mutation-applied false module-matches-candidate false llvm-passed false diagnostics 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+        "insertion-preview ready candidate ready candidate-verification blocked "
+        "module-mutation disabled function-integration blocked production blocked"
+    ) != std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2826,6 +2850,10 @@ auto main() -> int {
     assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_two_function_candidates.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,

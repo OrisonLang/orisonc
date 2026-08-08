@@ -8307,6 +8307,119 @@ auto main() -> int {
             .production_ready
     );
 
+    auto runtime_indexed_multi_candidate_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_cleanup_two_function_candidates.or";
+    auto runtime_indexed_multi_candidate_cleanup = pipeline.emit_llvm(
+        runtime_indexed_multi_candidate_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_multi_candidate_cleanup.has_errors());
+    assert(
+        runtime_indexed_multi_candidate_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .candidate_count == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .all_verified
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
+            .candidate_count == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
+            .available_candidate_count == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verification_count == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_verified
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verified_count == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verified_count == 2
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .llvm_verifier_diagnostic_count == 0
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_requested
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .candidate_verified
+    );
+    assert(
+        !runtime_indexed_multi_candidate_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+             .single_candidate_supported
+    );
+    assert(
+        runtime_indexed_multi_candidate_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .candidate_count == 2
+    );
+    assert(
+        !runtime_indexed_multi_candidate_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+             .mutation_applied
+    );
+    assert(
+        !runtime_indexed_multi_candidate_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+             .module_matches_candidate
+    );
+    assert(
+        !runtime_indexed_multi_candidate_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+             .llvm_verifier_passed
+    );
+    assert(
+        !runtime_indexed_multi_candidate_cleanup
+             .runtime_indexed_cleanup_module_ir_production_readiness_state
+             .function_integration_ready
+    );
+    assert(
+        !runtime_indexed_multi_candidate_cleanup
+             .runtime_indexed_cleanup_module_ir_production_readiness_state
+             .production_ready
+    );
+
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
     {
