@@ -128,7 +128,7 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         "length-load planned length-load-slice lowerable loop planned loop-block-slice lowerable "
         "skip planned skip-branch-slice lowerable live-drop planned live-drop-slice lowerable "
         "deallocate planned cleanup-tail-slice lowerable structured-ir-plan complete "
-        "comment-ir-preview-lines 5 gated-ir-slice-lines 19"
+        "comment-ir-preview-lines 5 gated-ir-slice-lines 20"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 1 "
@@ -288,6 +288,12 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     auto output = read_command_output(command);
     assert(output.find("define i32 @select_both(i1 %skip_first, i1 %skip_second)") != std::string::npos);
     assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %Inner.drop.values.drop.element.addr)") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %Inner.drop.values.cleanup.data") !=
+        std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %Inner.drop.values.addr") !=
+        std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("  br label %first_holder.items.runtime_cleanup.entry\n") != std::string::npos);
     assert(output.find("  br label %second_holder.items.runtime_cleanup.entry\n") != std::string::npos);

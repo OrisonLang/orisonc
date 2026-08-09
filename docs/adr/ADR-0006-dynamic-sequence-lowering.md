@@ -1382,6 +1382,9 @@ representation.
   after the destination value is lowered. This prevents later ordinary scope cleanup from freeing copied
   `DynamicArray<T>` descriptors twice, and CLI smoke now links and runs the DynamicArray-backed non-overlapping
   same-function fixture successfully.
+- Source-derived record Drop definitions now lower direct `DynamicArray<T>` fields by walking owned elements when a
+  finite source Drop exists, deallocating each descriptor, and finalizing the descriptor slot. Runtime-index fixed-array
+  cleanup also zeroes each source element after calling the element Drop so later ordinary cleanup remains idempotent.
 
 ## Follow-up work
 

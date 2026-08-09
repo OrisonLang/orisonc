@@ -6984,7 +6984,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
-            .gated_ir_slice_line_count == 19
+            .gated_ir_slice_line_count == 20
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state
@@ -7021,7 +7021,7 @@ auto main() -> int {
     assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.render_metadata_available);
     assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.plan_count == 1);
     assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.rendered_plan_count == 1);
-    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.rendered_ir_line_count == 19);
+    assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.rendered_ir_line_count == 20);
     assert(runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state.all_structured_plans_complete);
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_ir_render_state
@@ -7042,7 +7042,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_artifact_state
-            .rendered_ir_line_count == 19
+            .rendered_ir_line_count == 20
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_artifact_state.rendered_ir_lines ==
@@ -7127,7 +7127,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
-            .cleanup_slice_line_count == 19
+            .cleanup_slice_line_count == 20
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
@@ -7135,7 +7135,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
-            .candidate_cfg_line_count == 21
+            .candidate_cfg_line_count == 22
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
@@ -7171,7 +7171,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
-            .candidate_cfg_line_count == 21
+            .candidate_cfg_line_count == 22
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state.plans.front()
@@ -7307,7 +7307,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .inserted_cfg_line_count == 20
+            .inserted_cfg_line_count == 21
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
@@ -7480,13 +7480,13 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
-            .inserted_ir_line_count == 19
+            .inserted_ir_line_count == 20
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
             .projected_module_line_count ==
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_insertion_preview_state
-            .original_module_line_count + 19
+            .original_module_line_count + 20
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_candidate_state
@@ -7504,7 +7504,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_candidate_state
-            .inserted_ir_line_count == 19
+            .inserted_ir_line_count == 20
     );
     assert(
         runtime_indexed_cleanup_insertion_gate_on.runtime_indexed_cleanup_module_ir_candidate_state
@@ -7732,7 +7732,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_plan_state
-            .candidate_cfg_line_count == 21
+            .candidate_cfg_line_count == 22
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_cfg_rewrite_verification_state
@@ -7812,7 +7812,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .inserted_cfg_line_count == 21
+            .inserted_cfg_line_count == 22
     );
     auto const& runtime_indexed_cleanup_function_candidate =
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
@@ -7836,7 +7836,7 @@ auto main() -> int {
     assert(runtime_indexed_cleanup_function_candidate.original_function_line_count > 0);
     assert(
         runtime_indexed_cleanup_function_candidate.candidate_function_line_count ==
-        runtime_indexed_cleanup_function_candidate.original_function_line_count + 21
+        runtime_indexed_cleanup_function_candidate.original_function_line_count + 22
     );
     assert(
         runtime_indexed_cleanup_function_candidate.candidate_function_ir_text !=
@@ -8009,7 +8009,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_function_module_candidate.candidate_module_line_count ==
-        runtime_indexed_cleanup_function_module_candidate.original_module_line_count + 21
+        runtime_indexed_cleanup_function_module_candidate.original_module_line_count + 22
     );
     assert(
         occurrence_count(
@@ -8316,23 +8316,28 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .gated_ir_slice_lines[15] ==
-        "holder.items.runtime_cleanup.continue:\n"
+            .gated_ir_slice_lines[14] ==
+        "  store %record.Inner zeroinitializer, ptr %holder.items.runtime_cleanup.element.addr\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[16] ==
+        "holder.items.runtime_cleanup.continue:\n"
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
+            .gated_ir_slice_lines[17] ==
         "  %holder.items.runtime_cleanup.next_index = add i64 "
         "%holder.items.runtime_cleanup.index, 1\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .gated_ir_slice_lines[17] ==
+            .gated_ir_slice_lines[18] ==
         "  br label %holder.items.runtime_cleanup.condition\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .gated_ir_slice_lines[18] ==
+            .gated_ir_slice_lines[19] ==
         "holder.items.runtime_cleanup.exit:\n"
     );
     auto runtime_indexed_dynamic_array_cleanup_path =

@@ -437,6 +437,14 @@ auto render_runtime_indexed_cleanup_ir_plan(
                 plan.owner_llvm_type_name + ", ptr " + plan.owner_address_name +
                 ", i64 0, i64 " + plan.cleanup_index_name + "\n",
         "  call void @" + plan.drop_callee_name + "(ptr " + plan.element_address_name + ")\n",
+    });
+    if (!plan.descriptor_owner_ready) {
+        lines.push_back(
+            "  store " + plan.element_llvm_type_name + " zeroinitializer, ptr " +
+            plan.element_address_name + "\n"
+        );
+    }
+    lines.insert(lines.end(), {
         "  br label %" + plan.continue_block_name + "\n",
         plan.continue_block_name + ":\n",
         "  " + plan.next_index_name + " = add i64 " + plan.cleanup_index_name + ", 1\n",

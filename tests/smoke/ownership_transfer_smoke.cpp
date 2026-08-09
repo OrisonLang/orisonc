@@ -268,7 +268,7 @@ int main() {
     assert(enabled_emission_plan.ir_plan.continue_block_name == "holder.items.runtime_cleanup.continue");
     assert(enabled_emission_plan.ir_plan.exit_block_name == "holder.items.runtime_cleanup.exit");
     assert(enabled_emission_plan.ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate");
-    assert(enabled_emission_plan.gated_ir_slice_line_count == 19);
+    assert(enabled_emission_plan.gated_ir_slice_line_count == 20);
     assert(
         orison::lowering::render_runtime_indexed_cleanup_ir_plan(
             enabled_emission_plan.ir_plan
@@ -329,23 +329,27 @@ int main() {
     );
     assert(
         enabled_emission_plan.gated_ir_slice_lines[14] ==
-        "  br label %holder.items.runtime_cleanup.continue\n"
+        "  store %record.Inner zeroinitializer, ptr %holder.items.runtime_cleanup.element.addr\n"
     );
     assert(
         enabled_emission_plan.gated_ir_slice_lines[15] ==
-        "holder.items.runtime_cleanup.continue:\n"
+        "  br label %holder.items.runtime_cleanup.continue\n"
     );
     assert(
         enabled_emission_plan.gated_ir_slice_lines[16] ==
+        "holder.items.runtime_cleanup.continue:\n"
+    );
+    assert(
+        enabled_emission_plan.gated_ir_slice_lines[17] ==
         "  %holder.items.runtime_cleanup.next_index = add i64 "
         "%holder.items.runtime_cleanup.index, 1\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[17] ==
+        enabled_emission_plan.gated_ir_slice_lines[18] ==
         "  br label %holder.items.runtime_cleanup.condition\n"
     );
     assert(
-        enabled_emission_plan.gated_ir_slice_lines[18] ==
+        enabled_emission_plan.gated_ir_slice_lines[19] ==
         "holder.items.runtime_cleanup.exit:\n"
     );
     auto descriptor_owner = orison::lowering::RuntimeIndexedPartialOwner {

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -200,8 +201,129 @@ auto has_runtime_indexed_cleanup_source_drop_definition(
         implementation.body.finite;
 }
 
+auto source_drop_element_symbol(
+    std::string_view source_type_name,
+    std::vector<semantics::DropImplementation> const& implementations
+) -> std::optional<std::string> {
+    if (is_scalar_or_nonowning_source_type(source_type_name)) {
+        return std::nullopt;
+    }
+    auto const symbol_name = semantics::drop_abi_symbol_name(source_type_name);
+    auto match = std::ranges::find_if(
+        implementations,
+        [&](semantics::DropImplementation const& implementation) {
+            return implementation.origin == semantics::DropImplementationOrigin::source_derived &&
+                implementation.proven &&
+                implementation.body.finite &&
+                implementation.source_type_name == source_type_name &&
+                implementation.abi_symbol_name == symbol_name;
+        }
+    );
+    if (match == implementations.end()) {
+        return std::nullopt;
+    }
+    return symbol_name;
+}
+
+auto emit_dynamic_array_drop_field_sequence(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view field_pointer_name,
+    std::string_view name_prefix,
+    std::optional<std::string> const& element_drop_symbol
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    auto label_prefix = prefix;
+    if (!label_prefix.empty() && label_prefix.front() == '%') {
+        label_prefix.erase(label_prefix.begin());
+    }
+    output << "  " << prefix << ".descriptor = load " << dynamic_array_descriptor_llvm_type()
+           << ", ptr " << field_pointer_name << "\n";
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.capacity",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::capacity
+    );
+    if (element_drop_symbol.has_value()) {
+        output << "  br label %" << label_prefix << ".cleanup.entry\n";
+        output << label_prefix << ".cleanup.entry:\n";
+        output << "  br label %" << label_prefix << ".drop.walk\n";
+        output << label_prefix << ".drop.walk:\n";
+        output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix
+               << ".cleanup.entry ], [ " << prefix << ".drop.next, %" << label_prefix
+               << ".drop.body ]\n";
+        output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix
+               << ".drop.index, " << prefix << ".cleanup.length\n";
+        output << "  br i1 " << prefix << ".drop.more, label %" << label_prefix
+               << ".drop.body, label %" << label_prefix << ".drop.done\n";
+        output << label_prefix << ".drop.body:\n";
+        output << emit_dynamic_array_element_address(
+            plan,
+            prefix + ".drop.element.addr",
+            prefix + ".cleanup.data",
+            prefix + ".drop.index"
+        );
+        output << "  call void @" << *element_drop_symbol << "(ptr "
+               << prefix << ".drop.element.addr)\n";
+        output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+        output << "  br label %" << label_prefix << ".drop.walk\n";
+        output << label_prefix << ".drop.done:\n";
+    }
+    output << "  call void @__orison_dynamic_array_deallocate(ptr " << prefix
+           << ".cleanup.data, i64 " << plan.element_size_bytes << ", i64 "
+           << prefix << ".cleanup.capacity)\n";
+    output << emit_dynamic_array_descriptor_finalization(field_pointer_name);
+    return output.str();
+}
+
+auto emit_record_source_drop_body(
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::vector<semantics::DropImplementation> const& implementations
+) -> std::string {
+    auto layout = context.records.find(std::string {source_type_name});
+    if (layout == context.records.end()) {
+        return "  ret void\n";
+    }
+
+    auto output = std::ostringstream {};
+    for (auto const& field : layout->second.fields) {
+        auto plan = plan_dynamic_array_descriptor_cleanup(
+            std::string {source_type_name} + "." + field.name,
+            field.source_type_name,
+            context
+        );
+        if (!plan.has_value()) {
+            continue;
+        }
+        auto field_pointer_name = "%" + std::string {source_type_name} + ".drop." + field.name + ".addr";
+        auto prefix = "%" + std::string {source_type_name} + ".drop." + field.name;
+        output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
+               << ", ptr %value, i32 0, i32 " << field.index << "\n";
+        output << emit_dynamic_array_drop_field_sequence(
+            *plan,
+            field_pointer_name,
+            prefix,
+            source_drop_element_symbol(plan->element_source_type_name, implementations)
+        );
+    }
+    output << "  ret void\n";
+    return output.str();
+}
+
 auto emit_source_drop_definitions(
     syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
     std::vector<semantics::DropLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
@@ -219,7 +341,11 @@ auto emit_source_drop_definitions(
         }
         output << "define void @" << implementation.abi_symbol_name << "(ptr %value) {\n";
         output << "entry:\n";
-        output << "  ret void\n";
+        output << emit_record_source_drop_body(
+            implementation.source_type_name,
+            context,
+            implementations
+        );
         output << "}\n\n";
         emitted_symbols.push_back(implementation.abi_symbol_name);
     }
@@ -3102,7 +3228,7 @@ auto emit_module(
         result.dynamic_array_runtime_operations,
         source_defined_drop_symbols
     );
-    output << emit_source_drop_definitions(module, result.semantic_drop_lowering_authorizations, options);
+    output << emit_source_drop_definitions(module, context, result.semantic_drop_lowering_authorizations, options);
     for (auto const& function : module.functions) {
         if (is_uninstantiated_generic_function(function)) {
             continue;
