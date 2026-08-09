@@ -468,6 +468,15 @@ enum class RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind {
     FunctionSpliceConflict,
 };
 
+struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind =
+        RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
+    std::string stage_name;
+    std::string function_symbol_name;
+    bool source_available = false;
+    std::size_t source_line = 0;
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -479,6 +488,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool production_ready = false;
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind diagnostic_blocker_kind =
         RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
+    std::vector<RuntimeIndexedCleanupModuleIrProductionReadinessBlocker> blockers;
     std::size_t function_splice_conflict_count = 0;
     std::string diagnostic_blocker_stage_name;
     std::string diagnostic_function_symbol_name;

@@ -1350,6 +1350,8 @@ representation.
 - Runtime-index cleanup production-readiness blockers now carry structured diagnostic provenance: blocker stage name,
   optional function symbol, and optional source line when module rewrite verification can correlate a source candidate.
   Reports include function/source fields only when populated.
+- Runtime-index cleanup production-readiness now records an ordered blocker list while preserving the existing
+  first-blocker summary fields. Shared reports include a stable `blocker-count` before the first blocker kind.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

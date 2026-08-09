@@ -1638,6 +1638,7 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
            << " splice-conflicts " << state.function_splice_conflict_count
            << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
            << " production " << (state.production_ready ? "ready" : "blocked")
+           << " blocker-count " << state.blockers.size()
            << " blocker-kind "
            << runtime_indexed_cleanup_production_readiness_blocker_kind_name(state.diagnostic_blocker_kind);
     if (!state.diagnostic_function_symbol_name.empty()) {
@@ -1655,21 +1656,48 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
 
 namespace {
 
-auto set_runtime_indexed_cleanup_readiness_blocker(
+auto runtime_indexed_cleanup_readiness_blocker(
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state
+) -> RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+    auto blocker = RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+        .kind = blocker_kind,
+        .stage_name =
+            std::string(runtime_indexed_cleanup_production_readiness_blocker_stage_name(blocker_kind)),
+    };
+    if (!function_verification_state.verifications.empty()) {
+        auto const& verification = function_verification_state.verifications.front();
+        blocker.function_symbol_name = verification.function_symbol_name;
+        blocker.source_available = verification.source_line != 0;
+        blocker.source_line = verification.source_line;
+    }
+    return blocker;
+}
+
+auto append_runtime_indexed_cleanup_readiness_blocker(
     RuntimeIndexedCleanupModuleIrProductionReadinessState& readiness_state,
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state
 ) -> void {
-    readiness_state.diagnostic_blocker_kind = blocker_kind;
-    readiness_state.diagnostic_blocker_stage_name =
-        std::string(runtime_indexed_cleanup_production_readiness_blocker_stage_name(blocker_kind));
-    if (readiness_state.diagnostic_function_symbol_name.empty() &&
-        !function_verification_state.verifications.empty()) {
-        auto const& verification = function_verification_state.verifications.front();
-        readiness_state.diagnostic_function_symbol_name = verification.function_symbol_name;
-        readiness_state.diagnostic_source_line = verification.source_line;
-        readiness_state.diagnostic_source_available = verification.source_line != 0;
+    readiness_state.blockers.push_back(
+        runtime_indexed_cleanup_readiness_blocker(blocker_kind, function_verification_state)
+    );
+}
+
+auto apply_runtime_indexed_cleanup_first_readiness_blocker(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState& readiness_state
+) -> void {
+    if (readiness_state.blockers.empty()) {
+        return;
     }
+    auto const& blocker = readiness_state.blockers.front();
+    readiness_state.diagnostic_blocker_kind = blocker.kind;
+    readiness_state.diagnostic_blocker_stage_name = blocker.stage_name;
+    if (readiness_state.diagnostic_function_symbol_name.empty()) {
+        readiness_state.diagnostic_function_symbol_name = blocker.function_symbol_name;
+    }
+    readiness_state.diagnostic_source_available = blocker.source_available;
+    readiness_state.diagnostic_source_line = blocker.source_line;
 }
 
 auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
@@ -1722,48 +1750,55 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state.diagnostic_left_source_line = conflict.left_source_line;
             readiness_state.diagnostic_right_source_line = conflict.right_source_line;
         }
-        set_runtime_indexed_cleanup_readiness_blocker(
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
             function_verification_state
         );
-    } else if (!readiness_state.insertion_gate_ready) {
-        set_runtime_indexed_cleanup_readiness_blocker(
+    }
+    if (!readiness_state.insertion_gate_ready) {
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate,
             function_verification_state
         );
-    } else if (!readiness_state.insertion_preview_ready) {
-        set_runtime_indexed_cleanup_readiness_blocker(
+    }
+    if (!readiness_state.insertion_preview_ready) {
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview,
             function_verification_state
         );
-    } else if (!readiness_state.candidate_ready) {
-        set_runtime_indexed_cleanup_readiness_blocker(
+    }
+    if (!readiness_state.candidate_ready) {
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate,
             function_verification_state
         );
-    } else if (!readiness_state.candidate_verified) {
-        set_runtime_indexed_cleanup_readiness_blocker(
+    }
+    if (!readiness_state.candidate_verified) {
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification,
             function_verification_state
         );
-    } else if (!readiness_state.module_mutation_enabled) {
-        set_runtime_indexed_cleanup_readiness_blocker(
+    }
+    if (!readiness_state.module_mutation_enabled) {
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation,
             function_verification_state
         );
-    } else if (!readiness_state.function_integration_ready) {
-        set_runtime_indexed_cleanup_readiness_blocker(
+    }
+    if (!readiness_state.function_integration_ready) {
+        append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration,
             function_verification_state
         );
     }
+    apply_runtime_indexed_cleanup_first_readiness_blocker(readiness_state);
     readiness_state.diagnostic_text =
         format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness_state);
     return readiness_state;
