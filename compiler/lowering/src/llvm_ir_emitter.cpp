@@ -190,16 +190,28 @@ auto has_authorized_source_drop_definition(
     );
 }
 
+auto has_runtime_indexed_cleanup_source_drop_definition(
+    semantics::DropImplementation const& implementation,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.enable_runtime_indexed_cleanup_emission &&
+        implementation.origin == semantics::DropImplementationOrigin::source_derived &&
+        implementation.proven &&
+        implementation.body.finite;
+}
+
 auto emit_source_drop_definitions(
     syntax::ModuleSyntax const& module,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    LlvmIrEmissionOptions const& options
 ) -> std::string {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
     auto emitted_symbols = std::vector<std::string> {};
     auto output = std::ostringstream {};
     for (auto const& implementation : implementations) {
-        if (!has_authorized_source_drop_definition(implementation, authorizations)) {
+        if (!has_authorized_source_drop_definition(implementation, authorizations) &&
+            !has_runtime_indexed_cleanup_source_drop_definition(implementation, options)) {
             continue;
         }
         if (std::ranges::find(emitted_symbols, implementation.abi_symbol_name) != emitted_symbols.end()) {
@@ -216,13 +228,15 @@ auto emit_source_drop_definitions(
 
 auto collect_source_drop_definition_symbols(
     syntax::ModuleSyntax const& module,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
     auto symbols = std::vector<std::string> {};
     for (auto const& implementation : implementations) {
-        if (!has_authorized_source_drop_definition(implementation, authorizations)) {
+        if (!has_authorized_source_drop_definition(implementation, authorizations) &&
+            !has_runtime_indexed_cleanup_source_drop_definition(implementation, options)) {
             continue;
         }
         if (std::ranges::find(symbols, implementation.abi_symbol_name) != symbols.end()) {
@@ -3066,7 +3080,7 @@ auto emit_module(
         return result;
     }
     auto source_defined_drop_symbols =
-        collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations);
+        collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations, options);
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
     if (!validate_prelude_module_symbols(
             module,
@@ -3088,7 +3102,7 @@ auto emit_module(
         result.dynamic_array_runtime_operations,
         source_defined_drop_symbols
     );
-    output << emit_source_drop_definitions(module, result.semantic_drop_lowering_authorizations);
+    output << emit_source_drop_definitions(module, result.semantic_drop_lowering_authorizations, options);
     for (auto const& function : module.functions) {
         if (is_uninstantiated_generic_function(function)) {
             continue;

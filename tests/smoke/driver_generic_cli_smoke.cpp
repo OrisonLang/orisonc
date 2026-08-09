@@ -1,3 +1,6 @@
+#include "orison/link/host_linker.hpp"
+#include "orison/lowering/llvm_object_emitter.hpp"
+
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -284,6 +287,7 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("define i32 @select_both(i1 %skip_first, i1 %skip_second)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("  br label %first_holder.items.runtime_cleanup.entry\n") != std::string::npos);
     assert(output.find("  br label %second_holder.items.runtime_cleanup.entry\n") != std::string::npos);
@@ -296,6 +300,21 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
         "  call void @__orison_drop.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
+void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto object = orison::lowering::LlvmObjectEmitter {}.emit(output);
+    assert(!object.has_errors());
+
+    auto link = orison::link::HostLinker {}.link(object.object_bytes, output_path, std::vector<std::string> {});
+    assert(!link.has_errors());
+    assert(std::filesystem::file_size(output_path) > 0);
 }
 
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
@@ -3020,6 +3039,11 @@ auto main() -> int {
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
+    );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or",
+        smoke_temp_root / "runtime_indexed_cleanup_non_overlapping"
     );
     assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
         executable,

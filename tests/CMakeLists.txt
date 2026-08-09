@@ -250,6 +250,12 @@ add_executable(orison_driver_generic_cli_smoke
     smoke/driver_generic_cli_smoke.cpp
 )
 
+target_link_libraries(orison_driver_generic_cli_smoke
+    PRIVATE
+        orison_link
+        orison_lowering
+)
+
 target_compile_features(orison_driver_generic_cli_smoke PRIVATE cxx_std_23)
 
 add_test(

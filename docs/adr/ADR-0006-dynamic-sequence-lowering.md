@@ -1366,6 +1366,11 @@ representation.
 - The driver now has a guarded `--runtime-indexed-cleanup-emit-llvm` command that emits the production-ready mutated
   LLVM IR on stdout. Blocked inputs return nonzero and report runtime-index cleanup production-readiness diagnostics on
   stderr without emitting partial LLVM IR.
+- CLI smoke coverage now feeds `--runtime-indexed-cleanup-emit-llvm` output into the LLVM object emitter and host
+  linker, proving the production-ready non-overlapping same-function cleanup artifact reaches a linked executable.
+- Runtime-index cleanup emission now defines proven finite source-derived drop functions needed by generated cleanup
+  loops under the runtime-index cleanup gate, preventing linked artifacts from carrying unresolved element-drop
+  symbols such as `__orison_drop.Inner`.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
