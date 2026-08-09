@@ -1355,6 +1355,8 @@ representation.
 - Runtime-index cleanup production-readiness now has a compact per-blocker detail formatter for audit consumers. The
   full runtime-index cleanup audit appends one line per blocker with index, kind, stage, function, and source line when
   available, while the test-only readiness command stays summary-only.
+- Runtime-index cleanup full-audit CLI coverage now pins the production-ready zero-blocker path: non-overlapping
+  same-function cleanup candidates report `blocker-count 0 blocker-kind none` and emit no per-blocker detail lines.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
