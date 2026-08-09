@@ -1370,8 +1370,7 @@ representation.
   linker, proving the production-ready non-overlapping same-function cleanup artifact reaches a linked executable.
 - CLI smoke coverage now executes a scalar non-overlapping same-function runtime-index cleanup artifact and asserts a
   successful process exit, covering guarded LLVM emission, object emission, host linking, and host execution
-  end-to-end without dynamic-array allocator side effects. The DynamicArray-backed same-function fixture remains
-  link-covered; running it currently exposes a double-free blocker that needs ownership cleanup follow-up.
+  end-to-end without dynamic-array allocator side effects.
 - Runtime-index cleanup emission now defines proven finite source-derived drop functions needed by generated cleanup
   loops under the runtime-index cleanup gate, preventing linked artifacts from carrying unresolved element-drop
   symbols such as `__orison_drop.Inner`.
@@ -1379,6 +1378,10 @@ representation.
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
   with the ready production-readiness line.
+- Runtime-index constructor moves from fixed-array owners now finalize the moved source slot with `zeroinitializer`
+  after the destination value is lowered. This prevents later ordinary scope cleanup from freeing copied
+  `DynamicArray<T>` descriptors twice, and CLI smoke now links and runs the DynamicArray-backed non-overlapping
+  same-function fixture successfully.
 
 ## Follow-up work
 

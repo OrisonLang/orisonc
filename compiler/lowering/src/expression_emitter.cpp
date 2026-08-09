@@ -39,6 +39,16 @@ namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
+auto lowered_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
+) -> std::optional<LoweredExpression>;
+
 auto moved_owned_dynamic_array_binding_name(
     std::string_view owner_name,
     FunctionLoweringState const& state
@@ -608,6 +618,121 @@ auto runtime_indexed_constructor_move_enabled(
             session,
             true
         );
+}
+
+auto has_recorded_runtime_indexed_constructor_move(
+    RuntimeIndexedPartialOwner const& candidate,
+    FunctionLoweringState const& state
+) -> bool {
+    return std::ranges::any_of(
+        state.ownership_transfers.runtime_indexed_partial_owners,
+        [&](RuntimeIndexedPartialOwner const& recorded) {
+            return recorded.constructor_move_enabled &&
+                recorded.owner_name == candidate.owner_name &&
+                recorded.index_expression_text == candidate.index_expression_text &&
+                recorded.element_source_type_name == candidate.element_source_type_name &&
+                recorded.moved_source_type_name == candidate.moved_source_type_name;
+        }
+    );
+}
+
+auto emit_runtime_indexed_constructor_source_slot_finalization(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    std::string_view expected_llvm_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    if (!context.options.enable_runtime_indexed_cleanup_emission ||
+        !context.options.enable_runtime_indexed_constructor_move) {
+        return true;
+    }
+
+    auto candidate = runtime_indexed_partial_owner_for_constructor_argument(
+        argument,
+        expected_source_type,
+        context.lowering,
+        session.state
+    );
+    if (!candidate.has_value() ||
+        !has_recorded_runtime_indexed_constructor_move(*candidate, session.state)) {
+        return true;
+    }
+    if (candidate->static_length_value.empty()) {
+        return true;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return false;
+    }
+
+    auto storage = named_aggregate_storage_for_name(path->base_expression->text, session.state);
+    if (!storage.has_value() || !storage->source_type_name.has_value()) {
+        return false;
+    }
+
+    auto cursor = initialize_aggregate_path_cursor(
+        std::move(storage->storage),
+        std::move(*storage->source_type_name),
+        context.lowering
+    );
+    if (!cursor.has_value()) {
+        return false;
+    }
+
+    for (auto const& step : path->steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto result = advance_aggregate_path_member_with_temporary(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                session.state.next_temporary_index,
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                return false;
+            }
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return false;
+        }
+        auto lowered_index = lowered_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output,
+            std::nullopt
+        );
+        if (!lowered_index.has_value()) {
+            return false;
+        }
+
+        auto result = advance_aggregate_path_index_with_temporary(
+            *cursor,
+            lowered_index->value,
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            return false;
+        }
+    }
+
+    if (cursor->source_type_name != expected_source_type ||
+        cursor->llvm_type_name != expected_llvm_type) {
+        return false;
+    }
+
+    output << "  store " << expected_llvm_type << " zeroinitializer, ptr "
+           << cursor->pointer << "\n";
+    return true;
 }
 
 auto unsupported_indexed_constructor_ownership_detail(
@@ -1594,6 +1719,21 @@ auto lower_record_constructor_expression(
             context,
             session
         );
+        if (!emit_runtime_indexed_constructor_source_slot_finalization(
+                expression.arguments[index],
+                field.source_type_name,
+                field.llvm_type,
+                context,
+                session,
+                output
+            )) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "runtime-index constructor source slot finalization"
+            );
+            return std::nullopt;
+        }
     }
 
     return LoweredExpression {
@@ -1828,6 +1968,21 @@ auto lower_choice_constructor_expression(
                 context,
                 session
             );
+            if (!emit_runtime_indexed_constructor_source_slot_finalization(
+                    arguments->front(),
+                    payload.source_type_name,
+                    payload.llvm_type,
+                    context,
+                    session,
+                    output
+                )) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    "runtime-index constructor source slot finalization"
+                );
+                return std::nullopt;
+            }
             payload_value = lowered_payload->value;
         } else {
             payload_value = "undef";
@@ -1878,6 +2033,21 @@ auto lower_choice_constructor_expression(
                     context,
                     session
                 );
+                if (!emit_runtime_indexed_constructor_source_slot_finalization(
+                        (*arguments)[index],
+                        payload.source_type_name,
+                        payload.llvm_type,
+                        context,
+                        session,
+                        output
+                    )) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::unsupported_expression,
+                        "runtime-index constructor source slot finalization"
+                    );
+                    return std::nullopt;
+                }
                 auto payload_part_name = next_llvm_temporary_name(session.state.next_temporary_index);
                 output << "  " << payload_part_name << " = insertvalue " << variant->lowered_payload_type
                        << " " << payload_value << ", " << payload.llvm_type << " "

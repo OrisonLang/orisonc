@@ -9045,6 +9045,12 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(
+        occurrence_count(
+            runtime_indexed_same_function_non_overlap_cleanup.ir_text,
+            "store %record.Inner zeroinitializer"
+        ) >= 2
+    );
+    assert(
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .function_integration_ready

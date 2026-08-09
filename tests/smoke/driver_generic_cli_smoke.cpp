@@ -3051,7 +3051,7 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
     );
-    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or",
         smoke_temp_root / "runtime_indexed_cleanup_non_overlapping"
