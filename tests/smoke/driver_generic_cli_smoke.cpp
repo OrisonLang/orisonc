@@ -244,6 +244,24 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --test-only-runtime-indexed-cleanup-production-readiness " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+        "insertion-preview ready candidate ready candidate-verification verified "
+        "module-mutation enabled function-integration blocked splice-conflicts 1 "
+        "splice-conflict-check blocked production blocked diagnostic runtime-index cleanup blocked: "
+        "overlapping same-function splice ranges left-line 46 right-line 51"
+    ) != std::string::npos);
+    assert(output.find("runtime-index cleanup audit entries") == std::string::npos);
+    assert(output.find("runtime-index cleanup function-module splice-conflict") == std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2894,6 +2912,10 @@ auto main() -> int {
         fixtures / "runtime_indexed_cleanup_two_function_candidates.or"
     );
     assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
+    );
+    assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
     );
