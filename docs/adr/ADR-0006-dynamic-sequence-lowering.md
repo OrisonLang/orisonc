@@ -1363,6 +1363,9 @@ representation.
 - Runtime-index cleanup pipeline coverage now verifies final module text for non-overlapping same-function cleanup
   candidates: both owner-specific cleanup entry branches are present, both cleanup loop condition blocks appear once,
   and both emitted drop calls target `Inner` cleanup element addresses.
+- The driver now has a guarded `--runtime-indexed-cleanup-emit-llvm` command that emits the production-ready mutated
+  LLVM IR on stdout. Blocked inputs return nonzero and report runtime-index cleanup production-readiness diagnostics on
+  stderr without emitting partial LLVM IR.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

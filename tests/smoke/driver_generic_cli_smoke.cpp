@@ -277,6 +277,44 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i32 @select_both(i1 %skip_first, i1 %skip_second)") != std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
+    assert(output.find("  br label %first_holder.items.runtime_cleanup.entry\n") != std::string::npos);
+    assert(output.find("  br label %second_holder.items.runtime_cleanup.entry\n") != std::string::npos);
+    assert(output.find("first_holder.items.runtime_cleanup.condition:\n") != std::string::npos);
+    assert(output.find("second_holder.items.runtime_cleanup.condition:\n") != std::string::npos);
+    assert(output.find(
+        "  call void @__orison_drop.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
+    ) != std::string::npos);
+    assert(output.find(
+        "  call void @__orison_drop.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
+    ) != std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
+void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+        "insertion-preview ready candidate ready candidate-verification verified "
+        "module-mutation enabled function-integration blocked splice-conflicts 1 "
+        "splice-conflict-check blocked production blocked blocker-count 2 blocker-kind function-splice-conflict "
+        "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
+        "overlapping same-function splice ranges left-line 46 right-line 51"
+    ) != std::string::npos);
+    assert(output.find("define i32 @select_both") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2971,7 +3009,15 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
     );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
+    );
     assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
+    );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
     );
