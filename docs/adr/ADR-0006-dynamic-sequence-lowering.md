@@ -1368,6 +1368,10 @@ representation.
   stderr without emitting partial LLVM IR.
 - CLI smoke coverage now feeds `--runtime-indexed-cleanup-emit-llvm` output into the LLVM object emitter and host
   linker, proving the production-ready non-overlapping same-function cleanup artifact reaches a linked executable.
+- CLI smoke coverage now executes a scalar non-overlapping same-function runtime-index cleanup artifact and asserts a
+  successful process exit, covering guarded LLVM emission, object emission, host linking, and host execution
+  end-to-end without dynamic-array allocator side effects. The DynamicArray-backed same-function fixture remains
+  link-covered; running it currently exposes a double-free blocker that needs ownership cleanup follow-up.
 - Runtime-index cleanup emission now defines proven finite source-derived drop functions needed by generated cleanup
   loops under the runtime-index cleanup gate, preventing linked artifacts from carrying unresolved element-drop
   symbols such as `__orison_drop.Inner`.

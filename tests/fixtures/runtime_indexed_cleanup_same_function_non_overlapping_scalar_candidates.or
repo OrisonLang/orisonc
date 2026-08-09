@@ -1,0 +1,46 @@
+package tests.fixtures.runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates
+
+record Inner
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Holder
+    items: Array<Inner, 2>
+
+implements Drop for Holder
+    function drop(this: exclusive This) -> Unit
+        return
+
+record SelectedInner
+    item: Inner
+
+function make_inner(seed: UInt32) -> Inner
+    Inner(seed)
+
+function select_both(skip_first: Bool, skip_second: Bool) -> UInt32
+    if skip_first
+        return 1 as UInt32
+
+    var first_items: Array<Inner, 2> = [make_inner(1 as UInt32), make_inner(20 as UInt32)]
+    var first_holder: Holder = Holder(first_items)
+    let first_index: UInt64 = 0 as UInt64
+    var first_selected: SelectedInner = SelectedInner(first_holder.items[first_index])
+
+    if skip_second
+        return 2 as UInt32
+
+    var second_items: Array<Inner, 2> = [make_inner(100 as UInt32), make_inner(200 as UInt32)]
+    var second_holder: Holder = Holder(second_items)
+    let second_index: UInt64 = 1 as UInt64
+    var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])
+
+    first_selected.item.value + second_selected.item.value
+
+function main() -> UInt32
+    select_both(false, false) - 201 as UInt32

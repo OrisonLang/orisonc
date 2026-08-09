@@ -317,6 +317,17 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(
     assert(std::filesystem::file_size(output_path) > 0);
 }
 
+void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_path
+) {
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(executable, path, output_path);
+    auto status = std::system(output_path.string().c_str());
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == 0);
+}
+
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3044,6 +3055,11 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or",
         smoke_temp_root / "runtime_indexed_cleanup_non_overlapping"
+    );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates.or",
+        smoke_temp_root / "runtime_indexed_cleanup_non_overlapping_scalar"
     );
     assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
         executable,
