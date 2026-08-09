@@ -1357,6 +1357,9 @@ representation.
   available, while the test-only readiness command stays summary-only.
 - Runtime-index cleanup full-audit CLI coverage now pins the production-ready zero-blocker path: non-overlapping
   same-function cleanup candidates report `blocker-count 0 blocker-kind none` and emit no per-blocker detail lines.
+- Runtime-index cleanup pipeline coverage now pins the same zero-blocker contract at the shared formatter boundary:
+  the ready report must match the CLI summary exactly, no blocked diagnostic text may appear, and the blocker-detail
+  report must be empty.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
