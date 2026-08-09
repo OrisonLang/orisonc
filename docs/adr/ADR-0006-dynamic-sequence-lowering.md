@@ -1336,7 +1336,8 @@ representation.
   right source lines alongside candidate indexes and splice ranges.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
-  code and the source-correlated readiness diagnostic.
+  code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
+  with the ready production-readiness line.
 
 ## Follow-up work
 
