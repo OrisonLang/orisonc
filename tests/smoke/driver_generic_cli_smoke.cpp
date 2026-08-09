@@ -239,7 +239,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
         "splice-conflict-check blocked production blocked blocker-kind function-splice-conflict "
-        "diagnostic runtime-index cleanup blocked: "
+        "function select_both diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
@@ -257,7 +257,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
         "splice-conflict-check blocked production blocked blocker-kind function-splice-conflict "
-        "diagnostic runtime-index cleanup blocked: "
+        "function select_both diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup audit entries") == std::string::npos);

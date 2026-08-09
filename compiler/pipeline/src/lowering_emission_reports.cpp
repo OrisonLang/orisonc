@@ -1264,6 +1264,7 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state(
             .rewrite_requested = state.rewrite_requested,
             .function_candidate_verified = function_verified,
             .separate_from_module_ir = true,
+            .source_line = function_candidate.source_line,
             .original_module_line_count = state.original_module_line_count,
             .function_replacement_count =
                 occurrence_count(ir_text, function_candidate.original_function_ir_text),
@@ -1391,6 +1392,7 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             .llvm_verifier_ran = module_candidate.candidate_available,
             .llvm_verifier_passed =
                 module_candidate.candidate_available && !verifier_diagnostics.has_errors(),
+            .source_line = module_candidate.source_line,
             .function_replacement_count = module_candidate.function_replacement_count,
             .llvm_verifier_diagnostic_count = verifier_diagnostics.entries().size(),
         };
@@ -1598,6 +1600,30 @@ auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
     return "unknown";
 }
 
+auto runtime_indexed_cleanup_production_readiness_blocker_stage_name(
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
+) -> std::string_view {
+    switch (kind) {
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None:
+        return {};
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate:
+        return "module insertion gate";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview:
+        return "module insertion preview";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate:
+        return "module ir candidate";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification:
+        return "module ir candidate verification";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation:
+        return "module mutation";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration:
+        return "function integration";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict:
+        return "function splice conflict";
+    }
+    return {};
+}
+
 auto format_runtime_indexed_cleanup_production_readiness_report(
     RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::string {
@@ -1614,6 +1640,12 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
            << " production " << (state.production_ready ? "ready" : "blocked")
            << " blocker-kind "
            << runtime_indexed_cleanup_production_readiness_blocker_kind_name(state.diagnostic_blocker_kind);
+    if (!state.diagnostic_function_symbol_name.empty()) {
+        report << " function " << state.diagnostic_function_symbol_name;
+    }
+    if (state.diagnostic_source_available) {
+        report << " source-line " << state.diagnostic_source_line;
+    }
     auto diagnostic = format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
     if (!diagnostic.empty()) {
         report << " diagnostic " << diagnostic;
@@ -1622,6 +1654,23 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
 }
 
 namespace {
+
+auto set_runtime_indexed_cleanup_readiness_blocker(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState& readiness_state,
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state
+) -> void {
+    readiness_state.diagnostic_blocker_kind = blocker_kind;
+    readiness_state.diagnostic_blocker_stage_name =
+        std::string(runtime_indexed_cleanup_production_readiness_blocker_stage_name(blocker_kind));
+    if (readiness_state.diagnostic_function_symbol_name.empty() &&
+        !function_verification_state.verifications.empty()) {
+        auto const& verification = function_verification_state.verifications.front();
+        readiness_state.diagnostic_function_symbol_name = verification.function_symbol_name;
+        readiness_state.diagnostic_source_line = verification.source_line;
+        readiness_state.diagnostic_source_available = verification.source_line != 0;
+    }
+}
 
 auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
@@ -1673,26 +1722,47 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state.diagnostic_left_source_line = conflict.left_source_line;
             readiness_state.diagnostic_right_source_line = conflict.right_source_line;
         }
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
+            function_verification_state
+        );
     } else if (!readiness_state.insertion_gate_ready) {
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate,
+            function_verification_state
+        );
     } else if (!readiness_state.insertion_preview_ready) {
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview,
+            function_verification_state
+        );
     } else if (!readiness_state.candidate_ready) {
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate,
+            function_verification_state
+        );
     } else if (!readiness_state.candidate_verified) {
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification,
+            function_verification_state
+        );
     } else if (!readiness_state.module_mutation_enabled) {
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation,
+            function_verification_state
+        );
     } else if (!readiness_state.function_integration_ready) {
-        readiness_state.diagnostic_blocker_kind =
-            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration;
+        set_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration,
+            function_verification_state
+        );
     }
     readiness_state.diagnostic_text =
         format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness_state);

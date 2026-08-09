@@ -377,6 +377,7 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidate {
     bool candidate_available = false;
     bool separate_from_module_ir = true;
     bool module_ir_changed = false;
+    std::size_t source_line = 0;
     std::size_t original_module_line_count = 0;
     std::size_t candidate_module_line_count = 0;
     std::size_t function_replacement_count = 0;
@@ -407,6 +408,7 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
     bool llvm_verifier_ran = false;
     bool llvm_verifier_passed = false;
     bool verified = false;
+    std::size_t source_line = 0;
     std::size_t function_replacement_count = 0;
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
@@ -478,7 +480,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind diagnostic_blocker_kind =
         RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
     std::size_t function_splice_conflict_count = 0;
+    std::string diagnostic_blocker_stage_name;
     std::string diagnostic_function_symbol_name;
+    bool diagnostic_source_available = false;
+    std::size_t diagnostic_source_line = 0;
     std::size_t diagnostic_left_candidate_index = 0;
     std::size_t diagnostic_right_candidate_index = 0;
     std::size_t diagnostic_left_source_line = 0;
