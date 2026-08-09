@@ -9013,6 +9013,38 @@ auto main() -> int {
             .llvm_verifier_passed
     );
     assert(
+        runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
+            "  br label %first_holder.items.runtime_cleanup.entry\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
+            "  br label %second_holder.items.runtime_cleanup.entry\n"
+        ) != std::string::npos
+    );
+    assert(
+        occurrence_count(
+            runtime_indexed_same_function_non_overlap_cleanup.ir_text,
+            "first_holder.items.runtime_cleanup.condition:\n"
+        ) == 1
+    );
+    assert(
+        occurrence_count(
+            runtime_indexed_same_function_non_overlap_cleanup.ir_text,
+            "second_holder.items.runtime_cleanup.condition:\n"
+        ) == 1
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
+            "  call void @__orison_drop.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
+            "  call void @__orison_drop.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
+        ) != std::string::npos
+    );
+    assert(
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .function_integration_ready

@@ -1360,6 +1360,9 @@ representation.
 - Runtime-index cleanup pipeline coverage now pins the same zero-blocker contract at the shared formatter boundary:
   the ready report must match the CLI summary exactly, no blocked diagnostic text may appear, and the blocker-detail
   report must be empty.
+- Runtime-index cleanup pipeline coverage now verifies final module text for non-overlapping same-function cleanup
+  candidates: both owner-specific cleanup entry branches are present, both cleanup loop condition blocks appear once,
+  and both emitted drop calls target `Inner` cleanup element addresses.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
