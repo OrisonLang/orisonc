@@ -6827,6 +6827,21 @@ auto main() -> int {
         ).find("diagnostic runtime-index cleanup blocked: module insertion gate disabled") !=
         std::string::npos
     );
+    auto runtime_indexed_cleanup_readiness_blocker_report =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
+            runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+        );
+    assert(runtime_indexed_cleanup_readiness_blocker_report.size() == 6);
+    assert(
+        runtime_indexed_cleanup_readiness_blocker_report.front().find(
+            "index 0 kind insertion-gate stage module insertion gate function main source-line "
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_cleanup_readiness_blocker_report.back().find(
+            "index 5 kind function-integration stage function integration function main source-line "
+        ) != std::string::npos
+    );
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
             .mutation_requested
@@ -8852,6 +8867,21 @@ auto main() -> int {
             "overlapping same-function splice ranges left-line 46 right-line 51"
         ) != std::string::npos
     );
+    auto runtime_indexed_same_function_cleanup_readiness_blocker_report =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
+            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+        );
+    assert(runtime_indexed_same_function_cleanup_readiness_blocker_report.size() == 2);
+    assert(
+        runtime_indexed_same_function_cleanup_readiness_blocker_report.front().find(
+            "index 0 kind function-splice-conflict stage function splice conflict function select_both source-line 46"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_same_function_cleanup_readiness_blocker_report.back().find(
+            "index 1 kind function-integration stage function integration function select_both source-line 46"
+        ) != std::string::npos
+    );
     assert(
         !runtime_indexed_same_function_cleanup
              .runtime_indexed_cleanup_module_ir_production_readiness_state
@@ -9061,6 +9091,12 @@ auto main() -> int {
             runtime_indexed_same_function_non_overlap_cleanup
                 .runtime_indexed_cleanup_module_ir_production_readiness_state
         ).find("production ready blocker-count 0 blocker-kind none") != std::string::npos
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
+            runtime_indexed_same_function_non_overlap_cleanup
+                .runtime_indexed_cleanup_module_ir_production_readiness_state
+        ).empty()
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup

@@ -1654,6 +1654,29 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
     return report.str();
 }
 
+auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.blockers.size());
+    for (auto index = std::size_t {0}; index < state.blockers.size(); ++index) {
+        auto const& blocker = state.blockers[index];
+        auto line = std::ostringstream {};
+        line << "runtime-index cleanup module-ir production-readiness blocker "
+             << "index " << index
+             << " kind " << runtime_indexed_cleanup_production_readiness_blocker_kind_name(blocker.kind)
+             << " stage " << blocker.stage_name;
+        if (!blocker.function_symbol_name.empty()) {
+            line << " function " << blocker.function_symbol_name;
+        }
+        if (blocker.source_available) {
+            line << " source-line " << blocker.source_line;
+        }
+        lines.push_back(line.str());
+    }
+    return lines;
+}
+
 namespace {
 
 auto runtime_indexed_cleanup_readiness_blocker(

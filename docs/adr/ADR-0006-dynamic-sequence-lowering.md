@@ -1352,6 +1352,9 @@ representation.
   Reports include function/source fields only when populated.
 - Runtime-index cleanup production-readiness now records an ordered blocker list while preserving the existing
   first-blocker summary fields. Shared reports include a stable `blocker-count` before the first blocker kind.
+- Runtime-index cleanup production-readiness now has a compact per-blocker detail formatter for audit consumers. The
+  full runtime-index cleanup audit appends one line per blocker with index, kind, stage, function, and source line when
+  available, while the test-only readiness command stays summary-only.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

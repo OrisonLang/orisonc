@@ -513,6 +513,10 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
     RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::string;
 
+auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::vector<std::string>;
+
 struct ComputedDynamicArrayForDescriptorRenderState {
     std::vector<std::string> enclosing_function_names;
     std::vector<std::string> cleanup_owner_names;

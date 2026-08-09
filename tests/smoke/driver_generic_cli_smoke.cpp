@@ -242,6 +242,14 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
         "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness blocker index 0 "
+        "kind function-splice-conflict stage function splice conflict function select_both source-line 46"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness blocker index 1 "
+        "kind function-integration stage function integration function select_both source-line 46"
+    ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
@@ -261,6 +269,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup audit entries") == std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness blocker index") == std::string::npos);
     assert(output.find("runtime-index cleanup function-module splice-conflict") == std::string::npos);
 }
 

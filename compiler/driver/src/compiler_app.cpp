@@ -728,6 +728,11 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
         lines.push_back(runtime_indexed_cleanup_module_ir_production_readiness_report(
             result.runtime_indexed_cleanup_module_ir_production_readiness_state
         ));
+        auto readiness_blocker_lines =
+            pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
+                result.runtime_indexed_cleanup_module_ir_production_readiness_state
+            );
+        lines.insert(lines.end(), readiness_blocker_lines.begin(), readiness_blocker_lines.end());
     }
     return CompileResult {
         .exit_code = 0,
