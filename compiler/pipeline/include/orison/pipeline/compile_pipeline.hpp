@@ -454,6 +454,17 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
 
+enum class RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind {
+    None,
+    InsertionGate,
+    InsertionPreview,
+    Candidate,
+    CandidateVerification,
+    ModuleMutation,
+    FunctionIntegration,
+    FunctionSpliceConflict,
+};
+
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool insertion_gate_ready = false;
     bool insertion_preview_ready = false;
@@ -463,6 +474,8 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool function_integration_ready = false;
     bool function_splice_conflict_free = false;
     bool production_ready = false;
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind diagnostic_blocker_kind =
+        RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
     std::size_t function_splice_conflict_count = 0;
     std::string diagnostic_function_symbol_name;
     std::size_t diagnostic_left_candidate_index = 0;

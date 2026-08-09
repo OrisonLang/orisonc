@@ -1536,14 +1536,40 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
 auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
     RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::string {
-    if (state.function_splice_conflict_free) {
+    if (state.diagnostic_blocker_kind ==
+        RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None) {
         return {};
     }
     auto diagnostic = std::ostringstream {};
-    diagnostic << "runtime-index cleanup blocked: overlapping same-function splice ranges";
-    if (state.diagnostic_left_source_line != 0 || state.diagnostic_right_source_line != 0) {
-        diagnostic << " left-line " << state.diagnostic_left_source_line
-                   << " right-line " << state.diagnostic_right_source_line;
+    diagnostic << "runtime-index cleanup blocked: ";
+    switch (state.diagnostic_blocker_kind) {
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None:
+        return {};
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate:
+        diagnostic << "module insertion gate disabled";
+        break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview:
+        diagnostic << "module insertion preview unavailable";
+        break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate:
+        diagnostic << "module ir candidate unavailable";
+        break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification:
+        diagnostic << "module ir candidate verification blocked";
+        break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation:
+        diagnostic << "module mutation disabled";
+        break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration:
+        diagnostic << "function integration blocked";
+        break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict:
+        diagnostic << "overlapping same-function splice ranges";
+        if (state.diagnostic_left_source_line != 0 || state.diagnostic_right_source_line != 0) {
+            diagnostic << " left-line " << state.diagnostic_left_source_line
+                       << " right-line " << state.diagnostic_right_source_line;
+        }
+        break;
     }
     return diagnostic.str();
 }
@@ -1600,9 +1626,29 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state.diagnostic_left_source_line = conflict.left_source_line;
             readiness_state.diagnostic_right_source_line = conflict.right_source_line;
         }
-        readiness_state.diagnostic_text =
-            format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness_state);
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict;
+    } else if (!readiness_state.insertion_gate_ready) {
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate;
+    } else if (!readiness_state.insertion_preview_ready) {
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview;
+    } else if (!readiness_state.candidate_ready) {
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate;
+    } else if (!readiness_state.candidate_verified) {
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification;
+    } else if (!readiness_state.module_mutation_enabled) {
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation;
+    } else if (!readiness_state.function_integration_ready) {
+        readiness_state.diagnostic_blocker_kind =
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration;
     }
+    readiness_state.diagnostic_text =
+        format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness_state);
     return readiness_state;
 }
 

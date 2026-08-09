@@ -1339,6 +1339,9 @@ representation.
   this typed state.
 - Runtime-index cleanup production-readiness diagnostics now render through a shared pipeline formatter. The pipeline
   cached diagnostic text and CLI readiness report consume the same typed-state formatter.
+- Runtime-index cleanup production-readiness diagnostics now classify the first blocked prerequisite with an explicit
+  internal blocker kind before formatting text. This keeps insertion gates, preview/candidate readiness, verification,
+  mutation, function integration, and splice conflicts observable through one finite diagnostic model.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

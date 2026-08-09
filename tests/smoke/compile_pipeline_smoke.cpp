@@ -6765,6 +6765,16 @@ auto main() -> int {
             .production_ready
     );
     assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+        ) == "runtime-index cleanup blocked: module insertion gate disabled"
+    );
+    assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
             .mutation_requested
     );
@@ -7319,6 +7329,16 @@ auto main() -> int {
     assert(
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
+    );
+    assert(
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+        ) == "runtime-index cleanup blocked: module insertion gate disabled"
     );
     assert(
         !runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_module_ir_mutation_state
@@ -8040,12 +8060,28 @@ auto main() -> int {
             .production_ready
     );
     assert(
+        runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None
+    );
+    assert(
         !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .function_integration_ready
     );
     assert(
         !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
             .production_ready
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            runtime_indexed_cleanup_constructor_move_on
+                .runtime_indexed_cleanup_module_ir_production_readiness_state
+        ) == "runtime-index cleanup blocked: function integration blocked"
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_mutation_state
@@ -8647,6 +8683,12 @@ auto main() -> int {
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_function_symbol_name == "select_both"
     );
     assert(
@@ -8826,6 +8868,12 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .function_splice_conflict_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
