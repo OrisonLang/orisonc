@@ -1531,6 +1531,25 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
     return state;
 }
 
+}  // namespace
+
+auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::string {
+    if (state.function_splice_conflict_free) {
+        return {};
+    }
+    auto diagnostic = std::ostringstream {};
+    diagnostic << "runtime-index cleanup blocked: overlapping same-function splice ranges";
+    if (state.diagnostic_left_source_line != 0 || state.diagnostic_right_source_line != 0) {
+        diagnostic << " left-line " << state.diagnostic_left_source_line
+                   << " right-line " << state.diagnostic_right_source_line;
+    }
+    return diagnostic.str();
+}
+
+namespace {
+
 auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
     RuntimeIndexedCleanupModuleIrInsertionPreviewState const& preview_state,
@@ -1581,14 +1600,8 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state.diagnostic_left_source_line = conflict.left_source_line;
             readiness_state.diagnostic_right_source_line = conflict.right_source_line;
         }
-        auto diagnostic = std::ostringstream {};
-        diagnostic << "runtime-index cleanup blocked: overlapping same-function splice ranges";
-        if (readiness_state.diagnostic_left_source_line != 0 ||
-            readiness_state.diagnostic_right_source_line != 0) {
-            diagnostic << " left-line " << readiness_state.diagnostic_left_source_line
-                       << " right-line " << readiness_state.diagnostic_right_source_line;
-        }
-        readiness_state.diagnostic_text = diagnostic.str();
+        readiness_state.diagnostic_text =
+            format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness_state);
     }
     return readiness_state;
 }

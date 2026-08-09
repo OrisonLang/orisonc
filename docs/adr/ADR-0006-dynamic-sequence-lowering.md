@@ -1337,6 +1337,8 @@ representation.
 - Runtime-index cleanup production-readiness diagnostics now keep structured blocker fields for the first splice
   conflict: function symbol, candidate indexes, and left/right source lines. Formatted CLI diagnostics are derived from
   this typed state.
+- Runtime-index cleanup production-readiness diagnostics now render through a shared pipeline formatter. The pipeline
+  cached diagnostic text and CLI readiness report consume the same typed-state formatter.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

@@ -299,8 +299,9 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
            << " splice-conflicts " << state.function_splice_conflict_count
            << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
            << " production " << (state.production_ready ? "ready" : "blocked");
-    if (!state.diagnostic_text.empty()) {
-        report << " diagnostic " << state.diagnostic_text;
+    auto diagnostic = pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
+    if (!diagnostic.empty()) {
+        report << " diagnostic " << diagnostic;
     }
     return report.str();
 }

@@ -8676,6 +8676,13 @@ auto main() -> int {
         "runtime-index cleanup blocked: overlapping same-function splice ranges left-line 46 right-line 51"
     );
     assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+        ) ==
+        runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_text
+    );
+    assert(
         !runtime_indexed_same_function_cleanup
              .runtime_indexed_cleanup_module_ir_production_readiness_state
              .production_ready
@@ -8849,6 +8856,12 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_text.empty()
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            runtime_indexed_same_function_non_overlap_cleanup
+                .runtime_indexed_cleanup_module_ir_production_readiness_state
+        ).empty()
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup

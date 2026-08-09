@@ -472,6 +472,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     std::string diagnostic_text;
 };
 
+auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::string;
+
 struct ComputedDynamicArrayForDescriptorRenderState {
     std::vector<std::string> enclosing_function_names;
     std::vector<std::string> cleanup_owner_names;
