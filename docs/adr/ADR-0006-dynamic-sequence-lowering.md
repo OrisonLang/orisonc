@@ -1342,6 +1342,9 @@ representation.
 - Runtime-index cleanup production-readiness diagnostics now classify the first blocked prerequisite with an explicit
   internal blocker kind before formatting text. This keeps insertion gates, preview/candidate readiness, verification,
   mutation, function integration, and splice conflicts observable through one finite diagnostic model.
+- Runtime-index cleanup production-readiness CLI reports now expose the classified blocker as a stable `blocker-kind`
+  token on every readiness line. Ready reports use `blocker-kind none`; blocked reports still include the formatted
+  diagnostic text after the stable kind.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

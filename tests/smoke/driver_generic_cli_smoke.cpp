@@ -238,7 +238,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked production blocked diagnostic runtime-index cleanup blocked: "
+        "splice-conflict-check blocked production blocked blocker-kind function-splice-conflict "
+        "diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
@@ -255,7 +256,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked production blocked diagnostic runtime-index cleanup blocked: "
+        "splice-conflict-check blocked production blocked blocker-kind function-splice-conflict "
+        "diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup audit entries") == std::string::npos);
@@ -273,7 +275,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready"
+        "splice-conflict-check clear production ready blocker-kind none"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup audit entries") == std::string::npos);
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
