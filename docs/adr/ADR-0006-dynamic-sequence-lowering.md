@@ -1334,6 +1334,9 @@ representation.
 - Runtime-index cleanup splice-conflict diagnostics now preserve source-line correlation from the original
   runtime-index constructor-move arguments. Conflict detail and production-readiness diagnostics report the left and
   right source lines alongside candidate indexes and splice ranges.
+- Runtime-index cleanup production-readiness diagnostics now keep structured blocker fields for the first splice
+  conflict: function symbol, candidate indexes, and left/right source lines. Formatted CLI diagnostics are derived from
+  this typed state.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success

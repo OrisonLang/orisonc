@@ -464,6 +464,11 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool function_splice_conflict_free = false;
     bool production_ready = false;
     std::size_t function_splice_conflict_count = 0;
+    std::string diagnostic_function_symbol_name;
+    std::size_t diagnostic_left_candidate_index = 0;
+    std::size_t diagnostic_right_candidate_index = 0;
+    std::size_t diagnostic_left_source_line = 0;
+    std::size_t diagnostic_right_source_line = 0;
     std::string diagnostic_text;
 };
 
