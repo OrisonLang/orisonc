@@ -334,6 +334,82 @@ auto replace_once(
     return replaced;
 }
 
+auto inserted_cleanup_cfg_tail(
+    RuntimeIndexedCleanupFunctionIrRewriteCandidate const& candidate
+) -> std::string {
+    auto const insertion_start =
+        block_start_position(candidate.candidate_function_ir_text, candidate.insertion_block_name);
+    auto const closing_position = candidate.candidate_function_ir_text.rfind("\n}\n");
+    if (insertion_start == std::string::npos || closing_position == std::string::npos ||
+        insertion_start >= closing_position) {
+        return {};
+    }
+    return candidate.candidate_function_ir_text.substr(
+        insertion_start,
+        closing_position + 1 - insertion_start
+    );
+}
+
+auto compose_non_overlapping_function_ir_rewrite(
+    std::string const& original_function_ir,
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
+) -> std::string {
+    if (original_function_ir.empty() || candidates.empty()) {
+        return {};
+    }
+    std::sort(
+        candidates.begin(),
+        candidates.end(),
+        [](auto const* left, auto const* right) {
+            return left->splice_start_offset > right->splice_start_offset;
+        }
+    );
+
+    auto composed = original_function_ir;
+    auto appended_cleanup_cfg = std::string {};
+    for (auto const* candidate : candidates) {
+        if (!candidate->candidate_available || !candidate->splice_range_available ||
+            candidate->splice_start_offset >= candidate->splice_end_offset ||
+            candidate->splice_end_offset > original_function_ir.size()) {
+            return {};
+        }
+        auto const expected_terminator = "  " + candidate->replaced_terminator_text + "\n";
+        if (original_function_ir.substr(
+                candidate->splice_start_offset,
+                candidate->splice_end_offset - candidate->splice_start_offset
+            ) != expected_terminator) {
+            return {};
+        }
+        composed.replace(
+            candidate->splice_start_offset,
+            candidate->splice_end_offset - candidate->splice_start_offset,
+            "  " + candidate->inserted_branch_text + "\n"
+        );
+        auto cleanup_tail = inserted_cleanup_cfg_tail(*candidate);
+        if (cleanup_tail.empty()) {
+            return {};
+        }
+        appended_cleanup_cfg = std::move(cleanup_tail) + appended_cleanup_cfg;
+    }
+
+    auto const closing_position = composed.rfind("\n}\n");
+    if (closing_position == std::string::npos) {
+        return {};
+    }
+    composed.insert(closing_position + 1, appended_cleanup_cfg);
+    for (auto const* candidate : candidates) {
+        composed = retarget_phi_incoming_predecessor(
+            composed,
+            candidate->predecessor_block_name,
+            candidate->continuation_block_name
+        );
+        if (composed.empty()) {
+            return {};
+        }
+    }
+    return composed;
+}
+
 auto build_dynamic_array_descriptor_cleanup_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayDescriptorCleanupPlanState {
@@ -1220,7 +1296,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state(
 
 auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state(
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState const& module_candidate_state,
-    RuntimeIndexedCleanupFunctionIrRewriteCandidateState const& function_candidate_state
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateState const& function_candidate_state,
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState const& function_verification_state
 ) -> RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
     auto state = RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
         .verification_metadata_available = module_candidate_state.metadata_available,
@@ -1246,6 +1323,13 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
                 }
             )
         );
+        auto const replacement_target_acceptable =
+            module_candidate.function_replacement_count == 1 &&
+            (function_target_count == 1 ||
+             (function_verification_state.all_verified &&
+              function_verification_state.all_splice_ranges_available &&
+              function_verification_state.same_function_splice_ranges_ordered &&
+              function_verification_state.same_function_splice_ranges_non_overlapping));
         auto const candidate_function_ir =
             function_ir_slice(
                 module_candidate.candidate_module_ir_text,
@@ -1264,8 +1348,7 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             .candidate_function_found = !candidate_function_ir.empty(),
             .candidate_function_matches_verified_candidate =
                 candidate_function_ir == function_candidate.candidate_function_ir_text,
-            .replacement_target_unique =
-                module_candidate.function_replacement_count == 1 && function_target_count == 1,
+            .replacement_target_unique = replacement_target_acceptable,
             .module_ir_changed = module_candidate.module_ir_changed,
             .separate_from_module_ir = module_candidate.separate_from_module_ir,
             .llvm_verifier_ran = module_candidate.candidate_available,
@@ -1316,6 +1399,7 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
     std::string const& base_ir_text,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState const& candidate_state,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& verification_state,
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateState const& function_candidate_state,
     std::string& ir_text
 ) -> RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     auto state = RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
@@ -1347,20 +1431,55 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
         );
 
         auto composed_ir = base_ir_text;
-        for (auto const* candidate : ordered_candidates) {
-            auto const original_function = function_ir_slice(composed_ir, candidate->function_symbol_name);
-            if (original_function.empty()) {
+        for (auto index = std::size_t {0}; index < ordered_candidates.size();) {
+            auto const function_symbol_name = ordered_candidates[index]->function_symbol_name;
+            auto group_end = index + 1;
+            while (group_end < ordered_candidates.size() &&
+                   ordered_candidates[group_end]->function_symbol_name == function_symbol_name) {
+                ++group_end;
+            }
+            if (group_end - index == 1) {
+                auto const* candidate = ordered_candidates[index];
+                auto const original_function = function_ir_slice(composed_ir, candidate->function_symbol_name);
+                if (original_function.empty()) {
+                    return state;
+                }
+                auto const candidate_function =
+                    function_ir_slice(candidate->candidate_module_ir_text, candidate->function_symbol_name);
+                if (candidate_function.empty()) {
+                    return state;
+                }
+                composed_ir = replace_once(composed_ir, original_function, candidate_function);
+                if (composed_ir.empty()) {
+                    return state;
+                }
+                index = group_end;
+                continue;
+            }
+
+            auto function_candidates =
+                std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> {};
+            function_candidates.reserve(group_end - index);
+            for (auto candidate_index = index; candidate_index < group_end; ++candidate_index) {
+                auto const module_candidate_position = static_cast<std::size_t>(
+                    ordered_candidates[candidate_index] - candidate_state.candidates.data()
+                );
+                if (module_candidate_position >= function_candidate_state.candidates.size()) {
+                    return state;
+                }
+                function_candidates.push_back(&function_candidate_state.candidates[module_candidate_position]);
+            }
+            auto const original_function = function_ir_slice(composed_ir, function_symbol_name);
+            auto const composed_function =
+                compose_non_overlapping_function_ir_rewrite(original_function, std::move(function_candidates));
+            if (composed_function.empty()) {
                 return state;
             }
-            auto const candidate_function =
-                function_ir_slice(candidate->candidate_module_ir_text, candidate->function_symbol_name);
-            if (candidate_function.empty()) {
-                return state;
-            }
-            composed_ir = replace_once(composed_ir, original_function, candidate_function);
+            composed_ir = replace_once(composed_ir, original_function, composed_function);
             if (composed_ir.empty()) {
                 return state;
             }
+            index = group_end;
         }
 
         ir_text = std::move(composed_ir);
@@ -2325,7 +2444,8 @@ void populate_lowering_emission_reports(
     result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state =
         build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state(
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state,
-            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state,
+            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
         );
     result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state =
         apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
@@ -2333,6 +2453,7 @@ void populate_lowering_emission_reports(
             runtime_indexed_cleanup_function_module_base_ir_text,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state,
+            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state,
             result.ir_text
         );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =

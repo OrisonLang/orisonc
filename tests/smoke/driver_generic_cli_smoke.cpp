@@ -2888,6 +2888,10 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
     );
+    assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
+    );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_run.or"

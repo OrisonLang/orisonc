@@ -8683,14 +8683,14 @@ auto main() -> int {
             .available_candidate_count == 2
     );
     assert(
-        !runtime_indexed_same_function_non_overlap_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_replacement_targets_unique
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_replacement_targets_unique
     );
     assert(
-        !runtime_indexed_same_function_non_overlap_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_verified
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_verified
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
@@ -8698,19 +8698,39 @@ auto main() -> int {
             .llvm_verified_count == 2
     );
     assert(
-        !runtime_indexed_same_function_non_overlap_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .mutation_applied
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .candidate_verified
     );
     assert(
-        !runtime_indexed_same_function_non_overlap_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .function_integration_ready
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .replacement_targets_unique
     );
     assert(
-        !runtime_indexed_same_function_non_overlap_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .production_ready
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_applied
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .module_matches_candidate
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_passed
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_integration_ready
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .production_ready
     );
 
     auto parsed_drop_readiness_path =

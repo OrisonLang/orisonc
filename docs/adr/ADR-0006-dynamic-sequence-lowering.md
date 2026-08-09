@@ -1320,6 +1320,11 @@ representation.
   recorded. The same-function non-overlap fixture uses ordinary early-return branches to place two cleanup candidates
   in distinct predecessor blocks; typed splice metadata recognizes the ordered, non-overlapping ranges while duplicate
   function-symbol module mutation remains blocked.
+- Runtime-index cleanup function-module mutation now composes same-function candidates when their typed splice ranges
+  are ordered and non-overlapping. The composer rewrites predecessor terminators from the original function offsets,
+  appends each cleanup CFG tail, retargets PHI incoming predecessors, swaps the composed function into the module once,
+  and reruns LLVM verification before reporting production readiness. Overlapping same-function candidates remain
+  blocked by replacement-target verification.
 
 ## Follow-up work
 
@@ -1328,6 +1333,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Extend runtime-index cleanup function-module mutation with ordered intra-function splice composition using the typed
-  non-overlapping splice ranges, while keeping overlapping same-function ranges rejected until a separate composition
-  rule exists.
+- Add explicit overlapping same-function diagnostic detail so audit output names the conflicting splice ranges rather
+  than only reporting replacement targets blocked.
