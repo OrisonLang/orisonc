@@ -1574,6 +1574,53 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
     return diagnostic.str();
 }
 
+auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
+) -> std::string_view {
+    switch (kind) {
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None:
+        return "none";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate:
+        return "insertion-gate";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview:
+        return "insertion-preview";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate:
+        return "candidate";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification:
+        return "candidate-verification";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation:
+        return "module-mutation";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration:
+        return "function-integration";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict:
+        return "function-splice-conflict";
+    }
+    return "unknown";
+}
+
+auto format_runtime_indexed_cleanup_production_readiness_report(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup module-ir production-readiness "
+           << "insertion-gate " << (state.insertion_gate_ready ? "ready" : "blocked")
+           << " insertion-preview " << (state.insertion_preview_ready ? "ready" : "blocked")
+           << " candidate " << (state.candidate_ready ? "ready" : "blocked")
+           << " candidate-verification " << (state.candidate_verified ? "verified" : "blocked")
+           << " module-mutation " << (state.module_mutation_enabled ? "enabled" : "disabled")
+           << " function-integration " << (state.function_integration_ready ? "ready" : "blocked")
+           << " splice-conflicts " << state.function_splice_conflict_count
+           << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
+           << " production " << (state.production_ready ? "ready" : "blocked")
+           << " blocker-kind "
+           << runtime_indexed_cleanup_production_readiness_blocker_kind_name(state.diagnostic_blocker_kind);
+    auto diagnostic = format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
+    if (!diagnostic.empty()) {
+        report << " diagnostic " << diagnostic;
+    }
+    return report.str();
+}
+
 namespace {
 
 auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(

@@ -285,51 +285,10 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
     return options;
 }
 
-auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
-    pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
-) -> std::string_view {
-    switch (kind) {
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None:
-        return "none";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate:
-        return "insertion-gate";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionPreview:
-        return "insertion-preview";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::Candidate:
-        return "candidate";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification:
-        return "candidate-verification";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation:
-        return "module-mutation";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration:
-        return "function-integration";
-    case pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict:
-        return "function-splice-conflict";
-    }
-    return "unknown";
-}
-
 auto runtime_indexed_cleanup_module_ir_production_readiness_report(
     pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::string {
-    auto report = std::ostringstream {};
-    report << "runtime-index cleanup module-ir production-readiness "
-           << "insertion-gate " << (state.insertion_gate_ready ? "ready" : "blocked")
-           << " insertion-preview " << (state.insertion_preview_ready ? "ready" : "blocked")
-           << " candidate " << (state.candidate_ready ? "ready" : "blocked")
-           << " candidate-verification " << (state.candidate_verified ? "verified" : "blocked")
-           << " module-mutation " << (state.module_mutation_enabled ? "enabled" : "disabled")
-           << " function-integration " << (state.function_integration_ready ? "ready" : "blocked")
-           << " splice-conflicts " << state.function_splice_conflict_count
-           << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
-           << " production " << (state.production_ready ? "ready" : "blocked")
-           << " blocker-kind "
-           << runtime_indexed_cleanup_production_readiness_blocker_kind_name(state.diagnostic_blocker_kind);
-    auto diagnostic = pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
-    if (!diagnostic.empty()) {
-        report << " diagnostic " << diagnostic;
-    }
-    return report.str();
+    return pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
 }
 
 auto runtime_indexed_cleanup_function_module_verification_report(

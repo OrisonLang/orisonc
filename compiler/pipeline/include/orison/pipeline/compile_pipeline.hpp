@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::pipeline {
@@ -486,6 +487,14 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
 };
 
 auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
+    RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
+) -> std::string;
+
+auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
+    RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
+) -> std::string_view;
+
+auto format_runtime_indexed_cleanup_production_readiness_report(
     RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::string;
 

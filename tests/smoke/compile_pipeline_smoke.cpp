@@ -6770,9 +6770,21 @@ auto main() -> int {
         orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::InsertionGate
     );
     assert(
+        orison::pipeline::runtime_indexed_cleanup_production_readiness_blocker_kind_name(
+            runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+                .diagnostic_blocker_kind
+        ) == "insertion-gate"
+    );
+    assert(
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
             runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
         ) == "runtime-index cleanup blocked: module insertion gate disabled"
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
+            runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+        ).find("production blocked blocker-kind insertion-gate diagnostic runtime-index cleanup blocked") !=
+        std::string::npos
     );
     assert(
         !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_mutation_state
@@ -8687,6 +8699,12 @@ auto main() -> int {
         orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict
     );
     assert(
+        orison::pipeline::runtime_indexed_cleanup_production_readiness_blocker_kind_name(
+            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+                .diagnostic_blocker_kind
+        ) == "function-splice-conflict"
+    );
+    assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_function_symbol_name == "select_both"
@@ -8723,6 +8741,14 @@ auto main() -> int {
         ) ==
         runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_text
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
+            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+        ).find(
+            "production blocked blocker-kind function-splice-conflict diagnostic runtime-index cleanup blocked: "
+            "overlapping same-function splice ranges left-line 46 right-line 51"
+        ) != std::string::npos
     );
     assert(
         !runtime_indexed_same_function_cleanup
@@ -8876,6 +8902,13 @@ auto main() -> int {
         orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None
     );
     assert(
+        orison::pipeline::runtime_indexed_cleanup_production_readiness_blocker_kind_name(
+            runtime_indexed_same_function_non_overlap_cleanup
+                .runtime_indexed_cleanup_module_ir_production_readiness_state
+                .diagnostic_blocker_kind
+        ) == "none"
+    );
+    assert(
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_function_symbol_name.empty()
@@ -8910,6 +8943,12 @@ auto main() -> int {
             runtime_indexed_same_function_non_overlap_cleanup
                 .runtime_indexed_cleanup_module_ir_production_readiness_state
         ).empty()
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
+            runtime_indexed_same_function_non_overlap_cleanup
+                .runtime_indexed_cleanup_module_ir_production_readiness_state
+        ).find("production ready blocker-kind none") != std::string::npos
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup

@@ -1345,6 +1345,8 @@ representation.
 - Runtime-index cleanup production-readiness CLI reports now expose the classified blocker as a stable `blocker-kind`
   token on every readiness line. Ready reports use `blocker-kind none`; blocked reports still include the formatted
   diagnostic text after the stable kind.
+- Runtime-index cleanup production-readiness report formatting now lives in the pipeline layer with the stable
+  blocker-kind token mapping. The CLI delegates to that helper, and pipeline smoke coverage consumes it directly.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
