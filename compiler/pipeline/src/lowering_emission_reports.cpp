@@ -1306,10 +1306,41 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
         .all_replacement_targets_unique = module_candidate_state.metadata_available,
         .all_module_ir_changed = module_candidate_state.metadata_available,
         .all_candidates_separate_from_module_ir = module_candidate_state.metadata_available,
+        .same_function_splice_ranges_non_overlapping =
+            function_verification_state.same_function_splice_ranges_non_overlapping,
         .all_llvm_verifier_passed = module_candidate_state.metadata_available,
         .all_verified = module_candidate_state.metadata_available,
         .verification_count = module_candidate_state.candidate_count,
     };
+    for (auto left_index = std::size_t {0}; left_index < function_candidate_state.candidates.size(); ++left_index) {
+        for (auto right_index = left_index + 1; right_index < function_candidate_state.candidates.size(); ++right_index) {
+            auto const& left = function_candidate_state.candidates[left_index];
+            auto const& right = function_candidate_state.candidates[right_index];
+            if (left.function_symbol_name != right.function_symbol_name ||
+                !left.splice_range_available ||
+                !right.splice_range_available) {
+                continue;
+            }
+            auto const ranges_overlap =
+                left.splice_start_offset < right.splice_end_offset &&
+                right.splice_start_offset < left.splice_end_offset;
+            if (!ranges_overlap) {
+                continue;
+            }
+            state.splice_conflicts.push_back(
+                RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict {
+                    .function_symbol_name = left.function_symbol_name,
+                    .left_candidate_index = left_index,
+                    .right_candidate_index = right_index,
+                    .left_splice_start_offset = left.splice_start_offset,
+                    .left_splice_end_offset = left.splice_end_offset,
+                    .right_splice_start_offset = right.splice_start_offset,
+                    .right_splice_end_offset = right.splice_end_offset,
+                }
+            );
+        }
+    }
+    state.splice_conflict_count = state.splice_conflicts.size();
     state.verifications.reserve(module_candidate_state.candidates.size());
     for (auto index = std::size_t {0}; index < module_candidate_state.candidates.size(); ++index) {
         auto const& module_candidate = module_candidate_state.candidates[index];

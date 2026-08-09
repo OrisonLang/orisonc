@@ -8557,6 +8557,27 @@ auto main() -> int {
     assert(
         !runtime_indexed_same_function_cleanup
              .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+             .same_function_splice_ranges_non_overlapping
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .splice_conflict_count == 1
+    );
+    auto const& same_function_splice_conflict =
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .splice_conflicts.front();
+    assert(same_function_splice_conflict.function_symbol_name == same_function_first_candidate.function_symbol_name);
+    assert(same_function_splice_conflict.left_candidate_index == 0);
+    assert(same_function_splice_conflict.right_candidate_index == 1);
+    assert(same_function_splice_conflict.left_splice_start_offset == same_function_first_candidate.splice_start_offset);
+    assert(same_function_splice_conflict.left_splice_end_offset == same_function_first_candidate.splice_end_offset);
+    assert(same_function_splice_conflict.right_splice_start_offset == same_function_second_candidate.splice_start_offset);
+    assert(same_function_splice_conflict.right_splice_end_offset == same_function_second_candidate.splice_end_offset);
+    assert(
+        !runtime_indexed_same_function_cleanup
+             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
              .all_verified
     );
     assert(
@@ -8686,6 +8707,21 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
             .all_replacement_targets_unique
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .same_function_splice_ranges_non_overlapping
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .splice_conflict_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .splice_conflicts.empty()
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup

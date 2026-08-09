@@ -407,20 +407,33 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict {
+    std::string function_symbol_name;
+    std::size_t left_candidate_index = 0;
+    std::size_t right_candidate_index = 0;
+    std::size_t left_splice_start_offset = 0;
+    std::size_t left_splice_end_offset = 0;
+    std::size_t right_splice_start_offset = 0;
+    std::size_t right_splice_end_offset = 0;
+};
+
 struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
     std::vector<RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification> verifications;
+    std::vector<RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict> splice_conflicts;
     bool verification_metadata_available = false;
     bool all_candidate_functions_found = false;
     bool all_candidate_functions_match_verified_candidates = false;
     bool all_replacement_targets_unique = false;
     bool all_module_ir_changed = false;
     bool all_candidates_separate_from_module_ir = false;
+    bool same_function_splice_ranges_non_overlapping = false;
     bool any_llvm_verifier_ran = false;
     bool all_llvm_verifier_passed = false;
     bool all_verified = false;
     std::size_t verification_count = 0;
     std::size_t verified_count = 0;
     std::size_t llvm_verified_count = 0;
+    std::size_t splice_conflict_count = 0;
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
 

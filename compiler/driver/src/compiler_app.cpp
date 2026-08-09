@@ -311,12 +311,26 @@ auto runtime_indexed_cleanup_function_module_verification_report(
            << " replacement-targets " << (state.all_replacement_targets_unique ? "unique" : "blocked")
            << " module-changed " << (state.all_module_ir_changed ? "true" : "false")
            << " separate-module " << (state.all_candidates_separate_from_module_ir ? "true" : "false")
+           << " splice-conflicts " << state.splice_conflict_count
            << " llvm-ran " << (state.any_llvm_verifier_ran ? "true" : "false")
            << " llvm-passed " << (state.all_llvm_verifier_passed ? "true" : "false")
            << " verified " << (state.all_verified ? "true" : "false")
            << " verified-count " << state.verified_count
            << " llvm-verified-count " << state.llvm_verified_count
            << " diagnostics " << state.llvm_verifier_diagnostic_count;
+    return report.str();
+}
+
+auto runtime_indexed_cleanup_function_module_splice_conflict_report(
+    pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict const& conflict
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup function-module splice-conflict "
+           << "function " << conflict.function_symbol_name
+           << " left-candidate " << conflict.left_candidate_index
+           << " left-range " << conflict.left_splice_start_offset << ".." << conflict.left_splice_end_offset
+           << " right-candidate " << conflict.right_candidate_index
+           << " right-range " << conflict.right_splice_start_offset << ".." << conflict.right_splice_end_offset;
     return report.str();
 }
 
@@ -704,6 +718,10 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
         lines.push_back(runtime_indexed_cleanup_function_module_verification_report(
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
         ));
+        for (auto const& conflict :
+             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state.splice_conflicts) {
+            lines.push_back(runtime_indexed_cleanup_function_module_splice_conflict_report(conflict));
+        }
         for (auto const& verification :
              result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state.verifications) {
             if (!verification.llvm_verifier_passed && verification.llvm_verifier_diagnostic_count > 0) {

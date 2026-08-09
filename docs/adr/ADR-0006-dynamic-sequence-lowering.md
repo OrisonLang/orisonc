@@ -1325,6 +1325,9 @@ representation.
   appends each cleanup CFG tail, retargets PHI incoming predecessors, swaps the composed function into the module once,
   and reruns LLVM verification before reporting production readiness. Overlapping same-function candidates remain
   blocked by replacement-target verification.
+- Runtime-index cleanup function-module verification now records typed same-function splice conflicts. Audit output
+  reports the conflict count in the verification summary and emits detail lines naming the function, candidate indexes,
+  and overlapping splice ranges.
 
 ## Follow-up work
 
@@ -1333,5 +1336,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Add explicit overlapping same-function diagnostic detail so audit output names the conflicting splice ranges rather
-  than only reporting replacement targets blocked.
+- Promote overlapping same-function splice conflicts into a dedicated diagnostic when production compilation paths
+  would otherwise attempt runtime-index cleanup insertion.
