@@ -1331,6 +1331,9 @@ representation.
 - Runtime-index cleanup production-readiness now consumes typed same-function splice conflicts. Overlapping
   same-function splice ranges block the readiness splice-conflict check and render a dedicated diagnostic instead of
   relying only on lower-level audit detail.
+- Runtime-index cleanup splice-conflict diagnostics now preserve source-line correlation from the original
+  runtime-index constructor-move arguments. Conflict detail and production-readiness diagnostics report the left and
+  right source lines alongside candidate indexes and splice ranges.
 
 ## Follow-up work
 
@@ -1339,5 +1342,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Add source-span correlation to runtime-index cleanup splice-conflict diagnostics once computed-index ownership moves
-  are no longer audit-only.
+- Add richer source-span correlation to runtime-index cleanup splice-conflict diagnostics once computed-index ownership
+  moves are no longer audit-only.

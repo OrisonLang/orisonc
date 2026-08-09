@@ -125,6 +125,7 @@ auto runtime_indexed_cleanup_skip_plan(
         .moved_source_type_name = owner.moved_source_type_name,
         .cleanup_operation = owner.cleanup_strategy,
         .production_cleanup_enabled = false,
+        .source_line = owner.source_line,
     };
 }
 
@@ -168,6 +169,7 @@ auto runtime_indexed_cleanup_proof_gate(
         .operation_supported = operation_supported,
         .prerequisites_met = owner_known && index_known && type_match && operation_supported,
         .lowering_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -215,6 +217,7 @@ auto runtime_indexed_cleanup_emission_sketch(
         .snippets = std::move(snippets),
         .report_only = true,
         .production_emission_enabled = false,
+        .source_line = gate.source_line,
     };
 }
 
@@ -257,6 +260,7 @@ auto runtime_indexed_cleanup_capability(
         .sketch_ready = sketch_ready,
         .prerequisites_ready = proof_ready && sketch_ready,
         .production_enabled = production_cleanup_emission_enabled && proof_ready && sketch_ready,
+        .source_line = gate.source_line,
     };
 }
 
@@ -289,6 +293,7 @@ auto runtime_indexed_cleanup_emission_plan(
         .owner_address_ir_lines = capability.owner_address_ir_lines,
         .static_length_value = capability.static_length_value,
         .element_size_value = capability.element_size_value,
+        .source_line = capability.source_line,
         .prerequisites_ready = capability.prerequisites_ready && sketch.snippets.size() == 5,
         .production_gate_requested = production_cleanup_emission_enabled,
         .production_enabled = production_cleanup_emission_enabled && capability.production_enabled,
@@ -337,6 +342,7 @@ auto runtime_indexed_cleanup_emission_plan(
             .owner_address_ir_lines = plan.owner_address_ir_lines,
             .static_length_value = plan.static_length_value,
             .element_size_value = plan.element_size_value,
+            .source_line = plan.source_line,
             .descriptor_value_name = "%" + plan.owner_name + ".runtime_cleanup.descriptor",
             .descriptor_data_value_name = "%" + plan.owner_name + ".runtime_cleanup.data",
             .descriptor_capacity_value_name = "%" + plan.owner_name + ".runtime_cleanup.capacity",

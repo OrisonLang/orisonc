@@ -8,6 +8,7 @@
 #include "computed_cleanup_proof_model.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 namespace orison::pipeline {
 
@@ -895,6 +896,7 @@ auto build_runtime_indexed_cleanup_function_cfg_rewrite_plan_state(
             .rewrite_candidate_available = emission_plan.function_insertion_planned &&
                 !emission_plan.gated_ir_slice_lines.empty(),
             .function_ir_unchanged = true,
+            .source_line = emission_plan.source_line,
             .cleanup_slice_line_count = emission_plan.gated_ir_slice_line_count,
         };
         if (rewrite_plan.rewrite_candidate_available) {
@@ -1027,6 +1029,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
             .inserted_branch_text = rewrite_plan.inserted_branch_text,
             .original_function_ir_text = function_ir_slice(ir_text, rewrite_plan.function_symbol_name),
             .separate_from_module_ir = true,
+            .source_line = rewrite_plan.source_line,
         };
         candidate.original_function_line_count =
             logical_line_count(candidate.original_function_ir_text);
@@ -1168,6 +1171,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
             .predecessor_terminator_replaced = candidate.predecessor_terminator_replaced,
             .splice_range_available = candidate.splice_range_available,
             .separate_from_module_ir = candidate.separate_from_module_ir,
+            .source_line = candidate.source_line,
             .original_cleanup_block_count =
                 occurrence_count(candidate.original_function_ir_text, insertion_label),
             .candidate_cleanup_block_count =
@@ -1332,6 +1336,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
                     .function_symbol_name = left.function_symbol_name,
                     .left_candidate_index = left_index,
                     .right_candidate_index = right_index,
+                    .left_source_line = left.source_line,
+                    .right_source_line = right.source_line,
                     .left_splice_start_offset = left.splice_start_offset,
                     .left_splice_end_offset = left.splice_end_offset,
                     .right_splice_start_offset = right.splice_start_offset,
@@ -1567,8 +1573,16 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         readiness_state.function_integration_ready &&
         readiness_state.function_splice_conflict_free;
     if (!readiness_state.function_splice_conflict_free) {
-        readiness_state.diagnostic_text =
-            "runtime-index cleanup blocked: overlapping same-function splice ranges";
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index cleanup blocked: overlapping same-function splice ranges";
+        if (!function_verification_state.splice_conflicts.empty()) {
+            auto const& conflict = function_verification_state.splice_conflicts.front();
+            if (conflict.left_source_line != 0 || conflict.right_source_line != 0) {
+                diagnostic << " left-line " << conflict.left_source_line
+                           << " right-line " << conflict.right_source_line;
+            }
+        }
+        readiness_state.diagnostic_text = diagnostic.str();
     }
     return readiness_state;
 }

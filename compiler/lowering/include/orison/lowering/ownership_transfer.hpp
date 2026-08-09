@@ -25,6 +25,7 @@ struct RuntimeIndexedPartialOwner {
     std::string moved_source_type_name;
     std::string cleanup_strategy;
     bool constructor_move_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedPartialOwner const&) const -> bool = default;
 };
@@ -42,6 +43,7 @@ struct RuntimeIndexedCleanupSkipPlan {
     std::string moved_source_type_name;
     std::string cleanup_operation;
     bool production_cleanup_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedCleanupSkipPlan const&) const -> bool = default;
 };
@@ -64,6 +66,7 @@ struct RuntimeIndexedCleanupProofGate {
     bool operation_supported = false;
     bool prerequisites_met = false;
     bool lowering_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedCleanupProofGate const&) const -> bool = default;
 };
@@ -81,6 +84,7 @@ struct RuntimeIndexedCleanupEmissionSketch {
     std::vector<std::string> snippets;
     bool report_only = true;
     bool production_emission_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedCleanupEmissionSketch const&) const -> bool = default;
 };
@@ -99,6 +103,7 @@ struct RuntimeIndexedCleanupCapability {
     bool sketch_ready = false;
     bool prerequisites_ready = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedCleanupCapability const&) const -> bool = default;
 };
@@ -113,6 +118,7 @@ struct RuntimeIndexedCleanupIrPlan {
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
     std::string element_size_value;
+    std::size_t source_line = 0;
     std::string descriptor_value_name;
     std::string descriptor_data_value_name;
     std::string descriptor_capacity_value_name;
@@ -154,6 +160,7 @@ struct RuntimeIndexedCleanupEmissionPlan {
     std::vector<std::string> owner_address_ir_lines;
     std::string static_length_value;
     std::string element_size_value;
+    std::size_t source_line = 0;
     std::string function_insertion_block_name;
     std::string function_predecessor_block_name;
     std::string function_continuation_block_name;

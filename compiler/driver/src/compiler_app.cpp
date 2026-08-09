@@ -333,8 +333,10 @@ auto runtime_indexed_cleanup_function_module_splice_conflict_report(
     report << "runtime-index cleanup function-module splice-conflict "
            << "function " << conflict.function_symbol_name
            << " left-candidate " << conflict.left_candidate_index
+           << " left-line " << conflict.left_source_line
            << " left-range " << conflict.left_splice_start_offset << ".." << conflict.left_splice_end_offset
            << " right-candidate " << conflict.right_candidate_index
+           << " right-line " << conflict.right_source_line
            << " right-range " << conflict.right_splice_start_offset << ".." << conflict.right_splice_end_offset;
     return report.str();
 }

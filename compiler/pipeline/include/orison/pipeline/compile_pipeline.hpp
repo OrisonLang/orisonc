@@ -235,6 +235,7 @@ struct RuntimeIndexedCleanupFunctionCfgRewritePlan {
     bool rewrite_candidate_available = false;
     bool continuation_block_generated = false;
     bool function_ir_unchanged = true;
+    std::size_t source_line = 0;
     std::size_t cleanup_slice_line_count = 0;
     std::size_t candidate_cfg_line_count = 0;
 };
@@ -298,6 +299,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     bool function_ir_changed = false;
     bool predecessor_terminator_replaced = false;
     bool splice_range_available = false;
+    std::size_t source_line = 0;
     std::size_t original_function_line_count = 0;
     std::size_t candidate_function_line_count = 0;
     std::size_t inserted_cfg_line_count = 0;
@@ -337,6 +339,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
     bool splice_range_available = false;
     bool separate_from_module_ir = false;
     bool verified = false;
+    std::size_t source_line = 0;
     std::size_t original_cleanup_block_count = 0;
     std::size_t candidate_cleanup_block_count = 0;
     std::size_t candidate_continuation_block_count = 0;
@@ -411,6 +414,8 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict {
     std::string function_symbol_name;
     std::size_t left_candidate_index = 0;
     std::size_t right_candidate_index = 0;
+    std::size_t left_source_line = 0;
+    std::size_t right_source_line = 0;
     std::size_t left_splice_start_offset = 0;
     std::size_t left_splice_end_offset = 0;
     std::size_t right_splice_start_offset = 0;

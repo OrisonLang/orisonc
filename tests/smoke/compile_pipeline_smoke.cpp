@@ -8534,6 +8534,8 @@ auto main() -> int {
     assert(same_function_second_candidate.splice_range_available);
     assert(same_function_first_candidate.splice_start_offset == same_function_second_candidate.splice_start_offset);
     assert(same_function_first_candidate.splice_end_offset == same_function_second_candidate.splice_end_offset);
+    assert(same_function_first_candidate.source_line == 46);
+    assert(same_function_second_candidate.source_line == 51);
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
@@ -8571,6 +8573,8 @@ auto main() -> int {
     assert(same_function_splice_conflict.function_symbol_name == same_function_first_candidate.function_symbol_name);
     assert(same_function_splice_conflict.left_candidate_index == 0);
     assert(same_function_splice_conflict.right_candidate_index == 1);
+    assert(same_function_splice_conflict.left_source_line == 46);
+    assert(same_function_splice_conflict.right_source_line == 51);
     assert(same_function_splice_conflict.left_splice_start_offset == same_function_first_candidate.splice_start_offset);
     assert(same_function_splice_conflict.left_splice_end_offset == same_function_first_candidate.splice_end_offset);
     assert(same_function_splice_conflict.right_splice_start_offset == same_function_second_candidate.splice_start_offset);
@@ -8644,7 +8648,7 @@ auto main() -> int {
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_text ==
-        "runtime-index cleanup blocked: overlapping same-function splice ranges"
+        "runtime-index cleanup blocked: overlapping same-function splice ranges left-line 46 right-line 51"
     );
     assert(
         !runtime_indexed_same_function_cleanup
@@ -8704,6 +8708,8 @@ auto main() -> int {
     assert(non_overlap_first_candidate.splice_range_available);
     assert(non_overlap_second_candidate.splice_range_available);
     assert(non_overlap_first_candidate.splice_end_offset <= non_overlap_second_candidate.splice_start_offset);
+    assert(non_overlap_first_candidate.source_line == 47);
+    assert(non_overlap_second_candidate.source_line == 55);
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state

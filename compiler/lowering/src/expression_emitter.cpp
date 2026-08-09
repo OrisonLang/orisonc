@@ -583,6 +583,7 @@ auto record_runtime_indexed_constructor_ownership(
         return false;
     }
     owner->constructor_move_enabled = constructor_move_enabled;
+    owner->source_line = argument.line;
     record_runtime_indexed_partial_owner(
         session.state.ownership_transfers,
         *owner,
