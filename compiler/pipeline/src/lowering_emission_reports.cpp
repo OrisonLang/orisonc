@@ -1531,24 +1531,32 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state,
     RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state,
     RuntimeIndexedCleanupModuleIrMutationState const& mutation_state,
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
     RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
+    auto const function_splice_conflict_free =
+        function_verification_state.splice_conflict_count == 0;
     auto const function_mutation_ready =
         function_mutation_state.mutation_requested &&
         function_mutation_state.candidate_verified &&
         function_mutation_state.mutation_applied &&
         function_mutation_state.module_matches_candidate &&
-        function_mutation_state.llvm_verifier_passed;
+        function_mutation_state.llvm_verifier_passed &&
+        function_splice_conflict_free;
     auto readiness_state = RuntimeIndexedCleanupModuleIrProductionReadinessState {
         .insertion_gate_ready = insertion_gate_state.insertion_enabled,
         .insertion_preview_ready = preview_state.preview_available &&
             preview_state.insertion_point_found,
         .candidate_ready = candidate_state.candidate_available || function_mutation_state.mutation_requested,
-        .candidate_verified = verification_state.verified || function_mutation_state.candidate_verified,
+        .candidate_verified =
+            verification_state.verified ||
+            (function_mutation_state.candidate_verified && function_splice_conflict_free),
         .module_mutation_enabled =
             (mutation_state.mutation_applied && mutation_state.module_matches_candidate) ||
             function_mutation_ready,
         .function_integration_ready = function_mutation_ready,
+        .function_splice_conflict_free = function_splice_conflict_free,
+        .function_splice_conflict_count = function_verification_state.splice_conflict_count,
     };
     readiness_state.production_ready =
         readiness_state.insertion_gate_ready &&
@@ -1556,7 +1564,12 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         readiness_state.candidate_ready &&
         readiness_state.candidate_verified &&
         readiness_state.module_mutation_enabled &&
-        readiness_state.function_integration_ready;
+        readiness_state.function_integration_ready &&
+        readiness_state.function_splice_conflict_free;
+    if (!readiness_state.function_splice_conflict_free) {
+        readiness_state.diagnostic_text =
+            "runtime-index cleanup blocked: overlapping same-function splice ranges";
+    }
     return readiness_state;
 }
 
@@ -2494,6 +2507,7 @@ void populate_lowering_emission_reports(
             result.runtime_indexed_cleanup_module_ir_candidate_state,
             result.runtime_indexed_cleanup_module_ir_candidate_verification_state,
             result.runtime_indexed_cleanup_module_ir_mutation_state,
+            result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
         );
     result.runtime_indexed_cleanup_audit_lines =

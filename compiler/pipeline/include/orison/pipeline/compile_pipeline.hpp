@@ -456,7 +456,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool candidate_verified = false;
     bool module_mutation_enabled = false;
     bool function_integration_ready = false;
+    bool function_splice_conflict_free = false;
     bool production_ready = false;
+    std::size_t function_splice_conflict_count = 0;
+    std::string diagnostic_text;
 };
 
 struct ComputedDynamicArrayForDescriptorRenderState {

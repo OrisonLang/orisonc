@@ -295,7 +295,12 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
            << " candidate-verification " << (state.candidate_verified ? "verified" : "blocked")
            << " module-mutation " << (state.module_mutation_enabled ? "enabled" : "disabled")
            << " function-integration " << (state.function_integration_ready ? "ready" : "blocked")
+           << " splice-conflicts " << state.function_splice_conflict_count
+           << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
            << " production " << (state.production_ready ? "ready" : "blocked");
+    if (!state.diagnostic_text.empty()) {
+        report << " diagnostic " << state.diagnostic_text;
+    }
     return report.str();
 }
 

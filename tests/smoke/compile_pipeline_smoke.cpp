@@ -8633,6 +8633,22 @@ auto main() -> int {
     assert(
         !runtime_indexed_same_function_cleanup
              .runtime_indexed_cleanup_module_ir_production_readiness_state
+             .function_splice_conflict_free
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_splice_conflict_count == 1
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_text ==
+        "runtime-index cleanup blocked: overlapping same-function splice ranges"
+    );
+    assert(
+        !runtime_indexed_same_function_cleanup
+             .runtime_indexed_cleanup_module_ir_production_readiness_state
              .production_ready
     );
 
@@ -8762,6 +8778,21 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
             .function_integration_ready
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_splice_conflict_free
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .function_splice_conflict_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_text.empty()
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup

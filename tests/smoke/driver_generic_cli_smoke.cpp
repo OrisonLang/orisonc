@@ -141,7 +141,8 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration ready production ready"
+        "module-mutation enabled function-integration ready splice-conflicts 0 "
+        "splice-conflict-check clear production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -179,7 +180,8 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration ready production ready"
+        "module-mutation enabled function-integration ready splice-conflicts 0 "
+        "splice-conflict-check clear production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -204,7 +206,8 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration ready production ready"
+        "module-mutation enabled function-integration ready splice-conflicts 0 "
+        "splice-conflict-check clear production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -234,7 +237,9 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration blocked production blocked"
+        "module-mutation enabled function-integration blocked splice-conflicts 1 "
+        "splice-conflict-check blocked production blocked diagnostic runtime-index cleanup blocked: "
+        "overlapping same-function splice ranges"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }

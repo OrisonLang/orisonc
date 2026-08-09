@@ -1328,6 +1328,9 @@ representation.
 - Runtime-index cleanup function-module verification now records typed same-function splice conflicts. Audit output
   reports the conflict count in the verification summary and emits detail lines naming the function, candidate indexes,
   and overlapping splice ranges.
+- Runtime-index cleanup production-readiness now consumes typed same-function splice conflicts. Overlapping
+  same-function splice ranges block the readiness splice-conflict check and render a dedicated diagnostic instead of
+  relying only on lower-level audit detail.
 
 ## Follow-up work
 
@@ -1336,5 +1339,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Promote overlapping same-function splice conflicts into a dedicated diagnostic when production compilation paths
-  would otherwise attempt runtime-index cleanup insertion.
+- Add source-span correlation to runtime-index cleanup splice-conflict diagnostics once computed-index ownership moves
+  are no longer audit-only.
