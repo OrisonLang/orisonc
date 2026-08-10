@@ -408,6 +408,10 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     if (!validation.succeeded()) {
         return RuntimeIndexedCleanupFunctionIrRewriteResult {
             .failure = validation.failure,
+            .validation_part_available = validation.part_available,
+            .validation_part_index = validation.part_index,
+            .validation_splice_start_offset = validation.splice_start_offset,
+            .validation_splice_end_offset = validation.splice_end_offset,
         };
     }
     auto composed = original_function_ir;

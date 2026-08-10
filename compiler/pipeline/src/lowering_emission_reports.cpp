@@ -1217,6 +1217,12 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
                 compose_non_overlapping_function_ir_rewrite_result(original_function, std::move(function_candidates));
             if (!composed_function_result.succeeded()) {
                 state.composition_failure = composed_function_result.failure;
+                state.composition_failure_part_available = composed_function_result.validation_part_available;
+                state.composition_failure_part_index = composed_function_result.validation_part_index;
+                state.composition_failure_splice_start_offset =
+                    composed_function_result.validation_splice_start_offset;
+                state.composition_failure_splice_end_offset =
+                    composed_function_result.validation_splice_end_offset;
                 return state;
             }
             composed_ir = replace_once(composed_ir, original_function, composed_function_result.rewritten_function_ir);
@@ -1283,6 +1289,11 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
                    << runtime_indexed_cleanup_ir_composition_failure_token(
                           state.diagnostic_composition_failure
                       );
+        if (state.diagnostic_composition_failure_part_available) {
+            diagnostic << " composition-part " << state.diagnostic_composition_failure_part_index
+                       << " splice-range " << state.diagnostic_composition_failure_splice_start_offset
+                       << ".." << state.diagnostic_composition_failure_splice_end_offset;
+        }
     }
     return diagnostic.str();
 }
@@ -1386,6 +1397,11 @@ auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
         if (blocker.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
             line << " composition-failure "
                  << runtime_indexed_cleanup_ir_composition_failure_token(blocker.composition_failure);
+            if (blocker.composition_failure_part_available) {
+                line << " composition-part " << blocker.composition_failure_part_index
+                     << " splice-range " << blocker.composition_failure_splice_start_offset
+                     << ".." << blocker.composition_failure_splice_end_offset;
+            }
         }
         lines.push_back(line.str());
     }
@@ -1398,13 +1414,21 @@ auto runtime_indexed_cleanup_readiness_blocker(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
     RuntimeIndexedCleanupIrCompositionFailure composition_failure =
-        RuntimeIndexedCleanupIrCompositionFailure::none
+        RuntimeIndexedCleanupIrCompositionFailure::none,
+    bool composition_failure_part_available = false,
+    std::size_t composition_failure_part_index = 0,
+    std::size_t composition_failure_splice_start_offset = 0,
+    std::size_t composition_failure_splice_end_offset = 0
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
     auto blocker = RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
         .kind = blocker_kind,
         .stage_name =
             std::string(runtime_indexed_cleanup_production_readiness_blocker_stage_name(blocker_kind)),
         .composition_failure = composition_failure,
+        .composition_failure_part_available = composition_failure_part_available,
+        .composition_failure_part_index = composition_failure_part_index,
+        .composition_failure_splice_start_offset = composition_failure_splice_start_offset,
+        .composition_failure_splice_end_offset = composition_failure_splice_end_offset,
     };
     if (!function_verification_state.verifications.empty()) {
         auto const& verification = function_verification_state.verifications.front();
@@ -1420,13 +1444,21 @@ auto append_runtime_indexed_cleanup_readiness_blocker(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
     RuntimeIndexedCleanupIrCompositionFailure composition_failure =
-        RuntimeIndexedCleanupIrCompositionFailure::none
+        RuntimeIndexedCleanupIrCompositionFailure::none,
+    bool composition_failure_part_available = false,
+    std::size_t composition_failure_part_index = 0,
+    std::size_t composition_failure_splice_start_offset = 0,
+    std::size_t composition_failure_splice_end_offset = 0
 ) -> void {
     readiness_state.blockers.push_back(
         runtime_indexed_cleanup_readiness_blocker(
             blocker_kind,
             function_verification_state,
-            composition_failure
+            composition_failure,
+            composition_failure_part_available,
+            composition_failure_part_index,
+            composition_failure_splice_start_offset,
+            composition_failure_splice_end_offset
         )
     );
 }
@@ -1444,6 +1476,13 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
         readiness_state.diagnostic_function_symbol_name = blocker.function_symbol_name;
     }
     readiness_state.diagnostic_composition_failure = blocker.composition_failure;
+    readiness_state.diagnostic_composition_failure_part_available =
+        blocker.composition_failure_part_available;
+    readiness_state.diagnostic_composition_failure_part_index = blocker.composition_failure_part_index;
+    readiness_state.diagnostic_composition_failure_splice_start_offset =
+        blocker.composition_failure_splice_start_offset;
+    readiness_state.diagnostic_composition_failure_splice_end_offset =
+        blocker.composition_failure_splice_end_offset;
     readiness_state.diagnostic_source_available = blocker.source_available;
     readiness_state.diagnostic_source_line = blocker.source_line;
 }
@@ -1542,7 +1581,11 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation,
             function_verification_state,
-            function_composition_failure
+            function_composition_failure,
+            function_mutation_state.composition_failure_part_available,
+            function_mutation_state.composition_failure_part_index,
+            function_mutation_state.composition_failure_splice_start_offset,
+            function_mutation_state.composition_failure_splice_end_offset
         );
     }
     if (!readiness_state.function_integration_ready) {
@@ -1550,7 +1593,11 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration,
             function_verification_state,
-            function_composition_failure
+            function_composition_failure,
+            function_mutation_state.composition_failure_part_available,
+            function_mutation_state.composition_failure_part_index,
+            function_mutation_state.composition_failure_splice_start_offset,
+            function_mutation_state.composition_failure_splice_end_offset
         );
     }
     apply_runtime_indexed_cleanup_first_readiness_blocker(readiness_state);

@@ -301,6 +301,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         empty_operation_result.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
     );
+    assert(!empty_operation_result.validation_part_available);
+    assert(empty_operation_result.validation_part_index == 0);
+    assert(empty_operation_result.validation_splice_start_offset == 0);
+    assert(empty_operation_result.validation_splice_end_offset == 0);
 
     auto invalid_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
         .parts = {
@@ -345,6 +349,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         invalid_operation_result.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
     );
+    assert(invalid_operation_result.validation_part_available);
+    assert(invalid_operation_result.validation_part_index == 1);
+    assert(invalid_operation_result.validation_splice_start_offset == 3);
+    assert(invalid_operation_result.validation_splice_end_offset == 3);
 
     auto missing_closing_function_ir = std::string {
         "define i32 @missing_closing() {\n"

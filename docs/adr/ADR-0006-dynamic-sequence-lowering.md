@@ -1433,6 +1433,9 @@ representation.
   reports finite failure tokens without mutating IR text, and the applicator consumes that validation result.
 - Runtime-index cleanup operation validation now carries typed failing-part diagnostics: part availability, part index,
   and splice start/end offsets. Direct smoke coverage pins the empty-operation and second-part invalid-operation paths.
+- Runtime-index cleanup mutation and production-readiness audit state now carry operation validation part diagnostics
+  through composition failures. CLI mutation reports and readiness diagnostics include `composition-part` and
+  `splice-range` only when those details are available.
 
 ## Follow-up work
 

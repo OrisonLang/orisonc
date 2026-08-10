@@ -488,7 +488,11 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     bool llvm_verifier_passed = false;
     RuntimeIndexedCleanupIrCompositionFailure composition_failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
+    bool composition_failure_part_available = false;
     std::size_t candidate_count = 0;
+    std::size_t composition_failure_part_index = 0;
+    std::size_t composition_failure_splice_start_offset = 0;
+    std::size_t composition_failure_splice_end_offset = 0;
     std::size_t final_module_line_count = 0;
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
@@ -511,6 +515,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
     std::string function_symbol_name;
     RuntimeIndexedCleanupIrCompositionFailure composition_failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
+    bool composition_failure_part_available = false;
+    std::size_t composition_failure_part_index = 0;
+    std::size_t composition_failure_splice_start_offset = 0;
+    std::size_t composition_failure_splice_end_offset = 0;
     bool source_available = false;
     std::size_t source_line = 0;
 };
@@ -532,6 +540,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     std::string diagnostic_function_symbol_name;
     RuntimeIndexedCleanupIrCompositionFailure diagnostic_composition_failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
+    bool diagnostic_composition_failure_part_available = false;
+    std::size_t diagnostic_composition_failure_part_index = 0;
+    std::size_t diagnostic_composition_failure_splice_start_offset = 0;
+    std::size_t diagnostic_composition_failure_splice_end_offset = 0;
     bool diagnostic_source_available = false;
     std::size_t diagnostic_source_line = 0;
     std::size_t diagnostic_left_candidate_index = 0;

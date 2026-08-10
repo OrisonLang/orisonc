@@ -9261,6 +9261,10 @@ auto main() -> int {
                     .function_symbol_name = "main",
                     .composition_failure =
                         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
+                    .composition_failure_part_available = true,
+                    .composition_failure_part_index = 2,
+                    .composition_failure_splice_start_offset = 144,
+                    .composition_failure_splice_end_offset = 188,
                     .source_available = true,
                     .source_line = 55,
                 },
@@ -9270,6 +9274,10 @@ auto main() -> int {
             .diagnostic_function_symbol_name = "main",
             .diagnostic_composition_failure =
                 orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
+            .diagnostic_composition_failure_part_available = true,
+            .diagnostic_composition_failure_part_index = 2,
+            .diagnostic_composition_failure_splice_start_offset = 144,
+            .diagnostic_composition_failure_splice_end_offset = 188,
             .diagnostic_source_available = true,
             .diagnostic_source_line = 55,
         };
@@ -9280,7 +9288,7 @@ auto main() -> int {
     assert(
         composition_failure_readiness.diagnostic_text ==
         "runtime-index cleanup blocked: module mutation disabled "
-        "composition-failure missing-cleanup-cfg-tail"
+        "composition-failure missing-cleanup-cfg-tail composition-part 2 splice-range 144..188"
     );
     assert(
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
@@ -9288,7 +9296,7 @@ auto main() -> int {
         ).find(
             "blocker-count 1 blocker-kind module-mutation function main source-line 55 "
             "diagnostic runtime-index cleanup blocked: module mutation disabled "
-            "composition-failure missing-cleanup-cfg-tail"
+            "composition-failure missing-cleanup-cfg-tail composition-part 2 splice-range 144..188"
         ) != std::string::npos
     );
     auto const composition_failure_blockers =
@@ -9299,7 +9307,7 @@ auto main() -> int {
     assert(
         composition_failure_blockers.front().find(
             "index 0 kind module-mutation stage module mutation function main source-line 55 "
-            "composition-failure missing-cleanup-cfg-tail"
+            "composition-failure missing-cleanup-cfg-tail composition-part 2 splice-range 144..188"
         ) != std::string::npos
     );
 

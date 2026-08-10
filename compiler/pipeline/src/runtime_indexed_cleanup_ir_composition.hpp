@@ -55,6 +55,10 @@ struct RuntimeIndexedCleanupFunctionIrRewriteResult {
     std::string rewritten_function_ir;
     RuntimeIndexedCleanupIrCompositionFailure failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
+    bool validation_part_available = false;
+    std::size_t validation_part_index = 0;
+    std::size_t validation_splice_start_offset = 0;
+    std::size_t validation_splice_end_offset = 0;
 
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
