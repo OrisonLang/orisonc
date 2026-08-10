@@ -119,9 +119,44 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     );
 }
 
+void assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured() {
+    auto const original_function_ir =
+        std::string {
+            "define i32 @single() {\n"
+            "entry:\n"
+            "  br label %join\n"
+            "\n"
+            "join:\n"
+            "  %x = phi i32 [ 1, %entry ]\n"
+            "  ret i32 %x\n"
+            "}\n"
+        };
+    auto const insertion = orison::pipeline::RuntimeIndexedCleanupFunctionIrInsertion {
+        .predecessor_block_name = "entry",
+        .inserted_branch_text = "br label %entry.runtime_cleanup.entry",
+        .cfg_lines = {
+            "  br label %entry.runtime_cleanup.entry\n",
+            "entry.runtime_cleanup.entry:\n",
+            "  br label %entry.runtime_cleanup.exit\n",
+            "\n",
+            "entry.runtime_cleanup.exit:\n",
+        },
+    };
+
+    auto const rewritten =
+        orison::pipeline::rewrite_predecessor_terminator_and_insert_cfg(original_function_ir, insertion);
+
+    assert(!rewritten.empty());
+    assert(rewritten.find("entry:\n  br label %entry.runtime_cleanup.entry\n") != std::string::npos);
+    assert(rewritten.find("entry.runtime_cleanup.entry:\n") != std::string::npos);
+    assert(rewritten.find("entry.runtime_cleanup.exit:\n  br label %join\n") != std::string::npos);
+    assert(rewritten.find("%x = phi i32 [ 1, %entry.runtime_cleanup.exit ]") != std::string::npos);
+}
+
 } // namespace
 
 auto main() -> int {
     assert_runtime_indexed_cleanup_ir_composition_parts_are_structured();
+    assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured();
     return 0;
 }

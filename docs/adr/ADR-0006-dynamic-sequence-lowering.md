@@ -1405,6 +1405,9 @@ representation.
   data, separating candidate verification from the remaining text rewrite step.
 - Same-function runtime-index cleanup IR composition now lives in a named pipeline-internal support module with focused
   smoke coverage for composition parts, branch replacement, cleanup CFG tail appending, and PHI predecessor retargeting.
+- Single-candidate runtime-index cleanup predecessor rewrite now lives in the same pipeline-internal support module.
+  Focused smoke coverage pins inserted-branch replacement, cleanup CFG tail insertion, continuation branch restoration,
+  and PHI predecessor retargeting for that boundary.
 
 ## Follow-up work
 

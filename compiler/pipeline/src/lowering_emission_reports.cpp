@@ -15,12 +15,6 @@ namespace orison::pipeline {
 
 namespace {
 
-struct RuntimeIndexedCleanupFunctionIrInsertion {
-    std::string predecessor_block_name;
-    std::string inserted_branch_text;
-    std::vector<std::string> cfg_lines;
-};
-
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -209,120 +203,6 @@ auto predecessor_terminator_position(
         return std::string::npos;
     }
     return block_start + block_text.find(terminator);
-}
-
-auto trailing_label_name(std::vector<std::string> const& lines) -> std::string {
-    for (auto line = lines.rbegin(); line != lines.rend(); ++line) {
-        if (line->empty() || line->back() != '\n') {
-            continue;
-        }
-        auto label = line->substr(0, line->size() - 1);
-        if (!label.empty() && label.back() == ':') {
-            label.pop_back();
-            return label;
-        }
-    }
-    return {};
-}
-
-auto retarget_phi_incoming_predecessor(
-    std::string const& function_ir,
-    std::string const& old_predecessor_name,
-    std::string const& new_predecessor_name
-) -> std::string {
-    if (old_predecessor_name.empty() || new_predecessor_name.empty()) {
-        return {};
-    }
-
-    auto rewritten = std::string {};
-    auto search_position = std::string::size_type {0};
-    auto const old_incoming = ", %" + old_predecessor_name + " ]";
-    auto const new_incoming = ", %" + new_predecessor_name + " ]";
-    while (search_position < function_ir.size()) {
-        auto const line_end = function_ir.find('\n', search_position);
-        auto const line =
-            line_end == std::string::npos
-                ? function_ir.substr(search_position)
-                : function_ir.substr(search_position, line_end - search_position);
-        auto next_line = line;
-        if (next_line.find(" = phi ") != std::string::npos) {
-            auto incoming_position = std::string::size_type {0};
-            while ((incoming_position = next_line.find(old_incoming, incoming_position)) != std::string::npos) {
-                next_line.replace(incoming_position, old_incoming.size(), new_incoming);
-                incoming_position += new_incoming.size();
-            }
-        }
-        rewritten += next_line;
-        if (line_end == std::string::npos) {
-            break;
-        }
-        rewritten += '\n';
-        search_position = line_end + 1;
-    }
-    return rewritten;
-}
-
-auto rewrite_predecessor_terminator_and_insert_cfg(
-    std::string const& function_ir,
-    RuntimeIndexedCleanupFunctionIrInsertion const& insertion
-) -> std::string {
-    if (function_ir.empty() || insertion.predecessor_block_name.empty() ||
-        insertion.inserted_branch_text.empty() || insertion.cfg_lines.empty()) {
-        return {};
-    }
-
-    auto const closing_position = function_ir.rfind("\n}\n");
-    if (closing_position == std::string::npos) {
-        return {};
-    }
-
-    auto const block_start = block_start_position(function_ir, insertion.predecessor_block_name);
-    auto const block_end = block_end_position(function_ir, block_start);
-    if (block_start == std::string::npos || block_end == std::string::npos) {
-        return {};
-    }
-
-    auto const block_text = function_ir.substr(block_start, block_end - block_start);
-    auto const replaced_branch = predecessor_terminator_pattern(
-        function_ir,
-        insertion.predecessor_block_name
-    );
-    auto const inserted_branch = "  " + insertion.inserted_branch_text + "\n";
-    if (replaced_branch.empty()) {
-        return {};
-    }
-    auto const terminator_position_in_block = block_text.find(replaced_branch);
-    if (terminator_position_in_block == std::string::npos ||
-        occurrence_count(block_text, replaced_branch) != 1) {
-        return {};
-    }
-
-    auto const terminator_position = block_start + terminator_position_in_block;
-    auto rewritten_function = function_ir.substr(0, terminator_position);
-    rewritten_function += inserted_branch;
-    rewritten_function += function_ir.substr(terminator_position + replaced_branch.size());
-
-    auto const rewritten_closing_position = rewritten_function.rfind("\n}\n");
-    if (rewritten_closing_position == std::string::npos) {
-        return {};
-    }
-
-    auto candidate = rewritten_function.substr(0, rewritten_closing_position + 1);
-    for (auto line_index = std::size_t {1}; line_index < insertion.cfg_lines.size(); ++line_index) {
-        candidate += insertion.cfg_lines[line_index];
-    }
-    candidate += replaced_branch;
-    candidate += "}\n";
-    auto const cleanup_exit_block_name = trailing_label_name(insertion.cfg_lines);
-    auto phi_retargeted_candidate = retarget_phi_incoming_predecessor(
-        candidate,
-        insertion.predecessor_block_name,
-        cleanup_exit_block_name
-    );
-    if (phi_retargeted_candidate.empty()) {
-        return {};
-    }
-    return phi_retargeted_candidate;
 }
 
 auto build_runtime_indexed_cleanup_function_ir_insertion(
