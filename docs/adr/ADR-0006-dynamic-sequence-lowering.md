@@ -1388,6 +1388,10 @@ representation.
 - Source-derived record Drop definitions now delegate owned nested record fields and finite `Array<Record, N>` fields
   to their generated source Drop symbols, then store `zeroinitializer` into each delegated slot. This extends the same
   idempotent cleanup guarantee beyond direct `DynamicArray<T>` fields.
+- Function-return cleanup now uses emitted source Drop symbols for local owned record slots and finite
+  `Array<Record, N>` locals that have nested `DynamicArray<T>` descriptor cleanup obligations. The source Drop call
+  clears each covered slot and removes covered nested descriptor cleanup plans before ordinary local descriptor cleanup
+  runs; runtime-index owners keep their specialized live-element cleanup and moved-slot skip path.
 
 ## Follow-up work
 

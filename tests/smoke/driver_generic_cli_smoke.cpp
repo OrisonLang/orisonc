@@ -316,6 +316,32 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i32 @select_outer(i64 %index)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.SelectedOuter(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Outer(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Outer(ptr %SelectedOuter.drop.item.addr)") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Inner(ptr %Outer.drop.primary.addr)") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Inner(ptr %Outer.drop.items.drop.element.addr)") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.SelectedOuter(ptr %selected.addr)") != std::string::npos);
+    assert(output.find("store %record.SelectedOuter zeroinitializer, ptr %selected.addr") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Outer(ptr %outers.runtime_cleanup.element.addr)") !=
+        std::string::npos);
+    assert(output.find("store %record.Outer zeroinitializer, ptr %outers.runtime_cleanup.element.addr") !=
+        std::string::npos);
+    assert(output.find("%outers.source_drop.element") == std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -3069,6 +3095,15 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or",
         smoke_temp_root / "runtime_indexed_cleanup_non_overlapping"
+    );
+    assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_nested_source_drop.or"
+    );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_cleanup_nested_source_drop.or",
+        smoke_temp_root / "runtime_indexed_cleanup_nested_source_drop"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,

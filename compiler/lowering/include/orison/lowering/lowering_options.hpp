@@ -67,6 +67,7 @@ struct LlvmIrEmissionOptions {
     bool collect_aggregate_projection_access_metadata = false;
     bool enable_runtime_indexed_cleanup_emission = false;
     bool enable_runtime_indexed_constructor_move = false;
+    std::vector<std::string> source_drop_definition_symbols;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 

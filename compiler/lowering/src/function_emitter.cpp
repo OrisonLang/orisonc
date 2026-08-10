@@ -217,6 +217,261 @@ auto is_thread_join_expression(
     return state.thread_bindings.contains(expression.left->left->text);
 }
 
+auto source_type_has_dynamic_array_cleanup_descendant(
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t depth = 0
+) -> bool {
+    if (depth > 16) {
+        return false;
+    }
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array) {
+        return true;
+    }
+    if (auto element_source_type = array_element_source_type_name(source_type_name)) {
+        return source_type_has_dynamic_array_cleanup_descendant(
+            *element_source_type,
+            context,
+            depth + 1
+        );
+    }
+    auto const record = context.records.find(std::string {source_type_name});
+    if (record == context.records.end()) {
+        return false;
+    }
+    return std::ranges::any_of(
+        record->second.fields,
+        [&](LoweredRecordField const& field) {
+            return source_type_has_dynamic_array_cleanup_descendant(
+                field.source_type_name,
+                context,
+                depth + 1
+            );
+        }
+    );
+}
+
+auto source_drop_symbol_available(
+    std::string_view source_type_name,
+    LlvmIrEmissionOptions const& options
+) -> std::optional<std::string> {
+    auto symbol_name = semantics::drop_abi_symbol_name(source_type_name);
+    if (std::ranges::find(options.source_drop_definition_symbols, symbol_name) ==
+        options.source_drop_definition_symbols.end()) {
+        return std::nullopt;
+    }
+    return symbol_name;
+}
+
+auto owner_has_runtime_indexed_cleanup_plan(
+    std::string_view owner_name,
+    FunctionLoweringState const& state
+) -> bool {
+    return std::ranges::any_of(
+        state.ownership_transfers.runtime_indexed_cleanup_emission_plans,
+        [&](RuntimeIndexedCleanupEmissionPlan const& plan) {
+            return plan.owner_name == owner_name;
+        }
+    );
+}
+
+auto owner_has_local_dynamic_array_cleanup_plan(
+    std::string_view owner_name,
+    FunctionLoweringState const& state
+) -> bool {
+    auto owner_prefix = std::string {owner_name};
+    owner_prefix += ".";
+    return std::ranges::any_of(
+        state.dynamic_array_local_cleanup_plans,
+        [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+            return plan.owner_name == owner_name || plan.owner_name.starts_with(owner_prefix);
+        }
+    );
+}
+
+auto owner_has_local_dynamic_array_cleanup_plan(
+    std::string_view owner_name,
+    FunctionLoweringSession const& session
+) -> bool {
+    return owner_has_local_dynamic_array_cleanup_plan(owner_name, session.state);
+}
+
+void remove_local_dynamic_array_cleanup_plans_for_owner(
+    std::string_view owner_name,
+    FunctionLoweringState& state
+) {
+    auto owner_prefix = std::string {owner_name};
+    owner_prefix += ".";
+    auto& plans = state.dynamic_array_local_cleanup_plans;
+    plans.erase(
+        std::remove_if(
+            plans.begin(),
+            plans.end(),
+            [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+                return plan.owner_name == owner_name || plan.owner_name.starts_with(owner_prefix);
+            }
+        ),
+        plans.end()
+    );
+}
+
+void remove_local_dynamic_array_cleanup_plans_for_owner(
+    std::string_view owner_name,
+    FunctionLoweringSession& session
+) {
+    remove_local_dynamic_array_cleanup_plans_for_owner(owner_name, session.state);
+}
+
+void remove_runtime_indexed_owner_local_dynamic_array_cleanup_plans(FunctionLoweringSession& session) {
+    auto owner_names = std::vector<std::string> {};
+    owner_names.reserve(session.state.ownership_transfers.runtime_indexed_cleanup_emission_plans.size());
+    for (auto const& plan : session.state.ownership_transfers.runtime_indexed_cleanup_emission_plans) {
+        owner_names.push_back(plan.owner_name);
+    }
+    std::ranges::sort(owner_names);
+    auto const duplicate = std::ranges::unique(owner_names);
+    owner_names.erase(duplicate.begin(), duplicate.end());
+    for (auto const& owner_name : owner_names) {
+        remove_local_dynamic_array_cleanup_plans_for_owner(owner_name, session);
+    }
+}
+
+auto emit_source_drop_record_local_cleanups(
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    auto names = std::vector<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (std::ranges::find(session.state.parameter_names, name) != session.state.parameter_names.end()) {
+            continue;
+        }
+        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+            continue;
+        }
+        auto const record = context.lowering.records.find(source_type_name);
+        if (record == context.lowering.records.end()) {
+            continue;
+        }
+        if (!source_type_has_dynamic_array_cleanup_descendant(source_type_name, context.lowering)) {
+            continue;
+        }
+        if (!owner_has_local_dynamic_array_cleanup_plan(name, session)) {
+            continue;
+        }
+        if (!source_drop_symbol_available(source_type_name, context.options).has_value()) {
+            continue;
+        }
+        if (!aggregate_storage_for_name(name, session.state).has_value()) {
+            continue;
+        }
+        names.push_back(name);
+    }
+    std::ranges::sort(names);
+
+    for (auto const& name : names) {
+        auto const source_type = session.state.source_type_names.find(name);
+        if (source_type == session.state.source_type_names.end()) {
+            continue;
+        }
+        auto const record = context.lowering.records.find(source_type->second);
+        auto const storage = aggregate_storage_for_name(name, session.state);
+        auto const symbol = source_drop_symbol_available(source_type->second, context.options);
+        if (record == context.lowering.records.end() || !storage.has_value() || !symbol.has_value()) {
+            continue;
+        }
+
+        output << "  call void @" << *symbol << "(ptr " << *storage << ")\n";
+        output << "  store " << record->second.llvm_type_name << " zeroinitializer, ptr " << *storage << "\n";
+        remove_local_dynamic_array_cleanup_plans_for_owner(name, session);
+        mark_owned_binding_consumed(session.state.ownership_transfers, name);
+    }
+    return true;
+}
+
+auto emit_source_drop_fixed_array_local_cleanups(
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    auto names = std::vector<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (std::ranges::find(session.state.parameter_names, name) != session.state.parameter_names.end()) {
+            continue;
+        }
+        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+            continue;
+        }
+        if (owner_has_runtime_indexed_cleanup_plan(name, session.state)) {
+            continue;
+        }
+        auto element_source_type = array_element_source_type_name(source_type_name);
+        if (!element_source_type.has_value()) {
+            continue;
+        }
+        if (!context.lowering.records.contains(*element_source_type)) {
+            continue;
+        }
+        if (!source_type_has_dynamic_array_cleanup_descendant(*element_source_type, context.lowering)) {
+            continue;
+        }
+        if (!owner_has_local_dynamic_array_cleanup_plan(name, session)) {
+            continue;
+        }
+        if (!source_drop_symbol_available(*element_source_type, context.options).has_value()) {
+            continue;
+        }
+        if (!aggregate_storage_for_name(name, session.state).has_value()) {
+            continue;
+        }
+        names.push_back(name);
+    }
+    std::ranges::sort(names);
+
+    for (auto const& name : names) {
+        auto const source_type = session.state.source_type_names.find(name);
+        if (source_type == session.state.source_type_names.end()) {
+            continue;
+        }
+        auto const element_source_type = array_element_source_type_name(source_type->second);
+        auto const array_type = lowered_type_for_source_type_name(source_type->second, context.lowering);
+        auto const storage = aggregate_storage_for_name(name, session.state);
+        if (!element_source_type.has_value() || !array_type.has_value() || !storage.has_value()) {
+            continue;
+        }
+        auto const parsed_array_type = parse_llvm_array_type(array_type->type);
+        auto const symbol = source_drop_symbol_available(*element_source_type, context.options);
+        if (!parsed_array_type.has_value() || !symbol.has_value()) {
+            continue;
+        }
+
+        for (auto index = std::size_t {0}; index < parsed_array_type->length; ++index) {
+            auto element_pointer = "%" + name + ".source_drop.element" + std::to_string(index) + ".addr" +
+                std::to_string(session.state.next_temporary_index++);
+            output << "  " << element_pointer << " = getelementptr " << array_type->type
+                   << ", ptr " << *storage << ", i64 0, i64 " << index << "\n";
+            output << "  call void @" << *symbol << "(ptr " << element_pointer << ")\n";
+            output << "  store " << parsed_array_type->element_type << " zeroinitializer, ptr "
+                   << element_pointer << "\n";
+        }
+        remove_local_dynamic_array_cleanup_plans_for_owner(name, session);
+        mark_owned_binding_consumed(session.state.ownership_transfers, name);
+    }
+    return true;
+}
+
+auto emit_source_drop_local_cleanups(
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    return emit_source_drop_record_local_cleanups(context, session, output) &&
+        emit_source_drop_fixed_array_local_cleanups(context, session, output);
+}
+
 auto emit_function_return_cleanup(
     EmissionContext const& context,
     FunctionLoweringSession& session,
@@ -234,6 +489,10 @@ auto emit_function_return_cleanup(
     )) {
         return false;
     }
+    if (!emit_source_drop_local_cleanups(context, session, output)) {
+        return false;
+    }
+    remove_runtime_indexed_owner_local_dynamic_array_cleanup_plans(session);
     if (!emit_local_dynamic_array_cleanups(context, session, output)) {
         return false;
     }
@@ -243,11 +502,39 @@ auto emit_function_return_cleanup(
     return emit_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 
+void release_returned_owned_cleanup_expression(
+    syntax::ExpressionSyntax const& expression,
+    FunctionLoweringState& state
+) {
+    if (expression.kind == syntax::ExpressionKind::name &&
+        owner_has_local_dynamic_array_cleanup_plan(expression.text, state)) {
+        remove_local_dynamic_array_cleanup_plans_for_owner(expression.text, state);
+        mark_owned_binding_consumed(state.ownership_transfers, expression.text);
+        return;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr) {
+        release_returned_owned_cleanup_expression(*expression.right, state);
+    }
+    if (expression.kind == syntax::ExpressionKind::ternary && expression.alternate != nullptr) {
+        release_returned_owned_cleanup_expression(*expression.alternate, state);
+    }
+    if (expression.kind != syntax::ExpressionKind::call &&
+        expression.kind != syntax::ExpressionKind::array_literal) {
+        return;
+    }
+    for (auto const& argument : expression.arguments) {
+        release_returned_owned_cleanup_expression(argument, state);
+    }
+}
+
 void release_returned_dynamic_array_local_cleanup(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
     FunctionLoweringState& state
 ) {
+    release_returned_owned_cleanup_expression(expression, state);
+
     if (!return_source_type_name.has_value() ||
         dynamic_array_element_source_type_name(*return_source_type_name) == std::nullopt ||
         expression.kind != syntax::ExpressionKind::name) {

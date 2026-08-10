@@ -3323,6 +3323,8 @@ auto emit_module(
     }
     auto source_defined_drop_symbols =
         collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations, options);
+    auto function_options = options;
+    function_options.source_drop_definition_symbols = source_defined_drop_symbols;
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
     if (!validate_prelude_module_symbols(
             module,
@@ -3361,7 +3363,7 @@ auto emit_module(
             string_constants,
             semantic_result,
             result.diagnostics,
-            options
+            function_options
         );
         output << function_emission.ir_text;
         append_function_emission_reports(result, function_emission);
@@ -3381,7 +3383,7 @@ auto emit_module(
             string_constants,
             semantic_result,
             result.diagnostics,
-            options
+            function_options
         );
         output << function_emission.ir_text;
         append_function_emission_reports(result, function_emission);
@@ -3405,7 +3407,7 @@ auto emit_module(
             string_constants,
             semantic_result,
             result.diagnostics,
-            options
+            function_options
         );
         output << function_emission.ir_text;
         append_function_emission_reports(result, function_emission);
@@ -3451,7 +3453,7 @@ auto emit_module(
             string_constants,
             semantic_result,
             result.diagnostics,
-            options
+            function_options
         );
         output << function_emission.ir_text;
         append_function_emission_reports(result, function_emission);

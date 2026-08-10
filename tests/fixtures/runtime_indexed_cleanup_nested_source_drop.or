@@ -1,0 +1,55 @@
+package tests.fixtures.runtime_indexed_cleanup_nested_source_drop
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Inner
+    values: DynamicArray<Payload>
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    primary: Inner
+    items: Array<Inner, 2>
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+record SelectedOuter
+    item: Outer
+
+implements Drop for SelectedOuter
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_inner(seed: UInt32) -> Inner
+    Inner(make_values(seed))
+
+function make_outer(seed: UInt32) -> Outer
+    var items: Array<Inner, 2> = [make_inner(seed + 10 as UInt32), make_inner(seed + 20 as UInt32)]
+    var primary: Inner = make_inner(seed)
+    Outer(primary, items)
+
+function select_outer(index: UInt64) -> UInt32
+    var outers: Array<Outer, 2> = [make_outer(1 as UInt32), make_outer(100 as UInt32)]
+    var selected: SelectedOuter = SelectedOuter(outers[index])
+    0 as UInt32
+
+function main() -> UInt32
+    select_outer(1 as UInt64)
