@@ -1397,6 +1397,9 @@ representation.
 - Function-return source Drop cleanup now skips record owners that contain runtime-index cleanup owners, allowing the
   runtime-index loop to remain the authoritative live-element cleanup path. CLI smoke now covers a moved choice payload
   whose selected variant owns a nested `DynamicArray<Payload>` descriptor.
+- Runtime-index cleanup function IR mutation now receives predecessor, inserted branch, and CFG tail data through a
+  structured insertion object before text mutation. This keeps the current splice implementation behavior intact while
+  shrinking the raw string/vector API surface that still needs replacement by a fuller structured IR representation.
 
 ## Follow-up work
 

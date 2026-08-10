@@ -14,6 +14,12 @@ namespace orison::pipeline {
 
 namespace {
 
+struct RuntimeIndexedCleanupFunctionIrInsertion {
+    std::string predecessor_block_name;
+    std::string inserted_branch_text;
+    std::vector<std::string> cfg_lines;
+};
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -257,11 +263,10 @@ auto retarget_phi_incoming_predecessor(
 
 auto rewrite_predecessor_terminator_and_insert_cfg(
     std::string const& function_ir,
-    std::string const& predecessor_block_name,
-    std::string const& inserted_branch_text,
-    std::vector<std::string> const& candidate_cfg_lines
+    RuntimeIndexedCleanupFunctionIrInsertion const& insertion
 ) -> std::string {
-    if (function_ir.empty() || candidate_cfg_lines.empty()) {
+    if (function_ir.empty() || insertion.predecessor_block_name.empty() ||
+        insertion.inserted_branch_text.empty() || insertion.cfg_lines.empty()) {
         return {};
     }
 
@@ -270,15 +275,18 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
         return {};
     }
 
-    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_start = block_start_position(function_ir, insertion.predecessor_block_name);
     auto const block_end = block_end_position(function_ir, block_start);
     if (block_start == std::string::npos || block_end == std::string::npos) {
         return {};
     }
 
     auto const block_text = function_ir.substr(block_start, block_end - block_start);
-    auto const replaced_branch = predecessor_terminator_pattern(function_ir, predecessor_block_name);
-    auto const inserted_branch = "  " + inserted_branch_text + "\n";
+    auto const replaced_branch = predecessor_terminator_pattern(
+        function_ir,
+        insertion.predecessor_block_name
+    );
+    auto const inserted_branch = "  " + insertion.inserted_branch_text + "\n";
     if (replaced_branch.empty()) {
         return {};
     }
@@ -299,21 +307,31 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
     }
 
     auto candidate = rewritten_function.substr(0, rewritten_closing_position + 1);
-    for (auto line_index = std::size_t {1}; line_index < candidate_cfg_lines.size(); ++line_index) {
-        candidate += candidate_cfg_lines[line_index];
+    for (auto line_index = std::size_t {1}; line_index < insertion.cfg_lines.size(); ++line_index) {
+        candidate += insertion.cfg_lines[line_index];
     }
     candidate += replaced_branch;
     candidate += "}\n";
-    auto const cleanup_exit_block_name = trailing_label_name(candidate_cfg_lines);
+    auto const cleanup_exit_block_name = trailing_label_name(insertion.cfg_lines);
     auto phi_retargeted_candidate = retarget_phi_incoming_predecessor(
         candidate,
-        predecessor_block_name,
+        insertion.predecessor_block_name,
         cleanup_exit_block_name
     );
     if (phi_retargeted_candidate.empty()) {
         return {};
     }
     return phi_retargeted_candidate;
+}
+
+auto build_runtime_indexed_cleanup_function_ir_insertion(
+    RuntimeIndexedCleanupFunctionCfgRewritePlan const& rewrite_plan
+) -> RuntimeIndexedCleanupFunctionIrInsertion {
+    return RuntimeIndexedCleanupFunctionIrInsertion {
+        .predecessor_block_name = rewrite_plan.predecessor_block_name,
+        .inserted_branch_text = rewrite_plan.inserted_branch_text,
+        .cfg_lines = rewrite_plan.candidate_cfg_lines,
+    };
 }
 
 auto replace_once(
@@ -1056,9 +1074,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
         candidate.candidate_function_ir_text =
             rewrite_predecessor_terminator_and_insert_cfg(
                 candidate.original_function_ir_text,
-                rewrite_plan.predecessor_block_name,
-                rewrite_plan.inserted_branch_text,
-                rewrite_plan.candidate_cfg_lines
+                build_runtime_indexed_cleanup_function_ir_insertion(rewrite_plan)
             );
         candidate.candidate_available =
             rewrite_plan.rewrite_candidate_available &&
