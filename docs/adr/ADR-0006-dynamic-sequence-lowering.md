@@ -1425,6 +1425,8 @@ representation.
 - Same-function runtime-index cleanup composition now builds a typed function-rewrite operation before applying text
   mutation. The operation owns splice replacement parts and the appended cleanup CFG, leaving PHI retargeting in one
   operation application helper.
+- Runtime-index cleanup function-rewrite operation application is now exposed through the pipeline-internal
+  composition API. Direct smoke coverage pins empty-operation, missing-closing-brace, and PHI-retarget failure paths.
 
 ## Follow-up work
 

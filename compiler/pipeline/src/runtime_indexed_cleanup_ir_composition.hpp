@@ -99,6 +99,11 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
 ) -> RuntimeIndexedCleanupFunctionIrRewriteOperationResult;
 
+auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteResult;
+
 auto rewrite_predecessor_terminator_and_insert_cfg_result(
     std::string const& function_ir,
     RuntimeIndexedCleanupFunctionIrInsertion const& insertion

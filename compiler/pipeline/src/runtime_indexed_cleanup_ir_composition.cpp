@@ -381,8 +381,6 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
     };
 }
 
-namespace {
-
 auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     std::string const& original_function_ir,
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
@@ -424,8 +422,6 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
         .rewritten_function_ir = std::move(composed),
     };
 }
-
-} // namespace
 
 auto compose_non_overlapping_function_ir_rewrite_result(
     std::string const& original_function_ir,

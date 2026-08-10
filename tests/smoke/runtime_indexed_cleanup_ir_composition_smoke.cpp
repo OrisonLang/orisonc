@@ -268,6 +268,56 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         compose_result.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
     );
+
+    auto const empty_operation_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {}
+        );
+    assert(!empty_operation_result.succeeded());
+    assert(empty_operation_result.rewritten_function_ir.empty());
+    assert(
+        empty_operation_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
+    );
+
+    auto malformed_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
+        .parts = {
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
+                .predecessor_block_name = "entry",
+                .continuation_block_name = "entry.runtime_cleanup.exit",
+                .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
+                .cleanup_cfg_tail = "entry.runtime_cleanup.entry:\n",
+                .splice_start_offset = 0,
+                .splice_end_offset = 0,
+            },
+        },
+        .appended_cleanup_cfg = "entry.runtime_cleanup.entry:\n",
+    };
+    auto const missing_closing_brace_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            "define i32 @missing_closing() {\nentry:\n  ret i32 0\n",
+            malformed_operation
+        );
+    assert(!missing_closing_brace_result.succeeded());
+    assert(missing_closing_brace_result.rewritten_function_ir.empty());
+    assert(
+        missing_closing_brace_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace
+    );
+
+    malformed_operation.parts.front().continuation_block_name.clear();
+    auto const phi_retarget_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            malformed_operation
+        );
+    assert(!phi_retarget_result.succeeded());
+    assert(phi_retarget_result.rewritten_function_ir.empty());
+    assert(
+        phi_retarget_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed
+    );
 }
 
 } // namespace
