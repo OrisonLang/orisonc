@@ -281,6 +281,33 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
     );
 
+    auto const invalid_operation_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
+                .parts = {
+                    orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
+                        .predecessor_block_name = "entry",
+                        .continuation_block_name = "entry.runtime_cleanup.exit",
+                        .splice_start_offset = 3,
+                        .splice_end_offset = 3,
+                    },
+                },
+            }
+        );
+    assert(!invalid_operation_result.succeeded());
+    assert(invalid_operation_result.rewritten_function_ir.empty());
+    assert(
+        invalid_operation_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
+    );
+
+    auto missing_closing_function_ir = std::string {
+        "define i32 @missing_closing() {\n"
+        "entry:\n"
+        "  ret i32 0\n"
+    };
+    auto const missing_closing_ret = std::string {"  ret i32 0\n"};
     auto malformed_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
         .parts = {
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
@@ -288,15 +315,16 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
                 .cleanup_cfg_tail = "entry.runtime_cleanup.entry:\n",
-                .splice_start_offset = 0,
-                .splice_end_offset = 0,
+                .splice_start_offset = missing_closing_function_ir.find(missing_closing_ret),
+                .splice_end_offset = missing_closing_function_ir.find(missing_closing_ret) +
+                    missing_closing_ret.size(),
             },
         },
         .appended_cleanup_cfg = "entry.runtime_cleanup.entry:\n",
     };
     auto const missing_closing_brace_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
-            "define i32 @missing_closing() {\nentry:\n  ret i32 0\n",
+            missing_closing_function_ir,
             malformed_operation
         );
     assert(!missing_closing_brace_result.succeeded());
@@ -307,6 +335,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
 
     malformed_operation.parts.front().continuation_block_name.clear();
+    auto const original_branch = std::string {"  br label %join\n"};
+    malformed_operation.parts.front().splice_start_offset = original_function_ir.find(original_branch);
+    malformed_operation.parts.front().splice_end_offset =
+        malformed_operation.parts.front().splice_start_offset + original_branch.size();
     auto const phi_retarget_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             original_function_ir,

@@ -257,43 +257,33 @@ auto rewrite_predecessor_terminator_and_insert_cfg_result(
         };
     }
 
-    auto const terminator_position = block_start + terminator_position_in_block;
-    auto rewritten_function = function_ir.substr(0, terminator_position);
-    rewritten_function += inserted_branch;
-    rewritten_function += function_ir.substr(terminator_position + replaced_branch.size());
-
-    auto const rewritten_closing_position = rewritten_function.rfind("\n}\n");
-    if (rewritten_closing_position == std::string::npos) {
-        return RuntimeIndexedCleanupFunctionIrRewriteResult {
-            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace,
-        };
-    }
-
-    auto candidate = rewritten_function.substr(0, rewritten_closing_position + 1);
+    auto cleanup_cfg_tail = std::string {};
     for (auto line_index = std::size_t {1}; line_index < insertion.cfg_lines.size(); ++line_index) {
-        candidate += insertion.cfg_lines[line_index];
+        cleanup_cfg_tail += insertion.cfg_lines[line_index];
     }
-    candidate += replaced_branch;
-    candidate += "}\n";
     auto const cleanup_exit_block_name = trailing_label_name(insertion.cfg_lines);
     if (cleanup_exit_block_name.empty()) {
         return RuntimeIndexedCleanupFunctionIrRewriteResult {
             .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_exit_block,
         };
     }
-    auto phi_retargeted_candidate = retarget_phi_incoming_predecessor(
-        candidate,
-        insertion.predecessor_block_name,
-        cleanup_exit_block_name
+    cleanup_cfg_tail += replaced_branch;
+    return apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+        function_ir,
+        RuntimeIndexedCleanupFunctionIrRewriteOperation {
+            .parts = {
+                RuntimeIndexedCleanupFunctionIrCompositionPart {
+                    .predecessor_block_name = insertion.predecessor_block_name,
+                    .continuation_block_name = cleanup_exit_block_name,
+                    .replacement_branch_text = inserted_branch,
+                    .cleanup_cfg_tail = cleanup_cfg_tail,
+                    .splice_start_offset = block_start + terminator_position_in_block,
+                    .splice_end_offset = block_start + terminator_position_in_block + replaced_branch.size(),
+                },
+            },
+            .appended_cleanup_cfg = std::move(cleanup_cfg_tail),
+        }
     );
-    if (phi_retargeted_candidate.empty()) {
-        return RuntimeIndexedCleanupFunctionIrRewriteResult {
-            .failure = RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed,
-        };
-    }
-    return RuntimeIndexedCleanupFunctionIrRewriteResult {
-        .rewritten_function_ir = std::move(phi_retargeted_candidate),
-    };
 }
 
 auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
@@ -392,6 +382,13 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     }
     auto composed = original_function_ir;
     for (auto const& part : operation.parts) {
+        if (part.splice_start_offset >= part.splice_end_offset ||
+            part.splice_end_offset > composed.size() ||
+            part.replacement_branch_text.empty()) {
+            return RuntimeIndexedCleanupFunctionIrRewriteResult {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+            };
+        }
         composed.replace(
             part.splice_start_offset,
             part.splice_end_offset - part.splice_start_offset,

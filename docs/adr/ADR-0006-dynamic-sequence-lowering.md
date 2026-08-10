@@ -1427,6 +1427,8 @@ representation.
   operation application helper.
 - Runtime-index cleanup function-rewrite operation application is now exposed through the pipeline-internal
   composition API. Direct smoke coverage pins empty-operation, missing-closing-brace, and PHI-retarget failure paths.
+- Single-candidate runtime-index cleanup predecessor rewrite now builds a one-part function-rewrite operation and uses
+  the shared operation application helper. Direct smoke coverage also pins invalid-operation rejection.
 
 ## Follow-up work
 
