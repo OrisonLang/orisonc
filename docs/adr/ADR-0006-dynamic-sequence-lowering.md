@@ -1392,6 +1392,8 @@ representation.
   `Array<Record, N>` locals that have nested `DynamicArray<T>` descriptor cleanup obligations. The source Drop call
   clears each covered slot and removes covered nested descriptor cleanup plans before ordinary local descriptor cleanup
   runs; runtime-index owners keep their specialized live-element cleanup and moved-slot skip path.
+- Local cleanup-plan owner checks, owner-plan removal, and moved-expression cleanup release now live in shared lowering
+  support. Function-return cleanup and binding-initializer cleanup retirement use the same owner-prefix bookkeeping.
 
 ## Follow-up work
 

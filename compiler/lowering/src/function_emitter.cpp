@@ -2,6 +2,7 @@
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/cleanup_plan_owner.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
@@ -278,42 +279,9 @@ auto owner_has_runtime_indexed_cleanup_plan(
 
 auto owner_has_local_dynamic_array_cleanup_plan(
     std::string_view owner_name,
-    FunctionLoweringState const& state
-) -> bool {
-    auto owner_prefix = std::string {owner_name};
-    owner_prefix += ".";
-    return std::ranges::any_of(
-        state.dynamic_array_local_cleanup_plans,
-        [&](DynamicArrayDescriptorCleanupPlan const& plan) {
-            return plan.owner_name == owner_name || plan.owner_name.starts_with(owner_prefix);
-        }
-    );
-}
-
-auto owner_has_local_dynamic_array_cleanup_plan(
-    std::string_view owner_name,
     FunctionLoweringSession const& session
 ) -> bool {
     return owner_has_local_dynamic_array_cleanup_plan(owner_name, session.state);
-}
-
-void remove_local_dynamic_array_cleanup_plans_for_owner(
-    std::string_view owner_name,
-    FunctionLoweringState& state
-) {
-    auto owner_prefix = std::string {owner_name};
-    owner_prefix += ".";
-    auto& plans = state.dynamic_array_local_cleanup_plans;
-    plans.erase(
-        std::remove_if(
-            plans.begin(),
-            plans.end(),
-            [&](DynamicArrayDescriptorCleanupPlan const& plan) {
-                return plan.owner_name == owner_name || plan.owner_name.starts_with(owner_prefix);
-            }
-        ),
-        plans.end()
-    );
 }
 
 void remove_local_dynamic_array_cleanup_plans_for_owner(
@@ -502,38 +470,12 @@ auto emit_function_return_cleanup(
     return emit_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 
-void release_returned_owned_cleanup_expression(
-    syntax::ExpressionSyntax const& expression,
-    FunctionLoweringState& state
-) {
-    if (expression.kind == syntax::ExpressionKind::name &&
-        owner_has_local_dynamic_array_cleanup_plan(expression.text, state)) {
-        remove_local_dynamic_array_cleanup_plans_for_owner(expression.text, state);
-        mark_owned_binding_consumed(state.ownership_transfers, expression.text);
-        return;
-    }
-
-    if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr) {
-        release_returned_owned_cleanup_expression(*expression.right, state);
-    }
-    if (expression.kind == syntax::ExpressionKind::ternary && expression.alternate != nullptr) {
-        release_returned_owned_cleanup_expression(*expression.alternate, state);
-    }
-    if (expression.kind != syntax::ExpressionKind::call &&
-        expression.kind != syntax::ExpressionKind::array_literal) {
-        return;
-    }
-    for (auto const& argument : expression.arguments) {
-        release_returned_owned_cleanup_expression(argument, state);
-    }
-}
-
 void release_returned_dynamic_array_local_cleanup(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
     FunctionLoweringState& state
 ) {
-    release_returned_owned_cleanup_expression(expression, state);
+    release_moved_owned_cleanup_expression(expression, state);
 
     if (!return_source_type_name.has_value() ||
         dynamic_array_element_source_type_name(*return_source_type_name) == std::nullopt ||

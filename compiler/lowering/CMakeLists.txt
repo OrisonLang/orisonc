@@ -3,6 +3,7 @@ add_library(orison_lowering STATIC
     src/aggregate_path.cpp
     src/call_emitter.cpp
     src/c_abi_adapter.cpp
+    src/cleanup_plan_owner.cpp
     src/conditional_emitter.cpp
     src/conditional_plan.cpp
     src/concurrency_emitter.cpp
