@@ -25,6 +25,14 @@ implements Drop for Holder
     function drop(this: exclusive This) -> Unit
         return
 
+record Outer
+    primary: Inner
+    items: Array<Inner, 2>
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
 record SelectedInner
     item: Inner
 

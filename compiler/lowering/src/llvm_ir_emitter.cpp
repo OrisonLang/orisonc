@@ -225,6 +225,28 @@ auto source_drop_element_symbol(
     return symbol_name;
 }
 
+auto fixed_array_length_value(std::string_view source_type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (!source_type_name.starts_with(prefix) || !source_type_name.ends_with(">")) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        source_type_name.substr(prefix.size(), source_type_name.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 2 || arguments[1].empty()) {
+        return std::nullopt;
+    }
+
+    auto const& length_text = arguments[1];
+    if (!std::ranges::all_of(length_text, [](char character) {
+            return character >= '0' && character <= '9';
+        })) {
+        return std::nullopt;
+    }
+    return length_text;
+}
+
 auto emit_dynamic_array_drop_field_sequence(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view field_pointer_name,
@@ -286,6 +308,62 @@ auto emit_dynamic_array_drop_field_sequence(
     return output.str();
 }
 
+auto emit_record_field_drop_sequence(
+    LoweredRecordLayout const& layout,
+    LoweredRecordField const& field,
+    std::string_view source_type_name,
+    std::string_view drop_symbol
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto field_pointer_name = "%" + std::string {source_type_name} + ".drop." + field.name + ".addr";
+    output << "  " << field_pointer_name << " = getelementptr " << layout.llvm_type_name
+           << ", ptr %value, i32 0, i32 " << field.index << "\n";
+    output << "  call void @" << drop_symbol << "(ptr " << field_pointer_name << ")\n";
+    output << "  store " << field.llvm_type << " zeroinitializer, ptr " << field_pointer_name << "\n";
+    return output.str();
+}
+
+auto emit_fixed_array_record_drop_field_sequence(
+    LoweredRecordLayout const& layout,
+    LoweredRecordField const& field,
+    std::string_view source_type_name,
+    std::string_view element_llvm_type_name,
+    std::string_view length_value,
+    std::string_view drop_symbol
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto field_pointer_name = "%" + std::string {source_type_name} + ".drop." + field.name + ".addr";
+    auto prefix = "%" + std::string {source_type_name} + ".drop." + field.name;
+    auto label_prefix = std::string {prefix};
+    if (!label_prefix.empty() && label_prefix.front() == '%') {
+        label_prefix.erase(label_prefix.begin());
+    }
+
+    output << "  " << field_pointer_name << " = getelementptr " << layout.llvm_type_name
+           << ", ptr %value, i32 0, i32 " << field.index << "\n";
+    output << "  br label %" << label_prefix << ".cleanup.entry\n";
+    output << label_prefix << ".cleanup.entry:\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.walk:\n";
+    output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix
+           << ".cleanup.entry ], [ " << prefix << ".drop.next, %" << label_prefix
+           << ".drop.body ]\n";
+    output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix
+           << ".drop.index, " << length_value << "\n";
+    output << "  br i1 " << prefix << ".drop.more, label %" << label_prefix
+           << ".drop.body, label %" << label_prefix << ".drop.done\n";
+    output << label_prefix << ".drop.body:\n";
+    output << "  " << prefix << ".drop.element.addr = getelementptr " << field.llvm_type
+           << ", ptr " << field_pointer_name << ", i64 0, i64 " << prefix << ".drop.index\n";
+    output << "  call void @" << drop_symbol << "(ptr " << prefix << ".drop.element.addr)\n";
+    output << "  store " << element_llvm_type_name << " zeroinitializer, ptr "
+           << prefix << ".drop.element.addr\n";
+    output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.done:\n";
+    return output.str();
+}
+
 auto emit_record_source_drop_body(
     std::string_view source_type_name,
     LoweringContext const& context,
@@ -315,6 +393,44 @@ auto emit_record_source_drop_body(
             field_pointer_name,
             prefix,
             source_drop_element_symbol(plan->element_source_type_name, implementations)
+        );
+        continue;
+    }
+
+    for (auto const& field : layout->second.fields) {
+        if (dynamic_array_element_source_type_name(field.source_type_name).has_value()) {
+            continue;
+        }
+        auto drop_symbol = source_drop_element_symbol(field.source_type_name, implementations);
+        if (drop_symbol.has_value() && context.records.contains(field.source_type_name)) {
+            output << emit_record_field_drop_sequence(
+                layout->second,
+                field,
+                source_type_name,
+                *drop_symbol
+            );
+            continue;
+        }
+
+        auto element_source_type_name = array_element_source_type_name(field.source_type_name);
+        auto length_value = fixed_array_length_value(field.source_type_name);
+        if (!element_source_type_name.has_value() || !length_value.has_value()) {
+            continue;
+        }
+
+        auto element_drop_symbol = source_drop_element_symbol(*element_source_type_name, implementations);
+        auto element_llvm_type_name = llvm_type_for_source_type_name(*element_source_type_name, context);
+        if (!element_drop_symbol.has_value() || !element_llvm_type_name.has_value() ||
+            !context.records.contains(*element_source_type_name)) {
+            continue;
+        }
+        output << emit_fixed_array_record_drop_field_sequence(
+            layout->second,
+            field,
+            source_type_name,
+            *element_llvm_type_name,
+            *length_value,
+            *element_drop_symbol
         );
     }
     output << "  ret void\n";

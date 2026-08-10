@@ -1385,6 +1385,9 @@ representation.
 - Source-derived record Drop definitions now lower direct `DynamicArray<T>` fields by walking owned elements when a
   finite source Drop exists, deallocating each descriptor, and finalizing the descriptor slot. Runtime-index fixed-array
   cleanup also zeroes each source element after calling the element Drop so later ordinary cleanup remains idempotent.
+- Source-derived record Drop definitions now delegate owned nested record fields and finite `Array<Record, N>` fields
+  to their generated source Drop symbols, then store `zeroinitializer` into each delegated slot. This extends the same
+  idempotent cleanup guarantee beyond direct `DynamicArray<T>` fields.
 
 ## Follow-up work
 

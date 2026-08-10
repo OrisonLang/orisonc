@@ -8945,8 +8945,8 @@ auto main() -> int {
     assert(non_overlap_first_candidate.splice_range_available);
     assert(non_overlap_second_candidate.splice_range_available);
     assert(non_overlap_first_candidate.splice_end_offset <= non_overlap_second_candidate.splice_start_offset);
-    assert(non_overlap_first_candidate.source_line == 47);
-    assert(non_overlap_second_candidate.source_line == 55);
+    assert(non_overlap_first_candidate.source_line == 55);
+    assert(non_overlap_second_candidate.source_line == 63);
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
