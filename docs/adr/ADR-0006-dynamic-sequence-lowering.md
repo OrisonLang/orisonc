@@ -1411,6 +1411,9 @@ representation.
 - Runtime-index cleanup IR text helper logic for occurrence counting, block-label lookup, predecessor branch matching,
   and predecessor terminator discovery now lives in the same pipeline-internal support module. Focused smoke coverage
   pins those helpers before both report verification and rewrite composition consume them.
+- Runtime-index cleanup IR composition helpers now expose structured result APIs with finite failure kinds while the
+  existing string/vector wrapper APIs remain available for current callers. Focused smoke coverage pins representative
+  missing-predecessor, unexpected-splice-text, and empty-input failures without parsing empty strings.
 
 ## Follow-up work
 

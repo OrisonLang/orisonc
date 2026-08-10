@@ -184,11 +184,72 @@ void assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured(
     assert(rewritten.find("%x = phi i32 [ 1, %entry.runtime_cleanup.exit ]") != std::string::npos);
 }
 
+void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
+    auto const original_function_ir =
+        std::string {
+            "define i32 @failed() {\n"
+            "entry:\n"
+            "  br label %join\n"
+            "\n"
+            "join:\n"
+            "  ret i32 0\n"
+            "}\n"
+        };
+    auto const missing_predecessor = orison::pipeline::RuntimeIndexedCleanupFunctionIrInsertion {
+        .predecessor_block_name = "missing",
+        .inserted_branch_text = "br label %cleanup.entry",
+        .cfg_lines = {
+            "  br label %cleanup.entry\n",
+            "cleanup.entry:\n",
+        },
+    };
+    auto const insertion_result =
+        orison::pipeline::rewrite_predecessor_terminator_and_insert_cfg_result(
+            original_function_ir,
+            missing_predecessor
+        );
+    assert(!insertion_result.succeeded());
+    assert(insertion_result.rewritten_function_ir.empty());
+    assert(
+        insertion_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_predecessor_block
+    );
+
+    auto candidate = candidate_with_cleanup_tail("entry", "entry.runtime_cleanup.entry", "entry.runtime_cleanup.exit");
+    candidate.splice_start_offset = 0;
+    candidate.splice_end_offset = 2;
+    auto const candidates =
+        std::vector<orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> {
+            &candidate,
+        };
+    auto const part_result =
+        orison::pipeline::build_runtime_indexed_cleanup_function_ir_composition_part_result(
+            original_function_ir,
+            candidates
+        );
+    assert(!part_result.succeeded());
+    assert(part_result.parts.empty());
+    assert(
+        part_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text
+    );
+
+    auto const compose_result =
+        orison::pipeline::compose_non_overlapping_function_ir_rewrite_result({}, candidates);
+    assert(!compose_result.succeeded());
+    assert(compose_result.rewritten_function_ir.empty());
+    assert(
+        compose_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
+    );
+}
+
 } // namespace
 
 auto main() -> int {
     assert_runtime_indexed_cleanup_ir_text_helpers_are_shared();
     assert_runtime_indexed_cleanup_ir_composition_parts_are_structured();
     assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured();
+    assert_runtime_indexed_cleanup_ir_failures_are_structured();
     return 0;
 }

@@ -216,20 +216,36 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
     std::string const& function_ir,
     RuntimeIndexedCleanupFunctionIrInsertion const& insertion
 ) -> std::string {
+    return rewrite_predecessor_terminator_and_insert_cfg_result(
+        function_ir,
+        insertion
+    ).rewritten_function_ir;
+}
+
+auto rewrite_predecessor_terminator_and_insert_cfg_result(
+    std::string const& function_ir,
+    RuntimeIndexedCleanupFunctionIrInsertion const& insertion
+) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
     if (function_ir.empty() || insertion.predecessor_block_name.empty() ||
         insertion.inserted_branch_text.empty() || insertion.cfg_lines.empty()) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+        };
     }
 
     auto const closing_position = function_ir.rfind("\n}\n");
     if (closing_position == std::string::npos) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace,
+        };
     }
 
     auto const block_start = block_start_position(function_ir, insertion.predecessor_block_name);
     auto const block_end = block_end_position(function_ir, block_start);
     if (block_start == std::string::npos || block_end == std::string::npos) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_predecessor_block,
+        };
     }
 
     auto const block_text = function_ir.substr(block_start, block_end - block_start);
@@ -239,12 +255,16 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
     );
     auto const inserted_branch = "  " + insertion.inserted_branch_text + "\n";
     if (replaced_branch.empty()) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_predecessor_terminator,
+        };
     }
     auto const terminator_position_in_block = block_text.find(replaced_branch);
     if (terminator_position_in_block == std::string::npos ||
         occurrence_count(block_text, replaced_branch) != 1) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::ambiguous_predecessor_terminator,
+        };
     }
 
     auto const terminator_position = block_start + terminator_position_in_block;
@@ -254,7 +274,9 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
 
     auto const rewritten_closing_position = rewritten_function.rfind("\n}\n");
     if (rewritten_closing_position == std::string::npos) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace,
+        };
     }
 
     auto candidate = rewritten_function.substr(0, rewritten_closing_position + 1);
@@ -264,39 +286,70 @@ auto rewrite_predecessor_terminator_and_insert_cfg(
     candidate += replaced_branch;
     candidate += "}\n";
     auto const cleanup_exit_block_name = trailing_label_name(insertion.cfg_lines);
+    if (cleanup_exit_block_name.empty()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_exit_block,
+        };
+    }
     auto phi_retargeted_candidate = retarget_phi_incoming_predecessor(
         candidate,
         insertion.predecessor_block_name,
         cleanup_exit_block_name
     );
     if (phi_retargeted_candidate.empty()) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed,
+        };
     }
-    return phi_retargeted_candidate;
+    return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        .rewritten_function_ir = std::move(phi_retargeted_candidate),
+    };
 }
 
 auto build_runtime_indexed_cleanup_function_ir_composition_parts(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
 ) -> std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> {
+    return build_runtime_indexed_cleanup_function_ir_composition_part_result(
+        original_function_ir,
+        candidates
+    ).parts;
+}
+
+auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
+    std::string const& original_function_ir,
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
+) -> RuntimeIndexedCleanupFunctionIrCompositionPartResult {
+    if (original_function_ir.empty() || candidates.empty()) {
+        return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+        };
+    }
+
     auto parts = std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> {};
     parts.reserve(candidates.size());
     for (auto const* candidate : candidates) {
-        if (!candidate->candidate_available || !candidate->splice_range_available ||
+        if (candidate == nullptr || !candidate->candidate_available || !candidate->splice_range_available ||
             candidate->splice_start_offset >= candidate->splice_end_offset ||
             candidate->splice_end_offset > original_function_ir.size()) {
-            return {};
+            return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+            };
         }
         auto const expected_terminator = "  " + candidate->replaced_terminator_text + "\n";
         if (original_function_ir.substr(
                 candidate->splice_start_offset,
                 candidate->splice_end_offset - candidate->splice_start_offset
             ) != expected_terminator) {
-            return {};
+            return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
+            };
         }
         auto cleanup_tail = inserted_cleanup_cfg_tail(*candidate);
         if (cleanup_tail.empty()) {
-            return {};
+            return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
+            };
         }
         parts.push_back(RuntimeIndexedCleanupFunctionIrCompositionPart {
             .predecessor_block_name = candidate->predecessor_block_name,
@@ -307,15 +360,29 @@ auto build_runtime_indexed_cleanup_function_ir_composition_parts(
             .splice_end_offset = candidate->splice_end_offset,
         });
     }
-    return parts;
+    return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
+        .parts = std::move(parts),
+    };
 }
 
 auto compose_non_overlapping_function_ir_rewrite(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
 ) -> std::string {
+    return compose_non_overlapping_function_ir_rewrite_result(
+        original_function_ir,
+        std::move(candidates)
+    ).rewritten_function_ir;
+}
+
+auto compose_non_overlapping_function_ir_rewrite_result(
+    std::string const& original_function_ir,
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
+) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
     if (original_function_ir.empty() || candidates.empty()) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+        };
     }
     std::sort(
         candidates.begin(),
@@ -326,13 +393,15 @@ auto compose_non_overlapping_function_ir_rewrite(
     );
 
     auto composed = original_function_ir;
-    auto const composition_parts =
-        build_runtime_indexed_cleanup_function_ir_composition_parts(original_function_ir, candidates);
-    if (composition_parts.empty()) {
-        return {};
+    auto const composition_part_result =
+        build_runtime_indexed_cleanup_function_ir_composition_part_result(original_function_ir, candidates);
+    if (!composition_part_result.succeeded()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = composition_part_result.failure,
+        };
     }
     auto appended_cleanup_cfg = std::string {};
-    for (auto const& part : composition_parts) {
+    for (auto const& part : composition_part_result.parts) {
         composed.replace(
             part.splice_start_offset,
             part.splice_end_offset - part.splice_start_offset,
@@ -343,20 +412,26 @@ auto compose_non_overlapping_function_ir_rewrite(
 
     auto const closing_position = composed.rfind("\n}\n");
     if (closing_position == std::string::npos) {
-        return {};
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace,
+        };
     }
     composed.insert(closing_position + 1, appended_cleanup_cfg);
-    for (auto const& part : composition_parts) {
+    for (auto const& part : composition_part_result.parts) {
         composed = retarget_phi_incoming_predecessor(
             composed,
             part.predecessor_block_name,
             part.continuation_block_name
         );
         if (composed.empty()) {
-            return {};
+            return RuntimeIndexedCleanupFunctionIrRewriteResult {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed,
+            };
         }
     }
-    return composed;
+    return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        .rewritten_function_ir = std::move(composed),
+    };
 }
 
 } // namespace orison::pipeline
