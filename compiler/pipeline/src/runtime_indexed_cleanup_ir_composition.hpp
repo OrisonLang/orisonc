@@ -92,6 +92,10 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
 struct RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
     RuntimeIndexedCleanupIrCompositionFailure failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
+    bool part_available = false;
+    std::size_t part_index = 0;
+    std::size_t splice_start_offset = 0;
+    std::size_t splice_end_offset = 0;
 
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none;

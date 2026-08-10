@@ -1431,6 +1431,8 @@ representation.
   the shared operation application helper. Direct smoke coverage also pins invalid-operation rejection.
 - Runtime-index cleanup function-rewrite operation validation is now separate from operation application. The validator
   reports finite failure tokens without mutating IR text, and the applicator consumes that validation result.
+- Runtime-index cleanup operation validation now carries typed failing-part diagnostics: part availability, part index,
+  and splice start/end offsets. Direct smoke coverage pins the empty-operation and second-part invalid-operation paths.
 
 ## Follow-up work
 

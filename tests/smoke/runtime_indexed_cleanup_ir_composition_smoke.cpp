@@ -285,6 +285,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         empty_operation_validation.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
     );
+    assert(!empty_operation_validation.part_available);
+    assert(empty_operation_validation.part_index == 0);
+    assert(empty_operation_validation.splice_start_offset == 0);
+    assert(empty_operation_validation.splice_end_offset == 0);
 
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
@@ -303,6 +307,13 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
                 .predecessor_block_name = "entry",
                 .continuation_block_name = "entry.runtime_cleanup.exit",
+                .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
+                .splice_start_offset = 0,
+                .splice_end_offset = 1,
+            },
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
+                .predecessor_block_name = "entry",
+                .continuation_block_name = "entry.runtime_cleanup.exit",
                 .splice_start_offset = 3,
                 .splice_end_offset = 3,
             },
@@ -318,6 +329,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         invalid_operation_validation.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
     );
+    assert(invalid_operation_validation.part_available);
+    assert(invalid_operation_validation.part_index == 1);
+    assert(invalid_operation_validation.splice_start_offset == 3);
+    assert(invalid_operation_validation.splice_end_offset == 3);
 
     auto const invalid_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(

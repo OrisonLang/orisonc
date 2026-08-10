@@ -380,12 +380,17 @@ auto validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
             .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
         };
     }
-    for (auto const& part : operation.parts) {
+    for (auto part_index = std::size_t {0}; part_index < operation.parts.size(); ++part_index) {
+        auto const& part = operation.parts[part_index];
         if (part.splice_start_offset >= part.splice_end_offset ||
             part.splice_end_offset > original_function_ir.size() ||
             part.replacement_branch_text.empty()) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+                .part_available = true,
+                .part_index = part_index,
+                .splice_start_offset = part.splice_start_offset,
+                .splice_end_offset = part.splice_end_offset,
             };
         }
     }
