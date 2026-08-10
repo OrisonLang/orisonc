@@ -277,6 +277,20 @@ auto owner_has_runtime_indexed_cleanup_plan(
     );
 }
 
+auto owner_contains_runtime_indexed_cleanup_plan(
+    std::string_view owner_name,
+    FunctionLoweringState const& state
+) -> bool {
+    auto owner_prefix = std::string {owner_name};
+    owner_prefix += ".";
+    return std::ranges::any_of(
+        state.ownership_transfers.runtime_indexed_cleanup_emission_plans,
+        [&](RuntimeIndexedCleanupEmissionPlan const& plan) {
+            return plan.owner_name == owner_name || plan.owner_name.starts_with(owner_prefix);
+        }
+    );
+}
+
 auto owner_has_local_dynamic_array_cleanup_plan(
     std::string_view owner_name,
     FunctionLoweringSession const& session
@@ -317,6 +331,9 @@ auto emit_source_drop_record_local_cleanups(
             continue;
         }
         if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+            continue;
+        }
+        if (owner_contains_runtime_indexed_cleanup_plan(name, session.state)) {
             continue;
         }
         auto const record = context.lowering.records.find(source_type_name);

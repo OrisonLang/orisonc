@@ -342,6 +342,32 @@ void assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_choice_payload_source_drop_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i32 @select_outer(i64 %index)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Holder(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Outer(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Holder(ptr %holder.addr)") == std::string::npos);
+    assert(output.find("br label %holder.items.runtime_cleanup.entry") != std::string::npos);
+    assert(output.find("holder.items.runtime_cleanup.condition:") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Outer(ptr %holder.items.runtime_cleanup.element.addr)") !=
+        std::string::npos);
+    assert(output.find("store %record.Outer zeroinitializer, ptr %holder.items.runtime_cleanup.element.addr") !=
+        std::string::npos);
+    assert(output.find("%selected.Some.item.item.values.choice_dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %selected.Some.item.item.values.choice_dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %selected.Some.item.item.values.choice_dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -3104,6 +3130,15 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_nested_source_drop.or",
         smoke_temp_root / "runtime_indexed_cleanup_nested_source_drop"
+    );
+    assert_cli_runtime_indexed_choice_payload_source_drop_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or"
+    );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or",
+        smoke_temp_root / "runtime_indexed_cleanup_choice_payload_source_drop"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,

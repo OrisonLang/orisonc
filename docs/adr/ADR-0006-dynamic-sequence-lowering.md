@@ -1394,6 +1394,9 @@ representation.
   runs; runtime-index owners keep their specialized live-element cleanup and moved-slot skip path.
 - Local cleanup-plan owner checks, owner-plan removal, and moved-expression cleanup release now live in shared lowering
   support. Function-return cleanup and binding-initializer cleanup retirement use the same owner-prefix bookkeeping.
+- Function-return source Drop cleanup now skips record owners that contain runtime-index cleanup owners, allowing the
+  runtime-index loop to remain the authoritative live-element cleanup path. CLI smoke now covers a moved choice payload
+  whose selected variant owns a nested `DynamicArray<Payload>` descriptor.
 
 ## Follow-up work
 
