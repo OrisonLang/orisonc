@@ -20,6 +20,15 @@ struct RuntimeIndexedCleanupFunctionIrInsertion {
     std::vector<std::string> cfg_lines;
 };
 
+struct RuntimeIndexedCleanupFunctionIrCompositionPart {
+    std::string predecessor_block_name;
+    std::string continuation_block_name;
+    std::string replacement_branch_text;
+    std::string cleanup_cfg_tail;
+    std::size_t splice_start_offset = 0;
+    std::size_t splice_end_offset = 0;
+};
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -369,6 +378,41 @@ auto inserted_cleanup_cfg_tail(
     );
 }
 
+auto build_runtime_indexed_cleanup_function_ir_composition_parts(
+    std::string const& original_function_ir,
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
+) -> std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> {
+    auto parts = std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> {};
+    parts.reserve(candidates.size());
+    for (auto const* candidate : candidates) {
+        if (!candidate->candidate_available || !candidate->splice_range_available ||
+            candidate->splice_start_offset >= candidate->splice_end_offset ||
+            candidate->splice_end_offset > original_function_ir.size()) {
+            return {};
+        }
+        auto const expected_terminator = "  " + candidate->replaced_terminator_text + "\n";
+        if (original_function_ir.substr(
+                candidate->splice_start_offset,
+                candidate->splice_end_offset - candidate->splice_start_offset
+            ) != expected_terminator) {
+            return {};
+        }
+        auto cleanup_tail = inserted_cleanup_cfg_tail(*candidate);
+        if (cleanup_tail.empty()) {
+            return {};
+        }
+        parts.push_back(RuntimeIndexedCleanupFunctionIrCompositionPart {
+            .predecessor_block_name = candidate->predecessor_block_name,
+            .continuation_block_name = candidate->continuation_block_name,
+            .replacement_branch_text = "  " + candidate->inserted_branch_text + "\n",
+            .cleanup_cfg_tail = std::move(cleanup_tail),
+            .splice_start_offset = candidate->splice_start_offset,
+            .splice_end_offset = candidate->splice_end_offset,
+        });
+    }
+    return parts;
+}
+
 auto compose_non_overlapping_function_ir_rewrite(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
@@ -385,30 +429,19 @@ auto compose_non_overlapping_function_ir_rewrite(
     );
 
     auto composed = original_function_ir;
+    auto const composition_parts =
+        build_runtime_indexed_cleanup_function_ir_composition_parts(original_function_ir, candidates);
+    if (composition_parts.empty()) {
+        return {};
+    }
     auto appended_cleanup_cfg = std::string {};
-    for (auto const* candidate : candidates) {
-        if (!candidate->candidate_available || !candidate->splice_range_available ||
-            candidate->splice_start_offset >= candidate->splice_end_offset ||
-            candidate->splice_end_offset > original_function_ir.size()) {
-            return {};
-        }
-        auto const expected_terminator = "  " + candidate->replaced_terminator_text + "\n";
-        if (original_function_ir.substr(
-                candidate->splice_start_offset,
-                candidate->splice_end_offset - candidate->splice_start_offset
-            ) != expected_terminator) {
-            return {};
-        }
+    for (auto const& part : composition_parts) {
         composed.replace(
-            candidate->splice_start_offset,
-            candidate->splice_end_offset - candidate->splice_start_offset,
-            "  " + candidate->inserted_branch_text + "\n"
+            part.splice_start_offset,
+            part.splice_end_offset - part.splice_start_offset,
+            part.replacement_branch_text
         );
-        auto cleanup_tail = inserted_cleanup_cfg_tail(*candidate);
-        if (cleanup_tail.empty()) {
-            return {};
-        }
-        appended_cleanup_cfg = std::move(cleanup_tail) + appended_cleanup_cfg;
+        appended_cleanup_cfg = part.cleanup_cfg_tail + appended_cleanup_cfg;
     }
 
     auto const closing_position = composed.rfind("\n}\n");
@@ -416,11 +449,11 @@ auto compose_non_overlapping_function_ir_rewrite(
         return {};
     }
     composed.insert(closing_position + 1, appended_cleanup_cfg);
-    for (auto const* candidate : candidates) {
+    for (auto const& part : composition_parts) {
         composed = retarget_phi_incoming_predecessor(
             composed,
-            candidate->predecessor_block_name,
-            candidate->continuation_block_name
+            part.predecessor_block_name,
+            part.continuation_block_name
         );
         if (composed.empty()) {
             return {};

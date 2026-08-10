@@ -1400,6 +1400,9 @@ representation.
 - Runtime-index cleanup function IR mutation now receives predecessor, inserted branch, and CFG tail data through a
   structured insertion object before text mutation. This keeps the current splice implementation behavior intact while
   shrinking the raw string/vector API surface that still needs replacement by a fuller structured IR representation.
+- Same-function runtime-index cleanup composition now builds structured composition parts before mutating function IR.
+  Each part captures the validated splice range, replacement branch, cleanup CFG tail, and PHI-retarget predecessor
+  data, separating candidate verification from the remaining text rewrite step.
 
 ## Follow-up work
 
