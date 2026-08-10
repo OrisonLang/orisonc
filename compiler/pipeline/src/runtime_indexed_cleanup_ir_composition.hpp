@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::pipeline {
@@ -48,20 +49,6 @@ struct RuntimeIndexedCleanupFunctionIrCompositionPart {
     std::string cleanup_cfg_tail;
     std::size_t splice_start_offset = 0;
     std::size_t splice_end_offset = 0;
-};
-
-enum class RuntimeIndexedCleanupIrCompositionFailure {
-    none,
-    empty_input,
-    missing_function_closing_brace,
-    missing_predecessor_block,
-    missing_predecessor_terminator,
-    ambiguous_predecessor_terminator,
-    missing_cleanup_exit_block,
-    phi_retarget_failed,
-    invalid_candidate,
-    unexpected_splice_text,
-    missing_cleanup_cfg_tail,
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteResult {
@@ -115,5 +102,9 @@ auto compose_non_overlapping_function_ir_rewrite_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
 ) -> RuntimeIndexedCleanupFunctionIrRewriteResult;
+
+auto runtime_indexed_cleanup_ir_composition_failure_token(
+    RuntimeIndexedCleanupIrCompositionFailure failure
+) -> std::string_view;
 
 } // namespace orison::pipeline

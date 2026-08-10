@@ -7792,6 +7792,15 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
             .all_candidates_separate_from_module_ir
     );
     assert(
@@ -7818,6 +7827,10 @@ auto main() -> int {
         runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
             .candidates.front();
     assert(runtime_indexed_cleanup_function_candidate.candidate_available);
+    assert(
+        runtime_indexed_cleanup_function_candidate.composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+    );
     assert(runtime_indexed_cleanup_function_candidate.separate_from_module_ir);
     assert(runtime_indexed_cleanup_function_candidate.function_ir_changed);
     assert(runtime_indexed_cleanup_function_candidate.predecessor_terminator_replaced);
@@ -7933,6 +7946,15 @@ auto main() -> int {
             .verified_count == 1
     );
     assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+    );
+    assert(
         !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
              .rewrite_requested
     );
@@ -7982,6 +8004,15 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
             .available_candidate_count == 1
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
@@ -8057,6 +8088,17 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
             .all_candidate_functions_match_verified_candidates
     );
     assert(
@@ -8118,6 +8160,12 @@ auto main() -> int {
         runtime_indexed_cleanup_function_module_rewrite_on
             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
             .llvm_verifier_diagnostic_count == 0
+    );
+    assert(
+        runtime_indexed_cleanup_function_module_rewrite_on
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
     );
     assert(
         runtime_indexed_cleanup_function_module_rewrite_on.runtime_indexed_cleanup_module_ir_production_readiness_state
@@ -8935,6 +8983,17 @@ auto main() -> int {
             .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
             .same_function_splice_ranges_non_overlapping
     );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+    );
     auto const& non_overlap_first_candidate =
         runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
             .candidates[0];
@@ -8951,6 +9010,17 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
             .all_verified
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
@@ -8981,6 +9051,17 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
             .splice_conflicts.empty()
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .composition_failure_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .first_composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
@@ -9016,6 +9097,12 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
             .llvm_verifier_passed
+    );
+    assert(
+        runtime_indexed_same_function_non_overlap_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .composition_failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(

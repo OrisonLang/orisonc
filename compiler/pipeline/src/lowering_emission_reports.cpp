@@ -740,11 +740,15 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
             candidate.splice_start_offset = terminator_position;
             candidate.splice_end_offset = terminator_position + original_predecessor_terminator.size();
         }
-        candidate.candidate_function_ir_text =
-            rewrite_predecessor_terminator_and_insert_cfg(
-                candidate.original_function_ir_text,
-                build_runtime_indexed_cleanup_function_ir_insertion(rewrite_plan)
-            );
+        if (rewrite_plan.rewrite_candidate_available) {
+            auto const rewrite_result =
+                rewrite_predecessor_terminator_and_insert_cfg_result(
+                    candidate.original_function_ir_text,
+                    build_runtime_indexed_cleanup_function_ir_insertion(rewrite_plan)
+                );
+            candidate.candidate_function_ir_text = rewrite_result.rewritten_function_ir;
+            candidate.composition_failure = rewrite_result.failure;
+        }
         candidate.candidate_available =
             rewrite_plan.rewrite_candidate_available &&
             !candidate.original_function_ir_text.empty() &&
@@ -782,6 +786,11 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
             state.all_splice_ranges_available && candidate.splice_range_available;
         if (candidate.candidate_available) {
             ++state.available_candidate_count;
+        } else if (candidate.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
+            ++state.composition_failure_count;
+            if (state.first_composition_failure == RuntimeIndexedCleanupIrCompositionFailure::none) {
+                state.first_composition_failure = candidate.composition_failure;
+            }
         }
         state.original_function_line_count += candidate.original_function_line_count;
         state.candidate_function_line_count += candidate.candidate_function_line_count;
@@ -856,6 +865,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
             .predecessor_terminator_replaced = candidate.predecessor_terminator_replaced,
             .splice_range_available = candidate.splice_range_available,
             .separate_from_module_ir = candidate.separate_from_module_ir,
+            .composition_failure = candidate.composition_failure,
             .source_line = candidate.source_line,
             .original_cleanup_block_count =
                 occurrence_count(candidate.original_function_ir_text, insertion_label),
@@ -919,6 +929,11 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
         state.all_verified = state.all_verified && verification.verified;
         if (verification.verified) {
             ++state.verified_count;
+        } else if (verification.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
+            ++state.composition_failure_count;
+            if (state.first_composition_failure == RuntimeIndexedCleanupIrCompositionFailure::none) {
+                state.first_composition_failure = verification.composition_failure;
+            }
         }
         state.verifications.push_back(std::move(verification));
     }
@@ -935,7 +950,9 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state(
         .rewrite_requested = options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled,
         .metadata_available = function_candidate_state.metadata_available,
         .all_candidates_separate_from_module_ir = function_candidate_state.metadata_available,
+        .first_composition_failure = function_candidate_state.first_composition_failure,
         .candidate_count = function_candidate_state.candidate_count,
+        .composition_failure_count = function_candidate_state.composition_failure_count,
         .original_module_line_count = logical_line_count(ir_text),
     };
     state.candidates.reserve(function_candidate_state.candidates.size());
@@ -1000,7 +1017,9 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             function_verification_state.same_function_splice_ranges_non_overlapping,
         .all_llvm_verifier_passed = module_candidate_state.metadata_available,
         .all_verified = module_candidate_state.metadata_available,
+        .first_composition_failure = module_candidate_state.first_composition_failure,
         .verification_count = module_candidate_state.candidate_count,
+        .composition_failure_count = module_candidate_state.composition_failure_count,
     };
     for (auto left_index = std::size_t {0}; left_index < function_candidate_state.candidates.size(); ++left_index) {
         for (auto right_index = left_index + 1; right_index < function_candidate_state.candidates.size(); ++right_index) {
@@ -1194,12 +1213,13 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
                 function_candidates.push_back(&function_candidate_state.candidates[module_candidate_position]);
             }
             auto const original_function = function_ir_slice(composed_ir, function_symbol_name);
-            auto const composed_function =
-                compose_non_overlapping_function_ir_rewrite(original_function, std::move(function_candidates));
-            if (composed_function.empty()) {
+            auto const composed_function_result =
+                compose_non_overlapping_function_ir_rewrite_result(original_function, std::move(function_candidates));
+            if (!composed_function_result.succeeded()) {
+                state.composition_failure = composed_function_result.failure;
                 return state;
             }
-            composed_ir = replace_once(composed_ir, original_function, composed_function);
+            composed_ir = replace_once(composed_ir, original_function, composed_function_result.rewritten_function_ir);
             if (composed_ir.empty()) {
                 return state;
             }

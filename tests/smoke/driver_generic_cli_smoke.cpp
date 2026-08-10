@@ -133,13 +133,14 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 1 "
         "candidate-functions found candidate-match true replacement-targets unique module-changed true "
-        "separate-module true splice-conflicts 0 llvm-ran true llvm-passed true verified true verified-count 1 "
+        "separate-module true splice-conflicts 0 composition-failures 0 first-composition-failure none "
+        "llvm-ran true llvm-passed true verified true verified-count 1 "
         "llvm-verified-count 1 diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
         "replacement-targets unique mutation-applied true module-matches-candidate true "
-        "llvm-passed true diagnostics 0"
+        "composition-failure none llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -172,13 +173,14 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 1 "
         "candidate-functions found candidate-match true replacement-targets unique module-changed true "
-        "separate-module true splice-conflicts 0 llvm-ran true llvm-passed true verified true verified-count 1 "
+        "separate-module true splice-conflicts 0 composition-failures 0 first-composition-failure none "
+        "llvm-ran true llvm-passed true verified true verified-count 1 "
         "llvm-verified-count 1 diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
         "replacement-targets unique mutation-applied true module-matches-candidate true "
-        "llvm-passed true diagnostics 0"
+        "composition-failure none llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -198,13 +200,14 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 2 "
         "candidate-functions found candidate-match true replacement-targets unique module-changed true "
-        "separate-module true splice-conflicts 0 llvm-ran true llvm-passed true verified true verified-count 2 "
+        "separate-module true splice-conflicts 0 composition-failures 0 first-composition-failure none "
+        "llvm-ran true llvm-passed true verified true verified-count 2 "
         "llvm-verified-count 2 diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
         "replacement-targets unique mutation-applied true module-matches-candidate true "
-        "llvm-passed true diagnostics 0"
+        "composition-failure none llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -225,7 +228,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 2 "
         "candidate-functions found candidate-match true replacement-targets blocked module-changed true "
-        "separate-module true splice-conflicts 1 llvm-ran true llvm-passed true verified false verified-count 0 "
+        "separate-module true splice-conflicts 1 composition-failures 0 first-composition-failure none "
+        "llvm-ran true llvm-passed true verified false verified-count 0 "
         "llvm-verified-count 2 diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
@@ -235,7 +239,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified false "
         "replacement-targets blocked mutation-applied false module-matches-candidate false "
-        "llvm-passed false diagnostics 0"
+        "composition-failure none llvm-passed false diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -266,7 +270,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module verification metadata available verifications 2 "
         "candidate-functions found candidate-match true replacement-targets unique module-changed true "
-        "separate-module true splice-conflicts 0 llvm-ran true llvm-passed true verified true verified-count 2 "
+        "separate-module true splice-conflicts 0 composition-failures 0 first-composition-failure none "
+        "llvm-ran true llvm-passed true verified true verified-count 2 "
         "llvm-verified-count 2 diagnostics 0"
     ) != std::string::npos);
     assert(output.find(

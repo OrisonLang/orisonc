@@ -434,4 +434,34 @@ auto compose_non_overlapping_function_ir_rewrite_result(
     };
 }
 
+auto runtime_indexed_cleanup_ir_composition_failure_token(
+    RuntimeIndexedCleanupIrCompositionFailure failure
+) -> std::string_view {
+    switch (failure) {
+    case RuntimeIndexedCleanupIrCompositionFailure::none:
+        return "none";
+    case RuntimeIndexedCleanupIrCompositionFailure::empty_input:
+        return "empty-input";
+    case RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace:
+        return "missing-function-closing-brace";
+    case RuntimeIndexedCleanupIrCompositionFailure::missing_predecessor_block:
+        return "missing-predecessor-block";
+    case RuntimeIndexedCleanupIrCompositionFailure::missing_predecessor_terminator:
+        return "missing-predecessor-terminator";
+    case RuntimeIndexedCleanupIrCompositionFailure::ambiguous_predecessor_terminator:
+        return "ambiguous-predecessor-terminator";
+    case RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_exit_block:
+        return "missing-cleanup-exit-block";
+    case RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed:
+        return "phi-retarget-failed";
+    case RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate:
+        return "invalid-candidate";
+    case RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text:
+        return "unexpected-splice-text";
+    case RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail:
+        return "missing-cleanup-cfg-tail";
+    }
+    return "unknown";
+}
+
 } // namespace orison::pipeline

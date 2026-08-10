@@ -1414,6 +1414,9 @@ representation.
 - Runtime-index cleanup IR composition helpers now expose structured result APIs with finite failure kinds while the
   existing string/vector wrapper APIs remain available for current callers. Focused smoke coverage pins representative
   missing-predecessor, unexpected-splice-text, and empty-input failures without parsing empty strings.
+- Runtime-index cleanup audit reporting now carries structured IR composition failure counts and first-failure tokens
+  through function rewrite candidates, function-module verification, and mutation reports. Successful paths report
+  `composition-failures 0 first-composition-failure none` and mutation `composition-failure none`.
 
 ## Follow-up work
 

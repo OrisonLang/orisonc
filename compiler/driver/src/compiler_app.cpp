@@ -305,6 +305,9 @@ auto runtime_indexed_cleanup_function_module_verification_report(
            << " module-changed " << (state.all_module_ir_changed ? "true" : "false")
            << " separate-module " << (state.all_candidates_separate_from_module_ir ? "true" : "false")
            << " splice-conflicts " << state.splice_conflict_count
+           << " composition-failures " << state.composition_failure_count
+           << " first-composition-failure "
+           << pipeline::runtime_indexed_cleanup_ir_composition_failure_token(state.first_composition_failure)
            << " llvm-ran " << (state.any_llvm_verifier_ran ? "true" : "false")
            << " llvm-passed " << (state.all_llvm_verifier_passed ? "true" : "false")
            << " verified " << (state.all_verified ? "true" : "false")
@@ -339,6 +342,8 @@ auto runtime_indexed_cleanup_function_module_mutation_report(
            << " replacement-targets " << (state.replacement_targets_unique ? "unique" : "blocked")
            << " mutation-applied " << (state.mutation_applied ? "true" : "false")
            << " module-matches-candidate " << (state.module_matches_candidate ? "true" : "false")
+           << " composition-failure "
+           << pipeline::runtime_indexed_cleanup_ir_composition_failure_token(state.composition_failure)
            << " llvm-passed " << (state.llvm_verifier_passed ? "true" : "false")
            << " diagnostics " << state.llvm_verifier_diagnostic_count
            << " final-lines " << state.final_module_line_count;

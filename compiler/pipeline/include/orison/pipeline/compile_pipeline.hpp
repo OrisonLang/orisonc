@@ -286,6 +286,24 @@ struct RuntimeIndexedCleanupFunctionCfgRewriteVerificationState {
     std::size_t verified_count = 0;
 };
 
+enum class RuntimeIndexedCleanupIrCompositionFailure {
+    none,
+    empty_input,
+    missing_function_closing_brace,
+    missing_predecessor_block,
+    missing_predecessor_terminator,
+    ambiguous_predecessor_terminator,
+    missing_cleanup_exit_block,
+    phi_retarget_failed,
+    invalid_candidate,
+    unexpected_splice_text,
+    missing_cleanup_cfg_tail,
+};
+
+auto runtime_indexed_cleanup_ir_composition_failure_token(
+    RuntimeIndexedCleanupIrCompositionFailure failure
+) -> std::string_view;
+
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     std::string function_symbol_name;
     std::string predecessor_block_name;
@@ -300,6 +318,8 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     bool function_ir_changed = false;
     bool predecessor_terminator_replaced = false;
     bool splice_range_available = false;
+    RuntimeIndexedCleanupIrCompositionFailure composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t source_line = 0;
     std::size_t original_function_line_count = 0;
     std::size_t candidate_function_line_count = 0;
@@ -317,8 +337,11 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
     bool same_function_splice_ranges_ordered = true;
     bool same_function_splice_ranges_non_overlapping = true;
     bool any_function_ir_changed = false;
+    RuntimeIndexedCleanupIrCompositionFailure first_composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t candidate_count = 0;
     std::size_t available_candidate_count = 0;
+    std::size_t composition_failure_count = 0;
     std::size_t original_function_line_count = 0;
     std::size_t candidate_function_line_count = 0;
     std::size_t inserted_cfg_line_count = 0;
@@ -340,6 +363,8 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
     bool splice_range_available = false;
     bool separate_from_module_ir = false;
     bool verified = false;
+    RuntimeIndexedCleanupIrCompositionFailure composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t source_line = 0;
     std::size_t original_cleanup_block_count = 0;
     std::size_t candidate_cleanup_block_count = 0;
@@ -365,8 +390,11 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {
     bool same_function_splice_ranges_ordered = false;
     bool same_function_splice_ranges_non_overlapping = false;
     bool all_verified = false;
+    RuntimeIndexedCleanupIrCompositionFailure first_composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t verification_count = 0;
     std::size_t verified_count = 0;
+    std::size_t composition_failure_count = 0;
 };
 
 struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidate {
@@ -390,8 +418,11 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState {
     bool any_candidate_available = false;
     bool all_candidates_separate_from_module_ir = true;
     bool any_module_ir_changed = false;
+    RuntimeIndexedCleanupIrCompositionFailure first_composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t candidate_count = 0;
     std::size_t available_candidate_count = 0;
+    std::size_t composition_failure_count = 0;
     std::size_t original_module_line_count = 0;
     std::size_t candidate_module_line_count = 0;
 };
@@ -438,10 +469,13 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
     bool any_llvm_verifier_ran = false;
     bool all_llvm_verifier_passed = false;
     bool all_verified = false;
+    RuntimeIndexedCleanupIrCompositionFailure first_composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t verification_count = 0;
     std::size_t verified_count = 0;
     std::size_t llvm_verified_count = 0;
     std::size_t splice_conflict_count = 0;
+    std::size_t composition_failure_count = 0;
     std::size_t llvm_verifier_diagnostic_count = 0;
 };
 
@@ -452,6 +486,8 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     bool mutation_applied = false;
     bool module_matches_candidate = false;
     bool llvm_verifier_passed = false;
+    RuntimeIndexedCleanupIrCompositionFailure composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     std::size_t candidate_count = 0;
     std::size_t final_module_line_count = 0;
     std::size_t llvm_verifier_diagnostic_count = 0;
