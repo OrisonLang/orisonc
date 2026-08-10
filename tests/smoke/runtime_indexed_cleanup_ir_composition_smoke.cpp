@@ -158,6 +158,12 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
         operation_result.operation.appended_cleanup_cfg.find("left.runtime_cleanup.entry:\n") <
         operation_result.operation.appended_cleanup_cfg.find("right.runtime_cleanup.entry:\n")
     );
+    assert(
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            operation_result.operation
+        ).succeeded()
+    );
 
     auto const compose_result =
         orison::pipeline::compose_non_overlapping_function_ir_rewrite_result(original_function_ir, candidates);
@@ -269,6 +275,17 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
     );
 
+    auto const empty_operation_validation =
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {}
+        );
+    assert(!empty_operation_validation.succeeded());
+    assert(
+        empty_operation_validation.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
+    );
+
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             original_function_ir,
@@ -281,19 +298,31 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
     );
 
+    auto invalid_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
+        .parts = {
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
+                .predecessor_block_name = "entry",
+                .continuation_block_name = "entry.runtime_cleanup.exit",
+                .splice_start_offset = 3,
+                .splice_end_offset = 3,
+            },
+        },
+    };
+    auto const invalid_operation_validation =
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            invalid_operation
+        );
+    assert(!invalid_operation_validation.succeeded());
+    assert(
+        invalid_operation_validation.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
+    );
+
     auto const invalid_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             original_function_ir,
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
-                .parts = {
-                    orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
-                        .predecessor_block_name = "entry",
-                        .continuation_block_name = "entry.runtime_cleanup.exit",
-                        .splice_start_offset = 3,
-                        .splice_end_offset = 3,
-                    },
-                },
-            }
+            invalid_operation
         );
     assert(!invalid_operation_result.succeeded());
     assert(invalid_operation_result.rewritten_function_ir.empty());

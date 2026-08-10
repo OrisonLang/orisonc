@@ -1429,6 +1429,8 @@ representation.
   composition API. Direct smoke coverage pins empty-operation, missing-closing-brace, and PHI-retarget failure paths.
 - Single-candidate runtime-index cleanup predecessor rewrite now builds a one-part function-rewrite operation and uses
   the shared operation application helper. Direct smoke coverage also pins invalid-operation rejection.
+- Runtime-index cleanup function-rewrite operation validation is now separate from operation application. The validator
+  reports finite failure tokens without mutating IR text, and the applicator consumes that validation result.
 
 ## Follow-up work
 

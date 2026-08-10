@@ -371,24 +371,42 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
     };
 }
 
+auto validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+    if (original_function_ir.empty() || operation.parts.empty()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+        };
+    }
+    for (auto const& part : operation.parts) {
+        if (part.splice_start_offset >= part.splice_end_offset ||
+            part.splice_end_offset > original_function_ir.size() ||
+            part.replacement_branch_text.empty()) {
+            return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+            };
+        }
+    }
+    return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {};
+}
+
 auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     std::string const& original_function_ir,
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
 ) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
-    if (original_function_ir.empty() || operation.parts.empty()) {
+    auto const validation = validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+        original_function_ir,
+        operation
+    );
+    if (!validation.succeeded()) {
         return RuntimeIndexedCleanupFunctionIrRewriteResult {
-            .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+            .failure = validation.failure,
         };
     }
     auto composed = original_function_ir;
     for (auto const& part : operation.parts) {
-        if (part.splice_start_offset >= part.splice_end_offset ||
-            part.splice_end_offset > composed.size() ||
-            part.replacement_branch_text.empty()) {
-            return RuntimeIndexedCleanupFunctionIrRewriteResult {
-                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
-            };
-        }
         composed.replace(
             part.splice_start_offset,
             part.splice_end_offset - part.splice_start_offset,

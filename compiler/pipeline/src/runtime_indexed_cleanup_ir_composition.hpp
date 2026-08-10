@@ -89,6 +89,15 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
     }
 };
 
+struct RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+    RuntimeIndexedCleanupIrCompositionFailure failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
+
+    [[nodiscard]] auto succeeded() const -> bool {
+        return failure == RuntimeIndexedCleanupIrCompositionFailure::none;
+    }
+};
+
 auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
@@ -98,6 +107,11 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
 ) -> RuntimeIndexedCleanupFunctionIrRewriteOperationResult;
+
+auto validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteOperationValidation;
 
 auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     std::string const& original_function_ir,
