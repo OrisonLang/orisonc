@@ -139,6 +139,26 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     assert(parts[1].replacement_branch_text == "  br label %right.runtime_cleanup.entry\n");
     assert(parts[1].cleanup_cfg_tail.find("right.runtime_cleanup.entry:\n") != std::string::npos);
 
+    auto const operation_result =
+        orison::pipeline::build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
+            original_function_ir,
+            candidates
+        );
+    assert(operation_result.succeeded());
+    assert(operation_result.operation.parts.size() == 2);
+    assert(
+        operation_result.operation.appended_cleanup_cfg.find("left.runtime_cleanup.entry:\n") !=
+        std::string::npos
+    );
+    assert(
+        operation_result.operation.appended_cleanup_cfg.find("right.runtime_cleanup.entry:\n") !=
+        std::string::npos
+    );
+    assert(
+        operation_result.operation.appended_cleanup_cfg.find("left.runtime_cleanup.entry:\n") <
+        operation_result.operation.appended_cleanup_cfg.find("right.runtime_cleanup.entry:\n")
+    );
+
     auto const compose_result =
         orison::pipeline::compose_non_overlapping_function_ir_rewrite_result(original_function_ir, candidates);
     assert(compose_result.succeeded());

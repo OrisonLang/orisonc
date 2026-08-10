@@ -345,12 +345,12 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     };
 }
 
-auto compose_non_overlapping_function_ir_rewrite_result(
+auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
-) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
+) -> RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
     if (original_function_ir.empty() || candidates.empty()) {
-        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        return RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
             .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
         };
     }
@@ -362,22 +362,43 @@ auto compose_non_overlapping_function_ir_rewrite_result(
         }
     );
 
-    auto composed = original_function_ir;
     auto const composition_part_result =
         build_runtime_indexed_cleanup_function_ir_composition_part_result(original_function_ir, candidates);
     if (!composition_part_result.succeeded()) {
-        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        return RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
             .failure = composition_part_result.failure,
         };
     }
     auto appended_cleanup_cfg = std::string {};
     for (auto const& part : composition_part_result.parts) {
+        appended_cleanup_cfg = part.cleanup_cfg_tail + appended_cleanup_cfg;
+    }
+    return RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
+        .operation = RuntimeIndexedCleanupFunctionIrRewriteOperation {
+            .parts = composition_part_result.parts,
+            .appended_cleanup_cfg = std::move(appended_cleanup_cfg),
+        },
+    };
+}
+
+namespace {
+
+auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
+    if (original_function_ir.empty() || operation.parts.empty()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+        };
+    }
+    auto composed = original_function_ir;
+    for (auto const& part : operation.parts) {
         composed.replace(
             part.splice_start_offset,
             part.splice_end_offset - part.splice_start_offset,
             part.replacement_branch_text
         );
-        appended_cleanup_cfg = part.cleanup_cfg_tail + appended_cleanup_cfg;
     }
 
     auto const closing_position = composed.rfind("\n}\n");
@@ -386,8 +407,8 @@ auto compose_non_overlapping_function_ir_rewrite_result(
             .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace,
         };
     }
-    composed.insert(closing_position + 1, appended_cleanup_cfg);
-    for (auto const& part : composition_part_result.parts) {
+    composed.insert(closing_position + 1, operation.appended_cleanup_cfg);
+    for (auto const& part : operation.parts) {
         composed = retarget_phi_incoming_predecessor(
             composed,
             part.predecessor_block_name,
@@ -402,6 +423,25 @@ auto compose_non_overlapping_function_ir_rewrite_result(
     return RuntimeIndexedCleanupFunctionIrRewriteResult {
         .rewritten_function_ir = std::move(composed),
     };
+}
+
+} // namespace
+
+auto compose_non_overlapping_function_ir_rewrite_result(
+    std::string const& original_function_ir,
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
+) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
+    auto const operation_result =
+        build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(original_function_ir, std::move(candidates));
+    if (!operation_result.succeeded()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = operation_result.failure,
+        };
+    }
+    return apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+        original_function_ir,
+        operation_result.operation
+    );
 }
 
 auto runtime_indexed_cleanup_ir_composition_failure_token(

@@ -73,10 +73,31 @@ struct RuntimeIndexedCleanupFunctionIrCompositionPartResult {
     }
 };
 
+struct RuntimeIndexedCleanupFunctionIrRewriteOperation {
+    std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> parts;
+    std::string appended_cleanup_cfg;
+};
+
+struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
+    RuntimeIndexedCleanupFunctionIrRewriteOperation operation;
+    RuntimeIndexedCleanupIrCompositionFailure failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
+
+    [[nodiscard]] auto succeeded() const -> bool {
+        return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
+            !operation.parts.empty();
+    }
+};
+
 auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
 ) -> RuntimeIndexedCleanupFunctionIrCompositionPartResult;
+
+auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
+    std::string const& original_function_ir,
+    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
+) -> RuntimeIndexedCleanupFunctionIrRewriteOperationResult;
 
 auto rewrite_predecessor_terminator_and_insert_cfg_result(
     std::string const& function_ir,

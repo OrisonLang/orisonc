@@ -1422,6 +1422,9 @@ representation.
   ready-path output.
 - Runtime-index cleanup IR composition callers now consume structured result APIs directly. The previous string/vector
   wrapper APIs were removed from the pipeline-internal support module.
+- Same-function runtime-index cleanup composition now builds a typed function-rewrite operation before applying text
+  mutation. The operation owns splice replacement parts and the appended cleanup CFG, leaving PHI retargeting in one
+  operation application helper.
 
 ## Follow-up work
 
