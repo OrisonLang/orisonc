@@ -8,6 +8,33 @@
 
 namespace orison::pipeline {
 
+auto occurrence_count(
+    std::string const& text,
+    std::string const& needle
+) -> std::size_t;
+
+auto block_label_found(
+    std::string const& function_ir,
+    std::string const& block_name
+) -> bool;
+
+auto predecessor_branch_pattern(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& branch_text
+) -> std::string;
+
+auto predecessor_terminator_pattern(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name
+) -> std::string;
+
+auto predecessor_terminator_position(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& terminator
+) -> std::string::size_type;
+
 struct RuntimeIndexedCleanupFunctionIrInsertion {
     std::string predecessor_block_name;
     std::string inserted_branch_text;

@@ -7,6 +7,37 @@
 
 namespace {
 
+void assert_runtime_indexed_cleanup_ir_text_helpers_are_shared() {
+    auto const function_ir =
+        std::string {
+            "define i32 @helper() {\n"
+            "entry:\n"
+            "  br label %left\n"
+            "\n"
+            "left:\n"
+            "  %x = add i32 1, 2\n"
+            "  br label %join\n"
+            "\n"
+            "join:\n"
+            "  ret i32 0\n"
+            "}\n"
+        };
+
+    assert(orison::pipeline::occurrence_count(function_ir, "br label") == 2);
+    assert(orison::pipeline::block_label_found(function_ir, "left"));
+    assert(!orison::pipeline::block_label_found(function_ir, "missing"));
+    assert(
+        orison::pipeline::predecessor_branch_pattern(function_ir, "entry", "br label %left") ==
+        "  br label %left\n"
+    );
+    auto const terminator = orison::pipeline::predecessor_terminator_pattern(function_ir, "left");
+    assert(terminator == "  br label %join\n");
+    auto const terminator_position =
+        orison::pipeline::predecessor_terminator_position(function_ir, "left", terminator);
+    assert(terminator_position != std::string::npos);
+    assert(function_ir.substr(terminator_position, terminator.size()) == terminator);
+}
+
 auto branch_position_in_block(
     std::string const& function_ir,
     std::string const& block_name,
@@ -156,6 +187,7 @@ void assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured(
 } // namespace
 
 auto main() -> int {
+    assert_runtime_indexed_cleanup_ir_text_helpers_are_shared();
     assert_runtime_indexed_cleanup_ir_composition_parts_are_structured();
     assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured();
     return 0;

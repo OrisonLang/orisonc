@@ -1408,6 +1408,9 @@ representation.
 - Single-candidate runtime-index cleanup predecessor rewrite now lives in the same pipeline-internal support module.
   Focused smoke coverage pins inserted-branch replacement, cleanup CFG tail insertion, continuation branch restoration,
   and PHI predecessor retargeting for that boundary.
+- Runtime-index cleanup IR text helper logic for occurrence counting, block-label lookup, predecessor branch matching,
+  and predecessor terminator discovery now lives in the same pipeline-internal support module. Focused smoke coverage
+  pins those helpers before both report verification and rewrite composition consume them.
 
 ## Follow-up work
 

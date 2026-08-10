@@ -53,50 +53,6 @@ auto block_end_position(
     return function_ir.size();
 }
 
-auto occurrence_count(
-    std::string const& text,
-    std::string const& needle
-) -> std::size_t {
-    if (text.empty() || needle.empty()) {
-        return 0;
-    }
-
-    auto count = std::size_t {0};
-    auto position = std::string::size_type {0};
-    while ((position = text.find(needle, position)) != std::string::npos) {
-        ++count;
-        position += needle.size();
-    }
-    return count;
-}
-
-auto predecessor_terminator_pattern(
-    std::string const& function_ir,
-    std::string const& predecessor_block_name
-) -> std::string {
-    auto const block_start = block_start_position(function_ir, predecessor_block_name);
-    auto const block_end = block_end_position(function_ir, block_start);
-    if (block_start == std::string::npos || block_end == std::string::npos) {
-        return {};
-    }
-
-    auto const block_text = function_ir.substr(block_start, block_end - block_start);
-    auto search_position = std::string::size_type {0};
-    auto terminator = std::string {};
-    while (search_position < block_text.size()) {
-        auto const line_end = block_text.find('\n', search_position);
-        if (line_end == std::string::npos) {
-            break;
-        }
-        auto const line = block_text.substr(search_position, line_end - search_position);
-        if (line.rfind("  br ", 0) == 0 || line.rfind("  ret ", 0) == 0) {
-            terminator = line + "\n";
-        }
-        search_position = line_end + 1;
-    }
-    return terminator;
-}
-
 auto trailing_label_name(std::vector<std::string> const& lines) -> std::string {
     for (auto line = lines.rbegin(); line != lines.rend(); ++line) {
         if (line->empty() || line->back() != '\n') {
@@ -165,6 +121,96 @@ auto retarget_phi_incoming_predecessor(
 }
 
 } // namespace
+
+auto occurrence_count(
+    std::string const& text,
+    std::string const& needle
+) -> std::size_t {
+    if (text.empty() || needle.empty()) {
+        return 0;
+    }
+
+    auto count = std::size_t {0};
+    auto position = std::string::size_type {0};
+    while ((position = text.find(needle, position)) != std::string::npos) {
+        ++count;
+        position += needle.size();
+    }
+    return count;
+}
+
+auto block_label_found(
+    std::string const& function_ir,
+    std::string const& block_name
+) -> bool {
+    return !function_ir.empty() &&
+        !block_name.empty() &&
+        function_ir.find("\n" + block_name + ":\n") != std::string::npos;
+}
+
+auto predecessor_branch_pattern(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& branch_text
+) -> std::string {
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos) {
+        return {};
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    auto const branch_pattern = "  " + branch_text + "\n";
+    if (block_text.find(branch_pattern) == std::string::npos) {
+        return {};
+    }
+    return branch_pattern;
+}
+
+auto predecessor_terminator_pattern(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name
+) -> std::string {
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos) {
+        return {};
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    auto search_position = std::string::size_type {0};
+    auto terminator = std::string {};
+    while (search_position < block_text.size()) {
+        auto const line_end = block_text.find('\n', search_position);
+        if (line_end == std::string::npos) {
+            break;
+        }
+        auto const line = block_text.substr(search_position, line_end - search_position);
+        if (line.rfind("  br ", 0) == 0 || line.rfind("  ret ", 0) == 0) {
+            terminator = line + "\n";
+        }
+        search_position = line_end + 1;
+    }
+    return terminator;
+}
+
+auto predecessor_terminator_position(
+    std::string const& function_ir,
+    std::string const& predecessor_block_name,
+    std::string const& terminator
+) -> std::string::size_type {
+    auto const block_start = block_start_position(function_ir, predecessor_block_name);
+    auto const block_end = block_end_position(function_ir, block_start);
+    if (block_start == std::string::npos || block_end == std::string::npos || terminator.empty()) {
+        return std::string::npos;
+    }
+
+    auto const block_text = function_ir.substr(block_start, block_end - block_start);
+    if (occurrence_count(block_text, terminator) != 1) {
+        return std::string::npos;
+    }
+    return block_start + block_text.find(terminator);
+}
 
 auto rewrite_predecessor_terminator_and_insert_cfg(
     std::string const& function_ir,

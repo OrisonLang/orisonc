@@ -29,23 +29,6 @@ auto logical_line_count(std::string const& text) -> std::size_t {
     return line_count;
 }
 
-auto occurrence_count(
-    std::string const& text,
-    std::string const& needle
-) -> std::size_t {
-    if (text.empty() || needle.empty()) {
-        return 0;
-    }
-
-    auto count = std::size_t {0};
-    auto position = std::string::size_type {0};
-    while ((position = text.find(needle, position)) != std::string::npos) {
-        ++count;
-        position += needle.size();
-    }
-    return count;
-}
-
 auto function_ir_slice(
     std::string const& ir_text,
     std::string const& function_symbol_name
@@ -78,131 +61,12 @@ auto function_ir_slice(
     }
 }
 
-auto block_label_found(
-    std::string const& function_ir,
-    std::string const& block_name
-) -> bool {
-    return !function_ir.empty() &&
-        !block_name.empty() &&
-        function_ir.find("\n" + block_name + ":\n") != std::string::npos;
-}
-
 auto joined_lines(std::vector<std::string> const& lines) -> std::string {
     auto text = std::string {};
     for (auto const& line : lines) {
         text += line;
     }
     return text;
-}
-
-auto block_start_position(
-    std::string const& function_ir,
-    std::string const& block_name
-) -> std::string::size_type {
-    if (function_ir.empty() || block_name.empty()) {
-        return std::string::npos;
-    }
-
-    auto const label = "\n" + block_name + ":\n";
-    auto const label_position = function_ir.find(label);
-    if (label_position == std::string::npos) {
-        return std::string::npos;
-    }
-    return label_position + 1;
-}
-
-auto block_end_position(
-    std::string const& function_ir,
-    std::string::size_type block_start
-) -> std::string::size_type {
-    if (function_ir.empty() || block_start == std::string::npos) {
-        return std::string::npos;
-    }
-
-    auto search_position = function_ir.find('\n', block_start);
-    if (search_position == std::string::npos) {
-        return std::string::npos;
-    }
-    ++search_position;
-    while (search_position < function_ir.size()) {
-        auto const line_end = function_ir.find('\n', search_position);
-        if (line_end == std::string::npos) {
-            return function_ir.size();
-        }
-        auto const line = function_ir.substr(search_position, line_end - search_position);
-        if (!line.empty() && line.front() != ' ' && line.back() == ':') {
-            return search_position;
-        }
-        if (line == "}") {
-            return search_position;
-        }
-        search_position = line_end + 1;
-    }
-    return function_ir.size();
-}
-
-auto predecessor_branch_pattern(
-    std::string const& function_ir,
-    std::string const& predecessor_block_name,
-    std::string const& branch_text
-) -> std::string {
-    auto const block_start = block_start_position(function_ir, predecessor_block_name);
-    auto const block_end = block_end_position(function_ir, block_start);
-    if (block_start == std::string::npos || block_end == std::string::npos) {
-        return {};
-    }
-
-    auto const block_text = function_ir.substr(block_start, block_end - block_start);
-    auto const branch_pattern = "  " + branch_text + "\n";
-    if (block_text.find(branch_pattern) == std::string::npos) {
-        return {};
-    }
-    return branch_pattern;
-}
-
-auto predecessor_terminator_pattern(
-    std::string const& function_ir,
-    std::string const& predecessor_block_name
-) -> std::string {
-    auto const block_start = block_start_position(function_ir, predecessor_block_name);
-    auto const block_end = block_end_position(function_ir, block_start);
-    if (block_start == std::string::npos || block_end == std::string::npos) {
-        return {};
-    }
-
-    auto const block_text = function_ir.substr(block_start, block_end - block_start);
-    auto search_position = std::string::size_type {0};
-    auto terminator = std::string {};
-    while (search_position < block_text.size()) {
-        auto const line_end = block_text.find('\n', search_position);
-        if (line_end == std::string::npos) {
-            break;
-        }
-        auto const line = block_text.substr(search_position, line_end - search_position);
-        if (line.rfind("  br ", 0) == 0 || line.rfind("  ret ", 0) == 0) {
-            terminator = line + "\n";
-        }
-        search_position = line_end + 1;
-    }
-    return terminator;
-}
-
-auto predecessor_terminator_position(
-    std::string const& function_ir,
-    std::string const& predecessor_block_name,
-    std::string const& terminator
-) -> std::string::size_type {
-    auto const block_start = block_start_position(function_ir, predecessor_block_name);
-    auto const block_end = block_end_position(function_ir, block_start);
-    if (block_start == std::string::npos || block_end == std::string::npos || terminator.empty()) {
-        return std::string::npos;
-    }
-
-    auto const block_text = function_ir.substr(block_start, block_end - block_start);
-    if (occurrence_count(block_text, terminator) != 1) {
-        return std::string::npos;
-    }
-    return block_start + block_text.find(terminator);
 }
 
 auto build_runtime_indexed_cleanup_function_ir_insertion(
