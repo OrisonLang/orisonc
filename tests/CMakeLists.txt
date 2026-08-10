@@ -1376,6 +1376,27 @@ add_test(
     COMMAND orison_pipeline_smoke
 )
 
+add_executable(orison_runtime_indexed_cleanup_ir_composition_smoke
+    smoke/runtime_indexed_cleanup_ir_composition_smoke.cpp
+)
+
+target_link_libraries(orison_runtime_indexed_cleanup_ir_composition_smoke
+    PRIVATE
+        orison_pipeline
+)
+
+target_include_directories(orison_runtime_indexed_cleanup_ir_composition_smoke
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/compiler/pipeline/src
+)
+
+target_compile_features(orison_runtime_indexed_cleanup_ir_composition_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_runtime_indexed_cleanup_ir_composition_smoke
+    COMMAND orison_runtime_indexed_cleanup_ir_composition_smoke
+)
+
 add_executable(orison_drop_readiness_source_correlation_report_smoke
     smoke/drop_readiness_source_correlation_report_smoke.cpp
 )

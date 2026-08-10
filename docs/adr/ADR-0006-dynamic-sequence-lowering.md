@@ -1403,6 +1403,8 @@ representation.
 - Same-function runtime-index cleanup composition now builds structured composition parts before mutating function IR.
   Each part captures the validated splice range, replacement branch, cleanup CFG tail, and PHI-retarget predecessor
   data, separating candidate verification from the remaining text rewrite step.
+- Same-function runtime-index cleanup IR composition now lives in a named pipeline-internal support module with focused
+  smoke coverage for composition parts, branch replacement, cleanup CFG tail appending, and PHI predecessor retargeting.
 
 ## Follow-up work
 
