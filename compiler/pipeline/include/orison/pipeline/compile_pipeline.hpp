@@ -509,6 +509,8 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
         RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
     std::string stage_name;
     std::string function_symbol_name;
+    RuntimeIndexedCleanupIrCompositionFailure composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     bool source_available = false;
     std::size_t source_line = 0;
 };
@@ -528,6 +530,8 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     std::size_t function_splice_conflict_count = 0;
     std::string diagnostic_blocker_stage_name;
     std::string diagnostic_function_symbol_name;
+    RuntimeIndexedCleanupIrCompositionFailure diagnostic_composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
     bool diagnostic_source_available = false;
     std::size_t diagnostic_source_line = 0;
     std::size_t diagnostic_left_candidate_index = 0;

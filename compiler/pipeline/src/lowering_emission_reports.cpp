@@ -1278,6 +1278,12 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
         }
         break;
     }
+    if (state.diagnostic_composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
+        diagnostic << " composition-failure "
+                   << runtime_indexed_cleanup_ir_composition_failure_token(
+                          state.diagnostic_composition_failure
+                      );
+    }
     return diagnostic.str();
 }
 
@@ -1377,6 +1383,10 @@ auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
         if (blocker.source_available) {
             line << " source-line " << blocker.source_line;
         }
+        if (blocker.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
+            line << " composition-failure "
+                 << runtime_indexed_cleanup_ir_composition_failure_token(blocker.composition_failure);
+        }
         lines.push_back(line.str());
     }
     return lines;
@@ -1386,12 +1396,15 @@ namespace {
 
 auto runtime_indexed_cleanup_readiness_blocker(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
-    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
+    RuntimeIndexedCleanupIrCompositionFailure composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
     auto blocker = RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
         .kind = blocker_kind,
         .stage_name =
             std::string(runtime_indexed_cleanup_production_readiness_blocker_stage_name(blocker_kind)),
+        .composition_failure = composition_failure,
     };
     if (!function_verification_state.verifications.empty()) {
         auto const& verification = function_verification_state.verifications.front();
@@ -1405,10 +1418,16 @@ auto runtime_indexed_cleanup_readiness_blocker(
 auto append_runtime_indexed_cleanup_readiness_blocker(
     RuntimeIndexedCleanupModuleIrProductionReadinessState& readiness_state,
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind blocker_kind,
-    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
+    RuntimeIndexedCleanupIrCompositionFailure composition_failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none
 ) -> void {
     readiness_state.blockers.push_back(
-        runtime_indexed_cleanup_readiness_blocker(blocker_kind, function_verification_state)
+        runtime_indexed_cleanup_readiness_blocker(
+            blocker_kind,
+            function_verification_state,
+            composition_failure
+        )
     );
 }
 
@@ -1424,6 +1443,7 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
     if (readiness_state.diagnostic_function_symbol_name.empty()) {
         readiness_state.diagnostic_function_symbol_name = blocker.function_symbol_name;
     }
+    readiness_state.diagnostic_composition_failure = blocker.composition_failure;
     readiness_state.diagnostic_source_available = blocker.source_available;
     readiness_state.diagnostic_source_line = blocker.source_line;
 }
@@ -1439,6 +1459,10 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
     auto const function_splice_conflict_free =
         function_verification_state.splice_conflict_count == 0;
+    auto const function_composition_failure =
+        function_mutation_state.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none
+            ? function_mutation_state.composition_failure
+            : function_verification_state.first_composition_failure;
     auto const function_mutation_ready =
         function_mutation_state.mutation_requested &&
         function_mutation_state.candidate_verified &&
@@ -1509,21 +1533,24 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::CandidateVerification,
-            function_verification_state
+            function_verification_state,
+            function_verification_state.first_composition_failure
         );
     }
     if (!readiness_state.module_mutation_enabled) {
         append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation,
-            function_verification_state
+            function_verification_state,
+            function_composition_failure
         );
     }
     if (!readiness_state.function_integration_ready) {
         append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration,
-            function_verification_state
+            function_verification_state,
+            function_composition_failure
         );
     }
     apply_runtime_indexed_cleanup_first_readiness_blocker(readiness_state);

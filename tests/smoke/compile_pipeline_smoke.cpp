@@ -9241,6 +9241,68 @@ auto main() -> int {
             .production_ready
     );
 
+    auto composition_failure_readiness =
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+            .insertion_gate_ready = true,
+            .insertion_preview_ready = true,
+            .candidate_ready = true,
+            .candidate_verified = true,
+            .module_mutation_enabled = false,
+            .function_integration_ready = false,
+            .function_splice_conflict_free = true,
+            .production_ready = false,
+            .diagnostic_blocker_kind =
+                orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation,
+            .blockers = {
+                orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+                    .kind =
+                        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::ModuleMutation,
+                    .stage_name = "module mutation",
+                    .function_symbol_name = "main",
+                    .composition_failure =
+                        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
+                    .source_available = true,
+                    .source_line = 55,
+                },
+            },
+            .function_splice_conflict_count = 0,
+            .diagnostic_blocker_stage_name = "module mutation",
+            .diagnostic_function_symbol_name = "main",
+            .diagnostic_composition_failure =
+                orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
+            .diagnostic_source_available = true,
+            .diagnostic_source_line = 55,
+        };
+    composition_failure_readiness.diagnostic_text =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            composition_failure_readiness
+        );
+    assert(
+        composition_failure_readiness.diagnostic_text ==
+        "runtime-index cleanup blocked: module mutation disabled "
+        "composition-failure missing-cleanup-cfg-tail"
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
+            composition_failure_readiness
+        ).find(
+            "blocker-count 1 blocker-kind module-mutation function main source-line 55 "
+            "diagnostic runtime-index cleanup blocked: module mutation disabled "
+            "composition-failure missing-cleanup-cfg-tail"
+        ) != std::string::npos
+    );
+    auto const composition_failure_blockers =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
+            composition_failure_readiness
+        );
+    assert(composition_failure_blockers.size() == 1);
+    assert(
+        composition_failure_blockers.front().find(
+            "index 0 kind module-mutation stage module mutation function main source-line 55 "
+            "composition-failure missing-cleanup-cfg-tail"
+        ) != std::string::npos
+    );
+
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
     {
