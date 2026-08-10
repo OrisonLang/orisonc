@@ -73,30 +73,15 @@ struct RuntimeIndexedCleanupFunctionIrCompositionPartResult {
     }
 };
 
-auto build_runtime_indexed_cleanup_function_ir_composition_parts(
-    std::string const& original_function_ir,
-    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
-) -> std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart>;
-
 auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
 ) -> RuntimeIndexedCleanupFunctionIrCompositionPartResult;
 
-auto rewrite_predecessor_terminator_and_insert_cfg(
-    std::string const& function_ir,
-    RuntimeIndexedCleanupFunctionIrInsertion const& insertion
-) -> std::string;
-
 auto rewrite_predecessor_terminator_and_insert_cfg_result(
     std::string const& function_ir,
     RuntimeIndexedCleanupFunctionIrInsertion const& insertion
 ) -> RuntimeIndexedCleanupFunctionIrRewriteResult;
-
-auto compose_non_overlapping_function_ir_rewrite(
-    std::string const& original_function_ir,
-    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
-) -> std::string;
 
 auto compose_non_overlapping_function_ir_rewrite_result(
     std::string const& original_function_ir,

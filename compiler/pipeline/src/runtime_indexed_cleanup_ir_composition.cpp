@@ -212,16 +212,6 @@ auto predecessor_terminator_position(
     return block_start + block_text.find(terminator);
 }
 
-auto rewrite_predecessor_terminator_and_insert_cfg(
-    std::string const& function_ir,
-    RuntimeIndexedCleanupFunctionIrInsertion const& insertion
-) -> std::string {
-    return rewrite_predecessor_terminator_and_insert_cfg_result(
-        function_ir,
-        insertion
-    ).rewritten_function_ir;
-}
-
 auto rewrite_predecessor_terminator_and_insert_cfg_result(
     std::string const& function_ir,
     RuntimeIndexedCleanupFunctionIrInsertion const& insertion
@@ -306,16 +296,6 @@ auto rewrite_predecessor_terminator_and_insert_cfg_result(
     };
 }
 
-auto build_runtime_indexed_cleanup_function_ir_composition_parts(
-    std::string const& original_function_ir,
-    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
-) -> std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> {
-    return build_runtime_indexed_cleanup_function_ir_composition_part_result(
-        original_function_ir,
-        candidates
-    ).parts;
-}
-
 auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
@@ -363,16 +343,6 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
         .parts = std::move(parts),
     };
-}
-
-auto compose_non_overlapping_function_ir_rewrite(
-    std::string const& original_function_ir,
-    std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
-) -> std::string {
-    return compose_non_overlapping_function_ir_rewrite_result(
-        original_function_ir,
-        std::move(candidates)
-    ).rewritten_function_ir;
 }
 
 auto compose_non_overlapping_function_ir_rewrite_result(

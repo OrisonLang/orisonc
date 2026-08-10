@@ -121,12 +121,14 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
             &left_candidate,
             &right_candidate,
         };
-    auto const parts =
-        orison::pipeline::build_runtime_indexed_cleanup_function_ir_composition_parts(
+    auto const part_result =
+        orison::pipeline::build_runtime_indexed_cleanup_function_ir_composition_part_result(
             original_function_ir,
             candidates
         );
+    assert(part_result.succeeded());
 
+    auto const& parts = part_result.parts;
     assert(parts.size() == 2);
     assert(parts[0].predecessor_block_name == "left");
     assert(parts[0].continuation_block_name == "left.runtime_cleanup.exit");
@@ -137,9 +139,11 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     assert(parts[1].replacement_branch_text == "  br label %right.runtime_cleanup.entry\n");
     assert(parts[1].cleanup_cfg_tail.find("right.runtime_cleanup.entry:\n") != std::string::npos);
 
-    auto const composed =
-        orison::pipeline::compose_non_overlapping_function_ir_rewrite(original_function_ir, candidates);
-    assert(!composed.empty());
+    auto const compose_result =
+        orison::pipeline::compose_non_overlapping_function_ir_rewrite_result(original_function_ir, candidates);
+    assert(compose_result.succeeded());
+
+    auto const& composed = compose_result.rewritten_function_ir;
     assert(composed.find("left:\n  br label %left.runtime_cleanup.entry\n") != std::string::npos);
     assert(composed.find("right:\n  br label %right.runtime_cleanup.entry\n") != std::string::npos);
     assert(composed.find("left.runtime_cleanup.entry:\n") != std::string::npos);
@@ -174,9 +178,11 @@ void assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured(
         },
     };
 
-    auto const rewritten =
-        orison::pipeline::rewrite_predecessor_terminator_and_insert_cfg(original_function_ir, insertion);
+    auto const rewrite_result =
+        orison::pipeline::rewrite_predecessor_terminator_and_insert_cfg_result(original_function_ir, insertion);
+    assert(rewrite_result.succeeded());
 
+    auto const& rewritten = rewrite_result.rewritten_function_ir;
     assert(!rewritten.empty());
     assert(rewritten.find("entry:\n  br label %entry.runtime_cleanup.entry\n") != std::string::npos);
     assert(rewritten.find("entry.runtime_cleanup.entry:\n") != std::string::npos);

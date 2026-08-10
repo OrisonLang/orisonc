@@ -1411,15 +1411,17 @@ representation.
 - Runtime-index cleanup IR text helper logic for occurrence counting, block-label lookup, predecessor branch matching,
   and predecessor terminator discovery now lives in the same pipeline-internal support module. Focused smoke coverage
   pins those helpers before both report verification and rewrite composition consume them.
-- Runtime-index cleanup IR composition helpers now expose structured result APIs with finite failure kinds while the
-  existing string/vector wrapper APIs remain available for current callers. Focused smoke coverage pins representative
-  missing-predecessor, unexpected-splice-text, and empty-input failures without parsing empty strings.
+- Runtime-index cleanup IR composition helpers now expose structured result APIs with finite failure kinds. Focused
+  smoke coverage pins representative missing-predecessor, unexpected-splice-text, and empty-input failures without
+  parsing empty strings.
 - Runtime-index cleanup audit reporting now carries structured IR composition failure counts and first-failure tokens
   through function rewrite candidates, function-module verification, and mutation reports. Successful paths report
   `composition-failures 0 first-composition-failure none` and mutation `composition-failure none`.
 - Runtime-index cleanup production-readiness blockers now retain composition-failure provenance. Blocked module-mutation
   or function-integration diagnostics can include the stable `composition-failure <token>` detail without changing
   ready-path output.
+- Runtime-index cleanup IR composition callers now consume structured result APIs directly. The previous string/vector
+  wrapper APIs were removed from the pipeline-internal support module.
 
 ## Follow-up work
 
