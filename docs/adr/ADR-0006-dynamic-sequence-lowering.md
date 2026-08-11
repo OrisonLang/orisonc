@@ -1449,6 +1449,9 @@ representation.
   same-function rewrite failures can be distinguished from validation-only blockers.
 - Runtime-index cleanup production-readiness blockers now carry staged apply availability and stage outcomes. Blocked
   readiness diagnostics and blocker-detail reports expose those tokens when staged apply data exists.
+- Runtime-index cleanup function-rewrite operations now lower into an explicit function-IR edit script before
+  validation and staged application. The script separates branch replacements from the cleanup CFG append text while
+  preserving the existing final IR output.
 
 ## Follow-up work
 

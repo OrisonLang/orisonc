@@ -166,6 +166,26 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
             operation_result.operation
         ).succeeded()
     );
+    auto const edit_script_result =
+        orison::pipeline::build_runtime_indexed_cleanup_function_ir_edit_script_result(
+            operation_result.operation
+        );
+    assert(edit_script_result.succeeded());
+    assert(edit_script_result.edit_script.branch_replacements.size() == 2);
+    assert(
+        edit_script_result.edit_script.cleanup_cfg_append_text.find("left.runtime_cleanup.entry:\n") !=
+        std::string::npos
+    );
+    assert(
+        edit_script_result.edit_script.cleanup_cfg_append_text.find("right.runtime_cleanup.entry:\n") !=
+        std::string::npos
+    );
+    assert(
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_edit_script(
+            original_function_ir,
+            edit_script_result.edit_script
+        ).succeeded()
+    );
 
     auto const compose_result =
         orison::pipeline::compose_non_overlapping_function_ir_rewrite_result(original_function_ir, candidates);
@@ -180,6 +200,13 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     assert(stage_result.branch_replacements_applied);
     assert(stage_result.cleanup_cfg_appended);
     assert(stage_result.phi_predecessors_retargeted);
+    auto const edit_script_stage_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
+            original_function_ir,
+            edit_script_result.edit_script
+        );
+    assert(edit_script_stage_result.succeeded());
+    assert(edit_script_stage_result.staged_function_ir == stage_result.staged_function_ir);
 
     auto const& composed = compose_result.rewritten_function_ir;
     assert(composed.find("left:\n  br label %left.runtime_cleanup.entry\n") != std::string::npos);
@@ -301,6 +328,16 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(empty_operation_validation.part_index == 0);
     assert(empty_operation_validation.splice_start_offset == 0);
     assert(empty_operation_validation.splice_end_offset == 0);
+    auto const empty_edit_script_result =
+        orison::pipeline::build_runtime_indexed_cleanup_function_ir_edit_script_result(
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {}
+        );
+    assert(!empty_edit_script_result.succeeded());
+    assert(
+        empty_edit_script_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::empty_input
+    );
+    assert(empty_edit_script_result.edit_script.branch_replacements.empty());
 
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(

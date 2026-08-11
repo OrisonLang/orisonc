@@ -83,6 +83,11 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperation {
     std::string appended_cleanup_cfg;
 };
 
+struct RuntimeIndexedCleanupFunctionIrEditScript {
+    std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> branch_replacements;
+    std::string cleanup_cfg_append_text;
+};
+
 struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
     RuntimeIndexedCleanupFunctionIrRewriteOperation operation;
     RuntimeIndexedCleanupIrCompositionFailure failure =
@@ -91,6 +96,17 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
             !operation.parts.empty();
+    }
+};
+
+struct RuntimeIndexedCleanupFunctionIrEditScriptResult {
+    RuntimeIndexedCleanupFunctionIrEditScript edit_script;
+    RuntimeIndexedCleanupIrCompositionFailure failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
+
+    [[nodiscard]] auto succeeded() const -> bool {
+        return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
+            !edit_script.branch_replacements.empty();
     }
 };
 
@@ -143,6 +159,15 @@ auto validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
 ) -> RuntimeIndexedCleanupFunctionIrRewriteOperationValidation;
 
+auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrEditScriptResult;
+
+auto validate_runtime_indexed_cleanup_function_ir_edit_script(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrEditScript const& edit_script
+) -> RuntimeIndexedCleanupFunctionIrRewriteOperationValidation;
+
 auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     std::string const& original_function_ir,
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
@@ -151,6 +176,11 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
 auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
     std::string const& original_function_ir,
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteStageResult;
+
+auto apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrEditScript const& edit_script
 ) -> RuntimeIndexedCleanupFunctionIrRewriteStageResult;
 
 auto rewrite_predecessor_terminator_and_insert_cfg_result(
