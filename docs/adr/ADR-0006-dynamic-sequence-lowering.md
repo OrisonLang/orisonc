@@ -1479,6 +1479,8 @@ representation.
   validation result compatibility offsets remain as separate follow-up seams.
 - Runtime-index cleanup function-IR rewrite validation, staged-apply, and final rewrite results now expose typed splice
   ranges only. Rewrite candidates and splice-conflict records remain as separate raw-offset migration seams.
+- Runtime-index cleanup function-IR rewrite candidates and candidate verifications now carry typed splice ranges.
+  Splice-conflict records remain as the final raw-offset migration seam in this cleanup chain.
 
 ## Follow-up work
 

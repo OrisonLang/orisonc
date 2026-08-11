@@ -7836,14 +7836,14 @@ auto main() -> int {
     assert(runtime_indexed_cleanup_function_candidate.predecessor_terminator_replaced);
     assert(runtime_indexed_cleanup_function_candidate.splice_range_available);
     assert(
-        runtime_indexed_cleanup_function_candidate.splice_start_offset <
-        runtime_indexed_cleanup_function_candidate.splice_end_offset
+        runtime_indexed_cleanup_function_candidate.splice_range.start_offset <
+        runtime_indexed_cleanup_function_candidate.splice_range.end_offset
     );
     assert(
         runtime_indexed_cleanup_function_candidate.original_function_ir_text.substr(
-            runtime_indexed_cleanup_function_candidate.splice_start_offset,
-            runtime_indexed_cleanup_function_candidate.splice_end_offset -
-                runtime_indexed_cleanup_function_candidate.splice_start_offset
+            runtime_indexed_cleanup_function_candidate.splice_range.start_offset,
+            runtime_indexed_cleanup_function_candidate.splice_range.end_offset -
+                runtime_indexed_cleanup_function_candidate.splice_range.start_offset
         ) == "  " + runtime_indexed_cleanup_function_candidate.replaced_terminator_text + "\n"
     );
     assert(runtime_indexed_cleanup_function_candidate.original_function_line_count > 0);
@@ -8726,8 +8726,14 @@ auto main() -> int {
     assert(same_function_first_candidate.function_symbol_name == same_function_second_candidate.function_symbol_name);
     assert(same_function_first_candidate.splice_range_available);
     assert(same_function_second_candidate.splice_range_available);
-    assert(same_function_first_candidate.splice_start_offset == same_function_second_candidate.splice_start_offset);
-    assert(same_function_first_candidate.splice_end_offset == same_function_second_candidate.splice_end_offset);
+    assert(
+        same_function_first_candidate.splice_range.start_offset ==
+        same_function_second_candidate.splice_range.start_offset
+    );
+    assert(
+        same_function_first_candidate.splice_range.end_offset ==
+        same_function_second_candidate.splice_range.end_offset
+    );
     assert(same_function_first_candidate.source_line == 46);
     assert(same_function_second_candidate.source_line == 51);
     assert(
@@ -8769,10 +8775,22 @@ auto main() -> int {
     assert(same_function_splice_conflict.right_candidate_index == 1);
     assert(same_function_splice_conflict.left_source_line == 46);
     assert(same_function_splice_conflict.right_source_line == 51);
-    assert(same_function_splice_conflict.left_splice_start_offset == same_function_first_candidate.splice_start_offset);
-    assert(same_function_splice_conflict.left_splice_end_offset == same_function_first_candidate.splice_end_offset);
-    assert(same_function_splice_conflict.right_splice_start_offset == same_function_second_candidate.splice_start_offset);
-    assert(same_function_splice_conflict.right_splice_end_offset == same_function_second_candidate.splice_end_offset);
+    assert(
+        same_function_splice_conflict.left_splice_start_offset ==
+        same_function_first_candidate.splice_range.start_offset
+    );
+    assert(
+        same_function_splice_conflict.left_splice_end_offset ==
+        same_function_first_candidate.splice_range.end_offset
+    );
+    assert(
+        same_function_splice_conflict.right_splice_start_offset ==
+        same_function_second_candidate.splice_range.start_offset
+    );
+    assert(
+        same_function_splice_conflict.right_splice_end_offset ==
+        same_function_second_candidate.splice_range.end_offset
+    );
     assert(
         !runtime_indexed_same_function_cleanup
              .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
@@ -9003,7 +9021,7 @@ auto main() -> int {
     assert(non_overlap_first_candidate.function_symbol_name == non_overlap_second_candidate.function_symbol_name);
     assert(non_overlap_first_candidate.splice_range_available);
     assert(non_overlap_second_candidate.splice_range_available);
-    assert(non_overlap_first_candidate.splice_end_offset <= non_overlap_second_candidate.splice_start_offset);
+    assert(non_overlap_first_candidate.splice_range.end_offset <= non_overlap_second_candidate.splice_range.start_offset);
     assert(non_overlap_first_candidate.source_line == 55);
     assert(non_overlap_second_candidate.source_line == 63);
     assert(

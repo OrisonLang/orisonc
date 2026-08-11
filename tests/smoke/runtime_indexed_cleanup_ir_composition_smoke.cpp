@@ -111,10 +111,16 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     auto right_candidate =
         candidate_with_cleanup_tail("right", "right.runtime_cleanup.entry", "right.runtime_cleanup.exit");
     auto const branch_text = std::string {"  br label %join\n"};
-    left_candidate.splice_start_offset = branch_position_in_block(original_function_ir, "left", branch_text);
-    left_candidate.splice_end_offset = left_candidate.splice_start_offset + branch_text.size();
-    right_candidate.splice_start_offset = branch_position_in_block(original_function_ir, "right", branch_text);
-    right_candidate.splice_end_offset = right_candidate.splice_start_offset + branch_text.size();
+    auto const left_branch_position = branch_position_in_block(original_function_ir, "left", branch_text);
+    auto const right_branch_position = branch_position_in_block(original_function_ir, "right", branch_text);
+    left_candidate.splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+        .start_offset = left_branch_position,
+        .end_offset = left_branch_position + branch_text.size(),
+    };
+    right_candidate.splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+        .start_offset = right_branch_position,
+        .end_offset = right_branch_position + branch_text.size(),
+    };
 
     auto const candidates =
         std::vector<orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> {
@@ -135,15 +141,15 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     assert(parts[0].replaced_branch_text == "  br label %join\n");
     assert(parts[0].replacement_branch_text == "  br label %left.runtime_cleanup.entry\n");
     assert(parts[0].cleanup_cfg_tail.find("left.runtime_cleanup.entry:\n") != std::string::npos);
-    assert(parts[0].splice_range.start_offset == left_candidate.splice_start_offset);
-    assert(parts[0].splice_range.end_offset == left_candidate.splice_end_offset);
+    assert(parts[0].splice_range.start_offset == left_candidate.splice_range.start_offset);
+    assert(parts[0].splice_range.end_offset == left_candidate.splice_range.end_offset);
     assert(parts[1].predecessor_block_name == "right");
     assert(parts[1].continuation_block_name == "right.runtime_cleanup.exit");
     assert(parts[1].replaced_branch_text == "  br label %join\n");
     assert(parts[1].replacement_branch_text == "  br label %right.runtime_cleanup.entry\n");
     assert(parts[1].cleanup_cfg_tail.find("right.runtime_cleanup.entry:\n") != std::string::npos);
-    assert(parts[1].splice_range.start_offset == right_candidate.splice_start_offset);
-    assert(parts[1].splice_range.end_offset == right_candidate.splice_end_offset);
+    assert(parts[1].splice_range.start_offset == right_candidate.splice_range.start_offset);
+    assert(parts[1].splice_range.end_offset == right_candidate.splice_range.end_offset);
 
     auto const operation_result =
         orison::pipeline::build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
@@ -186,11 +192,11 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     );
     assert(
         edit_script_result.edit_script.branch_replacements[0].splice_range.start_offset ==
-        right_candidate.splice_start_offset
+        right_candidate.splice_range.start_offset
     );
     assert(
         edit_script_result.edit_script.branch_replacements[0].splice_range.end_offset ==
-        right_candidate.splice_end_offset
+        right_candidate.splice_range.end_offset
     );
     assert(edit_script_result.edit_script.branch_replacements[1].predecessor_block_name == "left");
     assert(edit_script_result.edit_script.branch_replacements[1].continuation_block_name ==
@@ -202,11 +208,11 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     );
     assert(
         edit_script_result.edit_script.branch_replacements[1].splice_range.start_offset ==
-        left_candidate.splice_start_offset
+        left_candidate.splice_range.start_offset
     );
     assert(
         edit_script_result.edit_script.branch_replacements[1].splice_range.end_offset ==
-        left_candidate.splice_end_offset
+        left_candidate.splice_range.end_offset
     );
     assert(
         edit_script_result.edit_script.cleanup_cfg_append.placement ==
@@ -339,8 +345,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
 
     auto candidate = candidate_with_cleanup_tail("entry", "entry.runtime_cleanup.entry", "entry.runtime_cleanup.exit");
-    candidate.splice_start_offset = 0;
-    candidate.splice_end_offset = 2;
+    candidate.splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+        .start_offset = 0,
+        .end_offset = 2,
+    };
     auto const candidates =
         std::vector<orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> {
             &candidate,

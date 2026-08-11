@@ -329,8 +329,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     std::size_t original_function_line_count = 0;
     std::size_t candidate_function_line_count = 0;
     std::size_t inserted_cfg_line_count = 0;
-    std::size_t splice_start_offset = 0;
-    std::size_t splice_end_offset = 0;
+    RuntimeIndexedCleanupTextSpliceRange splice_range;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidateState {
@@ -376,8 +375,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerification {
     std::size_t candidate_continuation_block_count = 0;
     std::size_t original_predecessor_terminator_count = 0;
     std::size_t candidate_predecessor_cleanup_branch_count = 0;
-    std::size_t splice_start_offset = 0;
-    std::size_t splice_end_offset = 0;
+    RuntimeIndexedCleanupTextSpliceRange splice_range;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState {

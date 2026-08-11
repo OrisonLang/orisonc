@@ -316,16 +316,16 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     parts.reserve(candidates.size());
     for (auto const* candidate : candidates) {
         if (candidate == nullptr || !candidate->candidate_available || !candidate->splice_range_available ||
-            candidate->splice_start_offset >= candidate->splice_end_offset ||
-            candidate->splice_end_offset > original_function_ir.size()) {
+            candidate->splice_range.start_offset >= candidate->splice_range.end_offset ||
+            candidate->splice_range.end_offset > original_function_ir.size()) {
             return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
             };
         }
         auto const expected_terminator = "  " + candidate->replaced_terminator_text + "\n";
         if (original_function_ir.substr(
-                candidate->splice_start_offset,
-                candidate->splice_end_offset - candidate->splice_start_offset
+                candidate->splice_range.start_offset,
+                candidate->splice_range.end_offset - candidate->splice_range.start_offset
             ) != expected_terminator) {
             return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
@@ -344,8 +344,8 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
             .replacement_branch_text = "  " + candidate->inserted_branch_text + "\n",
             .cleanup_cfg_tail = std::move(cleanup_tail),
             .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
-                .start_offset = candidate->splice_start_offset,
-                .end_offset = candidate->splice_end_offset,
+                .start_offset = candidate->splice_range.start_offset,
+                .end_offset = candidate->splice_range.end_offset,
             },
         });
     }
@@ -367,7 +367,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
         candidates.begin(),
         candidates.end(),
         [](auto const* left, auto const* right) {
-            return left->splice_start_offset > right->splice_start_offset;
+            return left->splice_range.start_offset > right->splice_range.start_offset;
         }
     );
 

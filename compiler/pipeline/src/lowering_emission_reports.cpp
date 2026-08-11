@@ -753,8 +753,10 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
         }
         if (terminator_position != std::string::npos) {
             candidate.splice_range_available = true;
-            candidate.splice_start_offset = terminator_position;
-            candidate.splice_end_offset = terminator_position + original_predecessor_terminator.size();
+            candidate.splice_range = RuntimeIndexedCleanupTextSpliceRange {
+                .start_offset = terminator_position,
+                .end_offset = terminator_position + original_predecessor_terminator.size(),
+            };
         }
         if (rewrite_plan.rewrite_candidate_available) {
             auto const rewrite_result =
@@ -823,10 +825,10 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_state(
             auto const ordered =
                 left.splice_range_available &&
                 right.splice_range_available &&
-                left.splice_start_offset <= right.splice_start_offset;
+                left.splice_range.start_offset <= right.splice_range.start_offset;
             auto const non_overlapping =
                 ordered &&
-                left.splice_end_offset <= right.splice_start_offset;
+                left.splice_range.end_offset <= right.splice_range.start_offset;
             state.same_function_splice_ranges_ordered =
                 state.same_function_splice_ranges_ordered && ordered;
             state.same_function_splice_ranges_non_overlapping =
@@ -893,8 +895,7 @@ auto build_runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_st
                 original_predecessor_branch.empty() ? std::size_t {0} : std::size_t {1},
             .candidate_predecessor_cleanup_branch_count =
                 candidate_predecessor_branch.empty() ? std::size_t {0} : std::size_t {1},
-            .splice_start_offset = candidate.splice_start_offset,
-            .splice_end_offset = candidate.splice_end_offset,
+            .splice_range = candidate.splice_range,
         };
         verification.original_function_excludes_cleanup_cfg =
             verification.original_cleanup_block_count == 0;
@@ -1047,8 +1048,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
                 continue;
             }
             auto const ranges_overlap =
-                left.splice_start_offset < right.splice_end_offset &&
-                right.splice_start_offset < left.splice_end_offset;
+                left.splice_range.start_offset < right.splice_range.end_offset &&
+                right.splice_range.start_offset < left.splice_range.end_offset;
             if (!ranges_overlap) {
                 continue;
             }
@@ -1059,10 +1060,10 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
                     .right_candidate_index = right_index,
                     .left_source_line = left.source_line,
                     .right_source_line = right.source_line,
-                    .left_splice_start_offset = left.splice_start_offset,
-                    .left_splice_end_offset = left.splice_end_offset,
-                    .right_splice_start_offset = right.splice_start_offset,
-                    .right_splice_end_offset = right.splice_end_offset,
+                    .left_splice_start_offset = left.splice_range.start_offset,
+                    .left_splice_end_offset = left.splice_range.end_offset,
+                    .right_splice_start_offset = right.splice_range.start_offset,
+                    .right_splice_end_offset = right.splice_range.end_offset,
                 }
             );
         }
