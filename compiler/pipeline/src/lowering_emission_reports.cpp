@@ -80,7 +80,7 @@ auto runtime_indexed_cleanup_text_splice_range(
 }
 
 auto runtime_indexed_cleanup_text_splice_range(
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange range
+    RuntimeIndexedCleanupTextSpliceRange range
 ) -> RuntimeIndexedCleanupTextSpliceRange {
     return runtime_indexed_cleanup_text_splice_range(range.start_offset, range.end_offset);
 }

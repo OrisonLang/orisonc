@@ -406,7 +406,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .expected_branch_text = "  br label %join\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = original_function_ir.find("  br label %join\n"),
                     .end_offset = original_function_ir.find("  br label %join\n") +
                         std::string {"  br label %join\n"}.size(),
@@ -433,7 +433,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .expected_branch_text = "  br label %join\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = original_function_ir.find("  br label %join\n"),
                     .end_offset = original_function_ir.find("  br label %join\n") +
                         std::string {"  br label %join\n"}.size(),
@@ -463,7 +463,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .expected_branch_text = "  br label %join\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = original_function_ir.find("  br label %join\n"),
                     .end_offset = original_function_ir.find("  br label %join\n") +
                         std::string {"  br label %join\n"}.size(),
@@ -544,7 +544,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .replaced_branch_text = "  br label %wrong\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = original_branch_position,
                     .end_offset = original_branch_position + original_branch.size(),
                 },
@@ -615,7 +615,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .replaced_branch_text = original_branch,
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = original_branch_position,
                     .end_offset = original_branch_position + original_branch.size(),
                 },
@@ -623,7 +623,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
                 .predecessor_block_name = "entry",
                 .continuation_block_name = "entry.runtime_cleanup.exit",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = 3,
                     .end_offset = 3,
                 },
@@ -676,7 +676,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .replaced_branch_text = missing_closing_ret,
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
                 .cleanup_cfg_tail = "entry.runtime_cleanup.entry:\n",
-                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
                     .start_offset = missing_closing_function_ir.find(missing_closing_ret),
                     .end_offset = missing_closing_function_ir.find(missing_closing_ret) +
                         missing_closing_ret.size(),
@@ -712,7 +712,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
 
     malformed_operation.parts.front().continuation_block_name.clear();
     malformed_operation.parts.front().splice_range =
-        orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+        orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
             .start_offset = original_function_ir.find(original_branch),
             .end_offset = original_function_ir.find(original_branch) + original_branch.size(),
         };

@@ -42,18 +42,13 @@ struct RuntimeIndexedCleanupFunctionIrInsertion {
     std::vector<std::string> cfg_lines;
 };
 
-struct RuntimeIndexedCleanupFunctionIrTextSpliceRange {
-    std::size_t start_offset = 0;
-    std::size_t end_offset = 0;
-};
-
 struct RuntimeIndexedCleanupFunctionIrCompositionPart {
     std::string predecessor_block_name;
     std::string continuation_block_name;
     std::string replaced_branch_text;
     std::string replacement_branch_text;
     std::string cleanup_cfg_tail;
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range;
+    RuntimeIndexedCleanupTextSpliceRange splice_range;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteResult {
@@ -62,7 +57,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteResult {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool validation_part_available = false;
     std::size_t validation_part_index = 0;
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange validation_splice_range;
+    RuntimeIndexedCleanupTextSpliceRange validation_splice_range;
 
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
@@ -91,7 +86,7 @@ struct RuntimeIndexedCleanupFunctionIrBranchReplacement {
     std::string continuation_block_name;
     std::string expected_branch_text;
     std::string replacement_branch_text;
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range;
+    RuntimeIndexedCleanupTextSpliceRange splice_range;
 };
 
 enum class RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement {
@@ -144,7 +139,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool part_available = false;
     std::size_t part_index = 0;
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range;
+    RuntimeIndexedCleanupTextSpliceRange splice_range;
 
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none;
@@ -157,7 +152,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteStageResult {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool validation_part_available = false;
     std::size_t validation_part_index = 0;
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange validation_splice_range;
+    RuntimeIndexedCleanupTextSpliceRange validation_splice_range;
     bool branch_replacements_applied = false;
     bool cleanup_cfg_appended = false;
     bool phi_predecessors_retargeted = false;

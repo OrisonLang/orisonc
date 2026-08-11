@@ -1483,6 +1483,8 @@ representation.
   Splice-conflict records remain as the final raw-offset migration seam in this cleanup chain.
 - Runtime-index cleanup same-function splice-conflict records now carry typed left and right splice ranges while
   preserving the existing CLI conflict text.
+- Runtime-index cleanup IR composition and report paths now use one shared typed text-splice range record instead of
+  separate report and function-IR range types.
 
 ## Follow-up work
 

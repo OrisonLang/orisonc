@@ -123,7 +123,7 @@ auto retarget_phi_incoming_predecessor(
 auto validation_failure_for_splice_range(
     RuntimeIndexedCleanupIrCompositionFailure failure,
     std::size_t part_index,
-    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range
+    RuntimeIndexedCleanupTextSpliceRange splice_range
 ) -> RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
     return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
         .failure = failure,
@@ -291,7 +291,7 @@ auto rewrite_predecessor_terminator_and_insert_cfg_result(
                     .replaced_branch_text = replaced_branch,
                     .replacement_branch_text = inserted_branch,
                     .cleanup_cfg_tail = cleanup_cfg_tail,
-                    .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                    .splice_range = RuntimeIndexedCleanupTextSpliceRange {
                         .start_offset = block_start + terminator_position_in_block,
                         .end_offset = block_start + terminator_position_in_block + replaced_branch.size(),
                     },
@@ -343,7 +343,7 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
             .replaced_branch_text = expected_terminator,
             .replacement_branch_text = "  " + candidate->inserted_branch_text + "\n",
             .cleanup_cfg_tail = std::move(cleanup_tail),
-            .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+            .splice_range = RuntimeIndexedCleanupTextSpliceRange {
                 .start_offset = candidate->splice_range.start_offset,
                 .end_offset = candidate->splice_range.end_offset,
             },
