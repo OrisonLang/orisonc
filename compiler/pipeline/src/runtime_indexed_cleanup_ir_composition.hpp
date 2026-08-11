@@ -45,6 +45,7 @@ struct RuntimeIndexedCleanupFunctionIrInsertion {
 struct RuntimeIndexedCleanupFunctionIrCompositionPart {
     std::string predecessor_block_name;
     std::string continuation_block_name;
+    std::string replaced_branch_text;
     std::string replacement_branch_text;
     std::string cleanup_cfg_tail;
     std::size_t splice_start_offset = 0;

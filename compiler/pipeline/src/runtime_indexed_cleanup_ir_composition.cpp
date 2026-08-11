@@ -275,6 +275,7 @@ auto rewrite_predecessor_terminator_and_insert_cfg_result(
                 RuntimeIndexedCleanupFunctionIrCompositionPart {
                     .predecessor_block_name = insertion.predecessor_block_name,
                     .continuation_block_name = cleanup_exit_block_name,
+                    .replaced_branch_text = replaced_branch,
                     .replacement_branch_text = inserted_branch,
                     .cleanup_cfg_tail = cleanup_cfg_tail,
                     .splice_start_offset = block_start + terminator_position_in_block,
@@ -324,6 +325,7 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
         parts.push_back(RuntimeIndexedCleanupFunctionIrCompositionPart {
             .predecessor_block_name = candidate->predecessor_block_name,
             .continuation_block_name = candidate->continuation_block_name,
+            .replaced_branch_text = expected_terminator,
             .replacement_branch_text = "  " + candidate->inserted_branch_text + "\n",
             .cleanup_cfg_tail = std::move(cleanup_tail),
             .splice_start_offset = candidate->splice_start_offset,
@@ -384,9 +386,22 @@ auto validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
         auto const& part = operation.parts[part_index];
         if (part.splice_start_offset >= part.splice_end_offset ||
             part.splice_end_offset > original_function_ir.size() ||
+            part.replaced_branch_text.empty() ||
             part.replacement_branch_text.empty()) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+                .part_available = true,
+                .part_index = part_index,
+                .splice_start_offset = part.splice_start_offset,
+                .splice_end_offset = part.splice_end_offset,
+            };
+        }
+        if (original_function_ir.substr(
+                part.splice_start_offset,
+                part.splice_end_offset - part.splice_start_offset
+            ) != part.replaced_branch_text) {
+            return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
                 .part_available = true,
                 .part_index = part_index,
                 .splice_start_offset = part.splice_start_offset,

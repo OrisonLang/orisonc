@@ -1438,6 +1438,9 @@ representation.
   `splice-range` only when those details are available.
 - Runtime-index cleanup driver mutation report formatting now lives in a shared driver helper. Direct smoke coverage
   pins `composition-part` and `splice-range` detail rendering for synthetic mutation states.
+- Runtime-index cleanup function-rewrite operation parts now carry the exact original branch text they expect to
+  replace. Operation validation rejects mismatched splice text before mutating function IR and reports the failing
+  part range.
 
 ## Follow-up work
 

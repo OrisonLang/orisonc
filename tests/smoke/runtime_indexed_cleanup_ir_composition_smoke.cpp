@@ -132,10 +132,12 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     assert(parts.size() == 2);
     assert(parts[0].predecessor_block_name == "left");
     assert(parts[0].continuation_block_name == "left.runtime_cleanup.exit");
+    assert(parts[0].replaced_branch_text == "  br label %join\n");
     assert(parts[0].replacement_branch_text == "  br label %left.runtime_cleanup.entry\n");
     assert(parts[0].cleanup_cfg_tail.find("left.runtime_cleanup.entry:\n") != std::string::npos);
     assert(parts[1].predecessor_block_name == "right");
     assert(parts[1].continuation_block_name == "right.runtime_cleanup.exit");
+    assert(parts[1].replaced_branch_text == "  br label %join\n");
     assert(parts[1].replacement_branch_text == "  br label %right.runtime_cleanup.entry\n");
     assert(parts[1].cleanup_cfg_tail.find("right.runtime_cleanup.entry:\n") != std::string::npos);
 
@@ -306,14 +308,62 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(empty_operation_result.validation_splice_start_offset == 0);
     assert(empty_operation_result.validation_splice_end_offset == 0);
 
+    auto const original_branch = std::string {"  br label %join\n"};
+    auto const original_branch_position = original_function_ir.find(original_branch);
+    assert(original_branch_position != std::string::npos);
+
+    auto unexpected_splice_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
+        .parts = {
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
+                .predecessor_block_name = "entry",
+                .continuation_block_name = "entry.runtime_cleanup.exit",
+                .replaced_branch_text = "  br label %wrong\n",
+                .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
+                .splice_start_offset = original_branch_position,
+                .splice_end_offset = original_branch_position + original_branch.size(),
+            },
+        },
+    };
+    auto const unexpected_splice_validation =
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            unexpected_splice_operation
+        );
+    assert(!unexpected_splice_validation.succeeded());
+    assert(
+        unexpected_splice_validation.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text
+    );
+    assert(unexpected_splice_validation.part_available);
+    assert(unexpected_splice_validation.part_index == 0);
+    assert(unexpected_splice_validation.splice_start_offset == original_branch_position);
+    assert(unexpected_splice_validation.splice_end_offset == original_branch_position + original_branch.size());
+
+    auto const unexpected_splice_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
+            original_function_ir,
+            unexpected_splice_operation
+        );
+    assert(!unexpected_splice_result.succeeded());
+    assert(unexpected_splice_result.rewritten_function_ir.empty());
+    assert(
+        unexpected_splice_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text
+    );
+    assert(unexpected_splice_result.validation_part_available);
+    assert(unexpected_splice_result.validation_part_index == 0);
+    assert(unexpected_splice_result.validation_splice_start_offset == original_branch_position);
+    assert(unexpected_splice_result.validation_splice_end_offset == original_branch_position + original_branch.size());
+
     auto invalid_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
         .parts = {
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
                 .predecessor_block_name = "entry",
                 .continuation_block_name = "entry.runtime_cleanup.exit",
+                .replaced_branch_text = original_branch,
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_start_offset = 0,
-                .splice_end_offset = 1,
+                .splice_start_offset = original_branch_position,
+                .splice_end_offset = original_branch_position + original_branch.size(),
             },
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
                 .predecessor_block_name = "entry",
@@ -365,6 +415,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
                 .predecessor_block_name = "entry",
                 .continuation_block_name = "entry.runtime_cleanup.exit",
+                .replaced_branch_text = missing_closing_ret,
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
                 .cleanup_cfg_tail = "entry.runtime_cleanup.entry:\n",
                 .splice_start_offset = missing_closing_function_ir.find(missing_closing_ret),
@@ -387,10 +438,10 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
 
     malformed_operation.parts.front().continuation_block_name.clear();
-    auto const original_branch = std::string {"  br label %join\n"};
     malformed_operation.parts.front().splice_start_offset = original_function_ir.find(original_branch);
     malformed_operation.parts.front().splice_end_offset =
         malformed_operation.parts.front().splice_start_offset + original_branch.size();
+    malformed_operation.parts.front().replaced_branch_text = original_branch;
     auto const phi_retarget_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             original_function_ir,
