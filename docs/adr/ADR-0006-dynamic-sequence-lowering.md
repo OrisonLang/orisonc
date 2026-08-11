@@ -1516,6 +1516,8 @@ representation.
   separate from the broad compile-pipeline API declaration.
 - Compile-pipeline options and result declarations now live in dedicated headers, leaving the compile-pipeline facade
   focused on pipeline operations and readiness helper declarations.
+- Compile-pipeline readiness helper declarations now live in a dedicated header, leaving the compile-pipeline facade
+  focused on the `CompilePipeline` class API.
 
 ## Follow-up work
 
