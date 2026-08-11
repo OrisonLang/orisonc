@@ -1467,6 +1467,8 @@ representation.
   of raw start/end offset fields.
 - Runtime-index cleanup validation results now retain the typed text-splice range internally while preserving the
   existing start/end offset fields consumed by report formatting.
+- Runtime-index cleanup staged-apply results now retain the typed validation text-splice range internally while
+  preserving the existing validation start/end offset fields consumed by report formatting.
 
 ## Follow-up work
 

@@ -161,6 +161,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteStageResult {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool validation_part_available = false;
     std::size_t validation_part_index = 0;
+    RuntimeIndexedCleanupFunctionIrTextSpliceRange validation_splice_range;
     std::size_t validation_splice_start_offset = 0;
     std::size_t validation_splice_end_offset = 0;
     bool branch_replacements_applied = false;

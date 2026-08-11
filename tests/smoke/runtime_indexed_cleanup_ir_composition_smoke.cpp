@@ -590,6 +590,18 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(!unexpected_splice_stage_result.branch_replacements_applied);
     assert(!unexpected_splice_stage_result.cleanup_cfg_appended);
     assert(!unexpected_splice_stage_result.phi_predecessors_retargeted);
+    assert(unexpected_splice_stage_result.validation_part_available);
+    assert(unexpected_splice_stage_result.validation_part_index == 0);
+    assert(unexpected_splice_stage_result.validation_splice_range.start_offset == original_branch_position);
+    assert(
+        unexpected_splice_stage_result.validation_splice_range.end_offset ==
+        original_branch_position + original_branch.size()
+    );
+    assert(unexpected_splice_stage_result.validation_splice_start_offset == original_branch_position);
+    assert(
+        unexpected_splice_stage_result.validation_splice_end_offset ==
+        original_branch_position + original_branch.size()
+    );
 
     auto invalid_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
         .parts = {
