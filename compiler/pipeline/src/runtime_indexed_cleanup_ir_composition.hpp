@@ -104,9 +104,15 @@ struct RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
     std::string append_text;
 };
 
+struct RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget {
+    std::string old_predecessor_block_name;
+    std::string new_predecessor_block_name;
+};
+
 struct RuntimeIndexedCleanupFunctionIrEditScript {
     std::vector<RuntimeIndexedCleanupFunctionIrBranchReplacement> branch_replacements;
     RuntimeIndexedCleanupFunctionIrCleanupCfgAppend cleanup_cfg_append;
+    std::vector<RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget> phi_predecessor_retargets;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {

@@ -399,6 +399,8 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
     }
     auto branch_replacements = std::vector<RuntimeIndexedCleanupFunctionIrBranchReplacement> {};
     branch_replacements.reserve(operation.parts.size());
+    auto phi_predecessor_retargets = std::vector<RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget> {};
+    phi_predecessor_retargets.reserve(operation.parts.size());
     for (auto const& part : operation.parts) {
         branch_replacements.push_back(RuntimeIndexedCleanupFunctionIrBranchReplacement {
             .predecessor_block_name = part.predecessor_block_name,
@@ -407,6 +409,10 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
             .replacement_branch_text = part.replacement_branch_text,
             .splice_start_offset = part.splice_start_offset,
             .splice_end_offset = part.splice_end_offset,
+        });
+        phi_predecessor_retargets.push_back(RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget {
+            .old_predecessor_block_name = part.predecessor_block_name,
+            .new_predecessor_block_name = part.continuation_block_name,
         });
     }
     return RuntimeIndexedCleanupFunctionIrEditScriptResult {
@@ -417,6 +423,7 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
                 .expected_closing_text = "\n}\n",
                 .append_text = operation.appended_cleanup_cfg,
             },
+            .phi_predecessor_retargets = std::move(phi_predecessor_retargets),
         },
     };
 }
@@ -438,6 +445,11 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
     if (edit_script.cleanup_cfg_append.placement !=
             RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::before_function_closing_brace ||
         edit_script.cleanup_cfg_append.expected_closing_text.empty()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+        };
+    }
+    if (edit_script.phi_predecessor_retargets.empty()) {
         return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
             .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
         };
@@ -545,11 +557,11 @@ auto apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
         };
     }
     composed.insert(closing_position + 1, edit_script.cleanup_cfg_append.append_text);
-    for (auto const& part : edit_script.branch_replacements) {
+    for (auto const& retarget : edit_script.phi_predecessor_retargets) {
         composed = retarget_phi_incoming_predecessor(
             composed,
-            part.predecessor_block_name,
-            part.continuation_block_name
+            retarget.old_predecessor_block_name,
+            retarget.new_predecessor_block_name
         );
         if (composed.empty()) {
             return RuntimeIndexedCleanupFunctionIrRewriteStageResult {

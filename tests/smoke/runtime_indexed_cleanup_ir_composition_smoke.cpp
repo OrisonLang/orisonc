@@ -201,6 +201,17 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
         edit_script_result.edit_script.cleanup_cfg_append.append_text.find("right.runtime_cleanup.entry:\n") !=
         std::string::npos
     );
+    assert(edit_script_result.edit_script.phi_predecessor_retargets.size() == 2);
+    assert(edit_script_result.edit_script.phi_predecessor_retargets[0].old_predecessor_block_name == "right");
+    assert(
+        edit_script_result.edit_script.phi_predecessor_retargets[0].new_predecessor_block_name ==
+        "right.runtime_cleanup.exit"
+    );
+    assert(edit_script_result.edit_script.phi_predecessor_retargets[1].old_predecessor_block_name == "left");
+    assert(
+        edit_script_result.edit_script.phi_predecessor_retargets[1].new_predecessor_block_name ==
+        "left.runtime_cleanup.exit"
+    );
     assert(
         orison::pipeline::validate_runtime_indexed_cleanup_function_ir_edit_script(
             original_function_ir,
@@ -412,6 +423,37 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
     );
     assert(!missing_append_placement_validation.part_available);
+
+    auto missing_phi_retarget_script = orison::pipeline::RuntimeIndexedCleanupFunctionIrEditScript {
+        .branch_replacements = {
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrBranchReplacement {
+                .predecessor_block_name = "entry",
+                .continuation_block_name = "entry.runtime_cleanup.exit",
+                .expected_branch_text = "  br label %join\n",
+                .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
+                .splice_start_offset = original_function_ir.find("  br label %join\n"),
+                .splice_end_offset = original_function_ir.find("  br label %join\n") +
+                    std::string {"  br label %join\n"}.size(),
+            },
+        },
+        .cleanup_cfg_append = orison::pipeline::RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+            .placement =
+                orison::pipeline::RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::before_function_closing_brace,
+            .expected_closing_text = "\n}\n",
+            .append_text = "entry.runtime_cleanup.entry:\n",
+        },
+    };
+    auto const missing_phi_retarget_validation =
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_edit_script(
+            original_function_ir,
+            missing_phi_retarget_script
+        );
+    assert(!missing_phi_retarget_validation.succeeded());
+    assert(
+        missing_phi_retarget_validation.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
+    );
+    assert(!missing_phi_retarget_validation.part_available);
 
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(

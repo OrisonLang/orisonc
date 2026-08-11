@@ -1459,6 +1459,8 @@ representation.
   Edit-script validation rejects missing append text before any branch replacement is applied.
 - Runtime-index cleanup CFG append entries now also carry explicit placement intent and expected closing-anchor text.
   Edit-script validation rejects append entries that have payload text but no approved placement.
+- Runtime-index cleanup function-IR edit scripts now carry typed PHI predecessor retarget entries instead of deriving
+  PHI retargeting from branch-replacement entries during staged application.
 
 ## Follow-up work
 
