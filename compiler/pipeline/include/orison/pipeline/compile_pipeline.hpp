@@ -5,6 +5,7 @@
 #include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/pipeline/computed_dynamic_array_production_sequence.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_cfg_rewrite.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_composition_failures.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_emission.hpp"
@@ -123,19 +124,6 @@ struct DynamicArrayCleanupProductionReadiness {
     bool production_signature_lowering_enabled = false;
     bool production_construction_lowering_enabled = false;
     bool production_cleanup_emission_enabled = false;
-};
-
-struct ComputedDynamicArrayForProductionSequenceState {
-    std::vector<std::string> cleanup_owner_names;
-    bool sequence_metadata_available = false;
-    bool module_comments_emitted = false;
-    std::size_t sequence_count = 0;
-    std::size_t rendered_ir_snippet_count = 0;
-    std::size_t module_comment_line_count = 0;
-};
-
-struct ComputedDynamicArrayForProductionSequenceModuleIrArtifactState {
-    std::vector<std::string> comment_ir_lines;
 };
 
 struct ComputedDynamicArrayForDescriptorRenderState {

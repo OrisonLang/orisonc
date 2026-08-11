@@ -1502,6 +1502,8 @@ representation.
   declaration.
 - Runtime-index cleanup capability, emission-plan, and IR-render values now live in a dedicated pipeline value header,
   keeping emission readiness data separate from the broad compile-pipeline API declaration.
+- Computed DynamicArray production sequence and module-artifact values now live in a dedicated pipeline value header,
+  keeping production-sequence data separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 
