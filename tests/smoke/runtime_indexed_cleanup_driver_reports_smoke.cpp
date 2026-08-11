@@ -29,8 +29,6 @@ void assert_mutation_report_with_composition_detail() {
                 .start_offset = 144,
                 .end_offset = 188,
             },
-            .composition_failure_splice_start_offset = 144,
-            .composition_failure_splice_end_offset = 188,
             .final_module_line_count = 91,
             .llvm_verifier_diagnostic_count = 0,
         }

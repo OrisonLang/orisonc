@@ -1262,10 +1262,6 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
                 state.composition_failure_part_index = stage_result.validation_part_index;
                 state.composition_failure_splice_range =
                     runtime_indexed_cleanup_text_splice_range(stage_result.validation_splice_range);
-                state.composition_failure_splice_start_offset =
-                    stage_result.validation_splice_start_offset;
-                state.composition_failure_splice_end_offset =
-                    stage_result.validation_splice_end_offset;
                 return state;
             }
             composed_ir = replace_once(composed_ir, original_function, stage_result.staged_function_ir);
@@ -1477,8 +1473,6 @@ auto runtime_indexed_cleanup_readiness_blocker(
     std::size_t composition_failure_part_index = 0,
     RuntimeIndexedCleanupTextSpliceRange composition_failure_splice_range =
         RuntimeIndexedCleanupTextSpliceRange {},
-    std::size_t composition_failure_splice_start_offset = 0,
-    std::size_t composition_failure_splice_end_offset = 0,
     bool rewrite_apply_stage_available = false,
     bool branch_replacements_applied = false,
     bool cleanup_cfg_appended = false,
@@ -1492,8 +1486,6 @@ auto runtime_indexed_cleanup_readiness_blocker(
         .composition_failure_part_available = composition_failure_part_available,
         .composition_failure_part_index = composition_failure_part_index,
         .composition_failure_splice_range = composition_failure_splice_range,
-        .composition_failure_splice_start_offset = composition_failure_splice_start_offset,
-        .composition_failure_splice_end_offset = composition_failure_splice_end_offset,
         .rewrite_apply_stage_available = rewrite_apply_stage_available,
         .branch_replacements_applied = branch_replacements_applied,
         .cleanup_cfg_appended = cleanup_cfg_appended,
@@ -1518,8 +1510,6 @@ auto append_runtime_indexed_cleanup_readiness_blocker(
     std::size_t composition_failure_part_index = 0,
     RuntimeIndexedCleanupTextSpliceRange composition_failure_splice_range =
         RuntimeIndexedCleanupTextSpliceRange {},
-    std::size_t composition_failure_splice_start_offset = 0,
-    std::size_t composition_failure_splice_end_offset = 0,
     bool rewrite_apply_stage_available = false,
     bool branch_replacements_applied = false,
     bool cleanup_cfg_appended = false,
@@ -1533,8 +1523,6 @@ auto append_runtime_indexed_cleanup_readiness_blocker(
             composition_failure_part_available,
             composition_failure_part_index,
             composition_failure_splice_range,
-            composition_failure_splice_start_offset,
-            composition_failure_splice_end_offset,
             rewrite_apply_stage_available,
             branch_replacements_applied,
             cleanup_cfg_appended,
@@ -1561,10 +1549,6 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
     readiness_state.diagnostic_composition_failure_part_index = blocker.composition_failure_part_index;
     readiness_state.diagnostic_composition_failure_splice_range =
         blocker.composition_failure_splice_range;
-    readiness_state.diagnostic_composition_failure_splice_start_offset =
-        blocker.composition_failure_splice_start_offset;
-    readiness_state.diagnostic_composition_failure_splice_end_offset =
-        blocker.composition_failure_splice_end_offset;
     readiness_state.diagnostic_rewrite_apply_stage_available = blocker.rewrite_apply_stage_available;
     readiness_state.diagnostic_branch_replacements_applied = blocker.branch_replacements_applied;
     readiness_state.diagnostic_cleanup_cfg_appended = blocker.cleanup_cfg_appended;
@@ -1671,8 +1655,6 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             function_mutation_state.composition_failure_part_available,
             function_mutation_state.composition_failure_part_index,
             function_mutation_state.composition_failure_splice_range,
-            function_mutation_state.composition_failure_splice_start_offset,
-            function_mutation_state.composition_failure_splice_end_offset,
             function_mutation_state.rewrite_apply_stage_available,
             function_mutation_state.branch_replacements_applied,
             function_mutation_state.cleanup_cfg_appended,
@@ -1688,8 +1670,6 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             function_mutation_state.composition_failure_part_available,
             function_mutation_state.composition_failure_part_index,
             function_mutation_state.composition_failure_splice_range,
-            function_mutation_state.composition_failure_splice_start_offset,
-            function_mutation_state.composition_failure_splice_end_offset,
             function_mutation_state.rewrite_apply_stage_available,
             function_mutation_state.branch_replacements_applied,
             function_mutation_state.cleanup_cfg_appended,

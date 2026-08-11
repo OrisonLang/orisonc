@@ -1473,6 +1473,8 @@ representation.
   preserving the existing validation start/end offset fields consumed by report formatting.
 - Runtime-index cleanup mutation and readiness report state now carry typed composition-failure splice ranges internally
   while preserving the existing raw offset fields used by public text reports.
+- Runtime-index cleanup mutation and readiness report state now use typed composition-failure splice ranges as the only
+  report-layer range carrier. Lower-level IR composition validation still keeps raw offsets until its API is migrated.
 
 ## Follow-up work
 
