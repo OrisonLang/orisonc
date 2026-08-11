@@ -1500,6 +1500,8 @@ representation.
 - Runtime-index cleanup module-IR artifact, insertion gate, preview, candidate, verification, and mutation values now
   live in a dedicated pipeline value header, keeping module insertion data separate from the broad compile-pipeline API
   declaration.
+- Runtime-index cleanup capability, emission-plan, and IR-render values now live in a dedicated pipeline value header,
+  keeping emission readiness data separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 
