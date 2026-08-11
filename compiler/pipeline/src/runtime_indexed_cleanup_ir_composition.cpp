@@ -120,6 +120,21 @@ auto retarget_phi_incoming_predecessor(
     return rewritten;
 }
 
+auto validation_failure_for_splice_range(
+    RuntimeIndexedCleanupIrCompositionFailure failure,
+    std::size_t part_index,
+    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range
+) -> RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+    return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+        .failure = failure,
+        .part_available = true,
+        .part_index = part_index,
+        .splice_range = splice_range,
+        .splice_start_offset = splice_range.start_offset,
+        .splice_end_offset = splice_range.end_offset,
+    };
+}
+
 } // namespace
 
 auto occurrence_count(
@@ -462,36 +477,30 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
             part.splice_range.end_offset > original_function_ir.size() ||
             part.expected_branch_text.empty() ||
             part.replacement_branch_text.empty()) {
-            return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
-                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
-                .part_available = true,
-                .part_index = part_index,
-                .splice_start_offset = part.splice_range.start_offset,
-                .splice_end_offset = part.splice_range.end_offset,
-            };
+            return validation_failure_for_splice_range(
+                RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+                part_index,
+                part.splice_range
+            );
         }
         if (original_function_ir.substr(
                 part.splice_range.start_offset,
                 part.splice_range.end_offset - part.splice_range.start_offset
             ) != part.expected_branch_text) {
-            return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
-                .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
-                .part_available = true,
-                .part_index = part_index,
-                .splice_start_offset = part.splice_range.start_offset,
-                .splice_end_offset = part.splice_range.end_offset,
-            };
+            return validation_failure_for_splice_range(
+                RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
+                part_index,
+                part.splice_range
+            );
         }
         auto const& phi_retarget = edit_script.phi_predecessor_retargets[part_index];
         if (phi_retarget.old_predecessor_block_name != part.predecessor_block_name ||
             phi_retarget.new_predecessor_block_name != part.continuation_block_name) {
-            return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
-                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
-                .part_available = true,
-                .part_index = part_index,
-                .splice_start_offset = part.splice_range.start_offset,
-                .splice_end_offset = part.splice_range.end_offset,
-            };
+            return validation_failure_for_splice_range(
+                RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+                part_index,
+                part.splice_range
+            );
         }
     }
     return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {};

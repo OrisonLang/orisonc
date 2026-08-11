@@ -146,6 +146,7 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool part_available = false;
     std::size_t part_index = 0;
+    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range;
     std::size_t splice_start_offset = 0;
     std::size_t splice_end_offset = 0;
 

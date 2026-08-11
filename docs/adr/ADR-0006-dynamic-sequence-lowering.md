@@ -1465,6 +1465,8 @@ representation.
   replacements one-for-one before staged mutation can run.
 - Runtime-index cleanup branch-replacement edit-script entries now carry a typed text-splice range value object instead
   of raw start/end offset fields.
+- Runtime-index cleanup validation results now retain the typed text-splice range internally while preserving the
+  existing start/end offset fields consumed by report formatting.
 
 ## Follow-up work
 
