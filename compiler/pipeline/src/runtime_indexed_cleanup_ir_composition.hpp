@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_composition_failures.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_ranges.hpp"
 
 #include <cstddef>
@@ -215,9 +216,5 @@ auto compose_non_overlapping_function_ir_rewrite_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> candidates
 ) -> RuntimeIndexedCleanupFunctionIrRewriteResult;
-
-auto runtime_indexed_cleanup_ir_composition_failure_token(
-    RuntimeIndexedCleanupIrCompositionFailure failure
-) -> std::string_view;
 
 } // namespace orison::pipeline

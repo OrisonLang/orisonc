@@ -5,6 +5,7 @@
 #include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_composition_failures.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_ranges.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
@@ -286,24 +287,6 @@ struct RuntimeIndexedCleanupFunctionCfgRewriteVerificationState {
     std::size_t candidate_verified_count = 0;
     std::size_t verified_count = 0;
 };
-
-enum class RuntimeIndexedCleanupIrCompositionFailure {
-    none,
-    empty_input,
-    missing_function_closing_brace,
-    missing_predecessor_block,
-    missing_predecessor_terminator,
-    ambiguous_predecessor_terminator,
-    missing_cleanup_exit_block,
-    phi_retarget_failed,
-    invalid_candidate,
-    unexpected_splice_text,
-    missing_cleanup_cfg_tail,
-};
-
-auto runtime_indexed_cleanup_ir_composition_failure_token(
-    RuntimeIndexedCleanupIrCompositionFailure failure
-) -> std::string_view;
 
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     std::string function_symbol_name;

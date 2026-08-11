@@ -1487,6 +1487,8 @@ representation.
   separate report and function-IR range types.
 - Runtime-index cleanup text-splice ranges now live in a dedicated pipeline value header, keeping the small shared
   value separate from the broad compile-pipeline API declaration.
+- Runtime-index cleanup IR composition failure tokens now live in a dedicated pipeline value header, further narrowing
+  the compile-pipeline API surface.
 
 ## Follow-up work
 
