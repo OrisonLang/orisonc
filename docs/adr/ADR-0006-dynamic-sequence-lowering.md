@@ -1506,6 +1506,9 @@ representation.
   keeping production-sequence data separate from the broad compile-pipeline API declaration.
 - Computed DynamicArray render and cleanup-transition values now live in a dedicated pipeline value header, keeping
   render-stage data separate from the broad compile-pipeline API declaration.
+- Computed DynamicArray cleanup-call, consumed-descriptor, inserted-cleanup, and production-readiness values now live
+  in a dedicated pipeline value header, keeping cleanup-state data separate from the broad compile-pipeline API
+  declaration.
 
 ## Follow-up work
 
