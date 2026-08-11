@@ -2,6 +2,7 @@
 
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_composition_failures.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_function_ir_rewrite_candidates.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_ranges.hpp"
 
 #include <cstddef>

@@ -1489,6 +1489,8 @@ representation.
   value separate from the broad compile-pipeline API declaration.
 - Runtime-index cleanup IR composition failure tokens now live in a dedicated pipeline value header, further narrowing
   the compile-pipeline API surface.
+- Runtime-index cleanup function-IR rewrite candidate and verification state now live in a dedicated pipeline value
+  header, keeping candidate data separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 
