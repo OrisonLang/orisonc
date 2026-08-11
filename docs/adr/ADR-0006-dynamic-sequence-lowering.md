@@ -1495,6 +1495,8 @@ representation.
   pipeline value header, keeping module rewrite data separate from the broad compile-pipeline API declaration.
 - Runtime-index cleanup production-readiness blocker/state values and format declarations now live in a dedicated
   pipeline value header, keeping readiness reporting data separate from the broad compile-pipeline API declaration.
+- Runtime-index cleanup CFG rewrite plan and verification values now live in a dedicated pipeline value header, keeping
+  CFG rewrite data separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 
