@@ -1,10 +1,10 @@
 #pragma once
 
 #include "orison/lowering/concurrency_plan.hpp"
-#include "orison/lowering/aggregate_projection_access_plan.hpp"
 #include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/pipeline/aggregate_projection_access_pipeline_state.hpp"
 #include "orison/pipeline/computed_dynamic_array_cleanup_states.hpp"
 #include "orison/pipeline/computed_dynamic_array_production_sequence.hpp"
 #include "orison/pipeline/computed_dynamic_array_render_states.hpp"
@@ -29,21 +29,6 @@
 #include <vector>
 
 namespace orison::pipeline {
-
-struct AggregateProjectionAccessPlanState {
-    std::vector<std::string> function_symbol_names;
-    std::vector<lowering::AggregateProjectionAccessIntent> intents;
-    std::vector<lowering::AggregateProjectionAccessStatus> statuses;
-    std::vector<std::string> binding_names;
-    std::vector<std::string> source_type_names;
-    std::vector<std::string> diagnostics;
-    std::vector<bool> receiver_projections;
-    bool access_plans_available = false;
-    std::size_t plan_count = 0;
-    std::size_t allowed_count = 0;
-    std::size_t blocked_count = 0;
-    std::size_t receiver_projection_count = 0;
-};
 
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness

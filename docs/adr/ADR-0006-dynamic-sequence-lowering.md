@@ -1512,6 +1512,8 @@ representation.
 - DynamicArray cleanup availability, cleanup sequencing, allocation, construction, runtime request, Drop planning, and
   production-readiness values now live in a dedicated pipeline value header, keeping general DynamicArray pipeline data
   separate from the broad compile-pipeline API declaration.
+- Aggregate projection access plan values now live in a dedicated pipeline value header, keeping aggregate access data
+  separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 
