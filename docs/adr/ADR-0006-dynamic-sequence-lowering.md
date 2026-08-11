@@ -1509,6 +1509,9 @@ representation.
 - Computed DynamicArray cleanup-call, consumed-descriptor, inserted-cleanup, and production-readiness values now live
   in a dedicated pipeline value header, keeping cleanup-state data separate from the broad compile-pipeline API
   declaration.
+- DynamicArray cleanup availability, cleanup sequencing, allocation, construction, runtime request, Drop planning, and
+  production-readiness values now live in a dedicated pipeline value header, keeping general DynamicArray pipeline data
+  separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 
