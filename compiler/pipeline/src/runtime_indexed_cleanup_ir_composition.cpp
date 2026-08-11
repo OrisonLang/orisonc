@@ -293,8 +293,10 @@ auto rewrite_predecessor_terminator_and_insert_cfg_result(
                     .replaced_branch_text = replaced_branch,
                     .replacement_branch_text = inserted_branch,
                     .cleanup_cfg_tail = cleanup_cfg_tail,
-                    .splice_start_offset = block_start + terminator_position_in_block,
-                    .splice_end_offset = block_start + terminator_position_in_block + replaced_branch.size(),
+                    .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                        .start_offset = block_start + terminator_position_in_block,
+                        .end_offset = block_start + terminator_position_in_block + replaced_branch.size(),
+                    },
                 },
             },
             .appended_cleanup_cfg = std::move(cleanup_cfg_tail),
@@ -343,8 +345,10 @@ auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
             .replaced_branch_text = expected_terminator,
             .replacement_branch_text = "  " + candidate->inserted_branch_text + "\n",
             .cleanup_cfg_tail = std::move(cleanup_tail),
-            .splice_start_offset = candidate->splice_start_offset,
-            .splice_end_offset = candidate->splice_end_offset,
+            .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .start_offset = candidate->splice_start_offset,
+                .end_offset = candidate->splice_end_offset,
+            },
         });
     }
     return RuntimeIndexedCleanupFunctionIrCompositionPartResult {
@@ -422,10 +426,7 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
             .continuation_block_name = part.continuation_block_name,
             .expected_branch_text = part.replaced_branch_text,
             .replacement_branch_text = part.replacement_branch_text,
-            .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
-                .start_offset = part.splice_start_offset,
-                .end_offset = part.splice_end_offset,
-            },
+            .splice_range = part.splice_range,
         });
         phi_predecessor_retargets.push_back(RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget {
             .old_predecessor_block_name = part.predecessor_block_name,

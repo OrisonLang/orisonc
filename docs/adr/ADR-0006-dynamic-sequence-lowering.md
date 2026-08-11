@@ -1475,6 +1475,8 @@ representation.
   while preserving the existing raw offset fields used by public text reports.
 - Runtime-index cleanup mutation and readiness report state now use typed composition-failure splice ranges as the only
   report-layer range carrier. Lower-level IR composition validation still keeps raw offsets until its API is migrated.
+- Runtime-index cleanup function-IR composition parts now carry typed splice ranges directly. Rewrite candidates and
+  validation result compatibility offsets remain as separate follow-up seams.
 
 ## Follow-up work
 
