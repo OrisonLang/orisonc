@@ -63,8 +63,6 @@ struct RuntimeIndexedCleanupFunctionIrRewriteResult {
     bool validation_part_available = false;
     std::size_t validation_part_index = 0;
     RuntimeIndexedCleanupFunctionIrTextSpliceRange validation_splice_range;
-    std::size_t validation_splice_start_offset = 0;
-    std::size_t validation_splice_end_offset = 0;
 
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
@@ -147,8 +145,6 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
     bool part_available = false;
     std::size_t part_index = 0;
     RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range;
-    std::size_t splice_start_offset = 0;
-    std::size_t splice_end_offset = 0;
 
     [[nodiscard]] auto succeeded() const -> bool {
         return failure == RuntimeIndexedCleanupIrCompositionFailure::none;
@@ -162,8 +158,6 @@ struct RuntimeIndexedCleanupFunctionIrRewriteStageResult {
     bool validation_part_available = false;
     std::size_t validation_part_index = 0;
     RuntimeIndexedCleanupFunctionIrTextSpliceRange validation_splice_range;
-    std::size_t validation_splice_start_offset = 0;
-    std::size_t validation_splice_end_offset = 0;
     bool branch_replacements_applied = false;
     bool cleanup_cfg_appended = false;
     bool phi_predecessors_retargeted = false;

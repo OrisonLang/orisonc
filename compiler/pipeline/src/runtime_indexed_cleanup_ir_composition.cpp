@@ -130,8 +130,6 @@ auto validation_failure_for_splice_range(
         .part_available = true,
         .part_index = part_index,
         .splice_range = splice_range,
-        .splice_start_offset = splice_range.start_offset,
-        .splice_end_offset = splice_range.end_offset,
     };
 }
 
@@ -521,8 +519,6 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             .validation_part_available = stage_result.validation_part_available,
             .validation_part_index = stage_result.validation_part_index,
             .validation_splice_range = stage_result.validation_splice_range,
-            .validation_splice_start_offset = stage_result.validation_splice_start_offset,
-            .validation_splice_end_offset = stage_result.validation_splice_end_offset,
         };
     }
     return RuntimeIndexedCleanupFunctionIrRewriteResult {
@@ -560,8 +556,6 @@ auto apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
             .validation_part_available = validation.part_available,
             .validation_part_index = validation.part_index,
             .validation_splice_range = validation.splice_range,
-            .validation_splice_start_offset = validation.splice_start_offset,
-            .validation_splice_end_offset = validation.splice_end_offset,
         };
     }
     auto composed = original_function_ir;

@@ -378,8 +378,8 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
     assert(!empty_operation_validation.part_available);
     assert(empty_operation_validation.part_index == 0);
-    assert(empty_operation_validation.splice_start_offset == 0);
-    assert(empty_operation_validation.splice_end_offset == 0);
+    assert(empty_operation_validation.splice_range.start_offset == 0);
+    assert(empty_operation_validation.splice_range.end_offset == 0);
     auto const empty_edit_script_result =
         orison::pipeline::build_runtime_indexed_cleanup_function_ir_edit_script_result(
             orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {}
@@ -508,11 +508,6 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         mismatched_phi_retarget_validation.splice_range.end_offset ==
         original_function_ir.find("  br label %join\n") + std::string {"  br label %join\n"}.size()
     );
-    assert(mismatched_phi_retarget_validation.splice_start_offset == original_function_ir.find("  br label %join\n"));
-    assert(
-        mismatched_phi_retarget_validation.splice_end_offset ==
-        original_function_ir.find("  br label %join\n") + std::string {"  br label %join\n"}.size()
-    );
 
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
@@ -527,8 +522,8 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
     assert(!empty_operation_result.validation_part_available);
     assert(empty_operation_result.validation_part_index == 0);
-    assert(empty_operation_result.validation_splice_start_offset == 0);
-    assert(empty_operation_result.validation_splice_end_offset == 0);
+    assert(empty_operation_result.validation_splice_range.start_offset == 0);
+    assert(empty_operation_result.validation_splice_range.end_offset == 0);
 
     auto const original_branch = std::string {"  br label %join\n"};
     auto const original_branch_position = original_function_ir.find(original_branch);
@@ -563,8 +558,6 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(unexpected_splice_validation.part_index == 0);
     assert(unexpected_splice_validation.splice_range.start_offset == original_branch_position);
     assert(unexpected_splice_validation.splice_range.end_offset == original_branch_position + original_branch.size());
-    assert(unexpected_splice_validation.splice_start_offset == original_branch_position);
-    assert(unexpected_splice_validation.splice_end_offset == original_branch_position + original_branch.size());
 
     auto const unexpected_splice_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
@@ -584,8 +577,6 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         unexpected_splice_result.validation_splice_range.end_offset ==
         original_branch_position + original_branch.size()
     );
-    assert(unexpected_splice_result.validation_splice_start_offset == original_branch_position);
-    assert(unexpected_splice_result.validation_splice_end_offset == original_branch_position + original_branch.size());
 
     auto const unexpected_splice_stage_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
@@ -606,11 +597,6 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(unexpected_splice_stage_result.validation_splice_range.start_offset == original_branch_position);
     assert(
         unexpected_splice_stage_result.validation_splice_range.end_offset ==
-        original_branch_position + original_branch.size()
-    );
-    assert(unexpected_splice_stage_result.validation_splice_start_offset == original_branch_position);
-    assert(
-        unexpected_splice_stage_result.validation_splice_end_offset ==
         original_branch_position + original_branch.size()
     );
 
@@ -651,8 +637,6 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(invalid_operation_validation.part_index == 1);
     assert(invalid_operation_validation.splice_range.start_offset == 3);
     assert(invalid_operation_validation.splice_range.end_offset == 3);
-    assert(invalid_operation_validation.splice_start_offset == 3);
-    assert(invalid_operation_validation.splice_end_offset == 3);
 
     auto const invalid_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
@@ -667,8 +651,8 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
     assert(invalid_operation_result.validation_part_available);
     assert(invalid_operation_result.validation_part_index == 1);
-    assert(invalid_operation_result.validation_splice_start_offset == 3);
-    assert(invalid_operation_result.validation_splice_end_offset == 3);
+    assert(invalid_operation_result.validation_splice_range.start_offset == 3);
+    assert(invalid_operation_result.validation_splice_range.end_offset == 3);
 
     auto missing_closing_function_ir = std::string {
         "define i32 @missing_closing() {\n"

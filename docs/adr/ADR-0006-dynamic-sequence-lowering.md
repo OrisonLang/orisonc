@@ -1477,6 +1477,8 @@ representation.
   report-layer range carrier. Lower-level IR composition validation still keeps raw offsets until its API is migrated.
 - Runtime-index cleanup function-IR composition parts now carry typed splice ranges directly. Rewrite candidates and
   validation result compatibility offsets remain as separate follow-up seams.
+- Runtime-index cleanup function-IR rewrite validation, staged-apply, and final rewrite results now expose typed splice
+  ranges only. Rewrite candidates and splice-conflict records remain as separate raw-offset migration seams.
 
 ## Follow-up work
 
