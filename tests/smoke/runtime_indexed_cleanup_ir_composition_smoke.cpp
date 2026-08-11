@@ -189,6 +189,11 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
         "  br label %left.runtime_cleanup.entry\n"
     );
     assert(
+        edit_script_result.edit_script.cleanup_cfg_append.placement ==
+        orison::pipeline::RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::before_function_closing_brace
+    );
+    assert(edit_script_result.edit_script.cleanup_cfg_append.expected_closing_text == "\n}\n");
+    assert(
         edit_script_result.edit_script.cleanup_cfg_append.append_text.find("left.runtime_cleanup.entry:\n") !=
         std::string::npos
     );
@@ -379,6 +384,34 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
     );
     assert(!missing_append_validation.part_available);
+
+    auto missing_append_placement_script = orison::pipeline::RuntimeIndexedCleanupFunctionIrEditScript {
+        .branch_replacements = {
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrBranchReplacement {
+                .predecessor_block_name = "entry",
+                .continuation_block_name = "entry.runtime_cleanup.exit",
+                .expected_branch_text = "  br label %join\n",
+                .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
+                .splice_start_offset = original_function_ir.find("  br label %join\n"),
+                .splice_end_offset = original_function_ir.find("  br label %join\n") +
+                    std::string {"  br label %join\n"}.size(),
+            },
+        },
+        .cleanup_cfg_append = orison::pipeline::RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+            .append_text = "entry.runtime_cleanup.entry:\n",
+        },
+    };
+    auto const missing_append_placement_validation =
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_edit_script(
+            original_function_ir,
+            missing_append_placement_script
+        );
+    assert(!missing_append_placement_validation.succeeded());
+    assert(
+        missing_append_placement_validation.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
+    );
+    assert(!missing_append_placement_validation.part_available);
 
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(

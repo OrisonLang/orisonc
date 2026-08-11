@@ -92,7 +92,15 @@ struct RuntimeIndexedCleanupFunctionIrBranchReplacement {
     std::size_t splice_end_offset = 0;
 };
 
+enum class RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement {
+    unknown,
+    before_function_closing_brace,
+};
+
 struct RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+    RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement placement =
+        RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::unknown;
+    std::string expected_closing_text;
     std::string append_text;
 };
 

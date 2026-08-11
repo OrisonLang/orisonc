@@ -413,6 +413,8 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
         .edit_script = RuntimeIndexedCleanupFunctionIrEditScript {
             .branch_replacements = std::move(branch_replacements),
             .cleanup_cfg_append = RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+                .placement = RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::before_function_closing_brace,
+                .expected_closing_text = "\n}\n",
                 .append_text = operation.appended_cleanup_cfg,
             },
         },
@@ -429,6 +431,13 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
         };
     }
     if (edit_script.cleanup_cfg_append.append_text.empty()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+        };
+    }
+    if (edit_script.cleanup_cfg_append.placement !=
+            RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::before_function_closing_brace ||
+        edit_script.cleanup_cfg_append.expected_closing_text.empty()) {
         return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
             .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
         };
@@ -527,7 +536,7 @@ auto apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
         );
     }
 
-    auto const closing_position = composed.rfind("\n}\n");
+    auto const closing_position = composed.rfind(edit_script.cleanup_cfg_append.expected_closing_text);
     if (closing_position == std::string::npos) {
         return RuntimeIndexedCleanupFunctionIrRewriteStageResult {
             .staged_function_ir = std::move(composed),

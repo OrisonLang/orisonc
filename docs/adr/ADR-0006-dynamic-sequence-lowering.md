@@ -1457,6 +1457,8 @@ representation.
   replacement text, and splice range data.
 - Runtime-index cleanup function-IR edit scripts now carry a typed cleanup CFG append entry instead of raw append text.
   Edit-script validation rejects missing append text before any branch replacement is applied.
+- Runtime-index cleanup CFG append entries now also carry explicit placement intent and expected closing-anchor text.
+  Edit-script validation rejects append entries that have payload text but no approved placement.
 
 ## Follow-up work
 
