@@ -1436,6 +1436,8 @@ representation.
 - Runtime-index cleanup mutation and production-readiness audit state now carry operation validation part diagnostics
   through composition failures. CLI mutation reports and readiness diagnostics include `composition-part` and
   `splice-range` only when those details are available.
+- Runtime-index cleanup driver mutation report formatting now lives in a shared driver helper. Direct smoke coverage
+  pins `composition-part` and `splice-range` detail rendering for synthetic mutation states.
 
 ## Follow-up work
 

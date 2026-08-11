@@ -2,6 +2,7 @@
 
 #include "computed_cleanup_reports.hpp"
 
+#include "orison/driver/runtime_indexed_cleanup_reports.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/link/host_linker.hpp"
@@ -329,29 +330,6 @@ auto runtime_indexed_cleanup_function_module_splice_conflict_report(
            << " right-candidate " << conflict.right_candidate_index
            << " right-line " << conflict.right_source_line
            << " right-range " << conflict.right_splice_start_offset << ".." << conflict.right_splice_end_offset;
-    return report.str();
-}
-
-auto runtime_indexed_cleanup_function_module_mutation_report(
-    pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& state
-) -> std::string {
-    auto report = std::ostringstream {};
-    report << "runtime-index cleanup function-module mutation "
-           << "requested " << (state.mutation_requested ? "true" : "false")
-           << " candidate-verified " << (state.candidate_verified ? "true" : "false")
-           << " replacement-targets " << (state.replacement_targets_unique ? "unique" : "blocked")
-           << " mutation-applied " << (state.mutation_applied ? "true" : "false")
-           << " module-matches-candidate " << (state.module_matches_candidate ? "true" : "false")
-           << " composition-failure "
-           << pipeline::runtime_indexed_cleanup_ir_composition_failure_token(state.composition_failure);
-    if (state.composition_failure_part_available) {
-        report << " composition-part " << state.composition_failure_part_index
-               << " splice-range " << state.composition_failure_splice_start_offset
-               << ".." << state.composition_failure_splice_end_offset;
-    }
-    report << " llvm-passed " << (state.llvm_verifier_passed ? "true" : "false")
-           << " diagnostics " << state.llvm_verifier_diagnostic_count
-           << " final-lines " << state.final_module_line_count;
     return report.str();
 }
 

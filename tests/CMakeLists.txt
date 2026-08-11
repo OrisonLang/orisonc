@@ -321,6 +321,22 @@ add_test(
     COMMAND orison_computed_cleanup_driver_reports_smoke
 )
 
+add_executable(orison_runtime_indexed_cleanup_driver_reports_smoke
+    smoke/runtime_indexed_cleanup_driver_reports_smoke.cpp
+)
+
+target_link_libraries(orison_runtime_indexed_cleanup_driver_reports_smoke
+    PRIVATE
+        orison_driver
+)
+
+target_compile_features(orison_runtime_indexed_cleanup_driver_reports_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_runtime_indexed_cleanup_driver_reports_smoke
+    COMMAND orison_runtime_indexed_cleanup_driver_reports_smoke
+)
+
 add_executable(orison_driver_aggregate_lowering_smoke
     smoke/driver_aggregate_lowering_smoke.cpp
 )
