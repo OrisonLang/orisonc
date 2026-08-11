@@ -1471,6 +1471,8 @@ representation.
   preserving the existing validation start/end offset fields consumed by report formatting.
 - Runtime-index cleanup final rewrite results now also retain the typed validation text-splice range internally while
   preserving the existing validation start/end offset fields consumed by report formatting.
+- Runtime-index cleanup mutation and readiness report state now carry typed composition-failure splice ranges internally
+  while preserving the existing raw offset fields used by public text reports.
 
 ## Follow-up work
 

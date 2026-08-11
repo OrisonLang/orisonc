@@ -18,8 +18,8 @@ auto runtime_indexed_cleanup_function_module_mutation_report(
            << pipeline::runtime_indexed_cleanup_ir_composition_failure_token(state.composition_failure);
     if (state.composition_failure_part_available) {
         report << " composition-part " << state.composition_failure_part_index
-               << " splice-range " << state.composition_failure_splice_start_offset
-               << ".." << state.composition_failure_splice_end_offset;
+               << " splice-range " << state.composition_failure_splice_range.start_offset
+               << ".." << state.composition_failure_splice_range.end_offset;
     }
     report << " apply-stages " << (state.rewrite_apply_stage_available ? "available" : "unavailable")
            << " branch-replacements " << (state.branch_replacements_applied ? "true" : "false")

@@ -9263,6 +9263,11 @@ auto main() -> int {
                         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
                     .composition_failure_part_available = true,
                     .composition_failure_part_index = 2,
+                    .composition_failure_splice_range =
+                        orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+                            .start_offset = 144,
+                            .end_offset = 188,
+                        },
                     .composition_failure_splice_start_offset = 144,
                     .composition_failure_splice_end_offset = 188,
                     .rewrite_apply_stage_available = true,
@@ -9280,6 +9285,11 @@ auto main() -> int {
                 orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_cleanup_cfg_tail,
             .diagnostic_composition_failure_part_available = true,
             .diagnostic_composition_failure_part_index = 2,
+            .diagnostic_composition_failure_splice_range =
+                orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+                    .start_offset = 144,
+                    .end_offset = 188,
+                },
             .diagnostic_composition_failure_splice_start_offset = 144,
             .diagnostic_composition_failure_splice_end_offset = 188,
             .diagnostic_rewrite_apply_stage_available = true,

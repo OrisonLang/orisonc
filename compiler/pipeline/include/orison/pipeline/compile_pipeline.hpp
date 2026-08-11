@@ -304,6 +304,11 @@ auto runtime_indexed_cleanup_ir_composition_failure_token(
     RuntimeIndexedCleanupIrCompositionFailure failure
 ) -> std::string_view;
 
+struct RuntimeIndexedCleanupTextSpliceRange {
+    std::size_t start_offset = 0;
+    std::size_t end_offset = 0;
+};
+
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     std::string function_symbol_name;
     std::string predecessor_block_name;
@@ -495,6 +500,7 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     bool phi_predecessors_retargeted = false;
     std::size_t candidate_count = 0;
     std::size_t composition_failure_part_index = 0;
+    RuntimeIndexedCleanupTextSpliceRange composition_failure_splice_range;
     std::size_t composition_failure_splice_start_offset = 0;
     std::size_t composition_failure_splice_end_offset = 0;
     std::size_t final_module_line_count = 0;
@@ -521,6 +527,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool composition_failure_part_available = false;
     std::size_t composition_failure_part_index = 0;
+    RuntimeIndexedCleanupTextSpliceRange composition_failure_splice_range;
     std::size_t composition_failure_splice_start_offset = 0;
     std::size_t composition_failure_splice_end_offset = 0;
     bool rewrite_apply_stage_available = false;
@@ -550,6 +557,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool diagnostic_composition_failure_part_available = false;
     std::size_t diagnostic_composition_failure_part_index = 0;
+    RuntimeIndexedCleanupTextSpliceRange diagnostic_composition_failure_splice_range;
     std::size_t diagnostic_composition_failure_splice_start_offset = 0;
     std::size_t diagnostic_composition_failure_splice_end_offset = 0;
     bool diagnostic_rewrite_apply_stage_available = false;

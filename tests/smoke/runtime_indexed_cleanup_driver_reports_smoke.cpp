@@ -25,6 +25,10 @@ void assert_mutation_report_with_composition_detail() {
             .phi_predecessors_retargeted = false,
             .candidate_count = 3,
             .composition_failure_part_index = 2,
+            .composition_failure_splice_range = pipeline::RuntimeIndexedCleanupTextSpliceRange {
+                .start_offset = 144,
+                .end_offset = 188,
+            },
             .composition_failure_splice_start_offset = 144,
             .composition_failure_splice_end_offset = 188,
             .final_module_line_count = 91,
