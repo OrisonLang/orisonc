@@ -171,6 +171,16 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
         orison::pipeline::compose_non_overlapping_function_ir_rewrite_result(original_function_ir, candidates);
     assert(compose_result.succeeded());
 
+    auto const stage_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+            original_function_ir,
+            operation_result.operation
+        );
+    assert(stage_result.succeeded());
+    assert(stage_result.branch_replacements_applied);
+    assert(stage_result.cleanup_cfg_appended);
+    assert(stage_result.phi_predecessors_retargeted);
+
     auto const& composed = compose_result.rewritten_function_ir;
     assert(composed.find("left:\n  br label %left.runtime_cleanup.entry\n") != std::string::npos);
     assert(composed.find("right:\n  br label %right.runtime_cleanup.entry\n") != std::string::npos);
@@ -355,6 +365,21 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     assert(unexpected_splice_result.validation_splice_start_offset == original_branch_position);
     assert(unexpected_splice_result.validation_splice_end_offset == original_branch_position + original_branch.size());
 
+    auto const unexpected_splice_stage_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+            original_function_ir,
+            unexpected_splice_operation
+        );
+    assert(!unexpected_splice_stage_result.succeeded());
+    assert(unexpected_splice_stage_result.staged_function_ir.empty());
+    assert(
+        unexpected_splice_stage_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text
+    );
+    assert(!unexpected_splice_stage_result.branch_replacements_applied);
+    assert(!unexpected_splice_stage_result.cleanup_cfg_appended);
+    assert(!unexpected_splice_stage_result.phi_predecessors_retargeted);
+
     auto invalid_operation = orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteOperation {
         .parts = {
             orison::pipeline::RuntimeIndexedCleanupFunctionIrCompositionPart {
@@ -436,6 +461,19 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         missing_closing_brace_result.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace
     );
+    auto const missing_closing_brace_stage_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+            missing_closing_function_ir,
+            malformed_operation
+        );
+    assert(!missing_closing_brace_stage_result.succeeded());
+    assert(
+        missing_closing_brace_stage_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace
+    );
+    assert(missing_closing_brace_stage_result.branch_replacements_applied);
+    assert(!missing_closing_brace_stage_result.cleanup_cfg_appended);
+    assert(!missing_closing_brace_stage_result.phi_predecessors_retargeted);
 
     malformed_operation.parts.front().continuation_block_name.clear();
     malformed_operation.parts.front().splice_start_offset = original_function_ir.find(original_branch);
@@ -453,6 +491,20 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
         phi_retarget_result.failure ==
         orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed
     );
+    auto const phi_retarget_stage_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+            original_function_ir,
+            malformed_operation
+        );
+    assert(!phi_retarget_stage_result.succeeded());
+    assert(phi_retarget_stage_result.staged_function_ir.empty());
+    assert(
+        phi_retarget_stage_result.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed
+    );
+    assert(phi_retarget_stage_result.branch_replacements_applied);
+    assert(phi_retarget_stage_result.cleanup_cfg_appended);
+    assert(!phi_retarget_stage_result.phi_predecessors_retargeted);
 }
 
 } // namespace

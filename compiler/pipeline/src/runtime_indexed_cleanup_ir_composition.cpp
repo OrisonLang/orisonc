@@ -416,12 +416,34 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     std::string const& original_function_ir,
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
 ) -> RuntimeIndexedCleanupFunctionIrRewriteResult {
+    auto const stage_result = apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+        original_function_ir,
+        operation
+    );
+    if (!stage_result.succeeded()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            .failure = stage_result.failure,
+            .validation_part_available = stage_result.validation_part_available,
+            .validation_part_index = stage_result.validation_part_index,
+            .validation_splice_start_offset = stage_result.validation_splice_start_offset,
+            .validation_splice_end_offset = stage_result.validation_splice_end_offset,
+        };
+    }
+    return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        .rewritten_function_ir = stage_result.staged_function_ir,
+    };
+}
+
+auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteStageResult {
     auto const validation = validate_runtime_indexed_cleanup_function_ir_rewrite_operation(
         original_function_ir,
         operation
     );
     if (!validation.succeeded()) {
-        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        return RuntimeIndexedCleanupFunctionIrRewriteStageResult {
             .failure = validation.failure,
             .validation_part_available = validation.part_available,
             .validation_part_index = validation.part_index,
@@ -440,8 +462,10 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
 
     auto const closing_position = composed.rfind("\n}\n");
     if (closing_position == std::string::npos) {
-        return RuntimeIndexedCleanupFunctionIrRewriteResult {
+        return RuntimeIndexedCleanupFunctionIrRewriteStageResult {
+            .staged_function_ir = std::move(composed),
             .failure = RuntimeIndexedCleanupIrCompositionFailure::missing_function_closing_brace,
+            .branch_replacements_applied = true,
         };
     }
     composed.insert(closing_position + 1, operation.appended_cleanup_cfg);
@@ -452,13 +476,18 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             part.continuation_block_name
         );
         if (composed.empty()) {
-            return RuntimeIndexedCleanupFunctionIrRewriteResult {
+            return RuntimeIndexedCleanupFunctionIrRewriteStageResult {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::phi_retarget_failed,
+                .branch_replacements_applied = true,
+                .cleanup_cfg_appended = true,
             };
         }
     }
-    return RuntimeIndexedCleanupFunctionIrRewriteResult {
-        .rewritten_function_ir = std::move(composed),
+    return RuntimeIndexedCleanupFunctionIrRewriteStageResult {
+        .staged_function_ir = std::move(composed),
+        .branch_replacements_applied = true,
+        .cleanup_cfg_appended = true,
+        .phi_predecessors_retargeted = true,
     };
 }
 

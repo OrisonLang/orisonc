@@ -107,6 +107,27 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
     }
 };
 
+struct RuntimeIndexedCleanupFunctionIrRewriteStageResult {
+    std::string staged_function_ir;
+    RuntimeIndexedCleanupIrCompositionFailure failure =
+        RuntimeIndexedCleanupIrCompositionFailure::none;
+    bool validation_part_available = false;
+    std::size_t validation_part_index = 0;
+    std::size_t validation_splice_start_offset = 0;
+    std::size_t validation_splice_end_offset = 0;
+    bool branch_replacements_applied = false;
+    bool cleanup_cfg_appended = false;
+    bool phi_predecessors_retargeted = false;
+
+    [[nodiscard]] auto succeeded() const -> bool {
+        return failure == RuntimeIndexedCleanupIrCompositionFailure::none &&
+            !staged_function_ir.empty() &&
+            branch_replacements_applied &&
+            cleanup_cfg_appended &&
+            phi_predecessors_retargeted;
+    }
+};
+
 auto build_runtime_indexed_cleanup_function_ir_composition_part_result(
     std::string const& original_function_ir,
     std::vector<RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> const& candidates
@@ -126,6 +147,11 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
     std::string const& original_function_ir,
     RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
 ) -> RuntimeIndexedCleanupFunctionIrRewriteResult;
+
+auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+    std::string const& original_function_ir,
+    RuntimeIndexedCleanupFunctionIrRewriteOperation const& operation
+) -> RuntimeIndexedCleanupFunctionIrRewriteStageResult;
 
 auto rewrite_predecessor_terminator_and_insert_cfg_result(
     std::string const& function_ir,

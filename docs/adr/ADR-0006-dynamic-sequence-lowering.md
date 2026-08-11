@@ -1441,6 +1441,9 @@ representation.
 - Runtime-index cleanup function-rewrite operation parts now carry the exact original branch text they expect to
   replace. Operation validation rejects mismatched splice text before mutating function IR and reports the failing
   part range.
+- Runtime-index cleanup function-rewrite operation application now exposes a staged result. Branch replacement,
+  cleanup CFG append, and PHI predecessor retarget state are tracked separately while the existing rewrite API remains
+  the final-IR wrapper.
 
 ## Follow-up work
 
