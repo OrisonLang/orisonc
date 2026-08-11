@@ -83,8 +83,17 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperation {
     std::string appended_cleanup_cfg;
 };
 
+struct RuntimeIndexedCleanupFunctionIrBranchReplacement {
+    std::string predecessor_block_name;
+    std::string continuation_block_name;
+    std::string expected_branch_text;
+    std::string replacement_branch_text;
+    std::size_t splice_start_offset = 0;
+    std::size_t splice_end_offset = 0;
+};
+
 struct RuntimeIndexedCleanupFunctionIrEditScript {
-    std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> branch_replacements;
+    std::vector<RuntimeIndexedCleanupFunctionIrBranchReplacement> branch_replacements;
     std::string cleanup_cfg_append_text;
 };
 

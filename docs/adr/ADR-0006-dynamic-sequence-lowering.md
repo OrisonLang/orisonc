@@ -1452,6 +1452,9 @@ representation.
 - Runtime-index cleanup function-rewrite operations now lower into an explicit function-IR edit script before
   validation and staged application. The script separates branch replacements from the cleanup CFG append text while
   preserving the existing final IR output.
+- Runtime-index cleanup function-IR edit scripts now use narrow branch-replacement entries instead of reusing full
+  composition parts. PHI retargeting and branch replacement consume only predecessor, continuation, expected text,
+  replacement text, and splice range data.
 
 ## Follow-up work
 

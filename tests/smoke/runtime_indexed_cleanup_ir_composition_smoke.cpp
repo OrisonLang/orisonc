@@ -169,9 +169,25 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     auto const edit_script_result =
         orison::pipeline::build_runtime_indexed_cleanup_function_ir_edit_script_result(
             operation_result.operation
-        );
+    );
     assert(edit_script_result.succeeded());
     assert(edit_script_result.edit_script.branch_replacements.size() == 2);
+    assert(edit_script_result.edit_script.branch_replacements[0].predecessor_block_name == "right");
+    assert(edit_script_result.edit_script.branch_replacements[0].continuation_block_name ==
+        "right.runtime_cleanup.exit");
+    assert(edit_script_result.edit_script.branch_replacements[0].expected_branch_text == "  br label %join\n");
+    assert(
+        edit_script_result.edit_script.branch_replacements[0].replacement_branch_text ==
+        "  br label %right.runtime_cleanup.entry\n"
+    );
+    assert(edit_script_result.edit_script.branch_replacements[1].predecessor_block_name == "left");
+    assert(edit_script_result.edit_script.branch_replacements[1].continuation_block_name ==
+        "left.runtime_cleanup.exit");
+    assert(edit_script_result.edit_script.branch_replacements[1].expected_branch_text == "  br label %join\n");
+    assert(
+        edit_script_result.edit_script.branch_replacements[1].replacement_branch_text ==
+        "  br label %left.runtime_cleanup.entry\n"
+    );
     assert(
         edit_script_result.edit_script.cleanup_cfg_append_text.find("left.runtime_cleanup.entry:\n") !=
         std::string::npos

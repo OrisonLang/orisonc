@@ -397,9 +397,21 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
             .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
         };
     }
+    auto branch_replacements = std::vector<RuntimeIndexedCleanupFunctionIrBranchReplacement> {};
+    branch_replacements.reserve(operation.parts.size());
+    for (auto const& part : operation.parts) {
+        branch_replacements.push_back(RuntimeIndexedCleanupFunctionIrBranchReplacement {
+            .predecessor_block_name = part.predecessor_block_name,
+            .continuation_block_name = part.continuation_block_name,
+            .expected_branch_text = part.replaced_branch_text,
+            .replacement_branch_text = part.replacement_branch_text,
+            .splice_start_offset = part.splice_start_offset,
+            .splice_end_offset = part.splice_end_offset,
+        });
+    }
     return RuntimeIndexedCleanupFunctionIrEditScriptResult {
         .edit_script = RuntimeIndexedCleanupFunctionIrEditScript {
-            .branch_replacements = operation.parts,
+            .branch_replacements = std::move(branch_replacements),
             .cleanup_cfg_append_text = operation.appended_cleanup_cfg,
         },
     };
@@ -418,7 +430,7 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
         auto const& part = edit_script.branch_replacements[part_index];
         if (part.splice_start_offset >= part.splice_end_offset ||
             part.splice_end_offset > original_function_ir.size() ||
-            part.replaced_branch_text.empty() ||
+            part.expected_branch_text.empty() ||
             part.replacement_branch_text.empty()) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
@@ -431,7 +443,7 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
         if (original_function_ir.substr(
                 part.splice_start_offset,
                 part.splice_end_offset - part.splice_start_offset
-            ) != part.replaced_branch_text) {
+            ) != part.expected_branch_text) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
                 .part_available = true,
