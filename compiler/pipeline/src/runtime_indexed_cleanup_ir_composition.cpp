@@ -449,7 +449,7 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
             .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
         };
     }
-    if (edit_script.phi_predecessor_retargets.empty()) {
+    if (edit_script.phi_predecessor_retargets.size() != edit_script.branch_replacements.size()) {
         return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
             .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
         };
@@ -474,6 +474,17 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
             ) != part.expected_branch_text) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
+                .part_available = true,
+                .part_index = part_index,
+                .splice_start_offset = part.splice_start_offset,
+                .splice_end_offset = part.splice_end_offset,
+            };
+        }
+        auto const& phi_retarget = edit_script.phi_predecessor_retargets[part_index];
+        if (phi_retarget.old_predecessor_block_name != part.predecessor_block_name ||
+            phi_retarget.new_predecessor_block_name != part.continuation_block_name) {
+            return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+                .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
                 .part_available = true,
                 .part_index = part_index,
                 .splice_start_offset = part.splice_start_offset,

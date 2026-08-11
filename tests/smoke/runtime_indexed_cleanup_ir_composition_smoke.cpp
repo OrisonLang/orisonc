@@ -455,6 +455,31 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
     );
     assert(!missing_phi_retarget_validation.part_available);
 
+    auto mismatched_phi_retarget_script = missing_phi_retarget_script;
+    mismatched_phi_retarget_script.phi_predecessor_retargets = {
+        orison::pipeline::RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget {
+            .old_predecessor_block_name = "entry",
+            .new_predecessor_block_name = "wrong.runtime_cleanup.exit",
+        },
+    };
+    auto const mismatched_phi_retarget_validation =
+        orison::pipeline::validate_runtime_indexed_cleanup_function_ir_edit_script(
+            original_function_ir,
+            mismatched_phi_retarget_script
+        );
+    assert(!mismatched_phi_retarget_validation.succeeded());
+    assert(
+        mismatched_phi_retarget_validation.failure ==
+        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate
+    );
+    assert(mismatched_phi_retarget_validation.part_available);
+    assert(mismatched_phi_retarget_validation.part_index == 0);
+    assert(mismatched_phi_retarget_validation.splice_start_offset == original_function_ir.find("  br label %join\n"));
+    assert(
+        mismatched_phi_retarget_validation.splice_end_offset ==
+        original_function_ir.find("  br label %join\n") + std::string {"  br label %join\n"}.size()
+    );
+
     auto const empty_operation_result =
         orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             original_function_ir,

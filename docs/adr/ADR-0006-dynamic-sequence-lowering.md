@@ -1461,6 +1461,8 @@ representation.
   Edit-script validation rejects append entries that have payload text but no approved placement.
 - Runtime-index cleanup function-IR edit scripts now carry typed PHI predecessor retarget entries instead of deriving
   PHI retargeting from branch-replacement entries during staged application.
+- Runtime-index cleanup edit-script validation now requires PHI predecessor retarget entries to match branch
+  replacements one-for-one before staged mutation can run.
 
 ## Follow-up work
 
