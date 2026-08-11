@@ -83,13 +83,17 @@ struct RuntimeIndexedCleanupFunctionIrRewriteOperation {
     std::string appended_cleanup_cfg;
 };
 
+struct RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+    std::size_t start_offset = 0;
+    std::size_t end_offset = 0;
+};
+
 struct RuntimeIndexedCleanupFunctionIrBranchReplacement {
     std::string predecessor_block_name;
     std::string continuation_block_name;
     std::string expected_branch_text;
     std::string replacement_branch_text;
-    std::size_t splice_start_offset = 0;
-    std::size_t splice_end_offset = 0;
+    RuntimeIndexedCleanupFunctionIrTextSpliceRange splice_range;
 };
 
 enum class RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement {

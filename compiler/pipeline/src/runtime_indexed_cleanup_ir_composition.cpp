@@ -407,8 +407,10 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
             .continuation_block_name = part.continuation_block_name,
             .expected_branch_text = part.replaced_branch_text,
             .replacement_branch_text = part.replacement_branch_text,
-            .splice_start_offset = part.splice_start_offset,
-            .splice_end_offset = part.splice_end_offset,
+            .splice_range = RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                .start_offset = part.splice_start_offset,
+                .end_offset = part.splice_end_offset,
+            },
         });
         phi_predecessor_retargets.push_back(RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget {
             .old_predecessor_block_name = part.predecessor_block_name,
@@ -456,28 +458,28 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
     }
     for (auto part_index = std::size_t {0}; part_index < edit_script.branch_replacements.size(); ++part_index) {
         auto const& part = edit_script.branch_replacements[part_index];
-        if (part.splice_start_offset >= part.splice_end_offset ||
-            part.splice_end_offset > original_function_ir.size() ||
+        if (part.splice_range.start_offset >= part.splice_range.end_offset ||
+            part.splice_range.end_offset > original_function_ir.size() ||
             part.expected_branch_text.empty() ||
             part.replacement_branch_text.empty()) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
                 .part_available = true,
                 .part_index = part_index,
-                .splice_start_offset = part.splice_start_offset,
-                .splice_end_offset = part.splice_end_offset,
+                .splice_start_offset = part.splice_range.start_offset,
+                .splice_end_offset = part.splice_range.end_offset,
             };
         }
         if (original_function_ir.substr(
-                part.splice_start_offset,
-                part.splice_end_offset - part.splice_start_offset
+                part.splice_range.start_offset,
+                part.splice_range.end_offset - part.splice_range.start_offset
             ) != part.expected_branch_text) {
             return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::unexpected_splice_text,
                 .part_available = true,
                 .part_index = part_index,
-                .splice_start_offset = part.splice_start_offset,
-                .splice_end_offset = part.splice_end_offset,
+                .splice_start_offset = part.splice_range.start_offset,
+                .splice_end_offset = part.splice_range.end_offset,
             };
         }
         auto const& phi_retarget = edit_script.phi_predecessor_retargets[part_index];
@@ -487,8 +489,8 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
                 .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
                 .part_available = true,
                 .part_index = part_index,
-                .splice_start_offset = part.splice_start_offset,
-                .splice_end_offset = part.splice_end_offset,
+                .splice_start_offset = part.splice_range.start_offset,
+                .splice_end_offset = part.splice_range.end_offset,
             };
         }
     }
@@ -553,8 +555,8 @@ auto apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
     auto composed = original_function_ir;
     for (auto const& part : edit_script.branch_replacements) {
         composed.replace(
-            part.splice_start_offset,
-            part.splice_end_offset - part.splice_start_offset,
+            part.splice_range.start_offset,
+            part.splice_range.end_offset - part.splice_range.start_offset,
             part.replacement_branch_text
         );
     }

@@ -180,6 +180,14 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
         edit_script_result.edit_script.branch_replacements[0].replacement_branch_text ==
         "  br label %right.runtime_cleanup.entry\n"
     );
+    assert(
+        edit_script_result.edit_script.branch_replacements[0].splice_range.start_offset ==
+        right_candidate.splice_start_offset
+    );
+    assert(
+        edit_script_result.edit_script.branch_replacements[0].splice_range.end_offset ==
+        right_candidate.splice_end_offset
+    );
     assert(edit_script_result.edit_script.branch_replacements[1].predecessor_block_name == "left");
     assert(edit_script_result.edit_script.branch_replacements[1].continuation_block_name ==
         "left.runtime_cleanup.exit");
@@ -187,6 +195,14 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     assert(
         edit_script_result.edit_script.branch_replacements[1].replacement_branch_text ==
         "  br label %left.runtime_cleanup.entry\n"
+    );
+    assert(
+        edit_script_result.edit_script.branch_replacements[1].splice_range.start_offset ==
+        left_candidate.splice_start_offset
+    );
+    assert(
+        edit_script_result.edit_script.branch_replacements[1].splice_range.end_offset ==
+        left_candidate.splice_end_offset
     );
     assert(
         edit_script_result.edit_script.cleanup_cfg_append.placement ==
@@ -378,9 +394,11 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .expected_branch_text = "  br label %join\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_start_offset = original_function_ir.find("  br label %join\n"),
-                .splice_end_offset = original_function_ir.find("  br label %join\n") +
-                    std::string {"  br label %join\n"}.size(),
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                    .start_offset = original_function_ir.find("  br label %join\n"),
+                    .end_offset = original_function_ir.find("  br label %join\n") +
+                        std::string {"  br label %join\n"}.size(),
+                },
             },
         },
     };
@@ -403,9 +421,11 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .expected_branch_text = "  br label %join\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_start_offset = original_function_ir.find("  br label %join\n"),
-                .splice_end_offset = original_function_ir.find("  br label %join\n") +
-                    std::string {"  br label %join\n"}.size(),
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                    .start_offset = original_function_ir.find("  br label %join\n"),
+                    .end_offset = original_function_ir.find("  br label %join\n") +
+                        std::string {"  br label %join\n"}.size(),
+                },
             },
         },
         .cleanup_cfg_append = orison::pipeline::RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
@@ -431,9 +451,11 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
                 .continuation_block_name = "entry.runtime_cleanup.exit",
                 .expected_branch_text = "  br label %join\n",
                 .replacement_branch_text = "  br label %entry.runtime_cleanup.entry\n",
-                .splice_start_offset = original_function_ir.find("  br label %join\n"),
-                .splice_end_offset = original_function_ir.find("  br label %join\n") +
-                    std::string {"  br label %join\n"}.size(),
+                .splice_range = orison::pipeline::RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+                    .start_offset = original_function_ir.find("  br label %join\n"),
+                    .end_offset = original_function_ir.find("  br label %join\n") +
+                        std::string {"  br label %join\n"}.size(),
+                },
             },
         },
         .cleanup_cfg_append = orison::pipeline::RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
