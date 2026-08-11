@@ -523,6 +523,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
     std::size_t composition_failure_part_index = 0;
     std::size_t composition_failure_splice_start_offset = 0;
     std::size_t composition_failure_splice_end_offset = 0;
+    bool rewrite_apply_stage_available = false;
+    bool branch_replacements_applied = false;
+    bool cleanup_cfg_appended = false;
+    bool phi_predecessors_retargeted = false;
     bool source_available = false;
     std::size_t source_line = 0;
 };
@@ -548,6 +552,10 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     std::size_t diagnostic_composition_failure_part_index = 0;
     std::size_t diagnostic_composition_failure_splice_start_offset = 0;
     std::size_t diagnostic_composition_failure_splice_end_offset = 0;
+    bool diagnostic_rewrite_apply_stage_available = false;
+    bool diagnostic_branch_replacements_applied = false;
+    bool diagnostic_cleanup_cfg_appended = false;
+    bool diagnostic_phi_predecessors_retargeted = false;
     bool diagnostic_source_available = false;
     std::size_t diagnostic_source_line = 0;
     std::size_t diagnostic_left_candidate_index = 0;

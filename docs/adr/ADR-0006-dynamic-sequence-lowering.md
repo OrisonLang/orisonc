@@ -1447,6 +1447,8 @@ representation.
 - Runtime-index cleanup function-module mutation audit state now carries staged apply availability plus branch
   replacement, cleanup CFG append, and PHI retarget outcomes. CLI mutation reports expose those stage tokens so
   same-function rewrite failures can be distinguished from validation-only blockers.
+- Runtime-index cleanup production-readiness blockers now carry staged apply availability and stage outcomes. Blocked
+  readiness diagnostics and blocker-detail reports expose those tokens when staged apply data exists.
 
 ## Follow-up work
 

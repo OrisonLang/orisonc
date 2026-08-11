@@ -1320,6 +1320,15 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
                        << ".." << state.diagnostic_composition_failure_splice_end_offset;
         }
     }
+    if (state.diagnostic_rewrite_apply_stage_available) {
+        diagnostic << " apply-stages available"
+                   << " branch-replacements "
+                   << (state.diagnostic_branch_replacements_applied ? "true" : "false")
+                   << " cleanup-cfg-appended "
+                   << (state.diagnostic_cleanup_cfg_appended ? "true" : "false")
+                   << " phi-retargeted "
+                   << (state.diagnostic_phi_predecessors_retargeted ? "true" : "false");
+    }
     return diagnostic.str();
 }
 
@@ -1428,6 +1437,12 @@ auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
                      << ".." << blocker.composition_failure_splice_end_offset;
             }
         }
+        if (blocker.rewrite_apply_stage_available) {
+            line << " apply-stages available"
+                 << " branch-replacements " << (blocker.branch_replacements_applied ? "true" : "false")
+                 << " cleanup-cfg-appended " << (blocker.cleanup_cfg_appended ? "true" : "false")
+                 << " phi-retargeted " << (blocker.phi_predecessors_retargeted ? "true" : "false");
+        }
         lines.push_back(line.str());
     }
     return lines;
@@ -1443,7 +1458,11 @@ auto runtime_indexed_cleanup_readiness_blocker(
     bool composition_failure_part_available = false,
     std::size_t composition_failure_part_index = 0,
     std::size_t composition_failure_splice_start_offset = 0,
-    std::size_t composition_failure_splice_end_offset = 0
+    std::size_t composition_failure_splice_end_offset = 0,
+    bool rewrite_apply_stage_available = false,
+    bool branch_replacements_applied = false,
+    bool cleanup_cfg_appended = false,
+    bool phi_predecessors_retargeted = false
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
     auto blocker = RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
         .kind = blocker_kind,
@@ -1454,6 +1473,10 @@ auto runtime_indexed_cleanup_readiness_blocker(
         .composition_failure_part_index = composition_failure_part_index,
         .composition_failure_splice_start_offset = composition_failure_splice_start_offset,
         .composition_failure_splice_end_offset = composition_failure_splice_end_offset,
+        .rewrite_apply_stage_available = rewrite_apply_stage_available,
+        .branch_replacements_applied = branch_replacements_applied,
+        .cleanup_cfg_appended = cleanup_cfg_appended,
+        .phi_predecessors_retargeted = phi_predecessors_retargeted,
     };
     if (!function_verification_state.verifications.empty()) {
         auto const& verification = function_verification_state.verifications.front();
@@ -1473,7 +1496,11 @@ auto append_runtime_indexed_cleanup_readiness_blocker(
     bool composition_failure_part_available = false,
     std::size_t composition_failure_part_index = 0,
     std::size_t composition_failure_splice_start_offset = 0,
-    std::size_t composition_failure_splice_end_offset = 0
+    std::size_t composition_failure_splice_end_offset = 0,
+    bool rewrite_apply_stage_available = false,
+    bool branch_replacements_applied = false,
+    bool cleanup_cfg_appended = false,
+    bool phi_predecessors_retargeted = false
 ) -> void {
     readiness_state.blockers.push_back(
         runtime_indexed_cleanup_readiness_blocker(
@@ -1483,7 +1510,11 @@ auto append_runtime_indexed_cleanup_readiness_blocker(
             composition_failure_part_available,
             composition_failure_part_index,
             composition_failure_splice_start_offset,
-            composition_failure_splice_end_offset
+            composition_failure_splice_end_offset,
+            rewrite_apply_stage_available,
+            branch_replacements_applied,
+            cleanup_cfg_appended,
+            phi_predecessors_retargeted
         )
     );
 }
@@ -1508,6 +1539,10 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
         blocker.composition_failure_splice_start_offset;
     readiness_state.diagnostic_composition_failure_splice_end_offset =
         blocker.composition_failure_splice_end_offset;
+    readiness_state.diagnostic_rewrite_apply_stage_available = blocker.rewrite_apply_stage_available;
+    readiness_state.diagnostic_branch_replacements_applied = blocker.branch_replacements_applied;
+    readiness_state.diagnostic_cleanup_cfg_appended = blocker.cleanup_cfg_appended;
+    readiness_state.diagnostic_phi_predecessors_retargeted = blocker.phi_predecessors_retargeted;
     readiness_state.diagnostic_source_available = blocker.source_available;
     readiness_state.diagnostic_source_line = blocker.source_line;
 }
@@ -1610,7 +1645,11 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             function_mutation_state.composition_failure_part_available,
             function_mutation_state.composition_failure_part_index,
             function_mutation_state.composition_failure_splice_start_offset,
-            function_mutation_state.composition_failure_splice_end_offset
+            function_mutation_state.composition_failure_splice_end_offset,
+            function_mutation_state.rewrite_apply_stage_available,
+            function_mutation_state.branch_replacements_applied,
+            function_mutation_state.cleanup_cfg_appended,
+            function_mutation_state.phi_predecessors_retargeted
         );
     }
     if (!readiness_state.function_integration_ready) {
@@ -1622,7 +1661,11 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             function_mutation_state.composition_failure_part_available,
             function_mutation_state.composition_failure_part_index,
             function_mutation_state.composition_failure_splice_start_offset,
-            function_mutation_state.composition_failure_splice_end_offset
+            function_mutation_state.composition_failure_splice_end_offset,
+            function_mutation_state.rewrite_apply_stage_available,
+            function_mutation_state.branch_replacements_applied,
+            function_mutation_state.cleanup_cfg_appended,
+            function_mutation_state.phi_predecessors_retargeted
         );
     }
     apply_runtime_indexed_cleanup_first_readiness_blocker(readiness_state);
