@@ -1491,6 +1491,8 @@ representation.
   the compile-pipeline API surface.
 - Runtime-index cleanup function-IR rewrite candidate and verification state now live in a dedicated pipeline value
   header, keeping candidate data separate from the broad compile-pipeline API declaration.
+- Runtime-index cleanup module-IR rewrite candidate, verification, conflict, and mutation state now live in a dedicated
+  pipeline value header, keeping module rewrite data separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 

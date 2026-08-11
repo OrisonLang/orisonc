@@ -1,6 +1,6 @@
 #pragma once
 
-#include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_module_ir_rewrite_candidates.hpp"
 
 #include <string>
 
