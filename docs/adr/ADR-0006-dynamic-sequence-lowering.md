@@ -1455,6 +1455,8 @@ representation.
 - Runtime-index cleanup function-IR edit scripts now use narrow branch-replacement entries instead of reusing full
   composition parts. PHI retargeting and branch replacement consume only predecessor, continuation, expected text,
   replacement text, and splice range data.
+- Runtime-index cleanup function-IR edit scripts now carry a typed cleanup CFG append entry instead of raw append text.
+  Edit-script validation rejects missing append text before any branch replacement is applied.
 
 ## Follow-up work
 

@@ -412,7 +412,9 @@ auto build_runtime_indexed_cleanup_function_ir_edit_script_result(
     return RuntimeIndexedCleanupFunctionIrEditScriptResult {
         .edit_script = RuntimeIndexedCleanupFunctionIrEditScript {
             .branch_replacements = std::move(branch_replacements),
-            .cleanup_cfg_append_text = operation.appended_cleanup_cfg,
+            .cleanup_cfg_append = RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+                .append_text = operation.appended_cleanup_cfg,
+            },
         },
     };
 }
@@ -424,6 +426,11 @@ auto validate_runtime_indexed_cleanup_function_ir_edit_script(
     if (original_function_ir.empty() || edit_script.branch_replacements.empty()) {
         return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
             .failure = RuntimeIndexedCleanupIrCompositionFailure::empty_input,
+        };
+    }
+    if (edit_script.cleanup_cfg_append.append_text.empty()) {
+        return RuntimeIndexedCleanupFunctionIrRewriteOperationValidation {
+            .failure = RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
         };
     }
     for (auto part_index = std::size_t {0}; part_index < edit_script.branch_replacements.size(); ++part_index) {
@@ -528,7 +535,7 @@ auto apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
             .branch_replacements_applied = true,
         };
     }
-    composed.insert(closing_position + 1, edit_script.cleanup_cfg_append_text);
+    composed.insert(closing_position + 1, edit_script.cleanup_cfg_append.append_text);
     for (auto const& part : edit_script.branch_replacements) {
         composed = retarget_phi_incoming_predecessor(
             composed,

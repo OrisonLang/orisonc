@@ -92,9 +92,13 @@ struct RuntimeIndexedCleanupFunctionIrBranchReplacement {
     std::size_t splice_end_offset = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+    std::string append_text;
+};
+
 struct RuntimeIndexedCleanupFunctionIrEditScript {
     std::vector<RuntimeIndexedCleanupFunctionIrBranchReplacement> branch_replacements;
-    std::string cleanup_cfg_append_text;
+    RuntimeIndexedCleanupFunctionIrCleanupCfgAppend cleanup_cfg_append;
 };
 
 struct RuntimeIndexedCleanupFunctionIrRewriteOperationResult {
