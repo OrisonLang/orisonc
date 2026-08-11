@@ -1118,8 +1118,8 @@ representation.
   element parameters such as `DynamicArray<Payload>` now lower on the default compile path when source-derived semantic
   Drop proof authorizes the `owner.element` cleanup site; unproven owned parameters remain rejected.
 - `examples/dynamic_array_parameter_reads.or` is the checked-in scalar parameter descriptor demo. It is covered by
-  examples and canonical pipeline smoke tests, while `tests/fixtures/dynamic_array_owned_parameter_rejected.or` pins
-  the production rejection boundary for owned-element parameters.
+  examples and canonical pipeline smoke tests, while `tests/fixtures/dynamic_array_owned_parameter_missing_drop.or`
+  pins the production rejection boundary for owned-element parameters without source-backed Drop proof.
 - Owned-element `DynamicArray<T>` parameter rejection now reports the specific parameter name and element type that
   needs ownership/drop proof, rather than falling through to the generic unsupported-parameter diagnostic.
 - Production dynamic-array parameter descriptor lowering can now consume positive semantic drop authorization for an

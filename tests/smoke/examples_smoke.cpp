@@ -175,7 +175,7 @@ auto main() -> int {
 
     auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     auto owned_dynamic_array_parameter =
-        pipeline.emit_llvm(fixtures / "dynamic_array_owned_parameter_rejected.or");
+        pipeline.emit_llvm(fixtures / "dynamic_array_owned_parameter_missing_drop.or");
     assert(owned_dynamic_array_parameter.has_errors());
     assert(
         owned_dynamic_array_parameter.error_text.find(
