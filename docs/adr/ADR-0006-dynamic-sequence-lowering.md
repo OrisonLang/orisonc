@@ -1497,6 +1497,9 @@ representation.
   pipeline value header, keeping readiness reporting data separate from the broad compile-pipeline API declaration.
 - Runtime-index cleanup CFG rewrite plan and verification values now live in a dedicated pipeline value header, keeping
   CFG rewrite data separate from the broad compile-pipeline API declaration.
+- Runtime-index cleanup module-IR artifact, insertion gate, preview, candidate, verification, and mutation values now
+  live in a dedicated pipeline value header, keeping module insertion data separate from the broad compile-pipeline API
+  declaration.
 
 ## Follow-up work
 
