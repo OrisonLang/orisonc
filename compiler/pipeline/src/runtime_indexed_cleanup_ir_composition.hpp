@@ -52,12 +52,18 @@ struct RuntimeIndexedCleanupFunctionIrCompositionPart {
     std::size_t splice_end_offset = 0;
 };
 
+struct RuntimeIndexedCleanupFunctionIrTextSpliceRange {
+    std::size_t start_offset = 0;
+    std::size_t end_offset = 0;
+};
+
 struct RuntimeIndexedCleanupFunctionIrRewriteResult {
     std::string rewritten_function_ir;
     RuntimeIndexedCleanupIrCompositionFailure failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool validation_part_available = false;
     std::size_t validation_part_index = 0;
+    RuntimeIndexedCleanupFunctionIrTextSpliceRange validation_splice_range;
     std::size_t validation_splice_start_offset = 0;
     std::size_t validation_splice_end_offset = 0;
 
@@ -81,11 +87,6 @@ struct RuntimeIndexedCleanupFunctionIrCompositionPartResult {
 struct RuntimeIndexedCleanupFunctionIrRewriteOperation {
     std::vector<RuntimeIndexedCleanupFunctionIrCompositionPart> parts;
     std::string appended_cleanup_cfg;
-};
-
-struct RuntimeIndexedCleanupFunctionIrTextSpliceRange {
-    std::size_t start_offset = 0;
-    std::size_t end_offset = 0;
 };
 
 struct RuntimeIndexedCleanupFunctionIrBranchReplacement {

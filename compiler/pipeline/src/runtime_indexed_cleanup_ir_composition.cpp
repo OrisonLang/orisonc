@@ -519,6 +519,7 @@ auto apply_runtime_indexed_cleanup_function_ir_rewrite_operation(
             .failure = stage_result.failure,
             .validation_part_available = stage_result.validation_part_available,
             .validation_part_index = stage_result.validation_part_index,
+            .validation_splice_range = stage_result.validation_splice_range,
             .validation_splice_start_offset = stage_result.validation_splice_start_offset,
             .validation_splice_end_offset = stage_result.validation_splice_end_offset,
         };
