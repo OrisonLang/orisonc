@@ -1481,6 +1481,8 @@ representation.
   ranges only. Rewrite candidates and splice-conflict records remain as separate raw-offset migration seams.
 - Runtime-index cleanup function-IR rewrite candidates and candidate verifications now carry typed splice ranges.
   Splice-conflict records remain as the final raw-offset migration seam in this cleanup chain.
+- Runtime-index cleanup same-function splice-conflict records now carry typed left and right splice ranges while
+  preserving the existing CLI conflict text.
 
 ## Follow-up work
 

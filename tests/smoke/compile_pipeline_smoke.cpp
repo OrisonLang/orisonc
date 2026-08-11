@@ -8776,19 +8776,19 @@ auto main() -> int {
     assert(same_function_splice_conflict.left_source_line == 46);
     assert(same_function_splice_conflict.right_source_line == 51);
     assert(
-        same_function_splice_conflict.left_splice_start_offset ==
+        same_function_splice_conflict.left_splice_range.start_offset ==
         same_function_first_candidate.splice_range.start_offset
     );
     assert(
-        same_function_splice_conflict.left_splice_end_offset ==
+        same_function_splice_conflict.left_splice_range.end_offset ==
         same_function_first_candidate.splice_range.end_offset
     );
     assert(
-        same_function_splice_conflict.right_splice_start_offset ==
+        same_function_splice_conflict.right_splice_range.start_offset ==
         same_function_second_candidate.splice_range.start_offset
     );
     assert(
-        same_function_splice_conflict.right_splice_end_offset ==
+        same_function_splice_conflict.right_splice_range.end_offset ==
         same_function_second_candidate.splice_range.end_offset
     );
     assert(

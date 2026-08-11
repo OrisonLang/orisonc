@@ -1060,10 +1060,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
                     .right_candidate_index = right_index,
                     .left_source_line = left.source_line,
                     .right_source_line = right.source_line,
-                    .left_splice_start_offset = left.splice_range.start_offset,
-                    .left_splice_end_offset = left.splice_range.end_offset,
-                    .right_splice_start_offset = right.splice_range.start_offset,
-                    .right_splice_end_offset = right.splice_range.end_offset,
+                    .left_splice_range = left.splice_range,
+                    .right_splice_range = right.splice_range,
                 }
             );
         }

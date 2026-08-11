@@ -453,10 +453,8 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict {
     std::size_t right_candidate_index = 0;
     std::size_t left_source_line = 0;
     std::size_t right_source_line = 0;
-    std::size_t left_splice_start_offset = 0;
-    std::size_t left_splice_end_offset = 0;
-    std::size_t right_splice_start_offset = 0;
-    std::size_t right_splice_end_offset = 0;
+    RuntimeIndexedCleanupTextSpliceRange left_splice_range;
+    RuntimeIndexedCleanupTextSpliceRange right_splice_range;
 };
 
 struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
