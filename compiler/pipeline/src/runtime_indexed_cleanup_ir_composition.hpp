@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_ranges.hpp"
 
 #include <cstddef>
 #include <string>

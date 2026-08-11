@@ -1485,6 +1485,8 @@ representation.
   preserving the existing CLI conflict text.
 - Runtime-index cleanup IR composition and report paths now use one shared typed text-splice range record instead of
   separate report and function-IR range types.
+- Runtime-index cleanup text-splice ranges now live in a dedicated pipeline value header, keeping the small shared
+  value separate from the broad compile-pipeline API declaration.
 
 ## Follow-up work
 

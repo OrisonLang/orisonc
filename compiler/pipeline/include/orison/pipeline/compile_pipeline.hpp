@@ -5,6 +5,7 @@
 #include "orison/lowering/dynamic_array_cleanup_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_ranges.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -303,11 +304,6 @@ enum class RuntimeIndexedCleanupIrCompositionFailure {
 auto runtime_indexed_cleanup_ir_composition_failure_token(
     RuntimeIndexedCleanupIrCompositionFailure failure
 ) -> std::string_view;
-
-struct RuntimeIndexedCleanupTextSpliceRange {
-    std::size_t start_offset = 0;
-    std::size_t end_offset = 0;
-};
 
 struct RuntimeIndexedCleanupFunctionIrRewriteCandidate {
     std::string function_symbol_name;
