@@ -21,6 +21,10 @@ auto runtime_indexed_cleanup_function_module_mutation_report(
                << " splice-range " << state.composition_failure_splice_start_offset
                << ".." << state.composition_failure_splice_end_offset;
     }
+    report << " apply-stages " << (state.rewrite_apply_stage_available ? "available" : "unavailable")
+           << " branch-replacements " << (state.branch_replacements_applied ? "true" : "false")
+           << " cleanup-cfg-appended " << (state.cleanup_cfg_appended ? "true" : "false")
+           << " phi-retargeted " << (state.phi_predecessors_retargeted ? "true" : "false");
     report << " llvm-passed " << (state.llvm_verifier_passed ? "true" : "false")
            << " diagnostics " << state.llvm_verifier_diagnostic_count
            << " final-lines " << state.final_module_line_count;

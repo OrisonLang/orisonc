@@ -1444,6 +1444,9 @@ representation.
 - Runtime-index cleanup function-rewrite operation application now exposes a staged result. Branch replacement,
   cleanup CFG append, and PHI predecessor retarget state are tracked separately while the existing rewrite API remains
   the final-IR wrapper.
+- Runtime-index cleanup function-module mutation audit state now carries staged apply availability plus branch
+  replacement, cleanup CFG append, and PHI retarget outcomes. CLI mutation reports expose those stage tokens so
+  same-function rewrite failures can be distinguished from validation-only blockers.
 
 ## Follow-up work
 

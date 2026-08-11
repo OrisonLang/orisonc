@@ -140,7 +140,8 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
         "replacement-targets unique mutation-applied true module-matches-candidate true "
-        "composition-failure none llvm-passed true diagnostics 0"
+        "composition-failure none apply-stages unavailable branch-replacements false "
+        "cleanup-cfg-appended false phi-retargeted false llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -180,7 +181,8 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
         "replacement-targets unique mutation-applied true module-matches-candidate true "
-        "composition-failure none llvm-passed true diagnostics 0"
+        "composition-failure none apply-stages unavailable branch-replacements false "
+        "cleanup-cfg-appended false phi-retargeted false llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -207,7 +209,8 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified true "
         "replacement-targets unique mutation-applied true module-matches-candidate true "
-        "composition-failure none llvm-passed true diagnostics 0"
+        "composition-failure none apply-stages unavailable branch-replacements false "
+        "cleanup-cfg-appended false phi-retargeted false llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -239,7 +242,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified false "
         "replacement-targets blocked mutation-applied false module-matches-candidate false "
-        "composition-failure none llvm-passed false diagnostics 0"
+        "composition-failure none apply-stages unavailable branch-replacements false "
+        "cleanup-cfg-appended false phi-retargeted false llvm-passed false diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
@@ -273,6 +277,12 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
         "separate-module true splice-conflicts 0 composition-failures 0 first-composition-failure none "
         "llvm-ran true llvm-passed true verified true verified-count 2 "
         "llvm-verified-count 2 diagnostics 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup function-module mutation requested true candidate-verified true "
+        "replacement-targets unique mutation-applied true module-matches-candidate true "
+        "composition-failure none apply-stages available branch-replacements true "
+        "cleanup-cfg-appended true phi-retargeted true llvm-passed true diagnostics 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "

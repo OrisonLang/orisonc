@@ -489,6 +489,10 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     RuntimeIndexedCleanupIrCompositionFailure composition_failure =
         RuntimeIndexedCleanupIrCompositionFailure::none;
     bool composition_failure_part_available = false;
+    bool rewrite_apply_stage_available = false;
+    bool branch_replacements_applied = false;
+    bool cleanup_cfg_appended = false;
+    bool phi_predecessors_retargeted = false;
     std::size_t candidate_count = 0;
     std::size_t composition_failure_part_index = 0;
     std::size_t composition_failure_splice_start_offset = 0;

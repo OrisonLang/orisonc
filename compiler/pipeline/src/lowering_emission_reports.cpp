@@ -1213,19 +1213,44 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
                 function_candidates.push_back(&function_candidate_state.candidates[module_candidate_position]);
             }
             auto const original_function = function_ir_slice(composed_ir, function_symbol_name);
-            auto const composed_function_result =
-                compose_non_overlapping_function_ir_rewrite_result(original_function, std::move(function_candidates));
-            if (!composed_function_result.succeeded()) {
-                state.composition_failure = composed_function_result.failure;
-                state.composition_failure_part_available = composed_function_result.validation_part_available;
-                state.composition_failure_part_index = composed_function_result.validation_part_index;
-                state.composition_failure_splice_start_offset =
-                    composed_function_result.validation_splice_start_offset;
-                state.composition_failure_splice_end_offset =
-                    composed_function_result.validation_splice_end_offset;
+            auto const operation_result =
+                build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
+                    original_function,
+                    std::move(function_candidates)
+                );
+            if (!operation_result.succeeded()) {
+                state.composition_failure = operation_result.failure;
                 return state;
             }
-            composed_ir = replace_once(composed_ir, original_function, composed_function_result.rewritten_function_ir);
+            auto const stage_result =
+                apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+                    original_function,
+                    operation_result.operation
+                );
+            if (!state.rewrite_apply_stage_available) {
+                state.rewrite_apply_stage_available = true;
+                state.branch_replacements_applied = stage_result.branch_replacements_applied;
+                state.cleanup_cfg_appended = stage_result.cleanup_cfg_appended;
+                state.phi_predecessors_retargeted = stage_result.phi_predecessors_retargeted;
+            } else {
+                state.branch_replacements_applied =
+                    state.branch_replacements_applied && stage_result.branch_replacements_applied;
+                state.cleanup_cfg_appended =
+                    state.cleanup_cfg_appended && stage_result.cleanup_cfg_appended;
+                state.phi_predecessors_retargeted =
+                    state.phi_predecessors_retargeted && stage_result.phi_predecessors_retargeted;
+            }
+            if (!stage_result.succeeded()) {
+                state.composition_failure = stage_result.failure;
+                state.composition_failure_part_available = stage_result.validation_part_available;
+                state.composition_failure_part_index = stage_result.validation_part_index;
+                state.composition_failure_splice_start_offset =
+                    stage_result.validation_splice_start_offset;
+                state.composition_failure_splice_end_offset =
+                    stage_result.validation_splice_end_offset;
+                return state;
+            }
+            composed_ir = replace_once(composed_ir, original_function, stage_result.staged_function_ir);
             if (composed_ir.empty()) {
                 return state;
             }

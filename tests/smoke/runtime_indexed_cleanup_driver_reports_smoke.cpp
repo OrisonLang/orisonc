@@ -19,6 +19,10 @@ void assert_mutation_report_with_composition_detail() {
             .llvm_verifier_passed = false,
             .composition_failure = pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
             .composition_failure_part_available = true,
+            .rewrite_apply_stage_available = true,
+            .branch_replacements_applied = true,
+            .cleanup_cfg_appended = false,
+            .phi_predecessors_retargeted = false,
             .candidate_count = 3,
             .composition_failure_part_index = 2,
             .composition_failure_splice_start_offset = 144,
@@ -34,6 +38,7 @@ void assert_mutation_report_with_composition_detail() {
     assert(
         report.find(
             "composition-failure invalid-candidate composition-part 2 splice-range 144..188 "
+            "apply-stages available branch-replacements true cleanup-cfg-appended false phi-retargeted false "
             "llvm-passed false diagnostics 0 final-lines 91"
         ) != std::string::npos
     );
@@ -50,14 +55,22 @@ void assert_mutation_report_without_composition_detail() {
             .llvm_verifier_passed = true,
             .composition_failure = pipeline::RuntimeIndexedCleanupIrCompositionFailure::none,
             .composition_failure_part_available = false,
+            .rewrite_apply_stage_available = false,
+            .branch_replacements_applied = false,
+            .cleanup_cfg_appended = false,
+            .phi_predecessors_retargeted = false,
             .candidate_count = 1,
             .final_module_line_count = 42,
             .llvm_verifier_diagnostic_count = 0,
         }
     );
 
-    assert(report.find("composition-failure none llvm-passed true diagnostics 0 final-lines 42") !=
-        std::string::npos);
+    assert(
+        report.find(
+            "composition-failure none apply-stages unavailable branch-replacements false "
+            "cleanup-cfg-appended false phi-retargeted false llvm-passed true diagnostics 0 final-lines 42"
+        ) != std::string::npos
+    );
     assert(report.find("composition-part") == std::string::npos);
     assert(report.find("splice-range") == std::string::npos);
 }
