@@ -186,6 +186,9 @@
   authorized element Drop exists, preventing descriptor deallocation from bypassing initialized owned elements.
 - 2026-07-30: `tests/fixtures/dynamic_array_owned_computed_cleanup_missing_drop.or` now pins that rejection through
   CLI `--emit-llvm` diagnostic coverage.
+- 2026-08-11: DynamicArray temp-fixture audit found the remaining `compile_pipeline_smoke.cpp` generated source files
+  fall into checked-in user-facing coverage or intentionally pipeline-only metadata/runtime/test-seam coverage. No
+  additional surface syntax or spec/tour updates are required.
 
 ## Scope
 

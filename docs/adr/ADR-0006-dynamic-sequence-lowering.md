@@ -1218,6 +1218,11 @@ representation.
   parameter descriptor mutation policy, generic DynamicArray lowering beyond concrete examples, retiring remaining
   computed-cleanup test-only seams, and expanding runtime/allocator APIs beyond allocate/grow/deallocate plus bounds
   failure. These are implementation-readiness gaps, not surface syntax changes.
+- DynamicArray temp-fixture audit now classifies the remaining `compile_pipeline_smoke.cpp` generated source files.
+  User-facing scalar/local/owned/computed paths are covered by checked-in examples or fixtures; pipeline-only temp
+  files remain appropriate for metadata, runtime request, descriptor-finalization, and test-only cleanup insertion
+  seams. The remaining implementation gaps stay parameter mutation policy, broader generic coverage, computed-cleanup
+  productionization, and runtime/allocator expansion.
 - Bound `DynamicArray<T>` parameter mutation is intentionally rejected on the current production path.
   `DynamicArray<T>` parameters support descriptor reads, iteration, transfer, and cleanup; they do not support
   `items[index] = value` or `items.push(value)` as parameter descriptor mutation. Parameter-style mutable element
