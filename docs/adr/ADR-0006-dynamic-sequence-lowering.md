@@ -1597,6 +1597,9 @@ representation.
   broader module Drop surface; only module-IR insertion, mutation, or function-rewrite gates request that broader Drop
   surface for audit/rewrite paths, with the explicit constructor-move run seam opting in through a named pipeline
   option.
+- Fixed-array runtime-index constructor moves are enabled on the ordinary driver path. The default gate requires a
+  static-length owner so source-slot zeroing can finalize the moved element; DynamicArray runtime-index owners remain
+  rejected by default and stay on the explicit run/audit seam until runtime-index cleanup CFG insertion is promoted.
 
 ## Follow-up work
 

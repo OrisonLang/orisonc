@@ -68,6 +68,7 @@ struct LlvmIrEmissionOptions {
     bool enable_runtime_indexed_cleanup_emission = false;
     bool enable_runtime_indexed_cleanup_source_drop_emission = false;
     bool enable_runtime_indexed_constructor_move = false;
+    bool enable_runtime_indexed_fixed_array_constructor_move_only = false;
     std::vector<std::string> source_drop_definition_symbols;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };

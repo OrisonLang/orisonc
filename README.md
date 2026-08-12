@@ -98,8 +98,9 @@ To inspect the default production gate without enabling constructor-move accepta
 build/tools/orisonc/orisonc --runtime-indexed-constructor-move-production-readiness tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_rejected.or
 ```
 
-This report names the remaining gate directly: cleanup proof and cleanup emission can be ready while constructor-move
-production acceptance stays blocked and ordinary LLVM emission remains rejected.
+This report confirms the fixed-array runtime-index constructor-move default path: cleanup proof, cleanup emission,
+constructor-move acceptance, and ordinary LLVM emission are ready for the checked fixed-array fixture. DynamicArray
+runtime-index owners remain on the explicit audit/test seam until runtime-index cleanup CFG insertion is promoted.
 
 The gated executable smoke path uses `tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_run.or`
 with `--test-only-runtime-indexed-constructor-move-run`. That command is a compiler test seam, not user-facing

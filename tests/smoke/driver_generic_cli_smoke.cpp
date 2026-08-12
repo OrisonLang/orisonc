@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <sys/wait.h>
@@ -47,6 +48,9 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     }
 
     auto status = pclose(pipe);
+    if (status == 0) {
+        std::cerr << "command unexpectedly succeeded: " << command << "\n";
+    }
     assert(status != 0);
     return output;
 }
@@ -512,7 +516,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
 }
 
-void assert_cli_runtime_indexed_constructor_move_readiness_fixture_blocked(
+void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -521,11 +525,9 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_blocked(
     auto output = read_command_output(command);
     assert(output.find(
         "runtime-index cleanup constructor-move production-readiness "
-        "constructor-move blocked partial-ownership required cleanup-proof ready "
-        "cleanup-production enabled capability-count 1 ordinary-emit rejected "
-        "diagnostic runtime-index constructor move gate disabled"
+        "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
+        "capability-count 1 ordinary-emit accepted"
     ) != std::string::npos);
-    assert(output.find("define i32 @select_inner") == std::string::npos);
 }
 
 void assert_cli_run_fixture_success(
@@ -3396,23 +3398,9 @@ auto main() -> int {
         fixtures / "choice_constructor_multi_variant_indexed_member_path_reuse_rejected.or",
         "use after move: holder.items.element0"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or",
-        "runtime-index partial owner owner holder.items index index element Inner moved Inner "
-        "cleanup skip-moved-element constructor-move disabled: "
-        "runtime-index cleanup-skip plan owner holder.items index index element Inner moved Inner "
-        "operation skip-moved-element production-cleanup disabled: "
-        "runtime-index cleanup proof owner holder.items index index element Inner moved Inner "
-        "operation skip-moved-element owner-known true index-known true type-match true "
-        "operation-supported true prerequisites met lowering disabled: "
-        "runtime-index cleanup emission-sketch owner holder.items index index element Inner snippets 5 "
-        "report-only true production-emission disabled snippet load-length holder.items "
-        "snippet loop-cleanup-index 0..<length snippet skip-cleanup-index index "
-        "snippet drop-live-element holder.items[cleanup_index] as Inner "
-        "snippet deallocate-owner holder.items: "
-        "runtime-index cleanup capability owner holder.items index index element Inner "
-        "proof-ready true sketch-ready true prerequisites ready production disabled"
+        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
     );
     assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         executable,
@@ -3487,45 +3475,45 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
     );
-    assert_cli_runtime_indexed_constructor_move_readiness_fixture_blocked(
+    assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_reuse_rejected.or",
         "use after move: holder.items[index]"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_reuse_rejected.or",
         "use after move: holder.items[index]"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_reuse_rejected.or",
         "use after move: holder.items[index]"
@@ -3567,15 +3555,13 @@ auto main() -> int {
         fixtures / "choice_constructor_multi_payload_indexed_member_path_reuse_rejected.or",
         "use after move: holder.items.element0"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_payload_computed_index_member_path_move_rejected.or",
-        "indexed constructor ownership move requires explicit partial ownership support"
+        fixtures / "choice_constructor_multi_payload_computed_index_member_path_move_rejected.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_payload_second_computed_index_member_path_move_rejected.or",
-        "indexed constructor ownership move requires explicit partial ownership support"
+        fixtures / "choice_constructor_multi_payload_second_computed_index_member_path_move_rejected.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
@@ -3631,10 +3617,9 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_constructor_indexed_member_path_reuse_rejected.or",
         "use after move: holder.items.element0"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or",
-        "indexed constructor ownership move requires explicit partial ownership support"
+        fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
@@ -3675,10 +3660,9 @@ auto main() -> int {
         fixtures / "choice_constructor_indexed_member_path_reuse_rejected.or",
         "use after move: holder.items.element0"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_computed_index_member_path_move_rejected.or",
-        "indexed constructor ownership move requires explicit partial ownership support"
+        fixtures / "choice_constructor_computed_index_member_path_move_rejected.or"
     );
     assert_cli_run_fixture_success(
         executable,

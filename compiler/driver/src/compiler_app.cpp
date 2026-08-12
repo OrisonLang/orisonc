@@ -264,6 +264,14 @@ auto computed_cleanup_call_insertion_readiness_options() -> pipeline::CompilePip
     return options;
 }
 
+auto default_driver_options() -> pipeline::CompilePipelineOptions {
+    auto options = pipeline::CompilePipelineOptions {};
+    options.runtime_indexed_cleanup_emission_enabled = true;
+    options.runtime_indexed_constructor_move_enabled = true;
+    options.runtime_indexed_fixed_array_constructor_move_only = true;
+    return options;
+}
+
 auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions {
     auto options = pipeline::CompilePipelineOptions {};
     options.source_drop_lowering_enabled = true;
@@ -290,8 +298,8 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
 }
 
 auto runtime_indexed_constructor_move_production_readiness_options() -> pipeline::CompilePipelineOptions {
-    auto options = runtime_indexed_constructor_move_run_options();
-    options.runtime_indexed_constructor_move_enabled = false;
+    auto options = default_driver_options();
+    options.collect_runtime_indexed_cleanup_audit = true;
     options.dynamic_array_production_construction_lowering_enabled = true;
     options.dynamic_array_production_append_lowering_enabled = true;
     options.dynamic_array_production_index_lowering_enabled = true;
@@ -1047,7 +1055,7 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
     auto command_index = std::size_t {1};
-    auto options = pipeline::CompilePipelineOptions {};
+    auto options = default_driver_options();
 
     if (args.size() > command_index && std::string_view(args[command_index]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};

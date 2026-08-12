@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-12: fixed-array runtime-index constructor moves are now enabled on the ordinary driver path. The default
+  gate requires a static-length owner for source-slot zeroing, while DynamicArray runtime-index owners remain rejected
+  by default until runtime-index cleanup CFG insertion is promoted.
 - 2026-08-12: runtime-index cleanup proof/emission no longer implies source-derived Drop declaration/definition
   emission. The broader runtime-index Drop surface is now limited to module-IR insertion, mutation, or function-rewrite
   gates plus an explicit constructor-move run-seam opt-in, keeping the constructor-move cleanup gate narrow for future

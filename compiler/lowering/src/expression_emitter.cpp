@@ -609,15 +609,34 @@ auto runtime_indexed_constructor_move_enabled(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) -> bool {
-    return context.options.enable_runtime_indexed_cleanup_emission &&
-        context.options.enable_runtime_indexed_constructor_move &&
-        record_runtime_indexed_constructor_ownership(
-            argument,
-            expected_source_type,
-            context,
-            session,
-            true
-        );
+    if (!context.options.enable_runtime_indexed_cleanup_emission ||
+        !context.options.enable_runtime_indexed_constructor_move) {
+        return false;
+    }
+
+    auto owner = runtime_indexed_partial_owner_for_constructor_argument(
+        argument,
+        expected_source_type,
+        context.lowering,
+        session.state
+    );
+    if (!owner.has_value()) {
+        return false;
+    }
+    if (context.options.enable_runtime_indexed_fixed_array_constructor_move_only &&
+        owner->static_length_value.empty()) {
+        return false;
+    }
+
+    owner->constructor_move_enabled = true;
+    owner->source_line = argument.line;
+    record_runtime_indexed_partial_owner(
+        session.state.ownership_transfers,
+        *owner,
+        session.state.current_block,
+        context.options.enable_runtime_indexed_cleanup_emission
+    );
+    return true;
 }
 
 auto has_recorded_runtime_indexed_constructor_move(
