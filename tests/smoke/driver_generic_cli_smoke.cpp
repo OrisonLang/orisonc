@@ -193,6 +193,52 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto bounds_branch = output.find(
+        "br i1 %items.dynamic_array_index4.in_bounds, "
+        "label %dynamic_array.index.in_bounds.2, label %dynamic_array.index.out_of_bounds.2"
+    );
+    auto value_load = output.find(
+        "%items.dynamic_array_index4.value = load %record.Inner, "
+        "ptr %items.dynamic_array_index4.element.addr"
+    );
+    auto outer_store = output.find("store %record.Outer %tmp5, ptr %outer.addr");
+    auto cleanup_branch = output.find("br label %items.runtime_cleanup.entry");
+    auto cleanup_entry = output.find("items.runtime_cleanup.entry:");
+    auto live_drop = output.find("call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)");
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)"
+    );
+    auto final_return = output.find("ret i32 0", deallocate);
+    assert(bounds_branch != std::string::npos);
+    assert(value_load != std::string::npos);
+    assert(outer_store != std::string::npos);
+    assert(cleanup_branch != std::string::npos);
+    assert(cleanup_entry != std::string::npos);
+    assert(live_drop != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(final_return != std::string::npos);
+    assert(bounds_branch < value_load);
+    assert(value_load < outer_store);
+    assert(outer_store < cleanup_branch);
+    assert(cleanup_branch < cleanup_entry);
+    assert(cleanup_entry < live_drop);
+    assert(live_drop < deallocate);
+    assert(deallocate < final_return);
+    assert(output.find(
+        "br label %items.runtime_cleanup.entry\n"
+        "dynamic_array.index.out_of_bounds.2:"
+    ) == std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3356,6 +3402,15 @@ auto main() -> int {
     assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_cleanup"
     );
     assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
         executable,

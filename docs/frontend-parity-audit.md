@@ -2304,3 +2304,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   Remaining DynamicArray work should move back to computed-index and partial-ownership cleanup gaps.
 - 2026-08-12: DynamicArray runtime-index constructor-move coverage now pins the gated move path, sibling read
   preservation, and same computed-index reuse rejection for `items[index]` without enabling ordinary compilation.
+- 2026-08-12: Runtime-index cleanup function integration now retargets DynamicArray constructor moves to the
+  post-move block, so emitted cleanup runs after the moved value is loaded and stored. Driver smoke coverage pins
+  emitted IR order plus object/link/run for the DynamicArray cleanup fixture.

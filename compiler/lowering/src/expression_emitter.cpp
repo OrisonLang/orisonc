@@ -693,6 +693,22 @@ struct RuntimeIndexedConstructorArgumentScope {
     }
 };
 
+void retarget_runtime_indexed_constructor_cleanup_predecessor(
+    FunctionLoweringState& state,
+    std::optional<std::string> const& key,
+    std::string const& predecessor_block_name
+) {
+    if (!key.has_value() || predecessor_block_name.empty()) {
+        return;
+    }
+    for (auto& plan : state.ownership_transfers.runtime_indexed_cleanup_emission_plans) {
+        auto const plan_key = plan.owner_name + "[" + plan.index_expression_text + "]";
+        if (plan_key == *key) {
+            plan.function_predecessor_block_name = predecessor_block_name;
+        }
+    }
+}
+
 auto emit_runtime_indexed_constructor_source_slot_finalization(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
@@ -1757,16 +1773,17 @@ auto lower_record_constructor_expression(
             return std::nullopt;
         }
 
+        auto runtime_indexed_argument_key = runtime_indexed_constructor_argument_key(
+            expression.arguments[index],
+            field.source_type_name,
+            context.lowering,
+            session.state
+        );
         auto lowered_field = std::optional<LoweredExpression> {};
         {
             auto runtime_indexed_argument_scope = RuntimeIndexedConstructorArgumentScope {
                 session.state,
-                runtime_indexed_constructor_argument_key(
-                    expression.arguments[index],
-                    field.source_type_name,
-                    context.lowering,
-                    session.state
-                )
+                runtime_indexed_argument_key
             };
             lowered_field = lowered_expression(
                 expression.arguments[index],
@@ -1783,6 +1800,11 @@ auto lower_record_constructor_expression(
         if (!lowered_field.has_value()) {
             return std::nullopt;
         }
+        retarget_runtime_indexed_constructor_cleanup_predecessor(
+            session.state,
+            runtime_indexed_argument_key,
+            session.state.current_block
+        );
 
         auto aggregate_name = next_llvm_temporary_name(session.state.next_temporary_index);
         output << "  " << aggregate_name << " = insertvalue " << layout->second.llvm_type_name << " "
@@ -2027,16 +2049,17 @@ auto lower_choice_constructor_expression(
                 return std::nullopt;
             }
 
+            auto runtime_indexed_argument_key = runtime_indexed_constructor_argument_key(
+                arguments->front(),
+                payload.source_type_name,
+                context.lowering,
+                session.state
+            );
             auto lowered_payload = std::optional<LoweredExpression> {};
             {
                 auto runtime_indexed_argument_scope = RuntimeIndexedConstructorArgumentScope {
                     session.state,
-                    runtime_indexed_constructor_argument_key(
-                        arguments->front(),
-                        payload.source_type_name,
-                        context.lowering,
-                        session.state
-                    )
+                    runtime_indexed_argument_key
                 };
                 lowered_payload = lowered_expression(
                     arguments->front(),
@@ -2050,6 +2073,11 @@ auto lower_choice_constructor_expression(
             if (!lowered_payload.has_value()) {
                 return std::nullopt;
             }
+            retarget_runtime_indexed_constructor_cleanup_predecessor(
+                session.state,
+                runtime_indexed_argument_key,
+                session.state.current_block
+            );
             mark_constructor_owned_argument_cleanup_consumed(
                 arguments->front(),
                 payload.source_type_name,
@@ -2104,16 +2132,17 @@ auto lower_choice_constructor_expression(
                     return std::nullopt;
                 }
 
+                auto runtime_indexed_argument_key = runtime_indexed_constructor_argument_key(
+                    (*arguments)[index],
+                    payload.source_type_name,
+                    context.lowering,
+                    session.state
+                );
                 auto lowered_payload = std::optional<LoweredExpression> {};
                 {
                     auto runtime_indexed_argument_scope = RuntimeIndexedConstructorArgumentScope {
                         session.state,
-                        runtime_indexed_constructor_argument_key(
-                            (*arguments)[index],
-                            payload.source_type_name,
-                            context.lowering,
-                            session.state
-                        )
+                        runtime_indexed_argument_key
                     };
                     lowered_payload = lowered_expression(
                         (*arguments)[index],
@@ -2127,6 +2156,11 @@ auto lower_choice_constructor_expression(
                 if (!lowered_payload.has_value()) {
                     return std::nullopt;
                 }
+                retarget_runtime_indexed_constructor_cleanup_predecessor(
+                    session.state,
+                    runtime_indexed_argument_key,
+                    session.state.current_block
+                );
                 mark_constructor_owned_argument_cleanup_consumed(
                     (*arguments)[index],
                     payload.source_type_name,

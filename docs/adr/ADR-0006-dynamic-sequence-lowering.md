@@ -1583,6 +1583,9 @@ representation.
 - DynamicArray runtime-index constructor-move coverage now mirrors the fixed-array gated boundary: the explicit test
   seam accepts the computed-index move, preserves sibling reads, and rejects reuse of `items[index]`, while ordinary
   `--emit-llvm` keeps the computed-index constructor move rejected.
+- Runtime-index cleanup function integration now retargets DynamicArray constructor-move cleanup to the block produced
+  after lowering the moved argument. This keeps bounds checking and moved-value materialization ahead of cleanup, then
+  runs skip-aware live-element cleanup and descriptor deallocation before the function return.
 
 ## Follow-up work
 
