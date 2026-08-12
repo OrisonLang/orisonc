@@ -1,0 +1,15 @@
+package tests.dynamicarraygenericnestedfixedarrayprojectionmissingdrop
+
+record Inner<T>
+    items: Array<T, 2>
+
+record Outer<T>
+    inner: Inner<T>
+
+function second_inner_item<T>(values: DynamicArray<Outer<T>>) -> T
+    values[0].inner.items[1 as UInt64]
+
+function main() -> UInt32
+    var values: DynamicArray<Outer<UInt32>> = DynamicArray()
+    values.push(Outer(Inner([13 as UInt32, 19 as UInt32])))
+    second_inner_item(values) - 19 as UInt32

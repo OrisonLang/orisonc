@@ -1556,6 +1556,8 @@ representation.
 - Nested generic dynamic-array projections now also cover fixed-array fields after generic record fields.
   `DynamicArray<Outer<T>>` can specialize through `Outer<UInt32>.inner.items: Array<UInt32, 2>` and lower a scalar
   indexed read while preserving concrete element cleanup.
+- The fixed-array projection path retains the same owned-element Drop proof gate. Missing concrete source Drop proof
+  for `Outer<UInt32>` blocks owned-element append before fixed-array nested projection or parameter cleanup lowering.
 
 ## Follow-up work
 

@@ -2855,6 +2855,11 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "dynamic_array_generic_nested_fixed_array_projection_missing_drop.or",
+        "lowering DynamicArray push to owned element requires authorized element drop"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "dynamic_array_generic_nested_owned_element_projection_missing_drop.or",
         "lowering DynamicArray push to owned element requires authorized element drop"
     );
