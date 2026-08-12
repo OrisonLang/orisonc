@@ -350,10 +350,16 @@ auto main() -> int {
     auto computed_dynamic_array_path = examples / "local_dynamic_array_computed_for.or";
     auto owned_computed_dynamic_array_path = examples / "local_dynamic_array_owned_computed_for.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
+    auto owned_dynamic_array_parameter_forwarding_path =
+        fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
+    auto owned_dynamic_array_parameter_forwarding_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
         fixtures / "dynamic_array_owned_parameter_branch_join_run.or";
     auto owned_dynamic_array_parameter_branch_mismatch_path =
         fixtures / "dynamic_array_owned_parameter_branch_mismatch_rejected.or";
+    auto owned_dynamic_array_parameter_statement_branch_mismatch_path =
+        fixtures / "dynamic_array_owned_parameter_statement_branch_mismatch_rejected.or";
     auto owned_dynamic_array_parameter_second_use_path =
         fixtures / "dynamic_array_owned_parameter_second_use_rejected.or";
     auto owned_dynamic_array_parameter_length_after_move_path =
@@ -413,6 +419,16 @@ auto main() -> int {
         owned_dynamic_array_parameter_path,
         smoke_temp_root / "dynamic_array_owned_parameter"
     );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_forwarding_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_forwarding.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_forwarding_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_forwarding"
+    );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,
         owned_dynamic_array_parameter_branch_join_path
@@ -434,6 +450,14 @@ auto main() -> int {
     assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_branch_mismatch_path
+    );
+    assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_statement_branch_mismatch_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_forwarding_reuse_path
     );
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,

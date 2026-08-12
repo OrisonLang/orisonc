@@ -1141,6 +1141,11 @@ representation.
   branch transfers the same owned descriptor, `tests/fixtures/dynamic_array_owned_parameter_branch_join_run.or` links
   and runs with a single callee-side cleanup; when one branch transfers and another continues without transfer,
   `tests/fixtures/dynamic_array_owned_parameter_branch_mismatch_rejected.or` reports the ownership mismatch.
+- Owned-element `DynamicArray<T>` parameter forwarding now has checked-in CLI coverage. Straight forwarding through
+  another owned-parameter function links and runs, while reusing the forwarded parameter in the forwarding callee
+  reports `use after move: items`.
+- Statement-level owned-parameter branch mismatch is also pinned through CLI coverage: transferring the descriptor in
+  one branch and reading it after the branch reports the same continuing-branch ownership mismatch.
 - Owned-element `DynamicArray<T>` parameter post-move diagnostics now have checked-in CLI coverage. Reusing the moved
   descriptor in a second owned call, `.length()` read, or `.push(...)` mutation all report `use after move: items`.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
