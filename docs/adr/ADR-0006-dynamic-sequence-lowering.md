@@ -1227,6 +1227,9 @@ representation.
   `DynamicArray<T>` parameters support descriptor reads, iteration, transfer, and cleanup; they do not support
   `items[index] = value` or `items.push(value)` as parameter descriptor mutation. Parameter-style mutable element
   writes remain represented by `exclusive.View<T>` indexed assignment.
+- Bound `DynamicArray<T>` parameter mutation diagnostics now report that policy directly. Indexed assignment points to
+  `exclusive.View<T>` for mutable parameter element writes, while `.push(...)` points to an owned local
+  `DynamicArray<T>` or explicit view-style mutation.
 - Generic `DynamicArray<T>` function use is now pinned as a front-to-back lowering boundary. A generic function that
   returns `T` from `values[0]` parses, but a concrete `DynamicArray<UInt32>` call still reaches lowering with an
   unconcretized return type. The remaining work is generic function monomorphization/substitution before descriptor

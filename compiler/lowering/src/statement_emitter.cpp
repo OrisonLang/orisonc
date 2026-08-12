@@ -114,6 +114,20 @@ auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
+auto is_bound_dynamic_array_parameter(
+    std::string_view owner_name,
+    FunctionLoweringState const& state
+) -> bool {
+    auto const name = std::string {owner_name};
+    if (std::ranges::find(state.parameter_names, name) == state.parameter_names.end()) {
+        return false;
+    }
+
+    auto source_type = state.source_type_names.find(name);
+    return source_type != state.source_type_names.end() &&
+        is_dynamic_array_source_type(source_type->second);
+}
+
 auto consumed_owned_push_argument_name(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
@@ -1100,6 +1114,17 @@ auto lower_assignment_target(
         )) {
         return dynamic_array_target;
     }
+    if (target.kind == syntax::ExpressionKind::index_access &&
+        target.left != nullptr &&
+        target.left->kind == syntax::ExpressionKind::name &&
+        is_bound_dynamic_array_parameter(target.left->text, session.state)) {
+        diagnostics.error(
+            target.line,
+            "lowering DynamicArray parameter indexed assignment is unsupported; use exclusive.View<T> for mutable "
+            "parameter element writes"
+        );
+        return std::nullopt;
+    }
 
     auto path = collect_aggregate_path(target);
     if (path.steps.empty() || path.base_expression == nullptr ||
@@ -1937,6 +1962,14 @@ auto lower_dynamic_array_push_statement(
     auto const owner_is_exclusive_receiver =
         owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
     if (!owner_is_mutable_local && !owner_is_exclusive_receiver) {
+        if (is_bound_dynamic_array_parameter(owner_name, session.state)) {
+            diagnostics.error(
+                statement.line,
+                "lowering DynamicArray parameter push is unsupported; pass an owned local DynamicArray<T> or use "
+                "exclusive.View<T> for mutable parameter element writes"
+            );
+            return true;
+        }
         return false;
     }
     auto source_type = session.state.source_type_names.find(owner_name);

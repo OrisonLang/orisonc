@@ -264,7 +264,10 @@ void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
 ) {
     auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(
-        output.find("lowering assignment target is not a mutable local") !=
+        output.find(
+            "lowering DynamicArray parameter indexed assignment is unsupported; use exclusive.View<T> for mutable "
+            "parameter element writes"
+        ) !=
         std::string::npos
     );
 }
@@ -275,7 +278,10 @@ void assert_dynamic_array_parameter_push_emit_llvm_failure(
 ) {
     auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(
-        output.find("lowering member call target is unknown: DynamicArray<UInt32>.push") !=
+        output.find(
+            "lowering DynamicArray parameter push is unsupported; pass an owned local DynamicArray<T> or use "
+            "exclusive.View<T> for mutable parameter element writes"
+        ) !=
         std::string::npos
     );
 }
