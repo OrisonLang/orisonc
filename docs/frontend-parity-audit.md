@@ -2267,3 +2267,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-12: the matching missing-Drop boundary is pinned for generic `DynamicArray<Box<T>>` projection. Appending
   `Box<UInt32>` without concrete source Drop proof fails with the owned-element authorized-drop diagnostic before any
   unchecked cleanup path can lower.
+- 2026-08-12: nested generic owned-element scalar projection now has checked-in CLI coverage.
+  `first_inner_value<T>(values: DynamicArray<Outer<T>>) -> T` specializes to `first_inner_value__UInt32`, lowers
+  `values[0].inner.value`, and emits concrete `%record.Outer_UInt32_` fields using `%record.Box_UInt32_` rather than
+  an open generic record layout.

@@ -247,6 +247,21 @@ auto generic_parameter_set(std::vector<std::string> const& generic_parameters) -
     return parameters;
 }
 
+auto contains_generic_parameter_reference(
+    syntax::TypeSyntax const& type,
+    std::unordered_set<std::string> const& generic_parameters
+) -> bool {
+    if (type.generic_arguments.empty()) {
+        return generic_parameters.contains(type.name);
+    }
+    return std::ranges::any_of(
+        type.generic_arguments,
+        [&](syntax::TypeSyntax const& argument) {
+            return contains_generic_parameter_reference(argument, generic_parameters);
+        }
+    );
+}
+
 auto unify_constructor_type(
     syntax::TypeSyntax const& pattern,
     syntax::TypeSyntax const& actual,
@@ -1185,6 +1200,12 @@ void collect_type_instantiations(
         return;
     }
     if (type.generic_arguments.size() != expected_argument_count) {
+        return;
+    }
+    auto const generic_parameters = record != generic_records.end()
+        ? generic_parameter_set(*record->second)
+        : generic_parameter_set(*choice->second);
+    if (contains_generic_parameter_reference(type, generic_parameters)) {
         return;
     }
 

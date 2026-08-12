@@ -1547,6 +1547,9 @@ representation.
 - The same path rejects concrete generic record elements without source Drop proof. Missing concrete authorization for
   `DynamicArray<Box<UInt32>>` blocks owned-element append and keeps parameter cleanup from lowering through an
   unproven Drop path.
+- Nested generic record element projections now avoid open generic record layouts. The lowering context skips
+  template-shaped instantiations such as `Outer<T>` and retains concrete layouts such as `Outer<UInt32>` and
+  `Box<UInt32>`, allowing `DynamicArray<Outer<T>>` specializations to project scalar nested fields safely.
 
 ## Follow-up work
 
