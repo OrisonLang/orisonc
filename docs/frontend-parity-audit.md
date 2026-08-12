@@ -2293,3 +2293,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-12: nested generic fixed-array projection now covers same-source-type ternary helper results.
   `second_inner_item(true ? make_left() : make_right())` specializes from matching
   `DynamicArray<Outer<UInt32>>` return descriptors and lowers the fixed-array projection with source Drop proof.
+- 2026-08-12: the mismatched ternary helper-result boundary is pinned. `DynamicArray<Outer<UInt32>>` versus
+  `DynamicArray<Outer<UInt64>>` arms fail source-type matching before `second_inner_item<T>` specialization.

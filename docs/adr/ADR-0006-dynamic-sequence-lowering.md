@@ -1571,6 +1571,8 @@ representation.
 - Same-source-type ternary helper results now feed nested fixed-array projection specialization. Matching
   `DynamicArray<Outer<UInt32>>` return descriptors from both ternary arms allow `second_inner_item<T>` to specialize
   `T` to `UInt32` and reuse the concrete Drop-proofed projection path.
+- Mismatched ternary helper-result source types remain rejected before specialization. `DynamicArray<Outer<UInt32>>`
+  and `DynamicArray<Outer<UInt64>>` arms cannot feed the same `DynamicArray<Outer<T>>` argument.
 
 ## Follow-up work
 
