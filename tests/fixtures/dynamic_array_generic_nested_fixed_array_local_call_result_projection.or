@@ -1,0 +1,26 @@
+package tests.dynamicarraygenericnestedfixedarraylocalcallresultprojection
+
+record Inner<T>
+    items: Array<T, 2>
+
+record Outer<T>
+    inner: Inner<T>
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Outer<UInt32>
+    function drop(this: exclusive This) -> Unit
+        return
+
+function second_inner_item<T>(values: DynamicArray<Outer<T>>) -> T
+    values[0].inner.items[1 as UInt64]
+
+function make_values() -> DynamicArray<Outer<UInt32>>
+    var values: DynamicArray<Outer<UInt32>> = DynamicArray()
+    values.push(Outer(Inner([13 as UInt32, 19 as UInt32])))
+    values
+
+function main() -> UInt32
+    let values = make_values()
+    second_inner_item(values) - 19 as UInt32

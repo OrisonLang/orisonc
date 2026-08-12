@@ -1563,6 +1563,9 @@ representation.
   and reuse the concrete nested record plus fixed-array projection layout with source Drop proof.
 - The same direct call-result path retains the source Drop proof boundary. A helper that appends `Outer<UInt32>` without
   concrete Drop authorization fails before returning the descriptor to the generic fixed-array projection call.
+- Inferred local bindings initialized from helper call results now preserve the same concrete source type for nested
+  fixed-array projection specialization. `let values = make_values()` feeds `second_inner_item(values)` without an
+  explicit `DynamicArray<Outer<UInt32>>` annotation while retaining source Drop proof.
 
 ## Follow-up work
 
