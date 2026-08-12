@@ -605,6 +605,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-30: owned-element `DynamicArray<T>` parameter descriptor `for` iteration is now pinned on the default path.
   The owned-parameter demo validates descriptor loop control, `%record.Payload` loop-item loads, record-field reads,
   length checks, and source-backed cleanup ordering.
+- 2026-08-11: owned-element `DynamicArray<T>` parameter branch-transfer behavior now has checked-in CLI fixtures.
+  `tests/fixtures/dynamic_array_owned_parameter_branch_join_run.or` pins the valid all-branches-transfer case, while
+  `tests/fixtures/dynamic_array_owned_parameter_branch_mismatch_rejected.or` pins the mismatch diagnostic when only one
+  continuing branch transfers the owned descriptor.
 - 2026-07-30: `tests/fixtures/dynamic_array_owned_parameter_iteration_missing_drop.or` now pins the negative CLI
   boundary for owned-element parameter iteration without source-backed Drop proof. The driver still rejects the
   unproven `items.element` cleanup site before production lowering.

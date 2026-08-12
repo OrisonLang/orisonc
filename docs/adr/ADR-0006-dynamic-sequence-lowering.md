@@ -1137,6 +1137,10 @@ representation.
   field reads, and preserve callee-side element cleanup ordering.
 - Owned-element `DynamicArray<T>` parameter iteration without authorized `owner.element` Drop proof remains rejected on
   the CLI path; `tests/fixtures/dynamic_array_owned_parameter_iteration_missing_drop.or` pins that boundary.
+- Owned-element `DynamicArray<T>` parameter branch transfer now has checked-in CLI coverage. When every continuing
+  branch transfers the same owned descriptor, `tests/fixtures/dynamic_array_owned_parameter_branch_join_run.or` links
+  and runs with a single callee-side cleanup; when one branch transfers and another continues without transfer,
+  `tests/fixtures/dynamic_array_owned_parameter_branch_mismatch_rejected.or` reports the ownership mismatch.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
   They no longer need the parameter-descriptor signature bypass to inspect missing element cleanup proof.
 - Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can
