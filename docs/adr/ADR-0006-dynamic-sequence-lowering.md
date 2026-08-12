@@ -1544,6 +1544,9 @@ representation.
   proof exists for the concrete generic record element. Dynamic-array parameter cleanup and element source-drop
   authorization use the canonical Drop ABI symbol renderer, so concrete generic elements such as `Box<UInt32>` map to
   `__orison_drop.Box_UInt32_` consistently across push, parameter cleanup, and source Drop definition emission.
+- The same path rejects concrete generic record elements without source Drop proof. Missing concrete authorization for
+  `DynamicArray<Box<UInt32>>` blocks owned-element append and keeps parameter cleanup from lowering through an
+  unproven Drop path.
 
 ## Follow-up work
 

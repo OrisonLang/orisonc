@@ -2264,3 +2264,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `first_value<T>(values: DynamicArray<Box<T>>) -> T` specializes to `first_value__UInt32`, lowers
   `values[0].value` through the owned-element projection path, and cleans up `Box<UInt32>` elements through the
   canonical `__orison_drop.Box_UInt32_` symbol.
+- 2026-08-12: the matching missing-Drop boundary is pinned for generic `DynamicArray<Box<T>>` projection. Appending
+  `Box<UInt32>` without concrete source Drop proof fails with the owned-element authorized-drop diagnostic before any
+  unchecked cleanup path can lower.
