@@ -1576,6 +1576,8 @@ representation.
 - Inferred local bindings initialized from same-source-type ternary helper results retain the concrete descriptor source
   type. `let values = flag ? make_left() : make_right()` can feed `second_inner_item(values)` through the existing
   nested fixed-array projection specialization path.
+- Mismatched ternary helper-result locals remain rejected at the local initializer. The diagnostic reports
+  `DynamicArray<Outer<UInt32>>` versus `DynamicArray<Outer<UInt64>>` before the local can feed projection lowering.
 
 ## Follow-up work
 

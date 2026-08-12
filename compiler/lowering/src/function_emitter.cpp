@@ -106,6 +106,41 @@ auto append_generic_record_constructor_inference_detail(
     return message;
 }
 
+auto append_ternary_source_type_mismatch_detail(
+    std::string message,
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::string {
+    if (expression.kind != syntax::ExpressionKind::ternary ||
+        expression.right == nullptr ||
+        expression.alternate == nullptr) {
+        return message;
+    }
+
+    auto then_source_type = source_type_name_for_expression(
+        *expression.right,
+        context.lowering,
+        session.state
+    );
+    auto else_source_type = source_type_name_for_expression(
+        *expression.alternate,
+        context.lowering,
+        session.state
+    );
+    if (!then_source_type.has_value() ||
+        !else_source_type.has_value() ||
+        *then_source_type == *else_source_type) {
+        return message;
+    }
+
+    message += ": let initializer has incompatible ternary arm source types: ";
+    message += *then_source_type;
+    message += " and ";
+    message += *else_source_type;
+    return message;
+}
+
 auto lower_unit_if_statement(
     syntax::StatementSyntax const& statement,
     EmissionContext const& context,
@@ -1636,8 +1671,13 @@ void emit_function_body(
                 } else {
                     diagnostics.error(
                         statement.line,
-                        append_generic_record_constructor_inference_detail(
-                            "lowering does not yet support this let binding",
+                        append_ternary_source_type_mismatch_detail(
+                            append_generic_record_constructor_inference_detail(
+                                "lowering does not yet support this let binding",
+                                statement.expression,
+                                context,
+                                session
+                            ),
                             statement.expression,
                             context,
                             session

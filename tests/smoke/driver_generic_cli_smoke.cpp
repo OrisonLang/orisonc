@@ -2983,6 +2983,11 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "dynamic_array_generic_nested_fixed_array_local_ternary_call_result_projection_mismatch.or",
+        "let initializer has incompatible ternary arm source types: DynamicArray<Outer<UInt32>> and DynamicArray<Outer<UInt64>>"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection_mismatch.or",
         "second_inner_item argument 1 has incompatible ternary arm source types: DynamicArray<Outer<UInt32>> and DynamicArray<Outer<UInt64>>"
     );
