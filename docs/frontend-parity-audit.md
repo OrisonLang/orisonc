@@ -2260,3 +2260,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   reports render from that state instead of reading a pre-rendered pipeline vector.
 - 2026-07-27: the computed cleanup-proof model is now a reusable private pipeline component instead of anonymous
   report-formatting state, so later lowering pipeline stages can consume the same typed proof bundle.
+- 2026-08-12: generic `DynamicArray<Box<T>>` owned-element scalar projection now has checked-in CLI coverage.
+  `first_value<T>(values: DynamicArray<Box<T>>) -> T` specializes to `first_value__UInt32`, lowers
+  `values[0].value` through the owned-element projection path, and cleans up `Box<UInt32>` elements through the
+  canonical `__orison_drop.Box_UInt32_` symbol.

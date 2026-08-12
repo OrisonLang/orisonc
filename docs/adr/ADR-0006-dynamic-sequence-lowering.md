@@ -1540,6 +1540,10 @@ representation.
   focused on pipeline operations and readiness helper declarations.
 - Compile-pipeline readiness helper declarations now live in a dedicated header, leaving the compile-pipeline facade
   focused on the `CompilePipeline` class API.
+- Generic `DynamicArray<Box<T>>` owned-element scalar projection now lowers on the default CLI path when source Drop
+  proof exists for the concrete generic record element. Dynamic-array parameter cleanup and element source-drop
+  authorization use the canonical Drop ABI symbol renderer, so concrete generic elements such as `Box<UInt32>` map to
+  `__orison_drop.Box_UInt32_` consistently across push, parameter cleanup, and source Drop definition emission.
 
 ## Follow-up work
 

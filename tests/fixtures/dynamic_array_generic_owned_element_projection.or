@@ -1,0 +1,19 @@
+package tests.dynamicarraygenericownedelementprojection
+
+record Box<T>
+    value: T
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Box<UInt32>
+    function drop(this: exclusive This) -> Unit
+        return
+
+function first_value<T>(values: DynamicArray<Box<T>>) -> T
+    values[0].value
+
+function main() -> UInt32
+    var values: DynamicArray<Box<UInt32>> = DynamicArray()
+    values.push(Box(13 as UInt32))
+    first_value(values) - 13 as UInt32

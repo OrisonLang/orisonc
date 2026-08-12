@@ -635,13 +635,14 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
         return;
     }
 
+    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
     auto lowerable_parameter =
         is_scalar_or_nonowning_source_type(sequence->element_source_type_name) ||
         std::ranges::any_of(context.options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
             return authorization.authorized &&
                 authorization.site.owner_name == std::string {parameter_name} + ".element" &&
                 authorization.site.source_type_name == sequence->element_source_type_name &&
-                authorization.site.abi_symbol_name == "__orison_drop." + sequence->element_source_type_name;
+                authorization.site.abi_symbol_name == expected_symbol_name;
         });
     if (!lowerable_parameter) {
         return;
@@ -701,7 +702,7 @@ auto dynamic_array_owned_parameter_has_drop_proof(
     }
 
     auto const expected_owner_name = parameter.name + ".element";
-    auto const expected_symbol_name = "__orison_drop." + sequence->element_source_type_name;
+    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
     return std::ranges::any_of(options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
         return authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&
