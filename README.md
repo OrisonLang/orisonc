@@ -100,7 +100,8 @@ build/tools/orisonc/orisonc --runtime-indexed-constructor-move-production-readin
 
 This report confirms the fixed-array runtime-index constructor-move default path: cleanup proof, cleanup emission,
 constructor-move acceptance, and ordinary LLVM emission are ready for the checked fixed-array fixture. DynamicArray
-runtime-index owners remain on the explicit audit/test seam until runtime-index cleanup CFG insertion is promoted.
+runtime-index owners remain rejected on the ordinary path with a static-length-owner diagnostic until runtime-index
+cleanup CFG insertion is promoted.
 
 The gated executable smoke path uses `tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_run.or`
 with `--test-only-runtime-indexed-constructor-move-run`. That command is a compiler test seam, not user-facing

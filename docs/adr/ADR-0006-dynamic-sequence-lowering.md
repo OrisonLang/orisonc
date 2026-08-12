@@ -1599,7 +1599,8 @@ representation.
   option.
 - Fixed-array runtime-index constructor moves are enabled on the ordinary driver path. The default gate requires a
   static-length owner so source-slot zeroing can finalize the moved element; DynamicArray runtime-index owners remain
-  rejected by default and stay on the explicit run/audit seam until runtime-index cleanup CFG insertion is promoted.
+  rejected by default with a static-length-owner diagnostic and stay on the explicit run/audit seam until runtime-index
+  cleanup CFG insertion is promoted.
 
 ## Follow-up work
 

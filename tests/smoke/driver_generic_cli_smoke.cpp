@@ -3624,7 +3624,7 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
-        "indexed constructor ownership move requires explicit partial ownership support"
+        "default runtime-index constructor move gate requires a static-length owner"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,

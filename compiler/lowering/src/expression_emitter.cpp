@@ -849,6 +849,10 @@ auto unsupported_indexed_constructor_ownership_detail(
     detail += runtime_indexed_partial_owner_report(
         session.state.ownership_transfers.runtime_indexed_partial_owners.back()
     );
+    if (context.options.enable_runtime_indexed_fixed_array_constructor_move_only &&
+        session.state.ownership_transfers.runtime_indexed_partial_owners.back().static_length_value.empty()) {
+        detail += ": default runtime-index constructor move gate requires a static-length owner";
+    }
     detail += ": ";
     detail += runtime_indexed_cleanup_skip_plan_report(
         session.state.ownership_transfers.runtime_indexed_cleanup_skip_plans.back()
