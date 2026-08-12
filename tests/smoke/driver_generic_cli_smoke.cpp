@@ -509,6 +509,22 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_constructor_move_readiness_fixture_blocked(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --runtime-indexed-constructor-move-production-readiness " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup constructor-move production-readiness "
+        "constructor-move blocked partial-ownership required cleanup-proof ready "
+        "cleanup-production enabled capability-count 1 ordinary-emit rejected "
+        "diagnostic runtime-index constructor move gate disabled"
+    ) != std::string::npos);
+    assert(output.find("define i32 @select_inner") == std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3467,6 +3483,10 @@ auto main() -> int {
     assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or"
+    );
+    assert_cli_runtime_indexed_constructor_move_readiness_fixture_blocked(
+        executable,
+        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,

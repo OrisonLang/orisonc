@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-12: runtime-index constructor-move production readiness now has a non-test CLI report that preserves the
+  default rejection path while naming the remaining gate directly. The checked fixture reports cleanup proof ready,
+  cleanup emission enabled, ordinary LLVM emission rejected, and constructor-move production acceptance blocked.
 - 2026-08-02: scalar/non-owning `DynamicArray<T>` choice payloads now lower through the finite descriptor ABI
   `{ ptr, i64, i64 }` at return, parameter, annotated `let`, and annotated `var` boundaries. The
   `choice_dynamic_array_payload*.or` fixtures pin the accepted `Buffered.Ready(values: DynamicArray<UInt32>)` ABI and

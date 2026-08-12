@@ -176,6 +176,7 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-emit-llvm <file> | "
+           "--runtime-indexed-constructor-move-production-readiness <file> | "
            "--test-only-runtime-indexed-cleanup-production-readiness <file> | "
            "--test-only-runtime-indexed-constructor-move-run <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
@@ -287,10 +288,43 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
     return options;
 }
 
+auto runtime_indexed_constructor_move_production_readiness_options() -> pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_constructor_move_run_options();
+    options.runtime_indexed_constructor_move_enabled = false;
+    options.dynamic_array_production_construction_lowering_enabled = true;
+    options.dynamic_array_production_append_lowering_enabled = true;
+    options.dynamic_array_production_index_lowering_enabled = true;
+    return options;
+}
+
 auto runtime_indexed_cleanup_module_ir_production_readiness_report(
     pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::string {
     return pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
+}
+
+auto runtime_indexed_constructor_move_production_readiness_report(
+    pipeline::CompilePipelineResult const& result
+) -> std::string {
+    auto const has_constructor_move_gate_diagnostic =
+        result.error_text.find("constructor-move disabled") != std::string::npos;
+    auto const has_partial_ownership_diagnostic =
+        result.error_text.find("indexed constructor ownership move requires explicit partial ownership support") !=
+        std::string::npos;
+
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup constructor-move production-readiness "
+           << "constructor-move " << (has_constructor_move_gate_diagnostic ? "blocked" : "enabled")
+           << " partial-ownership " << (has_partial_ownership_diagnostic ? "required" : "accepted")
+           << " cleanup-proof "
+           << (result.runtime_indexed_cleanup_capability_state.all_prerequisites_ready ? "ready" : "blocked")
+           << " cleanup-production "
+           << (result.runtime_indexed_cleanup_capability_state.any_production_enabled ? "enabled" : "disabled")
+           << " capability-count " << result.runtime_indexed_cleanup_capability_state.capability_count
+           << " ordinary-emit " << (result.has_errors() ? "rejected" : "accepted")
+           << " diagnostic "
+           << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
+    return report.str();
 }
 
 auto runtime_indexed_cleanup_function_module_verification_report(
@@ -775,6 +809,27 @@ auto test_only_runtime_indexed_cleanup_production_readiness(std::filesystem::pat
         return CompileResult {
             .exit_code = 1,
             .stdout_text = std::move(readiness_report),
+        };
+    }
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = std::move(readiness_report),
+    };
+}
+
+auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path const& source_path) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.emit_llvm(source_path, runtime_indexed_constructor_move_production_readiness_options());
+    auto readiness_report = runtime_indexed_constructor_move_production_readiness_report(result) + "\n";
+    if (
+        result.has_errors() &&
+        result.error_text.find("indexed constructor ownership move requires explicit partial ownership support") ==
+            std::string::npos
+    ) {
+        return CompileResult {
+            .exit_code = 1,
+            .stdout_text = std::move(readiness_report),
+            .stderr_text = std::move(result.error_text),
         };
     }
     return CompileResult {
@@ -1388,6 +1443,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--runtime-indexed-cleanup-emit-llvm") {
         return runtime_indexed_cleanup_emit_llvm(std::filesystem::path(args[2]));
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--runtime-indexed-constructor-move-production-readiness") {
+        return runtime_indexed_constructor_move_production_readiness(std::filesystem::path(args[2]));
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-cleanup-production-readiness") {

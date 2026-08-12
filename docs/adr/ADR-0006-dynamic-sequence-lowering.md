@@ -1586,6 +1586,9 @@ representation.
 - Runtime-index cleanup function integration now retargets DynamicArray constructor-move cleanup to the block produced
   after lowering the moved argument. This keeps bounds checking and moved-value materialization ahead of cleanup, then
   runs skip-aware live-element cleanup and descriptor deallocation before the function return.
+- Runtime-index constructor-move production readiness now has a non-test CLI report that leaves constructor-move
+  acceptance disabled. The report states that cleanup proof and cleanup emission are ready, ordinary LLVM emission is
+  rejected, and the remaining gate is runtime-index constructor-move production acceptance.
 
 ## Follow-up work
 

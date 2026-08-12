@@ -92,6 +92,15 @@ emission gate, capability proof, and production-readiness status in order. Ordin
 constructor moves rejected; this audit command explicitly enables the runtime-index constructor-move, cleanup-emission,
 module-insertion, and module-mutation gates for inspection.
 
+To inspect the default production gate without enabling constructor-move acceptance, run:
+
+```sh
+build/tools/orisonc/orisonc --runtime-indexed-constructor-move-production-readiness tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_rejected.or
+```
+
+This report names the remaining gate directly: cleanup proof and cleanup emission can be ready while constructor-move
+production acceptance stays blocked and ordinary LLVM emission remains rejected.
+
 The gated executable smoke path uses `tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_run.or`
 with `--test-only-runtime-indexed-constructor-move-run`. That command is a compiler test seam, not user-facing
 language syntax; it validates constructor-move acceptance without enabling the pseudo module-mutation artifact.
