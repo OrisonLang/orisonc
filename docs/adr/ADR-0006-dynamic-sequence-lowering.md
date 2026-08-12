@@ -235,6 +235,9 @@ representation.
   rewrite gate on the ordinary driver path. The gate reuses the proven runtime-index cleanup plan, inserts the cleanup
   CFG into the owning function, skips the moved computed index, drops remaining live elements, and deallocates the
   descriptor without requiring broad source-Drop emission.
+- Descriptor-backed runtime-index cleanup uses the function final block as the cleanup predecessor. This keeps
+  post-move sibling reads, such as `items[1].value`, ahead of deallocation while fixed-array source-slot cleanup keeps
+  the constructor-argument predecessor path.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

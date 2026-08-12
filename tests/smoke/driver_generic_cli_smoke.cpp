@@ -268,6 +268,41 @@ void assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_dynamic_array_default_sibling_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto sibling_branch = output.find(
+        "br i1 %items.dynamic_array_element_path6.in_bounds, "
+        "label %dynamic_array.element_path.in_bounds.3, label %dynamic_array.element_path.out_of_bounds.3"
+    );
+    auto sibling_load = output.find("%tmp8 = load i32, ptr %tmp7");
+    auto cleanup_branch = output.find("br label %items.runtime_cleanup.entry");
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)"
+    );
+    auto final_return = output.find("ret i32 0", deallocate);
+    assert(sibling_branch != std::string::npos);
+    assert(sibling_load != std::string::npos);
+    assert(cleanup_branch != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(final_return != std::string::npos);
+    assert(sibling_branch < sibling_load);
+    assert(sibling_load < cleanup_branch);
+    assert(cleanup_branch < deallocate);
+    assert(deallocate < final_return);
+    assert(output.find(
+        "br label %items.runtime_cleanup.entry\n"
+        "dynamic_array.element_path.out_of_bounds.3:"
+    ) == std::string::npos);
+    assert(output.find("default runtime-index constructor move gate requires a static-length owner") ==
+        std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3655,7 +3690,11 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or"
+    );
+    assert_cli_runtime_indexed_dynamic_array_default_sibling_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or"
     );

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-12: source-backed DynamicArray runtime-index cleanup now targets the function final block for descriptor
+  owners. This preserves valid post-move sibling reads before skip-aware cleanup and deallocation, while fixed-array
+  source-slot cleanup keeps its earlier constructor-argument predecessor behavior.
 - 2026-08-12: source-backed `DynamicArray<T>` runtime-index constructor moves now lower on the ordinary driver path
   through a production-named verified function-IR rewrite gate. The emitted IR inserts skip-aware runtime cleanup into
   the owning function, drops remaining live elements, deallocates the descriptor, and keeps moved-index reuse rejected.
