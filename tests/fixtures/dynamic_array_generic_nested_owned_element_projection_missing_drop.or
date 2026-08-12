@@ -1,0 +1,15 @@
+package tests.dynamicarraygenericnestedownedelementprojectionmissingdrop
+
+record Box<T>
+    value: T
+
+record Outer<T>
+    inner: Box<T>
+
+function first_inner_value<T>(values: DynamicArray<Outer<T>>) -> T
+    values[0].inner.value
+
+function main() -> UInt32
+    var values: DynamicArray<Outer<UInt32>> = DynamicArray()
+    values.push(Outer(Box(17 as UInt32)))
+    first_inner_value(values) - 17 as UInt32

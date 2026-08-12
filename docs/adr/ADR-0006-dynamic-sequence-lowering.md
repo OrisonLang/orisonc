@@ -1550,6 +1550,9 @@ representation.
 - Nested generic record element projections now avoid open generic record layouts. The lowering context skips
   template-shaped instantiations such as `Outer<T>` and retains concrete layouts such as `Outer<UInt32>` and
   `Box<UInt32>`, allowing `DynamicArray<Outer<T>>` specializations to project scalar nested fields safely.
+- The nested projection path keeps the same Drop proof boundary as direct generic record elements. Missing concrete
+  source Drop proof for `Outer<UInt32>` blocks owned-element append before `DynamicArray<Outer<T>>` parameter cleanup
+  or nested scalar projection lowering can proceed.
 
 ## Follow-up work
 
