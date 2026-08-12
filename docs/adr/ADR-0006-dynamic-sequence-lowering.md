@@ -1568,6 +1568,9 @@ representation.
   explicit `DynamicArray<Outer<UInt32>>` annotation while retaining source Drop proof.
 - The inferred-local call-result path keeps the same proof boundary. If the helper appends `Outer<UInt32>` without
   concrete Drop authorization, lowering fails before the inferred local can feed the generic projection call.
+- Same-source-type ternary helper results now feed nested fixed-array projection specialization. Matching
+  `DynamicArray<Outer<UInt32>>` return descriptors from both ternary arms allow `second_inner_item<T>` to specialize
+  `T` to `UInt32` and reuse the concrete Drop-proofed projection path.
 
 ## Follow-up work
 

@@ -2290,3 +2290,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   before specializing `DynamicArray<Outer<T>>` and lowering the fixed-array projection.
 - 2026-08-12: the inferred-local call-result missing-Drop boundary is pinned. `let values = make_values()` cannot feed
   `second_inner_item(values)` when the helper appends `Outer<UInt32>` without concrete source Drop proof.
+- 2026-08-12: nested generic fixed-array projection now covers same-source-type ternary helper results.
+  `second_inner_item(true ? make_left() : make_right())` specializes from matching
+  `DynamicArray<Outer<UInt32>>` return descriptors and lowers the fixed-array projection with source Drop proof.
