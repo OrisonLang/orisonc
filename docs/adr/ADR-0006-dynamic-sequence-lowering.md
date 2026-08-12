@@ -1573,6 +1573,9 @@ representation.
   `T` to `UInt32` and reuse the concrete Drop-proofed projection path.
 - Mismatched ternary helper-result source types remain rejected before specialization. `DynamicArray<Outer<UInt32>>`
   and `DynamicArray<Outer<UInt64>>` arms cannot feed the same `DynamicArray<Outer<T>>` argument.
+- Inferred local bindings initialized from same-source-type ternary helper results retain the concrete descriptor source
+  type. `let values = flag ? make_left() : make_right()` can feed `second_inner_item(values)` through the existing
+  nested fixed-array projection specialization path.
 
 ## Follow-up work
 

@@ -2295,3 +2295,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `DynamicArray<Outer<UInt32>>` return descriptors and lowers the fixed-array projection with source Drop proof.
 - 2026-08-12: the mismatched ternary helper-result boundary is pinned. `DynamicArray<Outer<UInt32>>` versus
   `DynamicArray<Outer<UInt64>>` arms fail source-type matching before `second_inner_item<T>` specialization.
+- 2026-08-12: same-source-type ternary helper results now also work through inferred locals. `let values =
+  flag ? make_left() : make_right(); second_inner_item(values)` preserves the concrete descriptor source type for
+  nested fixed-array projection specialization.
