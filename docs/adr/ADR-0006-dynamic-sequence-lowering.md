@@ -1589,6 +1589,9 @@ representation.
 - Runtime-index constructor-move production readiness now has a non-test CLI report that leaves constructor-move
   acceptance disabled. The report states that cleanup proof and cleanup emission are ready, ordinary LLVM emission is
   rejected, and the remaining gate is runtime-index constructor-move production acceptance.
+- Attempting to enable runtime-index cleanup emission in the default driver path exposed a broader source-derived Drop
+  emission interaction with existing fixed-index DynamicArray record-field moves. Default promotion should wait until
+  runtime-index constructor-move cleanup emission is isolated from unrelated Drop-definition and cleanup paths.
 
 ## Follow-up work
 

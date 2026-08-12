@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-12: default runtime-index constructor-move promotion is intentionally still blocked. Enabling the current
+  runtime-index cleanup emission flag on the ordinary driver path also affects source-derived Drop emission for
+  existing fixed-index DynamicArray record-field moves, so the next promotion slice needs a narrower production gate.
 - 2026-08-12: runtime-index constructor-move production readiness now has a non-test CLI report that preserves the
   default rejection path while naming the remaining gate directly. The checked fixture reports cleanup proof ready,
   cleanup emission enabled, ordinary LLVM emission rejected, and constructor-move production acceptance blocked.

@@ -28,6 +28,9 @@ auto read_command_output(std::string const& command) -> std::string {
     }
 
     auto status = pclose(pipe);
+    if (status != 0) {
+        std::fprintf(stderr, "command failed: %s\n", command.c_str());
+    }
     assert(status == 0);
     return output;
 }
