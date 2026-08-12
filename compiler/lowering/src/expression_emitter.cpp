@@ -636,6 +636,63 @@ auto has_recorded_runtime_indexed_constructor_move(
     );
 }
 
+auto runtime_indexed_constructor_argument_key(
+    RuntimeIndexedPartialOwner const& owner
+) -> std::string {
+    return owner.owner_name + "[" + owner.index_expression_text + "]";
+}
+
+auto runtime_indexed_constructor_argument_key(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto owner = runtime_indexed_partial_owner_for_constructor_argument(
+        argument,
+        expected_source_type,
+        context,
+        state
+    );
+    if (!owner.has_value()) {
+        return std::nullopt;
+    }
+    return runtime_indexed_constructor_argument_key(*owner);
+}
+
+auto runtime_indexed_constructor_argument_active(
+    FunctionLoweringState const& state,
+    std::string_view key
+) -> bool {
+    return std::ranges::find(
+        state.active_runtime_indexed_constructor_argument_keys,
+        key
+    ) != state.active_runtime_indexed_constructor_argument_keys.end();
+}
+
+struct RuntimeIndexedConstructorArgumentScope {
+    FunctionLoweringState& state;
+    bool active = false;
+
+    RuntimeIndexedConstructorArgumentScope(
+        FunctionLoweringState& lowering_state,
+        std::optional<std::string> key
+    ) : state(lowering_state) {
+        if (!key.has_value()) {
+            return;
+        }
+        active = true;
+        state.active_runtime_indexed_constructor_argument_keys.push_back(std::move(*key));
+    }
+
+    ~RuntimeIndexedConstructorArgumentScope() {
+        if (!active || state.active_runtime_indexed_constructor_argument_keys.empty()) {
+            return;
+        }
+        state.active_runtime_indexed_constructor_argument_keys.pop_back();
+    }
+};
+
 auto emit_runtime_indexed_constructor_source_slot_finalization(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
@@ -1700,17 +1757,29 @@ auto lower_record_constructor_expression(
             return std::nullopt;
         }
 
-        auto lowered_field = lowered_expression(
-            expression.arguments[index],
-            field.llvm_type,
-            integer_signedness_for(syntax::TypeSyntax {.name = field.source_type_name}),
-            context,
-            session,
-            output,
-            field.source_type_name.empty()
-                ? std::optional<std::string_view> {}
-                : std::optional<std::string_view> {field.source_type_name}
-        );
+        auto lowered_field = std::optional<LoweredExpression> {};
+        {
+            auto runtime_indexed_argument_scope = RuntimeIndexedConstructorArgumentScope {
+                session.state,
+                runtime_indexed_constructor_argument_key(
+                    expression.arguments[index],
+                    field.source_type_name,
+                    context.lowering,
+                    session.state
+                )
+            };
+            lowered_field = lowered_expression(
+                expression.arguments[index],
+                field.llvm_type,
+                integer_signedness_for(syntax::TypeSyntax {.name = field.source_type_name}),
+                context,
+                session,
+                output,
+                field.source_type_name.empty()
+                    ? std::optional<std::string_view> {}
+                    : std::optional<std::string_view> {field.source_type_name}
+            );
+        }
         if (!lowered_field.has_value()) {
             return std::nullopt;
         }
@@ -1958,14 +2027,26 @@ auto lower_choice_constructor_expression(
                 return std::nullopt;
             }
 
-            auto lowered_payload = lowered_expression(
-                arguments->front(),
-                payload.llvm_type,
-                integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
-                context,
-                session,
-                output
-            );
+            auto lowered_payload = std::optional<LoweredExpression> {};
+            {
+                auto runtime_indexed_argument_scope = RuntimeIndexedConstructorArgumentScope {
+                    session.state,
+                    runtime_indexed_constructor_argument_key(
+                        arguments->front(),
+                        payload.source_type_name,
+                        context.lowering,
+                        session.state
+                    )
+                };
+                lowered_payload = lowered_expression(
+                    arguments->front(),
+                    payload.llvm_type,
+                    integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
+                    context,
+                    session,
+                    output
+                );
+            }
             if (!lowered_payload.has_value()) {
                 return std::nullopt;
             }
@@ -2023,14 +2104,26 @@ auto lower_choice_constructor_expression(
                     return std::nullopt;
                 }
 
-                auto lowered_payload = lowered_expression(
-                    (*arguments)[index],
-                    payload.llvm_type,
-                    integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
-                    context,
-                    session,
-                    output
-                );
+                auto lowered_payload = std::optional<LoweredExpression> {};
+                {
+                    auto runtime_indexed_argument_scope = RuntimeIndexedConstructorArgumentScope {
+                        session.state,
+                        runtime_indexed_constructor_argument_key(
+                            (*arguments)[index],
+                            payload.source_type_name,
+                            context.lowering,
+                            session.state
+                        )
+                    };
+                    lowered_payload = lowered_expression(
+                        (*arguments)[index],
+                        payload.llvm_type,
+                        integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
+                        context,
+                        session,
+                        output
+                    );
+                }
                 if (!lowered_payload.has_value()) {
                     return std::nullopt;
                 }
@@ -2751,6 +2844,19 @@ auto lower_dynamic_array_index_read(
                     owner.element_source_type_name == *element_source_type;
             }
         );
+    auto const runtime_index_constructor_argument_key =
+        owner_name + "[" + index_expression_text + "]";
+    if (runtime_index_constructor_move_recorded &&
+        !runtime_indexed_constructor_argument_active(
+            session.state,
+            runtime_index_constructor_argument_key
+        )) {
+        record_use_after_move_failure(
+            session.failures,
+            runtime_index_constructor_argument_key
+        );
+        return std::nullopt;
+    }
     if (is_owned_transfer_source_type(*element_source_type, context.lowering) &&
         !runtime_index_constructor_move_recorded) {
         record_expression_lowering_failure(
@@ -2875,6 +2981,32 @@ auto lower_dynamic_array_element_path_read(
     auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
     if (!element_source_type.has_value() ||
         !is_owned_transfer_source_type(*element_source_type, context.lowering)) {
+        return std::nullopt;
+    }
+    auto const index_expression_text = path->steps.front().index_expression->text.empty()
+        ? std::string {"<computed>"}
+        : path->steps.front().index_expression->text;
+    auto const runtime_index_constructor_move_recorded =
+        std::ranges::any_of(
+            session.state.ownership_transfers.runtime_indexed_partial_owners,
+            [&](RuntimeIndexedPartialOwner const& owner) {
+                return owner.constructor_move_enabled &&
+                    owner.owner_name == owner_name &&
+                    owner.index_expression_text == index_expression_text &&
+                    owner.element_source_type_name == *element_source_type;
+            }
+        );
+    auto const runtime_index_constructor_argument_key =
+        owner_name + "[" + index_expression_text + "]";
+    if (runtime_index_constructor_move_recorded &&
+        !runtime_indexed_constructor_argument_active(
+            session.state,
+            runtime_index_constructor_argument_key
+        )) {
+        record_use_after_move_failure(
+            session.failures,
+            runtime_index_constructor_argument_key
+        );
         return std::nullopt;
     }
     auto projected_source_type = source_type_name_for_expression(expression, context.lowering, session.state);

@@ -2302,3 +2302,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   versus `DynamicArray<Outer<UInt64>>` arms now report a local initializer source-type mismatch before projection use.
 - 2026-08-12: README gap analysis now marks the nested generic fixed-array projection source-type matrix as covered.
   Remaining DynamicArray work should move back to computed-index and partial-ownership cleanup gaps.
+- 2026-08-12: DynamicArray runtime-index constructor-move coverage now pins the gated move path, sibling read
+  preservation, and same computed-index reuse rejection for `items[index]` without enabling ordinary compilation.

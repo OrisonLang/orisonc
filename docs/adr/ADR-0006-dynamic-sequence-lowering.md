@@ -1580,6 +1580,9 @@ representation.
   `DynamicArray<Outer<UInt32>>` versus `DynamicArray<Outer<UInt64>>` before the local can feed projection lowering.
 - The nested generic fixed-array projection source-type matrix is now documented as covered in the README gap analysis.
   Follow-up DynamicArray work should return to computed-index and partial-ownership cleanup coverage.
+- DynamicArray runtime-index constructor-move coverage now mirrors the fixed-array gated boundary: the explicit test
+  seam accepts the computed-index move, preserves sibling reads, and rejects reuse of `items[index]`, while ordinary
+  `--emit-llvm` keeps the computed-index constructor move rejected.
 
 ## Follow-up work
 

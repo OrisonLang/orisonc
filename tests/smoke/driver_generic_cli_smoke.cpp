@@ -3563,6 +3563,19 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
         "indexed constructor ownership move requires explicit partial ownership support"
     );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
+        "use after move: items[index]"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_indexed_member_path_move_run.or"
