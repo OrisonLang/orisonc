@@ -1561,6 +1561,8 @@ representation.
 - Generic call-result inference now covers nested fixed-array projection arguments. A helper returning
   `DynamicArray<Outer<UInt32>>` can feed `second_inner_item<T>(DynamicArray<Outer<T>>)`, specialize `T` to `UInt32`,
   and reuse the concrete nested record plus fixed-array projection layout with source Drop proof.
+- The same direct call-result path retains the source Drop proof boundary. A helper that appends `Outer<UInt32>` without
+  concrete Drop authorization fails before returning the descriptor to the generic fixed-array projection call.
 
 ## Follow-up work
 

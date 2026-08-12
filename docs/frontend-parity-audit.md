@@ -2282,3 +2282,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-12: nested generic fixed-array projection now also covers direct call-result arguments.
   `second_inner_item(make_values())` specializes `DynamicArray<Outer<T>>` from the helper's concrete
   `DynamicArray<Outer<UInt32>>` return descriptor and preserves the same fixed-array projection plus Drop proof path.
+- 2026-08-12: the direct call-result nested fixed-array missing-Drop boundary is pinned. A helper returning
+  `DynamicArray<Outer<UInt32>>` without concrete source Drop proof fails during owned-element append before the
+  returned descriptor can feed `second_inner_item(make_values())`.
