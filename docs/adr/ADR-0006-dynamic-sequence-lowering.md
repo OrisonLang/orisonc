@@ -231,6 +231,10 @@ representation.
   `items[0].bytes[1]`, using the same aggregate cursor after the bounded element address is established.
 - DynamicArray element paths reject owned projections such as `items[0].child` while allowing scalar terminal
   projections such as `items[0].child.value`.
+- Source-backed `DynamicArray<T>` runtime-index constructor moves now use a production-named verified function-IR
+  rewrite gate on the ordinary driver path. The gate reuses the proven runtime-index cleanup plan, inserts the cleanup
+  CFG into the owning function, skips the moved computed index, drops remaining live elements, and deallocates the
+  descriptor without requiring broad source-Drop emission.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports
@@ -1586,21 +1590,18 @@ representation.
 - Runtime-index cleanup function integration now retargets DynamicArray constructor-move cleanup to the block produced
   after lowering the moved argument. This keeps bounds checking and moved-value materialization ahead of cleanup, then
   runs skip-aware live-element cleanup and descriptor deallocation before the function return.
-- Runtime-index constructor-move production readiness now has a non-test CLI report that leaves constructor-move
-  acceptance disabled. The report states that cleanup proof and cleanup emission are ready, ordinary LLVM emission is
-  rejected, and the remaining gate is runtime-index constructor-move production acceptance.
-- Attempting to enable runtime-index cleanup emission in the default driver path exposed a broader source-derived Drop
-  emission interaction with existing fixed-index DynamicArray record-field moves. Default promotion should wait until
-  runtime-index constructor-move cleanup emission is isolated from unrelated Drop-definition and cleanup paths.
+- Runtime-index constructor-move production readiness now has a non-test CLI report. The report states that cleanup
+  proof, cleanup emission, constructor-move acceptance, and ordinary LLVM emission are ready for the checked
+  fixed-array and source-backed DynamicArray fixtures.
+- Runtime-index constructor-move cleanup emission is isolated from unrelated Drop-definition and cleanup paths through
+  the verified function-IR rewrite gate used by the default driver path.
 - Runtime-index cleanup proof/emission is now isolated from runtime-index source-derived Drop declaration and
   definition emission. The constructor-move cleanup gate can collect/prove runtime-index plans without requesting the
   broader module Drop surface; only module-IR insertion, mutation, or function-rewrite gates request that broader Drop
   surface for audit/rewrite paths, with the explicit constructor-move run seam opting in through a named pipeline
   option.
-- Fixed-array runtime-index constructor moves are enabled on the ordinary driver path. The default gate requires a
-  static-length owner so source-slot zeroing can finalize the moved element; DynamicArray runtime-index owners remain
-  rejected by default with a static-length-owner diagnostic and stay on the explicit run/audit seam until runtime-index
-  cleanup CFG insertion is promoted.
+- Fixed-array runtime-index constructor moves are enabled on the ordinary driver path with source-slot zeroing.
+  Source-backed DynamicArray runtime-index owners are also enabled through verified function cleanup CFG insertion.
 
 ## Follow-up work
 

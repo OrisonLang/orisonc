@@ -15,6 +15,13 @@ namespace orison::pipeline {
 
 namespace {
 
+auto runtime_indexed_cleanup_function_ir_rewrite_requested(
+    CompilePipelineOptions const& options
+) -> bool {
+    return options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled ||
+        options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled;
+}
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -964,7 +971,7 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state(
     RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState const& function_verification_state
 ) -> RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState {
     auto state = RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState {
-        .rewrite_requested = options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled,
+        .rewrite_requested = runtime_indexed_cleanup_function_ir_rewrite_requested(options),
         .metadata_available = function_candidate_state.metadata_available,
         .all_candidates_separate_from_module_ir = function_candidate_state.metadata_available,
         .first_composition_failure = function_candidate_state.first_composition_failure,
@@ -1162,8 +1169,9 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
 ) -> RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
     auto state = RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
         .mutation_requested =
-            options.runtime_indexed_cleanup_module_ir_mutation_enabled &&
-            options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled,
+            (options.runtime_indexed_cleanup_module_ir_mutation_enabled &&
+             options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled) ||
+            options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled,
         .candidate_verified = verification_state.all_verified,
         .replacement_targets_unique = verification_state.all_replacement_targets_unique,
         .candidate_count = candidate_state.candidate_count,
@@ -1578,10 +1586,17 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         function_mutation_state.module_matches_candidate &&
         function_mutation_state.llvm_verifier_passed &&
         function_splice_conflict_free;
+    auto const function_only_integration_ready =
+        function_mutation_ready &&
+        !insertion_gate_state.insertion_enabled &&
+        !mutation_state.mutation_applied;
     auto readiness_state = RuntimeIndexedCleanupModuleIrProductionReadinessState {
-        .insertion_gate_ready = insertion_gate_state.insertion_enabled,
-        .insertion_preview_ready = preview_state.preview_available &&
-            preview_state.insertion_point_found,
+        .insertion_gate_ready =
+            insertion_gate_state.insertion_enabled ||
+            function_only_integration_ready,
+        .insertion_preview_ready =
+            (preview_state.preview_available && preview_state.insertion_point_found) ||
+            function_only_integration_ready,
         .candidate_ready = candidate_state.candidate_available || function_mutation_state.mutation_requested,
         .candidate_verified =
             verification_state.verified ||

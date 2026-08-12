@@ -39,6 +39,7 @@ struct CompilePipelineOptions {
     bool runtime_indexed_cleanup_module_ir_insertion_enabled = false;
     bool runtime_indexed_cleanup_module_ir_mutation_enabled = false;
     bool runtime_indexed_cleanup_function_ir_module_rewrite_enabled = false;
+    bool runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = false;
     bool runtime_indexed_cleanup_source_drop_emission_enabled = false;
     bool runtime_indexed_constructor_move_enabled = false;
     bool runtime_indexed_fixed_array_constructor_move_only = false;

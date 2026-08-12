@@ -1,18 +1,19 @@
 # Frontend Parity Audit
 
-- 2026-08-12: fixed-array runtime-index constructor moves are now enabled on the ordinary driver path. The default
-  gate requires a static-length owner for source-slot zeroing, while DynamicArray runtime-index owners remain rejected
-  by default with a static-length-owner diagnostic until runtime-index cleanup CFG insertion is promoted.
+- 2026-08-12: source-backed `DynamicArray<T>` runtime-index constructor moves now lower on the ordinary driver path
+  through a production-named verified function-IR rewrite gate. The emitted IR inserts skip-aware runtime cleanup into
+  the owning function, drops remaining live elements, deallocates the descriptor, and keeps moved-index reuse rejected.
+- 2026-08-12: fixed-array runtime-index constructor moves are enabled on the ordinary driver path with source-slot
+  zeroing, while source-backed DynamicArray runtime-index owners use verified function cleanup CFG insertion.
 - 2026-08-12: runtime-index cleanup proof/emission no longer implies source-derived Drop declaration/definition
   emission. The broader runtime-index Drop surface is now limited to module-IR insertion, mutation, or function-rewrite
   gates plus an explicit constructor-move run-seam opt-in, keeping the constructor-move cleanup gate narrow for future
   default-promotion work.
-- 2026-08-12: default runtime-index constructor-move promotion is intentionally still blocked. Enabling the current
-  runtime-index cleanup emission flag on the ordinary driver path also affects source-derived Drop emission for
-  existing fixed-index DynamicArray record-field moves, so the next promotion slice needs a narrower production gate.
-- 2026-08-12: runtime-index constructor-move production readiness now has a non-test CLI report that preserves the
-  default rejection path while naming the remaining gate directly. The checked fixture reports cleanup proof ready,
-  cleanup emission enabled, ordinary LLVM emission rejected, and constructor-move production acceptance blocked.
+- 2026-08-12: default runtime-index constructor-move promotion previously needed a narrower production gate to avoid
+  broad source-derived Drop emission. That gate now exists as verified function-IR rewrite insertion.
+- 2026-08-12: runtime-index constructor-move production readiness has a non-test CLI report. The checked fixed-array
+  and source-backed DynamicArray fixtures now report cleanup proof ready, cleanup emission enabled, constructor-move
+  acceptance enabled, and ordinary LLVM emission accepted.
 - 2026-08-02: scalar/non-owning `DynamicArray<T>` choice payloads now lower through the finite descriptor ABI
   `{ ptr, i64, i64 }` at return, parameter, annotated `let`, and annotated `var` boundaries. The
   `choice_dynamic_array_payload*.or` fixtures pin the accepted `Buffered.Ready(values: DynamicArray<UInt32>)` ABI and

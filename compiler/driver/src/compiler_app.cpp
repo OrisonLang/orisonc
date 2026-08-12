@@ -267,8 +267,8 @@ auto computed_cleanup_call_insertion_readiness_options() -> pipeline::CompilePip
 auto default_driver_options() -> pipeline::CompilePipelineOptions {
     auto options = pipeline::CompilePipelineOptions {};
     options.runtime_indexed_cleanup_emission_enabled = true;
+    options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
-    options.runtime_indexed_fixed_array_constructor_move_only = true;
     return options;
 }
 

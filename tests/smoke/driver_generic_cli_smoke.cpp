@@ -246,6 +246,28 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("br label %items.runtime_cleanup.entry") != std::string::npos);
+    assert(output.find("items.runtime_cleanup.check_live:") != std::string::npos);
+    assert(output.find("%items.runtime_cleanup.skip_moved = icmp eq i64 %items.runtime_cleanup.index, %index") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)") !=
+        std::string::npos);
+    assert(output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)"
+    ) != std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
+    assert(output.find("default runtime-index constructor move gate requires a static-length owner") ==
+        std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3621,10 +3643,13 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
-        "default runtime-index constructor move gate requires a static-length owner"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,
