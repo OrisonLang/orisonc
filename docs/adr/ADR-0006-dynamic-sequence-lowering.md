@@ -1558,6 +1558,9 @@ representation.
   indexed read while preserving concrete element cleanup.
 - The fixed-array projection path retains the same owned-element Drop proof gate. Missing concrete source Drop proof
   for `Outer<UInt32>` blocks owned-element append before fixed-array nested projection or parameter cleanup lowering.
+- Generic call-result inference now covers nested fixed-array projection arguments. A helper returning
+  `DynamicArray<Outer<UInt32>>` can feed `second_inner_item<T>(DynamicArray<Outer<T>>)`, specialize `T` to `UInt32`,
+  and reuse the concrete nested record plus fixed-array projection layout with source Drop proof.
 
 ## Follow-up work
 

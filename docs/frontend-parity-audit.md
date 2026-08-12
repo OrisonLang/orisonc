@@ -2279,3 +2279,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   generic record layouts and fixed-array indexing, then cleans up `Outer<UInt32>` elements with source Drop proof.
 - 2026-08-12: the matching nested fixed-array missing-Drop boundary is pinned. Appending `Outer<UInt32>` without
   concrete source Drop proof fails before `values[0].inner.items[1]` can lower through an unchecked cleanup path.
+- 2026-08-12: nested generic fixed-array projection now also covers direct call-result arguments.
+  `second_inner_item(make_values())` specializes `DynamicArray<Outer<T>>` from the helper's concrete
+  `DynamicArray<Outer<UInt32>>` return descriptor and preserves the same fixed-array projection plus Drop proof path.

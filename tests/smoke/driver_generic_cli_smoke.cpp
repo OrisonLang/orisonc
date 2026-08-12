@@ -582,6 +582,28 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_projection_fi
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_call_result_projection_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("%record.Inner_UInt32_ = type { [2 x i32] }") != std::string::npos);
+    assert(output.find("%record.Outer_UInt32_ = type { %record.Inner_UInt32_ }") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @make_values()") != std::string::npos);
+    assert(output.find(
+        "define i32 @second_inner_item__UInt32({ ptr, i64, i64 } %values)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call i32 @second_inner_item__UInt32({ ptr, i64, i64 } %tmp"
+    ) != std::string::npos);
+    assert(output.find(
+        "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
+    ) != std::string::npos);
+    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+        std::string::npos);
+}
+
 void assert_cli_emit_llvm_call_result_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2852,6 +2874,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_fixed_array_projection.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_call_result_projection_fixture_success(
+        executable,
+        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
