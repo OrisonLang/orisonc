@@ -3698,6 +3698,11 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
+        "use after move: items[index]"
+    );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",

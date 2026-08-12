@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-12: DynamicArray runtime-index move tracking now has negative coverage for a valid sibling read followed by
+  same computed-index reuse. `items[1].value` remains allowed after moving `items[index]`, while later
+  `items[index].value` still reports `use after move: items[index]` on the default path.
 - 2026-08-12: source-backed DynamicArray runtime-index cleanup now targets the function final block for descriptor
   owners. This preserves valid post-move sibling reads before skip-aware cleanup and deallocation, while fixed-array
   source-slot cleanup keeps its earlier constructor-argument predecessor behavior.

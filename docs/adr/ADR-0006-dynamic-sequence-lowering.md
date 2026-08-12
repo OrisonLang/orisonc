@@ -238,6 +238,9 @@ representation.
 - Descriptor-backed runtime-index cleanup uses the function final block as the cleanup predecessor. This keeps
   post-move sibling reads, such as `items[1].value`, ahead of deallocation while fixed-array source-slot cleanup keeps
   the constructor-argument predecessor path.
+- Runtime-index move tracking rejects later reuse of the same computed index even after a valid sibling read. The
+  checked `sibling_then_reuse` fixture keeps `items[1].value` accepted after moving `items[index]`, then rejects
+  `items[index].value`.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports
