@@ -241,6 +241,14 @@ void assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
     );
 }
 
+void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("use after move: items") != std::string::npos);
+}
+
 void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -346,6 +354,12 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_parameter_branch_join_run.or";
     auto owned_dynamic_array_parameter_branch_mismatch_path =
         fixtures / "dynamic_array_owned_parameter_branch_mismatch_rejected.or";
+    auto owned_dynamic_array_parameter_second_use_path =
+        fixtures / "dynamic_array_owned_parameter_second_use_rejected.or";
+    auto owned_dynamic_array_parameter_length_after_move_path =
+        fixtures / "dynamic_array_owned_parameter_length_after_move_rejected.or";
+    auto owned_dynamic_array_parameter_push_after_move_path =
+        fixtures / "dynamic_array_owned_parameter_push_after_move_rejected.or";
     auto owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_owned_computed_cleanup_missing_drop.or";
     auto owned_dynamic_array_parameter_missing_drop_path =
@@ -420,6 +434,18 @@ auto main() -> int {
     assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_branch_mismatch_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_second_use_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_length_after_move_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_push_after_move_path
     );
     assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
         executable,

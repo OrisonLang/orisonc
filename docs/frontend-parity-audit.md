@@ -609,6 +609,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   `tests/fixtures/dynamic_array_owned_parameter_branch_join_run.or` pins the valid all-branches-transfer case, while
   `tests/fixtures/dynamic_array_owned_parameter_branch_mismatch_rejected.or` pins the mismatch diagnostic when only one
   continuing branch transfers the owned descriptor.
+- 2026-08-11: owned-element `DynamicArray<T>` parameter post-move diagnostics now have checked-in CLI fixtures for a
+  second owned call, descriptor `.length()` after move, and descriptor `.push(...)` after move. Each fixture pins
+  `use after move: items` on the default CLI path.
 - 2026-07-30: `tests/fixtures/dynamic_array_owned_parameter_iteration_missing_drop.or` now pins the negative CLI
   boundary for owned-element parameter iteration without source-backed Drop proof. The driver still rejects the
   unproven `items.element` cleanup site before production lowering.
