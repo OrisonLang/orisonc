@@ -175,6 +175,9 @@
 - 2026-07-30: `examples/local_dynamic_array_owned_replacement.or` now pins local owned-element `DynamicArray<Payload>`
   indexed replacement through `orisonc run`, `--emit-llvm`, `--emit-object`, and `--build`, including source drop
   definition, replacement-drop/store ordering, and later cleanup drop coverage.
+- 2026-08-11: local owned-element `DynamicArray<T>` RHS move-reuse diagnostics now have checked-in CLI fixtures for
+  `.push(payload)`, `.push(box.payload)`, and `items[0] = payload`, pinning later reuse diagnostics for the moved
+  source owner.
 - 2026-07-30: computed same-owner final-use cleanup now emits a source-backed initialized-element drop walk for owned
   `DynamicArray<Payload>` elements before descriptor deallocation/finalization on the default pipeline path.
 - 2026-07-30: `examples/local_dynamic_array_owned_computed_for.or` now pins that owned computed-loop cleanup path

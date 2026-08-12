@@ -249,6 +249,15 @@ void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
     assert(output.find("use after move: items") != std::string::npos);
 }
 
+void assert_dynamic_array_use_after_move_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::string_view moved_owner
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("use after move: " + std::string {moved_owner}) != std::string::npos);
+}
+
 void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -375,6 +384,12 @@ auto main() -> int {
     auto dynamic_array_parameter_push_path =
         fixtures / "dynamic_array_parameter_push_rejected.or";
     auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
+    auto dynamic_array_push_owned_payload_reuse_path =
+        fixtures / "dynamic_array_push_owned_payload_reuse_rejected.or";
+    auto dynamic_array_push_owned_field_reuse_path =
+        fixtures / "dynamic_array_push_owned_field_reuse_rejected.or";
+    auto dynamic_array_owned_element_assignment_rhs_reuse_path =
+        fixtures / "dynamic_array_owned_element_assignment_rhs_reuse_rejected.or";
     assert_emit_llvm_success(executable, generic_record_literal_path);
     assert_emit_object_success(
         executable,
@@ -493,6 +508,21 @@ auto main() -> int {
         executable,
         owned_dynamic_array_replacement_path,
         smoke_temp_root / "local_dynamic_array_owned_replacement"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_push_owned_payload_reuse_path,
+        "payload"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_push_owned_field_reuse_path,
+        "box.payload"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_element_assignment_rhs_reuse_path,
+        "payload"
     );
 
     std::filesystem::remove_all(smoke_temp_root);

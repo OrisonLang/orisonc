@@ -1197,6 +1197,9 @@ representation.
   array CLI smoke pins it through `orisonc run`, `--emit-llvm`, `--emit-object`, and `--build`, asserting that
   `__orison_drop.Payload` is source-defined, the old element is dropped before the replacement store, and the remaining
   live element is dropped during normal local descriptor cleanup.
+- Local owned-element `DynamicArray<T>` RHS move-reuse diagnostics now have checked-in CLI coverage. Moving `payload`
+  or `box.payload` into `.push(...)`, and moving `payload` into indexed replacement, reject later reuse of the moved
+  source owner.
 - Bound `DynamicArray<T>` parameter cleanup now uses the same consumed descriptor finalization plan for the callee-local
   descriptor spill. The clear targets `%parameter.addr` storage owned by the current function frame, not caller storage,
   and runs after descriptor deallocation for scalar/non-owning and authorized owned-element parameter cleanup paths.

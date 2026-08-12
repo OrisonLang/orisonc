@@ -1,0 +1,20 @@
+package fixtures.dynamicarraypushownedfieldreuse
+
+record Payload
+    public value: Int64
+
+record Box
+    public payload: Payload
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> Int64
+    var items: DynamicArray<Payload> = DynamicArray()
+    let box = Box(Payload(7))
+    items.push(box.payload)
+    box.payload.value
