@@ -2300,3 +2300,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   nested fixed-array projection specialization.
 - 2026-08-12: the inferred-local mismatched ternary helper-result boundary is pinned. `DynamicArray<Outer<UInt32>>`
   versus `DynamicArray<Outer<UInt64>>` arms now report a local initializer source-type mismatch before projection use.
+- 2026-08-12: README gap analysis now marks the nested generic fixed-array projection source-type matrix as covered.
+  Remaining DynamicArray work should move back to computed-index and partial-ownership cleanup gaps.

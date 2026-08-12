@@ -1578,6 +1578,8 @@ representation.
   nested fixed-array projection specialization path.
 - Mismatched ternary helper-result locals remain rejected at the local initializer. The diagnostic reports
   `DynamicArray<Outer<UInt32>>` versus `DynamicArray<Outer<UInt64>>` before the local can feed projection lowering.
+- The nested generic fixed-array projection source-type matrix is now documented as covered in the README gap analysis.
+  Follow-up DynamicArray work should return to computed-index and partial-ownership cleanup coverage.
 
 ## Follow-up work
 

@@ -146,3 +146,12 @@ This repository currently captures the initial language design and development c
   diagnostics should reuse the shared frontend and semantic model as they come online.
 - Next highest-value implementation work is to finish partial-ownership proof coverage: reject reuse of moved literal
   indexed elements, prove sibling element access remains valid, then extend the model toward computed indexes.
+
+## Implementation Gap Analysis - 2026-08-12
+
+- Nested generic fixed-array projection over `DynamicArray<Outer<T>>` is now covered across direct arguments, helper
+  call results, inferred locals, and same-source-type ternary helper results.
+- Matching negative coverage now pins missing Drop proof and mismatched ternary source-type boundaries for the same
+  projection paths.
+- The next DynamicArray lowering gap is outside this source-type matrix: broaden owned-element cleanup coverage toward
+  computed-index and partial-ownership paths without weakening Drop-proof gates.
