@@ -2288,3 +2288,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-12: nested generic fixed-array projection now covers inferred locals initialized from call results.
   `let values = make_values(); second_inner_item(values)` records the helper return descriptor's concrete source type
   before specializing `DynamicArray<Outer<T>>` and lowering the fixed-array projection.
+- 2026-08-12: the inferred-local call-result missing-Drop boundary is pinned. `let values = make_values()` cannot feed
+  `second_inner_item(values)` when the helper appends `Outer<UInt32>` without concrete source Drop proof.

@@ -1566,6 +1566,8 @@ representation.
 - Inferred local bindings initialized from helper call results now preserve the same concrete source type for nested
   fixed-array projection specialization. `let values = make_values()` feeds `second_inner_item(values)` without an
   explicit `DynamicArray<Outer<UInt32>>` annotation while retaining source Drop proof.
+- The inferred-local call-result path keeps the same proof boundary. If the helper appends `Outer<UInt32>` without
+  concrete Drop authorization, lowering fails before the inferred local can feed the generic projection call.
 
 ## Follow-up work
 
