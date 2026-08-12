@@ -195,7 +195,7 @@ auto has_runtime_indexed_cleanup_source_drop_definition(
     semantics::DropImplementation const& implementation,
     LlvmIrEmissionOptions const& options
 ) -> bool {
-    return options.enable_runtime_indexed_cleanup_emission &&
+    return options.enable_runtime_indexed_cleanup_source_drop_emission &&
         implementation.origin == semantics::DropImplementationOrigin::source_derived &&
         implementation.proven &&
         implementation.body.finite;
@@ -2850,7 +2850,7 @@ auto emit_module(
              )) {
             add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
         }
-        if (options.enable_runtime_indexed_cleanup_emission) {
+        if (options.enable_runtime_indexed_cleanup_source_drop_emission) {
             for (auto declaration : declared_drop_declarations_for_runtime_indexed_cleanup(module)) {
                 add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
             }

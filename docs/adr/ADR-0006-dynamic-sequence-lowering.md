@@ -1592,6 +1592,11 @@ representation.
 - Attempting to enable runtime-index cleanup emission in the default driver path exposed a broader source-derived Drop
   emission interaction with existing fixed-index DynamicArray record-field moves. Default promotion should wait until
   runtime-index constructor-move cleanup emission is isolated from unrelated Drop-definition and cleanup paths.
+- Runtime-index cleanup proof/emission is now isolated from runtime-index source-derived Drop declaration and
+  definition emission. The constructor-move cleanup gate can collect/prove runtime-index plans without requesting the
+  broader module Drop surface; only module-IR insertion, mutation, or function-rewrite gates request that broader Drop
+  surface for audit/rewrite paths, with the explicit constructor-move run seam opting in through a named pipeline
+  option.
 
 ## Follow-up work
 

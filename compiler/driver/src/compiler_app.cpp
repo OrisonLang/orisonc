@@ -284,6 +284,7 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
     options.source_drop_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
+    options.runtime_indexed_cleanup_source_drop_emission_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
     return options;
 }

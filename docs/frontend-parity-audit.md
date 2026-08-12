@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-12: runtime-index cleanup proof/emission no longer implies source-derived Drop declaration/definition
+  emission. The broader runtime-index Drop surface is now limited to module-IR insertion, mutation, or function-rewrite
+  gates plus an explicit constructor-move run-seam opt-in, keeping the constructor-move cleanup gate narrow for future
+  default-promotion work.
 - 2026-08-12: default runtime-index constructor-move promotion is intentionally still blocked. Enabling the current
   runtime-index cleanup emission flag on the ordinary driver path also affects source-derived Drop emission for
   existing fixed-index DynamicArray record-field moves, so the next promotion slice needs a narrower production gate.

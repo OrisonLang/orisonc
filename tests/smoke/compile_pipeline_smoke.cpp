@@ -6933,6 +6933,50 @@ auto main() -> int {
     );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 7);
 
+    auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
+                                           std::string_view symbol_name) {
+        return std::any_of(
+            result.planned_drop_declaration_state.declarations.begin(),
+            result.planned_drop_declaration_state.declarations.end(),
+            [&](orison::lowering::PlannedDropDeclaration const& declaration) {
+                return declaration.symbol_name == symbol_name;
+            }
+        );
+    };
+
+    auto runtime_indexed_cleanup_narrow_drop_surface = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_cleanup_narrow_drop_surface.has_errors());
+    assert(
+        !has_planned_drop_declaration(
+            runtime_indexed_cleanup_narrow_drop_surface,
+            "__orison_drop.Inner"
+        )
+    );
+
+    auto runtime_indexed_cleanup_module_drop_surface = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_cleanup_module_drop_surface.has_errors());
+    assert(
+        has_planned_drop_declaration(
+            runtime_indexed_cleanup_module_drop_surface,
+            "__orison_drop.Inner"
+        )
+    );
+
     auto runtime_indexed_cleanup_gate_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
