@@ -2274,3 +2274,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-12: the matching nested missing-Drop boundary is pinned for `DynamicArray<Outer<T>>`. Appending
   `Outer<UInt32>` without concrete source Drop proof fails with the owned-element authorized-drop diagnostic before
   parameter cleanup or nested projection lowering can proceed unchecked.
+- 2026-08-12: nested generic fixed-array projection now has checked-in CLI coverage.
+  `second_inner_item<T>(values: DynamicArray<Outer<T>>) -> T` lowers `values[0].inner.items[1]` through concrete
+  generic record layouts and fixed-array indexing, then cleans up `Outer<UInt32>` elements with source Drop proof.

@@ -1553,6 +1553,9 @@ representation.
 - The nested projection path keeps the same Drop proof boundary as direct generic record elements. Missing concrete
   source Drop proof for `Outer<UInt32>` blocks owned-element append before `DynamicArray<Outer<T>>` parameter cleanup
   or nested scalar projection lowering can proceed.
+- Nested generic dynamic-array projections now also cover fixed-array fields after generic record fields.
+  `DynamicArray<Outer<T>>` can specialize through `Outer<UInt32>.inner.items: Array<UInt32, 2>` and lower a scalar
+  indexed read while preserving concrete element cleanup.
 
 ## Follow-up work
 
