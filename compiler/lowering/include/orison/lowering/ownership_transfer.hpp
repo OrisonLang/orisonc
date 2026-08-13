@@ -517,6 +517,37 @@ struct RuntimeIndexedMemberCleanupPromotionSeam {
     auto operator==(RuntimeIndexedMemberCleanupPromotionSeam const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationOperation {
+    std::string kind;
+    std::string anchor;
+    std::string expected_text;
+    std::string replacement_text;
+    std::string placement;
+    std::string old_predecessor;
+    std::string new_predecessor;
+    bool ready = false;
+    bool applied = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationOperation const&) const -> bool = default;
+};
+
+struct RuntimeIndexedMemberCleanupMutationOperationPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<RuntimeIndexedMemberCleanupMutationOperation> operations;
+    std::vector<std::string> blockers;
+    bool seam_selected = false;
+    bool operations_ready = false;
+    bool operations_applied = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationOperationPlan const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -545,6 +576,8 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
     std::vector<RuntimeIndexedMemberCleanupPromotionChecklist> runtime_indexed_member_cleanup_promotion_checklists;
     std::vector<RuntimeIndexedMemberCleanupPromotionSeam> runtime_indexed_member_cleanup_promotion_seams;
+    std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>
+        runtime_indexed_member_cleanup_mutation_operation_plans;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -764,6 +797,15 @@ auto runtime_indexed_member_cleanup_promotion_seam(
 
 auto runtime_indexed_member_cleanup_promotion_seam_report(
     RuntimeIndexedMemberCleanupPromotionSeam const& seam
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_operation_plan(
+    RuntimeIndexedMemberCleanupPromotionSeam const& seam,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan
+) -> RuntimeIndexedMemberCleanupMutationOperationPlan;
+
+auto runtime_indexed_member_cleanup_mutation_operation_plan_report(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

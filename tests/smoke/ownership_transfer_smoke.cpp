@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 39);
+    assert(runtime_indexed_audit.size() == 40);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -302,6 +302,12 @@ int main() {
     assert(runtime_indexed_audit[38] == orison::lowering::runtime_indexed_member_cleanup_promotion_seam_report(
         runtime_indexed.runtime_indexed_member_cleanup_promotion_seams.front()
     ));
+    assert(
+        runtime_indexed_audit[39] ==
+        orison::lowering::runtime_indexed_member_cleanup_mutation_operation_plan_report(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_operation_plans.front()
+        )
+    );
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch
@@ -1013,6 +1019,43 @@ int main() {
         "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
         "blocker production-member-cleanup-ir-mutation"
     );
+    auto member_mutation_operation_plan =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_operation_plan(
+            member_promotion_seam,
+            member_edit_script_plan
+        );
+    assert(member_mutation_operation_plan.seam_selected);
+    assert(member_mutation_operation_plan.operations_ready);
+    assert(!member_mutation_operation_plan.operations_applied);
+    assert(member_mutation_operation_plan.report_only);
+    assert(!member_mutation_operation_plan.production_enabled);
+    assert(member_mutation_operation_plan.operations.size() == 3);
+    assert(member_mutation_operation_plan.operations[0].kind == "branch-replacement");
+    assert(member_mutation_operation_plan.operations[0].ready);
+    assert(!member_mutation_operation_plan.operations[0].applied);
+    assert(member_mutation_operation_plan.operations[1].kind == "cfg-append");
+    assert(member_mutation_operation_plan.operations[1].ready);
+    assert(!member_mutation_operation_plan.operations[1].applied);
+    assert(member_mutation_operation_plan.operations[2].kind == "phi-retarget");
+    assert(member_mutation_operation_plan.operations[2].ready);
+    assert(!member_mutation_operation_plan.operations[2].applied);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_operation_plan_report(
+            member_mutation_operation_plan
+        ) ==
+        "runtime-index member cleanup mutation-operation-plan owner items index (index + zero) "
+        "element Box moved Inner member-path item seam selected operations 3 operations-ready ready "
+        "operations-applied false report-only true production disabled blockers 4 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation "
+        "operation branch-replacement ready true applied false anchor items.final-cleanup "
+        "expected br label %items.final-cleanup replacement br label %items.member_cleanup.entry "
+        "placement missing old-pred missing new-pred missing operation cfg-append ready true "
+        "applied false anchor items.member_cleanup.exit expected \\n}\\n replacement missing "
+        "placement before-function-closing-brace old-pred missing new-pred missing operation "
+        "phi-retarget ready true applied false anchor items.member_cleanup.exit expected missing "
+        "replacement missing placement missing old-pred items.final-cleanup new-pred items.member_cleanup.exit"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1042,6 +1085,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_production_readiness.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_promotion_checklists.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_promotion_seams.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_operation_plans.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

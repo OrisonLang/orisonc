@@ -140,6 +140,8 @@ auto record_runtime_indexed_partial_owner(
         member_production_readiness
     );
     auto member_promotion_seam = runtime_indexed_member_cleanup_promotion_seam(member_promotion_checklist);
+    auto member_mutation_operation_plan =
+        runtime_indexed_member_cleanup_mutation_operation_plan(member_promotion_seam, member_edit_script_plan);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -173,6 +175,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_promotion_checklists.push_back(std::move(member_promotion_checklist));
     state.runtime_indexed_member_cleanup_promotion_seams.push_back(std::move(member_promotion_seam));
+    state.runtime_indexed_member_cleanup_mutation_operation_plans.push_back(
+        std::move(member_mutation_operation_plan)
+    );
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -1712,6 +1717,94 @@ auto runtime_indexed_member_cleanup_promotion_seam_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_operation_plan(
+    RuntimeIndexedMemberCleanupPromotionSeam const& seam,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan
+) -> RuntimeIndexedMemberCleanupMutationOperationPlan {
+    auto operations = std::vector<RuntimeIndexedMemberCleanupMutationOperation> {};
+    if (seam.mutation_seam_selected) {
+        operations.push_back(RuntimeIndexedMemberCleanupMutationOperation {
+            .kind = "branch-replacement",
+            .anchor = edit_script_plan.insertion_anchor,
+            .expected_text = edit_script_plan.expected_branch_text,
+            .replacement_text = edit_script_plan.replacement_branch_text,
+            .ready = edit_script_plan.branch_replacement_ready,
+            .applied = false,
+        });
+        operations.push_back(RuntimeIndexedMemberCleanupMutationOperation {
+            .kind = "cfg-append",
+            .anchor = edit_script_plan.exit_block_name,
+            .expected_text = edit_script_plan.expected_closing_text,
+            .placement = edit_script_plan.cleanup_cfg_append_placement,
+            .ready = edit_script_plan.cleanup_cfg_append_ready,
+            .applied = false,
+        });
+        operations.push_back(RuntimeIndexedMemberCleanupMutationOperation {
+            .kind = "phi-retarget",
+            .anchor = edit_script_plan.exit_block_name,
+            .old_predecessor = edit_script_plan.phi_old_predecessor_block_name,
+            .new_predecessor = edit_script_plan.phi_new_predecessor_block_name,
+            .ready = edit_script_plan.phi_retarget_ready,
+            .applied = false,
+        });
+    }
+
+    auto operations_ready = !operations.empty();
+    auto operations_applied = !operations.empty();
+    for (auto const& operation : operations) {
+        operations_ready = operations_ready && operation.ready;
+        operations_applied = operations_applied && operation.applied;
+    }
+
+    return RuntimeIndexedMemberCleanupMutationOperationPlan {
+        .owner_name = seam.owner_name,
+        .index_expression_text = seam.index_expression_text,
+        .element_source_type_name = seam.element_source_type_name,
+        .moved_source_type_name = seam.moved_source_type_name,
+        .moved_member_path = seam.moved_member_path,
+        .operations = std::move(operations),
+        .blockers = seam.blockers,
+        .seam_selected = seam.mutation_seam_selected,
+        .operations_ready = operations_ready,
+        .operations_applied = operations_applied,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_operation_plan_report(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-operation-plan owner " << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " moved " << plan.moved_source_type_name
+           << " member-path " << dotted_path(plan.moved_member_path)
+           << " seam " << (plan.seam_selected ? "selected" : "blocked")
+           << " operations " << plan.operations.size()
+           << " operations-ready " << (plan.operations_ready ? "ready" : "blocked")
+           << " operations-applied " << (plan.operations_applied ? "true" : "false")
+           << " report-only " << (plan.report_only ? "true" : "false")
+           << " production " << (plan.production_enabled ? "enabled" : "disabled")
+           << " blockers " << plan.blockers.size();
+    for (auto const& blocker : plan.blockers) {
+        report << " blocker " << blocker;
+    }
+    for (auto const& operation : plan.operations) {
+        report << " operation " << operation.kind
+               << " ready " << (operation.ready ? "true" : "false")
+               << " applied " << (operation.applied ? "true" : "false")
+               << " anchor " << (operation.anchor.empty() ? "missing" : operation.anchor)
+               << " expected " << (operation.expected_text.empty() ? "missing" : operation.expected_text)
+               << " replacement " << (operation.replacement_text.empty() ? "missing" : operation.replacement_text)
+               << " placement " << (operation.placement.empty() ? "missing" : operation.placement)
+               << " old-pred " << (operation.old_predecessor.empty() ? "missing" : operation.old_predecessor)
+               << " new-pred " << (operation.new_predecessor.empty() ? "missing" : operation.new_predecessor);
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -1850,7 +1943,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_module_mutation_gates.empty() &&
         state.runtime_indexed_member_cleanup_production_readiness.empty() &&
         state.runtime_indexed_member_cleanup_promotion_checklists.empty() &&
-        state.runtime_indexed_member_cleanup_promotion_seams.empty()) {
+        state.runtime_indexed_member_cleanup_promotion_seams.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_operation_plans.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -1934,6 +2028,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& seam : state.runtime_indexed_member_cleanup_promotion_seams) {
         report.push_back(runtime_indexed_member_cleanup_promotion_seam_report(seam));
+    }
+    for (auto const& plan : state.runtime_indexed_member_cleanup_mutation_operation_plans) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_operation_plan_report(plan));
     }
     return report;
 }
@@ -2054,7 +2151,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_promotion_checklists !=
                 merged.runtime_indexed_member_cleanup_promotion_checklists ||
             branch_states[index].runtime_indexed_member_cleanup_promotion_seams !=
-                merged.runtime_indexed_member_cleanup_promotion_seams) {
+                merged.runtime_indexed_member_cleanup_promotion_seams ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_operation_plans !=
+                merged.runtime_indexed_member_cleanup_mutation_operation_plans) {
             return std::nullopt;
         }
     }

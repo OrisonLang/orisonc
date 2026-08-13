@@ -1670,6 +1670,9 @@ representation.
 - Runtime-index member cleanup now has a disabled report-only promotion seam for real IR mutation. The seam can select
   the mutation path only after structural checklist readiness and still reports IR mutation and production gates as
   disabled.
+- Runtime-index member cleanup promotion seams now derive a report-only mutation operation plan with explicit branch
+  replacement, cleanup CFG append, and PHI retarget operation records. These records remain unapplied while IR mutation
+  is disabled.
 
 ## Follow-up work
 
