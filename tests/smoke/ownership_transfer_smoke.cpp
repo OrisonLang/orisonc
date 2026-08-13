@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 9);
+    assert(runtime_indexed_audit.size() == 10);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -213,6 +213,9 @@ int main() {
     ));
     assert(runtime_indexed_audit[8] == orison::lowering::runtime_indexed_member_cleanup_proof_report(
         runtime_indexed.runtime_indexed_member_cleanup_proofs.front()
+    ));
+    assert(runtime_indexed_audit[9] == orison::lowering::runtime_indexed_member_cleanup_emission_sketch_report(
+        runtime_indexed.runtime_indexed_member_cleanup_emission_sketches.front()
     ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
@@ -512,6 +515,23 @@ int main() {
         "member-cleanup-required true member-scope-proven true whole-element-cleanup-blocked true "
         "prerequisites met production disabled"
     );
+    auto member_cleanup_sketch =
+        orison::lowering::runtime_indexed_member_cleanup_emission_sketch(member_cleanup_proof);
+    assert(member_cleanup_sketch.proof_ready);
+    assert(member_cleanup_sketch.report_only);
+    assert(!member_cleanup_sketch.production_emission_enabled);
+    assert(member_cleanup_sketch.snippets.size() == 6);
+    assert(member_cleanup_sketch.snippets[3] == "drop-live-member-siblings items[cleanup_index] except item");
+    assert(member_cleanup_sketch.snippets[4] == "preserve-moved-member items[(index + zero)].item");
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_emission_sketch_report(member_cleanup_sketch) ==
+        "runtime-index member cleanup emission-sketch owner items index (index + zero) element Box "
+        "moved Inner member-path item snippets 6 proof-ready true report-only true "
+        "production-emission disabled snippet load-length items snippet loop-cleanup-index 0..<length "
+        "snippet skip-cleanup-index (index + zero) "
+        "snippet drop-live-member-siblings items[cleanup_index] except item "
+        "snippet preserve-moved-member items[(index + zero)].item snippet deallocate-owner items"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -525,6 +545,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_proofs.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_emission_sketches.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

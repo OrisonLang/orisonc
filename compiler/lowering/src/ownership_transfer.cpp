@@ -103,6 +103,7 @@ auto record_runtime_indexed_partial_owner(
     );
     auto member_plan = runtime_indexed_member_cleanup_plan(owner);
     auto member_proof = runtime_indexed_member_cleanup_proof(member_plan);
+    auto member_sketch = runtime_indexed_member_cleanup_emission_sketch(member_proof);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -112,6 +113,7 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_cleanup_emission_plans.push_back(std::move(emission_plan));
     state.runtime_indexed_member_cleanup_plans.push_back(std::move(member_plan));
     state.runtime_indexed_member_cleanup_proofs.push_back(std::move(member_proof));
+    state.runtime_indexed_member_cleanup_emission_sketches.push_back(std::move(member_sketch));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -529,6 +531,56 @@ auto runtime_indexed_member_cleanup_proof_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_emission_sketch(
+    RuntimeIndexedMemberCleanupProof const& proof
+) -> RuntimeIndexedMemberCleanupEmissionSketch {
+    auto snippets = std::vector<std::string> {};
+    if (proof.prerequisites_met) {
+        auto member_path = dotted_path(proof.moved_member_path);
+        snippets.push_back("load-length " + proof.owner_name);
+        snippets.push_back("loop-cleanup-index 0..<length");
+        snippets.push_back("skip-cleanup-index " + proof.index_expression_text);
+        snippets.push_back(
+            "drop-live-member-siblings " + proof.owner_name + "[cleanup_index] except " + member_path
+        );
+        snippets.push_back(
+            "preserve-moved-member " + proof.owner_name + "[" + proof.index_expression_text + "]." + member_path
+        );
+        snippets.push_back("deallocate-owner " + proof.owner_name);
+    }
+    return RuntimeIndexedMemberCleanupEmissionSketch {
+        .owner_name = proof.owner_name,
+        .index_expression_text = proof.index_expression_text,
+        .element_source_type_name = proof.element_source_type_name,
+        .moved_source_type_name = proof.moved_source_type_name,
+        .moved_member_path = proof.moved_member_path,
+        .snippets = std::move(snippets),
+        .proof_ready = proof.prerequisites_met,
+        .report_only = true,
+        .production_emission_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_emission_sketch_report(
+    RuntimeIndexedMemberCleanupEmissionSketch const& sketch
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup emission-sketch owner " << sketch.owner_name
+           << " index " << sketch.index_expression_text
+           << " element " << sketch.element_source_type_name
+           << " moved " << sketch.moved_source_type_name
+           << " member-path " << dotted_path(sketch.moved_member_path)
+           << " snippets " << sketch.snippets.size()
+           << " proof-ready " << (sketch.proof_ready ? "true" : "false")
+           << " report-only " << (sketch.report_only ? "true" : "false")
+           << " production-emission "
+           << (sketch.production_emission_enabled ? "enabled" : "disabled");
+    for (auto const& snippet : sketch.snippets) {
+        report << " snippet " << snippet;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -653,7 +705,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_cleanup_capabilities.empty() &&
         state.runtime_indexed_cleanup_emission_plans.empty() &&
         state.runtime_indexed_member_cleanup_plans.empty() &&
-        state.runtime_indexed_member_cleanup_proofs.empty()) {
+        state.runtime_indexed_member_cleanup_proofs.empty() &&
+        state.runtime_indexed_member_cleanup_emission_sketches.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -684,6 +737,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& proof : state.runtime_indexed_member_cleanup_proofs) {
         report.push_back(runtime_indexed_member_cleanup_proof_report(proof));
+    }
+    for (auto const& sketch : state.runtime_indexed_member_cleanup_emission_sketches) {
+        report.push_back(runtime_indexed_member_cleanup_emission_sketch_report(sketch));
     }
     return report;
 }
@@ -776,7 +832,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_plans !=
                 merged.runtime_indexed_member_cleanup_plans ||
             branch_states[index].runtime_indexed_member_cleanup_proofs !=
-                merged.runtime_indexed_member_cleanup_proofs) {
+                merged.runtime_indexed_member_cleanup_proofs ||
+            branch_states[index].runtime_indexed_member_cleanup_emission_sketches !=
+                merged.runtime_indexed_member_cleanup_emission_sketches) {
             return std::nullopt;
         }
     }

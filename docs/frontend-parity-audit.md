@@ -11,6 +11,8 @@
   while keeping whole-element cleanup and production acceptance blocked.
 - 2026-08-13: runtime-index cleanup proof gates now consume member cleanup proof metadata and report
   member-proof-ready/member-blocks-whole-element separately from whole-element type matching.
+- 2026-08-13: runtime-index member cleanup now exposes a report-only emission sketch for the future member-granular
+  cleanup sequence: skip moved index, drop live sibling members, preserve moved member, then deallocate the owner.
 - 2026-08-13: source-derived record Drop definitions now emit nested source Drop dependencies before the definitions
   that call them, preventing undeclared nested Drop calls in runtime-index cleanup fixtures.
 - 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.

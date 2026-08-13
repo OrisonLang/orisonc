@@ -259,6 +259,9 @@ representation.
   `items[index + zero].item`, records whole-element cleanup as blocked, and keeps production acceptance disabled.
 - Runtime-index cleanup proof gates now consume the member cleanup proof and report member-proof readiness separately
   from whole-element type matching. Member proof does not yet satisfy cleanup prerequisites or enable emission.
+- Runtime-index member cleanup now has a report-only emission sketch for future member-granular cleanup. The sketch
+  names skip, sibling-member drop, moved-member preservation, and descriptor deallocation operations without emitting
+  IR or enabling constructor acceptance.
 - Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
   cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`

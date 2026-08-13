@@ -231,6 +231,20 @@ struct RuntimeIndexedMemberCleanupProof {
     auto operator==(RuntimeIndexedMemberCleanupProof const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupEmissionSketch {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> snippets;
+    bool proof_ready = false;
+    bool report_only = true;
+    bool production_emission_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupEmissionSketch const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -241,6 +255,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
     std::vector<RuntimeIndexedMemberCleanupPlan> runtime_indexed_member_cleanup_plans;
     std::vector<RuntimeIndexedMemberCleanupProof> runtime_indexed_member_cleanup_proofs;
+    std::vector<RuntimeIndexedMemberCleanupEmissionSketch> runtime_indexed_member_cleanup_emission_sketches;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -320,6 +335,14 @@ auto runtime_indexed_member_cleanup_proof(
 
 auto runtime_indexed_member_cleanup_proof_report(
     RuntimeIndexedMemberCleanupProof const& proof
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_emission_sketch(
+    RuntimeIndexedMemberCleanupProof const& proof
+) -> RuntimeIndexedMemberCleanupEmissionSketch;
+
+auto runtime_indexed_member_cleanup_emission_sketch_report(
+    RuntimeIndexedMemberCleanupEmissionSketch const& sketch
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
