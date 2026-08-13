@@ -6931,7 +6931,7 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 40);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 41);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -7170,6 +7170,19 @@ auto main() -> int {
         "blocker member-cleanup-cfg-slice blocker member-cleanup-module-mutation "
         "blocker production-member-cleanup blocker member-cleanup-proof blocker member-drop-metadata "
         "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[40] ==
+        "runtime-index member cleanup mutation-operation-validation owner holder.items index index "
+        "element Inner moved Inner member-path none seam blocked count blocked order blocked "
+        "branch-replacement-fields blocked cfg-append-fields blocked phi-retarget-fields blocked "
+        "operations-ready blocked no-operations-applied false validation blocked report-only true "
+        "production disabled blockers 11 blocker member-cleanup-rewrite-candidate "
+        "blocker member-cleanup-edit-script blocker member-cleanup-edit-script-validation "
+        "blocker member-cleanup-staged-apply blocker member-cleanup-cfg-slice "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-ir-mutation "
+        "blocker production-member-cleanup-ir-mutation"
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

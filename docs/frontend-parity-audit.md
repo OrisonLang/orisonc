@@ -2389,3 +2389,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   mutation path only after structural checklist readiness, while production IR mutation remains blocked.
 - 2026-08-13: Runtime-index member cleanup promotion seams now feed a report-only mutation operation plan with explicit
   branch replacement, CFG append, and PHI retarget operation records that remain unapplied.
+- 2026-08-13: Runtime-index member cleanup mutation operation plans now have report-only validation for operation
+  count, order, required fields, readiness, and unapplied status.

@@ -142,6 +142,8 @@ auto record_runtime_indexed_partial_owner(
     auto member_promotion_seam = runtime_indexed_member_cleanup_promotion_seam(member_promotion_checklist);
     auto member_mutation_operation_plan =
         runtime_indexed_member_cleanup_mutation_operation_plan(member_promotion_seam, member_edit_script_plan);
+    auto member_mutation_operation_validation =
+        runtime_indexed_member_cleanup_mutation_operation_validation(member_mutation_operation_plan);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -177,6 +179,9 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_promotion_seams.push_back(std::move(member_promotion_seam));
     state.runtime_indexed_member_cleanup_mutation_operation_plans.push_back(
         std::move(member_mutation_operation_plan)
+    );
+    state.runtime_indexed_member_cleanup_mutation_operation_validations.push_back(
+        std::move(member_mutation_operation_validation)
     );
 }
 
@@ -1805,6 +1810,106 @@ auto runtime_indexed_member_cleanup_mutation_operation_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_operation_validation(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan
+) -> RuntimeIndexedMemberCleanupMutationOperationValidation {
+    auto operation_count_valid = plan.operations.size() == 3;
+    auto operation_order_valid =
+        operation_count_valid &&
+        plan.operations[0].kind == "branch-replacement" &&
+        plan.operations[1].kind == "cfg-append" &&
+        plan.operations[2].kind == "phi-retarget";
+
+    auto branch_replacement_fields_valid = false;
+    auto cfg_append_fields_valid = false;
+    auto phi_retarget_fields_valid = false;
+    auto no_operations_applied = !plan.operations.empty();
+    for (auto const& operation : plan.operations) {
+        no_operations_applied = no_operations_applied && !operation.applied;
+    }
+
+    if (operation_order_valid) {
+        auto const& branch_replacement = plan.operations[0];
+        branch_replacement_fields_valid =
+            branch_replacement.ready &&
+            !branch_replacement.anchor.empty() &&
+            !branch_replacement.expected_text.empty() &&
+            !branch_replacement.replacement_text.empty();
+
+        auto const& cfg_append = plan.operations[1];
+        cfg_append_fields_valid =
+            cfg_append.ready &&
+            !cfg_append.anchor.empty() &&
+            !cfg_append.expected_text.empty() &&
+            !cfg_append.placement.empty();
+
+        auto const& phi_retarget = plan.operations[2];
+        phi_retarget_fields_valid =
+            phi_retarget.ready &&
+            !phi_retarget.anchor.empty() &&
+            !phi_retarget.old_predecessor.empty() &&
+            !phi_retarget.new_predecessor.empty();
+    }
+
+    auto validation_ready =
+        plan.seam_selected &&
+        operation_count_valid &&
+        operation_order_valid &&
+        branch_replacement_fields_valid &&
+        cfg_append_fields_valid &&
+        phi_retarget_fields_valid &&
+        plan.operations_ready &&
+        no_operations_applied;
+
+    return RuntimeIndexedMemberCleanupMutationOperationValidation {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .moved_member_path = plan.moved_member_path,
+        .blockers = plan.blockers,
+        .seam_selected = plan.seam_selected,
+        .operation_count_valid = operation_count_valid,
+        .operation_order_valid = operation_order_valid,
+        .branch_replacement_fields_valid = branch_replacement_fields_valid,
+        .cfg_append_fields_valid = cfg_append_fields_valid,
+        .phi_retarget_fields_valid = phi_retarget_fields_valid,
+        .operations_ready = plan.operations_ready,
+        .no_operations_applied = no_operations_applied,
+        .validation_ready = validation_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_operation_validation_report(
+    RuntimeIndexedMemberCleanupMutationOperationValidation const& validation
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-operation-validation owner " << validation.owner_name
+           << " index " << validation.index_expression_text
+           << " element " << validation.element_source_type_name
+           << " moved " << validation.moved_source_type_name
+           << " member-path " << dotted_path(validation.moved_member_path)
+           << " seam " << (validation.seam_selected ? "selected" : "blocked")
+           << " count " << (validation.operation_count_valid ? "valid" : "blocked")
+           << " order " << (validation.operation_order_valid ? "valid" : "blocked")
+           << " branch-replacement-fields "
+           << (validation.branch_replacement_fields_valid ? "valid" : "blocked")
+           << " cfg-append-fields " << (validation.cfg_append_fields_valid ? "valid" : "blocked")
+           << " phi-retarget-fields " << (validation.phi_retarget_fields_valid ? "valid" : "blocked")
+           << " operations-ready " << (validation.operations_ready ? "ready" : "blocked")
+           << " no-operations-applied " << (validation.no_operations_applied ? "true" : "false")
+           << " validation " << (validation.validation_ready ? "ready" : "blocked")
+           << " report-only " << (validation.report_only ? "true" : "false")
+           << " production " << (validation.production_enabled ? "enabled" : "disabled")
+           << " blockers " << validation.blockers.size();
+    for (auto const& blocker : validation.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -1944,7 +2049,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_production_readiness.empty() &&
         state.runtime_indexed_member_cleanup_promotion_checklists.empty() &&
         state.runtime_indexed_member_cleanup_promotion_seams.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_operation_plans.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_operation_plans.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_operation_validations.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2031,6 +2137,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_member_cleanup_mutation_operation_plans) {
         report.push_back(runtime_indexed_member_cleanup_mutation_operation_plan_report(plan));
+    }
+    for (auto const& validation : state.runtime_indexed_member_cleanup_mutation_operation_validations) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_operation_validation_report(validation));
     }
     return report;
 }
@@ -2153,7 +2262,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_promotion_seams !=
                 merged.runtime_indexed_member_cleanup_promotion_seams ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_operation_plans !=
-                merged.runtime_indexed_member_cleanup_mutation_operation_plans) {
+                merged.runtime_indexed_member_cleanup_mutation_operation_plans ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_operation_validations !=
+                merged.runtime_indexed_member_cleanup_mutation_operation_validations) {
             return std::nullopt;
         }
     }

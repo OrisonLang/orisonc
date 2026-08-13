@@ -1673,6 +1673,8 @@ representation.
 - Runtime-index member cleanup promotion seams now derive a report-only mutation operation plan with explicit branch
   replacement, cleanup CFG append, and PHI retarget operation records. These records remain unapplied while IR mutation
   is disabled.
+- Runtime-index member cleanup mutation operation plans now have report-only validation for operation count, operation
+  order, required fields, readiness, and unapplied status before any production IR mutation path is enabled.
 
 ## Follow-up work
 

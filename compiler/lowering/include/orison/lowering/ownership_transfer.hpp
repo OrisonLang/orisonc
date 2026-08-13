@@ -548,6 +548,28 @@ struct RuntimeIndexedMemberCleanupMutationOperationPlan {
     auto operator==(RuntimeIndexedMemberCleanupMutationOperationPlan const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationOperationValidation {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool seam_selected = false;
+    bool operation_count_valid = false;
+    bool operation_order_valid = false;
+    bool branch_replacement_fields_valid = false;
+    bool cfg_append_fields_valid = false;
+    bool phi_retarget_fields_valid = false;
+    bool operations_ready = false;
+    bool no_operations_applied = false;
+    bool validation_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationOperationValidation const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -578,6 +600,8 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupPromotionSeam> runtime_indexed_member_cleanup_promotion_seams;
     std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>
         runtime_indexed_member_cleanup_mutation_operation_plans;
+    std::vector<RuntimeIndexedMemberCleanupMutationOperationValidation>
+        runtime_indexed_member_cleanup_mutation_operation_validations;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -806,6 +830,14 @@ auto runtime_indexed_member_cleanup_mutation_operation_plan(
 
 auto runtime_indexed_member_cleanup_mutation_operation_plan_report(
     RuntimeIndexedMemberCleanupMutationOperationPlan const& plan
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_operation_validation(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan
+) -> RuntimeIndexedMemberCleanupMutationOperationValidation;
+
+auto runtime_indexed_member_cleanup_mutation_operation_validation_report(
+    RuntimeIndexedMemberCleanupMutationOperationValidation const& validation
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
