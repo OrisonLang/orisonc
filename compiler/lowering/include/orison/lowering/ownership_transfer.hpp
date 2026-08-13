@@ -366,6 +366,33 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteCandidate {
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteCandidate const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string insertion_anchor;
+    std::string entry_block_name;
+    std::string exit_block_name;
+    std::string expected_branch_text;
+    std::string replacement_branch_text;
+    std::string cleanup_cfg_append_placement;
+    std::string expected_closing_text;
+    std::vector<std::string> appended_cfg_preview_lines;
+    std::string phi_old_predecessor_block_name;
+    std::string phi_new_predecessor_block_name;
+    bool candidate_verified = false;
+    bool branch_replacement_ready = false;
+    bool cleanup_cfg_append_ready = false;
+    bool phi_retarget_ready = false;
+    bool edit_script_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupModuleMutationGate {
     std::string owner_name;
     std::string index_expression_text;
@@ -423,6 +450,8 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupCfgSlice> runtime_indexed_member_cleanup_cfg_slices;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteCandidate>
         runtime_indexed_member_cleanup_function_rewrite_candidates;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
+        runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
 };
@@ -562,6 +591,14 @@ auto runtime_indexed_member_cleanup_function_rewrite_candidate(
 
 auto runtime_indexed_member_cleanup_function_rewrite_candidate_report(
     RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan(
+    RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate
+) -> RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan;
+
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
 ) -> std::string;
 
 auto runtime_indexed_member_cleanup_module_mutation_gate(

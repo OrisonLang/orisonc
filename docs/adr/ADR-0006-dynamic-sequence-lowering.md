@@ -1649,6 +1649,8 @@ representation.
   Source-backed DynamicArray runtime-index owners are also enabled through verified function cleanup CFG insertion.
 - Runtime-index member cleanup now has a report-only function-rewrite candidate for rendered member cleanup CFG slices.
   The candidate verifies anchor, label, and branch-preview shape before any future production module mutation can use it.
+- Verified runtime-index member cleanup candidates now derive a report-only edit-script plan with branch replacement,
+  cleanup CFG append, and PHI predecessor retarget readiness separated before production mutation is considered.
 
 ## Follow-up work
 
