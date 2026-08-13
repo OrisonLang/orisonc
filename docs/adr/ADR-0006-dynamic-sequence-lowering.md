@@ -1655,6 +1655,8 @@ representation.
   candidate, branch replacement, CFG append, PHI retarget, and production module mutation readiness.
 - Runtime-index member cleanup module-mutation gates now consume edit-script validation as an explicit prerequisite,
   keeping validated report-only rewrite plans separate from disabled production mutation.
+- Runtime-index member cleanup edit-script validation diagnostics now distinguish structural blockers from the
+  validated-but-production-disabled state, so readiness reports can separate correctness gaps from gate policy.
 
 ## Follow-up work
 

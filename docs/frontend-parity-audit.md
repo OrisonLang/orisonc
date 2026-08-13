@@ -2373,3 +2373,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   finite blockers before any production module mutation path is considered.
 - 2026-08-13: Runtime-index member cleanup module-mutation gates now explicitly require edit-script validation
   readiness, while still reporting production mutation as disabled.
+- 2026-08-13: Runtime-index member cleanup validation diagnostics now distinguish structural edit-script blockers from
+  structurally validated plans that remain production-disabled.

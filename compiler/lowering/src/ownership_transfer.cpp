@@ -1201,6 +1201,38 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_repo
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_diagnostics(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& blocker : validation.blockers) {
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup edit-script validation diagnostic owner "
+                   << validation.owner_name
+                   << " index " << validation.index_expression_text
+                   << " element " << validation.element_source_type_name
+                   << " moved " << validation.moved_source_type_name
+                   << " member-path " << dotted_path(validation.moved_member_path)
+                   << " blocker " << blocker
+                   << " detail ";
+        if (blocker == "member-cleanup-edit-script") {
+            diagnostic << "member cleanup edit script is not ready";
+        } else if (blocker == "member-cleanup-branch-replacement") {
+            diagnostic << "member cleanup branch replacement is invalid";
+        } else if (blocker == "member-cleanup-cfg-append") {
+            diagnostic << "member cleanup CFG append is invalid";
+        } else if (blocker == "member-cleanup-phi-retarget") {
+            diagnostic << "member cleanup PHI retarget is invalid";
+        } else if (blocker == "production-member-cleanup-module-mutation") {
+            diagnostic << "member cleanup edit script is validated but production module mutation is disabled";
+        } else {
+            diagnostic << "member cleanup edit script validation is blocked";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
@@ -1573,6 +1605,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& validation : state.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations) {
         report.push_back(runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(validation));
+        auto diagnostics =
+            runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_diagnostics(validation);
+        report.insert(report.end(), diagnostics.begin(), diagnostics.end());
     }
     for (auto const& gate : state.runtime_indexed_member_cleanup_module_mutation_gates) {
         report.push_back(runtime_indexed_member_cleanup_module_mutation_gate_report(gate));

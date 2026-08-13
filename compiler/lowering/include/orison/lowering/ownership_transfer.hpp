@@ -633,6 +633,10 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_repo
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
 ) -> std::string;
 
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_diagnostics(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
+) -> std::vector<std::string>;
+
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
