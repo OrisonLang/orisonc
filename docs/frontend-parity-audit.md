@@ -15,6 +15,8 @@
   cleanup sequence: skip moved index, drop live sibling members, preserve moved member, then deallocate the owner.
 - 2026-08-13: runtime-index member cleanup emission now has a typed gate that keeps production blocked on explicit
   member Drop metadata and member cleanup IR insertion support.
+- 2026-08-13: runtime-index member cleanup now derives report-only sibling cleanup target metadata, letting the
+  emission gate report member Drop metadata ready while IR insertion remains blocked.
 - 2026-08-13: source-derived record Drop definitions now emit nested source Drop dependencies before the definitions
   that call them, preventing undeclared nested Drop calls in runtime-index cleanup fixtures.
 - 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.

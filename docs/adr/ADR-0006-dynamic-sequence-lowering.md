@@ -264,6 +264,8 @@ representation.
   IR or enabling constructor acceptance.
 - Runtime-index member cleanup emission now has a typed gate. The gate consumes the report-only sketch and keeps
   production blocked on explicit member Drop metadata and member cleanup IR insertion support.
+- Runtime-index member cleanup now derives report-only sibling cleanup target metadata. Member-path gates can now
+  report member Drop metadata ready while production remains blocked on member cleanup IR insertion.
 - Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
   cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`

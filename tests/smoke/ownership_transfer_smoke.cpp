@@ -535,22 +535,35 @@ int main() {
         "snippet drop-live-member-siblings items[cleanup_index] except item "
         "snippet preserve-moved-member items[(index + zero)].item snippet deallocate-owner items"
     );
+    auto member_cleanup_targets =
+        orison::lowering::runtime_indexed_member_cleanup_targets(member_cleanup_sketch);
+    assert(member_cleanup_targets.size() == 1);
+    assert(member_cleanup_targets.front().metadata_ready);
+    assert(!member_cleanup_targets.front().production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_target_report(member_cleanup_targets.front()) ==
+        "runtime-index member cleanup target owner items index (index + zero) element Box moved Inner "
+        "member-path item operation drop-live-member-siblings "
+        "drop-metadata __orison_member_cleanup.Box.except.item metadata ready production disabled"
+    );
     auto member_cleanup_gate =
-        orison::lowering::runtime_indexed_member_cleanup_emission_gate(member_cleanup_sketch);
+        orison::lowering::runtime_indexed_member_cleanup_emission_gate(
+            member_cleanup_sketch,
+            member_cleanup_targets
+        );
     assert(member_cleanup_gate.sketch_ready);
-    assert(!member_cleanup_gate.member_drop_metadata_ready);
+    assert(member_cleanup_gate.member_drop_metadata_ready);
     assert(!member_cleanup_gate.ir_insertion_ready);
     assert(!member_cleanup_gate.prerequisites_met);
     assert(!member_cleanup_gate.production_enabled);
-    assert(member_cleanup_gate.blockers.size() == 2);
-    assert(member_cleanup_gate.blockers[0] == "member-drop-metadata");
-    assert(member_cleanup_gate.blockers[1] == "member-cleanup-ir-insertion");
+    assert(member_cleanup_gate.blockers.size() == 1);
+    assert(member_cleanup_gate.blockers[0] == "member-cleanup-ir-insertion");
     assert(
         orison::lowering::runtime_indexed_member_cleanup_emission_gate_report(member_cleanup_gate) ==
         "runtime-index member cleanup emission-gate owner items index (index + zero) element Box "
-        "moved Inner member-path item sketch-ready true member-drop-metadata missing "
-        "ir-insertion missing prerequisites missing production disabled blockers 2 "
-        "blocker member-drop-metadata blocker member-cleanup-ir-insertion"
+        "moved Inner member-path item sketch-ready true member-drop-metadata ready "
+        "ir-insertion missing prerequisites missing production disabled blockers 1 "
+        "blocker member-cleanup-ir-insertion"
     );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
@@ -566,6 +579,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_proofs.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_emission_sketches.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_targets.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_emission_gates.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";

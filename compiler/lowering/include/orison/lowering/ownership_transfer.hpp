@@ -245,6 +245,20 @@ struct RuntimeIndexedMemberCleanupEmissionSketch {
     auto operator==(RuntimeIndexedMemberCleanupEmissionSketch const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupTarget {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string cleanup_operation;
+    std::string drop_metadata_symbol_name;
+    bool metadata_ready = false;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupTarget const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupEmissionGate {
     std::string owner_name;
     std::string index_expression_text;
@@ -272,6 +286,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupPlan> runtime_indexed_member_cleanup_plans;
     std::vector<RuntimeIndexedMemberCleanupProof> runtime_indexed_member_cleanup_proofs;
     std::vector<RuntimeIndexedMemberCleanupEmissionSketch> runtime_indexed_member_cleanup_emission_sketches;
+    std::vector<std::vector<RuntimeIndexedMemberCleanupTarget>> runtime_indexed_member_cleanup_targets;
     std::vector<RuntimeIndexedMemberCleanupEmissionGate> runtime_indexed_member_cleanup_emission_gates;
 };
 
@@ -362,8 +377,17 @@ auto runtime_indexed_member_cleanup_emission_sketch_report(
     RuntimeIndexedMemberCleanupEmissionSketch const& sketch
 ) -> std::string;
 
-auto runtime_indexed_member_cleanup_emission_gate(
+auto runtime_indexed_member_cleanup_targets(
     RuntimeIndexedMemberCleanupEmissionSketch const& sketch
+) -> std::vector<RuntimeIndexedMemberCleanupTarget>;
+
+auto runtime_indexed_member_cleanup_target_report(
+    RuntimeIndexedMemberCleanupTarget const& target
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_emission_gate(
+    RuntimeIndexedMemberCleanupEmissionSketch const& sketch,
+    std::vector<RuntimeIndexedMemberCleanupTarget> const& targets = {}
 ) -> RuntimeIndexedMemberCleanupEmissionGate;
 
 auto runtime_indexed_member_cleanup_emission_gate_report(
