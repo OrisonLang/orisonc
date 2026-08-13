@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.
+  The behavior remains unchanged for computed DynamicArray keys and LLVM operand retargeting.
 - 2026-08-12: DynamicArray runtime-index cleanup now distinguishes source expression keys from lowered LLVM index
   operands. Computed indexes such as `index + zero` lower on the default path, cleanup skips the lowered `%tmp`
   operand, and reuse diagnostics still report the source key `items[(index + zero)]`.

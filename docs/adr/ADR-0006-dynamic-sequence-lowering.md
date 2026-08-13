@@ -244,6 +244,8 @@ representation.
 - Runtime-index cleanup planning now stores the source index-expression key separately from the lowered LLVM index
   operand. This lets computed index expressions such as `index + zero` drive skip-aware cleanup with the actual
   lowered `%tmp` value while diagnostics preserve the source key.
+- Runtime-index source-key rendering is now shared lowering infrastructure with focused smoke coverage, so move
+  tracking, reuse diagnostics, and cleanup operand retargeting use one internal key format.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

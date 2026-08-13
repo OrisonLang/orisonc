@@ -1059,6 +1059,22 @@ add_test(
     COMMAND orison_expression_emitter_smoke
 )
 
+add_executable(orison_runtime_index_expression_smoke
+    smoke/runtime_index_expression_smoke.cpp
+)
+
+target_link_libraries(orison_runtime_index_expression_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_runtime_index_expression_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_runtime_index_expression_smoke
+    COMMAND orison_runtime_index_expression_smoke
+)
+
 add_executable(orison_addressable_binding_smoke
     smoke/addressable_binding_smoke.cpp
 )

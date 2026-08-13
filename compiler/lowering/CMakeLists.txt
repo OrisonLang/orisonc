@@ -38,6 +38,7 @@ add_library(orison_lowering STATIC
     src/null_safe_plan.cpp
     src/ownership_transfer.cpp
     src/repeat_loop_lowering.cpp
+    src/runtime_index_expression.cpp
     src/source_type_queries.cpp
     src/statement_body_lowering.cpp
     src/statement_emitter.cpp
