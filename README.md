@@ -166,3 +166,14 @@ This repository currently captures the initial language design and development c
   projection paths.
 - The next DynamicArray lowering gap is outside this source-type matrix: broaden owned-element cleanup coverage toward
   computed-index and partial-ownership paths without weakening Drop-proof gates.
+
+## Runtime-Index Member Cleanup Gap Analysis - 2026-08-13
+
+- Report-only coverage now proves member scope, derives sibling cleanup targets, names insertion blocks, validates the
+  CFG topology, renders an audit CFG slice, gates module mutation, and reports production blockers.
+- Production emission is still blocked on real member Drop metadata binding, executable CFG insertion, module mutation
+  authorization, and an enabled production member-cleanup gate.
+- The next implementation step is to turn the report-only CFG slice into a verified function rewrite candidate that can
+  splice member cleanup blocks without changing ordinary constructor-move acceptance.
+- The promotion boundary should stay narrow: keep whole-element runtime-index moves working, keep member-path moves
+  rejected on ordinary `--emit-llvm`, and expose any new readiness through audit or test-only seams first.
