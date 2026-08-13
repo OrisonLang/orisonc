@@ -6931,7 +6931,7 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 11);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 12);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -6958,6 +6958,13 @@ auto main() -> int {
         "moved Inner member-path none sketch-ready false member-drop-metadata missing "
         "ir-insertion missing prerequisites missing production disabled blockers 3 "
         "blocker member-cleanup-sketch blocker member-drop-metadata blocker member-cleanup-ir-insertion"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[11] ==
+        "runtime-index member cleanup ir-insertion-plan owner holder.items index index element Inner "
+        "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
+        "preserve missing exit missing target-metadata missing insertion-points missing report-only true "
+        "production disabled preview-operations 0"
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

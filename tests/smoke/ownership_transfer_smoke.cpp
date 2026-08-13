@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 11);
+    assert(runtime_indexed_audit.size() == 12);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -219,6 +219,9 @@ int main() {
     ));
     assert(runtime_indexed_audit[10] == orison::lowering::runtime_indexed_member_cleanup_emission_gate_report(
         runtime_indexed.runtime_indexed_member_cleanup_emission_gates.front()
+    ));
+    assert(runtime_indexed_audit[11] == orison::lowering::runtime_indexed_member_cleanup_ir_insertion_plan_report(
+        runtime_indexed.runtime_indexed_member_cleanup_ir_insertion_plans.front()
     ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
@@ -565,6 +568,32 @@ int main() {
         "ir-insertion missing prerequisites missing production disabled blockers 1 "
         "blocker member-cleanup-ir-insertion"
     );
+    auto member_insertion_plan = orison::lowering::runtime_indexed_member_cleanup_ir_insertion_plan(
+        member_cleanup_gate,
+        member_cleanup_targets
+    );
+    assert(member_insertion_plan.target_metadata_ready);
+    assert(member_insertion_plan.insertion_points_named);
+    assert(member_insertion_plan.report_only);
+    assert(!member_insertion_plan.production_enabled);
+    assert(member_insertion_plan.preview_operations.size() == 6);
+    assert(member_insertion_plan.insertion_anchor == "items.final-cleanup");
+    assert(member_insertion_plan.entry_block_name == "items.member_cleanup.entry");
+    assert(member_insertion_plan.sibling_drop_block_name == "items.member_cleanup.drop_siblings");
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_ir_insertion_plan_report(member_insertion_plan) ==
+        "runtime-index member cleanup ir-insertion-plan owner items index (index + zero) element Box "
+        "moved Inner member-path item anchor items.final-cleanup entry items.member_cleanup.entry "
+        "skip items.member_cleanup.skip_moved sibling-drop items.member_cleanup.drop_siblings "
+        "preserve items.member_cleanup.preserve_moved exit items.member_cleanup.exit "
+        "target-metadata ready insertion-points named report-only true production disabled "
+        "preview-operations 6 operation anchor-owner-final-cleanup items "
+        "operation split-member-cleanup-entry items.member_cleanup.entry "
+        "operation branch-skip-moved-index (index + zero) "
+        "operation call-member-cleanup-target __orison_member_cleanup.Box.except.item "
+        "operation preserve-moved-member-path item operation resume-owner-deallocation "
+        "items.member_cleanup.exit"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -581,6 +610,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_emission_sketches.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_targets.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_emission_gates.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_ir_insertion_plans.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

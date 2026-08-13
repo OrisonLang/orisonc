@@ -106,6 +106,8 @@ auto record_runtime_indexed_partial_owner(
     auto member_sketch = runtime_indexed_member_cleanup_emission_sketch(member_proof);
     auto member_targets = runtime_indexed_member_cleanup_targets(member_sketch);
     auto member_gate = runtime_indexed_member_cleanup_emission_gate(member_sketch, member_targets);
+    auto member_insertion_plan =
+        runtime_indexed_member_cleanup_ir_insertion_plan(member_gate, member_targets);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -118,6 +120,7 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_emission_sketches.push_back(std::move(member_sketch));
     state.runtime_indexed_member_cleanup_targets.push_back(std::move(member_targets));
     state.runtime_indexed_member_cleanup_emission_gates.push_back(std::move(member_gate));
+    state.runtime_indexed_member_cleanup_ir_insertion_plans.push_back(std::move(member_insertion_plan));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -688,6 +691,70 @@ auto runtime_indexed_member_cleanup_emission_gate_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_ir_insertion_plan(
+    RuntimeIndexedMemberCleanupEmissionGate const& gate,
+    std::vector<RuntimeIndexedMemberCleanupTarget> const& targets
+) -> RuntimeIndexedMemberCleanupIrInsertionPlan {
+    auto target_metadata_ready = gate.member_drop_metadata_ready && !targets.empty();
+    auto insertion_points_named = target_metadata_ready && !gate.owner_name.empty();
+    auto preview_operations = std::vector<std::string> {};
+    if (insertion_points_named) {
+        preview_operations = {
+            "anchor-owner-final-cleanup " + gate.owner_name,
+            "split-member-cleanup-entry " + gate.owner_name + ".member_cleanup.entry",
+            "branch-skip-moved-index " + gate.index_expression_text,
+            "call-member-cleanup-target " + targets.front().drop_metadata_symbol_name,
+            "preserve-moved-member-path " + dotted_path(gate.moved_member_path),
+            "resume-owner-deallocation " + gate.owner_name + ".member_cleanup.exit",
+        };
+    }
+    return RuntimeIndexedMemberCleanupIrInsertionPlan {
+        .owner_name = gate.owner_name,
+        .index_expression_text = gate.index_expression_text,
+        .element_source_type_name = gate.element_source_type_name,
+        .moved_source_type_name = gate.moved_source_type_name,
+        .moved_member_path = gate.moved_member_path,
+        .insertion_anchor = insertion_points_named ? gate.owner_name + ".final-cleanup" : "",
+        .entry_block_name = insertion_points_named ? gate.owner_name + ".member_cleanup.entry" : "",
+        .skip_block_name = insertion_points_named ? gate.owner_name + ".member_cleanup.skip_moved" : "",
+        .sibling_drop_block_name = insertion_points_named ? gate.owner_name + ".member_cleanup.drop_siblings" : "",
+        .preserve_block_name = insertion_points_named ? gate.owner_name + ".member_cleanup.preserve_moved" : "",
+        .exit_block_name = insertion_points_named ? gate.owner_name + ".member_cleanup.exit" : "",
+        .preview_operations = std::move(preview_operations),
+        .target_metadata_ready = target_metadata_ready,
+        .insertion_points_named = insertion_points_named,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_ir_insertion_plan_report(
+    RuntimeIndexedMemberCleanupIrInsertionPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup ir-insertion-plan owner " << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " moved " << plan.moved_source_type_name
+           << " member-path " << dotted_path(plan.moved_member_path)
+           << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
+           << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
+           << " skip " << (plan.skip_block_name.empty() ? "missing" : plan.skip_block_name)
+           << " sibling-drop "
+           << (plan.sibling_drop_block_name.empty() ? "missing" : plan.sibling_drop_block_name)
+           << " preserve " << (plan.preserve_block_name.empty() ? "missing" : plan.preserve_block_name)
+           << " exit " << (plan.exit_block_name.empty() ? "missing" : plan.exit_block_name)
+           << " target-metadata " << (plan.target_metadata_ready ? "ready" : "missing")
+           << " insertion-points " << (plan.insertion_points_named ? "named" : "missing")
+           << " report-only " << (plan.report_only ? "true" : "false")
+           << " production " << (plan.production_enabled ? "enabled" : "disabled")
+           << " preview-operations " << plan.preview_operations.size();
+    for (auto const& operation : plan.preview_operations) {
+        report << " operation " << operation;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -815,7 +882,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_proofs.empty() &&
         state.runtime_indexed_member_cleanup_emission_sketches.empty() &&
         state.runtime_indexed_member_cleanup_targets.empty() &&
-        state.runtime_indexed_member_cleanup_emission_gates.empty()) {
+        state.runtime_indexed_member_cleanup_emission_gates.empty() &&
+        state.runtime_indexed_member_cleanup_ir_insertion_plans.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -857,6 +925,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& gate : state.runtime_indexed_member_cleanup_emission_gates) {
         report.push_back(runtime_indexed_member_cleanup_emission_gate_report(gate));
+    }
+    for (auto const& plan : state.runtime_indexed_member_cleanup_ir_insertion_plans) {
+        report.push_back(runtime_indexed_member_cleanup_ir_insertion_plan_report(plan));
     }
     return report;
 }
@@ -955,7 +1026,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_targets !=
                 merged.runtime_indexed_member_cleanup_targets ||
             branch_states[index].runtime_indexed_member_cleanup_emission_gates !=
-                merged.runtime_indexed_member_cleanup_emission_gates) {
+                merged.runtime_indexed_member_cleanup_emission_gates ||
+            branch_states[index].runtime_indexed_member_cleanup_ir_insertion_plans !=
+                merged.runtime_indexed_member_cleanup_ir_insertion_plans) {
             return std::nullopt;
         }
     }
