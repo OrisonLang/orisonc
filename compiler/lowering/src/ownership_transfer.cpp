@@ -108,6 +108,8 @@ auto record_runtime_indexed_partial_owner(
     auto member_gate = runtime_indexed_member_cleanup_emission_gate(member_sketch, member_targets);
     auto member_insertion_plan =
         runtime_indexed_member_cleanup_ir_insertion_plan(member_gate, member_targets);
+    auto member_composition_plan =
+        runtime_indexed_member_cleanup_ir_composition_plan(member_insertion_plan);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -121,6 +123,7 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_targets.push_back(std::move(member_targets));
     state.runtime_indexed_member_cleanup_emission_gates.push_back(std::move(member_gate));
     state.runtime_indexed_member_cleanup_ir_insertion_plans.push_back(std::move(member_insertion_plan));
+    state.runtime_indexed_member_cleanup_ir_composition_plans.push_back(std::move(member_composition_plan));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -755,6 +758,90 @@ auto runtime_indexed_member_cleanup_ir_insertion_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_ir_composition_plan(
+    RuntimeIndexedMemberCleanupIrInsertionPlan const& plan
+) -> RuntimeIndexedMemberCleanupIrCompositionPlan {
+    auto insertion_plan_ready = plan.insertion_points_named && plan.target_metadata_ready;
+    auto block_topology_ready =
+        insertion_plan_ready &&
+        !plan.insertion_anchor.empty() &&
+        !plan.entry_block_name.empty() &&
+        !plan.skip_block_name.empty() &&
+        !plan.sibling_drop_block_name.empty() &&
+        !plan.preserve_block_name.empty() &&
+        !plan.exit_block_name.empty() &&
+        plan.entry_block_name != plan.skip_block_name &&
+        plan.entry_block_name != plan.sibling_drop_block_name &&
+        plan.entry_block_name != plan.preserve_block_name &&
+        plan.entry_block_name != plan.exit_block_name &&
+        plan.skip_block_name != plan.sibling_drop_block_name &&
+        plan.skip_block_name != plan.preserve_block_name &&
+        plan.skip_block_name != plan.exit_block_name &&
+        plan.sibling_drop_block_name != plan.preserve_block_name &&
+        plan.sibling_drop_block_name != plan.exit_block_name &&
+        plan.preserve_block_name != plan.exit_block_name;
+    auto preview_operations_ready = block_topology_ready && plan.preview_operations.size() == 6;
+    auto topology_edges = std::vector<std::string> {};
+    if (block_topology_ready) {
+        topology_edges = {
+            plan.insertion_anchor + " -> " + plan.entry_block_name,
+            plan.entry_block_name + " -> " + plan.skip_block_name,
+            plan.entry_block_name + " -> " + plan.sibling_drop_block_name,
+            plan.skip_block_name + " -> " + plan.preserve_block_name,
+            plan.sibling_drop_block_name + " -> " + plan.preserve_block_name,
+            plan.preserve_block_name + " -> " + plan.exit_block_name,
+        };
+    }
+
+    return RuntimeIndexedMemberCleanupIrCompositionPlan {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .moved_member_path = plan.moved_member_path,
+        .insertion_anchor = plan.insertion_anchor,
+        .entry_block_name = plan.entry_block_name,
+        .skip_block_name = plan.skip_block_name,
+        .sibling_drop_block_name = plan.sibling_drop_block_name,
+        .preserve_block_name = plan.preserve_block_name,
+        .exit_block_name = plan.exit_block_name,
+        .topology_edges = std::move(topology_edges),
+        .insertion_plan_ready = insertion_plan_ready,
+        .block_topology_ready = block_topology_ready,
+        .preview_operations_ready = preview_operations_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_ir_composition_plan_report(
+    RuntimeIndexedMemberCleanupIrCompositionPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup ir-composition-plan owner " << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " moved " << plan.moved_source_type_name
+           << " member-path " << dotted_path(plan.moved_member_path)
+           << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
+           << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
+           << " skip " << (plan.skip_block_name.empty() ? "missing" : plan.skip_block_name)
+           << " sibling-drop "
+           << (plan.sibling_drop_block_name.empty() ? "missing" : plan.sibling_drop_block_name)
+           << " preserve " << (plan.preserve_block_name.empty() ? "missing" : plan.preserve_block_name)
+           << " exit " << (plan.exit_block_name.empty() ? "missing" : plan.exit_block_name)
+           << " insertion-plan " << (plan.insertion_plan_ready ? "ready" : "missing")
+           << " block-topology " << (plan.block_topology_ready ? "ready" : "missing")
+           << " preview-operations " << (plan.preview_operations_ready ? "ready" : "missing")
+           << " report-only " << (plan.report_only ? "true" : "false")
+           << " production " << (plan.production_enabled ? "enabled" : "disabled")
+           << " topology-edges " << plan.topology_edges.size();
+    for (auto const& edge : plan.topology_edges) {
+        report << " edge " << edge;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -883,7 +970,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_emission_sketches.empty() &&
         state.runtime_indexed_member_cleanup_targets.empty() &&
         state.runtime_indexed_member_cleanup_emission_gates.empty() &&
-        state.runtime_indexed_member_cleanup_ir_insertion_plans.empty()) {
+        state.runtime_indexed_member_cleanup_ir_insertion_plans.empty() &&
+        state.runtime_indexed_member_cleanup_ir_composition_plans.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -928,6 +1016,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_member_cleanup_ir_insertion_plans) {
         report.push_back(runtime_indexed_member_cleanup_ir_insertion_plan_report(plan));
+    }
+    for (auto const& plan : state.runtime_indexed_member_cleanup_ir_composition_plans) {
+        report.push_back(runtime_indexed_member_cleanup_ir_composition_plan_report(plan));
     }
     return report;
 }
@@ -1028,7 +1119,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_emission_gates !=
                 merged.runtime_indexed_member_cleanup_emission_gates ||
             branch_states[index].runtime_indexed_member_cleanup_ir_insertion_plans !=
-                merged.runtime_indexed_member_cleanup_ir_insertion_plans) {
+                merged.runtime_indexed_member_cleanup_ir_insertion_plans ||
+            branch_states[index].runtime_indexed_member_cleanup_ir_composition_plans !=
+                merged.runtime_indexed_member_cleanup_ir_composition_plans) {
             return std::nullopt;
         }
     }
