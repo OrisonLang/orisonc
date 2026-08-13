@@ -1680,6 +1680,8 @@ representation.
   apply authorization until production IR mutation is enabled.
 - Runtime-index member cleanup conflict detection now feeds a report-only apply-authorization gate. The gate consumes
   validation readiness and conflict-free status, then remains blocked while production IR mutation is disabled.
+- Runtime-index member cleanup apply authorization now feeds a report-only ordered apply preview. The preview renders
+  the future branch replacement, cleanup CFG append, and PHI retarget actions without mutating IR.
 
 ## Follow-up work
 

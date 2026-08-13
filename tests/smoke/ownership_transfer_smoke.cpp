@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 43);
+    assert(runtime_indexed_audit.size() == 44);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -324,6 +324,12 @@ int main() {
         runtime_indexed_audit[42] ==
         orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(
             runtime_indexed.runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
+        )
+    );
+    assert(
+        runtime_indexed_audit[43] ==
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_apply_previews.front()
         )
     );
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
@@ -1153,6 +1159,37 @@ int main() {
         "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
         "blocker production-member-cleanup-ir-mutation"
     );
+    auto member_mutation_apply_preview =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview(
+            member_mutation_operation_plan,
+            member_mutation_apply_authorization
+        );
+    assert(!member_mutation_apply_preview.authorization_ready);
+    assert(!member_mutation_apply_preview.apply_authorized);
+    assert(member_mutation_apply_preview.preview_ready);
+    assert(!member_mutation_apply_preview.actions_applied);
+    assert(member_mutation_apply_preview.report_only);
+    assert(!member_mutation_apply_preview.production_enabled);
+    assert(member_mutation_apply_preview.actions.size() == 3);
+    assert(member_mutation_apply_preview.actions[0].kind == "branch-replacement");
+    assert(member_mutation_apply_preview.actions[1].kind == "cfg-append");
+    assert(member_mutation_apply_preview.actions[2].kind == "phi-retarget");
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(
+            member_mutation_apply_preview
+        ) ==
+        "runtime-index member cleanup mutation-apply-preview owner items index (index + zero) "
+        "element Box moved Inner member-path item authorization blocked apply-authorized false "
+        "preview ready actions 3 actions-applied false report-only true production disabled "
+        "blockers 4 blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation "
+        "action branch-replacement ready true applied false anchor items.final-cleanup "
+        "detail replace `br label %items.final-cleanup` with `br label %items.member_cleanup.entry` "
+        "action cfg-append ready true applied false anchor items.member_cleanup.exit "
+        "detail append cleanup CFG before-function-closing-brace before closing anchor "
+        "action phi-retarget ready true applied false anchor items.member_cleanup.exit "
+        "detail retarget PHI predecessor items.final-cleanup to items.member_cleanup.exit"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1186,6 +1223,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_operation_validations.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_conflict_detections.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_apply_previews.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

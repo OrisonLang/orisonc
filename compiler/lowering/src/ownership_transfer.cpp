@@ -154,6 +154,11 @@ auto record_runtime_indexed_partial_owner(
             member_mutation_operation_validation,
             member_mutation_conflict_detection
         );
+    auto member_mutation_apply_preview =
+        runtime_indexed_member_cleanup_mutation_apply_preview(
+            member_mutation_operation_plan,
+            member_mutation_apply_authorization
+        );
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -198,6 +203,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_apply_authorizations.push_back(
         std::move(member_mutation_apply_authorization)
+    );
+    state.runtime_indexed_member_cleanup_mutation_apply_previews.push_back(
+        std::move(member_mutation_apply_preview)
     );
 }
 
@@ -2079,6 +2087,85 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_apply_preview(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan,
+    RuntimeIndexedMemberCleanupMutationApplyAuthorization const& authorization
+) -> RuntimeIndexedMemberCleanupMutationApplyPreview {
+    auto actions = std::vector<RuntimeIndexedMemberCleanupMutationApplyPreviewAction> {};
+    for (auto const& operation : plan.operations) {
+        auto detail = std::string {};
+        if (operation.kind == "branch-replacement") {
+            detail = "replace `" + operation.expected_text + "` with `" + operation.replacement_text + "`";
+        } else if (operation.kind == "cfg-append") {
+            detail = "append cleanup CFG " + operation.placement + " before closing anchor";
+        } else if (operation.kind == "phi-retarget") {
+            detail = "retarget PHI predecessor " + operation.old_predecessor + " to " + operation.new_predecessor;
+        } else {
+            detail = "unknown mutation operation";
+        }
+        actions.push_back(RuntimeIndexedMemberCleanupMutationApplyPreviewAction {
+            .kind = operation.kind,
+            .anchor = operation.anchor,
+            .detail = std::move(detail),
+            .ready = operation.ready,
+            .applied = false,
+        });
+    }
+
+    auto preview_ready = authorization.validation_ready && authorization.conflict_free && !actions.empty();
+    auto actions_applied = !actions.empty();
+    for (auto const& action : actions) {
+        preview_ready = preview_ready && action.ready;
+        actions_applied = actions_applied && action.applied;
+    }
+
+    return RuntimeIndexedMemberCleanupMutationApplyPreview {
+        .owner_name = authorization.owner_name,
+        .index_expression_text = authorization.index_expression_text,
+        .element_source_type_name = authorization.element_source_type_name,
+        .moved_source_type_name = authorization.moved_source_type_name,
+        .moved_member_path = authorization.moved_member_path,
+        .actions = std::move(actions),
+        .blockers = authorization.blockers,
+        .authorization_ready = authorization.authorization_ready,
+        .apply_authorized = authorization.apply_authorized,
+        .preview_ready = preview_ready,
+        .actions_applied = actions_applied,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_apply_preview_report(
+    RuntimeIndexedMemberCleanupMutationApplyPreview const& preview
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-apply-preview owner " << preview.owner_name
+           << " index " << preview.index_expression_text
+           << " element " << preview.element_source_type_name
+           << " moved " << preview.moved_source_type_name
+           << " member-path " << dotted_path(preview.moved_member_path)
+           << " authorization " << (preview.authorization_ready ? "ready" : "blocked")
+           << " apply-authorized " << (preview.apply_authorized ? "true" : "false")
+           << " preview " << (preview.preview_ready ? "ready" : "blocked")
+           << " actions " << preview.actions.size()
+           << " actions-applied " << (preview.actions_applied ? "true" : "false")
+           << " report-only " << (preview.report_only ? "true" : "false")
+           << " production " << (preview.production_enabled ? "enabled" : "disabled")
+           << " blockers " << preview.blockers.size();
+    for (auto const& blocker : preview.blockers) {
+        report << " blocker " << blocker;
+    }
+    for (auto const& action : preview.actions) {
+        report << " action " << action.kind
+               << " ready " << (action.ready ? "true" : "false")
+               << " applied " << (action.applied ? "true" : "false")
+               << " anchor " << (action.anchor.empty() ? "missing" : action.anchor)
+               << " detail " << (action.detail.empty() ? "missing" : action.detail);
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2221,7 +2308,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_mutation_operation_plans.empty() &&
         state.runtime_indexed_member_cleanup_mutation_operation_validations.empty() &&
         state.runtime_indexed_member_cleanup_mutation_conflict_detections.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_apply_authorizations.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_apply_authorizations.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_apply_previews.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2317,6 +2405,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& authorization : state.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
         report.push_back(runtime_indexed_member_cleanup_mutation_apply_authorization_report(authorization));
+    }
+    for (auto const& preview : state.runtime_indexed_member_cleanup_mutation_apply_previews) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_apply_preview_report(preview));
     }
     return report;
 }
@@ -2445,7 +2536,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_conflict_detections !=
                 merged.runtime_indexed_member_cleanup_mutation_conflict_detections ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_apply_authorizations !=
-                merged.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
+                merged.runtime_indexed_member_cleanup_mutation_apply_authorizations ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_apply_previews !=
+                merged.runtime_indexed_member_cleanup_mutation_apply_previews) {
             return std::nullopt;
         }
     }
