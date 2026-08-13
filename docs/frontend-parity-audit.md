@@ -2369,3 +2369,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup CFG slices. The candidate remains report-only, with production module mutation still blocked.
 - 2026-08-13: Runtime-index member cleanup now derives a report-only function rewrite edit-script plan from verified
   member cleanup candidates, covering branch replacement, CFG append, and PHI predecessor retarget readiness.
+- 2026-08-13: Runtime-index member cleanup now validates the report-only function rewrite edit-script plan and reports
+  finite blockers before any production module mutation path is considered.

@@ -115,6 +115,8 @@ auto record_runtime_indexed_partial_owner(
         runtime_indexed_member_cleanup_function_rewrite_candidate(member_cfg_slice);
     auto member_edit_script_plan =
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plan(member_rewrite_candidate);
+    auto member_edit_script_validation =
+        runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(member_edit_script_plan);
     auto member_mutation_gate =
         runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice);
     auto member_production_readiness = runtime_indexed_member_cleanup_production_readiness(
@@ -143,6 +145,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.push_back(
         std::move(member_edit_script_plan)
+    );
+    state.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations.push_back(
+        std::move(member_edit_script_validation)
     );
     state.runtime_indexed_member_cleanup_module_mutation_gates.push_back(std::move(member_mutation_gate));
     state.runtime_indexed_member_cleanup_production_readiness.push_back(
@@ -1112,6 +1117,90 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation {
+    auto blockers = std::vector<std::string> {};
+    auto branch_replacement_valid =
+        plan.branch_replacement_ready &&
+        !plan.expected_branch_text.empty() &&
+        !plan.replacement_branch_text.empty();
+    auto cleanup_cfg_append_valid =
+        plan.cleanup_cfg_append_ready &&
+        plan.cleanup_cfg_append_placement == "before-function-closing-brace" &&
+        !plan.expected_closing_text.empty() &&
+        !plan.appended_cfg_preview_lines.empty();
+    auto phi_retarget_valid =
+        plan.phi_retarget_ready &&
+        !plan.phi_old_predecessor_block_name.empty() &&
+        !plan.phi_new_predecessor_block_name.empty();
+    if (!plan.edit_script_ready) {
+        blockers.push_back("member-cleanup-edit-script");
+    }
+    if (!branch_replacement_valid) {
+        blockers.push_back("member-cleanup-branch-replacement");
+    }
+    if (!cleanup_cfg_append_valid) {
+        blockers.push_back("member-cleanup-cfg-append");
+    }
+    if (!phi_retarget_valid) {
+        blockers.push_back("member-cleanup-phi-retarget");
+    }
+    blockers.push_back("production-member-cleanup-module-mutation");
+
+    auto validation_ready =
+        plan.edit_script_ready &&
+        branch_replacement_valid &&
+        cleanup_cfg_append_valid &&
+        phi_retarget_valid;
+
+    return RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .moved_member_path = plan.moved_member_path,
+        .insertion_anchor = plan.insertion_anchor,
+        .entry_block_name = plan.entry_block_name,
+        .exit_block_name = plan.exit_block_name,
+        .blockers = std::move(blockers),
+        .edit_script_ready = plan.edit_script_ready,
+        .branch_replacement_valid = branch_replacement_valid,
+        .cleanup_cfg_append_valid = cleanup_cfg_append_valid,
+        .phi_retarget_valid = phi_retarget_valid,
+        .validation_ready = validation_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup function-rewrite-edit-script-validation owner "
+           << validation.owner_name
+           << " index " << validation.index_expression_text
+           << " element " << validation.element_source_type_name
+           << " moved " << validation.moved_source_type_name
+           << " member-path " << dotted_path(validation.moved_member_path)
+           << " anchor " << (validation.insertion_anchor.empty() ? "missing" : validation.insertion_anchor)
+           << " entry " << (validation.entry_block_name.empty() ? "missing" : validation.entry_block_name)
+           << " exit " << (validation.exit_block_name.empty() ? "missing" : validation.exit_block_name)
+           << " edit-script " << (validation.edit_script_ready ? "ready" : "blocked")
+           << " branch-replacement " << (validation.branch_replacement_valid ? "valid" : "invalid")
+           << " cleanup-cfg-append " << (validation.cleanup_cfg_append_valid ? "valid" : "invalid")
+           << " phi-retarget " << (validation.phi_retarget_valid ? "valid" : "invalid")
+           << " validation " << (validation.validation_ready ? "ready" : "blocked")
+           << " report-only " << (validation.report_only ? "true" : "false")
+           << " production " << (validation.production_enabled ? "enabled" : "disabled")
+           << " blockers " << validation.blockers.size();
+    for (auto const& blocker : validation.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice
 ) -> RuntimeIndexedMemberCleanupModuleMutationGate {
@@ -1415,6 +1504,7 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_cfg_slices.empty() &&
         state.runtime_indexed_member_cleanup_function_rewrite_candidates.empty() &&
         state.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.empty() &&
+        state.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations.empty() &&
         state.runtime_indexed_member_cleanup_module_mutation_gates.empty() &&
         state.runtime_indexed_member_cleanup_production_readiness.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
@@ -1473,6 +1563,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans) {
         report.push_back(runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(plan));
+    }
+    for (auto const& validation : state.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations) {
+        report.push_back(runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(validation));
     }
     for (auto const& gate : state.runtime_indexed_member_cleanup_module_mutation_gates) {
         report.push_back(runtime_indexed_member_cleanup_module_mutation_gate_report(gate));
@@ -1590,6 +1683,8 @@ auto merge_ownership_transfer_states(
                 merged.runtime_indexed_member_cleanup_function_rewrite_candidates ||
             branch_states[index].runtime_indexed_member_cleanup_function_rewrite_edit_script_plans !=
                 merged.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans ||
+            branch_states[index].runtime_indexed_member_cleanup_function_rewrite_edit_script_validations !=
+                merged.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations ||
             branch_states[index].runtime_indexed_member_cleanup_module_mutation_gates !=
                 merged.runtime_indexed_member_cleanup_module_mutation_gates ||
             branch_states[index].runtime_indexed_member_cleanup_production_readiness !=

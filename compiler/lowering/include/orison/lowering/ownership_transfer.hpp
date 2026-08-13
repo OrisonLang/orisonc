@@ -393,6 +393,27 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan {
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string insertion_anchor;
+    std::string entry_block_name;
+    std::string exit_block_name;
+    std::vector<std::string> blockers;
+    bool edit_script_ready = false;
+    bool branch_replacement_valid = false;
+    bool cleanup_cfg_append_valid = false;
+    bool phi_retarget_valid = false;
+    bool validation_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupModuleMutationGate {
     std::string owner_name;
     std::string index_expression_text;
@@ -452,6 +473,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_function_rewrite_candidates;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation>
+        runtime_indexed_member_cleanup_function_rewrite_edit_script_validations;
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
 };
@@ -599,6 +622,14 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan(
 
 auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation;
+
+auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
 ) -> std::string;
 
 auto runtime_indexed_member_cleanup_module_mutation_gate(

@@ -1651,6 +1651,8 @@ representation.
   The candidate verifies anchor, label, and branch-preview shape before any future production module mutation can use it.
 - Verified runtime-index member cleanup candidates now derive a report-only edit-script plan with branch replacement,
   cleanup CFG append, and PHI predecessor retarget readiness separated before production mutation is considered.
+- Runtime-index member cleanup edit-script plans now have report-only validation with finite blocker tokens for
+  candidate, branch replacement, CFG append, PHI retarget, and production module mutation readiness.
 
 ## Follow-up work
 

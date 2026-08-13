@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 23);
+    assert(runtime_indexed_audit.size() == 24);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -241,10 +241,16 @@ int main() {
             runtime_indexed.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.front()
         )
     );
-    assert(runtime_indexed_audit[16] == orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate_report(
+    assert(
+        runtime_indexed_audit[16] ==
+        orison::lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(
+            runtime_indexed.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations.front()
+        )
+    );
+    assert(runtime_indexed_audit[17] == orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate_report(
         runtime_indexed.runtime_indexed_member_cleanup_module_mutation_gates.front()
     ));
-    assert(runtime_indexed_audit[17] == orison::lowering::runtime_indexed_member_cleanup_production_readiness_report(
+    assert(runtime_indexed_audit[18] == orison::lowering::runtime_indexed_member_cleanup_production_readiness_report(
         runtime_indexed.runtime_indexed_member_cleanup_production_readiness.front()
     ));
     auto runtime_indexed_member_diagnostics =
@@ -252,11 +258,11 @@ int main() {
             runtime_indexed.runtime_indexed_member_cleanup_production_readiness.front()
         );
     assert(runtime_indexed_member_diagnostics.size() == 5);
-    assert(runtime_indexed_audit[18] == runtime_indexed_member_diagnostics[0]);
-    assert(runtime_indexed_audit[19] == runtime_indexed_member_diagnostics[1]);
-    assert(runtime_indexed_audit[20] == runtime_indexed_member_diagnostics[2]);
-    assert(runtime_indexed_audit[21] == runtime_indexed_member_diagnostics[3]);
-    assert(runtime_indexed_audit[22] == runtime_indexed_member_diagnostics[4]);
+    assert(runtime_indexed_audit[19] == runtime_indexed_member_diagnostics[0]);
+    assert(runtime_indexed_audit[20] == runtime_indexed_member_diagnostics[1]);
+    assert(runtime_indexed_audit[21] == runtime_indexed_member_diagnostics[2]);
+    assert(runtime_indexed_audit[22] == runtime_indexed_member_diagnostics[3]);
+    assert(runtime_indexed_audit[23] == runtime_indexed_member_diagnostics[4]);
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch
@@ -753,6 +759,32 @@ int main() {
         "before-function-closing-brace expected-closing \\n}\\n phi-old items.final-cleanup "
         "phi-new items.member_cleanup.exit appended-cfg-lines 15"
     );
+    auto member_edit_script_validation =
+        orison::lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(
+            member_edit_script_plan
+        );
+    assert(member_edit_script_validation.edit_script_ready);
+    assert(member_edit_script_validation.branch_replacement_valid);
+    assert(member_edit_script_validation.cleanup_cfg_append_valid);
+    assert(member_edit_script_validation.phi_retarget_valid);
+    assert(member_edit_script_validation.validation_ready);
+    assert(member_edit_script_validation.report_only);
+    assert(!member_edit_script_validation.production_enabled);
+    assert(member_edit_script_validation.blockers.size() == 1);
+    assert(
+        member_edit_script_validation.blockers[0] ==
+        "production-member-cleanup-module-mutation"
+    );
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(
+            member_edit_script_validation
+        ) ==
+        "runtime-index member cleanup function-rewrite-edit-script-validation owner items "
+        "index (index + zero) element Box moved Inner member-path item anchor items.final-cleanup "
+        "entry items.member_cleanup.entry exit items.member_cleanup.exit edit-script ready "
+        "branch-replacement valid cleanup-cfg-append valid phi-retarget valid validation ready "
+        "report-only true production disabled blockers 1 blocker production-member-cleanup-module-mutation"
+    );
     auto member_mutation_gate =
         orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice);
     assert(member_mutation_gate.cfg_slice_ready);
@@ -838,6 +870,9 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_cfg_slices.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_function_rewrite_candidates.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.size() == 1);
+    assert(
+        matching_runtime_indexed->runtime_indexed_member_cleanup_function_rewrite_edit_script_validations.size() == 1
+    );
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_module_mutation_gates.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_production_readiness.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
