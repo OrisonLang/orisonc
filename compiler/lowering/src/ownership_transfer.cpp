@@ -149,6 +149,11 @@ auto record_runtime_indexed_partial_owner(
             member_mutation_operation_plan,
             member_mutation_operation_validation
         );
+    auto member_mutation_apply_authorization =
+        runtime_indexed_member_cleanup_mutation_apply_authorization(
+            member_mutation_operation_validation,
+            member_mutation_conflict_detection
+        );
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -190,6 +195,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_conflict_detections.push_back(
         std::move(member_mutation_conflict_detection)
+    );
+    state.runtime_indexed_member_cleanup_mutation_apply_authorizations.push_back(
+        std::move(member_mutation_apply_authorization)
     );
 }
 
@@ -1998,6 +2006,79 @@ auto runtime_indexed_member_cleanup_mutation_conflict_detection_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_apply_authorization(
+    RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
+    RuntimeIndexedMemberCleanupMutationConflictDetection const& detection
+) -> RuntimeIndexedMemberCleanupMutationApplyAuthorization {
+    auto blockers = detection.blockers;
+    auto append_blocker = [&blockers](std::string blocker) {
+        if (!std::ranges::contains(blockers, blocker)) {
+            blockers.push_back(std::move(blocker));
+        }
+    };
+    auto ir_mutation_requested = false;
+    auto production_gate_enabled = false;
+    auto authorization_ready =
+        validation.validation_ready &&
+        detection.conflict_free &&
+        ir_mutation_requested &&
+        production_gate_enabled;
+    if (!validation.validation_ready) {
+        append_blocker("member-cleanup-mutation-validation");
+    }
+    if (!detection.conflict_free) {
+        append_blocker("member-cleanup-mutation-conflict");
+    }
+    if (!ir_mutation_requested) {
+        append_blocker("member-cleanup-ir-mutation");
+    }
+    if (!production_gate_enabled) {
+        append_blocker("production-member-cleanup-ir-mutation");
+    }
+
+    return RuntimeIndexedMemberCleanupMutationApplyAuthorization {
+        .owner_name = detection.owner_name,
+        .index_expression_text = detection.index_expression_text,
+        .element_source_type_name = detection.element_source_type_name,
+        .moved_source_type_name = detection.moved_source_type_name,
+        .moved_member_path = detection.moved_member_path,
+        .blockers = std::move(blockers),
+        .validation_ready = validation.validation_ready,
+        .conflict_free = detection.conflict_free,
+        .ir_mutation_requested = ir_mutation_requested,
+        .production_gate_enabled = production_gate_enabled,
+        .authorization_ready = authorization_ready,
+        .apply_authorized = false,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(
+    RuntimeIndexedMemberCleanupMutationApplyAuthorization const& authorization
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-apply-authorization owner "
+           << authorization.owner_name
+           << " index " << authorization.index_expression_text
+           << " element " << authorization.element_source_type_name
+           << " moved " << authorization.moved_source_type_name
+           << " member-path " << dotted_path(authorization.moved_member_path)
+           << " validation " << (authorization.validation_ready ? "ready" : "blocked")
+           << " conflict-free " << (authorization.conflict_free ? "true" : "false")
+           << " ir-mutation " << (authorization.ir_mutation_requested ? "requested" : "blocked")
+           << " production-gate " << (authorization.production_gate_enabled ? "enabled" : "disabled")
+           << " authorization " << (authorization.authorization_ready ? "ready" : "blocked")
+           << " apply-authorized " << (authorization.apply_authorized ? "true" : "false")
+           << " report-only " << (authorization.report_only ? "true" : "false")
+           << " production " << (authorization.production_enabled ? "enabled" : "disabled")
+           << " blockers " << authorization.blockers.size();
+    for (auto const& blocker : authorization.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2139,7 +2220,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_promotion_seams.empty() &&
         state.runtime_indexed_member_cleanup_mutation_operation_plans.empty() &&
         state.runtime_indexed_member_cleanup_mutation_operation_validations.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_conflict_detections.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_conflict_detections.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_apply_authorizations.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2232,6 +2314,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& detection : state.runtime_indexed_member_cleanup_mutation_conflict_detections) {
         report.push_back(runtime_indexed_member_cleanup_mutation_conflict_detection_report(detection));
+    }
+    for (auto const& authorization : state.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_apply_authorization_report(authorization));
     }
     return report;
 }
@@ -2358,7 +2443,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_operation_validations !=
                 merged.runtime_indexed_member_cleanup_mutation_operation_validations ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_conflict_detections !=
-                merged.runtime_indexed_member_cleanup_mutation_conflict_detections) {
+                merged.runtime_indexed_member_cleanup_mutation_conflict_detections ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_apply_authorizations !=
+                merged.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
             return std::nullopt;
         }
     }

@@ -1678,6 +1678,8 @@ representation.
 - Runtime-index member cleanup mutation validation now feeds report-only conflict detection for unique branch anchor,
   closing anchor, and PHI predecessor matches. The detector can report conflict-free readiness while still denying
   apply authorization until production IR mutation is enabled.
+- Runtime-index member cleanup conflict detection now feeds a report-only apply-authorization gate. The gate consumes
+  validation readiness and conflict-free status, then remains blocked while production IR mutation is disabled.
 
 ## Follow-up work
 

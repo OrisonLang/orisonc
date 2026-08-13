@@ -592,6 +592,25 @@ struct RuntimeIndexedMemberCleanupMutationConflictDetection {
     auto operator==(RuntimeIndexedMemberCleanupMutationConflictDetection const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationApplyAuthorization {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool validation_ready = false;
+    bool conflict_free = false;
+    bool ir_mutation_requested = false;
+    bool production_gate_enabled = false;
+    bool authorization_ready = false;
+    bool apply_authorized = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationApplyAuthorization const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -626,6 +645,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_operation_validations;
     std::vector<RuntimeIndexedMemberCleanupMutationConflictDetection>
         runtime_indexed_member_cleanup_mutation_conflict_detections;
+    std::vector<RuntimeIndexedMemberCleanupMutationApplyAuthorization>
+        runtime_indexed_member_cleanup_mutation_apply_authorizations;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -871,6 +892,15 @@ auto runtime_indexed_member_cleanup_mutation_conflict_detection(
 
 auto runtime_indexed_member_cleanup_mutation_conflict_detection_report(
     RuntimeIndexedMemberCleanupMutationConflictDetection const& detection
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_apply_authorization(
+    RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
+    RuntimeIndexedMemberCleanupMutationConflictDetection const& detection
+) -> RuntimeIndexedMemberCleanupMutationApplyAuthorization;
+
+auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(
+    RuntimeIndexedMemberCleanupMutationApplyAuthorization const& authorization
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

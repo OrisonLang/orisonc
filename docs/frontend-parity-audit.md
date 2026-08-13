@@ -2393,3 +2393,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   count, order, required fields, readiness, and unapplied status.
 - 2026-08-13: Runtime-index member cleanup mutation validation now feeds report-only conflict detection for unique
   branch anchor, closing anchor, and PHI predecessor matches before any apply step is allowed.
+- 2026-08-13: Runtime-index member cleanup conflict detection now feeds a report-only apply-authorization gate that
+  remains blocked while production IR mutation is disabled.

@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 42);
+    assert(runtime_indexed_audit.size() == 43);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -318,6 +318,12 @@ int main() {
         runtime_indexed_audit[41] ==
         orison::lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(
             runtime_indexed.runtime_indexed_member_cleanup_mutation_conflict_detections.front()
+        )
+    );
+    assert(
+        runtime_indexed_audit[42] ==
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
         )
     );
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
@@ -1123,6 +1129,30 @@ int main() {
         "blocker member-cleanup-module-mutation blocker production-member-cleanup "
         "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation"
     );
+    auto member_mutation_apply_authorization =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization(
+            member_mutation_operation_validation,
+            member_mutation_conflict_detection
+        );
+    assert(member_mutation_apply_authorization.validation_ready);
+    assert(member_mutation_apply_authorization.conflict_free);
+    assert(!member_mutation_apply_authorization.ir_mutation_requested);
+    assert(!member_mutation_apply_authorization.production_gate_enabled);
+    assert(!member_mutation_apply_authorization.authorization_ready);
+    assert(!member_mutation_apply_authorization.apply_authorized);
+    assert(member_mutation_apply_authorization.report_only);
+    assert(!member_mutation_apply_authorization.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(
+            member_mutation_apply_authorization
+        ) ==
+        "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
+        "element Box moved Inner member-path item validation ready conflict-free true "
+        "ir-mutation blocked production-gate disabled authorization blocked apply-authorized false "
+        "report-only true production disabled blockers 4 blocker member-cleanup-module-mutation "
+        "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
+        "blocker production-member-cleanup-ir-mutation"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1155,6 +1185,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_operation_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_operation_validations.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_conflict_detections.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
