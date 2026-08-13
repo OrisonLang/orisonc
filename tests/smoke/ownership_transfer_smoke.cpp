@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 69);
+    assert(runtime_indexed_audit.size() == 70);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -377,6 +377,12 @@ int main() {
     assert(runtime_indexed_rewrite_authorization_diagnostics.size() == 2);
     assert(runtime_indexed_audit[67] == runtime_indexed_rewrite_authorization_diagnostics[0]);
     assert(runtime_indexed_audit[68] == runtime_indexed_rewrite_authorization_diagnostics[1]);
+    assert(
+        runtime_indexed_audit[69] ==
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.front()
+        )
+    );
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch
@@ -1425,6 +1431,26 @@ int main() {
         "element Box moved Inner member-path item blocker member-cleanup-mutation-guarded-rewrite "
         "detail member cleanup mutation guarded rewrite is blocked"
     );
+    auto member_mutation_rewrite_execution_plan =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
+            member_mutation_rewrite_authorization
+        );
+    assert(!member_mutation_rewrite_execution_plan.authorization_ready);
+    assert(!member_mutation_rewrite_execution_plan.rewrite_authorized);
+    assert(!member_mutation_rewrite_execution_plan.execution_plan_ready);
+    assert(!member_mutation_rewrite_execution_plan.execution_enabled);
+    assert(member_mutation_rewrite_execution_plan.report_only);
+    assert(!member_mutation_rewrite_execution_plan.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
+            member_mutation_rewrite_execution_plan
+        ) ==
+        "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
+        "element Box moved Inner member-path item authorization blocked rewrite-authorized false "
+        "execution-plan blocked execution disabled report-only true production disabled blockers 2 "
+        "blocker member-cleanup-mutation-rewrite-authorization "
+        "blocker member-cleanup-mutation-rewrite-not-authorized"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1464,6 +1490,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_production_readiness.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_readiness_verdicts.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_rewrite_authorizations.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

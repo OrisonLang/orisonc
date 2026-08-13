@@ -176,6 +176,8 @@ auto record_runtime_indexed_partial_owner(
         runtime_indexed_member_cleanup_mutation_readiness_verdict(member_mutation_production_readiness);
     auto member_mutation_rewrite_authorization =
         runtime_indexed_member_cleanup_mutation_rewrite_authorization(member_mutation_readiness_verdict);
+    auto member_mutation_rewrite_execution_plan =
+        runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(member_mutation_rewrite_authorization);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -238,6 +240,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.push_back(
         std::move(member_mutation_rewrite_authorization)
+    );
+    state.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.push_back(
+        std::move(member_mutation_rewrite_execution_plan)
     );
 }
 
@@ -2615,6 +2620,57 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(
     return diagnostics;
 }
 
+auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
+) -> RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
+    auto blockers = std::vector<std::string> {};
+    if (!authorization.authorization_ready) {
+        blockers.push_back("member-cleanup-mutation-rewrite-authorization");
+    }
+    if (!authorization.rewrite_authorized) {
+        blockers.push_back("member-cleanup-mutation-rewrite-not-authorized");
+    }
+
+    auto execution_plan_ready = authorization.authorization_ready && authorization.rewrite_authorized;
+    return RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
+        .owner_name = authorization.owner_name,
+        .index_expression_text = authorization.index_expression_text,
+        .element_source_type_name = authorization.element_source_type_name,
+        .moved_source_type_name = authorization.moved_source_type_name,
+        .moved_member_path = authorization.moved_member_path,
+        .blockers = std::move(blockers),
+        .authorization_ready = authorization.authorization_ready,
+        .rewrite_authorized = authorization.rewrite_authorized,
+        .execution_plan_ready = execution_plan_ready,
+        .execution_enabled = false,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
+    RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation rewrite execution-plan owner "
+           << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " moved " << plan.moved_source_type_name
+           << " member-path " << dotted_path(plan.moved_member_path)
+           << " authorization " << (plan.authorization_ready ? "ready" : "blocked")
+           << " rewrite-authorized " << (plan.rewrite_authorized ? "true" : "false")
+           << " execution-plan " << (plan.execution_plan_ready ? "ready" : "blocked")
+           << " execution " << (plan.execution_enabled ? "enabled" : "disabled")
+           << " report-only " << (plan.report_only ? "true" : "false")
+           << " production " << (plan.production_enabled ? "enabled" : "disabled")
+           << " blockers " << plan.blockers.size();
+    for (auto const& blocker : plan.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2763,7 +2819,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_mutation_promotion_summaries.empty() &&
         state.runtime_indexed_member_cleanup_mutation_production_readiness.empty() &&
         state.runtime_indexed_member_cleanup_mutation_readiness_verdicts.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2882,6 +2939,9 @@ auto runtime_indexed_cleanup_audit_report(
         auto diagnostics =
             runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(authorization);
         report.insert(report.end(), diagnostics.begin(), diagnostics.end());
+    }
+    for (auto const& plan : state.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(plan));
     }
     return report;
 }
@@ -3022,7 +3082,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_readiness_verdicts !=
                 merged.runtime_indexed_member_cleanup_mutation_readiness_verdicts ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_rewrite_authorizations !=
-                merged.runtime_indexed_member_cleanup_mutation_rewrite_authorizations) {
+                merged.runtime_indexed_member_cleanup_mutation_rewrite_authorizations ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_rewrite_execution_plans !=
+                merged.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
             return std::nullopt;
         }
     }

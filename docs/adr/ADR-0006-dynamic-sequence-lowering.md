@@ -1696,6 +1696,8 @@ representation.
   that remains blocked until readiness and guarded rewrite prerequisites are met.
 - Runtime-index member cleanup mutation guarded rewrite authorization now emits stable per-blocker diagnostics for
   blocked readiness verdicts and blocked guarded rewrite authorization.
+- Runtime-index member cleanup mutation guarded rewrite authorization now feeds a report-only rewrite execution plan
+  that keeps actual IR mutation disabled until rewrite authorization is ready.
 
 ## Follow-up work
 
