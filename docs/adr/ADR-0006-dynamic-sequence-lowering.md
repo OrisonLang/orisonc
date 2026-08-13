@@ -1647,6 +1647,8 @@ representation.
   option.
 - Fixed-array runtime-index constructor moves are enabled on the ordinary driver path with source-slot zeroing.
   Source-backed DynamicArray runtime-index owners are also enabled through verified function cleanup CFG insertion.
+- Runtime-index member cleanup now has a report-only function-rewrite candidate for rendered member cleanup CFG slices.
+  The candidate verifies anchor, label, and branch-preview shape before any future production module mutation can use it.
 
 ## Follow-up work
 

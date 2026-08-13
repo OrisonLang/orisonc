@@ -2365,3 +2365,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-12: Runtime-index cleanup function integration now retargets DynamicArray constructor moves to the
   post-move block, so emitted cleanup runs after the moved value is loaded and stored. Driver smoke coverage pins
   emitted IR order plus object/link/run for the DynamicArray cleanup fixture.
+- 2026-08-13: Runtime-index member cleanup now reports a verified function-rewrite candidate for rendered member
+  cleanup CFG slices. The candidate remains report-only, with production module mutation still blocked.

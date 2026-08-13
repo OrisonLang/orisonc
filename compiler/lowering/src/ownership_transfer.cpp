@@ -111,6 +111,8 @@ auto record_runtime_indexed_partial_owner(
     auto member_composition_plan =
         runtime_indexed_member_cleanup_ir_composition_plan(member_insertion_plan);
     auto member_cfg_slice = runtime_indexed_member_cleanup_cfg_slice(member_composition_plan);
+    auto member_rewrite_candidate =
+        runtime_indexed_member_cleanup_function_rewrite_candidate(member_cfg_slice);
     auto member_mutation_gate =
         runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice);
     auto member_production_readiness = runtime_indexed_member_cleanup_production_readiness(
@@ -134,6 +136,9 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_ir_insertion_plans.push_back(std::move(member_insertion_plan));
     state.runtime_indexed_member_cleanup_ir_composition_plans.push_back(std::move(member_composition_plan));
     state.runtime_indexed_member_cleanup_cfg_slices.push_back(std::move(member_cfg_slice));
+    state.runtime_indexed_member_cleanup_function_rewrite_candidates.push_back(
+        std::move(member_rewrite_candidate)
+    );
     state.runtime_indexed_member_cleanup_module_mutation_gates.push_back(std::move(member_mutation_gate));
     state.runtime_indexed_member_cleanup_production_readiness.push_back(
         std::move(member_production_readiness)
@@ -935,6 +940,90 @@ auto runtime_indexed_member_cleanup_cfg_slice_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_function_rewrite_candidate(
+    RuntimeIndexedMemberCleanupCfgSlice const& slice
+) -> RuntimeIndexedMemberCleanupFunctionRewriteCandidate {
+    auto cfg_slice_ready = slice.slice_rendered && !slice.cfg_lines.empty();
+    auto anchor_ready = cfg_slice_ready && !slice.insertion_anchor.empty();
+    auto labels_ready =
+        cfg_slice_ready &&
+        !slice.entry_block_name.empty() &&
+        !slice.skip_block_name.empty() &&
+        !slice.sibling_drop_block_name.empty() &&
+        !slice.preserve_block_name.empty() &&
+        !slice.exit_block_name.empty();
+    auto line_present = [&](std::string const& expected_line) {
+        return std::find(slice.cfg_lines.begin(), slice.cfg_lines.end(), expected_line) !=
+               slice.cfg_lines.end();
+    };
+    auto candidate_available = anchor_ready && labels_ready;
+    auto candidate_verified =
+        candidate_available &&
+        line_present("; report-only runtime-index member cleanup anchor " + slice.insertion_anchor + "\n") &&
+        line_present(slice.entry_block_name + ":\n") &&
+        line_present(slice.skip_block_name + ":\n") &&
+        line_present(slice.sibling_drop_block_name + ":\n") &&
+        line_present(slice.preserve_block_name + ":\n") &&
+        line_present(slice.exit_block_name + ":\n") &&
+        line_present("  ; br label %" + slice.preserve_block_name + "\n") &&
+        line_present("  ; br label %" + slice.exit_block_name + "\n");
+
+    return RuntimeIndexedMemberCleanupFunctionRewriteCandidate {
+        .owner_name = slice.owner_name,
+        .index_expression_text = slice.index_expression_text,
+        .element_source_type_name = slice.element_source_type_name,
+        .moved_source_type_name = slice.moved_source_type_name,
+        .moved_member_path = slice.moved_member_path,
+        .insertion_anchor = slice.insertion_anchor,
+        .entry_block_name = slice.entry_block_name,
+        .skip_block_name = slice.skip_block_name,
+        .sibling_drop_block_name = slice.sibling_drop_block_name,
+        .preserve_block_name = slice.preserve_block_name,
+        .exit_block_name = slice.exit_block_name,
+        .replaced_terminator_text =
+            anchor_ready ? "br label %" + slice.insertion_anchor : std::string {},
+        .replacement_branch_text =
+            labels_ready ? "br label %" + slice.entry_block_name : std::string {},
+        .appended_cfg_preview_lines = slice.cfg_lines,
+        .cfg_slice_ready = cfg_slice_ready,
+        .anchor_ready = anchor_ready,
+        .branch_rewrite_planned = candidate_available,
+        .cfg_append_planned = candidate_available,
+        .candidate_available = candidate_available,
+        .candidate_verified = candidate_verified,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_function_rewrite_candidate_report(
+    RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup function-rewrite-candidate owner " << candidate.owner_name
+           << " index " << candidate.index_expression_text
+           << " element " << candidate.element_source_type_name
+           << " moved " << candidate.moved_source_type_name
+           << " member-path " << dotted_path(candidate.moved_member_path)
+           << " anchor " << (candidate.insertion_anchor.empty() ? "missing" : candidate.insertion_anchor)
+           << " entry " << (candidate.entry_block_name.empty() ? "missing" : candidate.entry_block_name)
+           << " exit " << (candidate.exit_block_name.empty() ? "missing" : candidate.exit_block_name)
+           << " cfg-slice " << (candidate.cfg_slice_ready ? "ready" : "missing")
+           << " anchor-state " << (candidate.anchor_ready ? "ready" : "missing")
+           << " branch-rewrite " << (candidate.branch_rewrite_planned ? "planned" : "blocked")
+           << " cfg-append " << (candidate.cfg_append_planned ? "planned" : "blocked")
+           << " candidate " << (candidate.candidate_available ? "available" : "missing")
+           << " verification " << (candidate.candidate_verified ? "verified" : "blocked")
+           << " report-only " << (candidate.report_only ? "true" : "false")
+           << " production " << (candidate.production_enabled ? "enabled" : "disabled")
+           << " replaced-terminator "
+           << (candidate.replaced_terminator_text.empty() ? "missing" : candidate.replaced_terminator_text)
+           << " replacement-branch "
+           << (candidate.replacement_branch_text.empty() ? "missing" : candidate.replacement_branch_text)
+           << " appended-cfg-lines " << candidate.appended_cfg_preview_lines.size();
+    return report.str();
+}
+
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice
 ) -> RuntimeIndexedMemberCleanupModuleMutationGate {
@@ -1236,6 +1325,7 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_ir_insertion_plans.empty() &&
         state.runtime_indexed_member_cleanup_ir_composition_plans.empty() &&
         state.runtime_indexed_member_cleanup_cfg_slices.empty() &&
+        state.runtime_indexed_member_cleanup_function_rewrite_candidates.empty() &&
         state.runtime_indexed_member_cleanup_module_mutation_gates.empty() &&
         state.runtime_indexed_member_cleanup_production_readiness.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
@@ -1288,6 +1378,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& slice : state.runtime_indexed_member_cleanup_cfg_slices) {
         report.push_back(runtime_indexed_member_cleanup_cfg_slice_report(slice));
+    }
+    for (auto const& candidate : state.runtime_indexed_member_cleanup_function_rewrite_candidates) {
+        report.push_back(runtime_indexed_member_cleanup_function_rewrite_candidate_report(candidate));
     }
     for (auto const& gate : state.runtime_indexed_member_cleanup_module_mutation_gates) {
         report.push_back(runtime_indexed_member_cleanup_module_mutation_gate_report(gate));
@@ -1401,6 +1494,8 @@ auto merge_ownership_transfer_states(
                 merged.runtime_indexed_member_cleanup_ir_composition_plans ||
             branch_states[index].runtime_indexed_member_cleanup_cfg_slices !=
                 merged.runtime_indexed_member_cleanup_cfg_slices ||
+            branch_states[index].runtime_indexed_member_cleanup_function_rewrite_candidates !=
+                merged.runtime_indexed_member_cleanup_function_rewrite_candidates ||
             branch_states[index].runtime_indexed_member_cleanup_module_mutation_gates !=
                 merged.runtime_indexed_member_cleanup_module_mutation_gates ||
             branch_states[index].runtime_indexed_member_cleanup_production_readiness !=
