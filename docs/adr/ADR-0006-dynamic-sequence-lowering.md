@@ -1653,6 +1653,8 @@ representation.
   cleanup CFG append, and PHI predecessor retarget readiness separated before production mutation is considered.
 - Runtime-index member cleanup edit-script plans now have report-only validation with finite blocker tokens for
   candidate, branch replacement, CFG append, PHI retarget, and production module mutation readiness.
+- Runtime-index member cleanup module-mutation gates now consume edit-script validation as an explicit prerequisite,
+  keeping validated report-only rewrite plans separate from disabled production mutation.
 
 ## Follow-up work
 

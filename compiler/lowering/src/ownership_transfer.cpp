@@ -118,7 +118,7 @@ auto record_runtime_indexed_partial_owner(
     auto member_edit_script_validation =
         runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(member_edit_script_plan);
     auto member_mutation_gate =
-        runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice);
+        runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice, member_edit_script_validation);
     auto member_production_readiness = runtime_indexed_member_cleanup_production_readiness(
         member_proof,
         member_targets,
@@ -1202,11 +1202,15 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_repo
 }
 
 auto runtime_indexed_member_cleanup_module_mutation_gate(
-    RuntimeIndexedMemberCleanupCfgSlice const& slice
+    RuntimeIndexedMemberCleanupCfgSlice const& slice,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
 ) -> RuntimeIndexedMemberCleanupModuleMutationGate {
     auto blockers = std::vector<std::string> {};
     if (!slice.slice_rendered) {
         blockers.push_back("member-cleanup-cfg-slice");
+    }
+    if (!validation.validation_ready) {
+        blockers.push_back("member-cleanup-edit-script-validation");
     }
     blockers.push_back("member-cleanup-module-mutation");
     blockers.push_back("production-member-cleanup");
@@ -1225,6 +1229,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate(
         .exit_block_name = slice.exit_block_name,
         .blockers = std::move(blockers),
         .cfg_slice_ready = slice.slice_rendered,
+        .edit_script_validation_ready = validation.validation_ready,
         .module_mutation_enabled = false,
         .production_member_cleanup_enabled = false,
         .prerequisites_met = false,
@@ -1249,6 +1254,8 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_report(
            << " preserve " << (gate.preserve_block_name.empty() ? "missing" : gate.preserve_block_name)
            << " exit " << (gate.exit_block_name.empty() ? "missing" : gate.exit_block_name)
            << " cfg-slice " << (gate.cfg_slice_ready ? "ready" : "missing")
+           << " edit-script-validation "
+           << (gate.edit_script_validation_ready ? "ready" : "missing")
            << " module-mutation " << (gate.module_mutation_enabled ? "enabled" : "disabled")
            << " production-member-cleanup "
            << (gate.production_member_cleanup_enabled ? "enabled" : "disabled")

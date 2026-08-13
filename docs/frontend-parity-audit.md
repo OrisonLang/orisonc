@@ -2371,3 +2371,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   member cleanup candidates, covering branch replacement, CFG append, and PHI predecessor retarget readiness.
 - 2026-08-13: Runtime-index member cleanup now validates the report-only function rewrite edit-script plan and reports
   finite blockers before any production module mutation path is considered.
+- 2026-08-13: Runtime-index member cleanup module-mutation gates now explicitly require edit-script validation
+  readiness, while still reporting production mutation as disabled.

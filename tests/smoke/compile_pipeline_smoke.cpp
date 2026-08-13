@@ -7011,9 +7011,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[17] ==
         "runtime-index member cleanup module-mutation-gate owner holder.items index index element Inner "
         "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing cfg-slice missing module-mutation disabled "
-        "production-member-cleanup disabled prerequisites missing production disabled blockers 3 "
-        "blocker member-cleanup-cfg-slice blocker member-cleanup-module-mutation "
+        "preserve missing exit missing cfg-slice missing edit-script-validation missing "
+        "module-mutation disabled production-member-cleanup disabled prerequisites missing "
+        "production disabled blockers 4 blocker member-cleanup-cfg-slice "
+        "blocker member-cleanup-edit-script-validation blocker member-cleanup-module-mutation "
         "blocker production-member-cleanup"
     );
     assert(

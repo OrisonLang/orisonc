@@ -786,8 +786,12 @@ int main() {
         "report-only true production disabled blockers 1 blocker production-member-cleanup-module-mutation"
     );
     auto member_mutation_gate =
-        orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice);
+        orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate(
+            member_cfg_slice,
+            member_edit_script_validation
+        );
     assert(member_mutation_gate.cfg_slice_ready);
+    assert(member_mutation_gate.edit_script_validation_ready);
     assert(!member_mutation_gate.module_mutation_enabled);
     assert(!member_mutation_gate.production_member_cleanup_enabled);
     assert(!member_mutation_gate.prerequisites_met);
@@ -803,7 +807,7 @@ int main() {
         "element Box moved Inner member-path item anchor items.final-cleanup "
         "entry items.member_cleanup.entry skip items.member_cleanup.skip_moved "
         "sibling-drop items.member_cleanup.drop_siblings preserve items.member_cleanup.preserve_moved "
-        "exit items.member_cleanup.exit cfg-slice ready module-mutation disabled "
+        "exit items.member_cleanup.exit cfg-slice ready edit-script-validation ready module-mutation disabled "
         "production-member-cleanup disabled prerequisites missing production disabled blockers 2 "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
     );
