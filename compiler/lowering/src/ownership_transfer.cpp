@@ -2671,6 +2671,32 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(
+    RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const& plan
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& blocker : plan.blockers) {
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup mutation rewrite execution-plan blocker owner "
+                   << plan.owner_name
+                   << " index " << plan.index_expression_text
+                   << " element " << plan.element_source_type_name
+                   << " moved " << plan.moved_source_type_name
+                   << " member-path " << dotted_path(plan.moved_member_path)
+                   << " blocker " << blocker
+                   << " detail ";
+        if (blocker == "member-cleanup-mutation-rewrite-authorization") {
+            diagnostic << "member cleanup mutation rewrite authorization is blocked";
+        } else if (blocker == "member-cleanup-mutation-rewrite-not-authorized") {
+            diagnostic << "member cleanup mutation rewrite is not authorized";
+        } else {
+            diagnostic << "member cleanup mutation rewrite execution plan is blocked";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2942,6 +2968,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
         report.push_back(runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(plan));
+        auto diagnostics =
+            runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(plan);
+        report.insert(report.end(), diagnostics.begin(), diagnostics.end());
     }
     return report;
 }

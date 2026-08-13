@@ -1698,6 +1698,8 @@ representation.
   blocked readiness verdicts and blocked guarded rewrite authorization.
 - Runtime-index member cleanup mutation guarded rewrite authorization now feeds a report-only rewrite execution plan
   that keeps actual IR mutation disabled until rewrite authorization is ready.
+- Runtime-index member cleanup mutation rewrite execution plans now emit stable per-blocker diagnostics for blocked
+  rewrite authorization and unauthenticated rewrite execution.
 
 ## Follow-up work
 
