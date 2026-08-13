@@ -1667,6 +1667,9 @@ representation.
   blocker before production-readiness diagnostics are reported.
 - Runtime-index member cleanup now ends its audit chain with a report-only promotion checklist that summarizes the
   candidate, edit script, validation, staged apply, module mutation, and production readiness phases.
+- Runtime-index member cleanup now has a disabled report-only promotion seam for real IR mutation. The seam can select
+  the mutation path only after structural checklist readiness and still reports IR mutation and production gates as
+  disabled.
 
 ## Follow-up work
 

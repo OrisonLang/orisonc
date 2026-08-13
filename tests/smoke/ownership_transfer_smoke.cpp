@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 38);
+    assert(runtime_indexed_audit.size() == 39);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -298,6 +298,9 @@ int main() {
     assert(runtime_indexed_audit[36] == runtime_indexed_member_diagnostics[4]);
     assert(runtime_indexed_audit[37] == orison::lowering::runtime_indexed_member_cleanup_promotion_checklist_report(
         runtime_indexed.runtime_indexed_member_cleanup_promotion_checklists.front()
+    ));
+    assert(runtime_indexed_audit[38] == orison::lowering::runtime_indexed_member_cleanup_promotion_seam_report(
+        runtime_indexed.runtime_indexed_member_cleanup_promotion_seams.front()
     ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
@@ -987,6 +990,29 @@ int main() {
         "promotion blocked report-only true production disabled blockers 2 "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
     );
+    auto member_promotion_seam =
+        orison::lowering::runtime_indexed_member_cleanup_promotion_seam(member_promotion_checklist);
+    assert(member_promotion_seam.checklist_ready);
+    assert(member_promotion_seam.mutation_seam_selected);
+    assert(!member_promotion_seam.ir_mutation_enabled);
+    assert(!member_promotion_seam.production_gate_enabled);
+    assert(!member_promotion_seam.promotion_ready);
+    assert(member_promotion_seam.report_only);
+    assert(!member_promotion_seam.production_enabled);
+    assert(member_promotion_seam.blockers.size() == 4);
+    assert(member_promotion_seam.blockers[0] == "member-cleanup-module-mutation");
+    assert(member_promotion_seam.blockers[1] == "production-member-cleanup");
+    assert(member_promotion_seam.blockers[2] == "member-cleanup-ir-mutation");
+    assert(member_promotion_seam.blockers[3] == "production-member-cleanup-ir-mutation");
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_promotion_seam_report(member_promotion_seam) ==
+        "runtime-index member cleanup promotion-seam owner items index (index + zero) "
+        "element Box moved Inner member-path item checklist ready mutation-seam selected "
+        "ir-mutation disabled production-gate disabled promotion blocked report-only true "
+        "production disabled blockers 4 blocker member-cleanup-module-mutation "
+        "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
+        "blocker production-member-cleanup-ir-mutation"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1015,6 +1041,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_module_mutation_gates.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_production_readiness.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_promotion_checklists.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_promotion_seams.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

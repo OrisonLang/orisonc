@@ -2385,3 +2385,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   slices, edit-script validation, staged apply readiness, disabled mutation, and disabled production cleanup.
 - 2026-08-13: Runtime-index member cleanup now emits a final report-only promotion checklist summarizing rewrite
   candidate, edit script, validation, staged apply, module mutation, and production readiness status.
+- 2026-08-13: Runtime-index member cleanup now emits a disabled report-only promotion seam that selects the real IR
+  mutation path only after structural checklist readiness, while production IR mutation remains blocked.

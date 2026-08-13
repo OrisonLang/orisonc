@@ -499,6 +499,24 @@ struct RuntimeIndexedMemberCleanupPromotionChecklist {
     auto operator==(RuntimeIndexedMemberCleanupPromotionChecklist const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupPromotionSeam {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool checklist_ready = false;
+    bool mutation_seam_selected = false;
+    bool ir_mutation_enabled = false;
+    bool production_gate_enabled = false;
+    bool promotion_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupPromotionSeam const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -526,6 +544,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
     std::vector<RuntimeIndexedMemberCleanupPromotionChecklist> runtime_indexed_member_cleanup_promotion_checklists;
+    std::vector<RuntimeIndexedMemberCleanupPromotionSeam> runtime_indexed_member_cleanup_promotion_seams;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -737,6 +756,14 @@ auto runtime_indexed_member_cleanup_promotion_checklist(
 
 auto runtime_indexed_member_cleanup_promotion_checklist_report(
     RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_promotion_seam(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
+) -> RuntimeIndexedMemberCleanupPromotionSeam;
+
+auto runtime_indexed_member_cleanup_promotion_seam_report(
+    RuntimeIndexedMemberCleanupPromotionSeam const& seam
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

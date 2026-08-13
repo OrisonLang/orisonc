@@ -139,6 +139,7 @@ auto record_runtime_indexed_partial_owner(
         member_mutation_gate,
         member_production_readiness
     );
+    auto member_promotion_seam = runtime_indexed_member_cleanup_promotion_seam(member_promotion_checklist);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -171,6 +172,7 @@ auto record_runtime_indexed_partial_owner(
         std::move(member_production_readiness)
     );
     state.runtime_indexed_member_cleanup_promotion_checklists.push_back(std::move(member_promotion_checklist));
+    state.runtime_indexed_member_cleanup_promotion_seams.push_back(std::move(member_promotion_seam));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -1645,6 +1647,71 @@ auto runtime_indexed_member_cleanup_promotion_checklist_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_promotion_seam(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
+) -> RuntimeIndexedMemberCleanupPromotionSeam {
+    auto blockers = checklist.blockers;
+    auto add_blocker = [&](std::string const& blocker) {
+        if (std::find(blockers.begin(), blockers.end(), blocker) == blockers.end()) {
+            blockers.push_back(blocker);
+        }
+    };
+
+    auto checklist_ready =
+        checklist.rewrite_candidate_ready &&
+        checklist.edit_script_ready &&
+        checklist.validation_ready &&
+        checklist.staged_apply_ready;
+    auto mutation_seam_selected = checklist_ready;
+    auto ir_mutation_enabled = false;
+    auto production_gate_enabled = false;
+    if (!ir_mutation_enabled) {
+        add_blocker("member-cleanup-ir-mutation");
+    }
+    if (!production_gate_enabled) {
+        add_blocker("production-member-cleanup-ir-mutation");
+    }
+
+    return RuntimeIndexedMemberCleanupPromotionSeam {
+        .owner_name = checklist.owner_name,
+        .index_expression_text = checklist.index_expression_text,
+        .element_source_type_name = checklist.element_source_type_name,
+        .moved_source_type_name = checklist.moved_source_type_name,
+        .moved_member_path = checklist.moved_member_path,
+        .blockers = std::move(blockers),
+        .checklist_ready = checklist_ready,
+        .mutation_seam_selected = mutation_seam_selected,
+        .ir_mutation_enabled = ir_mutation_enabled,
+        .production_gate_enabled = production_gate_enabled,
+        .promotion_ready = false,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_promotion_seam_report(
+    RuntimeIndexedMemberCleanupPromotionSeam const& seam
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup promotion-seam owner " << seam.owner_name
+           << " index " << seam.index_expression_text
+           << " element " << seam.element_source_type_name
+           << " moved " << seam.moved_source_type_name
+           << " member-path " << dotted_path(seam.moved_member_path)
+           << " checklist " << (seam.checklist_ready ? "ready" : "blocked")
+           << " mutation-seam " << (seam.mutation_seam_selected ? "selected" : "blocked")
+           << " ir-mutation " << (seam.ir_mutation_enabled ? "enabled" : "disabled")
+           << " production-gate " << (seam.production_gate_enabled ? "enabled" : "disabled")
+           << " promotion " << (seam.promotion_ready ? "ready" : "blocked")
+           << " report-only " << (seam.report_only ? "true" : "false")
+           << " production " << (seam.production_enabled ? "enabled" : "disabled")
+           << " blockers " << seam.blockers.size();
+    for (auto const& blocker : seam.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -1782,7 +1849,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans.empty() &&
         state.runtime_indexed_member_cleanup_module_mutation_gates.empty() &&
         state.runtime_indexed_member_cleanup_production_readiness.empty() &&
-        state.runtime_indexed_member_cleanup_promotion_checklists.empty()) {
+        state.runtime_indexed_member_cleanup_promotion_checklists.empty() &&
+        state.runtime_indexed_member_cleanup_promotion_seams.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -1863,6 +1931,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& checklist : state.runtime_indexed_member_cleanup_promotion_checklists) {
         report.push_back(runtime_indexed_member_cleanup_promotion_checklist_report(checklist));
+    }
+    for (auto const& seam : state.runtime_indexed_member_cleanup_promotion_seams) {
+        report.push_back(runtime_indexed_member_cleanup_promotion_seam_report(seam));
     }
     return report;
 }
@@ -1981,7 +2052,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_production_readiness !=
                 merged.runtime_indexed_member_cleanup_production_readiness ||
             branch_states[index].runtime_indexed_member_cleanup_promotion_checklists !=
-                merged.runtime_indexed_member_cleanup_promotion_checklists) {
+                merged.runtime_indexed_member_cleanup_promotion_checklists ||
+            branch_states[index].runtime_indexed_member_cleanup_promotion_seams !=
+                merged.runtime_indexed_member_cleanup_promotion_seams) {
             return std::nullopt;
         }
     }
