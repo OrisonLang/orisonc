@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-12: DynamicArray runtime-index cleanup now distinguishes source expression keys from lowered LLVM index
+  operands. Computed indexes such as `index + zero` lower on the default path, cleanup skips the lowered `%tmp`
+  operand, and reuse diagnostics still report the source key `items[(index + zero)]`.
 - 2026-08-12: DynamicArray runtime-index move tracking now has negative coverage for a valid sibling read followed by
   same computed-index reuse. `items[1].value` remains allowed after moving `items[index]`, while later
   `items[index].value` still reports `use after move: items[index]` on the default path.

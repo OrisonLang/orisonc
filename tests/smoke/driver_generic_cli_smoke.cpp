@@ -303,6 +303,22 @@ void assert_cli_runtime_indexed_dynamic_array_default_sibling_emit_llvm_fixture_
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_dynamic_array_default_computed_sibling_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(" = add i64 %index, %zero") != std::string::npos);
+    assert(output.find("%items.runtime_cleanup.skip_moved = icmp eq i64 %items.runtime_cleanup.index, %tmp") !=
+        std::string::npos);
+    assert(output.find("%items.runtime_cleanup.skip_moved = icmp eq i64 %items.runtime_cleanup.index, %(index + zero)") ==
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, ") !=
+        std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3702,6 +3718,19 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
         "use after move: items[index]"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or"
+    );
+    assert_cli_runtime_indexed_dynamic_array_default_computed_sibling_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
+        "use after move: items[(index + zero)]"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
         executable,

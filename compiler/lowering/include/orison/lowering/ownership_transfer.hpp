@@ -111,6 +111,7 @@ struct RuntimeIndexedCleanupCapability {
 struct RuntimeIndexedCleanupIrPlan {
     std::string owner_name;
     std::string index_expression_text;
+    std::string index_operand_value;
     std::string element_source_type_name;
     std::string element_llvm_type_name;
     std::string owner_llvm_type_name;

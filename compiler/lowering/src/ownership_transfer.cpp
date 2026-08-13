@@ -411,6 +411,9 @@ auto render_runtime_indexed_cleanup_ir_plan(
     auto const length_operand = plan.static_length_ready
         ? plan.static_length_value
         : plan.length_value_name;
+    auto const index_operand = plan.index_operand_value.empty()
+        ? "%" + plan.index_expression_text
+        : plan.index_operand_value;
     lines.insert(lines.end(), {
         "  br label %" + plan.condition_block_name + "\n",
         plan.condition_block_name + ":\n",
@@ -423,7 +426,7 @@ auto render_runtime_indexed_cleanup_ir_plan(
             ", label %" + plan.exit_block_name + "\n",
         plan.live_check_block_name + ":\n",
         "  " + plan.skip_check_name + " = icmp eq i64 " + plan.cleanup_index_name +
-            ", %" + plan.index_expression_text + "\n",
+            ", " + index_operand + "\n",
         "  br i1 " + plan.skip_check_name + ", label %" + plan.skip_block_name +
             ", label %" + plan.drop_block_name + "\n",
         plan.skip_block_name + ":\n",

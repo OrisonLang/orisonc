@@ -63,6 +63,91 @@ auto moved_owned_dynamic_array_binding_name(
     return name;
 }
 
+auto runtime_index_expression_key(
+    syntax::ExpressionSyntax const& expression
+) -> std::string {
+    using syntax::ExpressionKind;
+    switch (expression.kind) {
+    case ExpressionKind::name:
+    case ExpressionKind::integer_literal:
+    case ExpressionKind::float_literal:
+    case ExpressionKind::string_literal:
+    case ExpressionKind::boolean_literal:
+        return expression.text;
+    case ExpressionKind::array_literal: {
+        auto rendered = std::string {"["};
+        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+            if (index != 0) {
+                rendered += ", ";
+            }
+            rendered += runtime_index_expression_key(expression.arguments[index]);
+        }
+        rendered += "]";
+        return rendered;
+    }
+    case ExpressionKind::unary:
+        if (expression.left == nullptr) {
+            return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+        }
+        if (expression.text == "not" || expression.text == "bit_not" || expression.text == "await") {
+            return expression.text + " " + runtime_index_expression_key(*expression.left);
+        }
+        return expression.text + runtime_index_expression_key(*expression.left);
+    case ExpressionKind::cast:
+        if (expression.left == nullptr) {
+            return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+        }
+        return runtime_index_expression_key(*expression.left) + " as " + expression.text;
+    case ExpressionKind::call: {
+        if (expression.left == nullptr) {
+            return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+        }
+        auto rendered = runtime_index_expression_key(*expression.left) + "(";
+        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+            if (index != 0) {
+                rendered += ", ";
+            }
+            rendered += runtime_index_expression_key(expression.arguments[index]);
+        }
+        rendered += ")";
+        return rendered;
+    }
+    case ExpressionKind::member_access:
+        if (expression.left == nullptr) {
+            return expression.text;
+        }
+        return runtime_index_expression_key(*expression.left) + "." + expression.text;
+    case ExpressionKind::null_safe_member_access:
+        if (expression.left == nullptr) {
+            return expression.text;
+        }
+        return runtime_index_expression_key(*expression.left) + "?." + expression.text;
+    case ExpressionKind::index_access:
+        if (expression.left == nullptr || expression.arguments.empty()) {
+            return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+        }
+        return runtime_index_expression_key(*expression.left) + "[" +
+            runtime_index_expression_key(expression.arguments.front()) + "]";
+    case ExpressionKind::binary:
+        if (expression.left == nullptr || expression.right == nullptr) {
+            return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+        }
+        return "(" + runtime_index_expression_key(*expression.left) + " " + expression.text + " " +
+            runtime_index_expression_key(*expression.right) + ")";
+    case ExpressionKind::ternary:
+        if (expression.left == nullptr || expression.right == nullptr || expression.alternate == nullptr) {
+            return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+        }
+        return "(" + runtime_index_expression_key(*expression.left) + " ? " +
+            runtime_index_expression_key(*expression.right) + " : " +
+            runtime_index_expression_key(*expression.alternate) + ")";
+    case ExpressionKind::task:
+    case ExpressionKind::thread:
+        return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+    }
+    return expression.text.empty() ? std::string {"<computed>"} : expression.text;
+}
+
 auto record_use_after_move_failure(
     LoweringFailures& failures,
     std::string_view owner_name
@@ -268,9 +353,7 @@ auto consumed_owned_aggregate_path_name(
         if (step.index_expression == nullptr) {
             break;
         }
-        auto const index_expression_text = step.index_expression->text.empty()
-            ? std::string {"<computed>"}
-            : step.index_expression->text;
+        auto const index_expression_text = runtime_index_expression_key(*step.index_expression);
         for (auto const& owner : state.ownership_transfers.runtime_indexed_partial_owners) {
             if (owner.constructor_move_enabled &&
                 owner.owner_name == runtime_owner_name &&
@@ -509,9 +592,7 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
 
         moved_source_type_name = *element_source_type;
         current_source_type_name = std::move(*element_source_type);
-        auto const index_expression_text = step.index_expression->text.empty()
-            ? std::string {"<computed>"}
-            : step.index_expression->text;
+        auto const index_expression_text = runtime_index_expression_key(*step.index_expression);
         for (auto remaining_step_index = step_index + 1;
              remaining_step_index < path->steps.size();
              ++remaining_step_index) {
@@ -724,6 +805,27 @@ void retarget_runtime_indexed_constructor_cleanup_predecessor(
         auto const plan_key = plan.owner_name + "[" + plan.index_expression_text + "]";
         if (plan_key == *key) {
             plan.function_predecessor_block_name = predecessor_block_name;
+        }
+    }
+}
+
+void retarget_runtime_indexed_constructor_cleanup_index_operand(
+    FunctionLoweringState& state,
+    std::string_view key,
+    std::string const& index_operand_value
+) {
+    if (key.empty() || index_operand_value.empty()) {
+        return;
+    }
+    for (auto& plan : state.ownership_transfers.runtime_indexed_cleanup_emission_plans) {
+        auto const plan_key = plan.owner_name + "[" + plan.index_expression_text + "]";
+        if (plan_key != key) {
+            continue;
+        }
+        plan.ir_plan.index_operand_value = index_operand_value;
+        if (plan.ir_plan.complete) {
+            plan.gated_ir_slice_lines = render_runtime_indexed_cleanup_ir_plan(plan.ir_plan);
+            plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
         }
     }
 }
@@ -2888,9 +2990,7 @@ auto lower_dynamic_array_index_read(
     if (!element_source_type.has_value()) {
         return std::nullopt;
     }
-    auto const index_expression_text = expression.arguments.front().text.empty()
-        ? std::string {"<computed>"}
-        : expression.arguments.front().text;
+    auto const index_expression_text = runtime_index_expression_key(expression.arguments.front());
     auto const runtime_index_constructor_move_recorded =
         std::ranges::any_of(
             session.state.ownership_transfers.runtime_indexed_partial_owners,
@@ -2955,6 +3055,11 @@ auto lower_dynamic_array_index_read(
     if (!lowered_index.has_value()) {
         return std::nullopt;
     }
+    retarget_runtime_indexed_constructor_cleanup_index_operand(
+        session.state,
+        runtime_index_constructor_argument_key,
+        lowered_index->value
+    );
 
     auto prefix = "%" + owner_name + ".dynamic_array_index" +
         std::to_string(session.state.next_temporary_index++);
@@ -3040,9 +3145,7 @@ auto lower_dynamic_array_element_path_read(
         !is_owned_transfer_source_type(*element_source_type, context.lowering)) {
         return std::nullopt;
     }
-    auto const index_expression_text = path->steps.front().index_expression->text.empty()
-        ? std::string {"<computed>"}
-        : path->steps.front().index_expression->text;
+    auto const index_expression_text = runtime_index_expression_key(*path->steps.front().index_expression);
     auto const runtime_index_constructor_move_recorded =
         std::ranges::any_of(
             session.state.ownership_transfers.runtime_indexed_partial_owners,
