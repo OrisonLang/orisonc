@@ -430,6 +430,7 @@ int main() {
         .owner_address_name = "%items.addr",
         .element_size_value = "4",
         .moved_source_type_name = "Inner",
+        .moved_member_path = {"item"},
         .cleanup_strategy = "skip-moved-element",
         .constructor_move_enabled = true,
     };
@@ -469,6 +470,23 @@ int main() {
     assert(!member_transfer_emission_plan.production_enabled);
     assert(member_transfer_emission_plan.operation_names.empty());
     assert(member_transfer_emission_plan.gated_ir_slice_lines.empty());
+    auto member_cleanup_plan = orison::lowering::runtime_indexed_member_cleanup_plan(member_transfer_owner);
+    assert(member_cleanup_plan.owner_known);
+    assert(member_cleanup_plan.index_known);
+    assert(member_cleanup_plan.element_type_known);
+    assert(member_cleanup_plan.moved_type_known);
+    assert(member_cleanup_plan.moved_member_path_known);
+    assert(!member_cleanup_plan.cleanup_element_matches_move);
+    assert(member_cleanup_plan.member_granular_cleanup_required);
+    assert(!member_cleanup_plan.prerequisites_met);
+    assert(!member_cleanup_plan.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_plan_report(member_cleanup_plan) ==
+        "runtime-index member cleanup owner items index (index + zero) element Box moved Inner "
+        "member-path item owner-known true index-known true element-type-known true "
+        "moved-type-known true member-path-known true cleanup-element-matches-move false "
+        "member-granular-required true prerequisites missing production disabled"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,

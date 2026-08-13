@@ -443,6 +443,7 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
     auto owner_address_ir_lines = std::vector<std::string> {};
     auto current_source_type_name = owner_source_type->second;
     auto moved_source_type_name = std::optional<std::string> {};
+    auto moved_member_path = std::vector<std::string> {};
     for (auto step_index = std::size_t {0}; step_index < path->steps.size(); ++step_index) {
         auto const& step = path->steps[step_index];
         if (step.kind == AggregatePathStepKind::member) {
@@ -524,6 +525,7 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
                 }
                 current_source_type_name = field->source_type_name;
                 moved_source_type_name = current_source_type_name;
+                moved_member_path.push_back(remaining_step.field_name);
                 continue;
             }
 
@@ -536,6 +538,7 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
             }
             current_source_type_name = std::move(*nested_element_source_type);
             moved_source_type_name = current_source_type_name;
+            moved_member_path.push_back("[]");
         }
 
         if (!moved_source_type_name.has_value() || *moved_source_type_name != expected_source_type) {
@@ -565,6 +568,7 @@ auto runtime_indexed_partial_owner_for_constructor_argument(
                 ? std::to_string(*element_size_bytes)
                 : std::string {},
             .moved_source_type_name = std::move(*moved_source_type_name),
+            .moved_member_path = std::move(moved_member_path),
             .cleanup_strategy = "skip-moved-element",
             .constructor_move_enabled = false,
         };

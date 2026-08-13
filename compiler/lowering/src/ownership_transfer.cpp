@@ -59,6 +59,20 @@ auto is_owned_transfer_source_type_impl(
     return true;
 }
 
+auto dotted_path(std::vector<std::string> const& path) -> std::string {
+    if (path.empty()) {
+        return "none";
+    }
+    auto output = std::ostringstream {};
+    for (auto index = std::size_t {0}; index < path.size(); ++index) {
+        if (index != 0) {
+            output << ".";
+        }
+        output << path[index];
+    }
+    return output.str();
+}
+
 }  // namespace
 
 auto mark_owned_binding_consumed(
@@ -379,6 +393,65 @@ auto runtime_indexed_cleanup_emission_plan(
         plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
     }
     return plan;
+}
+
+auto runtime_indexed_member_cleanup_plan(
+    RuntimeIndexedPartialOwner const& owner
+) -> RuntimeIndexedMemberCleanupPlan {
+    auto owner_known = !owner.owner_name.empty();
+    auto index_known = !owner.index_expression_text.empty() && owner.index_expression_text != "<computed>";
+    auto element_type_known = !owner.element_source_type_name.empty();
+    auto moved_type_known = !owner.moved_source_type_name.empty();
+    auto moved_member_path_known = !owner.moved_member_path.empty();
+    auto cleanup_element_matches_move = element_type_known &&
+        moved_type_known &&
+        owner.element_source_type_name == owner.moved_source_type_name;
+    auto member_granular_cleanup_required =
+        moved_member_path_known && !cleanup_element_matches_move;
+    return RuntimeIndexedMemberCleanupPlan {
+        .owner_name = owner.owner_name,
+        .index_expression_text = owner.index_expression_text,
+        .element_source_type_name = owner.element_source_type_name,
+        .moved_source_type_name = owner.moved_source_type_name,
+        .moved_member_path = owner.moved_member_path,
+        .owner_known = owner_known,
+        .index_known = index_known,
+        .element_type_known = element_type_known,
+        .moved_type_known = moved_type_known,
+        .moved_member_path_known = moved_member_path_known,
+        .cleanup_element_matches_move = cleanup_element_matches_move,
+        .member_granular_cleanup_required = member_granular_cleanup_required,
+        .prerequisites_met = owner_known &&
+            index_known &&
+            element_type_known &&
+            moved_type_known &&
+            moved_member_path_known &&
+            cleanup_element_matches_move,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_plan_report(
+    RuntimeIndexedMemberCleanupPlan const& plan
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup owner " << plan.owner_name
+           << " index " << plan.index_expression_text
+           << " element " << plan.element_source_type_name
+           << " moved " << plan.moved_source_type_name
+           << " member-path " << dotted_path(plan.moved_member_path)
+           << " owner-known " << (plan.owner_known ? "true" : "false")
+           << " index-known " << (plan.index_known ? "true" : "false")
+           << " element-type-known " << (plan.element_type_known ? "true" : "false")
+           << " moved-type-known " << (plan.moved_type_known ? "true" : "false")
+           << " member-path-known " << (plan.moved_member_path_known ? "true" : "false")
+           << " cleanup-element-matches-move "
+           << (plan.cleanup_element_matches_move ? "true" : "false")
+           << " member-granular-required "
+           << (plan.member_granular_cleanup_required ? "true" : "false")
+           << " prerequisites " << (plan.prerequisites_met ? "met" : "missing")
+           << " production " << (plan.production_enabled ? "enabled" : "disabled");
+    return report.str();
 }
 
 auto render_runtime_indexed_cleanup_ir_plan(

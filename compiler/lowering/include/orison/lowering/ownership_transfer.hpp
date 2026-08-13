@@ -23,6 +23,7 @@ struct RuntimeIndexedPartialOwner {
     std::string static_length_value;
     std::string element_size_value;
     std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
     std::string cleanup_strategy;
     bool constructor_move_enabled = false;
     std::size_t source_line = 0;
@@ -191,6 +192,25 @@ struct RuntimeIndexedCleanupEmissionPlan {
     auto operator==(RuntimeIndexedCleanupEmissionPlan const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    bool owner_known = false;
+    bool index_known = false;
+    bool element_type_known = false;
+    bool moved_type_known = false;
+    bool moved_member_path_known = false;
+    bool cleanup_element_matches_move = false;
+    bool member_granular_cleanup_required = false;
+    bool prerequisites_met = false;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupPlan const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -263,6 +283,14 @@ auto runtime_indexed_cleanup_emission_plan(
     RuntimeIndexedCleanupEmissionSketch const& sketch,
     bool production_cleanup_emission_enabled = false
 ) -> RuntimeIndexedCleanupEmissionPlan;
+
+auto runtime_indexed_member_cleanup_plan(
+    RuntimeIndexedPartialOwner const& owner
+) -> RuntimeIndexedMemberCleanupPlan;
+
+auto runtime_indexed_member_cleanup_plan_report(
+    RuntimeIndexedMemberCleanupPlan const& plan
+) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
