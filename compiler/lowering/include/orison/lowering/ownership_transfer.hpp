@@ -414,6 +414,30 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation {
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string insertion_anchor;
+    std::string entry_block_name;
+    std::string exit_block_name;
+    std::vector<std::string> blockers;
+    bool validation_ready = false;
+    bool branch_replacement_planned = false;
+    bool cleanup_cfg_append_planned = false;
+    bool phi_retarget_planned = false;
+    bool staged_apply_ready = false;
+    bool branch_replacement_applied = false;
+    bool cleanup_cfg_appended = false;
+    bool phi_retarget_applied = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupModuleMutationGate {
     std::string owner_name;
     std::string index_expression_text;
@@ -476,6 +500,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation>
         runtime_indexed_member_cleanup_function_rewrite_edit_script_validations;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan>
+        runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans;
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
 };
@@ -636,6 +662,14 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_repo
 auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_diagnostics(
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan(
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
+) -> RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan;
+
+auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& plan
+) -> std::string;
 
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,

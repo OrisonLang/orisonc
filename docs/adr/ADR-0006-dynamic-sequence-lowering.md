@@ -1657,6 +1657,8 @@ representation.
   keeping validated report-only rewrite plans separate from disabled production mutation.
 - Runtime-index member cleanup edit-script validation diagnostics now distinguish structural blockers from the
   validated-but-production-disabled state, so readiness reports can separate correctness gaps from gate policy.
+- Runtime-index member cleanup now derives a report-only staged-apply plan from validated edit scripts, tracking
+  branch replacement, cleanup CFG append, and PHI retarget planning separately from disabled IR mutation.
 
 ## Follow-up work
 
