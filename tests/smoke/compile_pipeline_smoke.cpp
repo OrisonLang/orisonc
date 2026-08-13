@@ -6931,7 +6931,7 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 16);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 21);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -6996,6 +6996,36 @@ auto main() -> int {
         "module-mutation blocked production-member-cleanup blocked production blocked blockers 5 "
         "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[16] ==
+        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+        "moved Inner member-path none blocker member-cleanup-proof "
+        "detail member cleanup proof is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[17] ==
+        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+        "moved Inner member-path none blocker member-drop-metadata "
+        "detail member Drop metadata is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[18] ==
+        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+        "moved Inner member-path none blocker member-cleanup-cfg-slice "
+        "detail member cleanup CFG slice is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[19] ==
+        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+        "moved Inner member-path none blocker member-cleanup-module-mutation "
+        "detail member cleanup module mutation is disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[20] ==
+        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+        "moved Inner member-path none blocker production-member-cleanup "
+        "detail production member cleanup is disabled"
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

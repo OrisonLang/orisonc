@@ -27,6 +27,8 @@
   slice and reports missing slice, disabled module mutation, and disabled production member cleanup blockers.
 - 2026-08-13: runtime-index member cleanup now has a non-mutating production-readiness report aggregating proof,
   target metadata, CFG slice, module mutation, and production-member-cleanup readiness.
+- 2026-08-13: runtime-index member cleanup production-readiness blockers now render stable diagnostic detail lines
+  for proof, Drop metadata, CFG slice, module mutation, and production-member-cleanup blockers.
 - 2026-08-13: source-derived record Drop definitions now emit nested source Drop dependencies before the definitions
   that call them, preventing undeclared nested Drop calls in runtime-index cleanup fixtures.
 - 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.

@@ -546,6 +546,10 @@ auto runtime_indexed_member_cleanup_production_readiness_report(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness
 ) -> std::string;
 
+auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
+    RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> std::vector<std::string>;
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string>;
