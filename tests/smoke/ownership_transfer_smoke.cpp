@@ -99,6 +99,7 @@ int main() {
         ) ==
         "runtime-index cleanup proof owner holder.items index index element Inner moved Inner "
         "operation skip-moved-element owner-known true index-known true type-match true "
+        "member-proof-ready false member-blocks-whole-element false "
         "operation-supported true prerequisites met lowering disabled"
     );
     auto missing_index_plan = runtime_indexed.runtime_indexed_cleanup_skip_plans.front();
@@ -445,6 +446,8 @@ int main() {
     assert(member_transfer_gate.owner_known);
     assert(member_transfer_gate.index_known);
     assert(!member_transfer_gate.type_match);
+    assert(member_transfer_gate.member_cleanup_proof_ready);
+    assert(member_transfer_gate.member_cleanup_blocks_whole_element);
     assert(member_transfer_gate.operation_supported);
     assert(!member_transfer_gate.prerequisites_met);
     assert(!member_transfer_gate.lowering_enabled);
@@ -452,6 +455,7 @@ int main() {
         orison::lowering::runtime_indexed_cleanup_proof_gate_report(member_transfer_gate) ==
         "runtime-index cleanup proof owner items index (index + zero) element Box moved Inner "
         "operation skip-moved-element owner-known true index-known true type-match false "
+        "member-proof-ready true member-blocks-whole-element true "
         "operation-supported true prerequisites missing lowering disabled"
     );
     auto member_transfer_sketch =

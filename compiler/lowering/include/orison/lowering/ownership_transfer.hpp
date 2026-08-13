@@ -42,6 +42,7 @@ struct RuntimeIndexedCleanupSkipPlan {
     std::string static_length_value;
     std::string element_size_value;
     std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
     std::string cleanup_operation;
     bool production_cleanup_enabled = false;
     std::size_t source_line = 0;
@@ -64,6 +65,8 @@ struct RuntimeIndexedCleanupProofGate {
     bool owner_known = false;
     bool index_known = false;
     bool type_match = false;
+    bool member_cleanup_proof_ready = false;
+    bool member_cleanup_blocks_whole_element = false;
     bool operation_supported = false;
     bool prerequisites_met = false;
     bool lowering_enabled = false;

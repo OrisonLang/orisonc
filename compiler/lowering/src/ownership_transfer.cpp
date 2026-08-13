@@ -141,6 +141,7 @@ auto runtime_indexed_cleanup_skip_plan(
         .static_length_value = owner.static_length_value,
         .element_size_value = owner.element_size_value,
         .moved_source_type_name = owner.moved_source_type_name,
+        .moved_member_path = owner.moved_member_path,
         .cleanup_operation = owner.cleanup_strategy,
         .production_cleanup_enabled = false,
         .source_line = owner.source_line,
@@ -168,6 +169,24 @@ auto runtime_indexed_cleanup_proof_gate(
     auto type_match = !plan.element_source_type_name.empty() &&
         !plan.element_llvm_type_name.empty() &&
         plan.element_source_type_name == plan.moved_source_type_name;
+    auto member_cleanup_plan = runtime_indexed_member_cleanup_plan(
+        RuntimeIndexedPartialOwner {
+            .owner_name = plan.owner_name,
+            .index_expression_text = plan.index_expression_text,
+            .element_source_type_name = plan.element_source_type_name,
+            .element_llvm_type_name = plan.element_llvm_type_name,
+            .owner_llvm_type_name = plan.owner_llvm_type_name,
+            .owner_address_name = plan.owner_address_name,
+            .owner_address_ir_lines = plan.owner_address_ir_lines,
+            .static_length_value = plan.static_length_value,
+            .element_size_value = plan.element_size_value,
+            .moved_source_type_name = plan.moved_source_type_name,
+            .moved_member_path = plan.moved_member_path,
+            .cleanup_strategy = plan.cleanup_operation,
+            .source_line = plan.source_line,
+        }
+    );
+    auto member_cleanup_proof = runtime_indexed_member_cleanup_proof(member_cleanup_plan);
     auto operation_supported = plan.cleanup_operation == "skip-moved-element";
     return RuntimeIndexedCleanupProofGate {
         .owner_name = plan.owner_name,
@@ -184,6 +203,8 @@ auto runtime_indexed_cleanup_proof_gate(
         .owner_known = owner_known,
         .index_known = index_known,
         .type_match = type_match,
+        .member_cleanup_proof_ready = member_cleanup_proof.prerequisites_met,
+        .member_cleanup_blocks_whole_element = member_cleanup_proof.whole_element_cleanup_blocked,
         .operation_supported = operation_supported,
         .prerequisites_met = owner_known && index_known && type_match && operation_supported,
         .lowering_enabled = false,
@@ -203,6 +224,9 @@ auto runtime_indexed_cleanup_proof_gate_report(
            << " owner-known " << (gate.owner_known ? "true" : "false")
            << " index-known " << (gate.index_known ? "true" : "false")
            << " type-match " << (gate.type_match ? "true" : "false")
+           << " member-proof-ready " << (gate.member_cleanup_proof_ready ? "true" : "false")
+           << " member-blocks-whole-element "
+           << (gate.member_cleanup_blocks_whole_element ? "true" : "false")
            << " operation-supported " << (gate.operation_supported ? "true" : "false")
            << " prerequisites " << (gate.prerequisites_met ? "met" : "missing")
            << " lowering " << (gate.lowering_enabled ? "enabled" : "disabled");
