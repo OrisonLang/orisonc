@@ -272,6 +272,8 @@ representation.
   sibling-drop, preserve, and exit topology before any production member-cleanup CFG mutation is allowed.
 - Runtime-index member cleanup now has a report-only CFG slice renderer. The rendered slice names the verified blocks
   and branch shape as audit text while keeping module mutation and production emission disabled.
+- Runtime-index member cleanup now has a disabled module-mutation gate. It consumes the report-only CFG slice and
+  reports missing slice, disabled module mutation, and disabled production member cleanup as explicit blockers.
 - Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
   cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`

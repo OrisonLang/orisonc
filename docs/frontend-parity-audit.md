@@ -23,6 +23,8 @@
   anchor-to-entry, skip, sibling-drop, preserve, and exit topology while production emission remains disabled.
 - 2026-08-13: runtime-index member cleanup now has a report-only CFG slice renderer for the verified topology. The
   slice is audit text only and still cannot mutate module IR.
+- 2026-08-13: runtime-index member cleanup now has a disabled module-mutation gate that consumes the rendered CFG
+  slice and reports missing slice, disabled module mutation, and disabled production member cleanup blockers.
 - 2026-08-13: source-derived record Drop definitions now emit nested source Drop dependencies before the definitions
   that call them, preventing undeclared nested Drop calls in runtime-index cleanup fixtures.
 - 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.

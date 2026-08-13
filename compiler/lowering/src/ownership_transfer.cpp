@@ -111,6 +111,8 @@ auto record_runtime_indexed_partial_owner(
     auto member_composition_plan =
         runtime_indexed_member_cleanup_ir_composition_plan(member_insertion_plan);
     auto member_cfg_slice = runtime_indexed_member_cleanup_cfg_slice(member_composition_plan);
+    auto member_mutation_gate =
+        runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -126,6 +128,7 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_ir_insertion_plans.push_back(std::move(member_insertion_plan));
     state.runtime_indexed_member_cleanup_ir_composition_plans.push_back(std::move(member_composition_plan));
     state.runtime_indexed_member_cleanup_cfg_slices.push_back(std::move(member_cfg_slice));
+    state.runtime_indexed_member_cleanup_module_mutation_gates.push_back(std::move(member_mutation_gate));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -923,6 +926,66 @@ auto runtime_indexed_member_cleanup_cfg_slice_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_module_mutation_gate(
+    RuntimeIndexedMemberCleanupCfgSlice const& slice
+) -> RuntimeIndexedMemberCleanupModuleMutationGate {
+    auto blockers = std::vector<std::string> {};
+    if (!slice.slice_rendered) {
+        blockers.push_back("member-cleanup-cfg-slice");
+    }
+    blockers.push_back("member-cleanup-module-mutation");
+    blockers.push_back("production-member-cleanup");
+
+    return RuntimeIndexedMemberCleanupModuleMutationGate {
+        .owner_name = slice.owner_name,
+        .index_expression_text = slice.index_expression_text,
+        .element_source_type_name = slice.element_source_type_name,
+        .moved_source_type_name = slice.moved_source_type_name,
+        .moved_member_path = slice.moved_member_path,
+        .insertion_anchor = slice.insertion_anchor,
+        .entry_block_name = slice.entry_block_name,
+        .skip_block_name = slice.skip_block_name,
+        .sibling_drop_block_name = slice.sibling_drop_block_name,
+        .preserve_block_name = slice.preserve_block_name,
+        .exit_block_name = slice.exit_block_name,
+        .blockers = std::move(blockers),
+        .cfg_slice_ready = slice.slice_rendered,
+        .module_mutation_enabled = false,
+        .production_member_cleanup_enabled = false,
+        .prerequisites_met = false,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_module_mutation_gate_report(
+    RuntimeIndexedMemberCleanupModuleMutationGate const& gate
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup module-mutation-gate owner " << gate.owner_name
+           << " index " << gate.index_expression_text
+           << " element " << gate.element_source_type_name
+           << " moved " << gate.moved_source_type_name
+           << " member-path " << dotted_path(gate.moved_member_path)
+           << " anchor " << (gate.insertion_anchor.empty() ? "missing" : gate.insertion_anchor)
+           << " entry " << (gate.entry_block_name.empty() ? "missing" : gate.entry_block_name)
+           << " skip " << (gate.skip_block_name.empty() ? "missing" : gate.skip_block_name)
+           << " sibling-drop "
+           << (gate.sibling_drop_block_name.empty() ? "missing" : gate.sibling_drop_block_name)
+           << " preserve " << (gate.preserve_block_name.empty() ? "missing" : gate.preserve_block_name)
+           << " exit " << (gate.exit_block_name.empty() ? "missing" : gate.exit_block_name)
+           << " cfg-slice " << (gate.cfg_slice_ready ? "ready" : "missing")
+           << " module-mutation " << (gate.module_mutation_enabled ? "enabled" : "disabled")
+           << " production-member-cleanup "
+           << (gate.production_member_cleanup_enabled ? "enabled" : "disabled")
+           << " prerequisites " << (gate.prerequisites_met ? "met" : "missing")
+           << " production " << (gate.production_enabled ? "enabled" : "disabled")
+           << " blockers " << gate.blockers.size();
+    for (auto const& blocker : gate.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -1053,7 +1116,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_emission_gates.empty() &&
         state.runtime_indexed_member_cleanup_ir_insertion_plans.empty() &&
         state.runtime_indexed_member_cleanup_ir_composition_plans.empty() &&
-        state.runtime_indexed_member_cleanup_cfg_slices.empty()) {
+        state.runtime_indexed_member_cleanup_cfg_slices.empty() &&
+        state.runtime_indexed_member_cleanup_module_mutation_gates.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -1104,6 +1168,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& slice : state.runtime_indexed_member_cleanup_cfg_slices) {
         report.push_back(runtime_indexed_member_cleanup_cfg_slice_report(slice));
+    }
+    for (auto const& gate : state.runtime_indexed_member_cleanup_module_mutation_gates) {
+        report.push_back(runtime_indexed_member_cleanup_module_mutation_gate_report(gate));
     }
     return report;
 }
@@ -1208,7 +1275,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_ir_composition_plans !=
                 merged.runtime_indexed_member_cleanup_ir_composition_plans ||
             branch_states[index].runtime_indexed_member_cleanup_cfg_slices !=
-                merged.runtime_indexed_member_cleanup_cfg_slices) {
+                merged.runtime_indexed_member_cleanup_cfg_slices ||
+            branch_states[index].runtime_indexed_member_cleanup_module_mutation_gates !=
+                merged.runtime_indexed_member_cleanup_module_mutation_gates) {
             return std::nullopt;
         }
     }
