@@ -2381,3 +2381,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   keeping staged planning separate from disabled IR mutation.
 - 2026-08-13: Runtime-index member cleanup staged-apply blockers now emit report-only diagnostics, separating
   validation-blocked staged planning from ready staged plans held at the disabled production mutation gate.
+- 2026-08-13: Runtime-index member cleanup module-mutation blockers now emit report-only diagnostics for missing CFG
+  slices, edit-script validation, staged apply readiness, disabled mutation, and disabled production cleanup.

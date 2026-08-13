@@ -686,6 +686,10 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_report(
     RuntimeIndexedMemberCleanupModuleMutationGate const& gate
 ) -> std::string;
 
+auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
+    RuntimeIndexedMemberCleanupModuleMutationGate const& gate
+) -> std::vector<std::string>;
+
 auto runtime_indexed_member_cleanup_production_readiness(
     RuntimeIndexedMemberCleanupProof const& proof,
     std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,

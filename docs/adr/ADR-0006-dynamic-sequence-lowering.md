@@ -1663,6 +1663,8 @@ representation.
   keeping validated staged plans separate from disabled production IR mutation.
 - Runtime-index member cleanup staged-apply plans now emit report-only diagnostics for staged planning blockers and
   production-disabled policy blockers as separate audit lines.
+- Runtime-index member cleanup module-mutation gates now emit report-only diagnostics for each prerequisite and policy
+  blocker before production-readiness diagnostics are reported.
 
 ## Follow-up work
 

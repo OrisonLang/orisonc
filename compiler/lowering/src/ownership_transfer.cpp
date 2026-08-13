@@ -1403,6 +1403,38 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
+    RuntimeIndexedMemberCleanupModuleMutationGate const& gate
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& blocker : gate.blockers) {
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup module-mutation diagnostic owner "
+                   << gate.owner_name
+                   << " index " << gate.index_expression_text
+                   << " element " << gate.element_source_type_name
+                   << " moved " << gate.moved_source_type_name
+                   << " member-path " << dotted_path(gate.moved_member_path)
+                   << " blocker " << blocker
+                   << " detail ";
+        if (blocker == "member-cleanup-cfg-slice") {
+            diagnostic << "member cleanup module mutation is blocked by missing CFG slice";
+        } else if (blocker == "member-cleanup-edit-script-validation") {
+            diagnostic << "member cleanup module mutation is blocked by edit script validation";
+        } else if (blocker == "member-cleanup-staged-apply") {
+            diagnostic << "member cleanup module mutation is blocked by staged apply readiness";
+        } else if (blocker == "member-cleanup-module-mutation") {
+            diagnostic << "member cleanup module mutation is disabled";
+        } else if (blocker == "production-member-cleanup") {
+            diagnostic << "production member cleanup is disabled";
+        } else {
+            diagnostic << "member cleanup module mutation is blocked";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto runtime_indexed_member_cleanup_production_readiness(
     RuntimeIndexedMemberCleanupProof const& proof,
     std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,
@@ -1720,6 +1752,8 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& gate : state.runtime_indexed_member_cleanup_module_mutation_gates) {
         report.push_back(runtime_indexed_member_cleanup_module_mutation_gate_report(gate));
+        auto diagnostics = runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(gate);
+        report.insert(report.end(), diagnostics.begin(), diagnostics.end());
     }
     for (auto const& readiness : state.runtime_indexed_member_cleanup_production_readiness) {
         report.push_back(runtime_indexed_member_cleanup_production_readiness_report(readiness));

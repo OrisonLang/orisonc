@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 32);
+    assert(runtime_indexed_audit.size() == 37);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -273,7 +273,17 @@ int main() {
     assert(runtime_indexed_audit[25] == orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate_report(
         runtime_indexed.runtime_indexed_member_cleanup_module_mutation_gates.front()
     ));
-    assert(runtime_indexed_audit[26] == orison::lowering::runtime_indexed_member_cleanup_production_readiness_report(
+    auto runtime_indexed_module_mutation_diagnostics =
+        orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
+            runtime_indexed.runtime_indexed_member_cleanup_module_mutation_gates.front()
+        );
+    assert(runtime_indexed_module_mutation_diagnostics.size() == 5);
+    assert(runtime_indexed_audit[26] == runtime_indexed_module_mutation_diagnostics[0]);
+    assert(runtime_indexed_audit[27] == runtime_indexed_module_mutation_diagnostics[1]);
+    assert(runtime_indexed_audit[28] == runtime_indexed_module_mutation_diagnostics[2]);
+    assert(runtime_indexed_audit[29] == runtime_indexed_module_mutation_diagnostics[3]);
+    assert(runtime_indexed_audit[30] == runtime_indexed_module_mutation_diagnostics[4]);
+    assert(runtime_indexed_audit[31] == orison::lowering::runtime_indexed_member_cleanup_production_readiness_report(
         runtime_indexed.runtime_indexed_member_cleanup_production_readiness.front()
     ));
     auto runtime_indexed_member_diagnostics =
@@ -281,11 +291,11 @@ int main() {
             runtime_indexed.runtime_indexed_member_cleanup_production_readiness.front()
     );
     assert(runtime_indexed_member_diagnostics.size() == 5);
-    assert(runtime_indexed_audit[27] == runtime_indexed_member_diagnostics[0]);
-    assert(runtime_indexed_audit[28] == runtime_indexed_member_diagnostics[1]);
-    assert(runtime_indexed_audit[29] == runtime_indexed_member_diagnostics[2]);
-    assert(runtime_indexed_audit[30] == runtime_indexed_member_diagnostics[3]);
-    assert(runtime_indexed_audit[31] == runtime_indexed_member_diagnostics[4]);
+    assert(runtime_indexed_audit[32] == runtime_indexed_member_diagnostics[0]);
+    assert(runtime_indexed_audit[33] == runtime_indexed_member_diagnostics[1]);
+    assert(runtime_indexed_audit[34] == runtime_indexed_member_diagnostics[2]);
+    assert(runtime_indexed_audit[35] == runtime_indexed_member_diagnostics[3]);
+    assert(runtime_indexed_audit[36] == runtime_indexed_member_diagnostics[4]);
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch
@@ -886,6 +896,23 @@ int main() {
         "exit items.member_cleanup.exit cfg-slice ready edit-script-validation ready staged-apply ready "
         "module-mutation disabled production-member-cleanup disabled prerequisites missing production disabled blockers 2 "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+    );
+    auto member_module_mutation_diagnostics =
+        orison::lowering::runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
+            member_mutation_gate
+        );
+    assert(member_module_mutation_diagnostics.size() == 2);
+    assert(
+        member_module_mutation_diagnostics[0] ==
+        "runtime-index member cleanup module-mutation diagnostic owner items "
+        "index (index + zero) element Box moved Inner member-path item "
+        "blocker member-cleanup-module-mutation detail member cleanup module mutation is disabled"
+    );
+    assert(
+        member_module_mutation_diagnostics[1] ==
+        "runtime-index member cleanup module-mutation diagnostic owner items "
+        "index (index + zero) element Box moved Inner member-path item "
+        "blocker production-member-cleanup detail production member cleanup is disabled"
     );
     auto member_production_readiness = orison::lowering::runtime_indexed_member_cleanup_production_readiness(
         member_cleanup_proof,
