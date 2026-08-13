@@ -6931,7 +6931,21 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 7);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 9);
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
+        "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
+        "member-path none owner-known true index-known true element-type-known true "
+        "moved-type-known true member-path-known false cleanup-element-matches-move true "
+        "member-granular-required false prerequisites missing production disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[8] ==
+        "runtime-index member cleanup proof owner holder.items index index element Inner moved Inner "
+        "member-path none plan-ready false whole-element-cleanup-matches-move true "
+        "member-cleanup-required false member-scope-proven false whole-element-cleanup-blocked false "
+        "prerequisites missing production disabled"
+    );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {

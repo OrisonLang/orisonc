@@ -7,6 +7,8 @@
   cleanup element boundary. Lowering smoke coverage now pins the underlying `type-match false` proof gate.
 - 2026-08-13: runtime-index partial-owner metadata now carries moved member paths and exposes a report-only
   member-cleanup plan for future member-granular cleanup proof.
+- 2026-08-13: runtime-index member cleanup now has a report-only proof artifact that proves the moved member scope
+  while keeping whole-element cleanup and production acceptance blocked.
 - 2026-08-13: source-derived record Drop definitions now emit nested source Drop dependencies before the definitions
   that call them, preventing undeclared nested Drop calls in runtime-index cleanup fixtures.
 - 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.

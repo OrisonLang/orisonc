@@ -101,6 +101,8 @@ auto record_runtime_indexed_partial_owner(
         sketch,
         production_cleanup_emission_enabled
     );
+    auto member_plan = runtime_indexed_member_cleanup_plan(owner);
+    auto member_proof = runtime_indexed_member_cleanup_proof(member_plan);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -108,6 +110,8 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_cleanup_emission_sketches.push_back(std::move(sketch));
     state.runtime_indexed_cleanup_capabilities.push_back(std::move(capability));
     state.runtime_indexed_cleanup_emission_plans.push_back(std::move(emission_plan));
+    state.runtime_indexed_member_cleanup_plans.push_back(std::move(member_plan));
+    state.runtime_indexed_member_cleanup_proofs.push_back(std::move(member_proof));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -454,6 +458,53 @@ auto runtime_indexed_member_cleanup_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_proof(
+    RuntimeIndexedMemberCleanupPlan const& plan
+) -> RuntimeIndexedMemberCleanupProof {
+    auto plan_ready = plan.owner_known &&
+        plan.index_known &&
+        plan.element_type_known &&
+        plan.moved_type_known &&
+        plan.moved_member_path_known;
+    auto member_scope_proven = plan_ready && plan.member_granular_cleanup_required;
+    auto whole_element_cleanup_blocked = member_scope_proven && !plan.cleanup_element_matches_move;
+    return RuntimeIndexedMemberCleanupProof {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .moved_member_path = plan.moved_member_path,
+        .plan_ready = plan_ready,
+        .whole_element_cleanup_matches_move = plan.cleanup_element_matches_move,
+        .member_cleanup_required = plan.member_granular_cleanup_required,
+        .member_scope_proven = member_scope_proven,
+        .whole_element_cleanup_blocked = whole_element_cleanup_blocked,
+        .prerequisites_met = member_scope_proven && whole_element_cleanup_blocked,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_proof_report(
+    RuntimeIndexedMemberCleanupProof const& proof
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup proof owner " << proof.owner_name
+           << " index " << proof.index_expression_text
+           << " element " << proof.element_source_type_name
+           << " moved " << proof.moved_source_type_name
+           << " member-path " << dotted_path(proof.moved_member_path)
+           << " plan-ready " << (proof.plan_ready ? "true" : "false")
+           << " whole-element-cleanup-matches-move "
+           << (proof.whole_element_cleanup_matches_move ? "true" : "false")
+           << " member-cleanup-required " << (proof.member_cleanup_required ? "true" : "false")
+           << " member-scope-proven " << (proof.member_scope_proven ? "true" : "false")
+           << " whole-element-cleanup-blocked "
+           << (proof.whole_element_cleanup_blocked ? "true" : "false")
+           << " prerequisites " << (proof.prerequisites_met ? "met" : "missing")
+           << " production " << (proof.production_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -576,7 +627,9 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_cleanup_proof_gates.empty() &&
         state.runtime_indexed_cleanup_emission_sketches.empty() &&
         state.runtime_indexed_cleanup_capabilities.empty() &&
-        state.runtime_indexed_cleanup_emission_plans.empty()) {
+        state.runtime_indexed_cleanup_emission_plans.empty() &&
+        state.runtime_indexed_member_cleanup_plans.empty() &&
+        state.runtime_indexed_member_cleanup_proofs.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -601,6 +654,12 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_cleanup_emission_plans) {
         report.push_back(runtime_indexed_cleanup_emission_plan_report(plan));
+    }
+    for (auto const& plan : state.runtime_indexed_member_cleanup_plans) {
+        report.push_back(runtime_indexed_member_cleanup_plan_report(plan));
+    }
+    for (auto const& proof : state.runtime_indexed_member_cleanup_proofs) {
+        report.push_back(runtime_indexed_member_cleanup_proof_report(proof));
     }
     return report;
 }
@@ -689,7 +748,11 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_cleanup_capabilities !=
                 merged.runtime_indexed_cleanup_capabilities ||
             branch_states[index].runtime_indexed_cleanup_emission_plans !=
-                merged.runtime_indexed_cleanup_emission_plans) {
+                merged.runtime_indexed_cleanup_emission_plans ||
+            branch_states[index].runtime_indexed_member_cleanup_plans !=
+                merged.runtime_indexed_member_cleanup_plans ||
+            branch_states[index].runtime_indexed_member_cleanup_proofs !=
+                merged.runtime_indexed_member_cleanup_proofs) {
             return std::nullopt;
         }
     }

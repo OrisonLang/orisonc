@@ -255,6 +255,8 @@ representation.
   proof gate directly.
 - Runtime-index partial-owner metadata now carries moved member paths and exposes a report-only member-cleanup plan.
   The plan identifies the exact future proof gap without changing constructor-move acceptance or cleanup emission.
+- Runtime-index member cleanup now has a report-only proof artifact. It proves the moved member scope for paths such as
+  `items[index + zero].item`, records whole-element cleanup as blocked, and keeps production acceptance disabled.
 - Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
   cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`

@@ -187,7 +187,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 7);
+    assert(runtime_indexed_audit.size() == 9);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -206,6 +206,12 @@ int main() {
     ));
     assert(runtime_indexed_audit[6] == orison::lowering::runtime_indexed_cleanup_emission_plan_report(
         runtime_indexed.runtime_indexed_cleanup_emission_plans.front()
+    ));
+    assert(runtime_indexed_audit[7] == orison::lowering::runtime_indexed_member_cleanup_plan_report(
+        runtime_indexed.runtime_indexed_member_cleanup_plans.front()
+    ));
+    assert(runtime_indexed_audit[8] == orison::lowering::runtime_indexed_member_cleanup_proof_report(
+        runtime_indexed.runtime_indexed_member_cleanup_proofs.front()
     ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
@@ -487,6 +493,21 @@ int main() {
         "moved-type-known true member-path-known true cleanup-element-matches-move false "
         "member-granular-required true prerequisites missing production disabled"
     );
+    auto member_cleanup_proof = orison::lowering::runtime_indexed_member_cleanup_proof(member_cleanup_plan);
+    assert(member_cleanup_proof.plan_ready);
+    assert(!member_cleanup_proof.whole_element_cleanup_matches_move);
+    assert(member_cleanup_proof.member_cleanup_required);
+    assert(member_cleanup_proof.member_scope_proven);
+    assert(member_cleanup_proof.whole_element_cleanup_blocked);
+    assert(member_cleanup_proof.prerequisites_met);
+    assert(!member_cleanup_proof.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_proof_report(member_cleanup_proof) ==
+        "runtime-index member cleanup proof owner items index (index + zero) element Box moved Inner "
+        "member-path item plan-ready true whole-element-cleanup-matches-move false "
+        "member-cleanup-required true member-scope-proven true whole-element-cleanup-blocked true "
+        "prerequisites met production disabled"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -498,6 +519,8 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_sketches.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_capabilities.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_cleanup_emission_plans.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_plans.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_proofs.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
