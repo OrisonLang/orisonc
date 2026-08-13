@@ -2399,3 +2399,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   future branch replacement, CFG append, and PHI retarget actions without mutating IR.
 - 2026-08-13: Runtime-index member cleanup apply previews now feed report-only post-apply verification targets for
   branch target, CFG append, and PHI predecessor checks.
+- 2026-08-13: Runtime-index member cleanup mutation post-apply verification now feeds a final report-only promotion
+  summary across operation planning, validation, conflict detection, apply authorization, apply preview, and post-apply
+  verification.

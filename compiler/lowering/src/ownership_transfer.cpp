@@ -161,6 +161,15 @@ auto record_runtime_indexed_partial_owner(
         );
     auto member_mutation_post_apply_verification =
         runtime_indexed_member_cleanup_mutation_post_apply_verification(member_mutation_apply_preview);
+    auto member_mutation_promotion_summary =
+        runtime_indexed_member_cleanup_mutation_promotion_summary(
+            member_mutation_operation_plan,
+            member_mutation_operation_validation,
+            member_mutation_conflict_detection,
+            member_mutation_apply_authorization,
+            member_mutation_apply_preview,
+            member_mutation_post_apply_verification
+        );
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -211,6 +220,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.push_back(
         std::move(member_mutation_post_apply_verification)
+    );
+    state.runtime_indexed_member_cleanup_mutation_promotion_summaries.push_back(
+        std::move(member_mutation_promotion_summary)
     );
 }
 
@@ -2248,6 +2260,99 @@ auto runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_promotion_summary(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan,
+    RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
+    RuntimeIndexedMemberCleanupMutationConflictDetection const& detection,
+    RuntimeIndexedMemberCleanupMutationApplyAuthorization const& authorization,
+    RuntimeIndexedMemberCleanupMutationApplyPreview const& preview,
+    RuntimeIndexedMemberCleanupMutationPostApplyVerification const& verification
+) -> RuntimeIndexedMemberCleanupMutationPromotionSummary {
+    auto blockers = std::vector<std::string> {};
+    auto append_blocker = [&blockers](std::string const& blocker) {
+        if (!std::ranges::contains(blockers, blocker)) {
+            blockers.push_back(blocker);
+        }
+    };
+    for (auto const& blocker : plan.blockers) {
+        append_blocker(blocker);
+    }
+    for (auto const& blocker : validation.blockers) {
+        append_blocker(blocker);
+    }
+    for (auto const& blocker : detection.blockers) {
+        append_blocker(blocker);
+    }
+    for (auto const& blocker : authorization.blockers) {
+        append_blocker(blocker);
+    }
+    for (auto const& blocker : preview.blockers) {
+        append_blocker(blocker);
+    }
+    for (auto const& blocker : verification.blockers) {
+        append_blocker(blocker);
+    }
+
+    auto promotion_ready =
+        plan.operations_ready &&
+        validation.validation_ready &&
+        detection.conflict_free &&
+        authorization.authorization_ready &&
+        preview.preview_ready &&
+        verification.verification_ready;
+
+    return RuntimeIndexedMemberCleanupMutationPromotionSummary {
+        .owner_name = verification.owner_name,
+        .index_expression_text = verification.index_expression_text,
+        .element_source_type_name = verification.element_source_type_name,
+        .moved_source_type_name = verification.moved_source_type_name,
+        .moved_member_path = verification.moved_member_path,
+        .blockers = std::move(blockers),
+        .operation_count = static_cast<int>(plan.operations.size()),
+        .action_count = static_cast<int>(preview.actions.size()),
+        .expected_check_count = static_cast<int>(verification.expected_checks.size()),
+        .operations_ready = plan.operations_ready,
+        .validation_ready = validation.validation_ready,
+        .conflict_free = detection.conflict_free,
+        .authorization_ready = authorization.authorization_ready,
+        .preview_ready = preview.preview_ready,
+        .post_apply_verification_ready = verification.verification_ready,
+        .promotion_ready = promotion_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_promotion_summary_report(
+    RuntimeIndexedMemberCleanupMutationPromotionSummary const& summary
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-promotion-summary owner "
+           << summary.owner_name
+           << " index " << summary.index_expression_text
+           << " element " << summary.element_source_type_name
+           << " moved " << summary.moved_source_type_name
+           << " member-path " << dotted_path(summary.moved_member_path)
+           << " operations " << summary.operation_count
+           << " operations-ready " << (summary.operations_ready ? "ready" : "blocked")
+           << " validation " << (summary.validation_ready ? "ready" : "blocked")
+           << " conflict-free " << (summary.conflict_free ? "true" : "false")
+           << " authorization " << (summary.authorization_ready ? "ready" : "blocked")
+           << " preview " << (summary.preview_ready ? "ready" : "blocked")
+           << " actions " << summary.action_count
+           << " post-apply-verification "
+           << (summary.post_apply_verification_ready ? "ready" : "blocked")
+           << " expected-checks " << summary.expected_check_count
+           << " promotion " << (summary.promotion_ready ? "ready" : "blocked")
+           << " report-only " << (summary.report_only ? "true" : "false")
+           << " production " << (summary.production_enabled ? "enabled" : "disabled")
+           << " blockers " << summary.blockers.size();
+    for (auto const& blocker : summary.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2392,7 +2497,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_mutation_conflict_detections.empty() &&
         state.runtime_indexed_member_cleanup_mutation_apply_authorizations.empty() &&
         state.runtime_indexed_member_cleanup_mutation_apply_previews.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_promotion_summaries.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2494,6 +2600,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& verification : state.runtime_indexed_member_cleanup_mutation_post_apply_verifications) {
         report.push_back(runtime_indexed_member_cleanup_mutation_post_apply_verification_report(verification));
+    }
+    for (auto const& summary : state.runtime_indexed_member_cleanup_mutation_promotion_summaries) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_promotion_summary_report(summary));
     }
     return report;
 }
@@ -2626,7 +2735,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_apply_previews !=
                 merged.runtime_indexed_member_cleanup_mutation_apply_previews ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_post_apply_verifications !=
-                merged.runtime_indexed_member_cleanup_mutation_post_apply_verifications) {
+                merged.runtime_indexed_member_cleanup_mutation_post_apply_verifications ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_promotion_summaries !=
+                merged.runtime_indexed_member_cleanup_mutation_promotion_summaries) {
             return std::nullopt;
         }
     }
