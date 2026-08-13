@@ -1690,6 +1690,8 @@ representation.
   separates prerequisite readiness from disabled IR mutation and disabled production gates.
 - Runtime-index member cleanup mutation production-readiness gates now emit stable per-blocker diagnostic lines for
   prerequisite, authorization, post-apply verification, disabled IR mutation, and disabled production gates.
+- Runtime-index member cleanup mutation production-readiness diagnostics now end with a compact report-only verdict
+  line summarizing readiness, guarded rewrite status, blocker count, and diagnostic count.
 
 ## Follow-up work
 

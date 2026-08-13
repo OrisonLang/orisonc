@@ -2406,3 +2406,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   readiness gate that separates prerequisite readiness from disabled IR mutation and disabled production gates.
 - 2026-08-13: Runtime-index member cleanup mutation production-readiness gates now emit stable per-blocker diagnostic
   lines for prerequisite, authorization, post-apply verification, disabled IR mutation, and disabled production gates.
+- 2026-08-13: Runtime-index member cleanup mutation production-readiness diagnostics now end with a compact
+  report-only verdict line summarizing readiness, guarded rewrite status, blocker count, and diagnostic count.

@@ -172,6 +172,8 @@ auto record_runtime_indexed_partial_owner(
         );
     auto member_mutation_production_readiness =
         runtime_indexed_member_cleanup_mutation_production_readiness(member_mutation_promotion_summary);
+    auto member_mutation_readiness_verdict =
+        runtime_indexed_member_cleanup_mutation_readiness_verdict(member_mutation_production_readiness);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -228,6 +230,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_production_readiness.push_back(
         std::move(member_mutation_production_readiness)
+    );
+    state.runtime_indexed_member_cleanup_mutation_readiness_verdicts.push_back(
+        std::move(member_mutation_readiness_verdict)
     );
 }
 
@@ -2489,6 +2494,45 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(
     return diagnostics;
 }
 
+auto runtime_indexed_member_cleanup_mutation_readiness_verdict(
+    RuntimeIndexedMemberCleanupMutationProductionReadiness const& readiness
+) -> RuntimeIndexedMemberCleanupMutationReadinessVerdict {
+    auto const blocker_count = static_cast<int>(readiness.blockers.size());
+    return RuntimeIndexedMemberCleanupMutationReadinessVerdict {
+        .owner_name = readiness.owner_name,
+        .index_expression_text = readiness.index_expression_text,
+        .element_source_type_name = readiness.element_source_type_name,
+        .moved_source_type_name = readiness.moved_source_type_name,
+        .moved_member_path = readiness.moved_member_path,
+        .blocker_count = blocker_count,
+        .diagnostic_count = blocker_count,
+        .readiness_ready = readiness.readiness_ready,
+        .guarded_rewrite_ready = readiness.readiness_ready && readiness.ir_mutation_requested &&
+            readiness.production_gate_enabled,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_readiness_verdict_report(
+    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation readiness verdict owner "
+           << verdict.owner_name
+           << " index " << verdict.index_expression_text
+           << " element " << verdict.element_source_type_name
+           << " moved " << verdict.moved_source_type_name
+           << " member-path " << dotted_path(verdict.moved_member_path)
+           << " readiness " << (verdict.readiness_ready ? "ready" : "blocked")
+           << " guarded-rewrite " << (verdict.guarded_rewrite_ready ? "ready" : "blocked")
+           << " blockers " << verdict.blocker_count
+           << " diagnostics " << verdict.diagnostic_count
+           << " report-only " << (verdict.report_only ? "true" : "false")
+           << " production " << (verdict.production_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2635,7 +2679,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_mutation_apply_previews.empty() &&
         state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.empty() &&
         state.runtime_indexed_member_cleanup_mutation_promotion_summaries.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_production_readiness.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_production_readiness.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_readiness_verdicts.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2745,6 +2790,9 @@ auto runtime_indexed_cleanup_audit_report(
         report.push_back(runtime_indexed_member_cleanup_mutation_production_readiness_report(readiness));
         auto diagnostics = runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(readiness);
         report.insert(report.end(), diagnostics.begin(), diagnostics.end());
+    }
+    for (auto const& verdict : state.runtime_indexed_member_cleanup_mutation_readiness_verdicts) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_readiness_verdict_report(verdict));
     }
     return report;
 }
@@ -2881,7 +2929,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_promotion_summaries !=
                 merged.runtime_indexed_member_cleanup_mutation_promotion_summaries ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_production_readiness !=
-                merged.runtime_indexed_member_cleanup_mutation_production_readiness) {
+                merged.runtime_indexed_member_cleanup_mutation_production_readiness ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_readiness_verdicts !=
+                merged.runtime_indexed_member_cleanup_mutation_readiness_verdicts) {
             return std::nullopt;
         }
     }

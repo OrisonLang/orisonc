@@ -700,6 +700,22 @@ struct RuntimeIndexedMemberCleanupMutationProductionReadiness {
     auto operator==(RuntimeIndexedMemberCleanupMutationProductionReadiness const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationReadinessVerdict {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    int blocker_count = 0;
+    int diagnostic_count = 0;
+    bool readiness_ready = false;
+    bool guarded_rewrite_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationReadinessVerdict const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -744,6 +760,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_promotion_summaries;
     std::vector<RuntimeIndexedMemberCleanupMutationProductionReadiness>
         runtime_indexed_member_cleanup_mutation_production_readiness;
+    std::vector<RuntimeIndexedMemberCleanupMutationReadinessVerdict>
+        runtime_indexed_member_cleanup_mutation_readiness_verdicts;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -1041,6 +1059,14 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_report(
 auto runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(
     RuntimeIndexedMemberCleanupMutationProductionReadiness const& readiness
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_member_cleanup_mutation_readiness_verdict(
+    RuntimeIndexedMemberCleanupMutationProductionReadiness const& readiness
+) -> RuntimeIndexedMemberCleanupMutationReadinessVerdict;
+
+auto runtime_indexed_member_cleanup_mutation_readiness_verdict_report(
+    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict
+) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
