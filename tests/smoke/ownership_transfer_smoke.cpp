@@ -421,6 +421,54 @@ int main() {
         "  call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)\n"
     );
+    auto member_transfer_owner = orison::lowering::RuntimeIndexedPartialOwner {
+        .owner_name = "items",
+        .index_expression_text = "(index + zero)",
+        .element_source_type_name = "Box",
+        .element_llvm_type_name = "%record.Box",
+        .owner_llvm_type_name = "{ ptr, i64, i64 }",
+        .owner_address_name = "%items.addr",
+        .element_size_value = "4",
+        .moved_source_type_name = "Inner",
+        .cleanup_strategy = "skip-moved-element",
+        .constructor_move_enabled = true,
+    };
+    auto member_transfer_skip = orison::lowering::runtime_indexed_cleanup_skip_plan(member_transfer_owner);
+    auto member_transfer_gate = orison::lowering::runtime_indexed_cleanup_proof_gate(member_transfer_skip);
+    assert(member_transfer_gate.owner_known);
+    assert(member_transfer_gate.index_known);
+    assert(!member_transfer_gate.type_match);
+    assert(member_transfer_gate.operation_supported);
+    assert(!member_transfer_gate.prerequisites_met);
+    assert(!member_transfer_gate.lowering_enabled);
+    assert(
+        orison::lowering::runtime_indexed_cleanup_proof_gate_report(member_transfer_gate) ==
+        "runtime-index cleanup proof owner items index (index + zero) element Box moved Inner "
+        "operation skip-moved-element owner-known true index-known true type-match false "
+        "operation-supported true prerequisites missing lowering disabled"
+    );
+    auto member_transfer_sketch =
+        orison::lowering::runtime_indexed_cleanup_emission_sketch(member_transfer_gate);
+    assert(member_transfer_sketch.snippets.empty());
+    auto member_transfer_capability = orison::lowering::runtime_indexed_cleanup_capability(
+        member_transfer_gate,
+        member_transfer_sketch,
+        true
+    );
+    assert(!member_transfer_capability.proof_ready);
+    assert(!member_transfer_capability.sketch_ready);
+    assert(!member_transfer_capability.prerequisites_ready);
+    assert(!member_transfer_capability.production_enabled);
+    auto member_transfer_emission_plan = orison::lowering::runtime_indexed_cleanup_emission_plan(
+        member_transfer_capability,
+        member_transfer_sketch,
+        true
+    );
+    assert(!member_transfer_emission_plan.prerequisites_ready);
+    assert(member_transfer_emission_plan.production_gate_requested);
+    assert(!member_transfer_emission_plan.production_enabled);
+    assert(member_transfer_emission_plan.operation_names.empty());
+    assert(member_transfer_emission_plan.gated_ir_slice_lines.empty());
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,

@@ -251,7 +251,8 @@ representation.
   owned-projection rejection and same-index reuse diagnostics.
 - Nested owned member transfer from a runtime-indexed DynamicArray element remains rejected when the moved member type
   differs from the runtime cleanup element type. This pins the safety boundary for `items[index + zero].item` until
-  member-granular runtime cleanup proof exists.
+  member-granular runtime cleanup proof exists; lowering smoke coverage now asserts the blocked `type-match false`
+  proof gate directly.
 - Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
   cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`

@@ -4,7 +4,7 @@
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as
   `items[index + zero].item`, remains pinned as rejected until cleanup can prove the moved member type matches the
-  cleanup element boundary.
+  cleanup element boundary. Lowering smoke coverage now pins the underlying `type-match false` proof gate.
 - 2026-08-13: source-derived record Drop definitions now emit nested source Drop dependencies before the definitions
   that call them, preventing undeclared nested Drop calls in runtime-index cleanup fixtures.
 - 2026-08-13: runtime-index source-key rendering now lives in a shared lowering utility with direct smoke coverage.
