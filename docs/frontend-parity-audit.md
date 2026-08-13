@@ -2410,3 +2410,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   report-only verdict line summarizing readiness, guarded rewrite status, blocker count, and diagnostic count.
 - 2026-08-13: Runtime-index member cleanup mutation readiness verdicts now feed a report-only guarded rewrite
   authorization record that remains blocked until readiness and guarded rewrite prerequisites are met.
+- 2026-08-13: Runtime-index member cleanup mutation guarded rewrite authorization now emits stable per-blocker
+  diagnostics for blocked readiness verdicts and blocked guarded rewrite authorization.

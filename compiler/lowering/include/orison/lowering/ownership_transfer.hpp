@@ -1095,6 +1095,10 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
     RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
 ) -> std::string;
 
+auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
+) -> std::vector<std::string>;
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string>;

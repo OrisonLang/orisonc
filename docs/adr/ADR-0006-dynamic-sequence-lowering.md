@@ -1694,6 +1694,8 @@ representation.
   line summarizing readiness, guarded rewrite status, blocker count, and diagnostic count.
 - Runtime-index member cleanup mutation readiness verdicts now feed a report-only guarded rewrite authorization record
   that remains blocked until readiness and guarded rewrite prerequisites are met.
+- Runtime-index member cleanup mutation guarded rewrite authorization now emits stable per-blocker diagnostics for
+  blocked readiness verdicts and blocked guarded rewrite authorization.
 
 ## Follow-up work
 

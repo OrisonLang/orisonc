@@ -2589,6 +2589,32 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& blocker : authorization.blockers) {
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup mutation rewrite authorization blocker owner "
+                   << authorization.owner_name
+                   << " index " << authorization.index_expression_text
+                   << " element " << authorization.element_source_type_name
+                   << " moved " << authorization.moved_source_type_name
+                   << " member-path " << dotted_path(authorization.moved_member_path)
+                   << " blocker " << blocker
+                   << " detail ";
+        if (blocker == "member-cleanup-mutation-readiness-verdict") {
+            diagnostic << "member cleanup mutation readiness verdict is blocked";
+        } else if (blocker == "member-cleanup-mutation-guarded-rewrite") {
+            diagnostic << "member cleanup mutation guarded rewrite is blocked";
+        } else {
+            diagnostic << "member cleanup mutation rewrite authorization is blocked";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2853,6 +2879,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& authorization : state.runtime_indexed_member_cleanup_mutation_rewrite_authorizations) {
         report.push_back(runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(authorization));
+        auto diagnostics =
+            runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(authorization);
+        report.insert(report.end(), diagnostics.begin(), diagnostics.end());
     }
     return report;
 }
