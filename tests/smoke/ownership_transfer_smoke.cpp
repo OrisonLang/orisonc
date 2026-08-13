@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 47);
+    assert(runtime_indexed_audit.size() == 65);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -350,6 +350,14 @@ int main() {
             runtime_indexed.runtime_indexed_member_cleanup_mutation_production_readiness.front()
         )
     );
+    auto runtime_indexed_mutation_production_diagnostics =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_production_readiness.front()
+        );
+    assert(runtime_indexed_mutation_production_diagnostics.size() == 18);
+    for (auto index = std::size_t {0}; index < runtime_indexed_mutation_production_diagnostics.size(); ++index) {
+        assert(runtime_indexed_audit[47 + index] == runtime_indexed_mutation_production_diagnostics[index]);
+    }
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
         missing_index_sketch
@@ -1289,6 +1297,59 @@ int main() {
         "blocker production-member-cleanup-ir-mutation blocker member-cleanup-mutation-apply-authorization "
         "blocker member-cleanup-mutation-actions-applied blocker member-cleanup-mutation-promotion "
         "blocker member-cleanup-mutation-post-apply-verification"
+    );
+    auto member_mutation_production_readiness_diagnostics =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(
+            member_mutation_production_readiness
+        );
+    assert(member_mutation_production_readiness_diagnostics.size() == 8);
+    assert(
+        member_mutation_production_readiness_diagnostics[0] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker member-cleanup-module-mutation "
+        "detail member cleanup module mutation is disabled"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[1] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker production-member-cleanup "
+        "detail production member cleanup is disabled"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[2] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker member-cleanup-ir-mutation "
+        "detail member cleanup IR mutation is disabled"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[3] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker production-member-cleanup-ir-mutation "
+        "detail production member cleanup IR mutation is disabled"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[4] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker member-cleanup-mutation-apply-authorization "
+        "detail member cleanup mutation apply authorization is blocked"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[5] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker member-cleanup-mutation-actions-applied "
+        "detail member cleanup mutation actions are not applied"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[6] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker member-cleanup-mutation-promotion "
+        "detail member cleanup mutation promotion is blocked"
+    );
+    assert(
+        member_mutation_production_readiness_diagnostics[7] ==
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Box moved Inner member-path item blocker member-cleanup-mutation-post-apply-verification "
+        "detail member cleanup mutation post-apply verification is blocked"
     );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,

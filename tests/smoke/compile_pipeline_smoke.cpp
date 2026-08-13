@@ -6931,7 +6931,7 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 47);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 65);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -7266,6 +7266,114 @@ auto main() -> int {
         "blocker member-cleanup-mutation-apply-authorization blocker member-cleanup-mutation-actions-applied "
         "blocker member-cleanup-mutation-promotion "
         "blocker member-cleanup-mutation-post-apply-verification"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[47] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-rewrite-candidate "
+        "detail member cleanup rewrite candidate is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[48] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-edit-script "
+        "detail member cleanup edit script is not ready"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[49] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-edit-script-validation "
+        "detail member cleanup edit script validation is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[50] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-staged-apply "
+        "detail member cleanup staged apply is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[51] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-cfg-slice "
+        "detail member cleanup CFG slice is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[52] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-module-mutation "
+        "detail member cleanup module mutation is disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[53] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker production-member-cleanup "
+        "detail production member cleanup is disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[54] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-proof "
+        "detail member cleanup proof is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[55] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-drop-metadata "
+        "detail member Drop metadata is missing"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[56] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-ir-mutation "
+        "detail member cleanup IR mutation is disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[57] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker production-member-cleanup-ir-mutation "
+        "detail production member cleanup IR mutation is disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[58] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-validation "
+        "detail member cleanup mutation validation is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[59] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-conflict "
+        "detail member cleanup mutation conflict detection is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[60] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-apply-preview "
+        "detail member cleanup mutation apply preview is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[61] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-apply-authorization "
+        "detail member cleanup mutation apply authorization is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[62] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-actions-applied "
+        "detail member cleanup mutation actions are not applied"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[63] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-promotion "
+        "detail member cleanup mutation promotion is blocked"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[64] ==
+        "runtime-index member cleanup mutation production blocker owner holder.items index index "
+        "element Inner moved Inner member-path none blocker member-cleanup-mutation-post-apply-verification "
+        "detail member cleanup mutation post-apply verification is blocked"
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

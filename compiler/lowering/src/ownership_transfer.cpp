@@ -2431,6 +2431,64 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(
+    RuntimeIndexedMemberCleanupMutationProductionReadiness const& readiness
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& blocker : readiness.blockers) {
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup mutation production blocker owner "
+                   << readiness.owner_name
+                   << " index " << readiness.index_expression_text
+                   << " element " << readiness.element_source_type_name
+                   << " moved " << readiness.moved_source_type_name
+                   << " member-path " << dotted_path(readiness.moved_member_path)
+                   << " blocker " << blocker
+                   << " detail ";
+        if (blocker == "member-cleanup-rewrite-candidate") {
+            diagnostic << "member cleanup rewrite candidate is missing";
+        } else if (blocker == "member-cleanup-edit-script") {
+            diagnostic << "member cleanup edit script is not ready";
+        } else if (blocker == "member-cleanup-edit-script-validation") {
+            diagnostic << "member cleanup edit script validation is blocked";
+        } else if (blocker == "member-cleanup-staged-apply") {
+            diagnostic << "member cleanup staged apply is blocked";
+        } else if (blocker == "member-cleanup-cfg-slice") {
+            diagnostic << "member cleanup CFG slice is missing";
+        } else if (blocker == "member-cleanup-module-mutation") {
+            diagnostic << "member cleanup module mutation is disabled";
+        } else if (blocker == "production-member-cleanup") {
+            diagnostic << "production member cleanup is disabled";
+        } else if (blocker == "member-cleanup-proof") {
+            diagnostic << "member cleanup proof is missing";
+        } else if (blocker == "member-drop-metadata") {
+            diagnostic << "member Drop metadata is missing";
+        } else if (blocker == "member-cleanup-ir-mutation") {
+            diagnostic << "member cleanup IR mutation is disabled";
+        } else if (blocker == "production-member-cleanup-ir-mutation") {
+            diagnostic << "production member cleanup IR mutation is disabled";
+        } else if (blocker == "member-cleanup-mutation-validation") {
+            diagnostic << "member cleanup mutation validation is blocked";
+        } else if (blocker == "member-cleanup-mutation-conflict") {
+            diagnostic << "member cleanup mutation conflict detection is blocked";
+        } else if (blocker == "member-cleanup-mutation-apply-preview") {
+            diagnostic << "member cleanup mutation apply preview is blocked";
+        } else if (blocker == "member-cleanup-mutation-apply-authorization") {
+            diagnostic << "member cleanup mutation apply authorization is blocked";
+        } else if (blocker == "member-cleanup-mutation-actions-applied") {
+            diagnostic << "member cleanup mutation actions are not applied";
+        } else if (blocker == "member-cleanup-mutation-promotion") {
+            diagnostic << "member cleanup mutation promotion is blocked";
+        } else if (blocker == "member-cleanup-mutation-post-apply-verification") {
+            diagnostic << "member cleanup mutation post-apply verification is blocked";
+        } else {
+            diagnostic << "member cleanup mutation production readiness is blocked";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2685,6 +2743,8 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& readiness : state.runtime_indexed_member_cleanup_mutation_production_readiness) {
         report.push_back(runtime_indexed_member_cleanup_mutation_production_readiness_report(readiness));
+        auto diagnostics = runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(readiness);
+        report.insert(report.end(), diagnostics.begin(), diagnostics.end());
     }
     return report;
 }

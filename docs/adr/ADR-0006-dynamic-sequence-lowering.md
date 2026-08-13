@@ -1688,6 +1688,8 @@ representation.
   operation planning, validation, conflict detection, apply authorization, apply preview, and post-apply verification.
 - Runtime-index member cleanup mutation promotion summaries now feed a final report-only production readiness gate that
   separates prerequisite readiness from disabled IR mutation and disabled production gates.
+- Runtime-index member cleanup mutation production-readiness gates now emit stable per-blocker diagnostic lines for
+  prerequisite, authorization, post-apply verification, disabled IR mutation, and disabled production gates.
 
 ## Follow-up work
 
