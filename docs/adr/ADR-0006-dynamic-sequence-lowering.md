@@ -246,6 +246,11 @@ representation.
   lowered `%tmp` value while diagnostics preserve the source key.
 - Runtime-index source-key rendering is now shared lowering infrastructure with focused smoke coverage, so move
   tracking, reuse diagnostics, and cleanup operand retargeting use one internal key format.
+- DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed whole-element
+  move, such as moving `items[index + zero]` and reading `items[1].item.value`, while preserving ordinary
+  owned-projection rejection and same-index reuse diagnostics.
+- Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
+  cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

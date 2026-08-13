@@ -437,6 +437,13 @@ auto emit_record_source_drop_body(
     return output.str();
 }
 
+auto collect_source_drop_definition_symbols(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    LlvmIrEmissionOptions const& options
+) -> std::vector<std::string>;
+
 auto emit_source_drop_definitions(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
@@ -445,46 +452,148 @@ auto emit_source_drop_definitions(
 ) -> std::string {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
-    auto emitted_symbols = std::vector<std::string> {};
+    auto emitted_symbols = collect_source_drop_definition_symbols(module, context, authorizations, options);
     auto output = std::ostringstream {};
+    for (auto const& symbol : emitted_symbols) {
+        auto implementation = std::ranges::find_if(
+            implementations,
+            [&](semantics::DropImplementation const& candidate) {
+                return candidate.abi_symbol_name == symbol;
+            }
+        );
+        if (implementation == implementations.end()) {
+            continue;
+        }
+        output << "define void @" << implementation->abi_symbol_name << "(ptr %value) {\n";
+        output << "entry:\n";
+        output << emit_record_source_drop_body(
+            implementation->source_type_name,
+            context,
+            implementations
+        );
+        output << "}\n\n";
+    }
+    return output.str();
+}
+
+auto source_drop_implementation_for_type(
+    std::string_view source_type_name,
+    std::vector<semantics::DropImplementation> const& implementations
+) -> std::optional<semantics::DropImplementation> {
+    auto const symbol_name = semantics::drop_abi_symbol_name(source_type_name);
+    auto implementation = std::ranges::find_if(
+        implementations,
+        [&](semantics::DropImplementation const& candidate) {
+            return candidate.origin == semantics::DropImplementationOrigin::source_derived &&
+                candidate.proven &&
+                candidate.body.finite &&
+                candidate.source_type_name == source_type_name &&
+                candidate.abi_symbol_name == symbol_name;
+        }
+    );
+    if (implementation == implementations.end()) {
+        return std::nullopt;
+    }
+    return *implementation;
+}
+
+void add_source_drop_definition_symbol_with_dependencies(
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::vector<semantics::DropImplementation> const& implementations,
+    std::vector<std::string>& symbols,
+    std::vector<std::string>& active_source_types
+) {
+    auto implementation = source_drop_implementation_for_type(source_type_name, implementations);
+    if (!implementation.has_value()) {
+        return;
+    }
+    if (std::ranges::find(symbols, implementation->abi_symbol_name) != symbols.end()) {
+        return;
+    }
+    if (std::ranges::find(active_source_types, implementation->source_type_name) != active_source_types.end()) {
+        return;
+    }
+
+    active_source_types.push_back(implementation->source_type_name);
+    auto layout = context.records.find(implementation->source_type_name);
+    if (layout != context.records.end()) {
+        for (auto const& field : layout->second.fields) {
+            if (auto element_source_type = dynamic_array_element_source_type_name(field.source_type_name)) {
+                add_source_drop_definition_symbol_with_dependencies(
+                    *element_source_type,
+                    context,
+                    implementations,
+                    symbols,
+                    active_source_types
+                );
+                continue;
+            }
+            if (auto element_source_type = array_element_source_type_name(field.source_type_name)) {
+                add_source_drop_definition_symbol_with_dependencies(
+                    *element_source_type,
+                    context,
+                    implementations,
+                    symbols,
+                    active_source_types
+                );
+                continue;
+            }
+            add_source_drop_definition_symbol_with_dependencies(
+                field.source_type_name,
+                context,
+                implementations,
+                symbols,
+                active_source_types
+            );
+        }
+    }
+
+    active_source_types.pop_back();
+    symbols.push_back(implementation->abi_symbol_name);
+}
+
+auto collect_direct_source_drop_definition_types(
+    std::vector<semantics::DropImplementation> const& implementations,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    LlvmIrEmissionOptions const& options
+) -> std::vector<std::string> {
+    auto source_types = std::vector<std::string> {};
     for (auto const& implementation : implementations) {
         if (!has_authorized_source_drop_definition(implementation, authorizations) &&
             !has_runtime_indexed_cleanup_source_drop_definition(implementation, options)) {
             continue;
         }
-        if (std::ranges::find(emitted_symbols, implementation.abi_symbol_name) != emitted_symbols.end()) {
+        if (std::ranges::find(source_types, implementation.source_type_name) != source_types.end()) {
             continue;
         }
-        output << "define void @" << implementation.abi_symbol_name << "(ptr %value) {\n";
-        output << "entry:\n";
-        output << emit_record_source_drop_body(
-            implementation.source_type_name,
-            context,
-            implementations
-        );
-        output << "}\n\n";
-        emitted_symbols.push_back(implementation.abi_symbol_name);
+        source_types.push_back(implementation.source_type_name);
     }
-    return output.str();
+    return source_types;
 }
 
 auto collect_source_drop_definition_symbols(
     syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
     std::vector<semantics::DropLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
     auto symbols = std::vector<std::string> {};
-    for (auto const& implementation : implementations) {
-        if (!has_authorized_source_drop_definition(implementation, authorizations) &&
-            !has_runtime_indexed_cleanup_source_drop_definition(implementation, options)) {
-            continue;
-        }
-        if (std::ranges::find(symbols, implementation.abi_symbol_name) != symbols.end()) {
-            continue;
-        }
-        symbols.push_back(implementation.abi_symbol_name);
+    auto active_source_types = std::vector<std::string> {};
+    for (auto const& source_type : collect_direct_source_drop_definition_types(
+             implementations,
+             authorizations,
+             options
+         )) {
+        add_source_drop_definition_symbol_with_dependencies(
+            source_type,
+            context,
+            implementations,
+            symbols,
+            active_source_types
+        );
     }
     return symbols;
 }
@@ -3324,7 +3433,7 @@ auto emit_module(
         return result;
     }
     auto source_defined_drop_symbols =
-        collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations, options);
+        collect_source_drop_definition_symbols(module, context, result.semantic_drop_lowering_authorizations, options);
     auto function_options = options;
     function_options.source_drop_definition_symbols = source_defined_drop_symbols;
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
