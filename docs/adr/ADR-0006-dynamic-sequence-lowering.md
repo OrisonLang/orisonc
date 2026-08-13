@@ -1661,6 +1661,8 @@ representation.
   branch replacement, cleanup CFG append, and PHI retarget planning separately from disabled IR mutation.
 - Runtime-index member cleanup module-mutation gates now consume staged-apply readiness as an explicit prerequisite,
   keeping validated staged plans separate from disabled production IR mutation.
+- Runtime-index member cleanup staged-apply plans now emit report-only diagnostics for staged planning blockers and
+  production-disabled policy blockers as separate audit lines.
 
 ## Follow-up work
 

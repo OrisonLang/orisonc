@@ -672,6 +672,10 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(
     RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& plan
 ) -> std::string;
 
+auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_diagnostics(
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& plan
+) -> std::vector<std::string>;
+
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation,

@@ -1304,6 +1304,32 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_diagnostics(
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& plan
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& blocker : plan.blockers) {
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup staged-apply diagnostic owner "
+                   << plan.owner_name
+                   << " index " << plan.index_expression_text
+                   << " element " << plan.element_source_type_name
+                   << " moved " << plan.moved_source_type_name
+                   << " member-path " << dotted_path(plan.moved_member_path)
+                   << " blocker " << blocker
+                   << " detail ";
+        if (blocker == "member-cleanup-edit-script-validation") {
+            diagnostic << "member cleanup staged apply is blocked by edit script validation";
+        } else if (blocker == "production-member-cleanup-module-mutation") {
+            diagnostic << "member cleanup staged plan is ready but production module mutation is disabled";
+        } else {
+            diagnostic << "member cleanup staged apply is blocked";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation,
@@ -1689,6 +1715,8 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans) {
         report.push_back(runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(plan));
+        auto diagnostics = runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_diagnostics(plan);
+        report.insert(report.end(), diagnostics.begin(), diagnostics.end());
     }
     for (auto const& gate : state.runtime_indexed_member_cleanup_module_mutation_gates) {
         report.push_back(runtime_indexed_member_cleanup_module_mutation_gate_report(gate));

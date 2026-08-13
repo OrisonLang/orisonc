@@ -2379,3 +2379,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   separating planned branch replacement, CFG append, and PHI retarget from disabled IR mutation.
 - 2026-08-13: Runtime-index member cleanup module-mutation gates now require staged-apply readiness explicitly,
   keeping staged planning separate from disabled IR mutation.
+- 2026-08-13: Runtime-index member cleanup staged-apply blockers now emit report-only diagnostics, separating
+  validation-blocked staged planning from ready staged plans held at the disabled production mutation gate.
