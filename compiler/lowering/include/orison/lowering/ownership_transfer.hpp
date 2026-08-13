@@ -318,6 +318,27 @@ struct RuntimeIndexedMemberCleanupIrCompositionPlan {
     auto operator==(RuntimeIndexedMemberCleanupIrCompositionPlan const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupCfgSlice {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string insertion_anchor;
+    std::string entry_block_name;
+    std::string skip_block_name;
+    std::string sibling_drop_block_name;
+    std::string preserve_block_name;
+    std::string exit_block_name;
+    std::vector<std::string> cfg_lines;
+    bool composition_ready = false;
+    bool slice_rendered = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupCfgSlice const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -333,6 +354,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupEmissionGate> runtime_indexed_member_cleanup_emission_gates;
     std::vector<RuntimeIndexedMemberCleanupIrInsertionPlan> runtime_indexed_member_cleanup_ir_insertion_plans;
     std::vector<RuntimeIndexedMemberCleanupIrCompositionPlan> runtime_indexed_member_cleanup_ir_composition_plans;
+    std::vector<RuntimeIndexedMemberCleanupCfgSlice> runtime_indexed_member_cleanup_cfg_slices;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -454,6 +476,14 @@ auto runtime_indexed_member_cleanup_ir_composition_plan(
 
 auto runtime_indexed_member_cleanup_ir_composition_plan_report(
     RuntimeIndexedMemberCleanupIrCompositionPlan const& plan
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_cfg_slice(
+    RuntimeIndexedMemberCleanupIrCompositionPlan const& plan
+) -> RuntimeIndexedMemberCleanupCfgSlice;
+
+auto runtime_indexed_member_cleanup_cfg_slice_report(
+    RuntimeIndexedMemberCleanupCfgSlice const& slice
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 13);
+    assert(runtime_indexed_audit.size() == 14);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -225,6 +225,9 @@ int main() {
     ));
     assert(runtime_indexed_audit[12] == orison::lowering::runtime_indexed_member_cleanup_ir_composition_plan_report(
         runtime_indexed.runtime_indexed_member_cleanup_ir_composition_plans.front()
+    ));
+    assert(runtime_indexed_audit[13] == orison::lowering::runtime_indexed_member_cleanup_cfg_slice_report(
+        runtime_indexed.runtime_indexed_member_cleanup_cfg_slices.front()
     ));
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
         missing_index_gate,
@@ -631,6 +634,41 @@ int main() {
         "edge items.member_cleanup.drop_siblings -> items.member_cleanup.preserve_moved "
         "edge items.member_cleanup.preserve_moved -> items.member_cleanup.exit"
     );
+    auto member_cfg_slice =
+        orison::lowering::runtime_indexed_member_cleanup_cfg_slice(member_composition_plan);
+    assert(member_cfg_slice.composition_ready);
+    assert(member_cfg_slice.slice_rendered);
+    assert(member_cfg_slice.report_only);
+    assert(!member_cfg_slice.production_enabled);
+    assert(member_cfg_slice.cfg_lines.size() == 15);
+    assert(member_cfg_slice.cfg_lines[0] == "; report-only runtime-index member cleanup anchor items.final-cleanup\n");
+    assert(member_cfg_slice.cfg_lines[1] == "items.member_cleanup.entry:\n");
+    assert(
+        member_cfg_slice.cfg_lines[6] ==
+        "  ; preserve moved member items[(index + zero)].item\n"
+    );
+    assert(member_cfg_slice.cfg_lines[13] == "items.member_cleanup.exit:\n");
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_cfg_slice_report(member_cfg_slice) ==
+        "runtime-index member cleanup cfg-slice owner items index (index + zero) element Box "
+        "moved Inner member-path item anchor items.final-cleanup entry items.member_cleanup.entry "
+        "skip items.member_cleanup.skip_moved sibling-drop items.member_cleanup.drop_siblings "
+        "preserve items.member_cleanup.preserve_moved exit items.member_cleanup.exit "
+        "composition ready slice rendered report-only true production disabled cfg-lines 15 "
+        "line ; report-only runtime-index member cleanup anchor items.final-cleanup "
+        "line items.member_cleanup.entry: line ; report-only compare cleanup_index with (index + zero) "
+        "line   ; br moved index -> items.member_cleanup.skip_moved "
+        "line   ; br live sibling -> items.member_cleanup.drop_siblings "
+        "line items.member_cleanup.skip_moved: "
+        "line   ; preserve moved member items[(index + zero)].item "
+        "line   ; br label %items.member_cleanup.preserve_moved "
+        "line items.member_cleanup.drop_siblings: "
+        "line   ; call member cleanup for Box except item "
+        "line   ; br label %items.member_cleanup.preserve_moved "
+        "line items.member_cleanup.preserve_moved: "
+        "line   ; br label %items.member_cleanup.exit "
+        "line items.member_cleanup.exit: line   ; resume owner cleanup items"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -649,6 +687,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_emission_gates.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_ir_insertion_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_ir_composition_plans.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_cfg_slices.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

@@ -110,6 +110,7 @@ auto record_runtime_indexed_partial_owner(
         runtime_indexed_member_cleanup_ir_insertion_plan(member_gate, member_targets);
     auto member_composition_plan =
         runtime_indexed_member_cleanup_ir_composition_plan(member_insertion_plan);
+    auto member_cfg_slice = runtime_indexed_member_cleanup_cfg_slice(member_composition_plan);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -124,6 +125,7 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_emission_gates.push_back(std::move(member_gate));
     state.runtime_indexed_member_cleanup_ir_insertion_plans.push_back(std::move(member_insertion_plan));
     state.runtime_indexed_member_cleanup_ir_composition_plans.push_back(std::move(member_composition_plan));
+    state.runtime_indexed_member_cleanup_cfg_slices.push_back(std::move(member_cfg_slice));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -842,6 +844,85 @@ auto runtime_indexed_member_cleanup_ir_composition_plan_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_cfg_slice(
+    RuntimeIndexedMemberCleanupIrCompositionPlan const& plan
+) -> RuntimeIndexedMemberCleanupCfgSlice {
+    auto composition_ready =
+        plan.block_topology_ready && plan.preview_operations_ready && !plan.topology_edges.empty();
+    auto cfg_lines = std::vector<std::string> {};
+    if (composition_ready) {
+        cfg_lines = {
+            "; report-only runtime-index member cleanup anchor " + plan.insertion_anchor + "\n",
+            plan.entry_block_name + ":\n",
+            "; report-only compare cleanup_index with " + plan.index_expression_text + "\n",
+            "  ; br moved index -> " + plan.skip_block_name + "\n",
+            "  ; br live sibling -> " + plan.sibling_drop_block_name + "\n",
+            plan.skip_block_name + ":\n",
+            "  ; preserve moved member " + plan.owner_name + "[" + plan.index_expression_text +
+                "]." + dotted_path(plan.moved_member_path) + "\n",
+            "  ; br label %" + plan.preserve_block_name + "\n",
+            plan.sibling_drop_block_name + ":\n",
+            "  ; call member cleanup for " + plan.element_source_type_name +
+                " except " + dotted_path(plan.moved_member_path) + "\n",
+            "  ; br label %" + plan.preserve_block_name + "\n",
+            plan.preserve_block_name + ":\n",
+            "  ; br label %" + plan.exit_block_name + "\n",
+            plan.exit_block_name + ":\n",
+            "  ; resume owner cleanup " + plan.owner_name + "\n",
+        };
+    }
+
+    return RuntimeIndexedMemberCleanupCfgSlice {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .moved_member_path = plan.moved_member_path,
+        .insertion_anchor = plan.insertion_anchor,
+        .entry_block_name = plan.entry_block_name,
+        .skip_block_name = plan.skip_block_name,
+        .sibling_drop_block_name = plan.sibling_drop_block_name,
+        .preserve_block_name = plan.preserve_block_name,
+        .exit_block_name = plan.exit_block_name,
+        .cfg_lines = std::move(cfg_lines),
+        .composition_ready = composition_ready,
+        .slice_rendered = composition_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_cfg_slice_report(
+    RuntimeIndexedMemberCleanupCfgSlice const& slice
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup cfg-slice owner " << slice.owner_name
+           << " index " << slice.index_expression_text
+           << " element " << slice.element_source_type_name
+           << " moved " << slice.moved_source_type_name
+           << " member-path " << dotted_path(slice.moved_member_path)
+           << " anchor " << (slice.insertion_anchor.empty() ? "missing" : slice.insertion_anchor)
+           << " entry " << (slice.entry_block_name.empty() ? "missing" : slice.entry_block_name)
+           << " skip " << (slice.skip_block_name.empty() ? "missing" : slice.skip_block_name)
+           << " sibling-drop "
+           << (slice.sibling_drop_block_name.empty() ? "missing" : slice.sibling_drop_block_name)
+           << " preserve " << (slice.preserve_block_name.empty() ? "missing" : slice.preserve_block_name)
+           << " exit " << (slice.exit_block_name.empty() ? "missing" : slice.exit_block_name)
+           << " composition " << (slice.composition_ready ? "ready" : "missing")
+           << " slice " << (slice.slice_rendered ? "rendered" : "missing")
+           << " report-only " << (slice.report_only ? "true" : "false")
+           << " production " << (slice.production_enabled ? "enabled" : "disabled")
+           << " cfg-lines " << slice.cfg_lines.size();
+    for (auto const& line : slice.cfg_lines) {
+        auto trimmed_line = line;
+        if (!trimmed_line.empty() && trimmed_line.back() == '\n') {
+            trimmed_line.pop_back();
+        }
+        report << " line " << trimmed_line;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -971,7 +1052,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_targets.empty() &&
         state.runtime_indexed_member_cleanup_emission_gates.empty() &&
         state.runtime_indexed_member_cleanup_ir_insertion_plans.empty() &&
-        state.runtime_indexed_member_cleanup_ir_composition_plans.empty()) {
+        state.runtime_indexed_member_cleanup_ir_composition_plans.empty() &&
+        state.runtime_indexed_member_cleanup_cfg_slices.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -1019,6 +1101,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& plan : state.runtime_indexed_member_cleanup_ir_composition_plans) {
         report.push_back(runtime_indexed_member_cleanup_ir_composition_plan_report(plan));
+    }
+    for (auto const& slice : state.runtime_indexed_member_cleanup_cfg_slices) {
+        report.push_back(runtime_indexed_member_cleanup_cfg_slice_report(slice));
     }
     return report;
 }
@@ -1121,7 +1206,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_ir_insertion_plans !=
                 merged.runtime_indexed_member_cleanup_ir_insertion_plans ||
             branch_states[index].runtime_indexed_member_cleanup_ir_composition_plans !=
-                merged.runtime_indexed_member_cleanup_ir_composition_plans) {
+                merged.runtime_indexed_member_cleanup_ir_composition_plans ||
+            branch_states[index].runtime_indexed_member_cleanup_cfg_slices !=
+                merged.runtime_indexed_member_cleanup_cfg_slices) {
             return std::nullopt;
         }
     }

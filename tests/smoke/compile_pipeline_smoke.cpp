@@ -6931,7 +6931,7 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 13);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 14);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -6972,6 +6972,13 @@ auto main() -> int {
         "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
         "preserve missing exit missing insertion-plan missing block-topology missing "
         "preview-operations missing report-only true production disabled topology-edges 0"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[13] ==
+        "runtime-index member cleanup cfg-slice owner holder.items index index element Inner "
+        "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
+        "preserve missing exit missing composition missing slice missing report-only true "
+        "production disabled cfg-lines 0"
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
