@@ -120,7 +120,11 @@ auto record_runtime_indexed_partial_owner(
     auto member_staged_apply_plan =
         runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan(member_edit_script_validation);
     auto member_mutation_gate =
-        runtime_indexed_member_cleanup_module_mutation_gate(member_cfg_slice, member_edit_script_validation);
+        runtime_indexed_member_cleanup_module_mutation_gate(
+            member_cfg_slice,
+            member_edit_script_validation,
+            member_staged_apply_plan
+        );
     auto member_production_readiness = runtime_indexed_member_cleanup_production_readiness(
         member_proof,
         member_targets,
@@ -1302,7 +1306,8 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(
 
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
-    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation,
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& staged_apply_plan
 ) -> RuntimeIndexedMemberCleanupModuleMutationGate {
     auto blockers = std::vector<std::string> {};
     if (!slice.slice_rendered) {
@@ -1310,6 +1315,9 @@ auto runtime_indexed_member_cleanup_module_mutation_gate(
     }
     if (!validation.validation_ready) {
         blockers.push_back("member-cleanup-edit-script-validation");
+    }
+    if (!staged_apply_plan.staged_apply_ready) {
+        blockers.push_back("member-cleanup-staged-apply");
     }
     blockers.push_back("member-cleanup-module-mutation");
     blockers.push_back("production-member-cleanup");
@@ -1329,6 +1337,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate(
         .blockers = std::move(blockers),
         .cfg_slice_ready = slice.slice_rendered,
         .edit_script_validation_ready = validation.validation_ready,
+        .staged_apply_ready = staged_apply_plan.staged_apply_ready,
         .module_mutation_enabled = false,
         .production_member_cleanup_enabled = false,
         .prerequisites_met = false,
@@ -1355,6 +1364,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_report(
            << " cfg-slice " << (gate.cfg_slice_ready ? "ready" : "missing")
            << " edit-script-validation "
            << (gate.edit_script_validation_ready ? "ready" : "missing")
+           << " staged-apply " << (gate.staged_apply_ready ? "ready" : "missing")
            << " module-mutation " << (gate.module_mutation_enabled ? "enabled" : "disabled")
            << " production-member-cleanup "
            << (gate.production_member_cleanup_enabled ? "enabled" : "disabled")

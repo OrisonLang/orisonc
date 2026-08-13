@@ -453,6 +453,7 @@ struct RuntimeIndexedMemberCleanupModuleMutationGate {
     std::vector<std::string> blockers;
     bool cfg_slice_ready = false;
     bool edit_script_validation_ready = false;
+    bool staged_apply_ready = false;
     bool module_mutation_enabled = false;
     bool production_member_cleanup_enabled = false;
     bool prerequisites_met = false;
@@ -673,7 +674,8 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(
 
 auto runtime_indexed_member_cleanup_module_mutation_gate(
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
-    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation,
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& staged_apply_plan
 ) -> RuntimeIndexedMemberCleanupModuleMutationGate;
 
 auto runtime_indexed_member_cleanup_module_mutation_gate_report(

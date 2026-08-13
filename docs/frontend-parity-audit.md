@@ -2377,3 +2377,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   structurally validated plans that remain production-disabled.
 - 2026-08-13: Runtime-index member cleanup now derives a report-only staged-apply plan from edit-script validation,
   separating planned branch replacement, CFG append, and PHI retarget from disabled IR mutation.
+- 2026-08-13: Runtime-index member cleanup module-mutation gates now require staged-apply readiness explicitly,
+  keeping staged planning separate from disabled IR mutation.

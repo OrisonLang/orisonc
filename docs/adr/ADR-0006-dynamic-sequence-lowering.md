@@ -1659,6 +1659,8 @@ representation.
   validated-but-production-disabled state, so readiness reports can separate correctness gaps from gate policy.
 - Runtime-index member cleanup now derives a report-only staged-apply plan from validated edit scripts, tracking
   branch replacement, cleanup CFG append, and PHI retarget planning separately from disabled IR mutation.
+- Runtime-index member cleanup module-mutation gates now consume staged-apply readiness as an explicit prerequisite,
+  keeping validated staged plans separate from disabled production IR mutation.
 
 ## Follow-up work
 
