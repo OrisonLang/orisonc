@@ -361,6 +361,23 @@ struct RuntimeIndexedMemberCleanupModuleMutationGate {
     auto operator==(RuntimeIndexedMemberCleanupModuleMutationGate const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupProductionReadiness {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool proof_ready = false;
+    bool target_metadata_ready = false;
+    bool cfg_slice_ready = false;
+    bool module_mutation_ready = false;
+    bool production_member_cleanup_ready = false;
+    bool production_ready = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupProductionReadiness const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -378,6 +395,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupIrCompositionPlan> runtime_indexed_member_cleanup_ir_composition_plans;
     std::vector<RuntimeIndexedMemberCleanupCfgSlice> runtime_indexed_member_cleanup_cfg_slices;
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
+    std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -515,6 +533,17 @@ auto runtime_indexed_member_cleanup_module_mutation_gate(
 
 auto runtime_indexed_member_cleanup_module_mutation_gate_report(
     RuntimeIndexedMemberCleanupModuleMutationGate const& gate
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_production_readiness(
+    RuntimeIndexedMemberCleanupProof const& proof,
+    std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,
+    RuntimeIndexedMemberCleanupCfgSlice const& slice,
+    RuntimeIndexedMemberCleanupModuleMutationGate const& gate
+) -> RuntimeIndexedMemberCleanupProductionReadiness;
+
+auto runtime_indexed_member_cleanup_production_readiness_report(
+    RuntimeIndexedMemberCleanupProductionReadiness const& readiness
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
