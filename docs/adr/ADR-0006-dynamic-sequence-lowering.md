@@ -1675,6 +1675,9 @@ representation.
   is disabled.
 - Runtime-index member cleanup mutation operation plans now have report-only validation for operation count, operation
   order, required fields, readiness, and unapplied status before any production IR mutation path is enabled.
+- Runtime-index member cleanup mutation validation now feeds report-only conflict detection for unique branch anchor,
+  closing anchor, and PHI predecessor matches. The detector can report conflict-free readiness while still denying
+  apply authorization until production IR mutation is enabled.
 
 ## Follow-up work
 

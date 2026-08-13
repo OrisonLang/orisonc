@@ -144,6 +144,11 @@ auto record_runtime_indexed_partial_owner(
         runtime_indexed_member_cleanup_mutation_operation_plan(member_promotion_seam, member_edit_script_plan);
     auto member_mutation_operation_validation =
         runtime_indexed_member_cleanup_mutation_operation_validation(member_mutation_operation_plan);
+    auto member_mutation_conflict_detection =
+        runtime_indexed_member_cleanup_mutation_conflict_detection(
+            member_mutation_operation_plan,
+            member_mutation_operation_validation
+        );
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -182,6 +187,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_operation_validations.push_back(
         std::move(member_mutation_operation_validation)
+    );
+    state.runtime_indexed_member_cleanup_mutation_conflict_detections.push_back(
+        std::move(member_mutation_conflict_detection)
     );
 }
 
@@ -1910,6 +1918,86 @@ auto runtime_indexed_member_cleanup_mutation_operation_validation_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_conflict_detection(
+    RuntimeIndexedMemberCleanupMutationOperationPlan const& plan,
+    RuntimeIndexedMemberCleanupMutationOperationValidation const& validation
+) -> RuntimeIndexedMemberCleanupMutationConflictDetection {
+    auto branch_anchor_match_count = 0;
+    auto closing_anchor_match_count = 0;
+    auto phi_predecessor_match_count = 0;
+
+    if (validation.validation_ready && plan.operations.size() == 3) {
+        auto const& branch_replacement = plan.operations[0];
+        auto const& cfg_append = plan.operations[1];
+        auto const& phi_retarget = plan.operations[2];
+        if (!branch_replacement.anchor.empty() && !branch_replacement.expected_text.empty()) {
+            branch_anchor_match_count = 1;
+        }
+        if (!cfg_append.anchor.empty() && !cfg_append.expected_text.empty()) {
+            closing_anchor_match_count = 1;
+        }
+        if (!phi_retarget.anchor.empty() && !phi_retarget.old_predecessor.empty()) {
+            phi_predecessor_match_count = 1;
+        }
+    }
+
+    auto branch_anchor_unique = branch_anchor_match_count == 1;
+    auto closing_anchor_unique = closing_anchor_match_count == 1;
+    auto phi_predecessor_unique = phi_predecessor_match_count == 1;
+    auto conflict_free =
+        validation.validation_ready &&
+        branch_anchor_unique &&
+        closing_anchor_unique &&
+        phi_predecessor_unique;
+
+    return RuntimeIndexedMemberCleanupMutationConflictDetection {
+        .owner_name = plan.owner_name,
+        .index_expression_text = plan.index_expression_text,
+        .element_source_type_name = plan.element_source_type_name,
+        .moved_source_type_name = plan.moved_source_type_name,
+        .moved_member_path = plan.moved_member_path,
+        .blockers = validation.blockers,
+        .validation_ready = validation.validation_ready,
+        .branch_anchor_match_count = branch_anchor_match_count,
+        .closing_anchor_match_count = closing_anchor_match_count,
+        .phi_predecessor_match_count = phi_predecessor_match_count,
+        .branch_anchor_unique = branch_anchor_unique,
+        .closing_anchor_unique = closing_anchor_unique,
+        .phi_predecessor_unique = phi_predecessor_unique,
+        .conflict_free = conflict_free,
+        .apply_allowed = false,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_conflict_detection_report(
+    RuntimeIndexedMemberCleanupMutationConflictDetection const& detection
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-conflict-detection owner " << detection.owner_name
+           << " index " << detection.index_expression_text
+           << " element " << detection.element_source_type_name
+           << " moved " << detection.moved_source_type_name
+           << " member-path " << dotted_path(detection.moved_member_path)
+           << " validation " << (detection.validation_ready ? "ready" : "blocked")
+           << " branch-anchor-matches " << detection.branch_anchor_match_count
+           << " branch-anchor " << (detection.branch_anchor_unique ? "unique" : "blocked")
+           << " closing-anchor-matches " << detection.closing_anchor_match_count
+           << " closing-anchor " << (detection.closing_anchor_unique ? "unique" : "blocked")
+           << " phi-predecessor-matches " << detection.phi_predecessor_match_count
+           << " phi-predecessor " << (detection.phi_predecessor_unique ? "unique" : "blocked")
+           << " conflict-free " << (detection.conflict_free ? "true" : "false")
+           << " apply-allowed " << (detection.apply_allowed ? "true" : "false")
+           << " report-only " << (detection.report_only ? "true" : "false")
+           << " production " << (detection.production_enabled ? "enabled" : "disabled")
+           << " blockers " << detection.blockers.size();
+    for (auto const& blocker : detection.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2050,7 +2138,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_promotion_checklists.empty() &&
         state.runtime_indexed_member_cleanup_promotion_seams.empty() &&
         state.runtime_indexed_member_cleanup_mutation_operation_plans.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_operation_validations.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_operation_validations.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_conflict_detections.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2140,6 +2229,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& validation : state.runtime_indexed_member_cleanup_mutation_operation_validations) {
         report.push_back(runtime_indexed_member_cleanup_mutation_operation_validation_report(validation));
+    }
+    for (auto const& detection : state.runtime_indexed_member_cleanup_mutation_conflict_detections) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_conflict_detection_report(detection));
     }
     return report;
 }
@@ -2264,7 +2356,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_operation_plans !=
                 merged.runtime_indexed_member_cleanup_mutation_operation_plans ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_operation_validations !=
-                merged.runtime_indexed_member_cleanup_mutation_operation_validations) {
+                merged.runtime_indexed_member_cleanup_mutation_operation_validations ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_conflict_detections !=
+                merged.runtime_indexed_member_cleanup_mutation_conflict_detections) {
             return std::nullopt;
         }
     }

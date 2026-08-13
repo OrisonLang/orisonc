@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 41);
+    assert(runtime_indexed_audit.size() == 42);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -312,6 +312,12 @@ int main() {
         runtime_indexed_audit[40] ==
         orison::lowering::runtime_indexed_member_cleanup_mutation_operation_validation_report(
             runtime_indexed.runtime_indexed_member_cleanup_mutation_operation_validations.front()
+        )
+    );
+    assert(
+        runtime_indexed_audit[41] ==
+        orison::lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_conflict_detections.front()
         )
     );
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
@@ -1089,6 +1095,34 @@ int main() {
         "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
         "blocker production-member-cleanup-ir-mutation"
     );
+    auto member_mutation_conflict_detection =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_conflict_detection(
+            member_mutation_operation_plan,
+            member_mutation_operation_validation
+        );
+    assert(member_mutation_conflict_detection.validation_ready);
+    assert(member_mutation_conflict_detection.branch_anchor_match_count == 1);
+    assert(member_mutation_conflict_detection.closing_anchor_match_count == 1);
+    assert(member_mutation_conflict_detection.phi_predecessor_match_count == 1);
+    assert(member_mutation_conflict_detection.branch_anchor_unique);
+    assert(member_mutation_conflict_detection.closing_anchor_unique);
+    assert(member_mutation_conflict_detection.phi_predecessor_unique);
+    assert(member_mutation_conflict_detection.conflict_free);
+    assert(!member_mutation_conflict_detection.apply_allowed);
+    assert(member_mutation_conflict_detection.report_only);
+    assert(!member_mutation_conflict_detection.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(
+            member_mutation_conflict_detection
+        ) ==
+        "runtime-index member cleanup mutation-conflict-detection owner items index (index + zero) "
+        "element Box moved Inner member-path item validation ready branch-anchor-matches 1 "
+        "branch-anchor unique closing-anchor-matches 1 closing-anchor unique "
+        "phi-predecessor-matches 1 phi-predecessor unique conflict-free true "
+        "apply-allowed false report-only true production disabled blockers 4 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1120,6 +1154,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_promotion_seams.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_operation_plans.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_operation_validations.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_conflict_detections.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

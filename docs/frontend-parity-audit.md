@@ -2391,3 +2391,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   branch replacement, CFG append, and PHI retarget operation records that remain unapplied.
 - 2026-08-13: Runtime-index member cleanup mutation operation plans now have report-only validation for operation
   count, order, required fields, readiness, and unapplied status.
+- 2026-08-13: Runtime-index member cleanup mutation validation now feeds report-only conflict detection for unique
+  branch anchor, closing anchor, and PHI predecessor matches before any apply step is allowed.
