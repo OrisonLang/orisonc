@@ -249,6 +249,9 @@ representation.
 - DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed whole-element
   move, such as moving `items[index + zero]` and reading `items[1].item.value`, while preserving ordinary
   owned-projection rejection and same-index reuse diagnostics.
+- Nested owned member transfer from a runtime-indexed DynamicArray element remains rejected when the moved member type
+  differs from the runtime cleanup element type. This pins the safety boundary for `items[index + zero].item` until
+  member-granular runtime cleanup proof exists.
 - Source-derived record Drop emission now includes nested source Drop dependencies in definition order, so runtime-index
   cleanup fixtures with nested owned record fields do not emit calls to undeclared Drop symbols.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`

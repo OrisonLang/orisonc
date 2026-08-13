@@ -1,0 +1,34 @@
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer_rejected
+
+record Inner
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Box
+    item: Inner
+
+implements Drop for Box
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var items: DynamicArray<Box> = DynamicArray()
+    items.push(Box(Inner(7 as UInt32)))
+    items.push(Box(Inner(11 as UInt32)))
+    let index: UInt64 = 0 as UInt64
+    let zero: UInt64 = 0 as UInt64
+    var outer: Outer = Outer(items[index + zero].item)
+    0 as UInt32
