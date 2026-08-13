@@ -131,6 +131,14 @@ auto record_runtime_indexed_partial_owner(
         member_cfg_slice,
         member_mutation_gate
     );
+    auto member_promotion_checklist = runtime_indexed_member_cleanup_promotion_checklist(
+        member_rewrite_candidate,
+        member_edit_script_plan,
+        member_edit_script_validation,
+        member_staged_apply_plan,
+        member_mutation_gate,
+        member_production_readiness
+    );
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -162,6 +170,7 @@ auto record_runtime_indexed_partial_owner(
     state.runtime_indexed_member_cleanup_production_readiness.push_back(
         std::move(member_production_readiness)
     );
+    state.runtime_indexed_member_cleanup_promotion_checklists.push_back(std::move(member_promotion_checklist));
 }
 
 auto runtime_indexed_partial_owner_report(
@@ -1545,6 +1554,97 @@ auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
     return diagnostics;
 }
 
+auto runtime_indexed_member_cleanup_promotion_checklist(
+    RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation,
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& staged_apply_plan,
+    RuntimeIndexedMemberCleanupModuleMutationGate const& mutation_gate,
+    RuntimeIndexedMemberCleanupProductionReadiness const& production_readiness
+) -> RuntimeIndexedMemberCleanupPromotionChecklist {
+    auto blockers = std::vector<std::string> {};
+    auto add_blocker = [&](std::string const& blocker) {
+        if (std::find(blockers.begin(), blockers.end(), blocker) == blockers.end()) {
+            blockers.push_back(blocker);
+        }
+    };
+    if (!candidate.candidate_verified) {
+        add_blocker("member-cleanup-rewrite-candidate");
+    }
+    if (!edit_script_plan.edit_script_ready) {
+        add_blocker("member-cleanup-edit-script");
+    }
+    if (!validation.validation_ready) {
+        add_blocker("member-cleanup-edit-script-validation");
+    }
+    if (!staged_apply_plan.staged_apply_ready) {
+        add_blocker("member-cleanup-staged-apply");
+    }
+    for (auto const& blocker : mutation_gate.blockers) {
+        add_blocker(blocker);
+    }
+    for (auto const& blocker : production_readiness.blockers) {
+        add_blocker(blocker);
+    }
+
+    auto module_mutation_ready =
+        mutation_gate.module_mutation_enabled &&
+        mutation_gate.prerequisites_met &&
+        mutation_gate.production_enabled;
+    auto production_readiness_ready = production_readiness.production_ready;
+    auto promotion_ready =
+        candidate.candidate_verified &&
+        edit_script_plan.edit_script_ready &&
+        validation.validation_ready &&
+        staged_apply_plan.staged_apply_ready &&
+        module_mutation_ready &&
+        production_readiness_ready;
+
+    return RuntimeIndexedMemberCleanupPromotionChecklist {
+        .owner_name = candidate.owner_name,
+        .index_expression_text = candidate.index_expression_text,
+        .element_source_type_name = candidate.element_source_type_name,
+        .moved_source_type_name = candidate.moved_source_type_name,
+        .moved_member_path = candidate.moved_member_path,
+        .blockers = std::move(blockers),
+        .rewrite_candidate_ready = candidate.candidate_verified,
+        .edit_script_ready = edit_script_plan.edit_script_ready,
+        .validation_ready = validation.validation_ready,
+        .staged_apply_ready = staged_apply_plan.staged_apply_ready,
+        .module_mutation_ready = module_mutation_ready,
+        .production_readiness_ready = production_readiness_ready,
+        .promotion_ready = promotion_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_promotion_checklist_report(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup promotion-checklist owner " << checklist.owner_name
+           << " index " << checklist.index_expression_text
+           << " element " << checklist.element_source_type_name
+           << " moved " << checklist.moved_source_type_name
+           << " member-path " << dotted_path(checklist.moved_member_path)
+           << " candidate " << (checklist.rewrite_candidate_ready ? "ready" : "blocked")
+           << " edit-script " << (checklist.edit_script_ready ? "ready" : "blocked")
+           << " validation " << (checklist.validation_ready ? "ready" : "blocked")
+           << " staged-apply " << (checklist.staged_apply_ready ? "ready" : "blocked")
+           << " module-mutation " << (checklist.module_mutation_ready ? "ready" : "blocked")
+           << " production-readiness "
+           << (checklist.production_readiness_ready ? "ready" : "blocked")
+           << " promotion " << (checklist.promotion_ready ? "ready" : "blocked")
+           << " report-only " << (checklist.report_only ? "true" : "false")
+           << " production " << (checklist.production_enabled ? "enabled" : "disabled")
+           << " blockers " << checklist.blockers.size();
+    for (auto const& blocker : checklist.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -1681,7 +1781,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations.empty() &&
         state.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans.empty() &&
         state.runtime_indexed_member_cleanup_module_mutation_gates.empty() &&
-        state.runtime_indexed_member_cleanup_production_readiness.empty()) {
+        state.runtime_indexed_member_cleanup_production_readiness.empty() &&
+        state.runtime_indexed_member_cleanup_promotion_checklists.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -1759,6 +1860,9 @@ auto runtime_indexed_cleanup_audit_report(
         report.push_back(runtime_indexed_member_cleanup_production_readiness_report(readiness));
         auto diagnostics = runtime_indexed_member_cleanup_production_blocker_diagnostics(readiness);
         report.insert(report.end(), diagnostics.begin(), diagnostics.end());
+    }
+    for (auto const& checklist : state.runtime_indexed_member_cleanup_promotion_checklists) {
+        report.push_back(runtime_indexed_member_cleanup_promotion_checklist_report(checklist));
     }
     return report;
 }
@@ -1875,7 +1979,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_module_mutation_gates !=
                 merged.runtime_indexed_member_cleanup_module_mutation_gates ||
             branch_states[index].runtime_indexed_member_cleanup_production_readiness !=
-                merged.runtime_indexed_member_cleanup_production_readiness) {
+                merged.runtime_indexed_member_cleanup_production_readiness ||
+            branch_states[index].runtime_indexed_member_cleanup_promotion_checklists !=
+                merged.runtime_indexed_member_cleanup_promotion_checklists) {
             return std::nullopt;
         }
     }

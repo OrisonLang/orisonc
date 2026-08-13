@@ -1665,6 +1665,8 @@ representation.
   production-disabled policy blockers as separate audit lines.
 - Runtime-index member cleanup module-mutation gates now emit report-only diagnostics for each prerequisite and policy
   blocker before production-readiness diagnostics are reported.
+- Runtime-index member cleanup now ends its audit chain with a report-only promotion checklist that summarizes the
+  candidate, edit script, validation, staged apply, module mutation, and production readiness phases.
 
 ## Follow-up work
 

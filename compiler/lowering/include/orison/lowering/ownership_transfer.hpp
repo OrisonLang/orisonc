@@ -479,6 +479,26 @@ struct RuntimeIndexedMemberCleanupProductionReadiness {
     auto operator==(RuntimeIndexedMemberCleanupProductionReadiness const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupPromotionChecklist {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool rewrite_candidate_ready = false;
+    bool edit_script_ready = false;
+    bool validation_ready = false;
+    bool staged_apply_ready = false;
+    bool module_mutation_ready = false;
+    bool production_readiness_ready = false;
+    bool promotion_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupPromotionChecklist const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -505,6 +525,7 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans;
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
+    std::vector<RuntimeIndexedMemberCleanupPromotionChecklist> runtime_indexed_member_cleanup_promotion_checklists;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -704,6 +725,19 @@ auto runtime_indexed_member_cleanup_production_readiness_report(
 auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_member_cleanup_promotion_checklist(
+    RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan,
+    RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& validation,
+    RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& staged_apply_plan,
+    RuntimeIndexedMemberCleanupModuleMutationGate const& mutation_gate,
+    RuntimeIndexedMemberCleanupProductionReadiness const& production_readiness
+) -> RuntimeIndexedMemberCleanupPromotionChecklist;
+
+auto runtime_indexed_member_cleanup_promotion_checklist_report(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
+) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
