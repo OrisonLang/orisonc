@@ -170,6 +170,8 @@ auto record_runtime_indexed_partial_owner(
             member_mutation_apply_preview,
             member_mutation_post_apply_verification
         );
+    auto member_mutation_production_readiness =
+        runtime_indexed_member_cleanup_mutation_production_readiness(member_mutation_promotion_summary);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -223,6 +225,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_promotion_summaries.push_back(
         std::move(member_mutation_promotion_summary)
+    );
+    state.runtime_indexed_member_cleanup_mutation_production_readiness.push_back(
+        std::move(member_mutation_production_readiness)
     );
 }
 
@@ -2353,6 +2358,79 @@ auto runtime_indexed_member_cleanup_mutation_promotion_summary_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_production_readiness(
+    RuntimeIndexedMemberCleanupMutationPromotionSummary const& summary
+) -> RuntimeIndexedMemberCleanupMutationProductionReadiness {
+    auto blockers = summary.blockers;
+    auto append_blocker = [&blockers](std::string const& blocker) {
+        if (!std::ranges::contains(blockers, blocker)) {
+            blockers.push_back(blocker);
+        }
+    };
+
+    auto ir_mutation_requested = false;
+    auto production_gate_enabled = false;
+    auto readiness_ready = summary.promotion_ready && ir_mutation_requested && production_gate_enabled;
+    if (!summary.promotion_ready) {
+        append_blocker("member-cleanup-mutation-promotion");
+    }
+    if (!summary.post_apply_verification_ready) {
+        append_blocker("member-cleanup-mutation-post-apply-verification");
+    }
+    if (!summary.authorization_ready) {
+        append_blocker("member-cleanup-mutation-apply-authorization");
+    }
+    if (!ir_mutation_requested) {
+        append_blocker("member-cleanup-ir-mutation");
+    }
+    if (!production_gate_enabled) {
+        append_blocker("production-member-cleanup-ir-mutation");
+    }
+
+    return RuntimeIndexedMemberCleanupMutationProductionReadiness {
+        .owner_name = summary.owner_name,
+        .index_expression_text = summary.index_expression_text,
+        .element_source_type_name = summary.element_source_type_name,
+        .moved_source_type_name = summary.moved_source_type_name,
+        .moved_member_path = summary.moved_member_path,
+        .blockers = std::move(blockers),
+        .promotion_ready = summary.promotion_ready,
+        .post_apply_verification_ready = summary.post_apply_verification_ready,
+        .authorization_ready = summary.authorization_ready,
+        .ir_mutation_requested = ir_mutation_requested,
+        .production_gate_enabled = production_gate_enabled,
+        .readiness_ready = readiness_ready,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_production_readiness_report(
+    RuntimeIndexedMemberCleanupMutationProductionReadiness const& readiness
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-production-readiness owner "
+           << readiness.owner_name
+           << " index " << readiness.index_expression_text
+           << " element " << readiness.element_source_type_name
+           << " moved " << readiness.moved_source_type_name
+           << " member-path " << dotted_path(readiness.moved_member_path)
+           << " promotion " << (readiness.promotion_ready ? "ready" : "blocked")
+           << " post-apply-verification "
+           << (readiness.post_apply_verification_ready ? "ready" : "blocked")
+           << " authorization " << (readiness.authorization_ready ? "ready" : "blocked")
+           << " ir-mutation " << (readiness.ir_mutation_requested ? "requested" : "blocked")
+           << " production-gate " << (readiness.production_gate_enabled ? "enabled" : "disabled")
+           << " readiness " << (readiness.readiness_ready ? "ready" : "blocked")
+           << " report-only " << (readiness.report_only ? "true" : "false")
+           << " production " << (readiness.production_enabled ? "enabled" : "disabled")
+           << " blockers " << readiness.blockers.size();
+    for (auto const& blocker : readiness.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2498,7 +2576,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_mutation_apply_authorizations.empty() &&
         state.runtime_indexed_member_cleanup_mutation_apply_previews.empty() &&
         state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_promotion_summaries.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_promotion_summaries.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_production_readiness.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2603,6 +2682,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& summary : state.runtime_indexed_member_cleanup_mutation_promotion_summaries) {
         report.push_back(runtime_indexed_member_cleanup_mutation_promotion_summary_report(summary));
+    }
+    for (auto const& readiness : state.runtime_indexed_member_cleanup_mutation_production_readiness) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_production_readiness_report(readiness));
     }
     return report;
 }
@@ -2737,7 +2819,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_post_apply_verifications !=
                 merged.runtime_indexed_member_cleanup_mutation_post_apply_verifications ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_promotion_summaries !=
-                merged.runtime_indexed_member_cleanup_mutation_promotion_summaries) {
+                merged.runtime_indexed_member_cleanup_mutation_promotion_summaries ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_production_readiness !=
+                merged.runtime_indexed_member_cleanup_mutation_production_readiness) {
             return std::nullopt;
         }
     }

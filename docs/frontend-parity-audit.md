@@ -2402,3 +2402,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-13: Runtime-index member cleanup mutation post-apply verification now feeds a final report-only promotion
   summary across operation planning, validation, conflict detection, apply authorization, apply preview, and post-apply
   verification.
+- 2026-08-13: Runtime-index member cleanup mutation promotion summaries now feed a final report-only production
+  readiness gate that separates prerequisite readiness from disabled IR mutation and disabled production gates.

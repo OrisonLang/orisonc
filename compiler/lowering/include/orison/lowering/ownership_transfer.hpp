@@ -681,6 +681,25 @@ struct RuntimeIndexedMemberCleanupMutationPromotionSummary {
     auto operator==(RuntimeIndexedMemberCleanupMutationPromotionSummary const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationProductionReadiness {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool promotion_ready = false;
+    bool post_apply_verification_ready = false;
+    bool authorization_ready = false;
+    bool ir_mutation_requested = false;
+    bool production_gate_enabled = false;
+    bool readiness_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationProductionReadiness const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -723,6 +742,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_post_apply_verifications;
     std::vector<RuntimeIndexedMemberCleanupMutationPromotionSummary>
         runtime_indexed_member_cleanup_mutation_promotion_summaries;
+    std::vector<RuntimeIndexedMemberCleanupMutationProductionReadiness>
+        runtime_indexed_member_cleanup_mutation_production_readiness;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -1007,6 +1028,14 @@ auto runtime_indexed_member_cleanup_mutation_promotion_summary(
 
 auto runtime_indexed_member_cleanup_mutation_promotion_summary_report(
     RuntimeIndexedMemberCleanupMutationPromotionSummary const& summary
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_production_readiness(
+    RuntimeIndexedMemberCleanupMutationPromotionSummary const& summary
+) -> RuntimeIndexedMemberCleanupMutationProductionReadiness;
+
+auto runtime_indexed_member_cleanup_mutation_production_readiness_report(
+    RuntimeIndexedMemberCleanupMutationProductionReadiness const& readiness
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

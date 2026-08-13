@@ -1686,6 +1686,8 @@ representation.
   the branch target, cleanup CFG append, and PHI predecessor checks expected after a future authorized apply step.
 - Runtime-index member cleanup mutation post-apply verification now feeds a final report-only promotion summary across
   operation planning, validation, conflict detection, apply authorization, apply preview, and post-apply verification.
+- Runtime-index member cleanup mutation promotion summaries now feed a final report-only production readiness gate that
+  separates prerequisite readiness from disabled IR mutation and disabled production gates.
 
 ## Follow-up work
 
