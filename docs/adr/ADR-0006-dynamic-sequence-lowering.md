@@ -1692,6 +1692,8 @@ representation.
   prerequisite, authorization, post-apply verification, disabled IR mutation, and disabled production gates.
 - Runtime-index member cleanup mutation production-readiness diagnostics now end with a compact report-only verdict
   line summarizing readiness, guarded rewrite status, blocker count, and diagnostic count.
+- Runtime-index member cleanup mutation readiness verdicts now feed a report-only guarded rewrite authorization record
+  that remains blocked until readiness and guarded rewrite prerequisites are met.
 
 ## Follow-up work
 

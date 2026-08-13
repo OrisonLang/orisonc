@@ -716,6 +716,23 @@ struct RuntimeIndexedMemberCleanupMutationReadinessVerdict {
     auto operator==(RuntimeIndexedMemberCleanupMutationReadinessVerdict const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool verdict_ready = false;
+    bool guarded_rewrite_ready = false;
+    bool authorization_ready = false;
+    bool rewrite_authorized = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationRewriteAuthorization const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -762,6 +779,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_production_readiness;
     std::vector<RuntimeIndexedMemberCleanupMutationReadinessVerdict>
         runtime_indexed_member_cleanup_mutation_readiness_verdicts;
+    std::vector<RuntimeIndexedMemberCleanupMutationRewriteAuthorization>
+        runtime_indexed_member_cleanup_mutation_rewrite_authorizations;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -1066,6 +1085,14 @@ auto runtime_indexed_member_cleanup_mutation_readiness_verdict(
 
 auto runtime_indexed_member_cleanup_mutation_readiness_verdict_report(
     RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_authorization(
+    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict
+) -> RuntimeIndexedMemberCleanupMutationRewriteAuthorization;
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

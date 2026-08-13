@@ -2408,3 +2408,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   lines for prerequisite, authorization, post-apply verification, disabled IR mutation, and disabled production gates.
 - 2026-08-13: Runtime-index member cleanup mutation production-readiness diagnostics now end with a compact
   report-only verdict line summarizing readiness, guarded rewrite status, blocker count, and diagnostic count.
+- 2026-08-13: Runtime-index member cleanup mutation readiness verdicts now feed a report-only guarded rewrite
+  authorization record that remains blocked until readiness and guarded rewrite prerequisites are met.
