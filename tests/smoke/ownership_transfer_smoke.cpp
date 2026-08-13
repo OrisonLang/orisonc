@@ -188,7 +188,7 @@ int main() {
         "operation skip-cleanup-index operation drop-live-element operation deallocate-owner"
     );
     auto runtime_indexed_audit = orison::lowering::runtime_indexed_cleanup_audit_report(runtime_indexed);
-    assert(runtime_indexed_audit.size() == 44);
+    assert(runtime_indexed_audit.size() == 45);
     assert(runtime_indexed_audit[0] == "runtime-index cleanup audit entries 1");
     assert(runtime_indexed_audit[1] == orison::lowering::runtime_indexed_partial_owner_report(
         runtime_indexed.runtime_indexed_partial_owners.front()
@@ -330,6 +330,12 @@ int main() {
         runtime_indexed_audit[43] ==
         orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(
             runtime_indexed.runtime_indexed_member_cleanup_mutation_apply_previews.front()
+        )
+    );
+    assert(
+        runtime_indexed_audit[44] ==
+        orison::lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
+            runtime_indexed.runtime_indexed_member_cleanup_mutation_post_apply_verifications.front()
         )
     );
     auto missing_index_capability = orison::lowering::runtime_indexed_cleanup_capability(
@@ -1190,6 +1196,31 @@ int main() {
         "action phi-retarget ready true applied false anchor items.member_cleanup.exit "
         "detail retarget PHI predecessor items.final-cleanup to items.member_cleanup.exit"
     );
+    auto member_mutation_post_apply_verification =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification(
+            member_mutation_apply_preview
+        );
+    assert(member_mutation_post_apply_verification.preview_ready);
+    assert(!member_mutation_post_apply_verification.apply_authorized);
+    assert(!member_mutation_post_apply_verification.actions_applied);
+    assert(member_mutation_post_apply_verification.expected_checks_ready);
+    assert(!member_mutation_post_apply_verification.verification_ready);
+    assert(member_mutation_post_apply_verification.report_only);
+    assert(!member_mutation_post_apply_verification.production_enabled);
+    assert(member_mutation_post_apply_verification.expected_checks.size() == 3);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
+            member_mutation_post_apply_verification
+        ) ==
+        "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
+        "element Box moved Inner member-path item preview ready apply-authorized false "
+        "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
+        "report-only true production disabled blockers 6 blocker member-cleanup-module-mutation "
+        "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
+        "blocker production-member-cleanup-ir-mutation blocker member-cleanup-mutation-apply-authorization "
+        "blocker member-cleanup-mutation-actions-applied expected-check branch-target items.final-cleanup "
+        "expected-check cfg-appended items.member_cleanup.exit expected-check phi-predecessor items.member_cleanup.exit"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
@@ -1224,6 +1255,7 @@ int main() {
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_conflict_detections.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1);
     assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_apply_previews.size() == 1);
+    assert(matching_runtime_indexed->runtime_indexed_member_cleanup_mutation_post_apply_verifications.size() == 1);
     auto different_runtime_indexed = runtime_indexed;
     different_runtime_indexed.runtime_indexed_partial_owners.front().index_expression_text = "other_index";
     auto mismatched_runtime_indexed = orison::lowering::merge_ownership_transfer_states({

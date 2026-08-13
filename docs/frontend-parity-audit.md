@@ -2397,3 +2397,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   remains blocked while production IR mutation is disabled.
 - 2026-08-13: Runtime-index member cleanup apply authorization now feeds a report-only ordered apply preview for the
   future branch replacement, CFG append, and PHI retarget actions without mutating IR.
+- 2026-08-13: Runtime-index member cleanup apply previews now feed report-only post-apply verification targets for
+  branch target, CFG append, and PHI predecessor checks.

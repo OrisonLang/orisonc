@@ -639,6 +639,25 @@ struct RuntimeIndexedMemberCleanupMutationApplyPreview {
     auto operator==(RuntimeIndexedMemberCleanupMutationApplyPreview const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationPostApplyVerification {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> expected_checks;
+    std::vector<std::string> blockers;
+    bool preview_ready = false;
+    bool apply_authorized = false;
+    bool actions_applied = false;
+    bool expected_checks_ready = false;
+    bool verification_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationPostApplyVerification const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -677,6 +696,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_apply_authorizations;
     std::vector<RuntimeIndexedMemberCleanupMutationApplyPreview>
         runtime_indexed_member_cleanup_mutation_apply_previews;
+    std::vector<RuntimeIndexedMemberCleanupMutationPostApplyVerification>
+        runtime_indexed_member_cleanup_mutation_post_apply_verifications;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -940,6 +961,14 @@ auto runtime_indexed_member_cleanup_mutation_apply_preview(
 
 auto runtime_indexed_member_cleanup_mutation_apply_preview_report(
     RuntimeIndexedMemberCleanupMutationApplyPreview const& preview
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_post_apply_verification(
+    RuntimeIndexedMemberCleanupMutationApplyPreview const& preview
+) -> RuntimeIndexedMemberCleanupMutationPostApplyVerification;
+
+auto runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
+    RuntimeIndexedMemberCleanupMutationPostApplyVerification const& verification
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(

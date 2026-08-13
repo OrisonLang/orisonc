@@ -159,6 +159,8 @@ auto record_runtime_indexed_partial_owner(
             member_mutation_operation_plan,
             member_mutation_apply_authorization
         );
+    auto member_mutation_post_apply_verification =
+        runtime_indexed_member_cleanup_mutation_post_apply_verification(member_mutation_apply_preview);
     emission_plan.function_predecessor_block_name = std::move(function_predecessor_block_name);
     state.runtime_indexed_partial_owners.push_back(std::move(owner));
     state.runtime_indexed_cleanup_skip_plans.push_back(std::move(plan));
@@ -206,6 +208,9 @@ auto record_runtime_indexed_partial_owner(
     );
     state.runtime_indexed_member_cleanup_mutation_apply_previews.push_back(
         std::move(member_mutation_apply_preview)
+    );
+    state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.push_back(
+        std::move(member_mutation_post_apply_verification)
     );
 }
 
@@ -2166,6 +2171,83 @@ auto runtime_indexed_member_cleanup_mutation_apply_preview_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_mutation_post_apply_verification(
+    RuntimeIndexedMemberCleanupMutationApplyPreview const& preview
+) -> RuntimeIndexedMemberCleanupMutationPostApplyVerification {
+    auto expected_checks = std::vector<std::string> {};
+    for (auto const& action : preview.actions) {
+        if (action.kind == "branch-replacement") {
+            expected_checks.push_back("branch-target " + action.anchor);
+        } else if (action.kind == "cfg-append") {
+            expected_checks.push_back("cfg-appended " + action.anchor);
+        } else if (action.kind == "phi-retarget") {
+            expected_checks.push_back("phi-predecessor " + action.anchor);
+        }
+    }
+
+    auto blockers = preview.blockers;
+    auto append_blocker = [&blockers](std::string blocker) {
+        if (!std::ranges::contains(blockers, blocker)) {
+            blockers.push_back(std::move(blocker));
+        }
+    };
+    auto expected_checks_ready = preview.preview_ready && expected_checks.size() == preview.actions.size();
+    if (!preview.preview_ready) {
+        append_blocker("member-cleanup-mutation-apply-preview");
+    }
+    if (!preview.apply_authorized) {
+        append_blocker("member-cleanup-mutation-apply-authorization");
+    }
+    if (!preview.actions_applied) {
+        append_blocker("member-cleanup-mutation-actions-applied");
+    }
+
+    return RuntimeIndexedMemberCleanupMutationPostApplyVerification {
+        .owner_name = preview.owner_name,
+        .index_expression_text = preview.index_expression_text,
+        .element_source_type_name = preview.element_source_type_name,
+        .moved_source_type_name = preview.moved_source_type_name,
+        .moved_member_path = preview.moved_member_path,
+        .expected_checks = std::move(expected_checks),
+        .blockers = std::move(blockers),
+        .preview_ready = preview.preview_ready,
+        .apply_authorized = preview.apply_authorized,
+        .actions_applied = preview.actions_applied,
+        .expected_checks_ready = expected_checks_ready,
+        .verification_ready = expected_checks_ready && preview.apply_authorized && preview.actions_applied,
+        .report_only = true,
+        .production_enabled = false,
+    };
+}
+
+auto runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
+    RuntimeIndexedMemberCleanupMutationPostApplyVerification const& verification
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup mutation-post-apply-verification owner "
+           << verification.owner_name
+           << " index " << verification.index_expression_text
+           << " element " << verification.element_source_type_name
+           << " moved " << verification.moved_source_type_name
+           << " member-path " << dotted_path(verification.moved_member_path)
+           << " preview " << (verification.preview_ready ? "ready" : "blocked")
+           << " apply-authorized " << (verification.apply_authorized ? "true" : "false")
+           << " actions-applied " << (verification.actions_applied ? "true" : "false")
+           << " expected-checks " << verification.expected_checks.size()
+           << " expected-checks-ready " << (verification.expected_checks_ready ? "true" : "false")
+           << " verification " << (verification.verification_ready ? "ready" : "blocked")
+           << " report-only " << (verification.report_only ? "true" : "false")
+           << " production " << (verification.production_enabled ? "enabled" : "disabled")
+           << " blockers " << verification.blockers.size();
+    for (auto const& blocker : verification.blockers) {
+        report << " blocker " << blocker;
+    }
+    for (auto const& check : verification.expected_checks) {
+        report << " expected-check " << check;
+    }
+    return report.str();
+}
+
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan
 ) -> std::vector<std::string> {
@@ -2309,7 +2391,8 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_mutation_operation_validations.empty() &&
         state.runtime_indexed_member_cleanup_mutation_conflict_detections.empty() &&
         state.runtime_indexed_member_cleanup_mutation_apply_authorizations.empty() &&
-        state.runtime_indexed_member_cleanup_mutation_apply_previews.empty()) {
+        state.runtime_indexed_member_cleanup_mutation_apply_previews.empty() &&
+        state.runtime_indexed_member_cleanup_mutation_post_apply_verifications.empty()) {
         return {"runtime-index cleanup audit: no runtime-index cleanup metadata"};
     }
 
@@ -2408,6 +2491,9 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& preview : state.runtime_indexed_member_cleanup_mutation_apply_previews) {
         report.push_back(runtime_indexed_member_cleanup_mutation_apply_preview_report(preview));
+    }
+    for (auto const& verification : state.runtime_indexed_member_cleanup_mutation_post_apply_verifications) {
+        report.push_back(runtime_indexed_member_cleanup_mutation_post_apply_verification_report(verification));
     }
     return report;
 }
@@ -2538,7 +2624,9 @@ auto merge_ownership_transfer_states(
             branch_states[index].runtime_indexed_member_cleanup_mutation_apply_authorizations !=
                 merged.runtime_indexed_member_cleanup_mutation_apply_authorizations ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_apply_previews !=
-                merged.runtime_indexed_member_cleanup_mutation_apply_previews) {
+                merged.runtime_indexed_member_cleanup_mutation_apply_previews ||
+            branch_states[index].runtime_indexed_member_cleanup_mutation_post_apply_verifications !=
+                merged.runtime_indexed_member_cleanup_mutation_post_apply_verifications) {
             return std::nullopt;
         }
     }

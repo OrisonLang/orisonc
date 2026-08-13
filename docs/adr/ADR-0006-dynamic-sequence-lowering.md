@@ -1682,6 +1682,8 @@ representation.
   validation readiness and conflict-free status, then remains blocked while production IR mutation is disabled.
 - Runtime-index member cleanup apply authorization now feeds a report-only ordered apply preview. The preview renders
   the future branch replacement, cleanup CFG append, and PHI retarget actions without mutating IR.
+- Runtime-index member cleanup apply previews now feed report-only post-apply verification targets. These targets name
+  the branch target, cleanup CFG append, and PHI predecessor checks expected after a future authorized apply step.
 
 ## Follow-up work
 
