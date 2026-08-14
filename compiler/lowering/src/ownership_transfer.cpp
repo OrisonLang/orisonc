@@ -2558,7 +2558,8 @@ auto runtime_indexed_member_cleanup_mutation_readiness_verdict_report(
 }
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_authorization(
-    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict
+    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict,
+    bool rewrite_authorization_requested
 ) -> RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
     auto blockers = std::vector<std::string> {};
     if (!verdict.readiness_ready) {
@@ -2579,7 +2580,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization(
         .verdict_ready = verdict.readiness_ready,
         .guarded_rewrite_ready = verdict.guarded_rewrite_ready,
         .authorization_ready = authorization_ready,
-        .rewrite_authorized = false,
+        .rewrite_authorized = authorization_ready && rewrite_authorization_requested,
         .report_only = true,
         .production_enabled = false,
     };
@@ -2635,7 +2636,8 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(
 }
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
-    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization,
+    bool execution_requested
 ) -> RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
     auto blockers = std::vector<std::string> {};
     if (!authorization.authorization_ready) {
@@ -2656,7 +2658,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
         .authorization_ready = authorization.authorization_ready,
         .rewrite_authorized = authorization.rewrite_authorized,
         .execution_plan_ready = execution_plan_ready,
-        .execution_enabled = false,
+        .execution_enabled = execution_plan_ready && execution_requested,
         .report_only = true,
         .production_enabled = false,
     };

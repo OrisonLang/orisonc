@@ -1145,7 +1145,8 @@ auto runtime_indexed_member_cleanup_mutation_readiness_verdict_report(
 ) -> std::string;
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_authorization(
-    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict
+    RuntimeIndexedMemberCleanupMutationReadinessVerdict const& verdict,
+    bool rewrite_authorization_requested = false
 ) -> RuntimeIndexedMemberCleanupMutationRewriteAuthorization;
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
@@ -1157,7 +1158,8 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(
 ) -> std::vector<std::string>;
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
-    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization,
+    bool execution_requested = false
 ) -> RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan;
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(

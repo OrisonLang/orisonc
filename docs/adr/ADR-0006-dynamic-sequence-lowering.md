@@ -1704,6 +1704,8 @@ representation.
   summarizing execution readiness, blocker count, diagnostic count, and disabled production execution.
 - Runtime-index member cleanup mutation rewrite execution verdicts now feed a final report-only promotion status line
   that aggregates authorization, execution-plan, execution-verdict, and production-disabled readiness.
+- Runtime-index member cleanup mutation rewrite authorization and execution planning now have explicit internal opt-in
+  gates that can reach promotion-ready status while default audit paths and production mutation remain disabled.
 
 ## Follow-up work
 

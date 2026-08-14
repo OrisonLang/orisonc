@@ -1528,6 +1528,80 @@ int main() {
         "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true "
         "production disabled"
     );
+    auto ready_member_mutation_readiness_verdict = member_mutation_readiness_verdict;
+    ready_member_mutation_readiness_verdict.blocker_count = 0;
+    ready_member_mutation_readiness_verdict.diagnostic_count = 0;
+    ready_member_mutation_readiness_verdict.readiness_ready = true;
+    ready_member_mutation_readiness_verdict.guarded_rewrite_ready = true;
+    auto authorized_member_mutation_rewrite =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization(
+            ready_member_mutation_readiness_verdict,
+            true
+        );
+    assert(authorized_member_mutation_rewrite.authorization_ready);
+    assert(authorized_member_mutation_rewrite.rewrite_authorized);
+    assert(authorized_member_mutation_rewrite.blockers.empty());
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
+            authorized_member_mutation_rewrite
+        ) ==
+        "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
+        "element Box moved Inner member-path item verdict ready guarded-rewrite ready authorization ready "
+        "rewrite-authorized true report-only true production disabled blockers 0"
+    );
+    auto enabled_member_mutation_execution_plan =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
+            authorized_member_mutation_rewrite,
+            true
+        );
+    assert(enabled_member_mutation_execution_plan.authorization_ready);
+    assert(enabled_member_mutation_execution_plan.rewrite_authorized);
+    assert(enabled_member_mutation_execution_plan.execution_plan_ready);
+    assert(enabled_member_mutation_execution_plan.execution_enabled);
+    assert(enabled_member_mutation_execution_plan.blockers.empty());
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
+            enabled_member_mutation_execution_plan
+        ) ==
+        "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
+        "element Box moved Inner member-path item authorization ready rewrite-authorized true "
+        "execution-plan ready execution enabled report-only true production disabled blockers 0"
+    );
+    auto enabled_member_mutation_execution_verdict =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict(
+            enabled_member_mutation_execution_plan
+        );
+    assert(enabled_member_mutation_execution_verdict.blocker_count == 0);
+    assert(enabled_member_mutation_execution_verdict.diagnostic_count == 0);
+    assert(enabled_member_mutation_execution_verdict.execution_plan_ready);
+    assert(enabled_member_mutation_execution_verdict.execution_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(
+            enabled_member_mutation_execution_verdict
+        ) ==
+        "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
+        "element Box moved Inner member-path item execution-plan ready execution enabled blockers 0 "
+        "diagnostics 0 report-only true production disabled"
+    );
+    auto enabled_member_mutation_promotion_status =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_promotion_status(
+            authorized_member_mutation_rewrite,
+            enabled_member_mutation_execution_plan,
+            enabled_member_mutation_execution_verdict
+        );
+    assert(enabled_member_mutation_promotion_status.authorization_ready);
+    assert(enabled_member_mutation_promotion_status.execution_plan_ready);
+    assert(enabled_member_mutation_promotion_status.execution_verdict_ready);
+    assert(enabled_member_mutation_promotion_status.promotion_ready);
+    assert(!enabled_member_mutation_promotion_status.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(
+            enabled_member_mutation_promotion_status
+        ) ==
+        "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
+        "element Box moved Inner member-path item authorization ready execution-plan ready "
+        "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only true production disabled"
+    );
     auto matching_runtime_indexed = orison::lowering::merge_ownership_transfer_states({
         runtime_indexed,
         runtime_indexed,
