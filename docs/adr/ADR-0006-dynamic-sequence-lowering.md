@@ -1741,6 +1741,10 @@ representation.
   in the lowering namespace before helper rendering. The pipeline still derives the metadata from parsed record
   declarations and emitted IR in this step, but helper emission consumes typed cleanup-field records containing owner,
   moved-path, field index, source type, LLVM type, and Drop symbol data.
+- Runtime-index member cleanup sibling metadata derivation now lives in LLVM lowering emission. The emitter consumes
+  lowered record layouts, planned member cleanup edit scripts, and source Drop definition symbols to populate
+  `runtime_indexed_member_cleanup_sibling_fields`; the pipeline no longer inspects parsed record declarations or
+  emitted record-layout text to discover helper fields.
 
 ## Follow-up work
 

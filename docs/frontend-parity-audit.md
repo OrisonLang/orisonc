@@ -8,6 +8,10 @@
   metadata in the lowering namespace before helper rendering. The pipeline still derives the metadata from parsed
   records and emitted IR today, but helper emission now consumes a typed cleanup-field artifact rather than ad hoc
   pipeline-local field data.
+- 2026-08-14: Runtime-index member cleanup sibling metadata derivation now lives in LLVM lowering emission. The emitter
+  uses lowered record layouts, planned member cleanup edit scripts, and source Drop definition symbols to populate
+  `runtime_indexed_member_cleanup_sibling_fields`; the pipeline now only selects matching typed records while rendering
+  the helper body.
 - 2026-08-13: DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as

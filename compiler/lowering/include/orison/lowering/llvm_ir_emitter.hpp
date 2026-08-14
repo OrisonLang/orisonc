@@ -322,6 +322,7 @@ struct LlvmIrEmissionResult {
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
     std::vector<RuntimeIndexedCleanupCapability> runtime_indexed_cleanup_capabilities;
     std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
+    std::vector<RuntimeIndexedMemberCleanupSiblingField> runtime_indexed_member_cleanup_sibling_fields;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
     std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan>

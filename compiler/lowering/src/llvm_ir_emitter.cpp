@@ -598,6 +598,57 @@ auto collect_source_drop_definition_symbols(
     return symbols;
 }
 
+auto collect_runtime_indexed_member_cleanup_sibling_fields(
+    LoweringContext const& context,
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan> const& edit_script_plans,
+    std::vector<std::string> const& source_defined_drop_symbols
+) -> std::vector<RuntimeIndexedMemberCleanupSiblingField> {
+    auto fields = std::vector<RuntimeIndexedMemberCleanupSiblingField> {};
+    for (auto const& plan : edit_script_plans) {
+        if (plan.element_source_type_name.empty() || plan.moved_member_path.size() != 1) {
+            continue;
+        }
+        auto const record = context.records.find(plan.element_source_type_name);
+        if (record == context.records.end()) {
+            continue;
+        }
+        auto const moved_field_name = plan.moved_member_path.front();
+        auto const moved_field = std::ranges::find_if(
+            record->second.fields,
+            [&](LoweredRecordField const& field) {
+                return field.name == moved_field_name;
+            }
+        );
+        if (moved_field == record->second.fields.end()) {
+            continue;
+        }
+        for (auto const& field : record->second.fields) {
+            if (field.name == moved_field_name || field.source_type_name.empty() || field.llvm_type.empty()) {
+                continue;
+            }
+            auto drop_symbol_name = semantics::drop_abi_symbol_name(field.source_type_name);
+            if (std::ranges::find(source_defined_drop_symbols, drop_symbol_name) ==
+                source_defined_drop_symbols.end()) {
+                continue;
+            }
+            fields.push_back(RuntimeIndexedMemberCleanupSiblingField {
+                .owner_name = plan.owner_name,
+                .index_expression_text = plan.index_expression_text,
+                .element_source_type_name = plan.element_source_type_name,
+                .moved_source_type_name = plan.moved_source_type_name,
+                .moved_member_path = plan.moved_member_path,
+                .field_name = field.name,
+                .field_source_type_name = field.source_type_name,
+                .field_llvm_type_name = field.llvm_type,
+                .drop_symbol_name = std::move(drop_symbol_name),
+                .field_index = field.index,
+                .drop_definition_available = true,
+            });
+        }
+    }
+    return fields;
+}
+
 auto declared_drop_declarations_for_runtime_indexed_cleanup(
     syntax::ModuleSyntax const& module
 ) -> std::vector<PlannedDropDeclaration> {
@@ -3583,6 +3634,13 @@ auto emit_module(
             return result;
         }
     }
+
+    result.runtime_indexed_member_cleanup_sibling_fields =
+        collect_runtime_indexed_member_cleanup_sibling_fields(
+            context,
+            result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
+            source_defined_drop_symbols
+        );
 
     for (auto const& line : result.computed_dynamic_array_for_production_sequence_module_ir) {
         output << line;
