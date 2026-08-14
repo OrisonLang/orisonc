@@ -7535,6 +7535,57 @@ auto main() -> int {
             "blocker member-cleanup-mutation-guarded-rewrite"
         )
     );
+    auto runtime_indexed_member_transfer_ir_mutation_request = pipeline.emit_llvm(
+        runtime_indexed_member_transfer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .test_only_runtime_indexed_member_cleanup_ir_mutation_request = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(runtime_indexed_member_transfer_ir_mutation_request.has_errors());
+    auto has_requested_member_transfer_audit_line =
+        [&](std::string_view expected_line) {
+            return std::any_of(
+                runtime_indexed_member_transfer_ir_mutation_request
+                    .runtime_indexed_cleanup_audit_lines.begin(),
+                runtime_indexed_member_transfer_ir_mutation_request
+                    .runtime_indexed_cleanup_audit_lines.end(),
+                [&](std::string const& line) {
+                    return line == expected_line;
+                }
+            );
+        };
+    assert(
+        has_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
+            "element Box moved Inner member-path item validation ready conflict-free true "
+            "ir-mutation requested production-gate disabled authorization blocked apply-authorized false "
+            "report-only true production disabled blockers 3 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup blocker production-member-cleanup-ir-mutation"
+        )
+    );
+    assert(
+        has_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
+            "element Box moved Inner member-path item preview ready apply-authorized false "
+            "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
+            "report-only true production disabled blockers 5 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup blocker production-member-cleanup-ir-mutation "
+            "blocker member-cleanup-mutation-apply-authorization "
+            "blocker member-cleanup-mutation-actions-applied expected-check branch-target items.final-cleanup "
+            "expected-check cfg-appended items.member_cleanup.exit "
+            "expected-check phi-predecessor items.member_cleanup.exit"
+        )
+    );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {

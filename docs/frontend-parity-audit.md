@@ -2429,3 +2429,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-13: Pipeline smoke coverage now pins the source-backed computed DynamicArray member-transfer audit path for
   `items[index + zero].item`, including member Drop metadata readiness, production-readiness blockers, mutation
   operation validation readiness, and guarded rewrite authorization remaining blocked by default.
+- 2026-08-13: Runtime-index member cleanup mutation apply authorization now accepts an internal test-only IR mutation
+  request. The request is observable in audit output, while the production gate remains disabled and apply
+  authorization stays blocked.

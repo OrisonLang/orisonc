@@ -859,6 +859,7 @@ auto record_runtime_indexed_partial_owner(
     RuntimeIndexedPartialOwner owner,
     std::string function_predecessor_block_name = {},
     bool production_cleanup_emission_enabled = false,
+    bool member_cleanup_ir_mutation_requested = false,
     bool member_cleanup_rewrite_execution_requested = false
 ) -> void;
 
@@ -1090,7 +1091,8 @@ auto runtime_indexed_member_cleanup_mutation_conflict_detection_report(
 
 auto runtime_indexed_member_cleanup_mutation_apply_authorization(
     RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
-    RuntimeIndexedMemberCleanupMutationConflictDetection const& detection
+    RuntimeIndexedMemberCleanupMutationConflictDetection const& detection,
+    bool ir_mutation_requested = false
 ) -> RuntimeIndexedMemberCleanupMutationApplyAuthorization;
 
 auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(
