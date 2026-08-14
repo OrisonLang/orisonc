@@ -7809,6 +7809,38 @@ auto main() -> int {
     );
     assert(!runtime_indexed_sibling_member_transfer_apply_request.has_errors());
     assert(
+        runtime_indexed_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_sibling_fields.size() == 2
+    );
+    auto const& prefix_member_cleanup_field =
+        runtime_indexed_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_sibling_fields[0];
+    assert(prefix_member_cleanup_field.owner_name == "items");
+    assert(prefix_member_cleanup_field.index_expression_text == "(index + zero)");
+    assert(prefix_member_cleanup_field.element_source_type_name == "Box");
+    assert(prefix_member_cleanup_field.moved_source_type_name == "Inner");
+    assert(prefix_member_cleanup_field.moved_member_path == std::vector<std::string> {"item"});
+    assert(prefix_member_cleanup_field.field_name == "prefix");
+    assert(prefix_member_cleanup_field.field_source_type_name == "Sibling");
+    assert(prefix_member_cleanup_field.field_llvm_type_name == "%record.Sibling");
+    assert(prefix_member_cleanup_field.drop_symbol_name == "__orison_drop.Sibling");
+    assert(prefix_member_cleanup_field.field_index == 0);
+    assert(prefix_member_cleanup_field.drop_definition_available);
+    auto const& tail_member_cleanup_field =
+        runtime_indexed_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_sibling_fields[1];
+    assert(tail_member_cleanup_field.owner_name == "items");
+    assert(tail_member_cleanup_field.index_expression_text == "(index + zero)");
+    assert(tail_member_cleanup_field.element_source_type_name == "Box");
+    assert(tail_member_cleanup_field.moved_source_type_name == "Inner");
+    assert(tail_member_cleanup_field.moved_member_path == std::vector<std::string> {"item"});
+    assert(tail_member_cleanup_field.field_name == "tail");
+    assert(tail_member_cleanup_field.field_source_type_name == "Tail");
+    assert(tail_member_cleanup_field.field_llvm_type_name == "%record.Tail");
+    assert(tail_member_cleanup_field.drop_symbol_name == "__orison_drop.Tail");
+    assert(tail_member_cleanup_field.field_index == 2);
+    assert(tail_member_cleanup_field.drop_definition_available);
+    assert(
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
             "items.member_cleanup.drop_siblings:\n"
             "  call void @__orison_member_cleanup.Box.except.item(ptr "

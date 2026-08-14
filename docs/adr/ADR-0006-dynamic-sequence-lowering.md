@@ -1745,6 +1745,9 @@ representation.
   lowered record layouts, planned member cleanup edit scripts, and source Drop definition symbols to populate
   `runtime_indexed_member_cleanup_sibling_fields`; the pipeline no longer inspects parsed record declarations or
   emitted record-layout text to discover helper fields.
+- Pipeline smoke coverage now directly asserts `runtime_indexed_member_cleanup_sibling_fields` for the two-sibling
+  `Box.except.item` fixture. This pins the typed metadata boundary independently from helper-body IR rendering before
+  nested member-path cleanup expands the same model.
 
 ## Follow-up work
 

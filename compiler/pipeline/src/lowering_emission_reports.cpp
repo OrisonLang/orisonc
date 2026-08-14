@@ -2970,6 +2970,8 @@ void populate_lowering_emission_reports(
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);
+    result.runtime_indexed_member_cleanup_sibling_fields =
+        std::move(emission.runtime_indexed_member_cleanup_sibling_fields);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
 }
 

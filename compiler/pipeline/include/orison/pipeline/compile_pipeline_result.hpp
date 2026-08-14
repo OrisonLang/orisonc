@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/pipeline/aggregate_projection_access_pipeline_state.hpp"
 #include "orison/pipeline/computed_dynamic_array_cleanup_states.hpp"
 #include "orison/pipeline/computed_dynamic_array_production_sequence.hpp"
@@ -109,6 +110,8 @@ struct CompilePipelineResult {
         runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
+    std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField>
+        runtime_indexed_member_cleanup_sibling_fields;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;
