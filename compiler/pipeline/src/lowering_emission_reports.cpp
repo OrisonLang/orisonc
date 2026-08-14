@@ -1307,9 +1307,36 @@ auto label_from_member_cleanup_preview(
     return {};
 }
 
+auto selected_runtime_indexed_member_cleanup_element_address(
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan,
+    std::string const& function_ir
+) -> std::string {
+    auto const needle = " = getelementptr %record." + plan.element_source_type_name + ", ptr ";
+    auto position = std::string::size_type {0};
+    auto selected = std::string {};
+    while ((position = function_ir.find(needle, position)) != std::string::npos) {
+        auto const line_start = function_ir.rfind('\n', position);
+        auto const value_start = line_start == std::string::npos ? std::string::size_type {0} : line_start + 1;
+        auto const value_end = position;
+        auto trimmed_value_start = value_start;
+        while (trimmed_value_start < value_end && function_ir[trimmed_value_start] == ' ') {
+            ++trimmed_value_start;
+        }
+        if (trimmed_value_start < value_end &&
+            function_ir[trimmed_value_start] == '%' &&
+            function_ir.substr(trimmed_value_start, value_end - trimmed_value_start).find(".element.addr") !=
+                std::string::npos) {
+            selected = function_ir.substr(trimmed_value_start, value_end - trimmed_value_start);
+        }
+        position += needle.size();
+    }
+    return selected;
+}
+
 auto member_cleanup_executable_cfg_append(
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan,
-    std::string const& continuation_terminator_text
+    std::string const& continuation_terminator_text,
+    std::string const& selected_element_address
 ) -> std::string {
     auto const skip_block_name =
         label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".skip_moved");
@@ -1321,6 +1348,7 @@ auto member_cleanup_executable_cfg_append(
         preserve_block_name.empty() ||
         plan.exit_block_name.empty() ||
         plan.member_cleanup_target_symbol_name.empty() ||
+        selected_element_address.empty() ||
         continuation_terminator_text.empty()) {
         return {};
     }
@@ -1333,13 +1361,34 @@ auto member_cleanup_executable_cfg_append(
            << "  ; preserve moved member\n"
            << "  br label %" << preserve_block_name << "\n"
            << sibling_drop_block_name << ":\n"
-           << "  ; member sibling cleanup target " << plan.member_cleanup_target_symbol_name << "\n"
+           << "  call void @" << plan.member_cleanup_target_symbol_name
+           << "(ptr " << selected_element_address << ")\n"
            << "  br label %" << preserve_block_name << "\n"
            << preserve_block_name << ":\n"
            << "  br label %" << plan.exit_block_name << "\n"
            << plan.exit_block_name << ":\n"
            << continuation_terminator_text;
     return output.str();
+}
+
+auto ensure_member_cleanup_declaration(
+    std::string& ir_text,
+    std::string const& symbol_name
+) -> bool {
+    if (symbol_name.empty()) {
+        return false;
+    }
+    auto const declaration = "declare void @" + symbol_name + "(ptr)\n";
+    if (ir_text.find(declaration) != std::string::npos ||
+        ir_text.find("define void @" + symbol_name + "(") != std::string::npos) {
+        return true;
+    }
+    auto const first_function = ir_text.find("define ");
+    if (first_function == std::string::npos) {
+        return false;
+    }
+    ir_text.insert(first_function, declaration + "\n");
+    return true;
 }
 
 auto final_return_terminator_splice(
@@ -1431,7 +1480,13 @@ auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
             return state;
         }
 
-        auto const append_text = member_cleanup_executable_cfg_append(edit_plan, expected_branch_text);
+        auto const selected_element_address =
+            selected_runtime_indexed_member_cleanup_element_address(edit_plan, original_function_ir);
+        auto const append_text = member_cleanup_executable_cfg_append(
+            edit_plan,
+            expected_branch_text,
+            selected_element_address
+        );
         if (append_text.empty()) {
             state.candidate_verified = false;
             state.final_module_line_count = logical_line_count(ir_text);
@@ -1490,6 +1545,11 @@ auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
         }
         composed_ir = replace_once(composed_ir, original_function_ir, stage_result.staged_function_ir);
         if (composed_ir.empty()) {
+            state.final_module_line_count = logical_line_count(ir_text);
+            return state;
+        }
+        if (!ensure_member_cleanup_declaration(composed_ir, edit_plan.member_cleanup_target_symbol_name)) {
+            state.candidate_verified = false;
             state.final_module_line_count = logical_line_count(ir_text);
             return state;
         }

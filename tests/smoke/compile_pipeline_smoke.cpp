@@ -7756,7 +7756,18 @@ auto main() -> int {
     assert(
         runtime_indexed_member_transfer_apply_request.ir_text.find(
             "items.member_cleanup.drop_siblings:\n"
-            "  ; member sibling cleanup target __orison_member_cleanup.Box.except.item\n"
+            "  call void @__orison_member_cleanup.Box.except.item(ptr "
+            "%items.dynamic_array_element_path"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "declare void @__orison_member_cleanup.Box.except.item(ptr)\n\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            ".element.addr)\n"
             "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );

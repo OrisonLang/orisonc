@@ -1727,6 +1727,9 @@ representation.
 - Runtime-index member cleanup rewrite plans now carry the synthetic member cleanup target through to the pipeline
   mutation helper. The fully gated emitted CFG routes through the sibling-cleanup block and records the target symbol,
   while real Drop/deallocation call lowering remains the next backend step.
+- Runtime-index member cleanup rewrite mutation now emits a verifier-clean synthetic cleanup helper declaration and
+  call. The call uses the selected runtime-indexed element address; helper body expansion into concrete sibling-member
+  Drop/deallocation calls remains the next backend step.
 
 ## Follow-up work
 
