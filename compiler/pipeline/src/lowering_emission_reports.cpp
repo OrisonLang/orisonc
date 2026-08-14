@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <unordered_set>
 
 namespace orison::pipeline {
 
@@ -1402,13 +1403,32 @@ auto member_cleanup_helper_definition(
     output << "define void @" << plan.member_cleanup_target_symbol_name << "(ptr %value) {\n"
            << "entry:\n";
     if (!sibling_fields.empty()) {
+        auto emitted_address_names = std::unordered_set<std::string> {};
         for (auto const& field : sibling_fields) {
-            auto const field_address_name = "%" + plan.element_source_type_name +
-                ".member_cleanup." + field.field_name + ".addr";
-            output << "  " << field_address_name << " = getelementptr %record."
-                   << plan.element_source_type_name << ", ptr %value, i32 0, i32 "
-                   << field.field_index << "\n"
-                   << "  call void @" << field.drop_symbol_name
+            if (field.field_path.empty() ||
+                field.field_indices.size() != field.field_path.size() ||
+                field.container_llvm_type_names.size() != field.field_path.size()) {
+                return {};
+            }
+            auto source_pointer_name = std::string {"%value"};
+            auto field_address_name = std::string {};
+            auto path_prefix = std::string {};
+            for (auto index = std::size_t {0}; index < field.field_path.size(); ++index) {
+                if (!path_prefix.empty()) {
+                    path_prefix += ".";
+                }
+                path_prefix += field.field_path[index];
+                field_address_name = "%" + plan.element_source_type_name +
+                    ".member_cleanup." + path_prefix + ".addr";
+                if (emitted_address_names.insert(field_address_name).second) {
+                    output << "  " << field_address_name << " = getelementptr "
+                           << field.container_llvm_type_names[index] << ", ptr "
+                           << source_pointer_name << ", i32 0, i32 "
+                           << field.field_indices[index] << "\n";
+                }
+                source_pointer_name = field_address_name;
+            }
+            output << "  call void @" << field.drop_symbol_name
                    << "(ptr " << field_address_name << ")\n"
                    << "  store " << field.field_llvm_type_name << " zeroinitializer, ptr "
                    << field_address_name << "\n";

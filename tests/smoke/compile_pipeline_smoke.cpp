@@ -7877,6 +7877,122 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto runtime_indexed_nested_sibling_member_transfer_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or";
+    auto runtime_indexed_nested_sibling_member_transfer_apply_request = pipeline.emit_llvm(
+        runtime_indexed_nested_sibling_member_transfer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .test_only_runtime_indexed_member_cleanup_ir_mutation_request = true,
+            .test_only_runtime_indexed_member_cleanup_production_gate_request = true,
+            .test_only_runtime_indexed_member_cleanup_apply_authorization_request = true,
+            .test_only_runtime_indexed_member_cleanup_rewrite_execution_request = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_nested_sibling_member_transfer_apply_request.has_errors());
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_sibling_fields.size() == 4
+    );
+    auto assert_nested_member_cleanup_field =
+        [&](std::size_t index,
+            std::string_view field_name,
+            std::string_view field_source_type_name,
+            std::vector<std::string> const& field_path,
+            std::vector<std::size_t> const& field_indices,
+            std::vector<std::string> const& container_llvm_type_names,
+            std::size_t field_index) {
+            auto const& field =
+                runtime_indexed_nested_sibling_member_transfer_apply_request
+                    .runtime_indexed_member_cleanup_sibling_fields[index];
+            assert(field.owner_name == "items");
+            assert(field.index_expression_text == "(index + zero)");
+            assert(field.element_source_type_name == "Wrap");
+            assert(field.moved_source_type_name == "Inner");
+            assert(field.moved_member_path == (std::vector<std::string> {"box", "item"}));
+            assert(field.field_name == field_name);
+            assert(field.field_source_type_name == field_source_type_name);
+            assert(field.field_llvm_type_name == "%record." + std::string {field_source_type_name});
+            assert(field.drop_symbol_name == "__orison_drop." + std::string {field_source_type_name});
+            assert(field.field_path == field_path);
+            assert(field.field_indices == field_indices);
+            assert(field.container_llvm_type_names == container_llvm_type_names);
+            assert(field.field_index == field_index);
+            assert(field.drop_definition_available);
+        };
+    assert_nested_member_cleanup_field(
+        0,
+        "head",
+        "Head",
+        std::vector<std::string> {"head"},
+        std::vector<std::size_t> {0},
+        std::vector<std::string> {"%record.Wrap"},
+        0
+    );
+    assert_nested_member_cleanup_field(
+        1,
+        "tail",
+        "Tail",
+        std::vector<std::string> {"tail"},
+        std::vector<std::size_t> {2},
+        std::vector<std::string> {"%record.Wrap"},
+        2
+    );
+    assert_nested_member_cleanup_field(
+        2,
+        "left",
+        "Left",
+        std::vector<std::string> {"box", "left"},
+        std::vector<std::size_t> {1, 0},
+        std::vector<std::string> {"%record.Wrap", "%record.Box"},
+        0
+    );
+    assert_nested_member_cleanup_field(
+        3,
+        "right",
+        "Right",
+        std::vector<std::string> {"box", "right"},
+        std::vector<std::size_t> {1, 2},
+        std::vector<std::string> {"%record.Wrap", "%record.Box"},
+        2
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value) {\n"
+            "entry:\n"
+            "  %Wrap.member_cleanup.head.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 0\n"
+            "  call void @__orison_drop.Head(ptr %Wrap.member_cleanup.head.addr)\n"
+            "  store %record.Head zeroinitializer, ptr %Wrap.member_cleanup.head.addr\n"
+            "  %Wrap.member_cleanup.tail.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 2\n"
+            "  call void @__orison_drop.Tail(ptr %Wrap.member_cleanup.tail.addr)\n"
+            "  store %record.Tail zeroinitializer, ptr %Wrap.member_cleanup.tail.addr\n"
+            "  %Wrap.member_cleanup.box.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 1\n"
+            "  %Wrap.member_cleanup.box.left.addr = getelementptr %record.Box, ptr %Wrap.member_cleanup.box.addr, i32 0, i32 0\n"
+            "  call void @__orison_drop.Left(ptr %Wrap.member_cleanup.box.left.addr)\n"
+            "  store %record.Left zeroinitializer, ptr %Wrap.member_cleanup.box.left.addr\n"
+            "  %Wrap.member_cleanup.box.right.addr = getelementptr %record.Box, ptr %Wrap.member_cleanup.box.addr, i32 0, i32 2\n"
+            "  call void @__orison_drop.Right(ptr %Wrap.member_cleanup.box.right.addr)\n"
+            "  store %record.Right zeroinitializer, ptr %Wrap.member_cleanup.box.right.addr\n"
+            "  ret void\n"
+            "}\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "declare void @__orison_member_cleanup.Wrap.except.box.item(ptr)"
+        ) == std::string::npos
+    );
+
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {
         return std::any_of(

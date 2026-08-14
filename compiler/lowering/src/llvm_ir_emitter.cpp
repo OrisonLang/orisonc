@@ -605,45 +605,90 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
 ) -> std::vector<RuntimeIndexedMemberCleanupSiblingField> {
     auto fields = std::vector<RuntimeIndexedMemberCleanupSiblingField> {};
     for (auto const& plan : edit_script_plans) {
-        if (plan.element_source_type_name.empty() || plan.moved_member_path.size() != 1) {
+        if (plan.element_source_type_name.empty() || plan.moved_member_path.empty()) {
             continue;
         }
         auto const record = context.records.find(plan.element_source_type_name);
         if (record == context.records.end()) {
             continue;
         }
-        auto const moved_field_name = plan.moved_member_path.front();
-        auto const moved_field = std::ranges::find_if(
-            record->second.fields,
-            [&](LoweredRecordField const& field) {
-                return field.name == moved_field_name;
+
+        auto plan_fields = std::vector<RuntimeIndexedMemberCleanupSiblingField> {};
+        auto const* current_record = &record->second;
+        auto field_path_prefix = std::vector<std::string> {};
+        auto field_index_prefix = std::vector<std::size_t> {};
+        auto container_type_prefix = std::vector<std::string> {};
+        auto path_resolved = true;
+        for (auto depth = std::size_t {0}; depth < plan.moved_member_path.size(); ++depth) {
+            auto const& selected_field_name = plan.moved_member_path[depth];
+            auto const selected_field = std::ranges::find_if(
+                current_record->fields,
+                [&](LoweredRecordField const& field) {
+                    return field.name == selected_field_name;
+                }
+            );
+            if (selected_field == current_record->fields.end()) {
+                path_resolved = false;
+                break;
             }
-        );
-        if (moved_field == record->second.fields.end()) {
-            continue;
+
+            auto container_type_names = container_type_prefix;
+            container_type_names.push_back(current_record->llvm_type_name);
+            for (auto const& field : current_record->fields) {
+                if (field.name == selected_field_name || field.source_type_name.empty() || field.llvm_type.empty()) {
+                    continue;
+                }
+                auto drop_symbol_name = semantics::drop_abi_symbol_name(field.source_type_name);
+                if (std::ranges::find(source_defined_drop_symbols, drop_symbol_name) ==
+                    source_defined_drop_symbols.end()) {
+                    continue;
+                }
+
+                auto field_path = field_path_prefix;
+                field_path.push_back(field.name);
+                auto field_indices = field_index_prefix;
+                field_indices.push_back(field.index);
+                plan_fields.push_back(RuntimeIndexedMemberCleanupSiblingField {
+                    .owner_name = plan.owner_name,
+                    .index_expression_text = plan.index_expression_text,
+                    .element_source_type_name = plan.element_source_type_name,
+                    .moved_source_type_name = plan.moved_source_type_name,
+                    .moved_member_path = plan.moved_member_path,
+                    .field_path = std::move(field_path),
+                    .field_indices = std::move(field_indices),
+                    .container_llvm_type_names = container_type_names,
+                    .field_name = field.name,
+                    .field_source_type_name = field.source_type_name,
+                    .field_llvm_type_name = field.llvm_type,
+                    .drop_symbol_name = std::move(drop_symbol_name),
+                    .field_index = field.index,
+                    .drop_definition_available = true,
+                });
+            }
+
+            if (depth + 1 == plan.moved_member_path.size()) {
+                break;
+            }
+            if (selected_field->source_type_name.empty()) {
+                path_resolved = false;
+                break;
+            }
+            auto const nested_record = context.records.find(selected_field->source_type_name);
+            if (nested_record == context.records.end()) {
+                path_resolved = false;
+                break;
+            }
+            field_path_prefix.push_back(selected_field->name);
+            field_index_prefix.push_back(selected_field->index);
+            container_type_prefix.push_back(current_record->llvm_type_name);
+            current_record = &nested_record->second;
         }
-        for (auto const& field : record->second.fields) {
-            if (field.name == moved_field_name || field.source_type_name.empty() || field.llvm_type.empty()) {
-                continue;
-            }
-            auto drop_symbol_name = semantics::drop_abi_symbol_name(field.source_type_name);
-            if (std::ranges::find(source_defined_drop_symbols, drop_symbol_name) ==
-                source_defined_drop_symbols.end()) {
-                continue;
-            }
-            fields.push_back(RuntimeIndexedMemberCleanupSiblingField {
-                .owner_name = plan.owner_name,
-                .index_expression_text = plan.index_expression_text,
-                .element_source_type_name = plan.element_source_type_name,
-                .moved_source_type_name = plan.moved_source_type_name,
-                .moved_member_path = plan.moved_member_path,
-                .field_name = field.name,
-                .field_source_type_name = field.source_type_name,
-                .field_llvm_type_name = field.llvm_type,
-                .drop_symbol_name = std::move(drop_symbol_name),
-                .field_index = field.index,
-                .drop_definition_available = true,
-            });
+        if (path_resolved) {
+            fields.insert(
+                fields.end(),
+                std::make_move_iterator(plan_fields.begin()),
+                std::make_move_iterator(plan_fields.end())
+            );
         }
     }
     return fields;

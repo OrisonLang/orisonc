@@ -1,0 +1,73 @@
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected
+
+record Inner
+    value: UInt32
+
+record Head
+    value: UInt32
+
+record Left
+    value: UInt32
+
+record Right
+    value: UInt32
+
+record Tail
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Head
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Left
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Right
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Tail
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Box
+    left: Left
+    item: Inner
+    right: Right
+
+implements Drop for Box
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Wrap
+    head: Head
+    box: Box
+    tail: Tail
+
+implements Drop for Wrap
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var items: DynamicArray<Wrap> = DynamicArray()
+    items.push(Wrap(Head(17 as UInt32), Box(Left(7 as UInt32), Inner(11 as UInt32), Right(13 as UInt32)), Tail(19 as UInt32)))
+    items.push(Wrap(Head(23 as UInt32), Box(Left(29 as UInt32), Inner(31 as UInt32), Right(37 as UInt32)), Tail(41 as UInt32)))
+    let index: UInt64 = 0 as UInt64
+    let zero: UInt64 = 0 as UInt64
+    var outer: Outer = Outer(items[index + zero].box.item)
+    0 as UInt32

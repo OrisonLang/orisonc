@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member cleanup sibling metadata now supports nested moved member paths such as
+  `items[index + zero].box.item`. The emitter records full sibling field paths, per-hop field indexes, and container
+  LLVM type chains; helper generation renders chained `getelementptr` cleanup addresses for both root-level siblings
+  and nested siblings.
 - 2026-08-14: Runtime-index member cleanup helper generation now derives concrete sibling cleanup from parsed record
   fields and emitted source Drop definitions for top-level member transfers. The fixture-backed helper skips the moved
   `item` field, drops owned siblings on both sides, and zeroes each dropped sibling slot; nested paths and generic

@@ -1748,6 +1748,9 @@ representation.
 - Pipeline smoke coverage now directly asserts `runtime_indexed_member_cleanup_sibling_fields` for the two-sibling
   `Box.except.item` fixture. This pins the typed metadata boundary independently from helper-body IR rendering before
   nested member-path cleanup expands the same model.
+- Runtime-index member cleanup sibling metadata now covers nested moved member paths. Cleanup field records carry the
+  full sibling path, per-hop field indexes, and container LLVM type names so helper rendering can emit chained GEPs for
+  root and nested siblings without rediscovering record layout in the pipeline.
 
 ## Follow-up work
 

@@ -265,6 +265,9 @@ struct RuntimeIndexedMemberCleanupSiblingField {
     std::string element_source_type_name;
     std::string moved_source_type_name;
     std::vector<std::string> moved_member_path;
+    std::vector<std::string> field_path;
+    std::vector<std::size_t> field_indices;
+    std::vector<std::string> container_llvm_type_names;
     std::string field_name;
     std::string field_source_type_name;
     std::string field_llvm_type_name;
