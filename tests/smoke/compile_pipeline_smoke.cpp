@@ -7652,12 +7652,13 @@ auto main() -> int {
             .test_only_runtime_indexed_member_cleanup_ir_mutation_request = true,
             .test_only_runtime_indexed_member_cleanup_production_gate_request = true,
             .test_only_runtime_indexed_member_cleanup_apply_authorization_request = true,
+            .test_only_runtime_indexed_member_cleanup_rewrite_execution_request = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_index_lowering_enabled = true,
             .dynamic_array_production_append_lowering_enabled = true,
         }
     );
-    assert(runtime_indexed_member_transfer_apply_request.has_errors());
+    assert(!runtime_indexed_member_transfer_apply_request.has_errors());
     auto has_apply_requested_member_transfer_audit_line =
         [&](std::string_view expected_line) {
             return std::any_of(
@@ -7695,6 +7696,58 @@ auto main() -> int {
             "authorization ready ir-mutation requested production-gate enabled readiness ready "
             "report-only false production enabled blockers 0"
         )
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.mutation_requested
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.candidate_verified
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.replacement_targets_unique
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.mutation_applied
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.branch_replacements_applied
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.cleanup_cfg_appended
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.phi_predecessors_retargeted
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.llvm_verifier_passed
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "  br label %items.member_cleanup.entry\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.entry:\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.skip_moved:\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.exit:\n  ret i32 0\n"
+        ) != std::string::npos
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

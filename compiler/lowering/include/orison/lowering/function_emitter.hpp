@@ -36,6 +36,10 @@ struct FunctionEmissionResult {
     std::vector<GeneratedModuleSymbol> generated_module_symbols;
     std::vector<RuntimeIndexedCleanupCapability> runtime_indexed_cleanup_capabilities;
     std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
+        runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
+    std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan>
+        runtime_indexed_member_cleanup_mutation_rewrite_execution_plans;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
 };
 

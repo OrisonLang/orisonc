@@ -105,6 +105,8 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state;
     RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState
         runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state;
+    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState
+        runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state;
     RuntimeIndexedCleanupModuleIrProductionReadinessState
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;

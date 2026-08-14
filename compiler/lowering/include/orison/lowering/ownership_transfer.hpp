@@ -367,6 +367,7 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteCandidate {
 };
 
 struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan {
+    std::string function_symbol_name;
     std::string owner_name;
     std::string index_expression_text;
     std::string element_source_type_name;
@@ -739,6 +740,7 @@ struct RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
 };
 
 struct RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
+    std::string function_symbol_name;
     std::string owner_name;
     std::string index_expression_text;
     std::string element_source_type_name;

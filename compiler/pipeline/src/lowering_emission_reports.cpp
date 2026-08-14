@@ -1290,6 +1290,222 @@ auto apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
     return state;
 }
 
+auto label_from_member_cleanup_preview(
+    std::vector<std::string> const& lines,
+    std::string_view token
+) -> std::string {
+    for (auto const& line : lines) {
+        if (line.find(token) == std::string::npos || line.empty() || line.back() != '\n') {
+            continue;
+        }
+        auto label = line.substr(0, line.size() - 1);
+        if (!label.empty() && label.back() == ':') {
+            label.pop_back();
+            return label;
+        }
+    }
+    return {};
+}
+
+auto member_cleanup_executable_cfg_append(
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan,
+    std::string const& continuation_terminator_text
+) -> std::string {
+    auto const skip_block_name =
+        label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".skip_moved");
+    auto const sibling_drop_block_name =
+        label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".drop_siblings");
+    auto const preserve_block_name =
+        label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".preserve_moved");
+    if (plan.entry_block_name.empty() ||
+        skip_block_name.empty() ||
+        sibling_drop_block_name.empty() ||
+        preserve_block_name.empty() ||
+        plan.exit_block_name.empty() ||
+        continuation_terminator_text.empty()) {
+        return {};
+    }
+
+    auto output = std::ostringstream {};
+    output << plan.entry_block_name << ":\n"
+           << "  ; runtime-index member cleanup rewrite entry\n"
+           << "  br label %" << skip_block_name << "\n"
+           << skip_block_name << ":\n"
+           << "  ; preserve moved member\n"
+           << "  br label %" << preserve_block_name << "\n"
+           << sibling_drop_block_name << ":\n"
+           << "  ; member sibling cleanup target pending Drop metadata binding\n"
+           << "  br label %" << preserve_block_name << "\n"
+           << preserve_block_name << ":\n"
+           << "  br label %" << plan.exit_block_name << "\n"
+           << plan.exit_block_name << ":\n"
+           << continuation_terminator_text;
+    return output.str();
+}
+
+auto final_return_terminator_splice(
+    std::string const& function_ir
+) -> RuntimeIndexedCleanupTextSpliceRange {
+    auto const terminator_start = function_ir.rfind("\n  ret ");
+    if (terminator_start == std::string::npos) {
+        return {};
+    }
+    auto const line_start = terminator_start + 1;
+    auto const line_end = function_ir.find('\n', line_start);
+    if (line_end == std::string::npos) {
+        return {};
+    }
+    return RuntimeIndexedCleanupTextSpliceRange {
+        .start_offset = line_start,
+        .end_offset = line_end + 1,
+    };
+}
+
+auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
+    lowering::LlvmIrEmissionResult const& emission,
+    std::string& ir_text
+) -> RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
+    auto state = RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
+        .mutation_requested =
+            std::ranges::any_of(
+                emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans,
+                [](auto const& plan) {
+                    return plan.execution_requested;
+                }
+            ),
+        .candidate_count =
+            emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.size(),
+    };
+    if (!state.mutation_requested ||
+        emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.empty() ||
+        emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.empty() ||
+        emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.size() !=
+            emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.size()) {
+        state.final_module_line_count = logical_line_count(ir_text);
+        return state;
+    }
+
+    auto composed_ir = ir_text;
+    state.candidate_verified = true;
+    state.replacement_targets_unique = true;
+    for (auto index = std::size_t {0};
+         index < emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.size();
+         ++index) {
+        auto const& execution_plan =
+            emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans[index];
+        auto const& edit_plan =
+            emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans[index];
+        auto const candidate_ready =
+            execution_plan.execution_enabled &&
+            edit_plan.edit_script_ready &&
+            !execution_plan.function_symbol_name.empty() &&
+            execution_plan.function_symbol_name == edit_plan.function_symbol_name;
+        state.candidate_verified = state.candidate_verified && candidate_ready;
+        if (!candidate_ready) {
+            state.final_module_line_count = logical_line_count(ir_text);
+            return state;
+        }
+
+        auto const original_function_ir = function_ir_slice(composed_ir, execution_plan.function_symbol_name);
+        auto expected_branch_text = "  " + edit_plan.expected_branch_text + "\n";
+        auto const replacement_branch_text = "  " + edit_plan.replacement_branch_text + "\n";
+        auto terminator_position = original_function_ir.find(expected_branch_text);
+        if (occurrence_count(original_function_ir, expected_branch_text) != 1) {
+            auto const final_return_range = final_return_terminator_splice(original_function_ir);
+            if (final_return_range.start_offset < final_return_range.end_offset &&
+                final_return_range.end_offset <= original_function_ir.size()) {
+                terminator_position = final_return_range.start_offset;
+                expected_branch_text = original_function_ir.substr(
+                    final_return_range.start_offset,
+                    final_return_range.end_offset - final_return_range.start_offset
+                );
+            }
+        }
+        auto const target_unique =
+            !original_function_ir.empty() &&
+            occurrence_count(composed_ir, original_function_ir) == 1 &&
+            occurrence_count(original_function_ir, expected_branch_text) == 1 &&
+            terminator_position != std::string::npos;
+        state.replacement_targets_unique = state.replacement_targets_unique && target_unique;
+        if (!target_unique) {
+            state.final_module_line_count = logical_line_count(ir_text);
+            return state;
+        }
+
+        auto const append_text = member_cleanup_executable_cfg_append(edit_plan, expected_branch_text);
+        if (append_text.empty()) {
+            state.candidate_verified = false;
+            state.final_module_line_count = logical_line_count(ir_text);
+            return state;
+        }
+        auto const stage_result = apply_runtime_indexed_cleanup_function_ir_edit_script_stages(
+            original_function_ir,
+            RuntimeIndexedCleanupFunctionIrEditScript {
+                .branch_replacements = {
+                    RuntimeIndexedCleanupFunctionIrBranchReplacement {
+                        .predecessor_block_name = edit_plan.insertion_anchor,
+                        .continuation_block_name = edit_plan.exit_block_name,
+                        .expected_branch_text = expected_branch_text,
+                        .replacement_branch_text = replacement_branch_text,
+                        .splice_range = RuntimeIndexedCleanupTextSpliceRange {
+                            .start_offset = terminator_position,
+                            .end_offset = terminator_position + expected_branch_text.size(),
+                        },
+                    },
+                },
+                .cleanup_cfg_append = RuntimeIndexedCleanupFunctionIrCleanupCfgAppend {
+                    .placement =
+                        RuntimeIndexedCleanupFunctionIrCleanupCfgAppendPlacement::before_function_closing_brace,
+                    .expected_closing_text = "\n}\n",
+                    .append_text = append_text,
+                },
+                .phi_predecessor_retargets = {
+                    RuntimeIndexedCleanupFunctionIrPhiPredecessorRetarget {
+                        .old_predecessor_block_name = edit_plan.phi_old_predecessor_block_name,
+                        .new_predecessor_block_name = edit_plan.phi_new_predecessor_block_name,
+                    },
+                },
+            }
+        );
+        if (!state.rewrite_apply_stage_available) {
+            state.rewrite_apply_stage_available = true;
+            state.branch_replacements_applied = stage_result.branch_replacements_applied;
+            state.cleanup_cfg_appended = stage_result.cleanup_cfg_appended;
+            state.phi_predecessors_retargeted = stage_result.phi_predecessors_retargeted;
+        } else {
+            state.branch_replacements_applied =
+                state.branch_replacements_applied && stage_result.branch_replacements_applied;
+            state.cleanup_cfg_appended =
+                state.cleanup_cfg_appended && stage_result.cleanup_cfg_appended;
+            state.phi_predecessors_retargeted =
+                state.phi_predecessors_retargeted && stage_result.phi_predecessors_retargeted;
+        }
+        if (!stage_result.succeeded()) {
+            state.composition_failure = stage_result.failure;
+            state.composition_failure_part_available = stage_result.validation_part_available;
+            state.composition_failure_part_index = stage_result.validation_part_index;
+            state.composition_failure_splice_range =
+                runtime_indexed_cleanup_text_splice_range(stage_result.validation_splice_range);
+            state.final_module_line_count = logical_line_count(ir_text);
+            return state;
+        }
+        composed_ir = replace_once(composed_ir, original_function_ir, stage_result.staged_function_ir);
+        if (composed_ir.empty()) {
+            state.final_module_line_count = logical_line_count(ir_text);
+            return state;
+        }
+    }
+
+    ir_text = std::move(composed_ir);
+    state.mutation_applied = true;
+    state.module_matches_candidate = true;
+    auto verifier_diagnostics = lowering::LlvmIrVerifier {}.verify(ir_text);
+    state.llvm_verifier_passed = !verifier_diagnostics.has_errors();
+    state.llvm_verifier_diagnostic_count = verifier_diagnostics.entries().size();
+    state.final_module_line_count = logical_line_count(ir_text);
+    return state;
+}
+
 }  // namespace
 
 auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
@@ -2621,6 +2837,11 @@ void populate_lowering_emission_reports(
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state,
             result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state,
+            result.ir_text
+        );
+    result.runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state =
+        apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
+            emission,
             result.ir_text
         );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =

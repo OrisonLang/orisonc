@@ -2228,6 +2228,16 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_cleanup_capabilities.begin(),
         function_emission.runtime_indexed_cleanup_capabilities.end()
     );
+    result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.insert(
+        result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.end(),
+        function_emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.begin(),
+        function_emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.insert(
+        result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.end()
+    );
     for (auto plan : function_emission.runtime_indexed_cleanup_emission_plans) {
         plan.function_symbol_name = function_emission.function_symbol_name;
         plan.function_insertion_block_name = plan.ir_plan.entry_block_name;

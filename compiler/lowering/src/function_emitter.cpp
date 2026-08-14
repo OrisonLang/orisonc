@@ -1414,6 +1414,16 @@ void preserve_function_emission_metadata(
             state.ownership_transfers.runtime_indexed_cleanup_capabilities;
         result->runtime_indexed_cleanup_emission_plans =
             state.ownership_transfers.runtime_indexed_cleanup_emission_plans;
+        result->runtime_indexed_member_cleanup_function_rewrite_edit_script_plans =
+            state.ownership_transfers.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
+        for (auto& plan : result->runtime_indexed_member_cleanup_function_rewrite_edit_script_plans) {
+            plan.function_symbol_name = result->function_symbol_name;
+        }
+        result->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans;
+        for (auto& plan : result->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
+            plan.function_symbol_name = result->function_symbol_name;
+        }
         if (!state.ownership_transfers.runtime_indexed_partial_owners.empty() ||
             !state.ownership_transfers.runtime_indexed_cleanup_skip_plans.empty() ||
             !state.ownership_transfers.runtime_indexed_cleanup_proof_gates.empty() ||

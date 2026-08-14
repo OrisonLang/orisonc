@@ -2438,3 +2438,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-14: Runtime-index member cleanup mutation apply authorization now has a separate internal apply request.
   When validation, conflict detection, IR mutation, production gate, and apply request all align, the audit reports
   applied actions, ready post-apply verification, and production-ready mutation status.
+- 2026-08-14: Runtime-index member cleanup rewrite execution now reaches gated function-IR mutation. The pipeline
+  records verifier-backed mutation state, appends the member cleanup CFG, and falls back to the function final return
+  anchor for fixtures that do not yet contain an abstract cleanup branch.
