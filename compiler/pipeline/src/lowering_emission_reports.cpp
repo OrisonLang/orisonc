@@ -3,12 +3,15 @@
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
+#include "orison/lowering/llvm_names.hpp"
+#include "orison/semantics/drop_model.hpp"
 
 #include "dynamic_array_cleanup_readiness.hpp"
 #include "computed_cleanup_proof_model.hpp"
 #include "runtime_indexed_cleanup_ir_composition.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <sstream>
 #include <unordered_set>
 
@@ -1334,10 +1337,67 @@ auto selected_runtime_indexed_member_cleanup_element_address(
     return selected;
 }
 
+auto selected_runtime_indexed_member_cleanup_index_operand(
+    std::string const& selected_element_address,
+    std::string const& function_ir
+) -> std::string {
+    if (selected_element_address.empty() || function_ir.empty()) {
+        return {};
+    }
+    auto const assignment_marker = selected_element_address + " = getelementptr ";
+    auto const marker_position = function_ir.find(assignment_marker);
+    if (marker_position == std::string::npos) {
+        return {};
+    }
+    auto const line_end = function_ir.find('\n', marker_position);
+    auto const line = function_ir.substr(
+        marker_position,
+        line_end == std::string::npos ? std::string::npos : line_end - marker_position
+    );
+    auto constexpr index_marker = std::string_view {", i64 "};
+    auto const index_position = line.rfind(index_marker);
+    if (index_position == std::string::npos) {
+        return {};
+    }
+    return line.substr(index_position + index_marker.size());
+}
+
+auto member_cleanup_descriptor_cleanup_plan(
+    lowering::LlvmIrEmissionResult const& emission,
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> std::optional<lowering::DynamicArrayDescriptorCleanupPlan> {
+    for (auto const& cleanup_plan : emission.dynamic_array_descriptor_cleanup_plans) {
+        if (cleanup_plan.owner_name == plan.owner_name &&
+            cleanup_plan.element_source_type_name == plan.element_source_type_name &&
+            !cleanup_plan.descriptor_storage_name.empty()) {
+            return cleanup_plan;
+        }
+    }
+    for (auto const& construction_plan : emission.dynamic_array_construction_plans) {
+        if (construction_plan.owner_name == plan.owner_name &&
+            construction_plan.element_source_type_name == plan.element_source_type_name) {
+            return lowering::DynamicArrayDescriptorCleanupPlan {
+                .owner_name = construction_plan.owner_name,
+                .source_type_name = construction_plan.source_type_name,
+                .element_source_type_name = construction_plan.element_source_type_name,
+                .element_llvm_type = construction_plan.element_llvm_type,
+                .descriptor_storage_name =
+                    lowering::llvm_local_value_name(construction_plan.owner_name + ".addr"),
+                .descriptor_storage_status =
+                    lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+                .element_size_bytes = construction_plan.element_size_bytes,
+            };
+        }
+    }
+    return std::nullopt;
+}
+
 auto member_cleanup_executable_cfg_append(
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan,
     std::string const& continuation_terminator_text,
-    std::string const& selected_element_address
+    std::string const& selected_element_address,
+    std::string const& selected_index_operand,
+    std::optional<lowering::DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plan
 ) -> std::string {
     auto const skip_block_name =
         label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".skip_moved");
@@ -1353,6 +1413,9 @@ auto member_cleanup_executable_cfg_append(
         continuation_terminator_text.empty()) {
         return {};
     }
+    if (descriptor_cleanup_plan.has_value() && selected_index_operand.empty()) {
+        return {};
+    }
 
     auto output = std::ostringstream {};
     output << plan.entry_block_name << ":\n"
@@ -1360,12 +1423,79 @@ auto member_cleanup_executable_cfg_append(
            << "  br label %" << sibling_drop_block_name << "\n"
            << skip_block_name << ":\n"
            << "  ; preserve moved member\n"
-           << "  br label %" << preserve_block_name << "\n"
-           << sibling_drop_block_name << ":\n"
-           << "  call void @" << plan.member_cleanup_target_symbol_name
-           << "(ptr " << selected_element_address << ")\n"
-           << "  br label %" << preserve_block_name << "\n"
-           << preserve_block_name << ":\n"
+           << "  br label %" << preserve_block_name << "\n";
+    if (!descriptor_cleanup_plan.has_value()) {
+        output << sibling_drop_block_name << ":\n"
+               << "  call void @" << plan.member_cleanup_target_symbol_name
+               << "(ptr " << selected_element_address << ")\n"
+               << "  br label %" << preserve_block_name << "\n";
+    } else {
+        auto const& cleanup_plan = *descriptor_cleanup_plan;
+        auto const prefix = "%" + plan.owner_name + ".member_cleanup";
+        auto const label_prefix = plan.owner_name + ".member_cleanup";
+        auto const descriptor_name = prefix + ".descriptor";
+        output << sibling_drop_block_name << ":\n"
+               << lowering::emit_dynamic_array_descriptor_load(
+                   descriptor_name,
+                   cleanup_plan.descriptor_storage_name
+               )
+               << lowering::emit_dynamic_array_descriptor_field_projection(
+                   prefix + ".cleanup.data",
+                   descriptor_name,
+                   lowering::DynamicArrayDescriptorField::data
+               )
+               << lowering::emit_dynamic_array_descriptor_field_projection(
+                   prefix + ".cleanup.length",
+                   descriptor_name,
+                   lowering::DynamicArrayDescriptorField::length
+               )
+               << lowering::emit_dynamic_array_descriptor_field_projection(
+                   prefix + ".cleanup.capacity",
+                   descriptor_name,
+                   lowering::DynamicArrayDescriptorField::capacity
+               )
+               << "  br label %" << label_prefix << ".walk\n"
+               << label_prefix << ".walk:\n"
+               << "  " << prefix << ".index = phi i64 [ 0, %" << sibling_drop_block_name
+               << " ], [ " << prefix << ".next, %" << label_prefix << ".continue ]\n"
+               << "  " << prefix << ".more = icmp ult i64 " << prefix
+               << ".index, " << prefix << ".cleanup.length\n"
+               << "  br i1 " << prefix << ".more, label %" << label_prefix
+               << ".live_check, label %" << label_prefix << ".deallocate\n"
+               << label_prefix << ".live_check:\n"
+               << "  " << prefix << ".is_moved = icmp eq i64 " << prefix
+               << ".index, " << selected_index_operand << "\n"
+               << "  br i1 " << prefix << ".is_moved, label %" << label_prefix
+               << ".drop_siblings_for_moved, label %" << label_prefix << ".drop_element\n"
+               << label_prefix << ".drop_siblings_for_moved:\n"
+               << "  " << prefix << ".moved.addr = getelementptr "
+               << cleanup_plan.element_llvm_type << ", ptr "
+               << prefix << ".cleanup.data, i64 " << prefix << ".index\n"
+               << "  call void @" << plan.member_cleanup_target_symbol_name
+               << "(ptr " << prefix << ".moved.addr)\n"
+               << "  br label %" << label_prefix << ".continue\n"
+               << label_prefix << ".drop_element:\n"
+               << "  " << prefix << ".element.addr = getelementptr "
+               << cleanup_plan.element_llvm_type << ", ptr "
+               << prefix << ".cleanup.data, i64 " << prefix << ".index\n"
+               << "  call void @" << semantics::drop_abi_symbol_name(plan.element_source_type_name)
+               << "(ptr " << prefix << ".element.addr)\n"
+               << "  store " << cleanup_plan.element_llvm_type
+               << " zeroinitializer, ptr " << prefix << ".element.addr\n"
+               << "  br label %" << label_prefix << ".continue\n"
+               << label_prefix << ".continue:\n"
+               << "  " << prefix << ".next = add i64 " << prefix << ".index, 1\n"
+               << "  br label %" << label_prefix << ".walk\n"
+               << label_prefix << ".deallocate:\n"
+               << "  call void @__orison_dynamic_array_deallocate(ptr "
+               << prefix << ".cleanup.data, i64 " << cleanup_plan.element_size_bytes
+               << ", i64 " << prefix << ".cleanup.capacity)\n"
+               << lowering::emit_dynamic_array_descriptor_finalization(
+                   cleanup_plan.descriptor_storage_name
+               )
+               << "  br label %" << preserve_block_name << "\n";
+    }
+    output << preserve_block_name << ":\n"
            << "  br label %" << plan.exit_block_name << "\n"
            << plan.exit_block_name << ":\n"
            << continuation_terminator_text;
@@ -1557,10 +1687,16 @@ auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
 
         auto const selected_element_address =
             selected_runtime_indexed_member_cleanup_element_address(edit_plan, original_function_ir);
+        auto const selected_index_operand =
+            selected_runtime_indexed_member_cleanup_index_operand(selected_element_address, original_function_ir);
+        auto const descriptor_cleanup_plan =
+            member_cleanup_descriptor_cleanup_plan(emission, edit_plan);
         auto const append_text = member_cleanup_executable_cfg_append(
             edit_plan,
             expected_branch_text,
-            selected_element_address
+            selected_element_address,
+            selected_index_operand,
+            descriptor_cleanup_plan
         );
         if (append_text.empty()) {
             state.candidate_verified = false;

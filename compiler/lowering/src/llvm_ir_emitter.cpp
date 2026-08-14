@@ -2203,6 +2203,10 @@ auto collect_dynamic_array_runtime_operations(
         if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {
             push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
         }
+        if (options.enable_runtime_indexed_member_cleanup_rewrite_execution_request &&
+            source_plan_offset < plans.size()) {
+            push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
+        }
     }
     if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);

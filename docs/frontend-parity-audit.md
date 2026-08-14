@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member cleanup rewrite mutation now emits the owner cleanup loop for source-backed
+  `DynamicArray<T>` member transfers. The generated CFG loads the owner descriptor, walks initialized elements, invokes
+  the member-preserving helper for the moved index, invokes the full element Drop for other indexes, deallocates the
+  descriptor storage, and zeroes the consumed descriptor slot.
 - 2026-08-14: Runtime-index member cleanup sibling metadata now supports nested moved member paths such as
   `items[index + zero].box.item`. The emitter records full sibling field paths, per-hop field indexes, and container
   LLVM type chains; helper generation renders chained `getelementptr` cleanup addresses for both root-level siblings

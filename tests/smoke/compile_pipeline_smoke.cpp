@@ -7756,8 +7756,7 @@ auto main() -> int {
     assert(
         runtime_indexed_member_transfer_apply_request.ir_text.find(
             "items.member_cleanup.drop_siblings:\n"
-            "  call void @__orison_member_cleanup.Box.except.item(ptr "
-            "%items.dynamic_array_element_path"
+            "  %items.member_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
         ) != std::string::npos
     );
     assert(
@@ -7776,7 +7775,31 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_member_transfer_apply_request.ir_text.find(
-            ".element.addr)\n"
+            "items.member_cleanup.drop_siblings_for_moved:\n"
+            "  %items.member_cleanup.moved.addr = getelementptr %record.Box, ptr "
+            "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
+            "  call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)\n"
+            "  br label %items.member_cleanup.continue\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_element:\n"
+            "  %items.member_cleanup.element.addr = getelementptr %record.Box, ptr "
+            "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
+            "  call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)\n"
+            "  store %record.Box zeroinitializer, ptr %items.member_cleanup.element.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.deallocate:\n"
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 "
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
             "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );
@@ -7843,8 +7866,36 @@ auto main() -> int {
     assert(
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
             "items.member_cleanup.drop_siblings:\n"
-            "  call void @__orison_member_cleanup.Box.except.item(ptr "
-            "%items.dynamic_array_element_path"
+            "  %items.member_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_siblings_for_moved:\n"
+            "  %items.member_cleanup.moved.addr = getelementptr %record.Box, ptr "
+            "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
+            "  call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_element:\n"
+            "  %items.member_cleanup.element.addr = getelementptr %record.Box, ptr "
+            "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
+            "  call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)\n"
+            "  store %record.Box zeroinitializer, ptr %items.member_cleanup.element.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.deallocate:\n"
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 "
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+            "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );
     assert(
@@ -7991,6 +8042,41 @@ auto main() -> int {
         runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
             "declare void @__orison_member_cleanup.Wrap.except.box.item(ptr)"
         ) == std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_siblings:\n"
+            "  %items.member_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_siblings_for_moved:\n"
+            "  %items.member_cleanup.moved.addr = getelementptr %record.Wrap, ptr "
+            "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
+            "  call void @__orison_member_cleanup.Wrap.except.box.item(ptr %items.member_cleanup.moved.addr)\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_element:\n"
+            "  %items.member_cleanup.element.addr = getelementptr %record.Wrap, ptr "
+            "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
+            "  call void @__orison_drop.Wrap(ptr %items.member_cleanup.element.addr)\n"
+            "  store %record.Wrap zeroinitializer, ptr %items.member_cleanup.element.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.deallocate:\n"
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 "
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+            "  br label %items.member_cleanup.preserve_moved\n"
+        ) != std::string::npos
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

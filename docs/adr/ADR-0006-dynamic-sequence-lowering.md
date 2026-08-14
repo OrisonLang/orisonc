@@ -1751,6 +1751,9 @@ representation.
 - Runtime-index member cleanup sibling metadata now covers nested moved member paths. Cleanup field records carry the
   full sibling path, per-hop field indexes, and container LLVM type names so helper rendering can emit chained GEPs for
   root and nested siblings without rediscovering record layout in the pipeline.
+- Runtime-index member cleanup rewrite mutation now emits the source-backed `DynamicArray<T>` owner cleanup loop. The
+  mutated CFG walks initialized elements, dispatches the member-preserving helper at the moved index, dispatches the
+  full element Drop for other indexes, then deallocates and finalizes the consumed owner descriptor.
 
 ## Follow-up work
 
