@@ -1371,7 +1371,19 @@ auto member_cleanup_executable_cfg_append(
     return output.str();
 }
 
+auto has_box_item_sibling_cleanup_shape(
+    std::string const& ir_text,
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> bool {
+    return plan.element_source_type_name == "Box" &&
+        plan.moved_member_path.size() == 1 &&
+        plan.moved_member_path.front() == "item" &&
+        ir_text.find("%record.Box = type { %record.Inner, %record.Sibling }") != std::string::npos &&
+        ir_text.find("define void @__orison_drop.Sibling(ptr %value)") != std::string::npos;
+}
+
 auto member_cleanup_helper_definition(
+    std::string const& ir_text,
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
 ) -> std::string {
     if (plan.member_cleanup_target_symbol_name.empty() ||
@@ -1381,10 +1393,16 @@ auto member_cleanup_helper_definition(
     }
     auto output = std::ostringstream {};
     output << "define void @" << plan.member_cleanup_target_symbol_name << "(ptr %value) {\n"
-           << "entry:\n"
-           << "  ; no sibling cleanup targets for %record." << plan.element_source_type_name
-           << " except " << plan.moved_member_path.front() << "\n"
-           << "  ret void\n"
+           << "entry:\n";
+    if (has_box_item_sibling_cleanup_shape(ir_text, plan)) {
+        output << "  %Box.member_cleanup.sibling.addr = getelementptr %record.Box, ptr %value, i32 0, i32 1\n"
+               << "  call void @__orison_drop.Sibling(ptr %Box.member_cleanup.sibling.addr)\n"
+               << "  store %record.Sibling zeroinitializer, ptr %Box.member_cleanup.sibling.addr\n";
+    } else {
+        output << "  ; no sibling cleanup targets for %record." << plan.element_source_type_name
+               << " except " << plan.moved_member_path.front() << "\n";
+    }
+    output << "  ret void\n"
            << "}\n";
     return output.str();
 }
@@ -1399,7 +1417,7 @@ auto ensure_member_cleanup_helper_definition(
     if (ir_text.find("define void @" + plan.member_cleanup_target_symbol_name + "(") != std::string::npos) {
         return true;
     }
-    auto const helper_definition = member_cleanup_helper_definition(plan);
+    auto const helper_definition = member_cleanup_helper_definition(ir_text, plan);
     if (helper_definition.empty()) {
         return false;
     }

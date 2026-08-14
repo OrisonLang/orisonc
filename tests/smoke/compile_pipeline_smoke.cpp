@@ -7785,6 +7785,57 @@ auto main() -> int {
             "items.member_cleanup.exit:\n  ret i32 0\n"
         ) != std::string::npos
     );
+    auto runtime_indexed_sibling_member_transfer_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_rejected.or";
+    auto runtime_indexed_sibling_member_transfer_apply_request = pipeline.emit_llvm(
+        runtime_indexed_sibling_member_transfer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .test_only_runtime_indexed_member_cleanup_ir_mutation_request = true,
+            .test_only_runtime_indexed_member_cleanup_production_gate_request = true,
+            .test_only_runtime_indexed_member_cleanup_apply_authorization_request = true,
+            .test_only_runtime_indexed_member_cleanup_rewrite_execution_request = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_sibling_member_transfer_apply_request.has_errors());
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_siblings:\n"
+            "  call void @__orison_member_cleanup.Box.except.item(ptr "
+            "%items.dynamic_array_element_path"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "define void @__orison_member_cleanup.Box.except.item(ptr %value) {\n"
+            "entry:\n"
+            "  %Box.member_cleanup.sibling.addr = getelementptr %record.Box, ptr %value, i32 0, i32 1\n"
+            "  call void @__orison_drop.Sibling(ptr %Box.member_cleanup.sibling.addr)\n"
+            "  store %record.Sibling zeroinitializer, ptr %Box.member_cleanup.sibling.addr\n"
+            "  ret void\n"
+            "}\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "declare void @__orison_member_cleanup.Box.except.item(ptr)"
+        ) == std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "define void @__orison_drop.Sibling(ptr %value)"
+        ) != std::string::npos
+    );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {

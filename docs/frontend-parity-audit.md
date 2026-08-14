@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member cleanup helper generation now has fixture-backed concrete sibling cleanup for the
+  narrow `Box.except.item` shape. The generated helper projects the `sibling` field, calls `__orison_drop.Sibling`,
+  and zeroes the sibling slot; general record-field metadata plumbing remains follow-up work.
 - 2026-08-13: DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as

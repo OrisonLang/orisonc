@@ -1733,6 +1733,10 @@ representation.
 - Runtime-index member cleanup helper generation now emits a verifier-clean helper body for the current no-sibling
   `Box.except.item` fixture instead of leaving a declaration-only helper. A sibling-owned-field fixture is still needed
   to drive concrete Drop/deallocation expansion.
+- Runtime-index member cleanup helper generation now has fixture-backed concrete sibling cleanup for the narrow
+  `%record.Box = { %record.Inner, %record.Sibling }` and `Box.except.item` shape. The helper projects the sibling field,
+  calls `__orison_drop.Sibling`, and zeroes that sibling slot. General sibling discovery still needs typed record-field
+  cleanup metadata before this can become a broad production path.
 
 ## Follow-up work
 
