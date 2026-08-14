@@ -1373,13 +1373,6 @@ auto member_cleanup_executable_cfg_append(
     return output.str();
 }
 
-struct MemberCleanupSiblingField {
-    std::string name;
-    std::string source_type_name;
-    std::string llvm_type_name;
-    std::size_t field_index = 0;
-};
-
 auto source_type_name_for(syntax::TypeSyntax const& type) -> std::string {
     auto rendered = type.name;
     if (type.generic_arguments.empty()) {
@@ -1437,7 +1430,7 @@ auto member_cleanup_sibling_fields(
     std::string const& ir_text,
     syntax::ParseResult const& parse_result,
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
-) -> std::vector<MemberCleanupSiblingField> {
+) -> std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField> {
     if (plan.element_source_type_name.empty() || plan.moved_member_path.size() != 1) {
         return {};
     }
@@ -1465,7 +1458,7 @@ auto member_cleanup_sibling_fields(
         return {};
     }
 
-    auto fields = std::vector<MemberCleanupSiblingField> {};
+    auto fields = std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField> {};
     for (auto index = std::size_t {0}; index < record->fields.size(); ++index) {
         auto const& field = record->fields[index];
         if (field.name == moved_field_name) {
@@ -1479,19 +1472,26 @@ auto member_cleanup_sibling_fields(
         if (!source_drop_definition_available(ir_text, field_source_type_name)) {
             continue;
         }
-        fields.push_back(MemberCleanupSiblingField {
-            .name = field.name,
-            .source_type_name = std::move(field_source_type_name),
-            .llvm_type_name = std::move(*field_llvm_type_name),
+        auto drop_symbol_name = "__orison_drop." + field_source_type_name;
+        fields.push_back(lowering::RuntimeIndexedMemberCleanupSiblingField {
+            .owner_name = plan.owner_name,
+            .index_expression_text = plan.index_expression_text,
+            .element_source_type_name = plan.element_source_type_name,
+            .moved_source_type_name = plan.moved_source_type_name,
+            .moved_member_path = plan.moved_member_path,
+            .field_name = field.name,
+            .field_source_type_name = std::move(field_source_type_name),
+            .field_llvm_type_name = std::move(*field_llvm_type_name),
+            .drop_symbol_name = std::move(drop_symbol_name),
             .field_index = index,
+            .drop_definition_available = true,
         });
     }
     return fields;
 }
 
 auto member_cleanup_helper_definition(
-    std::string const& ir_text,
-    syntax::ParseResult const& parse_result,
+    std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField> const& sibling_fields,
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
 ) -> std::string {
     if (plan.member_cleanup_target_symbol_name.empty() ||
@@ -1502,17 +1502,16 @@ auto member_cleanup_helper_definition(
     auto output = std::ostringstream {};
     output << "define void @" << plan.member_cleanup_target_symbol_name << "(ptr %value) {\n"
            << "entry:\n";
-    auto const sibling_fields = member_cleanup_sibling_fields(ir_text, parse_result, plan);
     if (!sibling_fields.empty()) {
         for (auto const& field : sibling_fields) {
             auto const field_address_name = "%" + plan.element_source_type_name +
-                ".member_cleanup." + field.name + ".addr";
+                ".member_cleanup." + field.field_name + ".addr";
             output << "  " << field_address_name << " = getelementptr %record."
                    << plan.element_source_type_name << ", ptr %value, i32 0, i32 "
                    << field.field_index << "\n"
-                   << "  call void @__orison_drop." << field.source_type_name
+                   << "  call void @" << field.drop_symbol_name
                    << "(ptr " << field_address_name << ")\n"
-                   << "  store " << field.llvm_type_name << " zeroinitializer, ptr "
+                   << "  store " << field.field_llvm_type_name << " zeroinitializer, ptr "
                    << field_address_name << "\n";
         }
     } else {
@@ -1535,7 +1534,8 @@ auto ensure_member_cleanup_helper_definition(
     if (ir_text.find("define void @" + plan.member_cleanup_target_symbol_name + "(") != std::string::npos) {
         return true;
     }
-    auto const helper_definition = member_cleanup_helper_definition(ir_text, parse_result, plan);
+    auto const sibling_fields = member_cleanup_sibling_fields(ir_text, parse_result, plan);
+    auto const helper_definition = member_cleanup_helper_definition(sibling_fields, plan);
     if (helper_definition.empty()) {
         return false;
     }

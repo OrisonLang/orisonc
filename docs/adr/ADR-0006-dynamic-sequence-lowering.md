@@ -1737,6 +1737,10 @@ representation.
   emitted source Drop definitions, and the emitted record layout line for top-level member transfers. The current
   fixture-backed helper skips the moved `item` field, drops owned siblings on both sides, and zeroes each dropped
   sibling slot. Nested member paths, generic record layouts, and richer typed cleanup metadata remain follow-up work.
+- Runtime-index member cleanup sibling discovery now materializes `RuntimeIndexedMemberCleanupSiblingField` metadata
+  in the lowering namespace before helper rendering. The pipeline still derives the metadata from parsed record
+  declarations and emitted IR in this step, but helper emission consumes typed cleanup-field records containing owner,
+  moved-path, field index, source type, LLVM type, and Drop symbol data.
 
 ## Follow-up work
 

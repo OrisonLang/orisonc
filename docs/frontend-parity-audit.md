@@ -4,6 +4,10 @@
   fields and emitted source Drop definitions for top-level member transfers. The fixture-backed helper skips the moved
   `item` field, drops owned siblings on both sides, and zeroes each dropped sibling slot; nested paths and generic
   record layouts remain follow-up work.
+- 2026-08-14: Runtime-index member cleanup sibling discovery now materializes `RuntimeIndexedMemberCleanupSiblingField`
+  metadata in the lowering namespace before helper rendering. The pipeline still derives the metadata from parsed
+  records and emitted IR today, but helper emission now consumes a typed cleanup-field artifact rather than ad hoc
+  pipeline-local field data.
 - 2026-08-13: DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as

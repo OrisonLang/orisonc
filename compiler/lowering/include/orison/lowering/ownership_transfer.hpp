@@ -259,6 +259,22 @@ struct RuntimeIndexedMemberCleanupTarget {
     auto operator==(RuntimeIndexedMemberCleanupTarget const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupSiblingField {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string field_name;
+    std::string field_source_type_name;
+    std::string field_llvm_type_name;
+    std::string drop_symbol_name;
+    std::size_t field_index = 0;
+    bool drop_definition_available = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupSiblingField const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupEmissionGate {
     std::string owner_name;
     std::string index_expression_text;
