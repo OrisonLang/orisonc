@@ -86,7 +86,8 @@ auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
     RuntimeIndexedPartialOwner owner,
     std::string function_predecessor_block_name,
-    bool production_cleanup_emission_enabled
+    bool production_cleanup_emission_enabled,
+    bool member_cleanup_rewrite_execution_requested
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
     auto gate = runtime_indexed_cleanup_proof_gate(plan);
@@ -175,9 +176,15 @@ auto record_runtime_indexed_partial_owner(
     auto member_mutation_readiness_verdict =
         runtime_indexed_member_cleanup_mutation_readiness_verdict(member_mutation_production_readiness);
     auto member_mutation_rewrite_authorization =
-        runtime_indexed_member_cleanup_mutation_rewrite_authorization(member_mutation_readiness_verdict);
+        runtime_indexed_member_cleanup_mutation_rewrite_authorization(
+            member_mutation_readiness_verdict,
+            member_cleanup_rewrite_execution_requested
+        );
     auto member_mutation_rewrite_execution_plan =
-        runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(member_mutation_rewrite_authorization);
+        runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
+            member_mutation_rewrite_authorization,
+            member_cleanup_rewrite_execution_requested
+        );
     auto member_mutation_rewrite_execution_verdict =
         runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict(member_mutation_rewrite_execution_plan);
     auto member_mutation_rewrite_promotion_status =
@@ -2580,6 +2587,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization(
         .verdict_ready = verdict.readiness_ready,
         .guarded_rewrite_ready = verdict.guarded_rewrite_ready,
         .authorization_ready = authorization_ready,
+        .rewrite_authorization_requested = rewrite_authorization_requested,
         .rewrite_authorized = authorization_ready && rewrite_authorization_requested,
         .report_only = true,
         .production_enabled = false,
@@ -2599,6 +2607,8 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
            << " verdict " << (authorization.verdict_ready ? "ready" : "blocked")
            << " guarded-rewrite " << (authorization.guarded_rewrite_ready ? "ready" : "blocked")
            << " authorization " << (authorization.authorization_ready ? "ready" : "blocked")
+           << " rewrite-requested "
+           << (authorization.rewrite_authorization_requested ? "true" : "false")
            << " rewrite-authorized " << (authorization.rewrite_authorized ? "true" : "false")
            << " report-only " << (authorization.report_only ? "true" : "false")
            << " production " << (authorization.production_enabled ? "enabled" : "disabled")
@@ -2658,6 +2668,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
         .authorization_ready = authorization.authorization_ready,
         .rewrite_authorized = authorization.rewrite_authorized,
         .execution_plan_ready = execution_plan_ready,
+        .execution_requested = execution_requested,
         .execution_enabled = execution_plan_ready && execution_requested,
         .report_only = true,
         .production_enabled = false,
@@ -2677,6 +2688,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
            << " authorization " << (plan.authorization_ready ? "ready" : "blocked")
            << " rewrite-authorized " << (plan.rewrite_authorized ? "true" : "false")
            << " execution-plan " << (plan.execution_plan_ready ? "ready" : "blocked")
+           << " execution-requested " << (plan.execution_requested ? "true" : "false")
            << " execution " << (plan.execution_enabled ? "enabled" : "disabled")
            << " report-only " << (plan.report_only ? "true" : "false")
            << " production " << (plan.production_enabled ? "enabled" : "disabled")

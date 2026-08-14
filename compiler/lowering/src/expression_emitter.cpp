@@ -599,7 +599,8 @@ auto record_runtime_indexed_constructor_ownership(
         session.state.ownership_transfers,
         *owner,
         session.state.current_block,
-        context.options.enable_runtime_indexed_cleanup_emission
+        context.options.enable_runtime_indexed_cleanup_emission,
+        context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request
     );
     return true;
 }
@@ -635,7 +636,8 @@ auto runtime_indexed_constructor_move_enabled(
         session.state.ownership_transfers,
         *owner,
         session.state.current_block,
-        context.options.enable_runtime_indexed_cleanup_emission
+        context.options.enable_runtime_indexed_cleanup_emission,
+        context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request
     );
     return true;
 }

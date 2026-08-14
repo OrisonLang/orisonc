@@ -2423,3 +2423,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-13: Runtime-index member cleanup mutation rewrite authorization and execution planning now have explicit
   internal opt-in gates that can reach promotion-ready status while default audit paths and production mutation remain
   disabled.
+- 2026-08-13: Runtime-index member cleanup rewrite execution requests now thread from a test-only pipeline option into
+  lowering audit state. Reports expose `rewrite-requested` and `execution-requested` while blocked prerequisites still
+  prevent authorization, execution, and IR mutation.

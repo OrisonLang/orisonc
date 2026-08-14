@@ -1420,6 +1420,7 @@ int main() {
     assert(!member_mutation_rewrite_authorization.verdict_ready);
     assert(!member_mutation_rewrite_authorization.guarded_rewrite_ready);
     assert(!member_mutation_rewrite_authorization.authorization_ready);
+    assert(!member_mutation_rewrite_authorization.rewrite_authorization_requested);
     assert(!member_mutation_rewrite_authorization.rewrite_authorized);
     assert(member_mutation_rewrite_authorization.report_only);
     assert(!member_mutation_rewrite_authorization.production_enabled);
@@ -1429,8 +1430,8 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
         "element Box moved Inner member-path item verdict blocked guarded-rewrite blocked "
-        "authorization blocked rewrite-authorized false report-only true production disabled blockers 2 "
-        "blocker member-cleanup-mutation-readiness-verdict "
+        "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
         "blocker member-cleanup-mutation-guarded-rewrite"
     );
     auto member_mutation_rewrite_authorization_diagnostics =
@@ -1457,6 +1458,7 @@ int main() {
     assert(!member_mutation_rewrite_execution_plan.authorization_ready);
     assert(!member_mutation_rewrite_execution_plan.rewrite_authorized);
     assert(!member_mutation_rewrite_execution_plan.execution_plan_ready);
+    assert(!member_mutation_rewrite_execution_plan.execution_requested);
     assert(!member_mutation_rewrite_execution_plan.execution_enabled);
     assert(member_mutation_rewrite_execution_plan.report_only);
     assert(!member_mutation_rewrite_execution_plan.production_enabled);
@@ -1466,8 +1468,8 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
         "element Box moved Inner member-path item authorization blocked rewrite-authorized false "
-        "execution-plan blocked execution disabled report-only true production disabled blockers 2 "
-        "blocker member-cleanup-mutation-rewrite-authorization "
+        "execution-plan blocked execution-requested false execution disabled report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
         "blocker member-cleanup-mutation-rewrite-not-authorized"
     );
     auto member_mutation_rewrite_execution_plan_diagnostics =
@@ -1537,8 +1539,9 @@ int main() {
         orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization(
             ready_member_mutation_readiness_verdict,
             true
-        );
+    );
     assert(authorized_member_mutation_rewrite.authorization_ready);
+    assert(authorized_member_mutation_rewrite.rewrite_authorization_requested);
     assert(authorized_member_mutation_rewrite.rewrite_authorized);
     assert(authorized_member_mutation_rewrite.blockers.empty());
     assert(
@@ -1547,7 +1550,7 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
         "element Box moved Inner member-path item verdict ready guarded-rewrite ready authorization ready "
-        "rewrite-authorized true report-only true production disabled blockers 0"
+        "rewrite-requested true rewrite-authorized true report-only true production disabled blockers 0"
     );
     auto enabled_member_mutation_execution_plan =
         orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
@@ -1557,6 +1560,7 @@ int main() {
     assert(enabled_member_mutation_execution_plan.authorization_ready);
     assert(enabled_member_mutation_execution_plan.rewrite_authorized);
     assert(enabled_member_mutation_execution_plan.execution_plan_ready);
+    assert(enabled_member_mutation_execution_plan.execution_requested);
     assert(enabled_member_mutation_execution_plan.execution_enabled);
     assert(enabled_member_mutation_execution_plan.blockers.empty());
     assert(
@@ -1565,7 +1569,8 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
         "element Box moved Inner member-path item authorization ready rewrite-authorized true "
-        "execution-plan ready execution enabled report-only true production disabled blockers 0"
+        "execution-plan ready execution-requested true execution enabled report-only true "
+        "production disabled blockers 0"
     );
     auto enabled_member_mutation_execution_verdict =
         orison::lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict(

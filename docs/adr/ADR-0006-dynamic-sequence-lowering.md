@@ -1706,6 +1706,9 @@ representation.
   that aggregates authorization, execution-plan, execution-verdict, and production-disabled readiness.
 - Runtime-index member cleanup mutation rewrite authorization and execution planning now have explicit internal opt-in
   gates that can reach promotion-ready status while default audit paths and production mutation remain disabled.
+- Runtime-index member cleanup rewrite execution requests now thread from a test-only pipeline option into lowering
+  audit state. The request is observable as `rewrite-requested` and `execution-requested`, but authorization and
+  execution still require the existing readiness gates and production mutation remains disabled.
 
 ## Follow-up work
 

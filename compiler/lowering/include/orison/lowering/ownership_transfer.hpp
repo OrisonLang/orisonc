@@ -726,6 +726,7 @@ struct RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
     bool verdict_ready = false;
     bool guarded_rewrite_ready = false;
     bool authorization_ready = false;
+    bool rewrite_authorization_requested = false;
     bool rewrite_authorized = false;
     bool report_only = true;
     bool production_enabled = false;
@@ -743,6 +744,7 @@ struct RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
     bool authorization_ready = false;
     bool rewrite_authorized = false;
     bool execution_plan_ready = false;
+    bool execution_requested = false;
     bool execution_enabled = false;
     bool report_only = true;
     bool production_enabled = false;
@@ -856,7 +858,8 @@ auto record_runtime_indexed_partial_owner(
     OwnershipTransferState& state,
     RuntimeIndexedPartialOwner owner,
     std::string function_predecessor_block_name = {},
-    bool production_cleanup_emission_enabled = false
+    bool production_cleanup_emission_enabled = false,
+    bool member_cleanup_rewrite_execution_requested = false
 ) -> void;
 
 auto runtime_indexed_partial_owner_report(

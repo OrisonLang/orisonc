@@ -7385,8 +7385,8 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[66] ==
         "runtime-index member cleanup mutation rewrite authorization owner holder.items index index "
         "element Inner moved Inner member-path none verdict blocked guarded-rewrite blocked "
-        "authorization blocked rewrite-authorized false report-only true production disabled blockers 2 "
-        "blocker member-cleanup-mutation-readiness-verdict "
+        "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
         "blocker member-cleanup-mutation-guarded-rewrite"
     );
     assert(
@@ -7405,8 +7405,8 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[69] ==
         "runtime-index member cleanup mutation rewrite execution-plan owner holder.items index index "
         "element Inner moved Inner member-path none authorization blocked rewrite-authorized false "
-        "execution-plan blocked execution disabled report-only true production disabled blockers 2 "
-        "blocker member-cleanup-mutation-rewrite-authorization "
+        "execution-plan blocked execution-requested false execution disabled report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
         "blocker member-cleanup-mutation-rewrite-not-authorized"
     );
     assert(
@@ -7433,6 +7433,37 @@ auto main() -> int {
         "element Inner moved Inner member-path none authorization blocked execution-plan blocked "
         "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true "
         "production disabled"
+    );
+
+    auto runtime_indexed_cleanup_rewrite_request = pipeline.emit_llvm(
+        runtime_indexed_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .test_only_runtime_indexed_member_cleanup_rewrite_execution_request = true,
+        }
+    );
+    assert(runtime_indexed_cleanup_rewrite_request.has_errors());
+    assert(runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines.size() == 74);
+    assert(
+        runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[66] ==
+        "runtime-index member cleanup mutation rewrite authorization owner holder.items index index "
+        "element Inner moved Inner member-path none verdict blocked guarded-rewrite blocked "
+        "authorization blocked rewrite-requested true rewrite-authorized false report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
+        "blocker member-cleanup-mutation-guarded-rewrite"
+    );
+    assert(
+        runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[69] ==
+        "runtime-index member cleanup mutation rewrite execution-plan owner holder.items index index "
+        "element Inner moved Inner member-path none authorization blocked rewrite-authorized false "
+        "execution-plan blocked execution-requested true execution disabled report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
+        "blocker member-cleanup-mutation-rewrite-not-authorized"
+    );
+    assert(
+        runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[73] ==
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[73]
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
