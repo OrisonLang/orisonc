@@ -1371,23 +1371,43 @@ auto member_cleanup_executable_cfg_append(
     return output.str();
 }
 
-auto ensure_member_cleanup_declaration(
+auto member_cleanup_helper_definition(
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> std::string {
+    if (plan.member_cleanup_target_symbol_name.empty() ||
+        plan.element_source_type_name.empty() ||
+        plan.moved_member_path.empty()) {
+        return {};
+    }
+    auto output = std::ostringstream {};
+    output << "define void @" << plan.member_cleanup_target_symbol_name << "(ptr %value) {\n"
+           << "entry:\n"
+           << "  ; no sibling cleanup targets for %record." << plan.element_source_type_name
+           << " except " << plan.moved_member_path.front() << "\n"
+           << "  ret void\n"
+           << "}\n";
+    return output.str();
+}
+
+auto ensure_member_cleanup_helper_definition(
     std::string& ir_text,
-    std::string const& symbol_name
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
 ) -> bool {
-    if (symbol_name.empty()) {
+    if (plan.member_cleanup_target_symbol_name.empty()) {
         return false;
     }
-    auto const declaration = "declare void @" + symbol_name + "(ptr)\n";
-    if (ir_text.find(declaration) != std::string::npos ||
-        ir_text.find("define void @" + symbol_name + "(") != std::string::npos) {
+    if (ir_text.find("define void @" + plan.member_cleanup_target_symbol_name + "(") != std::string::npos) {
         return true;
+    }
+    auto const helper_definition = member_cleanup_helper_definition(plan);
+    if (helper_definition.empty()) {
+        return false;
     }
     auto const first_function = ir_text.find("define ");
     if (first_function == std::string::npos) {
         return false;
     }
-    ir_text.insert(first_function, declaration + "\n");
+    ir_text.insert(first_function, helper_definition + "\n");
     return true;
 }
 
@@ -1548,7 +1568,7 @@ auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
             state.final_module_line_count = logical_line_count(ir_text);
             return state;
         }
-        if (!ensure_member_cleanup_declaration(composed_ir, edit_plan.member_cleanup_target_symbol_name)) {
+        if (!ensure_member_cleanup_helper_definition(composed_ir, edit_plan)) {
             state.candidate_verified = false;
             state.final_module_line_count = logical_line_count(ir_text);
             return state;

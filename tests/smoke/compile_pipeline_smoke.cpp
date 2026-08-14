@@ -7762,8 +7762,17 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_member_transfer_apply_request.ir_text.find(
-            "declare void @__orison_member_cleanup.Box.except.item(ptr)\n\n"
+            "define void @__orison_member_cleanup.Box.except.item(ptr %value) {\n"
+            "entry:\n"
+            "  ; no sibling cleanup targets for %record.Box except item\n"
+            "  ret void\n"
+            "}\n"
         ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "declare void @__orison_member_cleanup.Box.except.item(ptr)"
+        ) == std::string::npos
     );
     assert(
         runtime_indexed_member_transfer_apply_request.ir_text.find(

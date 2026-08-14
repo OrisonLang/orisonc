@@ -1730,6 +1730,9 @@ representation.
 - Runtime-index member cleanup rewrite mutation now emits a verifier-clean synthetic cleanup helper declaration and
   call. The call uses the selected runtime-indexed element address; helper body expansion into concrete sibling-member
   Drop/deallocation calls remains the next backend step.
+- Runtime-index member cleanup helper generation now emits a verifier-clean helper body for the current no-sibling
+  `Box.except.item` fixture instead of leaving a declaration-only helper. A sibling-owned-field fixture is still needed
+  to drive concrete Drop/deallocation expansion.
 
 ## Follow-up work
 
