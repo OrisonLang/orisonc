@@ -6931,7 +6931,7 @@ auto main() -> int {
             .comment_ir_preview_lines.front() ==
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
-    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 73);
+    assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 74);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -7426,6 +7426,13 @@ auto main() -> int {
         "runtime-index member cleanup mutation rewrite execution verdict owner holder.items index index "
         "element Inner moved Inner member-path none execution-plan blocked execution disabled blockers 2 "
         "diagnostics 2 report-only true production disabled"
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[73] ==
+        "runtime-index member cleanup mutation rewrite promotion-status owner holder.items index index "
+        "element Inner moved Inner member-path none authorization blocked execution-plan blocked "
+        "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true "
+        "production disabled"
     );
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,

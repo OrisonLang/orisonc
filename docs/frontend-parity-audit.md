@@ -2418,3 +2418,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   for blocked rewrite authorization and unauthenticated rewrite execution.
 - 2026-08-13: Runtime-index member cleanup mutation rewrite execution diagnostics now end with a compact report-only
   verdict summarizing execution readiness, blocker count, diagnostic count, and disabled production execution.
+- 2026-08-13: Runtime-index member cleanup mutation rewrite execution verdicts now feed a final report-only promotion
+  status line that aggregates authorization, execution-plan, execution-verdict, and production-disabled readiness.

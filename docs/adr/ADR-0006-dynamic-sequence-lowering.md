@@ -1702,6 +1702,8 @@ representation.
   rewrite authorization and unauthenticated rewrite execution.
 - Runtime-index member cleanup mutation rewrite execution diagnostics now end with a compact report-only verdict
   summarizing execution readiness, blocker count, diagnostic count, and disabled production execution.
+- Runtime-index member cleanup mutation rewrite execution verdicts now feed a final report-only promotion status line
+  that aggregates authorization, execution-plan, execution-verdict, and production-disabled readiness.
 
 ## Follow-up work
 

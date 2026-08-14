@@ -766,6 +766,24 @@ struct RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict {
     auto operator==(RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationRewritePromotionStatus {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    int blocker_count = 0;
+    int diagnostic_count = 0;
+    bool authorization_ready = false;
+    bool execution_plan_ready = false;
+    bool execution_verdict_ready = false;
+    bool promotion_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationRewritePromotionStatus const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -818,6 +836,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_rewrite_execution_plans;
     std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict>
         runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts;
+    std::vector<RuntimeIndexedMemberCleanupMutationRewritePromotionStatus>
+        runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -1154,6 +1174,16 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict(
 
 auto runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(
     RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const& verdict
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_promotion_status(
+    RuntimeIndexedMemberCleanupMutationRewriteAuthorization const& authorization,
+    RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const& plan,
+    RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const& verdict
+) -> RuntimeIndexedMemberCleanupMutationRewritePromotionStatus;
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(
+    RuntimeIndexedMemberCleanupMutationRewritePromotionStatus const& status
 ) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
