@@ -7466,6 +7466,76 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[73]
     );
 
+    auto runtime_indexed_member_transfer_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer_rejected.or";
+    auto runtime_indexed_member_transfer_audit = pipeline.emit_llvm(
+        runtime_indexed_member_transfer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(runtime_indexed_member_transfer_audit.has_errors());
+    assert(
+        runtime_indexed_member_transfer_audit.error_text.find(
+            "DynamicArray element path read of owned projection requires a non-owning scalar projection"
+        ) != std::string::npos
+    );
+    auto has_runtime_indexed_member_transfer_audit_line =
+        [&](std::string_view expected_line) {
+            return std::any_of(
+                runtime_indexed_member_transfer_audit.runtime_indexed_cleanup_audit_lines.begin(),
+                runtime_indexed_member_transfer_audit.runtime_indexed_cleanup_audit_lines.end(),
+                [&](std::string const& line) {
+                    return line == expected_line;
+                }
+            );
+        };
+    assert(
+        has_runtime_indexed_member_transfer_audit_line(
+            "runtime-index member cleanup target owner items index (index + zero) element Box moved Inner "
+            "member-path item operation drop-live-member-siblings "
+            "drop-metadata __orison_member_cleanup.Box.except.item metadata ready production disabled"
+        )
+    );
+    assert(
+        has_runtime_indexed_member_transfer_audit_line(
+            "runtime-index member cleanup production-readiness owner items index (index + zero) "
+            "element Box moved Inner member-path item proof ready target-metadata ready cfg-slice ready "
+            "module-mutation blocked production-member-cleanup blocked production blocked blockers 2 "
+            "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+        )
+    );
+    assert(
+        has_runtime_indexed_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
+            "element Box moved Inner member-path item seam selected count valid order valid "
+            "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid "
+            "operations-ready ready no-operations-applied true validation ready report-only true "
+            "production disabled blockers 4 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
+            "blocker production-member-cleanup-ir-mutation"
+        )
+    );
+    assert(
+        has_runtime_indexed_member_transfer_audit_line(
+            "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
+            "element Box moved Inner member-path item verdict blocked guarded-rewrite blocked "
+            "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
+            "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
+            "blocker member-cleanup-mutation-guarded-rewrite"
+        )
+    );
+
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {
         return std::any_of(

@@ -1709,6 +1709,9 @@ representation.
 - Runtime-index member cleanup rewrite execution requests now thread from a test-only pipeline option into lowering
   audit state. The request is observable as `rewrite-requested` and `execution-requested`, but authorization and
   execution still require the existing readiness gates and production mutation remains disabled.
+- Pipeline smoke coverage now pins the source-backed computed DynamicArray member-transfer audit path for
+  `items[index + zero].item`, including member Drop metadata readiness, production-readiness blockers, mutation
+  operation validation readiness, and default-blocked guarded rewrite authorization.
 
 ## Follow-up work
 
