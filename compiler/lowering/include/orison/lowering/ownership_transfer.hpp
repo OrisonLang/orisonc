@@ -750,6 +750,22 @@ struct RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
     auto operator==(RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    int blocker_count = 0;
+    int diagnostic_count = 0;
+    bool execution_plan_ready = false;
+    bool execution_enabled = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const&) const -> bool = default;
+};
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
     std::vector<RuntimeIndexedPartialOwner> runtime_indexed_partial_owners;
@@ -800,6 +816,8 @@ struct OwnershipTransferState {
         runtime_indexed_member_cleanup_mutation_rewrite_authorizations;
     std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan>
         runtime_indexed_member_cleanup_mutation_rewrite_execution_plans;
+    std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict>
+        runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts;
 };
 
 struct OwnedAggregateMemberTransfer {
@@ -1129,6 +1147,14 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
 auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(
     RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const& plan
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict(
+    RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const& plan
+) -> RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict;
+
+auto runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(
+    RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const& verdict
+) -> std::string;
 
 auto render_runtime_indexed_cleanup_ir_plan(
     RuntimeIndexedCleanupIrPlan const& plan

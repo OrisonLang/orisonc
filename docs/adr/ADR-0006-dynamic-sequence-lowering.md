@@ -1700,6 +1700,8 @@ representation.
   that keeps actual IR mutation disabled until rewrite authorization is ready.
 - Runtime-index member cleanup mutation rewrite execution plans now emit stable per-blocker diagnostics for blocked
   rewrite authorization and unauthenticated rewrite execution.
+- Runtime-index member cleanup mutation rewrite execution diagnostics now end with a compact report-only verdict
+  summarizing execution readiness, blocker count, diagnostic count, and disabled production execution.
 
 ## Follow-up work
 
