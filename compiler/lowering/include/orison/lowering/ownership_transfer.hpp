@@ -308,6 +308,7 @@ struct RuntimeIndexedMemberCleanupIrCompositionPlan {
     std::string sibling_drop_block_name;
     std::string preserve_block_name;
     std::string exit_block_name;
+    std::string member_cleanup_target_symbol_name;
     std::vector<std::string> topology_edges;
     bool insertion_plan_ready = false;
     bool block_topology_ready = false;
@@ -330,6 +331,7 @@ struct RuntimeIndexedMemberCleanupCfgSlice {
     std::string sibling_drop_block_name;
     std::string preserve_block_name;
     std::string exit_block_name;
+    std::string member_cleanup_target_symbol_name;
     std::vector<std::string> cfg_lines;
     bool composition_ready = false;
     bool slice_rendered = false;
@@ -351,6 +353,7 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteCandidate {
     std::string sibling_drop_block_name;
     std::string preserve_block_name;
     std::string exit_block_name;
+    std::string member_cleanup_target_symbol_name;
     std::string replaced_terminator_text;
     std::string replacement_branch_text;
     std::vector<std::string> appended_cfg_preview_lines;
@@ -375,7 +378,10 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan {
     std::vector<std::string> moved_member_path;
     std::string insertion_anchor;
     std::string entry_block_name;
+    std::string sibling_drop_block_name;
+    std::string preserve_block_name;
     std::string exit_block_name;
+    std::string member_cleanup_target_symbol_name;
     std::string expected_branch_text;
     std::string replacement_branch_text;
     std::string cleanup_cfg_append_placement;

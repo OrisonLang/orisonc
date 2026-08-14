@@ -6970,21 +6970,22 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[12] ==
         "runtime-index member cleanup ir-composition-plan owner holder.items index index element Inner "
         "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing insertion-plan missing block-topology missing "
+        "preserve missing exit missing cleanup-target missing insertion-plan missing block-topology missing "
         "preview-operations missing report-only true production disabled topology-edges 0"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[13] ==
         "runtime-index member cleanup cfg-slice owner holder.items index index element Inner "
         "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing composition missing slice missing report-only true "
+        "preserve missing exit missing cleanup-target missing composition missing slice missing report-only true "
         "production disabled cfg-lines 0"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[14] ==
         "runtime-index member cleanup function-rewrite-candidate owner holder.items index index "
-        "element Inner moved Inner member-path none anchor missing entry missing exit missing "
-        "cfg-slice missing anchor-state missing branch-rewrite blocked cfg-append blocked "
+        "element Inner moved Inner member-path none anchor missing entry missing sibling-drop missing "
+        "preserve missing exit missing cleanup-target missing cfg-slice missing anchor-state missing "
+        "branch-rewrite blocked cfg-append blocked "
         "candidate missing verification blocked report-only true production disabled "
         "replaced-terminator missing replacement-branch missing appended-cfg-lines 0"
     );
@@ -6992,8 +6993,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[15] ==
         "runtime-index member cleanup function-rewrite-edit-script-plan owner holder.items "
         "index index element Inner moved Inner member-path none anchor missing entry missing "
-        "exit missing candidate blocked branch-replacement missing cleanup-cfg-append missing "
-        "phi-retarget missing edit-script blocked report-only true production disabled "
+        "sibling-drop missing preserve missing exit missing cleanup-target missing candidate blocked "
+        "branch-replacement missing cleanup-cfg-append missing phi-retarget missing edit-script blocked "
+        "report-only true production disabled "
         "expected-branch missing replacement-branch missing append-placement missing "
         "expected-closing missing phi-old missing phi-new missing appended-cfg-lines 0"
     );
@@ -7741,7 +7743,21 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.entry:\n"
+            "  ; runtime-index member cleanup rewrite entry\n"
+            "  br label %items.member_cleanup.drop_siblings\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
             "items.member_cleanup.skip_moved:\n"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request.ir_text.find(
+            "items.member_cleanup.drop_siblings:\n"
+            "  ; member sibling cleanup target __orison_member_cleanup.Box.except.item\n"
+            "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );
     assert(

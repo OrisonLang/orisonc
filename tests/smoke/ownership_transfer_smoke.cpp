@@ -778,6 +778,10 @@ int main() {
     assert(member_composition_plan.insertion_plan_ready);
     assert(member_composition_plan.block_topology_ready);
     assert(member_composition_plan.preview_operations_ready);
+    assert(
+        member_composition_plan.member_cleanup_target_symbol_name ==
+        "__orison_member_cleanup.Box.except.item"
+    );
     assert(member_composition_plan.report_only);
     assert(!member_composition_plan.production_enabled);
     assert(member_composition_plan.topology_edges.size() == 6);
@@ -798,7 +802,8 @@ int main() {
         "element Box moved Inner member-path item anchor items.final-cleanup "
         "entry items.member_cleanup.entry skip items.member_cleanup.skip_moved "
         "sibling-drop items.member_cleanup.drop_siblings preserve items.member_cleanup.preserve_moved "
-        "exit items.member_cleanup.exit insertion-plan ready block-topology ready "
+        "exit items.member_cleanup.exit cleanup-target __orison_member_cleanup.Box.except.item "
+        "insertion-plan ready block-topology ready "
         "preview-operations ready report-only true production disabled topology-edges 6 "
         "edge items.final-cleanup -> items.member_cleanup.entry "
         "edge items.member_cleanup.entry -> items.member_cleanup.skip_moved "
@@ -813,21 +818,27 @@ int main() {
     assert(member_cfg_slice.slice_rendered);
     assert(member_cfg_slice.report_only);
     assert(!member_cfg_slice.production_enabled);
-    assert(member_cfg_slice.cfg_lines.size() == 15);
+    assert(member_cfg_slice.member_cleanup_target_symbol_name == "__orison_member_cleanup.Box.except.item");
+    assert(member_cfg_slice.cfg_lines.size() == 16);
     assert(member_cfg_slice.cfg_lines[0] == "; report-only runtime-index member cleanup anchor items.final-cleanup\n");
     assert(member_cfg_slice.cfg_lines[1] == "items.member_cleanup.entry:\n");
     assert(
         member_cfg_slice.cfg_lines[6] ==
         "  ; preserve moved member items[(index + zero)].item\n"
     );
-    assert(member_cfg_slice.cfg_lines[13] == "items.member_cleanup.exit:\n");
+    assert(
+        member_cfg_slice.cfg_lines[10] ==
+        "  ; member cleanup target __orison_member_cleanup.Box.except.item\n"
+    );
+    assert(member_cfg_slice.cfg_lines[14] == "items.member_cleanup.exit:\n");
     assert(
         orison::lowering::runtime_indexed_member_cleanup_cfg_slice_report(member_cfg_slice) ==
         "runtime-index member cleanup cfg-slice owner items index (index + zero) element Box "
         "moved Inner member-path item anchor items.final-cleanup entry items.member_cleanup.entry "
         "skip items.member_cleanup.skip_moved sibling-drop items.member_cleanup.drop_siblings "
         "preserve items.member_cleanup.preserve_moved exit items.member_cleanup.exit "
-        "composition ready slice rendered report-only true production disabled cfg-lines 15 "
+        "cleanup-target __orison_member_cleanup.Box.except.item composition ready slice rendered "
+        "report-only true production disabled cfg-lines 16 "
         "line ; report-only runtime-index member cleanup anchor items.final-cleanup "
         "line items.member_cleanup.entry: line ; report-only compare cleanup_index with (index + zero) "
         "line   ; br moved index -> items.member_cleanup.skip_moved "
@@ -837,6 +848,7 @@ int main() {
         "line   ; br label %items.member_cleanup.preserve_moved "
         "line items.member_cleanup.drop_siblings: "
         "line   ; call member cleanup for Box except item "
+        "line   ; member cleanup target __orison_member_cleanup.Box.except.item "
         "line   ; br label %items.member_cleanup.preserve_moved "
         "line items.member_cleanup.preserve_moved: "
         "line   ; br label %items.member_cleanup.exit "
@@ -850,22 +862,30 @@ int main() {
     assert(member_rewrite_candidate.cfg_append_planned);
     assert(member_rewrite_candidate.candidate_available);
     assert(member_rewrite_candidate.candidate_verified);
+    assert(member_rewrite_candidate.sibling_drop_block_name == "items.member_cleanup.drop_siblings");
+    assert(member_rewrite_candidate.preserve_block_name == "items.member_cleanup.preserve_moved");
+    assert(
+        member_rewrite_candidate.member_cleanup_target_symbol_name ==
+        "__orison_member_cleanup.Box.except.item"
+    );
     assert(member_rewrite_candidate.report_only);
     assert(!member_rewrite_candidate.production_enabled);
     assert(member_rewrite_candidate.replaced_terminator_text == "br label %items.final-cleanup");
     assert(member_rewrite_candidate.replacement_branch_text == "br label %items.member_cleanup.entry");
-    assert(member_rewrite_candidate.appended_cfg_preview_lines.size() == 15);
+    assert(member_rewrite_candidate.appended_cfg_preview_lines.size() == 16);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_function_rewrite_candidate_report(
             member_rewrite_candidate
         ) ==
         "runtime-index member cleanup function-rewrite-candidate owner items index (index + zero) "
         "element Box moved Inner member-path item anchor items.final-cleanup "
-        "entry items.member_cleanup.entry exit items.member_cleanup.exit cfg-slice ready "
+        "entry items.member_cleanup.entry sibling-drop items.member_cleanup.drop_siblings "
+        "preserve items.member_cleanup.preserve_moved exit items.member_cleanup.exit "
+        "cleanup-target __orison_member_cleanup.Box.except.item cfg-slice ready "
         "anchor-state ready branch-rewrite planned cfg-append planned candidate available "
         "verification verified report-only true production disabled replaced-terminator "
         "br label %items.final-cleanup replacement-branch br label %items.member_cleanup.entry "
-        "appended-cfg-lines 15"
+        "appended-cfg-lines 16"
     );
     auto member_edit_script_plan =
         orison::lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_plan(
@@ -876,6 +896,12 @@ int main() {
     assert(member_edit_script_plan.cleanup_cfg_append_ready);
     assert(member_edit_script_plan.phi_retarget_ready);
     assert(member_edit_script_plan.edit_script_ready);
+    assert(member_edit_script_plan.sibling_drop_block_name == "items.member_cleanup.drop_siblings");
+    assert(member_edit_script_plan.preserve_block_name == "items.member_cleanup.preserve_moved");
+    assert(
+        member_edit_script_plan.member_cleanup_target_symbol_name ==
+        "__orison_member_cleanup.Box.except.item"
+    );
     assert(member_edit_script_plan.report_only);
     assert(!member_edit_script_plan.production_enabled);
     assert(member_edit_script_plan.expected_branch_text == "br label %items.final-cleanup");
@@ -884,19 +910,21 @@ int main() {
     assert(member_edit_script_plan.expected_closing_text == "\\n}\\n");
     assert(member_edit_script_plan.phi_old_predecessor_block_name == "items.final-cleanup");
     assert(member_edit_script_plan.phi_new_predecessor_block_name == "items.member_cleanup.exit");
-    assert(member_edit_script_plan.appended_cfg_preview_lines.size() == 15);
+    assert(member_edit_script_plan.appended_cfg_preview_lines.size() == 16);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(
             member_edit_script_plan
         ) ==
         "runtime-index member cleanup function-rewrite-edit-script-plan owner items "
         "index (index + zero) element Box moved Inner member-path item anchor items.final-cleanup "
-        "entry items.member_cleanup.entry exit items.member_cleanup.exit candidate verified "
+        "entry items.member_cleanup.entry sibling-drop items.member_cleanup.drop_siblings "
+        "preserve items.member_cleanup.preserve_moved exit items.member_cleanup.exit "
+        "cleanup-target __orison_member_cleanup.Box.except.item candidate verified "
         "branch-replacement ready cleanup-cfg-append ready phi-retarget ready edit-script ready "
         "report-only true production disabled expected-branch br label %items.final-cleanup "
         "replacement-branch br label %items.member_cleanup.entry append-placement "
         "before-function-closing-brace expected-closing \\n}\\n phi-old items.final-cleanup "
-        "phi-new items.member_cleanup.exit appended-cfg-lines 15"
+        "phi-new items.member_cleanup.exit appended-cfg-lines 16"
     );
     auto member_edit_script_validation =
         orison::lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(

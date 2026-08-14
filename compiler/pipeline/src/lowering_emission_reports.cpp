@@ -1313,15 +1313,14 @@ auto member_cleanup_executable_cfg_append(
 ) -> std::string {
     auto const skip_block_name =
         label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".skip_moved");
-    auto const sibling_drop_block_name =
-        label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".drop_siblings");
-    auto const preserve_block_name =
-        label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".preserve_moved");
+    auto const sibling_drop_block_name = plan.sibling_drop_block_name;
+    auto const preserve_block_name = plan.preserve_block_name;
     if (plan.entry_block_name.empty() ||
         skip_block_name.empty() ||
         sibling_drop_block_name.empty() ||
         preserve_block_name.empty() ||
         plan.exit_block_name.empty() ||
+        plan.member_cleanup_target_symbol_name.empty() ||
         continuation_terminator_text.empty()) {
         return {};
     }
@@ -1329,12 +1328,12 @@ auto member_cleanup_executable_cfg_append(
     auto output = std::ostringstream {};
     output << plan.entry_block_name << ":\n"
            << "  ; runtime-index member cleanup rewrite entry\n"
-           << "  br label %" << skip_block_name << "\n"
+           << "  br label %" << sibling_drop_block_name << "\n"
            << skip_block_name << ":\n"
            << "  ; preserve moved member\n"
            << "  br label %" << preserve_block_name << "\n"
            << sibling_drop_block_name << ":\n"
-           << "  ; member sibling cleanup target pending Drop metadata binding\n"
+           << "  ; member sibling cleanup target " << plan.member_cleanup_target_symbol_name << "\n"
            << "  br label %" << preserve_block_name << "\n"
            << preserve_block_name << ":\n"
            << "  br label %" << plan.exit_block_name << "\n"

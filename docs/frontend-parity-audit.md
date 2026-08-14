@@ -2441,3 +2441,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-14: Runtime-index member cleanup rewrite execution now reaches gated function-IR mutation. The pipeline
   records verifier-backed mutation state, appends the member cleanup CFG, and falls back to the function final return
   anchor for fixtures that do not yet contain an abstract cleanup branch.
+- 2026-08-14: Runtime-index member cleanup rewrite plans now carry the synthetic member cleanup target through to the
+  pipeline mutation helper. The fully gated emitted CFG routes through the sibling-cleanup block and records the target
+  symbol, while real Drop/deallocation call lowering remains the next backend step.

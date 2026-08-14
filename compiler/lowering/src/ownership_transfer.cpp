@@ -73,6 +73,18 @@ auto dotted_path(std::vector<std::string> const& path) -> std::string {
     return output.str();
 }
 
+auto member_cleanup_target_symbol_from_preview_operations(
+    std::vector<std::string> const& preview_operations
+) -> std::string {
+    auto constexpr prefix = std::string_view {"call-member-cleanup-target "};
+    for (auto const& operation : preview_operations) {
+        if (operation.starts_with(prefix)) {
+            return operation.substr(prefix.size());
+        }
+    }
+    return {};
+}
+
 }  // namespace
 
 auto mark_owned_binding_consumed(
@@ -928,6 +940,8 @@ auto runtime_indexed_member_cleanup_ir_composition_plan(
         plan.sibling_drop_block_name != plan.exit_block_name &&
         plan.preserve_block_name != plan.exit_block_name;
     auto preview_operations_ready = block_topology_ready && plan.preview_operations.size() == 6;
+    auto member_cleanup_target_symbol_name =
+        member_cleanup_target_symbol_from_preview_operations(plan.preview_operations);
     auto topology_edges = std::vector<std::string> {};
     if (block_topology_ready) {
         topology_edges = {
@@ -952,6 +966,7 @@ auto runtime_indexed_member_cleanup_ir_composition_plan(
         .sibling_drop_block_name = plan.sibling_drop_block_name,
         .preserve_block_name = plan.preserve_block_name,
         .exit_block_name = plan.exit_block_name,
+        .member_cleanup_target_symbol_name = std::move(member_cleanup_target_symbol_name),
         .topology_edges = std::move(topology_edges),
         .insertion_plan_ready = insertion_plan_ready,
         .block_topology_ready = block_topology_ready,
@@ -977,6 +992,8 @@ auto runtime_indexed_member_cleanup_ir_composition_plan_report(
            << (plan.sibling_drop_block_name.empty() ? "missing" : plan.sibling_drop_block_name)
            << " preserve " << (plan.preserve_block_name.empty() ? "missing" : plan.preserve_block_name)
            << " exit " << (plan.exit_block_name.empty() ? "missing" : plan.exit_block_name)
+           << " cleanup-target "
+           << (plan.member_cleanup_target_symbol_name.empty() ? "missing" : plan.member_cleanup_target_symbol_name)
            << " insertion-plan " << (plan.insertion_plan_ready ? "ready" : "missing")
            << " block-topology " << (plan.block_topology_ready ? "ready" : "missing")
            << " preview-operations " << (plan.preview_operations_ready ? "ready" : "missing")
@@ -1009,6 +1026,7 @@ auto runtime_indexed_member_cleanup_cfg_slice(
             plan.sibling_drop_block_name + ":\n",
             "  ; call member cleanup for " + plan.element_source_type_name +
                 " except " + dotted_path(plan.moved_member_path) + "\n",
+            "  ; member cleanup target " + plan.member_cleanup_target_symbol_name + "\n",
             "  ; br label %" + plan.preserve_block_name + "\n",
             plan.preserve_block_name + ":\n",
             "  ; br label %" + plan.exit_block_name + "\n",
@@ -1029,6 +1047,7 @@ auto runtime_indexed_member_cleanup_cfg_slice(
         .sibling_drop_block_name = plan.sibling_drop_block_name,
         .preserve_block_name = plan.preserve_block_name,
         .exit_block_name = plan.exit_block_name,
+        .member_cleanup_target_symbol_name = plan.member_cleanup_target_symbol_name,
         .cfg_lines = std::move(cfg_lines),
         .composition_ready = composition_ready,
         .slice_rendered = composition_ready,
@@ -1053,6 +1072,8 @@ auto runtime_indexed_member_cleanup_cfg_slice_report(
            << (slice.sibling_drop_block_name.empty() ? "missing" : slice.sibling_drop_block_name)
            << " preserve " << (slice.preserve_block_name.empty() ? "missing" : slice.preserve_block_name)
            << " exit " << (slice.exit_block_name.empty() ? "missing" : slice.exit_block_name)
+           << " cleanup-target "
+           << (slice.member_cleanup_target_symbol_name.empty() ? "missing" : slice.member_cleanup_target_symbol_name)
            << " composition " << (slice.composition_ready ? "ready" : "missing")
            << " slice " << (slice.slice_rendered ? "rendered" : "missing")
            << " report-only " << (slice.report_only ? "true" : "false")
@@ -1093,6 +1114,7 @@ auto runtime_indexed_member_cleanup_function_rewrite_candidate(
         line_present(slice.sibling_drop_block_name + ":\n") &&
         line_present(slice.preserve_block_name + ":\n") &&
         line_present(slice.exit_block_name + ":\n") &&
+        !slice.member_cleanup_target_symbol_name.empty() &&
         line_present("  ; br label %" + slice.preserve_block_name + "\n") &&
         line_present("  ; br label %" + slice.exit_block_name + "\n");
 
@@ -1108,6 +1130,7 @@ auto runtime_indexed_member_cleanup_function_rewrite_candidate(
         .sibling_drop_block_name = slice.sibling_drop_block_name,
         .preserve_block_name = slice.preserve_block_name,
         .exit_block_name = slice.exit_block_name,
+        .member_cleanup_target_symbol_name = slice.member_cleanup_target_symbol_name,
         .replaced_terminator_text =
             anchor_ready ? "br label %" + slice.insertion_anchor : std::string {},
         .replacement_branch_text =
@@ -1135,7 +1158,13 @@ auto runtime_indexed_member_cleanup_function_rewrite_candidate_report(
            << " member-path " << dotted_path(candidate.moved_member_path)
            << " anchor " << (candidate.insertion_anchor.empty() ? "missing" : candidate.insertion_anchor)
            << " entry " << (candidate.entry_block_name.empty() ? "missing" : candidate.entry_block_name)
+           << " sibling-drop "
+           << (candidate.sibling_drop_block_name.empty() ? "missing" : candidate.sibling_drop_block_name)
+           << " preserve "
+           << (candidate.preserve_block_name.empty() ? "missing" : candidate.preserve_block_name)
            << " exit " << (candidate.exit_block_name.empty() ? "missing" : candidate.exit_block_name)
+           << " cleanup-target "
+           << (candidate.member_cleanup_target_symbol_name.empty() ? "missing" : candidate.member_cleanup_target_symbol_name)
            << " cfg-slice " << (candidate.cfg_slice_ready ? "ready" : "missing")
            << " anchor-state " << (candidate.anchor_ready ? "ready" : "missing")
            << " branch-rewrite " << (candidate.branch_rewrite_planned ? "planned" : "blocked")
@@ -1177,7 +1206,10 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan(
         .moved_member_path = candidate.moved_member_path,
         .insertion_anchor = candidate.insertion_anchor,
         .entry_block_name = candidate.entry_block_name,
+        .sibling_drop_block_name = candidate.sibling_drop_block_name,
+        .preserve_block_name = candidate.preserve_block_name,
         .exit_block_name = candidate.exit_block_name,
+        .member_cleanup_target_symbol_name = candidate.member_cleanup_target_symbol_name,
         .expected_branch_text =
             branch_replacement_ready ? candidate.replaced_terminator_text : std::string {},
         .replacement_branch_text =
@@ -1211,7 +1243,12 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(
            << " member-path " << dotted_path(plan.moved_member_path)
            << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
            << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
+           << " sibling-drop "
+           << (plan.sibling_drop_block_name.empty() ? "missing" : plan.sibling_drop_block_name)
+           << " preserve " << (plan.preserve_block_name.empty() ? "missing" : plan.preserve_block_name)
            << " exit " << (plan.exit_block_name.empty() ? "missing" : plan.exit_block_name)
+           << " cleanup-target "
+           << (plan.member_cleanup_target_symbol_name.empty() ? "missing" : plan.member_cleanup_target_symbol_name)
            << " candidate " << (plan.candidate_verified ? "verified" : "blocked")
            << " branch-replacement " << (plan.branch_replacement_ready ? "ready" : "missing")
            << " cleanup-cfg-append " << (plan.cleanup_cfg_append_ready ? "ready" : "missing")
