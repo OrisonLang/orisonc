@@ -603,6 +603,7 @@ struct RuntimeIndexedMemberCleanupMutationApplyAuthorization {
     bool conflict_free = false;
     bool ir_mutation_requested = false;
     bool production_gate_enabled = false;
+    bool apply_authorization_requested = false;
     bool authorization_ready = false;
     bool apply_authorized = false;
     bool report_only = true;
@@ -672,6 +673,9 @@ struct RuntimeIndexedMemberCleanupMutationPromotionSummary {
     bool validation_ready = false;
     bool conflict_free = false;
     bool authorization_ready = false;
+    bool ir_mutation_requested = false;
+    bool production_gate_enabled = false;
+    bool apply_authorized = false;
     bool preview_ready = false;
     bool post_apply_verification_ready = false;
     bool promotion_ready = false;
@@ -861,6 +865,7 @@ auto record_runtime_indexed_partial_owner(
     bool production_cleanup_emission_enabled = false,
     bool member_cleanup_ir_mutation_requested = false,
     bool member_cleanup_production_gate_requested = false,
+    bool member_cleanup_apply_authorization_requested = false,
     bool member_cleanup_rewrite_execution_requested = false
 ) -> void;
 
@@ -1094,7 +1099,8 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization(
     RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
     RuntimeIndexedMemberCleanupMutationConflictDetection const& detection,
     bool ir_mutation_requested = false,
-    bool production_gate_enabled = false
+    bool production_gate_enabled = false,
+    bool apply_authorization_requested = false
 ) -> RuntimeIndexedMemberCleanupMutationApplyAuthorization;
 
 auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(

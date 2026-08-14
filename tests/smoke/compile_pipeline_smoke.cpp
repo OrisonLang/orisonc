@@ -7201,7 +7201,8 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[42] ==
         "runtime-index member cleanup mutation-apply-authorization owner holder.items index index "
         "element Inner moved Inner member-path none validation blocked conflict-free false "
-        "ir-mutation blocked production-gate disabled authorization blocked apply-authorized false "
+        "ir-mutation blocked production-gate disabled apply-requested false authorization blocked "
+        "apply-authorized false "
         "report-only true production disabled blockers 13 blocker member-cleanup-rewrite-candidate "
         "blocker member-cleanup-edit-script blocker member-cleanup-edit-script-validation "
         "blocker member-cleanup-staged-apply blocker member-cleanup-cfg-slice "
@@ -7568,7 +7569,8 @@ auto main() -> int {
         has_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
             "element Box moved Inner member-path item validation ready conflict-free true "
-            "ir-mutation requested production-gate disabled authorization blocked apply-authorized false "
+            "ir-mutation requested production-gate disabled apply-requested false authorization blocked "
+            "apply-authorized false "
             "report-only true production disabled blockers 3 blocker member-cleanup-module-mutation "
             "blocker production-member-cleanup blocker production-member-cleanup-ir-mutation"
         )
@@ -7620,7 +7622,8 @@ auto main() -> int {
         has_production_gate_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
             "element Box moved Inner member-path item validation ready conflict-free true "
-            "ir-mutation requested production-gate enabled authorization ready apply-authorized false "
+            "ir-mutation requested production-gate enabled apply-requested false authorization ready "
+            "apply-authorized false "
             "report-only true production disabled blockers 0"
         )
     );
@@ -7634,6 +7637,63 @@ auto main() -> int {
             "blocker member-cleanup-mutation-actions-applied expected-check branch-target items.final-cleanup "
             "expected-check cfg-appended items.member_cleanup.exit "
             "expected-check phi-predecessor items.member_cleanup.exit"
+        )
+    );
+    auto runtime_indexed_member_transfer_apply_request = pipeline.emit_llvm(
+        runtime_indexed_member_transfer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .test_only_runtime_indexed_member_cleanup_ir_mutation_request = true,
+            .test_only_runtime_indexed_member_cleanup_production_gate_request = true,
+            .test_only_runtime_indexed_member_cleanup_apply_authorization_request = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(runtime_indexed_member_transfer_apply_request.has_errors());
+    auto has_apply_requested_member_transfer_audit_line =
+        [&](std::string_view expected_line) {
+            return std::any_of(
+                runtime_indexed_member_transfer_apply_request
+                    .runtime_indexed_cleanup_audit_lines.begin(),
+                runtime_indexed_member_transfer_apply_request
+                    .runtime_indexed_cleanup_audit_lines.end(),
+                [&](std::string const& line) {
+                    return line == expected_line;
+                }
+            );
+        };
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
+            "element Box moved Inner member-path item validation ready conflict-free true "
+            "ir-mutation requested production-gate enabled apply-requested true authorization ready "
+            "apply-authorized true report-only false production enabled blockers 0"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
+            "element Box moved Inner member-path item preview ready apply-authorized true "
+            "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
+            "report-only false production enabled blockers 0 expected-check branch-target items.final-cleanup "
+            "expected-check cfg-appended items.member_cleanup.exit "
+            "expected-check phi-predecessor items.member_cleanup.exit"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
+            "element Box moved Inner member-path item promotion ready post-apply-verification ready "
+            "authorization ready ir-mutation requested production-gate enabled readiness ready "
+            "report-only false production enabled blockers 0"
         )
     );
 

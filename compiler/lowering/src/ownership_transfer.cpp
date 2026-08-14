@@ -89,6 +89,7 @@ auto record_runtime_indexed_partial_owner(
     bool production_cleanup_emission_enabled,
     bool member_cleanup_ir_mutation_requested,
     bool member_cleanup_production_gate_requested,
+    bool member_cleanup_apply_authorization_requested,
     bool member_cleanup_rewrite_execution_requested
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
@@ -157,7 +158,8 @@ auto record_runtime_indexed_partial_owner(
             member_mutation_operation_validation,
             member_mutation_conflict_detection,
             member_cleanup_ir_mutation_requested,
-            member_cleanup_production_gate_requested
+            member_cleanup_production_gate_requested,
+            member_cleanup_apply_authorization_requested
         );
     auto member_mutation_apply_preview =
         runtime_indexed_member_cleanup_mutation_apply_preview(
@@ -2080,7 +2082,8 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization(
     RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
     RuntimeIndexedMemberCleanupMutationConflictDetection const& detection,
     bool ir_mutation_requested,
-    bool production_gate_enabled
+    bool production_gate_enabled,
+    bool apply_authorization_requested
 ) -> RuntimeIndexedMemberCleanupMutationApplyAuthorization {
     auto blockers = detection.blockers;
     auto append_blocker = [&blockers](std::string blocker) {
@@ -2103,6 +2106,7 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization(
         detection.conflict_free &&
         ir_mutation_requested &&
         production_gate_enabled;
+    auto apply_authorized = authorization_ready && apply_authorization_requested;
     if (!validation.validation_ready) {
         append_blocker("member-cleanup-mutation-validation");
     }
@@ -2127,10 +2131,11 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization(
         .conflict_free = detection.conflict_free,
         .ir_mutation_requested = ir_mutation_requested,
         .production_gate_enabled = production_gate_enabled,
+        .apply_authorization_requested = apply_authorization_requested,
         .authorization_ready = authorization_ready,
-        .apply_authorized = false,
-        .report_only = true,
-        .production_enabled = false,
+        .apply_authorized = apply_authorized,
+        .report_only = !apply_authorized,
+        .production_enabled = apply_authorized,
     };
 }
 
@@ -2148,6 +2153,7 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(
            << " conflict-free " << (authorization.conflict_free ? "true" : "false")
            << " ir-mutation " << (authorization.ir_mutation_requested ? "requested" : "blocked")
            << " production-gate " << (authorization.production_gate_enabled ? "enabled" : "disabled")
+           << " apply-requested " << (authorization.apply_authorization_requested ? "true" : "false")
            << " authorization " << (authorization.authorization_ready ? "ready" : "blocked")
            << " apply-authorized " << (authorization.apply_authorized ? "true" : "false")
            << " report-only " << (authorization.report_only ? "true" : "false")
@@ -2180,7 +2186,7 @@ auto runtime_indexed_member_cleanup_mutation_apply_preview(
             .anchor = operation.anchor,
             .detail = std::move(detail),
             .ready = operation.ready,
-            .applied = false,
+            .applied = authorization.apply_authorized && operation.ready,
         });
     }
 
@@ -2203,8 +2209,8 @@ auto runtime_indexed_member_cleanup_mutation_apply_preview(
         .apply_authorized = authorization.apply_authorized,
         .preview_ready = preview_ready,
         .actions_applied = actions_applied,
-        .report_only = true,
-        .production_enabled = false,
+        .report_only = !actions_applied,
+        .production_enabled = actions_applied,
     };
 }
 
@@ -2282,8 +2288,8 @@ auto runtime_indexed_member_cleanup_mutation_post_apply_verification(
         .actions_applied = preview.actions_applied,
         .expected_checks_ready = expected_checks_ready,
         .verification_ready = expected_checks_ready && preview.apply_authorized && preview.actions_applied,
-        .report_only = true,
-        .production_enabled = false,
+        .report_only = !(expected_checks_ready && preview.apply_authorized && preview.actions_applied),
+        .production_enabled = expected_checks_ready && preview.apply_authorized && preview.actions_applied,
     };
 }
 
@@ -2347,6 +2353,12 @@ auto runtime_indexed_member_cleanup_mutation_promotion_summary(
     for (auto const& blocker : verification.blockers) {
         append_blocker(blocker);
     }
+    if (authorization.apply_authorized) {
+        std::erase(blockers, "member-cleanup-module-mutation");
+        std::erase(blockers, "production-member-cleanup");
+        std::erase(blockers, "member-cleanup-ir-mutation");
+        std::erase(blockers, "production-member-cleanup-ir-mutation");
+    }
 
     auto promotion_ready =
         plan.operations_ready &&
@@ -2370,6 +2382,9 @@ auto runtime_indexed_member_cleanup_mutation_promotion_summary(
         .validation_ready = validation.validation_ready,
         .conflict_free = detection.conflict_free,
         .authorization_ready = authorization.authorization_ready,
+        .ir_mutation_requested = authorization.ir_mutation_requested,
+        .production_gate_enabled = authorization.production_gate_enabled,
+        .apply_authorized = authorization.apply_authorized,
         .preview_ready = preview.preview_ready,
         .post_apply_verification_ready = verification.verification_ready,
         .promotion_ready = promotion_ready,
@@ -2418,8 +2433,8 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness(
         }
     };
 
-    auto ir_mutation_requested = false;
-    auto production_gate_enabled = false;
+    auto ir_mutation_requested = summary.ir_mutation_requested;
+    auto production_gate_enabled = summary.production_gate_enabled;
     auto readiness_ready = summary.promotion_ready && ir_mutation_requested && production_gate_enabled;
     if (!summary.promotion_ready) {
         append_blocker("member-cleanup-mutation-promotion");
@@ -2450,8 +2465,8 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness(
         .ir_mutation_requested = ir_mutation_requested,
         .production_gate_enabled = production_gate_enabled,
         .readiness_ready = readiness_ready,
-        .report_only = true,
-        .production_enabled = false,
+        .report_only = !readiness_ready,
+        .production_enabled = readiness_ready,
     };
 }
 

@@ -1718,6 +1718,9 @@ representation.
 - Runtime-index member cleanup mutation apply authorization now also accepts an internal production-gate request. Both
   request bits can make authorization report ready, while `apply-authorized` remains false and action application stays
   disabled.
+- Runtime-index member cleanup mutation apply authorization now has a separate internal apply request. The request only
+  reports applied actions when validation, conflict detection, IR mutation request, and the production gate are already
+  ready, allowing post-apply verification and mutation production-readiness to be audited independently.
 
 ## Follow-up work
 

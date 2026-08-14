@@ -602,6 +602,7 @@ auto record_runtime_indexed_constructor_ownership(
         context.options.enable_runtime_indexed_cleanup_emission,
         context.options.enable_runtime_indexed_member_cleanup_ir_mutation_request,
         context.options.enable_runtime_indexed_member_cleanup_production_gate_request,
+        context.options.enable_runtime_indexed_member_cleanup_apply_authorization_request,
         context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request
     );
     return true;
@@ -641,6 +642,7 @@ auto runtime_indexed_constructor_move_enabled(
         context.options.enable_runtime_indexed_cleanup_emission,
         context.options.enable_runtime_indexed_member_cleanup_ir_mutation_request,
         context.options.enable_runtime_indexed_member_cleanup_production_gate_request,
+        context.options.enable_runtime_indexed_member_cleanup_apply_authorization_request,
         context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request
     );
     return true;

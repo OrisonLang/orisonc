@@ -1224,7 +1224,7 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
         "element Box moved Inner member-path item validation ready conflict-free true "
-        "ir-mutation blocked production-gate disabled authorization blocked apply-authorized false "
+        "ir-mutation blocked production-gate disabled apply-requested false authorization blocked apply-authorized false "
         "report-only true production disabled blockers 4 blocker member-cleanup-module-mutation "
         "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
         "blocker production-member-cleanup-ir-mutation"
@@ -1247,7 +1247,8 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
         "element Box moved Inner member-path item validation ready conflict-free true "
-        "ir-mutation requested production-gate disabled authorization blocked apply-authorized false "
+        "ir-mutation requested production-gate disabled apply-requested false authorization blocked "
+        "apply-authorized false "
         "report-only true production disabled blockers 3 blocker member-cleanup-module-mutation "
         "blocker production-member-cleanup blocker production-member-cleanup-ir-mutation"
     );
@@ -1271,7 +1272,8 @@ int main() {
         ) ==
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
         "element Box moved Inner member-path item validation ready conflict-free true "
-        "ir-mutation requested production-gate enabled authorization ready apply-authorized false "
+        "ir-mutation requested production-gate enabled apply-requested false authorization ready "
+        "apply-authorized false "
         "report-only true production disabled blockers 0"
     );
     auto gate_requested_member_mutation_apply_preview =
@@ -1292,6 +1294,76 @@ int main() {
             "element Box moved Inner member-path item authorization ready apply-authorized false "
             "preview ready actions 3 actions-applied false report-only true production disabled blockers 0 "
         )
+    );
+    auto apply_requested_member_mutation_apply_authorization =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization(
+            member_mutation_operation_validation,
+            member_mutation_conflict_detection,
+            true,
+            true,
+            true
+        );
+    assert(apply_requested_member_mutation_apply_authorization.validation_ready);
+    assert(apply_requested_member_mutation_apply_authorization.conflict_free);
+    assert(apply_requested_member_mutation_apply_authorization.ir_mutation_requested);
+    assert(apply_requested_member_mutation_apply_authorization.production_gate_enabled);
+    assert(apply_requested_member_mutation_apply_authorization.apply_authorization_requested);
+    assert(apply_requested_member_mutation_apply_authorization.authorization_ready);
+    assert(apply_requested_member_mutation_apply_authorization.apply_authorized);
+    assert(!apply_requested_member_mutation_apply_authorization.report_only);
+    assert(apply_requested_member_mutation_apply_authorization.production_enabled);
+    assert(apply_requested_member_mutation_apply_authorization.blockers.empty());
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(
+            apply_requested_member_mutation_apply_authorization
+        ) ==
+        "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
+        "element Box moved Inner member-path item validation ready conflict-free true "
+        "ir-mutation requested production-gate enabled apply-requested true authorization ready "
+        "apply-authorized true report-only false production enabled blockers 0"
+    );
+    auto apply_requested_member_mutation_apply_preview =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview(
+            member_mutation_operation_plan,
+            apply_requested_member_mutation_apply_authorization
+        );
+    assert(apply_requested_member_mutation_apply_preview.authorization_ready);
+    assert(apply_requested_member_mutation_apply_preview.apply_authorized);
+    assert(apply_requested_member_mutation_apply_preview.preview_ready);
+    assert(apply_requested_member_mutation_apply_preview.actions_applied);
+    assert(!apply_requested_member_mutation_apply_preview.report_only);
+    assert(apply_requested_member_mutation_apply_preview.production_enabled);
+    assert(apply_requested_member_mutation_apply_preview.blockers.empty());
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(
+            apply_requested_member_mutation_apply_preview
+        ).starts_with(
+            "runtime-index member cleanup mutation-apply-preview owner items index (index + zero) "
+            "element Box moved Inner member-path item authorization ready apply-authorized true "
+            "preview ready actions 3 actions-applied true report-only false production enabled blockers 0 "
+        )
+    );
+    auto apply_requested_member_mutation_post_apply_verification =
+        orison::lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification(
+            apply_requested_member_mutation_apply_preview
+        );
+    assert(apply_requested_member_mutation_post_apply_verification.preview_ready);
+    assert(apply_requested_member_mutation_post_apply_verification.apply_authorized);
+    assert(apply_requested_member_mutation_post_apply_verification.actions_applied);
+    assert(apply_requested_member_mutation_post_apply_verification.expected_checks_ready);
+    assert(apply_requested_member_mutation_post_apply_verification.verification_ready);
+    assert(!apply_requested_member_mutation_post_apply_verification.report_only);
+    assert(apply_requested_member_mutation_post_apply_verification.production_enabled);
+    assert(apply_requested_member_mutation_post_apply_verification.blockers.empty());
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
+            apply_requested_member_mutation_post_apply_verification
+        ) ==
+        "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
+        "element Box moved Inner member-path item preview ready apply-authorized true "
+        "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
+        "report-only false production enabled blockers 0 expected-check branch-target items.final-cleanup "
+        "expected-check cfg-appended items.member_cleanup.exit expected-check phi-predecessor items.member_cleanup.exit"
     );
     auto member_mutation_apply_preview =
         orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview(

@@ -70,6 +70,7 @@ struct LlvmIrEmissionOptions {
     bool enable_runtime_indexed_constructor_move = false;
     bool enable_runtime_indexed_member_cleanup_ir_mutation_request = false;
     bool enable_runtime_indexed_member_cleanup_production_gate_request = false;
+    bool enable_runtime_indexed_member_cleanup_apply_authorization_request = false;
     bool enable_runtime_indexed_member_cleanup_rewrite_execution_request = false;
     bool enable_runtime_indexed_fixed_array_constructor_move_only = false;
     std::vector<std::string> source_drop_definition_symbols;
