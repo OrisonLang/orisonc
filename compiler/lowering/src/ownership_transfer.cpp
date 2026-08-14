@@ -88,6 +88,7 @@ auto record_runtime_indexed_partial_owner(
     std::string function_predecessor_block_name,
     bool production_cleanup_emission_enabled,
     bool member_cleanup_ir_mutation_requested,
+    bool member_cleanup_production_gate_requested,
     bool member_cleanup_rewrite_execution_requested
 ) -> void {
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
@@ -155,7 +156,8 @@ auto record_runtime_indexed_partial_owner(
         runtime_indexed_member_cleanup_mutation_apply_authorization(
             member_mutation_operation_validation,
             member_mutation_conflict_detection,
-            member_cleanup_ir_mutation_requested
+            member_cleanup_ir_mutation_requested,
+            member_cleanup_production_gate_requested
         );
     auto member_mutation_apply_preview =
         runtime_indexed_member_cleanup_mutation_apply_preview(
@@ -2077,7 +2079,8 @@ auto runtime_indexed_member_cleanup_mutation_conflict_detection_report(
 auto runtime_indexed_member_cleanup_mutation_apply_authorization(
     RuntimeIndexedMemberCleanupMutationOperationValidation const& validation,
     RuntimeIndexedMemberCleanupMutationConflictDetection const& detection,
-    bool ir_mutation_requested
+    bool ir_mutation_requested,
+    bool production_gate_enabled
 ) -> RuntimeIndexedMemberCleanupMutationApplyAuthorization {
     auto blockers = detection.blockers;
     auto append_blocker = [&blockers](std::string blocker) {
@@ -2088,7 +2091,13 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization(
     if (ir_mutation_requested) {
         std::erase(blockers, "member-cleanup-ir-mutation");
     }
-    auto production_gate_enabled = false;
+    if (production_gate_enabled) {
+        std::erase(blockers, "production-member-cleanup-ir-mutation");
+    }
+    if (ir_mutation_requested && production_gate_enabled) {
+        std::erase(blockers, "member-cleanup-module-mutation");
+        std::erase(blockers, "production-member-cleanup");
+    }
     auto authorization_ready =
         validation.validation_ready &&
         detection.conflict_free &&

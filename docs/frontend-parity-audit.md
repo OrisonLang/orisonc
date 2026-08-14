@@ -2432,3 +2432,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-13: Runtime-index member cleanup mutation apply authorization now accepts an internal test-only IR mutation
   request. The request is observable in audit output, while the production gate remains disabled and apply
   authorization stays blocked.
+- 2026-08-13: Runtime-index member cleanup mutation apply authorization now also accepts an internal production-gate
+  request. With both internal request bits set, authorization can report ready while `apply-authorized` remains false
+  and no mutation actions are applied.

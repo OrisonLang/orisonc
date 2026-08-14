@@ -129,6 +129,8 @@ auto build_lowering_emission_options(
         options.runtime_indexed_constructor_move_enabled;
     emission_options.enable_runtime_indexed_member_cleanup_ir_mutation_request =
         options.test_only_runtime_indexed_member_cleanup_ir_mutation_request;
+    emission_options.enable_runtime_indexed_member_cleanup_production_gate_request =
+        options.test_only_runtime_indexed_member_cleanup_production_gate_request;
     emission_options.enable_runtime_indexed_member_cleanup_rewrite_execution_request =
         options.test_only_runtime_indexed_member_cleanup_rewrite_execution_request;
     emission_options.enable_runtime_indexed_fixed_array_constructor_move_only =
