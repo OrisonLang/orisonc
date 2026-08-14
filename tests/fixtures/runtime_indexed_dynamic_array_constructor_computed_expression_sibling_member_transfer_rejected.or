@@ -6,6 +6,9 @@ record Inner
 record Sibling
     value: UInt32
 
+record Tail
+    value: UInt32
+
 interface Drop
     function drop(this: exclusive This) -> Unit
 
@@ -17,9 +20,14 @@ implements Drop for Sibling
     function drop(this: exclusive This) -> Unit
         return
 
+implements Drop for Tail
+    function drop(this: exclusive This) -> Unit
+        return
+
 record Box
+    prefix: Sibling
     item: Inner
-    sibling: Sibling
+    tail: Tail
 
 implements Drop for Box
     function drop(this: exclusive This) -> Unit
@@ -34,8 +42,8 @@ implements Drop for Outer
 
 function main() -> UInt32
     var items: DynamicArray<Box> = DynamicArray()
-    items.push(Box(Inner(7 as UInt32), Sibling(17 as UInt32)))
-    items.push(Box(Inner(11 as UInt32), Sibling(19 as UInt32)))
+    items.push(Box(Sibling(17 as UInt32), Inner(7 as UInt32), Tail(27 as UInt32)))
+    items.push(Box(Sibling(19 as UInt32), Inner(11 as UInt32), Tail(29 as UInt32)))
     let index: UInt64 = 0 as UInt64
     let zero: UInt64 = 0 as UInt64
     var outer: Outer = Outer(items[index + zero].item)

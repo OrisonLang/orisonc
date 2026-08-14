@@ -7819,9 +7819,12 @@ auto main() -> int {
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
             "define void @__orison_member_cleanup.Box.except.item(ptr %value) {\n"
             "entry:\n"
-            "  %Box.member_cleanup.sibling.addr = getelementptr %record.Box, ptr %value, i32 0, i32 1\n"
-            "  call void @__orison_drop.Sibling(ptr %Box.member_cleanup.sibling.addr)\n"
-            "  store %record.Sibling zeroinitializer, ptr %Box.member_cleanup.sibling.addr\n"
+            "  %Box.member_cleanup.prefix.addr = getelementptr %record.Box, ptr %value, i32 0, i32 0\n"
+            "  call void @__orison_drop.Sibling(ptr %Box.member_cleanup.prefix.addr)\n"
+            "  store %record.Sibling zeroinitializer, ptr %Box.member_cleanup.prefix.addr\n"
+            "  %Box.member_cleanup.tail.addr = getelementptr %record.Box, ptr %value, i32 0, i32 2\n"
+            "  call void @__orison_drop.Tail(ptr %Box.member_cleanup.tail.addr)\n"
+            "  store %record.Tail zeroinitializer, ptr %Box.member_cleanup.tail.addr\n"
             "  ret void\n"
             "}\n"
         ) != std::string::npos
@@ -7834,6 +7837,11 @@ auto main() -> int {
     assert(
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
             "define void @__orison_drop.Sibling(ptr %value)"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
+            "define void @__orison_drop.Tail(ptr %value)"
         ) != std::string::npos
     );
 
