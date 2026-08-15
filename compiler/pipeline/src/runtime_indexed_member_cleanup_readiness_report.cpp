@@ -4,9 +4,26 @@
 #include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <sstream>
 
 namespace orison::pipeline {
 namespace {
+
+auto dotted_path(std::vector<std::string> const& path) -> std::string {
+    if (path.empty()) {
+        return "none";
+    }
+
+    auto text = std::ostringstream {};
+    for (auto index = std::size_t {0}; index < path.size(); ++index) {
+        if (index > 0) {
+            text << '.';
+        }
+        text << path[index];
+    }
+    return text.str();
+}
 
 template <typename Record>
 auto find_member_cleanup_record_by_key(
@@ -275,6 +292,24 @@ void append_ungated_member_cleanup_lines(
     );
 }
 
+void append_promotion_blocker_line(
+    std::vector<std::string>& lines,
+    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    std::string const& blocker,
+    std::string const& detail
+) {
+    auto line = std::ostringstream {};
+    line << "runtime-index member cleanup promotion blocker"
+         << " owner " << gate.owner_name
+         << " index " << gate.index_expression_text
+         << " element " << gate.element_source_type_name
+         << " moved " << gate.moved_source_type_name
+         << " member-path " << dotted_path(gate.moved_member_path)
+         << " blocker " << blocker
+         << " detail " << detail;
+    lines.push_back(line.str());
+}
+
 }  // namespace
 
 auto runtime_indexed_member_cleanup_promotion_state(
@@ -327,6 +362,86 @@ auto runtime_indexed_member_cleanup_promotion_state(
     }
     state.state = ready ? "ready" : "blocked";
     return state;
+}
+
+auto runtime_indexed_member_cleanup_promotion_state_report_lines(
+    CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    if (result.runtime_indexed_member_cleanup_typed_promotion_gates.empty()) {
+        return lines;
+    }
+
+    for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
+        auto const key = runtime_indexed_member_cleanup_match_key(gate);
+        auto const* production_readiness = find_member_cleanup_record_by_key(
+            key,
+            result.runtime_indexed_member_cleanup_production_readiness
+        );
+        auto const* mutation_readiness = find_member_cleanup_record_by_key(
+            key,
+            result.runtime_indexed_member_cleanup_mutation_production_readiness
+        );
+        auto const* rewrite_promotion = find_member_cleanup_record_by_key(
+            key,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
+        );
+
+        if (production_readiness == nullptr) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "missing-production-readiness",
+                "matching member cleanup production-readiness record is missing"
+            );
+        } else if (!production_readiness->production_ready) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "blocked-production-readiness",
+                "matching member cleanup production-readiness record is blocked"
+            );
+        }
+        if (!gate.production_enabled) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "typed-promotion-disabled",
+                "typed promotion gate production is disabled"
+            );
+        }
+        if (mutation_readiness == nullptr) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "missing-mutation-readiness",
+                "matching member cleanup mutation-readiness record is missing"
+            );
+        } else if (!mutation_readiness->production_enabled) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "blocked-mutation-readiness",
+                "matching member cleanup mutation-readiness record production is disabled"
+            );
+        }
+        if (rewrite_promotion == nullptr) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "missing-rewrite-promotion",
+                "matching member cleanup rewrite-promotion record is missing"
+            );
+        } else if (!rewrite_promotion->production_enabled) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "blocked-rewrite-promotion",
+                "matching member cleanup rewrite-promotion record production is disabled"
+            );
+        }
+    }
+    return lines;
 }
 
 auto runtime_indexed_member_cleanup_readiness_report_lines(

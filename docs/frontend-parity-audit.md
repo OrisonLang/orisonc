@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index constructor-move production-readiness now prints keyed member-cleanup promotion blocker
+  lines. The lines identify the owner, index, element type, moved type, member path, blocker kind, and missing or
+  blocked keyed record detail.
 - 2026-08-15: Runtime-index constructor-move production-readiness promotion state now lives in the pipeline and uses
   the shared member-cleanup match key. The headline can report `ready` only when every typed promotion gate has
   matching production-readiness, mutation-readiness, and rewrite-promotion records.

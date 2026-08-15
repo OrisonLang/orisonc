@@ -20,6 +20,10 @@ auto runtime_indexed_member_cleanup_promotion_state(
     CompilePipelineResult const& result
 ) -> RuntimeIndexedMemberCleanupPromotionState;
 
+auto runtime_indexed_member_cleanup_promotion_state_report_lines(
+    CompilePipelineResult const& result
+) -> std::vector<std::string>;
+
 auto runtime_indexed_member_cleanup_readiness_report_lines(
     CompilePipelineResult const& result
 ) -> std::vector<std::string>;

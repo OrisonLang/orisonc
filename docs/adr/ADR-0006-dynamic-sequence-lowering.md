@@ -1825,6 +1825,9 @@ representation.
 - Constructor-move production-readiness member-cleanup promotion state now also lives in the pipeline. It derives
   `none|blocked|ready` per typed promotion gate through the shared key and requires matching production-readiness,
   mutation-readiness, and rewrite-promotion records before reporting `ready`.
+- Constructor-move production-readiness now formats keyed member-cleanup promotion blocker lines. Each line names the
+  gate owner, index, element type, moved type, member path, blocker kind, and detail for missing or blocked production,
+  mutation, or rewrite promotion records.
 
 ## Follow-up work
 

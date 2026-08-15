@@ -8026,6 +8026,34 @@ auto main() -> int {
     assert(synthetic_member_cleanup_promotion_state.typed_gate_count == 2);
     assert(synthetic_member_cleanup_promotion_state.mutation_readiness_count == 2);
     assert(synthetic_member_cleanup_promotion_state.rewrite_promotion_count == 2);
+    auto const synthetic_member_cleanup_promotion_lines =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(
+            synthetic_member_cleanup_summary_result
+        );
+    assert_any_line_contains(
+        synthetic_member_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner rights index j "
+        "element RightBox moved Payload member-path inner.payload "
+        "blocker blocked-production-readiness"
+    );
+    assert_any_line_contains(
+        synthetic_member_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner rights index j "
+        "element RightBox moved Payload member-path inner.payload "
+        "blocker typed-promotion-disabled"
+    );
+    assert_any_line_contains(
+        synthetic_member_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner rights index j "
+        "element RightBox moved Payload member-path inner.payload "
+        "blocker blocked-mutation-readiness"
+    );
+    assert_any_line_contains(
+        synthetic_member_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner rights index j "
+        "element RightBox moved Payload member-path inner.payload "
+        "blocker blocked-rewrite-promotion"
+    );
 
     auto synthetic_ready_member_cleanup_promotion_result = orison::pipeline::CompilePipelineResult {};
     synthetic_ready_member_cleanup_promotion_result.runtime_indexed_member_cleanup_typed_promotion_gates = {
@@ -8114,6 +8142,16 @@ auto main() -> int {
             synthetic_ready_member_cleanup_promotion_result
         );
     assert(incomplete_member_cleanup_promotion_state.state == "blocked");
+    auto const incomplete_member_cleanup_promotion_lines =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(
+            synthetic_ready_member_cleanup_promotion_result
+        );
+    assert_any_line_contains(
+        incomplete_member_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner lefts index i "
+        "element LeftBox moved Payload member-path payload "
+        "blocker missing-rewrite-promotion"
+    );
     assert(
         runtime_indexed_member_transfer_apply_request
             .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1

@@ -353,6 +353,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " member-rewrite-records " << member_cleanup_typed_promotion.rewrite_promotion_count
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
+    for (auto const& line : pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(result)) {
+        report << '\n' << line;
+    }
     for (auto const& line : pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result)) {
         report << '\n' << line;
     }
