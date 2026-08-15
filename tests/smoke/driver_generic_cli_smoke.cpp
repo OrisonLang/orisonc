@@ -618,6 +618,23 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
         "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
+    auto const promotion_blocker = output.find(
+        "runtime-index member cleanup promotion blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker blocked-production-readiness"
+    );
+    auto const helper_bindings = output.find(
+        "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    );
+    auto const production_readiness = output.find(
+        "runtime-index member cleanup production-readiness owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    );
+    assert(promotion_blocker != std::string::npos);
+    assert(helper_bindings != std::string::npos);
+    assert(production_readiness != std::string::npos);
+    assert(promotion_blocker < helper_bindings);
+    assert(helper_bindings < production_readiness);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item helper __orison_member_cleanup.Wrap.except.box.item "
