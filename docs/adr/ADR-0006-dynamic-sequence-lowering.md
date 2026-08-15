@@ -1764,6 +1764,9 @@ representation.
 - Runtime-index constructor-move production-readiness now appends member-cleanup readiness and blocker details when
   member-granular cleanup state exists. This gives the non-test driver report an explicit default-promotion blocker for
   member cleanup while keeping the ordinary emission path rejected.
+- Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
+  `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
+  instead of filtering audit text by prefix.
 
 ## Follow-up work
 

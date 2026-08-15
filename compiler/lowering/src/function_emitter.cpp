@@ -1419,6 +1419,10 @@ void preserve_function_emission_metadata(
         for (auto& plan : result->runtime_indexed_member_cleanup_function_rewrite_edit_script_plans) {
             plan.function_symbol_name = result->function_symbol_name;
         }
+        result->runtime_indexed_member_cleanup_production_readiness =
+            state.ownership_transfers.runtime_indexed_member_cleanup_production_readiness;
+        result->runtime_indexed_member_cleanup_mutation_production_readiness =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_production_readiness;
         result->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans =
             state.ownership_transfers.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans;
         for (auto& plan : result->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {

@@ -2333,6 +2333,16 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.begin(),
         function_emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.end()
     );
+    result.runtime_indexed_member_cleanup_production_readiness.insert(
+        result.runtime_indexed_member_cleanup_production_readiness.end(),
+        function_emission.runtime_indexed_member_cleanup_production_readiness.begin(),
+        function_emission.runtime_indexed_member_cleanup_production_readiness.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_production_readiness.insert(
+        result.runtime_indexed_member_cleanup_mutation_production_readiness.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_production_readiness.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_production_readiness.end()
+    );
     result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.insert(
         result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.end(),
         function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.begin(),

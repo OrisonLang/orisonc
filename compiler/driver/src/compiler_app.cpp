@@ -326,13 +326,10 @@ auto runtime_indexed_member_cleanup_production_readiness_report_lines(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    for (auto const& line : result.runtime_indexed_cleanup_audit_lines) {
-        if (
-            line.starts_with("runtime-index member cleanup production-readiness ") ||
-            line.starts_with("runtime-index member cleanup production blocker ")
-        ) {
-            lines.push_back(line);
-        }
+    for (auto const& readiness : result.runtime_indexed_member_cleanup_production_readiness) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_production_readiness_report(readiness));
+        auto diagnostics = lowering::runtime_indexed_member_cleanup_production_blocker_diagnostics(readiness);
+        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
     }
     return lines;
 }

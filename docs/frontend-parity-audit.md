@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member-cleanup production readiness now flows through typed lowering emission and pipeline
+  result vectors. The driver formats those typed records directly instead of extracting production-readiness lines from
+  the audit text.
 - 2026-08-14: Runtime-index constructor-move production-readiness now surfaces member-cleanup readiness when a
   member-granular cleanup fixture reaches typed member readiness but remains blocked for default promotion. The report
   includes the blocked `member-cleanup-module-mutation` and `production-member-cleanup` details without enabling

@@ -112,6 +112,10 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField>
         runtime_indexed_member_cleanup_sibling_fields;
+    std::vector<lowering::RuntimeIndexedMemberCleanupProductionReadiness>
+        runtime_indexed_member_cleanup_production_readiness;
+    std::vector<lowering::RuntimeIndexedMemberCleanupMutationProductionReadiness>
+        runtime_indexed_member_cleanup_mutation_production_readiness;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;
