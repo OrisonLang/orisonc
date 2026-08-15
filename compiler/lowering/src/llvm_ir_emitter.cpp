@@ -2651,6 +2651,11 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_production_readiness.begin(),
         function_emission.runtime_indexed_member_cleanup_production_readiness.end()
     );
+    result.runtime_indexed_member_cleanup_typed_promotion_gates.insert(
+        result.runtime_indexed_member_cleanup_typed_promotion_gates.end(),
+        function_emission.runtime_indexed_member_cleanup_typed_promotion_gates.begin(),
+        function_emission.runtime_indexed_member_cleanup_typed_promotion_gates.end()
+    );
     result.runtime_indexed_member_cleanup_mutation_operation_plans.insert(
         result.runtime_indexed_member_cleanup_mutation_operation_plans.end(),
         function_emission.runtime_indexed_member_cleanup_mutation_operation_plans.begin(),

@@ -2522,3 +2522,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-15: Runtime-index member cleanup promotion now has a typed internal gate between the promotion checklist and
   mutation seam. The gate records checklist readiness, explicit test-only IR mutation and production-gate requests,
   derived enablement, and remaining blockers before apply authorization consumes those same derived fields.
+- 2026-08-15: Runtime-index member cleanup typed promotion gates now flow through function emission, LLVM emission,
+  pipeline results, and the driver production-readiness headline. The headline reports `member-gate-records` and
+  evaluates promotion readiness from those gate records plus the existing downstream typed readiness records.

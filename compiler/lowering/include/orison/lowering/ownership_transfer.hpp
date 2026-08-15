@@ -882,6 +882,7 @@ struct OwnershipTransferState {
     std::vector<RuntimeIndexedMemberCleanupModuleMutationGate> runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> runtime_indexed_member_cleanup_production_readiness;
     std::vector<RuntimeIndexedMemberCleanupPromotionChecklist> runtime_indexed_member_cleanup_promotion_checklists;
+    std::vector<RuntimeIndexedMemberCleanupTypedPromotionGate> runtime_indexed_member_cleanup_typed_promotion_gates;
     std::vector<RuntimeIndexedMemberCleanupPromotionSeam> runtime_indexed_member_cleanup_promotion_seams;
     std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>
         runtime_indexed_member_cleanup_mutation_operation_plans;

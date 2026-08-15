@@ -1798,6 +1798,9 @@ representation.
 - Member-cleanup promotion now has a typed internal gate between the promotion checklist and mutation seam. The gate
   derives IR mutation and production-gate enablement from explicit test-only requests plus checklist readiness, and the
   apply-authorization path consumes those derived fields instead of duplicating raw request decisions.
+- Member-cleanup typed promotion gates now cross the function-emission, LLVM-emission, pipeline, and driver
+  boundaries as typed records. The constructor-move production-readiness headline reports `member-gate-records` and
+  uses those records as part of the typed promotion decision.
 
 ## Follow-up work
 

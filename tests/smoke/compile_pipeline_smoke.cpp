@@ -6932,6 +6932,8 @@ auto main() -> int {
         "; runtime-index cleanup preview load-length owner holder.items\n"
     );
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 76);
+    assert(runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.size() == 1);
+    assert(!runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front().gate_ready);
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
@@ -7283,9 +7285,9 @@ auto main() -> int {
         "production disabled"
     );
     assert(
-        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[75].starts_with(
-            "runtime-index member cleanup typed-promotion-gate owner holder.items index index "
-            "element Inner moved Inner member-path none "
+        runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[75] ==
+        orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
+            runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front()
         )
     );
 

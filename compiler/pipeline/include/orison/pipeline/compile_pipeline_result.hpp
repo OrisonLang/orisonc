@@ -116,6 +116,8 @@ struct CompilePipelineResult {
         runtime_indexed_member_cleanup_helper_drop_bindings;
     std::vector<lowering::RuntimeIndexedMemberCleanupProductionReadiness>
         runtime_indexed_member_cleanup_production_readiness;
+    std::vector<lowering::RuntimeIndexedMemberCleanupTypedPromotionGate>
+        runtime_indexed_member_cleanup_typed_promotion_gates;
     std::vector<lowering::RuntimeIndexedMemberCleanupMutationOperationPlan>
         runtime_indexed_member_cleanup_mutation_operation_plans;
     std::vector<lowering::RuntimeIndexedMemberCleanupMutationOperationValidation>

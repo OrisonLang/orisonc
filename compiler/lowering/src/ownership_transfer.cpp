@@ -249,6 +249,7 @@ auto record_runtime_indexed_partial_owner(
         std::move(member_production_readiness)
     );
     state.runtime_indexed_member_cleanup_promotion_checklists.push_back(std::move(member_promotion_checklist));
+    state.runtime_indexed_member_cleanup_typed_promotion_gates.push_back(std::move(member_typed_promotion_gate));
     state.runtime_indexed_member_cleanup_promotion_seams.push_back(std::move(member_promotion_seam));
     state.runtime_indexed_member_cleanup_mutation_operation_plans.push_back(
         std::move(member_mutation_operation_plan)
@@ -3142,6 +3143,7 @@ auto runtime_indexed_cleanup_audit_report(
         state.runtime_indexed_member_cleanup_module_mutation_gates.empty() &&
         state.runtime_indexed_member_cleanup_production_readiness.empty() &&
         state.runtime_indexed_member_cleanup_promotion_checklists.empty() &&
+        state.runtime_indexed_member_cleanup_typed_promotion_gates.empty() &&
         state.runtime_indexed_member_cleanup_promotion_seams.empty() &&
         state.runtime_indexed_member_cleanup_mutation_operation_plans.empty() &&
         state.runtime_indexed_member_cleanup_mutation_operation_validations.empty() &&
@@ -3287,10 +3289,8 @@ auto runtime_indexed_cleanup_audit_report(
     for (auto const& status : state.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses) {
         report.push_back(runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(status));
     }
-    for (auto const& checklist : state.runtime_indexed_member_cleanup_promotion_checklists) {
-        report.push_back(runtime_indexed_member_cleanup_typed_promotion_gate_report(
-            runtime_indexed_member_cleanup_typed_promotion_gate(checklist)
-        ));
+    for (auto const& gate : state.runtime_indexed_member_cleanup_typed_promotion_gates) {
+        report.push_back(runtime_indexed_member_cleanup_typed_promotion_gate_report(gate));
     }
     return report;
 }
@@ -3410,6 +3410,8 @@ auto merge_ownership_transfer_states(
                 merged.runtime_indexed_member_cleanup_production_readiness ||
             branch_states[index].runtime_indexed_member_cleanup_promotion_checklists !=
                 merged.runtime_indexed_member_cleanup_promotion_checklists ||
+            branch_states[index].runtime_indexed_member_cleanup_typed_promotion_gates !=
+                merged.runtime_indexed_member_cleanup_typed_promotion_gates ||
             branch_states[index].runtime_indexed_member_cleanup_promotion_seams !=
                 merged.runtime_indexed_member_cleanup_promotion_seams ||
             branch_states[index].runtime_indexed_member_cleanup_mutation_operation_plans !=

@@ -600,7 +600,7 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         "runtime-index cleanup constructor-move production-readiness "
         "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
         "capability-count 1 ordinary-emit accepted member-cleanup-promotion blocked "
-        "member-production-records 1 member-mutation-records 1 member-rewrite-records 1"
+        "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1"
     ) != std::string::npos);
 }
 
@@ -615,7 +615,8 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "runtime-index cleanup constructor-move production-readiness "
         "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
         "capability-count 1 ordinary-emit rejected member-cleanup-promotion blocked "
-        "member-production-records 1 member-mutation-records 1 member-rewrite-records 1 diagnostic none"
+        "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
+        "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
