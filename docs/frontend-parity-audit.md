@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member cleanup now has executable smoke coverage for the nested source-backed
+  `DynamicArray<T>` member-transfer path. The pipeline emits the gated mutated IR, compiles it to an object, links a
+  native executable, and runs the fixture successfully while ordinary surface syntax remains unchanged.
 - 2026-08-14: Runtime-index member cleanup rewrite mutation now emits the owner cleanup loop for source-backed
   `DynamicArray<T>` member transfers. The generated CFG loads the owner descriptor, walks initialized elements, invokes
   the member-preserving helper for the moved index, invokes the full element Drop for other indexes, deallocates the

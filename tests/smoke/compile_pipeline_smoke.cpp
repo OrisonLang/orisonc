@@ -8078,6 +8078,23 @@ auto main() -> int {
             "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );
+    auto runtime_indexed_nested_sibling_member_transfer_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(
+            runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text
+        );
+    assert(!runtime_indexed_nested_sibling_member_transfer_object.has_errors());
+    auto runtime_indexed_nested_sibling_member_transfer_executable =
+        smoke_temp_root / "runtime_indexed_nested_sibling_member_transfer";
+    auto runtime_indexed_nested_sibling_member_transfer_link =
+        orison::link::HostLinker {}.link(
+            runtime_indexed_nested_sibling_member_transfer_object.object_bytes,
+            runtime_indexed_nested_sibling_member_transfer_executable
+        );
+    assert(!runtime_indexed_nested_sibling_member_transfer_link.has_errors());
+    auto runtime_indexed_nested_sibling_member_transfer_status =
+        std::system(runtime_indexed_nested_sibling_member_transfer_executable.string().c_str());
+    assert(WIFEXITED(runtime_indexed_nested_sibling_member_transfer_status));
+    assert(WEXITSTATUS(runtime_indexed_nested_sibling_member_transfer_status) == 0);
 
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {
