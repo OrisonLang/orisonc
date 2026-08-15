@@ -1801,6 +1801,9 @@ representation.
 - Member-cleanup typed promotion gates now cross the function-emission, LLVM-emission, pipeline, and driver
   boundaries as typed records. The constructor-move production-readiness headline reports `member-gate-records` and
   uses those records as part of the typed promotion decision.
+- The executable test-only member-cleanup run seam now prints the same typed promotion gate report after successful
+  host execution. This keeps gated run observability aligned with constructor-move production-readiness reporting while
+  leaving ordinary `--emit-llvm` behavior unchanged.
 
 ## Follow-up work
 

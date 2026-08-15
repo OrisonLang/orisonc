@@ -775,7 +775,14 @@ void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
 ) {
     auto command = executable.string() + " --test-only-runtime-indexed-member-cleanup-run " + path.string();
     auto output = read_command_output(command);
-    assert(output.empty());
+    assert(output.find(
+        "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item checklist ready ir-mutation-requested true "
+        "production-gate-requested true ir-mutation enabled production-gate enabled "
+        "gate ready report-only false production enabled blockers 3 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-helper-drop-bindings"
+    ) != std::string::npos);
 }
 
 void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(

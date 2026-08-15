@@ -2525,3 +2525,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-15: Runtime-index member cleanup typed promotion gates now flow through function emission, LLVM emission,
   pipeline results, and the driver production-readiness headline. The headline reports `member-gate-records` and
   evaluates promotion readiness from those gate records plus the existing downstream typed readiness records.
+- 2026-08-15: The executable `--test-only-runtime-indexed-member-cleanup-run` seam now emits the same typed promotion
+  gate report used by readiness reporting after successful host execution, keeping run-path observability aligned with
+  the production-readiness path.

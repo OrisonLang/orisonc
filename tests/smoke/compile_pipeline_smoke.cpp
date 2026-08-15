@@ -7592,6 +7592,19 @@ auto main() -> int {
         }
     );
     assert(!runtime_indexed_member_transfer_apply_request.has_errors());
+    assert(runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.size() == 1);
+    assert(runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front().gate_ready);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
+            runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front()
+        ) ==
+        "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
+        "element Box moved Inner member-path item checklist ready ir-mutation-requested true "
+        "production-gate-requested true ir-mutation enabled production-gate enabled "
+        "gate ready report-only false production enabled blockers 3 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-helper-drop-bindings"
+    );
     assert(
         runtime_indexed_member_transfer_apply_request
             .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1

@@ -1058,7 +1058,10 @@ auto test_only_runtime_indexed_member_cleanup_run(std::filesystem::path const& s
             .stderr_text = run_result.diagnostics.render(result.source_file->path().string()),
         };
     }
-    return CompileResult {.exit_code = run_result.exit_code};
+    return CompileResult {
+        .exit_code = run_result.exit_code,
+        .stdout_text = render_report_lines(runtime_indexed_member_cleanup_typed_promotion_gate_report_lines(result)),
+    };
 }
 
 auto analyze_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
