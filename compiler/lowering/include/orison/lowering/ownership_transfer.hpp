@@ -513,6 +513,7 @@ struct RuntimeIndexedMemberCleanupProductionReadiness {
     std::vector<std::string> blockers;
     bool proof_ready = false;
     bool target_metadata_ready = false;
+    bool helper_drop_bindings_ready = false;
     bool cfg_slice_ready = false;
     bool module_mutation_ready = false;
     bool production_member_cleanup_ready = false;
@@ -1079,6 +1080,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
 auto runtime_indexed_member_cleanup_production_readiness(
     RuntimeIndexedMemberCleanupProof const& proof,
     std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings,
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupModuleMutationGate const& gate
 ) -> RuntimeIndexedMemberCleanupProductionReadiness;

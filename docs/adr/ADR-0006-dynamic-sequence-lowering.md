@@ -1776,6 +1776,9 @@ representation.
 - Member-cleanup helper Drop bindings now have a typed readiness record derived from concrete sibling cleanup fields.
   The driver production-readiness report can show nested sibling binding count, Drop definition readiness, helper
   definition readiness, and production-disabled status without inspecting emitted helper IR.
+- Member-cleanup production readiness now uses helper Drop-binding readiness as an explicit prerequisite for non-empty
+  moved member paths. Whole-element paths do not require helper bindings; member paths report
+  `member-helper-drop-bindings` until concrete helper binding metadata is ready.
 
 ## Follow-up work
 

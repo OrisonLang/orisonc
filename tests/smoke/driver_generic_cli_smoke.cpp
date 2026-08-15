@@ -622,7 +622,8 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item proof ready target-metadata ready cfg-slice ready "
+        "element Wrap moved Inner member-path box.item proof ready target-metadata ready helper-drop-bindings ready "
+        "cfg-slice ready "
         "module-mutation blocked production-member-cleanup blocked production blocked blockers 2 "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
     ) != std::string::npos);

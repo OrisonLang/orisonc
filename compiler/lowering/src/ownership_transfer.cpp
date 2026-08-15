@@ -144,6 +144,7 @@ auto record_runtime_indexed_partial_owner(
     auto member_production_readiness = runtime_indexed_member_cleanup_production_readiness(
         member_proof,
         member_targets,
+        {},
         member_cfg_slice,
         member_mutation_gate
     );
@@ -1584,12 +1585,24 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
 auto runtime_indexed_member_cleanup_production_readiness(
     RuntimeIndexedMemberCleanupProof const& proof,
     std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings,
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupModuleMutationGate const& gate
 ) -> RuntimeIndexedMemberCleanupProductionReadiness {
     auto target_metadata_ready = !targets.empty();
     for (auto const& target : targets) {
         target_metadata_ready = target_metadata_ready && target.metadata_ready;
+    }
+    auto const helper_drop_bindings_required = !proof.moved_member_path.empty();
+    auto helper_drop_bindings_ready = !helper_drop_bindings_required;
+    if (helper_drop_bindings_required) {
+        helper_drop_bindings_ready = target_metadata_ready && !helper_drop_bindings.empty();
+        for (auto const& bindings : helper_drop_bindings) {
+            helper_drop_bindings_ready = helper_drop_bindings_ready &&
+                bindings.helper_definition_ready &&
+                bindings.all_drop_definitions_available &&
+                !bindings.helper_symbol_name.empty();
+        }
     }
 
     auto proof_ready = proof.prerequisites_met && proof.member_scope_proven;
@@ -1599,6 +1612,7 @@ auto runtime_indexed_member_cleanup_production_readiness(
     auto production_ready =
         proof_ready &&
         target_metadata_ready &&
+        helper_drop_bindings_ready &&
         cfg_slice_ready &&
         module_mutation_ready &&
         production_member_cleanup_ready &&
@@ -1610,6 +1624,9 @@ auto runtime_indexed_member_cleanup_production_readiness(
     }
     if (!target_metadata_ready) {
         blockers.push_back("member-drop-metadata");
+    }
+    if (helper_drop_bindings_required && !helper_drop_bindings_ready) {
+        blockers.push_back("member-helper-drop-bindings");
     }
     if (!cfg_slice_ready) {
         blockers.push_back("member-cleanup-cfg-slice");
@@ -1630,6 +1647,7 @@ auto runtime_indexed_member_cleanup_production_readiness(
         .blockers = std::move(blockers),
         .proof_ready = proof_ready,
         .target_metadata_ready = target_metadata_ready,
+        .helper_drop_bindings_ready = helper_drop_bindings_ready,
         .cfg_slice_ready = cfg_slice_ready,
         .module_mutation_ready = module_mutation_ready,
         .production_member_cleanup_ready = production_member_cleanup_ready,
@@ -1648,6 +1666,8 @@ auto runtime_indexed_member_cleanup_production_readiness_report(
            << " member-path " << dotted_path(readiness.moved_member_path)
            << " proof " << (readiness.proof_ready ? "ready" : "missing")
            << " target-metadata " << (readiness.target_metadata_ready ? "ready" : "missing")
+           << " helper-drop-bindings "
+           << (readiness.helper_drop_bindings_ready ? "ready" : "missing")
            << " cfg-slice " << (readiness.cfg_slice_ready ? "ready" : "missing")
            << " module-mutation " << (readiness.module_mutation_ready ? "ready" : "blocked")
            << " production-member-cleanup "
@@ -1677,6 +1697,8 @@ auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
             diagnostic << "member cleanup proof is missing";
         } else if (blocker == "member-drop-metadata") {
             diagnostic << "member Drop metadata is missing";
+        } else if (blocker == "member-helper-drop-bindings") {
+            diagnostic << "member cleanup helper Drop bindings are missing";
         } else if (blocker == "member-cleanup-cfg-slice") {
             diagnostic << "member cleanup CFG slice is missing";
         } else if (blocker == "member-cleanup-module-mutation") {

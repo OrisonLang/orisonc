@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member-cleanup production readiness now requires concrete helper Drop-binding readiness
+  for non-empty moved member paths. Whole-element paths treat helper bindings as not required, while member paths
+  report `member-helper-drop-bindings` as an explicit blocker until concrete helper binding evidence is present.
 - 2026-08-14: Runtime-index member-cleanup helper Drop bindings now flow as typed LLVM/pipeline records. The
   constructor-move production-readiness report shows concrete nested sibling Drop binding counts, Drop definition
   readiness, helper-definition readiness, and production-disabled status without inspecting emitted helper IR.

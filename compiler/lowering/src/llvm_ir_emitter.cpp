@@ -755,6 +755,103 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
     return bindings;
 }
 
+auto helper_drop_bindings_ready_for(
+    RuntimeIndexedMemberCleanupProductionReadiness const& readiness,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+) -> bool {
+    if (readiness.moved_member_path.empty()) {
+        return true;
+    }
+    auto matched = false;
+    auto ready = true;
+    for (auto const& bindings : helper_drop_bindings) {
+        if (bindings.owner_name != readiness.owner_name ||
+            bindings.index_expression_text != readiness.index_expression_text ||
+            bindings.element_source_type_name != readiness.element_source_type_name ||
+            bindings.moved_source_type_name != readiness.moved_source_type_name ||
+            bindings.moved_member_path != readiness.moved_member_path) {
+            continue;
+        }
+        matched = true;
+        ready = ready &&
+            bindings.helper_definition_ready &&
+            bindings.all_drop_definitions_available &&
+            !bindings.helper_symbol_name.empty();
+    }
+    return matched && ready;
+}
+
+void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bindings(
+    std::vector<RuntimeIndexedMemberCleanupProductionReadiness>& readiness,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+) {
+    for (auto& entry : readiness) {
+        entry.helper_drop_bindings_ready = helper_drop_bindings_ready_for(entry, helper_drop_bindings);
+        auto const helper_blocker = std::string {"member-helper-drop-bindings"};
+        auto const blocker_position = std::ranges::find(entry.blockers, helper_blocker);
+        if (entry.helper_drop_bindings_ready) {
+            if (blocker_position != entry.blockers.end()) {
+                entry.blockers.erase(blocker_position);
+            }
+        } else if (blocker_position == entry.blockers.end()) {
+            entry.blockers.push_back(helper_blocker);
+        }
+        entry.production_ready =
+            entry.proof_ready &&
+            entry.target_metadata_ready &&
+            entry.helper_drop_bindings_ready &&
+            entry.cfg_slice_ready &&
+            entry.module_mutation_ready &&
+            entry.production_member_cleanup_ready &&
+            entry.production_ready;
+    }
+}
+
+void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+    std::vector<RuntimeIndexedMemberCleanupMutationProductionReadiness>& readiness,
+    std::vector<RuntimeIndexedMemberCleanupMutationReadinessVerdict>& verdicts,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+) {
+    for (auto& entry : readiness) {
+        auto const helper_ready = helper_drop_bindings_ready_for(
+            RuntimeIndexedMemberCleanupProductionReadiness {
+                .owner_name = entry.owner_name,
+                .index_expression_text = entry.index_expression_text,
+                .element_source_type_name = entry.element_source_type_name,
+                .moved_source_type_name = entry.moved_source_type_name,
+                .moved_member_path = entry.moved_member_path,
+            },
+            helper_drop_bindings
+        );
+        if (!helper_ready) {
+            continue;
+        }
+        auto const helper_blocker = std::string {"member-helper-drop-bindings"};
+        auto const blocker_position = std::ranges::find(entry.blockers, helper_blocker);
+        if (blocker_position != entry.blockers.end()) {
+            entry.blockers.erase(blocker_position);
+        }
+    }
+    for (auto& verdict : verdicts) {
+        for (auto const& entry : readiness) {
+            if (entry.owner_name != verdict.owner_name ||
+                entry.index_expression_text != verdict.index_expression_text ||
+                entry.element_source_type_name != verdict.element_source_type_name ||
+                entry.moved_source_type_name != verdict.moved_source_type_name ||
+                entry.moved_member_path != verdict.moved_member_path) {
+                continue;
+            }
+            verdict.blocker_count = static_cast<int>(entry.blockers.size());
+            verdict.diagnostic_count = static_cast<int>(entry.blockers.size());
+            verdict.readiness_ready = entry.readiness_ready;
+            verdict.guarded_rewrite_ready =
+                entry.readiness_ready &&
+                entry.ir_mutation_requested &&
+                entry.production_gate_enabled;
+        }
+    }
+}
+
 auto declared_drop_declarations_for_runtime_indexed_cleanup(
     syntax::ModuleSyntax const& module
 ) -> std::vector<PlannedDropDeclaration> {
@@ -3649,6 +3746,15 @@ auto emit_module(
                 result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
                 result.runtime_indexed_member_cleanup_sibling_fields
             );
+        refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bindings(
+            result.runtime_indexed_member_cleanup_production_readiness,
+            result.runtime_indexed_member_cleanup_helper_drop_bindings
+        );
+        refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+            result.runtime_indexed_member_cleanup_mutation_production_readiness,
+            result.runtime_indexed_member_cleanup_mutation_readiness_verdicts,
+            result.runtime_indexed_member_cleanup_helper_drop_bindings
+        );
     };
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
     if (!validate_prelude_module_symbols(

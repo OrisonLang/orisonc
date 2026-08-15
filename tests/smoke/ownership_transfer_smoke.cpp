@@ -1051,11 +1051,27 @@ int main() {
     auto member_production_readiness = orison::lowering::runtime_indexed_member_cleanup_production_readiness(
         member_cleanup_proof,
         member_cleanup_targets,
+        std::vector<orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings> {
+            orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings {
+                .owner_name = "items",
+                .index_expression_text = "(index + zero)",
+                .element_source_type_name = "Box",
+                .moved_source_type_name = "Inner",
+                .moved_member_path = std::vector<std::string> {"item"},
+                .helper_symbol_name = "__orison_member_cleanup.Box.except.item",
+                .sibling_binding_count = 2,
+                .all_drop_definitions_available = true,
+                .nested_member_path = false,
+                .helper_definition_ready = true,
+                .production_enabled = false,
+            },
+        },
         member_cfg_slice,
         member_mutation_gate
     );
     assert(member_production_readiness.proof_ready);
     assert(member_production_readiness.target_metadata_ready);
+    assert(member_production_readiness.helper_drop_bindings_ready);
     assert(member_production_readiness.cfg_slice_ready);
     assert(!member_production_readiness.module_mutation_ready);
     assert(!member_production_readiness.production_member_cleanup_ready);
@@ -1068,7 +1084,7 @@ int main() {
             member_production_readiness
         ) ==
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
-        "element Box moved Inner member-path item proof ready target-metadata ready "
+        "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings ready "
         "cfg-slice ready module-mutation blocked production-member-cleanup blocked "
         "production blocked blockers 2 blocker member-cleanup-module-mutation "
         "blocker production-member-cleanup"
