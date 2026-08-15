@@ -1795,6 +1795,9 @@ representation.
 - Constructor-move production-readiness now derives a typed member-cleanup promotion state from member production
   readiness, mutation production readiness, and rewrite promotion-status records. The headline reports
   `member-cleanup-promotion none|blocked|ready` and record counts without consulting audit text.
+- Member-cleanup promotion now has a typed internal gate between the promotion checklist and mutation seam. The gate
+  derives IR mutation and production-gate enablement from explicit test-only requests plus checklist readiness, and the
+  apply-authorization path consumes those derived fields instead of duplicating raw request decisions.
 
 ## Follow-up work
 

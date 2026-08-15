@@ -562,6 +562,25 @@ struct RuntimeIndexedMemberCleanupPromotionSeam {
     auto operator==(RuntimeIndexedMemberCleanupPromotionSeam const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupTypedPromotionGate {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::vector<std::string> blockers;
+    bool checklist_ready = false;
+    bool ir_mutation_requested = false;
+    bool production_gate_requested = false;
+    bool ir_mutation_enabled = false;
+    bool production_gate_enabled = false;
+    bool gate_ready = false;
+    bool report_only = true;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupTypedPromotionGate const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupMutationOperation {
     std::string kind;
     std::string anchor;
@@ -1111,6 +1130,20 @@ auto runtime_indexed_member_cleanup_promotion_checklist(
 auto runtime_indexed_member_cleanup_promotion_checklist_report(
     RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
 ) -> std::string;
+
+auto runtime_indexed_member_cleanup_typed_promotion_gate(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist,
+    bool ir_mutation_requested = false,
+    bool production_gate_requested = false
+) -> RuntimeIndexedMemberCleanupTypedPromotionGate;
+
+auto runtime_indexed_member_cleanup_typed_promotion_gate_report(
+    RuntimeIndexedMemberCleanupTypedPromotionGate const& gate
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_promotion_seam(
+    RuntimeIndexedMemberCleanupTypedPromotionGate const& gate
+) -> RuntimeIndexedMemberCleanupPromotionSeam;
 
 auto runtime_indexed_member_cleanup_promotion_seam(
     RuntimeIndexedMemberCleanupPromotionChecklist const& checklist

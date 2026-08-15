@@ -156,7 +156,12 @@ auto record_runtime_indexed_partial_owner(
         member_mutation_gate,
         member_production_readiness
     );
-    auto member_promotion_seam = runtime_indexed_member_cleanup_promotion_seam(member_promotion_checklist);
+    auto member_typed_promotion_gate = runtime_indexed_member_cleanup_typed_promotion_gate(
+        member_promotion_checklist,
+        member_cleanup_ir_mutation_requested,
+        member_cleanup_production_gate_requested
+    );
+    auto member_promotion_seam = runtime_indexed_member_cleanup_promotion_seam(member_typed_promotion_gate);
     auto member_mutation_operation_plan =
         runtime_indexed_member_cleanup_mutation_operation_plan(member_promotion_seam, member_edit_script_plan);
     auto member_mutation_operation_validation =
@@ -170,8 +175,8 @@ auto record_runtime_indexed_partial_owner(
         runtime_indexed_member_cleanup_mutation_apply_authorization(
             member_mutation_operation_validation,
             member_mutation_conflict_detection,
-            member_cleanup_ir_mutation_requested,
-            member_cleanup_production_gate_requested,
+            member_typed_promotion_gate.ir_mutation_enabled,
+            member_typed_promotion_gate.production_gate_enabled,
             member_cleanup_apply_authorization_requested
         );
     auto member_mutation_apply_preview =
@@ -1827,12 +1832,14 @@ auto runtime_indexed_member_cleanup_promotion_checklist_report(
     return report.str();
 }
 
-auto runtime_indexed_member_cleanup_promotion_seam(
-    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
-) -> RuntimeIndexedMemberCleanupPromotionSeam {
+auto runtime_indexed_member_cleanup_typed_promotion_gate(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist,
+    bool ir_mutation_requested,
+    bool production_gate_requested
+) -> RuntimeIndexedMemberCleanupTypedPromotionGate {
     auto blockers = checklist.blockers;
-    auto add_blocker = [&](std::string const& blocker) {
-        if (std::find(blockers.begin(), blockers.end(), blocker) == blockers.end()) {
+    auto append_blocker = [&blockers](std::string const& blocker) {
+        if (!std::ranges::contains(blockers, blocker)) {
             blockers.push_back(blocker);
         }
     };
@@ -1842,17 +1849,25 @@ auto runtime_indexed_member_cleanup_promotion_seam(
         checklist.edit_script_ready &&
         checklist.validation_ready &&
         checklist.staged_apply_ready;
-    auto mutation_seam_selected = checklist_ready;
-    auto ir_mutation_enabled = false;
-    auto production_gate_enabled = false;
+    auto ir_mutation_enabled = checklist_ready && ir_mutation_requested;
+    auto production_gate_enabled = checklist_ready && production_gate_requested;
+    auto gate_ready = checklist_ready && ir_mutation_enabled && production_gate_enabled;
+
+    if (!checklist_ready) {
+        append_blocker("member-cleanup-promotion-checklist");
+    }
     if (!ir_mutation_enabled) {
-        add_blocker("member-cleanup-ir-mutation");
+        append_blocker("member-cleanup-ir-mutation");
+    } else {
+        std::erase(blockers, "member-cleanup-ir-mutation");
     }
     if (!production_gate_enabled) {
-        add_blocker("production-member-cleanup-ir-mutation");
+        append_blocker("production-member-cleanup-ir-mutation");
+    } else {
+        std::erase(blockers, "production-member-cleanup-ir-mutation");
     }
 
-    return RuntimeIndexedMemberCleanupPromotionSeam {
+    return RuntimeIndexedMemberCleanupTypedPromotionGate {
         .owner_name = checklist.owner_name,
         .index_expression_text = checklist.index_expression_text,
         .element_source_type_name = checklist.element_source_type_name,
@@ -1860,13 +1875,81 @@ auto runtime_indexed_member_cleanup_promotion_seam(
         .moved_member_path = checklist.moved_member_path,
         .blockers = std::move(blockers),
         .checklist_ready = checklist_ready,
-        .mutation_seam_selected = mutation_seam_selected,
+        .ir_mutation_requested = ir_mutation_requested,
+        .production_gate_requested = production_gate_requested,
         .ir_mutation_enabled = ir_mutation_enabled,
         .production_gate_enabled = production_gate_enabled,
-        .promotion_ready = false,
-        .report_only = true,
-        .production_enabled = false,
+        .gate_ready = gate_ready,
+        .report_only = !gate_ready,
+        .production_enabled = gate_ready,
     };
+}
+
+auto runtime_indexed_member_cleanup_typed_promotion_gate_report(
+    RuntimeIndexedMemberCleanupTypedPromotionGate const& gate
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup typed-promotion-gate owner " << gate.owner_name
+           << " index " << gate.index_expression_text
+           << " element " << gate.element_source_type_name
+           << " moved " << gate.moved_source_type_name
+           << " member-path " << dotted_path(gate.moved_member_path)
+           << " checklist " << (gate.checklist_ready ? "ready" : "blocked")
+           << " ir-mutation-requested " << (gate.ir_mutation_requested ? "true" : "false")
+           << " production-gate-requested " << (gate.production_gate_requested ? "true" : "false")
+           << " ir-mutation " << (gate.ir_mutation_enabled ? "enabled" : "disabled")
+           << " production-gate " << (gate.production_gate_enabled ? "enabled" : "disabled")
+           << " gate " << (gate.gate_ready ? "ready" : "blocked")
+           << " report-only " << (gate.report_only ? "true" : "false")
+           << " production " << (gate.production_enabled ? "enabled" : "disabled")
+           << " blockers " << gate.blockers.size();
+    for (auto const& blocker : gate.blockers) {
+        report << " blocker " << blocker;
+    }
+    return report.str();
+}
+
+auto runtime_indexed_member_cleanup_promotion_seam(
+    RuntimeIndexedMemberCleanupTypedPromotionGate const& gate
+) -> RuntimeIndexedMemberCleanupPromotionSeam {
+    auto blockers = gate.blockers;
+    auto add_blocker = [&](std::string const& blocker) {
+        if (std::find(blockers.begin(), blockers.end(), blocker) == blockers.end()) {
+            blockers.push_back(blocker);
+        }
+    };
+
+    auto mutation_seam_selected = gate.checklist_ready;
+    if (!gate.ir_mutation_enabled) {
+        add_blocker("member-cleanup-ir-mutation");
+    }
+    if (!gate.production_gate_enabled) {
+        add_blocker("production-member-cleanup-ir-mutation");
+    }
+
+    return RuntimeIndexedMemberCleanupPromotionSeam {
+        .owner_name = gate.owner_name,
+        .index_expression_text = gate.index_expression_text,
+        .element_source_type_name = gate.element_source_type_name,
+        .moved_source_type_name = gate.moved_source_type_name,
+        .moved_member_path = gate.moved_member_path,
+        .blockers = std::move(blockers),
+        .checklist_ready = gate.checklist_ready,
+        .mutation_seam_selected = mutation_seam_selected,
+        .ir_mutation_enabled = gate.ir_mutation_enabled,
+        .production_gate_enabled = gate.production_gate_enabled,
+        .promotion_ready = gate.gate_ready,
+        .report_only = gate.report_only,
+        .production_enabled = gate.production_enabled,
+    };
+}
+
+auto runtime_indexed_member_cleanup_promotion_seam(
+    RuntimeIndexedMemberCleanupPromotionChecklist const& checklist
+) -> RuntimeIndexedMemberCleanupPromotionSeam {
+    return runtime_indexed_member_cleanup_promotion_seam(
+        runtime_indexed_member_cleanup_typed_promotion_gate(checklist)
+    );
 }
 
 auto runtime_indexed_member_cleanup_promotion_seam_report(
@@ -3203,6 +3286,11 @@ auto runtime_indexed_cleanup_audit_report(
     }
     for (auto const& status : state.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses) {
         report.push_back(runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(status));
+    }
+    for (auto const& checklist : state.runtime_indexed_member_cleanup_promotion_checklists) {
+        report.push_back(runtime_indexed_member_cleanup_typed_promotion_gate_report(
+            runtime_indexed_member_cleanup_typed_promotion_gate(checklist)
+        ));
     }
     return report;
 }

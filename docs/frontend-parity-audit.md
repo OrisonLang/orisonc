@@ -2519,3 +2519,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-14: Runtime-index member cleanup helper generation now emits a verifier-clean helper body for the current
   no-sibling `Box.except.item` fixture instead of leaving a declaration-only helper. A sibling-owned-field fixture is
   still needed to drive concrete Drop/deallocation expansion.
+- 2026-08-15: Runtime-index member cleanup promotion now has a typed internal gate between the promotion checklist and
+  mutation seam. The gate records checklist readiness, explicit test-only IR mutation and production-gate requests,
+  derived enablement, and remaining blockers before apply authorization consumes those same derived fields.
