@@ -1818,6 +1818,10 @@ representation.
 - Member-cleanup matching now has a reusable pipeline match-key helper for owner, index, element type, moved type, and
   moved member path comparisons. Execution-summary derivation consumes the helper, and smoke coverage pins both
   matching and non-matching records.
+- Constructor-move production-readiness member-cleanup detail rendering now uses a pipeline-owned helper that groups
+  each promotion gate's helper Drop-binding, production, apply, mutation, rewrite, and diagnostic records by that
+  shared key. Synthetic coverage pins two out-of-order promotion chains so report assembly no longer relies on vector
+  position.
 
 ## Follow-up work
 

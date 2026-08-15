@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index constructor-move production-readiness member-cleanup detail lines now render through a
+  pipeline helper that groups each promotion gate's readiness, mutation, rewrite, helper Drop-binding, and diagnostics
+  records by the shared member-cleanup match key.
 - 2026-08-15: Runtime-index member-cleanup matching now uses a reusable pipeline match-key helper. Summary derivation
   and tests share owner, index, element type, moved type, and moved member path comparison instead of open-coded field
   checks.

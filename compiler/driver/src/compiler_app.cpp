@@ -10,6 +10,7 @@
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
+#include "orison/pipeline/runtime_indexed_member_cleanup_readiness_report.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -324,99 +325,6 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
     return pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
 }
 
-auto runtime_indexed_member_cleanup_production_readiness_report_lines(
-    pipeline::CompilePipelineResult const& result
-) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    for (auto const& bindings : result.runtime_indexed_member_cleanup_helper_drop_bindings) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report(bindings));
-    }
-    for (auto const& readiness : result.runtime_indexed_member_cleanup_production_readiness) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_production_readiness_report(readiness));
-        auto diagnostics = lowering::runtime_indexed_member_cleanup_production_blocker_diagnostics(readiness);
-        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
-    }
-    return lines;
-}
-
-auto runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(
-    pipeline::CompilePipelineResult const& result
-) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    for (auto const& readiness : result.runtime_indexed_member_cleanup_mutation_production_readiness) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_production_readiness_report(readiness));
-        auto diagnostics =
-            lowering::runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(readiness);
-        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
-    }
-    return lines;
-}
-
-auto runtime_indexed_member_cleanup_typed_promotion_gate_report_lines(
-    pipeline::CompilePipelineResult const& result
-) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(gate));
-    }
-    return lines;
-}
-
-auto runtime_indexed_member_cleanup_mutation_apply_readiness_report_lines(
-    pipeline::CompilePipelineResult const& result
-) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    for (auto const& plan : result.runtime_indexed_member_cleanup_mutation_operation_plans) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_operation_plan_report(plan));
-    }
-    for (auto const& validation : result.runtime_indexed_member_cleanup_mutation_operation_validations) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_operation_validation_report(validation));
-    }
-    for (auto const& detection : result.runtime_indexed_member_cleanup_mutation_conflict_detections) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(detection));
-    }
-    for (auto const& authorization : result.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(authorization));
-    }
-    for (auto const& preview : result.runtime_indexed_member_cleanup_mutation_apply_previews) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(preview));
-    }
-    for (auto const& verification : result.runtime_indexed_member_cleanup_mutation_post_apply_verifications) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification_report(verification));
-    }
-    for (auto const& summary : result.runtime_indexed_member_cleanup_mutation_promotion_summaries) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_promotion_summary_report(summary));
-    }
-    return lines;
-}
-
-auto runtime_indexed_member_cleanup_mutation_rewrite_readiness_report_lines(
-    pipeline::CompilePipelineResult const& result
-) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    for (auto const& verdict : result.runtime_indexed_member_cleanup_mutation_readiness_verdicts) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_readiness_verdict_report(verdict));
-    }
-    for (auto const& authorization : result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(authorization));
-        auto diagnostics =
-            lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(authorization);
-        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
-    }
-    for (auto const& plan : result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(plan));
-        auto diagnostics = lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(plan);
-        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
-    }
-    for (auto const& verdict : result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(verdict));
-    }
-    for (auto const& status : result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses) {
-        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(status));
-    }
-    return lines;
-}
-
 struct RuntimeIndexedMemberCleanupTypedPromotionState {
     std::string state = "none";
     std::size_t production_readiness_count = 0;
@@ -488,19 +396,7 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " member-rewrite-records " << member_cleanup_typed_promotion.rewrite_promotion_count
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
-    for (auto const& line : runtime_indexed_member_cleanup_production_readiness_report_lines(result)) {
-        report << '\n' << line;
-    }
-    for (auto const& line : runtime_indexed_member_cleanup_mutation_apply_readiness_report_lines(result)) {
-        report << '\n' << line;
-    }
-    for (auto const& line : runtime_indexed_member_cleanup_typed_promotion_gate_report_lines(result)) {
-        report << '\n' << line;
-    }
-    for (auto const& line : runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(result)) {
-        report << '\n' << line;
-    }
-    for (auto const& line : runtime_indexed_member_cleanup_mutation_rewrite_readiness_report_lines(result)) {
+    for (auto const& line : pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result)) {
         report << '\n' << line;
     }
     return report.str();
@@ -1001,7 +897,7 @@ auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path
     auto result = pipeline.emit_llvm(source_path, runtime_indexed_constructor_move_production_readiness_options());
     auto readiness_report = runtime_indexed_constructor_move_production_readiness_report(result) + "\n";
     auto const has_member_cleanup_readiness =
-        !runtime_indexed_member_cleanup_production_readiness_report_lines(result).empty();
+        !pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result).empty();
     if (
         result.has_errors() &&
         result.error_text.find("indexed constructor ownership move requires explicit partial ownership support") ==
@@ -1059,7 +955,10 @@ auto test_only_runtime_indexed_member_cleanup_run(std::filesystem::path const& s
             .stderr_text = run_result.diagnostics.render(result.source_file->path().string()),
         };
     }
-    auto report_lines = runtime_indexed_member_cleanup_typed_promotion_gate_report_lines(result);
+    auto report_lines = std::vector<std::string> {};
+    for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
+        report_lines.push_back(lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(gate));
+    }
     auto summary_lines = pipeline::runtime_indexed_member_cleanup_execution_summary_report_lines(result);
     report_lines.insert(report_lines.end(), summary_lines.begin(), summary_lines.end());
     return CompileResult {
