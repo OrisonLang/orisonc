@@ -1767,6 +1767,9 @@ representation.
 - Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
   `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
   instead of filtering audit text by prefix.
+- Member-cleanup mutation-production readiness now uses the same typed driver reporting path from
+  `RuntimeIndexedMemberCleanupMutationProductionReadiness` records, covering the next promotion gate without depending
+  on audit-line filtering.
 
 ## Follow-up work
 

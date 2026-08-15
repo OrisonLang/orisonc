@@ -631,6 +631,26 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "element Wrap moved Inner member-path box.item blocker production-member-cleanup "
         "detail production member cleanup is disabled"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item promotion blocked post-apply-verification blocked "
+        "authorization blocked ir-mutation blocked production-gate disabled readiness blocked report-only true "
+        "production disabled blockers 8 blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation "
+        "blocker member-cleanup-mutation-apply-authorization "
+        "blocker member-cleanup-mutation-actions-applied blocker member-cleanup-mutation-promotion "
+        "blocker member-cleanup-mutation-post-apply-verification"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker member-cleanup-ir-mutation "
+        "detail member cleanup IR mutation is disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation production blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker production-member-cleanup-ir-mutation "
+        "detail production member cleanup IR mutation is disabled"
+    ) != std::string::npos);
 }
 
 void assert_cli_run_fixture_success(

@@ -334,6 +334,19 @@ auto runtime_indexed_member_cleanup_production_readiness_report_lines(
     return lines;
 }
 
+auto runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto const& readiness : result.runtime_indexed_member_cleanup_mutation_production_readiness) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_production_readiness_report(readiness));
+        auto diagnostics =
+            lowering::runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(readiness);
+        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
+    }
+    return lines;
+}
+
 auto runtime_indexed_constructor_move_production_readiness_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::string {
@@ -356,6 +369,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
     for (auto const& line : runtime_indexed_member_cleanup_production_readiness_report_lines(result)) {
+        report << '\n' << line;
+    }
+    for (auto const& line : runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(result)) {
         report << '\n' << line;
     }
     return report.str();
