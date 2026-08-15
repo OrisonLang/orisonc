@@ -781,8 +781,104 @@ auto helper_drop_bindings_ready_for(
     return matched && ready;
 }
 
+auto member_cleanup_path_text(std::vector<std::string> const& path) -> std::string {
+    if (path.empty()) {
+        return "none";
+    }
+    auto text = std::ostringstream {};
+    for (auto index = std::size_t {0}; index < path.size(); ++index) {
+        if (index > 0) {
+            text << ".";
+        }
+        text << path[index];
+    }
+    return text.str();
+}
+
+template <typename Record>
+auto member_cleanup_site_fragment(Record const& record) -> std::string {
+    auto text = std::ostringstream {};
+    text << "owner " << record.owner_name
+         << " index " << record.index_expression_text
+         << " element " << record.element_source_type_name
+         << " moved " << record.moved_source_type_name
+         << " member-path " << member_cleanup_path_text(record.moved_member_path);
+    return text.str();
+}
+
+template <typename Record>
+auto helper_drop_bindings_ready_for(
+    Record const& record,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+) -> bool {
+    return helper_drop_bindings_ready_for(
+        RuntimeIndexedMemberCleanupProductionReadiness {
+            .owner_name = record.owner_name,
+            .index_expression_text = record.index_expression_text,
+            .element_source_type_name = record.element_source_type_name,
+            .moved_source_type_name = record.moved_source_type_name,
+            .moved_member_path = record.moved_member_path,
+        },
+        helper_drop_bindings
+    );
+}
+
+template <typename Record>
+auto remove_helper_drop_binding_blocker_if_ready(
+    Record& record,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+) -> bool {
+    if (!helper_drop_bindings_ready_for(record, helper_drop_bindings)) {
+        return false;
+    }
+    auto const old_size = record.blockers.size();
+    std::erase(record.blockers, "member-helper-drop-bindings");
+    return record.blockers.size() != old_size;
+}
+
+template <typename Record>
+void replace_runtime_indexed_member_cleanup_audit_line(
+    std::vector<std::string>& audit_lines,
+    std::string_view report_prefix,
+    Record const& record,
+    std::string replacement
+) {
+    auto const site_fragment = member_cleanup_site_fragment(record);
+    auto line = std::ranges::find_if(
+        audit_lines,
+        [&](std::string const& candidate) {
+            return candidate.starts_with(report_prefix) &&
+                candidate.find(site_fragment) != std::string::npos;
+        }
+    );
+    if (line != audit_lines.end()) {
+        *line = std::move(replacement);
+    }
+}
+
+template <typename Record, typename Report>
+void refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+    std::vector<Record>& records,
+    std::vector<std::string>& audit_lines,
+    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings,
+    std::string_view report_prefix,
+    Report report
+) {
+    for (auto& record : records) {
+        if (remove_helper_drop_binding_blocker_if_ready(record, helper_drop_bindings)) {
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                report_prefix,
+                record,
+                report(record)
+            );
+        }
+    }
+}
+
 void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bindings(
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness>& readiness,
+    std::vector<std::string>& audit_lines,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) {
     for (auto& entry : readiness) {
@@ -804,32 +900,85 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
             entry.module_mutation_ready &&
             entry.production_member_cleanup_ready;
         entry.production_ready = entry.production_gate_ready && entry.production_enabled;
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup production-readiness",
+            entry,
+            runtime_indexed_member_cleanup_production_readiness_report(entry)
+        );
     }
 }
 
 void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+    std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>& operation_plans,
+    std::vector<RuntimeIndexedMemberCleanupMutationOperationValidation>& operation_validations,
+    std::vector<RuntimeIndexedMemberCleanupMutationConflictDetection>& conflict_detections,
+    std::vector<RuntimeIndexedMemberCleanupMutationApplyAuthorization>& apply_authorizations,
+    std::vector<RuntimeIndexedMemberCleanupMutationApplyPreview>& apply_previews,
+    std::vector<RuntimeIndexedMemberCleanupMutationPostApplyVerification>& post_apply_verifications,
+    std::vector<RuntimeIndexedMemberCleanupMutationPromotionSummary>& promotion_summaries,
     std::vector<RuntimeIndexedMemberCleanupMutationProductionReadiness>& readiness,
     std::vector<RuntimeIndexedMemberCleanupMutationReadinessVerdict>& verdicts,
+    std::vector<std::string>& audit_lines,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) {
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        operation_plans,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-operation-plan",
+        runtime_indexed_member_cleanup_mutation_operation_plan_report
+    );
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        operation_validations,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-operation-validation",
+        runtime_indexed_member_cleanup_mutation_operation_validation_report
+    );
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        conflict_detections,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-conflict-detection",
+        runtime_indexed_member_cleanup_mutation_conflict_detection_report
+    );
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        apply_authorizations,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-apply-authorization",
+        runtime_indexed_member_cleanup_mutation_apply_authorization_report
+    );
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        apply_previews,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-apply-preview",
+        runtime_indexed_member_cleanup_mutation_apply_preview_report
+    );
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        post_apply_verifications,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-post-apply-verification",
+        runtime_indexed_member_cleanup_mutation_post_apply_verification_report
+    );
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        promotion_summaries,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup mutation-promotion-summary",
+        runtime_indexed_member_cleanup_mutation_promotion_summary_report
+    );
     for (auto& entry : readiness) {
-        auto const helper_ready = helper_drop_bindings_ready_for(
-            RuntimeIndexedMemberCleanupProductionReadiness {
-                .owner_name = entry.owner_name,
-                .index_expression_text = entry.index_expression_text,
-                .element_source_type_name = entry.element_source_type_name,
-                .moved_source_type_name = entry.moved_source_type_name,
-                .moved_member_path = entry.moved_member_path,
-            },
-            helper_drop_bindings
-        );
-        if (!helper_ready) {
-            continue;
-        }
-        auto const helper_blocker = std::string {"member-helper-drop-bindings"};
-        auto const blocker_position = std::ranges::find(entry.blockers, helper_blocker);
-        if (blocker_position != entry.blockers.end()) {
-            entry.blockers.erase(blocker_position);
+        if (remove_helper_drop_binding_blocker_if_ready(entry, helper_drop_bindings)) {
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                "runtime-index member cleanup mutation-production-readiness",
+                entry,
+                runtime_indexed_member_cleanup_mutation_production_readiness_report(entry)
+            );
         }
     }
     for (auto& verdict : verdicts) {
@@ -848,6 +997,12 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
                 entry.readiness_ready &&
                 entry.ir_mutation_requested &&
                 entry.production_gate_enabled;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                "runtime-index member cleanup mutation readiness verdict",
+                verdict,
+                runtime_indexed_member_cleanup_mutation_readiness_verdict_report(verdict)
+            );
         }
     }
 }
@@ -2496,6 +2651,41 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_production_readiness.begin(),
         function_emission.runtime_indexed_member_cleanup_production_readiness.end()
     );
+    result.runtime_indexed_member_cleanup_mutation_operation_plans.insert(
+        result.runtime_indexed_member_cleanup_mutation_operation_plans.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_operation_plans.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_operation_plans.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_operation_validations.insert(
+        result.runtime_indexed_member_cleanup_mutation_operation_validations.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_operation_validations.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_operation_validations.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_conflict_detections.insert(
+        result.runtime_indexed_member_cleanup_mutation_conflict_detections.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_conflict_detections.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_conflict_detections.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_apply_authorizations.insert(
+        result.runtime_indexed_member_cleanup_mutation_apply_authorizations.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_apply_authorizations.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_apply_authorizations.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_apply_previews.insert(
+        result.runtime_indexed_member_cleanup_mutation_apply_previews.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_apply_previews.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_apply_previews.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_post_apply_verifications.insert(
+        result.runtime_indexed_member_cleanup_mutation_post_apply_verifications.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_post_apply_verifications.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_post_apply_verifications.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_promotion_summaries.insert(
+        result.runtime_indexed_member_cleanup_mutation_promotion_summaries.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_promotion_summaries.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_promotion_summaries.end()
+    );
     result.runtime_indexed_member_cleanup_mutation_production_readiness.insert(
         result.runtime_indexed_member_cleanup_mutation_production_readiness.end(),
         function_emission.runtime_indexed_member_cleanup_mutation_production_readiness.begin(),
@@ -3748,11 +3938,20 @@ auto emit_module(
             );
         refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bindings(
             result.runtime_indexed_member_cleanup_production_readiness,
+            result.runtime_indexed_cleanup_audit_lines,
             result.runtime_indexed_member_cleanup_helper_drop_bindings
         );
         refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+            result.runtime_indexed_member_cleanup_mutation_operation_plans,
+            result.runtime_indexed_member_cleanup_mutation_operation_validations,
+            result.runtime_indexed_member_cleanup_mutation_conflict_detections,
+            result.runtime_indexed_member_cleanup_mutation_apply_authorizations,
+            result.runtime_indexed_member_cleanup_mutation_apply_previews,
+            result.runtime_indexed_member_cleanup_mutation_post_apply_verifications,
+            result.runtime_indexed_member_cleanup_mutation_promotion_summaries,
             result.runtime_indexed_member_cleanup_mutation_production_readiness,
             result.runtime_indexed_member_cleanup_mutation_readiness_verdicts,
+            result.runtime_indexed_cleanup_audit_lines,
             result.runtime_indexed_member_cleanup_helper_drop_bindings
         );
     };

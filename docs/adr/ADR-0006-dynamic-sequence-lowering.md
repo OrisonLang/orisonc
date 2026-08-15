@@ -1782,6 +1782,10 @@ representation.
 - Member-cleanup production readiness now separates `production_gate_ready` from `production_enabled`. Late helper
   Drop-binding refreshes recompute the gate from explicit proof, metadata, CFG, module-mutation, and production-member
   cleanup prerequisites before applying the final production-enabled flag.
+- Member-cleanup helper Drop-binding refresh now applies across mutation readiness records and regenerated audit
+  lines. Once concrete helper binding evidence exists for a member path, mutation operation validation, conflict
+  detection, apply authorization, apply preview, post-apply verification, promotion summary, production readiness, and
+  verdict reporting all remove `member-helper-drop-bindings`.
 
 ## Follow-up work
 

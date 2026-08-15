@@ -40,6 +40,20 @@ struct FunctionEmissionResult {
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness>
         runtime_indexed_member_cleanup_production_readiness;
+    std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>
+        runtime_indexed_member_cleanup_mutation_operation_plans;
+    std::vector<RuntimeIndexedMemberCleanupMutationOperationValidation>
+        runtime_indexed_member_cleanup_mutation_operation_validations;
+    std::vector<RuntimeIndexedMemberCleanupMutationConflictDetection>
+        runtime_indexed_member_cleanup_mutation_conflict_detections;
+    std::vector<RuntimeIndexedMemberCleanupMutationApplyAuthorization>
+        runtime_indexed_member_cleanup_mutation_apply_authorizations;
+    std::vector<RuntimeIndexedMemberCleanupMutationApplyPreview>
+        runtime_indexed_member_cleanup_mutation_apply_previews;
+    std::vector<RuntimeIndexedMemberCleanupMutationPostApplyVerification>
+        runtime_indexed_member_cleanup_mutation_post_apply_verifications;
+    std::vector<RuntimeIndexedMemberCleanupMutationPromotionSummary>
+        runtime_indexed_member_cleanup_mutation_promotion_summaries;
     std::vector<RuntimeIndexedMemberCleanupMutationProductionReadiness>
         runtime_indexed_member_cleanup_mutation_production_readiness;
     std::vector<RuntimeIndexedMemberCleanupMutationReadinessVerdict>

@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup helper Drop-binding refresh now updates the mutation readiness chain and
+  regenerated audit lines. Operation validation, conflict detection, apply authorization, apply preview, post-apply
+  verification, promotion summary, production readiness, and verdict reports remove `member-helper-drop-bindings` when
+  concrete helper binding evidence exists.
 - 2026-08-14: Runtime-index member-cleanup production readiness now records `production_gate_ready` and
   `production_enabled` separately. Helper Drop-binding refresh can recompute production readiness from explicit
   prerequisites instead of preserving stale readiness from the earlier report-only state.

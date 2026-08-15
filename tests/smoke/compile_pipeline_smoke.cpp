@@ -7514,10 +7514,10 @@ auto main() -> int {
     assert(
         has_runtime_indexed_member_transfer_audit_line(
             "runtime-index member cleanup production-readiness owner items index (index + zero) "
-            "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings missing "
+            "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings ready "
             "cfg-slice ready module-mutation blocked production-member-cleanup blocked production-gate blocked "
-            "production-enabled false production blocked blockers 3 "
-            "blocker member-helper-drop-bindings blocker member-cleanup-module-mutation blocker production-member-cleanup"
+            "production-enabled false production blocked blockers 2 "
+            "blocker member-cleanup-module-mutation blocker production-member-cleanup"
         )
     );
     assert(
@@ -7526,8 +7526,8 @@ auto main() -> int {
             "element Box moved Inner member-path item seam selected count valid order valid "
             "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid "
             "operations-ready ready no-operations-applied true validation ready report-only true "
-            "production disabled blockers 5 blocker member-cleanup-module-mutation "
-            "blocker production-member-cleanup blocker member-helper-drop-bindings blocker member-cleanup-ir-mutation "
+            "production disabled blockers 4 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup blocker member-cleanup-ir-mutation "
             "blocker production-member-cleanup-ir-mutation"
         )
     );
@@ -7575,8 +7575,8 @@ auto main() -> int {
             "element Box moved Inner member-path item validation ready conflict-free true "
             "ir-mutation requested production-gate disabled apply-requested false authorization blocked "
             "apply-authorized false "
-            "report-only true production disabled blockers 4 blocker member-cleanup-module-mutation "
-            "blocker production-member-cleanup blocker member-helper-drop-bindings "
+            "report-only true production disabled blockers 3 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup "
             "blocker production-member-cleanup-ir-mutation"
         )
     );
@@ -7585,8 +7585,8 @@ auto main() -> int {
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
             "element Box moved Inner member-path item preview ready apply-authorized false "
             "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
-            "report-only true production disabled blockers 6 blocker member-cleanup-module-mutation "
-            "blocker production-member-cleanup blocker member-helper-drop-bindings "
+            "report-only true production disabled blockers 5 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup "
             "blocker production-member-cleanup-ir-mutation "
             "blocker member-cleanup-mutation-apply-authorization "
             "blocker member-cleanup-mutation-actions-applied expected-check branch-target items.final-cleanup "
@@ -7630,7 +7630,7 @@ auto main() -> int {
             "element Box moved Inner member-path item validation ready conflict-free true "
             "ir-mutation requested production-gate enabled apply-requested false authorization ready "
             "apply-authorized false "
-            "report-only true production disabled blockers 1 blocker member-helper-drop-bindings"
+            "report-only true production disabled blockers 0"
         )
     );
     assert(
@@ -7638,8 +7638,7 @@ auto main() -> int {
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
             "element Box moved Inner member-path item preview ready apply-authorized false "
             "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
-            "report-only true production disabled blockers 3 blocker member-helper-drop-bindings "
-            "blocker member-cleanup-mutation-apply-authorization "
+            "report-only true production disabled blockers 2 blocker member-cleanup-mutation-apply-authorization "
             "blocker member-cleanup-mutation-actions-applied expected-check branch-target items.final-cleanup "
             "expected-check cfg-appended items.member_cleanup.exit "
             "expected-check phi-predecessor items.member_cleanup.exit"
@@ -7682,8 +7681,7 @@ auto main() -> int {
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
             "element Box moved Inner member-path item validation ready conflict-free true "
             "ir-mutation requested production-gate enabled apply-requested true authorization ready "
-            "apply-authorized true report-only false production enabled blockers 1 "
-            "blocker member-helper-drop-bindings"
+            "apply-authorized true report-only false production enabled blockers 0"
         )
     );
     assert(
@@ -7691,8 +7689,7 @@ auto main() -> int {
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
             "element Box moved Inner member-path item preview ready apply-authorized true "
             "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
-            "report-only false production enabled blockers 1 blocker member-helper-drop-bindings "
-            "expected-check branch-target items.final-cleanup "
+            "report-only false production enabled blockers 0 expected-check branch-target items.final-cleanup "
             "expected-check cfg-appended items.member_cleanup.exit "
             "expected-check phi-predecessor items.member_cleanup.exit"
         )
@@ -7702,7 +7699,7 @@ auto main() -> int {
             "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
             "element Box moved Inner member-path item promotion ready post-apply-verification ready "
             "authorization ready ir-mutation requested production-gate enabled readiness ready "
-            "report-only false production enabled blockers 1 blocker member-helper-drop-bindings"
+            "report-only false production enabled blockers 0"
         )
     );
     assert(

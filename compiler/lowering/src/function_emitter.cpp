@@ -1421,6 +1421,20 @@ void preserve_function_emission_metadata(
         }
         result->runtime_indexed_member_cleanup_production_readiness =
             state.ownership_transfers.runtime_indexed_member_cleanup_production_readiness;
+        result->runtime_indexed_member_cleanup_mutation_operation_plans =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_operation_plans;
+        result->runtime_indexed_member_cleanup_mutation_operation_validations =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_operation_validations;
+        result->runtime_indexed_member_cleanup_mutation_conflict_detections =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_conflict_detections;
+        result->runtime_indexed_member_cleanup_mutation_apply_authorizations =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_apply_authorizations;
+        result->runtime_indexed_member_cleanup_mutation_apply_previews =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_apply_previews;
+        result->runtime_indexed_member_cleanup_mutation_post_apply_verifications =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_post_apply_verifications;
+        result->runtime_indexed_member_cleanup_mutation_promotion_summaries =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_promotion_summaries;
         result->runtime_indexed_member_cleanup_mutation_production_readiness =
             state.ownership_transfers.runtime_indexed_member_cleanup_mutation_production_readiness;
         result->runtime_indexed_member_cleanup_mutation_readiness_verdicts =
