@@ -796,14 +796,14 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
         } else if (blocker_position == entry.blockers.end()) {
             entry.blockers.push_back(helper_blocker);
         }
-        entry.production_ready =
+        entry.production_gate_ready =
             entry.proof_ready &&
             entry.target_metadata_ready &&
             entry.helper_drop_bindings_ready &&
             entry.cfg_slice_ready &&
             entry.module_mutation_ready &&
-            entry.production_member_cleanup_ready &&
-            entry.production_ready;
+            entry.production_member_cleanup_ready;
+        entry.production_ready = entry.production_gate_ready && entry.production_enabled;
     }
 }
 

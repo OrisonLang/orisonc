@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member-cleanup production readiness now records `production_gate_ready` and
+  `production_enabled` separately. Helper Drop-binding refresh can recompute production readiness from explicit
+  prerequisites instead of preserving stale readiness from the earlier report-only state.
 - 2026-08-14: Runtime-index member-cleanup production readiness now requires concrete helper Drop-binding readiness
   for non-empty moved member paths. Whole-element paths treat helper bindings as not required, while member paths
   report `member-helper-drop-bindings` as an explicit blocker until concrete helper binding evidence is present.

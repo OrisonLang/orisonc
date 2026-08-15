@@ -1075,6 +1075,8 @@ int main() {
     assert(member_production_readiness.cfg_slice_ready);
     assert(!member_production_readiness.module_mutation_ready);
     assert(!member_production_readiness.production_member_cleanup_ready);
+    assert(!member_production_readiness.production_gate_ready);
+    assert(!member_production_readiness.production_enabled);
     assert(!member_production_readiness.production_ready);
     assert(member_production_readiness.blockers.size() == 2);
     assert(member_production_readiness.blockers[0] == "member-cleanup-module-mutation");
@@ -1086,7 +1088,8 @@ int main() {
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
         "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings ready "
         "cfg-slice ready module-mutation blocked production-member-cleanup blocked "
-        "production blocked blockers 2 blocker member-cleanup-module-mutation "
+        "production-gate blocked production-enabled false production blocked blockers 2 "
+        "blocker member-cleanup-module-mutation "
         "blocker production-member-cleanup"
     );
     auto member_production_diagnostics =

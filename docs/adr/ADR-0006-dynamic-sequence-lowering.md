@@ -1779,6 +1779,9 @@ representation.
 - Member-cleanup production readiness now uses helper Drop-binding readiness as an explicit prerequisite for non-empty
   moved member paths. Whole-element paths do not require helper bindings; member paths report
   `member-helper-drop-bindings` until concrete helper binding metadata is ready.
+- Member-cleanup production readiness now separates `production_gate_ready` from `production_enabled`. Late helper
+  Drop-binding refreshes recompute the gate from explicit proof, metadata, CFG, module-mutation, and production-member
+  cleanup prerequisites before applying the final production-enabled flag.
 
 ## Follow-up work
 

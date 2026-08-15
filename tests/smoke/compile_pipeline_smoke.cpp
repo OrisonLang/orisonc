@@ -7105,7 +7105,8 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[31] ==
         "runtime-index member cleanup production-readiness owner holder.items index index element Inner "
         "moved Inner member-path none proof missing target-metadata missing helper-drop-bindings ready cfg-slice missing "
-        "module-mutation blocked production-member-cleanup blocked production blocked blockers 5 "
+        "module-mutation blocked production-member-cleanup blocked production-gate blocked "
+        "production-enabled false production blocked blockers 5 "
         "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
     );
@@ -7514,7 +7515,8 @@ auto main() -> int {
         has_runtime_indexed_member_transfer_audit_line(
             "runtime-index member cleanup production-readiness owner items index (index + zero) "
             "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings missing "
-            "cfg-slice ready module-mutation blocked production-member-cleanup blocked production blocked blockers 3 "
+            "cfg-slice ready module-mutation blocked production-member-cleanup blocked production-gate blocked "
+            "production-enabled false production blocked blockers 3 "
             "blocker member-helper-drop-bindings blocker member-cleanup-module-mutation blocker production-member-cleanup"
         )
     );

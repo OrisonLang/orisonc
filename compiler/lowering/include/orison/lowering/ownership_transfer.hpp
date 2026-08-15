@@ -517,6 +517,8 @@ struct RuntimeIndexedMemberCleanupProductionReadiness {
     bool cfg_slice_ready = false;
     bool module_mutation_ready = false;
     bool production_member_cleanup_ready = false;
+    bool production_gate_ready = false;
+    bool production_enabled = false;
     bool production_ready = false;
 
     auto operator==(RuntimeIndexedMemberCleanupProductionReadiness const&) const -> bool = default;

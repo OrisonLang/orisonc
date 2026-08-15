@@ -1615,8 +1615,9 @@ auto runtime_indexed_member_cleanup_production_readiness(
         helper_drop_bindings_ready &&
         cfg_slice_ready &&
         module_mutation_ready &&
-        production_member_cleanup_ready &&
-        gate.production_enabled;
+        production_member_cleanup_ready;
+    auto production_gate_ready = production_ready;
+    production_ready = production_gate_ready && gate.production_enabled;
 
     auto blockers = std::vector<std::string> {};
     if (!proof_ready) {
@@ -1651,6 +1652,8 @@ auto runtime_indexed_member_cleanup_production_readiness(
         .cfg_slice_ready = cfg_slice_ready,
         .module_mutation_ready = module_mutation_ready,
         .production_member_cleanup_ready = production_member_cleanup_ready,
+        .production_gate_ready = production_gate_ready,
+        .production_enabled = gate.production_enabled,
         .production_ready = production_ready,
     };
 }
@@ -1672,6 +1675,8 @@ auto runtime_indexed_member_cleanup_production_readiness_report(
            << " module-mutation " << (readiness.module_mutation_ready ? "ready" : "blocked")
            << " production-member-cleanup "
            << (readiness.production_member_cleanup_ready ? "ready" : "blocked")
+           << " production-gate " << (readiness.production_gate_ready ? "ready" : "blocked")
+           << " production-enabled " << (readiness.production_enabled ? "true" : "false")
            << " production " << (readiness.production_ready ? "ready" : "blocked")
            << " blockers " << readiness.blockers.size();
     for (auto const& blocker : readiness.blockers) {
