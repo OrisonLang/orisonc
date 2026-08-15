@@ -3548,6 +3548,11 @@ auto main() -> int {
         fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or",
         smoke_temp_root / "runtime_indexed_cleanup_choice_payload_source_drop"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or",
+        "DynamicArray element path read of owned projection requires a non-owning scalar projection"
+    );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"

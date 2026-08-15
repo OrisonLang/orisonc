@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Driver smoke coverage now pins the runtime-index member-cleanup promotion boundary directly: ordinary
+  `--emit-llvm` still rejects the nested owned member-transfer fixture, while
+  `--test-only-runtime-indexed-member-cleanup-run` accepts and executes the same source through the gated seam.
 - 2026-08-14: The driver now exposes `--test-only-runtime-indexed-member-cleanup-run` as a narrow executable seam for
   the gated runtime-index member cleanup path. Driver smoke coverage runs the nested member-transfer fixture through
   object emission, host linking, and execution without changing ordinary `--emit-llvm` behavior.

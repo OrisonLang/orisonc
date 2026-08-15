@@ -1758,6 +1758,9 @@ representation.
   `--test-only-runtime-indexed-member-cleanup-run`. The command enables the internal member-cleanup mutation,
   production-gate, apply, and rewrite-execution requests, then object-compiles, host-links, and runs the fixture while
   keeping the ordinary `--emit-llvm` path unchanged.
+- Driver smoke coverage now asserts both sides of that boundary for the nested member-transfer fixture: default
+  `--emit-llvm` remains rejected for the owned projection, and the test-only member-cleanup run seam executes the same
+  fixture successfully.
 
 ## Follow-up work
 
