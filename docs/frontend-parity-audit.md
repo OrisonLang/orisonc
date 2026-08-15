@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index constructor-move production-readiness now reports typed member-cleanup promotion state
+  from member production-readiness, mutation production-readiness, and rewrite promotion-status records. The headline
+  reports `member-cleanup-promotion none|blocked|ready` plus typed record counts without consulting audit text.
 - 2026-08-15: Runtime-index member-cleanup mutation operation plan, operation validation, and conflict detection now
   flow through typed pipeline records and the driver production-readiness report. This removes another audit-text
   dependency from mutation-stage visibility.

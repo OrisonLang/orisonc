@@ -1792,6 +1792,9 @@ representation.
 - Member-cleanup mutation operation plan, operation validation, and conflict detection now cross the lowering,
   pipeline, and driver boundaries as typed records. The constructor-move production-readiness report renders the full
   mutation-stage readiness sequence before final mutation production readiness.
+- Constructor-move production-readiness now derives a typed member-cleanup promotion state from member production
+  readiness, mutation production readiness, and rewrite promotion-status records. The headline reports
+  `member-cleanup-promotion none|blocked|ready` and record counts without consulting audit text.
 
 ## Follow-up work
 

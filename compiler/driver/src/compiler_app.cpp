@@ -406,6 +406,43 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_readiness_report_lines(
     return lines;
 }
 
+struct RuntimeIndexedMemberCleanupTypedPromotionState {
+    std::string state = "none";
+    std::size_t production_readiness_count = 0;
+    std::size_t mutation_readiness_count = 0;
+    std::size_t rewrite_promotion_count = 0;
+};
+
+auto runtime_indexed_member_cleanup_typed_promotion_state(
+    pipeline::CompilePipelineResult const& result
+) -> RuntimeIndexedMemberCleanupTypedPromotionState {
+    auto state = RuntimeIndexedMemberCleanupTypedPromotionState {
+        .production_readiness_count = result.runtime_indexed_member_cleanup_production_readiness.size(),
+        .mutation_readiness_count = result.runtime_indexed_member_cleanup_mutation_production_readiness.size(),
+        .rewrite_promotion_count = result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.size(),
+    };
+    auto const has_member_cleanup_records =
+        state.production_readiness_count > 0 ||
+        state.mutation_readiness_count > 0 ||
+        state.rewrite_promotion_count > 0;
+    if (!has_member_cleanup_records) {
+        return state;
+    }
+
+    auto ready = true;
+    for (auto const& readiness : result.runtime_indexed_member_cleanup_production_readiness) {
+        ready = ready && readiness.production_ready;
+    }
+    for (auto const& readiness : result.runtime_indexed_member_cleanup_mutation_production_readiness) {
+        ready = ready && readiness.production_enabled;
+    }
+    for (auto const& status : result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses) {
+        ready = ready && status.production_enabled;
+    }
+    state.state = ready ? "ready" : "blocked";
+    return state;
+}
+
 auto runtime_indexed_constructor_move_production_readiness_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::string {
@@ -414,6 +451,8 @@ auto runtime_indexed_constructor_move_production_readiness_report(
     auto const has_partial_ownership_diagnostic =
         result.error_text.find("indexed constructor ownership move requires explicit partial ownership support") !=
         std::string::npos;
+    auto const member_cleanup_typed_promotion =
+        runtime_indexed_member_cleanup_typed_promotion_state(result);
 
     auto report = std::ostringstream {};
     report << "runtime-index cleanup constructor-move production-readiness "
@@ -425,6 +464,10 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << (result.runtime_indexed_cleanup_capability_state.any_production_enabled ? "enabled" : "disabled")
            << " capability-count " << result.runtime_indexed_cleanup_capability_state.capability_count
            << " ordinary-emit " << (result.has_errors() ? "rejected" : "accepted")
+           << " member-cleanup-promotion " << member_cleanup_typed_promotion.state
+           << " member-production-records " << member_cleanup_typed_promotion.production_readiness_count
+           << " member-mutation-records " << member_cleanup_typed_promotion.mutation_readiness_count
+           << " member-rewrite-records " << member_cleanup_typed_promotion.rewrite_promotion_count
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
     for (auto const& line : runtime_indexed_member_cleanup_production_readiness_report_lines(result)) {
