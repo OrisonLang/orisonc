@@ -603,6 +603,36 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
     ) != std::string::npos);
 }
 
+void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --runtime-indexed-constructor-move-production-readiness " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup constructor-move production-readiness "
+        "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
+        "capability-count 1 ordinary-emit rejected diagnostic none"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup production-readiness owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item proof ready target-metadata ready cfg-slice ready "
+        "module-mutation blocked production-member-cleanup blocked production blocked blockers 2 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup production blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker member-cleanup-module-mutation "
+        "detail member cleanup module mutation is disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup production blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker production-member-cleanup "
+        "detail production member cleanup is disabled"
+    ) != std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3552,6 +3582,10 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or",
         "DynamicArray element path read of owned projection requires a non-owning scalar projection"
+    );
+    assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,

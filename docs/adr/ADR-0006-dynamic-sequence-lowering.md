@@ -1761,6 +1761,9 @@ representation.
 - Driver smoke coverage now asserts both sides of that boundary for the nested member-transfer fixture: default
   `--emit-llvm` remains rejected for the owned projection, and the test-only member-cleanup run seam executes the same
   fixture successfully.
+- Runtime-index constructor-move production-readiness now appends member-cleanup readiness and blocker details when
+  member-granular cleanup state exists. This gives the non-test driver report an explicit default-promotion blocker for
+  member cleanup while keeping the ordinary emission path rejected.
 
 ## Follow-up work
 

@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index constructor-move production-readiness now surfaces member-cleanup readiness when a
+  member-granular cleanup fixture reaches typed member readiness but remains blocked for default promotion. The report
+  includes the blocked `member-cleanup-module-mutation` and `production-member-cleanup` details without enabling
+  ordinary `--emit-llvm`.
 - 2026-08-14: Driver smoke coverage now pins the runtime-index member-cleanup promotion boundary directly: ordinary
   `--emit-llvm` still rejects the nested owned member-transfer fixture, while
   `--test-only-runtime-indexed-member-cleanup-run` accepts and executes the same source through the gated seam.

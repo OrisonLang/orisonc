@@ -322,6 +322,21 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
     return pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
 }
 
+auto runtime_indexed_member_cleanup_production_readiness_report_lines(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto const& line : result.runtime_indexed_cleanup_audit_lines) {
+        if (
+            line.starts_with("runtime-index member cleanup production-readiness ") ||
+            line.starts_with("runtime-index member cleanup production blocker ")
+        ) {
+            lines.push_back(line);
+        }
+    }
+    return lines;
+}
+
 auto runtime_indexed_constructor_move_production_readiness_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::string {
@@ -343,6 +358,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " ordinary-emit " << (result.has_errors() ? "rejected" : "accepted")
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
+    for (auto const& line : runtime_indexed_member_cleanup_production_readiness_report_lines(result)) {
+        report << '\n' << line;
+    }
     return report.str();
 }
 
@@ -840,10 +858,13 @@ auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path
     pipeline::CompilePipeline pipeline;
     auto result = pipeline.emit_llvm(source_path, runtime_indexed_constructor_move_production_readiness_options());
     auto readiness_report = runtime_indexed_constructor_move_production_readiness_report(result) + "\n";
+    auto const has_member_cleanup_readiness =
+        !runtime_indexed_member_cleanup_production_readiness_report_lines(result).empty();
     if (
         result.has_errors() &&
         result.error_text.find("indexed constructor ownership move requires explicit partial ownership support") ==
-            std::string::npos
+            std::string::npos &&
+        !has_member_cleanup_readiness
     ) {
         return CompileResult {
             .exit_code = 1,
