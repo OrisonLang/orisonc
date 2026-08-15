@@ -11,6 +11,7 @@
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
+#include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 
 #include <algorithm>
@@ -7769,6 +7770,42 @@ auto main() -> int {
             .helper_definition_ready = true,
         },
     };
+    auto const synthetic_left_key = orison::pipeline::RuntimeIndexedMemberCleanupMatchKey {
+        .owner_name = "lefts",
+        .index_expression_text = "i",
+        .element_source_type_name = "LeftBox",
+        .moved_source_type_name = "Payload",
+        .moved_member_path = {"payload"},
+    };
+    auto const synthetic_right_key = orison::pipeline::RuntimeIndexedMemberCleanupMatchKey {
+        .owner_name = "rights",
+        .index_expression_text = "j",
+        .element_source_type_name = "RightBox",
+        .moved_source_type_name = "Payload",
+        .moved_member_path = {"inner", "payload"},
+    };
+    assert(
+        orison::pipeline::runtime_indexed_member_cleanup_match_key(
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates[0]
+        ) == synthetic_left_key
+    );
+    assert(
+        orison::pipeline::runtime_indexed_member_cleanup_match_key(
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_helper_drop_bindings[0]
+        ) == synthetic_right_key
+    );
+    assert(
+        orison::pipeline::same_runtime_indexed_member_cleanup_key(
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates[0],
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_apply_authorizations[1]
+        )
+    );
+    assert(
+        !orison::pipeline::same_runtime_indexed_member_cleanup_key(
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates[0],
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_apply_authorizations[0]
+        )
+    );
     auto synthetic_member_cleanup_summaries =
         orison::pipeline::runtime_indexed_member_cleanup_execution_summaries(
             synthetic_member_cleanup_summary_result

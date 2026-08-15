@@ -1,5 +1,7 @@
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 
+#include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
+
 #include <algorithm>
 #include <cstddef>
 #include <sstream>
@@ -23,18 +25,6 @@ auto dotted_path(std::vector<std::string> const& path) -> std::string {
 }
 
 template <typename Record>
-auto same_member_cleanup_key(
-    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
-    Record const& record
-) -> bool {
-    return record.owner_name == gate.owner_name &&
-        record.index_expression_text == gate.index_expression_text &&
-        record.element_source_type_name == gate.element_source_type_name &&
-        record.moved_source_type_name == gate.moved_source_type_name &&
-        record.moved_member_path == gate.moved_member_path;
-}
-
-template <typename Record>
 auto find_member_cleanup_record(
     lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
     std::vector<Record> const& records
@@ -43,7 +33,7 @@ auto find_member_cleanup_record(
         records.begin(),
         records.end(),
         [&](Record const& record) {
-            return same_member_cleanup_key(gate, record);
+            return same_runtime_indexed_member_cleanup_key(gate, record);
         }
     );
     if (found == records.end()) {
@@ -61,7 +51,7 @@ auto count_member_cleanup_records(
         records.begin(),
         records.end(),
         [&](Record const& record) {
-            return same_member_cleanup_key(gate, record);
+            return same_runtime_indexed_member_cleanup_key(gate, record);
         }
     ));
 }

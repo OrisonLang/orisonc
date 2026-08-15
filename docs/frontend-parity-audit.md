@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup matching now uses a reusable pipeline match-key helper. Summary derivation
+  and tests share owner, index, element type, moved type, and moved member path comparison instead of open-coded field
+  checks.
 - 2026-08-15: Runtime-index member-cleanup execution summary derivation now emits one typed summary per promotion
   gate. Apply, rewrite, helper Drop-binding, and promotion records are matched by owner, index, element type, moved
   type, and moved member path rather than by vector position.

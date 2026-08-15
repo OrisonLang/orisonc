@@ -1815,6 +1815,9 @@ representation.
 - Member-cleanup execution summary derivation now emits one summary per typed promotion gate. Downstream apply,
   guarded rewrite, execution, promotion, and helper Drop-binding records are matched by owner, index, element type,
   moved type, and moved member path instead of vector position.
+- Member-cleanup matching now has a reusable pipeline match-key helper for owner, index, element type, moved type, and
+  moved member path comparisons. Execution-summary derivation consumes the helper, and smoke coverage pins both
+  matching and non-matching records.
 
 ## Follow-up work
 
