@@ -1754,6 +1754,10 @@ representation.
 - Runtime-index member cleanup rewrite mutation now emits the source-backed `DynamicArray<T>` owner cleanup loop. The
   mutated CFG walks initialized elements, dispatches the member-preserving helper at the moved index, dispatches the
   full element Drop for other indexes, then deallocates and finalizes the consumed owner descriptor.
+- Runtime-index member cleanup now has a driver-level executable test seam:
+  `--test-only-runtime-indexed-member-cleanup-run`. The command enables the internal member-cleanup mutation,
+  production-gate, apply, and rewrite-execution requests, then object-compiles, host-links, and runs the fixture while
+  keeping the ordinary `--emit-llvm` path unchanged.
 
 ## Follow-up work
 

@@ -621,6 +621,15 @@ void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
     assert(output.empty());
 }
 
+void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --test-only-runtime-indexed-member-cleanup-run " + path.string();
+    auto output = read_command_output(command);
+    assert(output.empty());
+}
+
 void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -3538,6 +3547,10 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or",
         smoke_temp_root / "runtime_indexed_cleanup_choice_payload_source_drop"
+    );
+    assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: The driver now exposes `--test-only-runtime-indexed-member-cleanup-run` as a narrow executable seam for
+  the gated runtime-index member cleanup path. Driver smoke coverage runs the nested member-transfer fixture through
+  object emission, host linking, and execution without changing ordinary `--emit-llvm` behavior.
 - 2026-08-14: Runtime-index member cleanup now has executable smoke coverage for the nested source-backed
   `DynamicArray<T>` member-transfer path. The pipeline emits the gated mutated IR, compiles it to an object, links a
   native executable, and runs the fixture successfully while ordinary surface syntax remains unchanged.

@@ -179,6 +179,7 @@ auto usage_text() -> std::string {
            "--runtime-indexed-constructor-move-production-readiness <file> | "
            "--test-only-runtime-indexed-cleanup-production-readiness <file> | "
            "--test-only-runtime-indexed-constructor-move-run <file> | "
+           "--test-only-runtime-indexed-member-cleanup-run <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
@@ -294,6 +295,15 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
     options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_source_drop_emission_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
+    return options;
+}
+
+auto runtime_indexed_member_cleanup_run_options() -> pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_audit_options();
+    options.test_only_runtime_indexed_member_cleanup_ir_mutation_request = true;
+    options.test_only_runtime_indexed_member_cleanup_production_gate_request = true;
+    options.test_only_runtime_indexed_member_cleanup_apply_authorization_request = true;
+    options.test_only_runtime_indexed_member_cleanup_rewrite_execution_request = true;
     return options;
 }
 
@@ -850,6 +860,27 @@ auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path
 auto test_only_runtime_indexed_constructor_move_run(std::filesystem::path const& source_path) -> CompileResult {
     pipeline::CompilePipeline pipeline;
     auto result = pipeline.emit_object(source_path, runtime_indexed_constructor_move_run_options());
+    if (result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = std::move(result.error_text),
+        };
+    }
+
+    link::HostRunner runner;
+    auto run_result = runner.run(result.object_bytes, result.link_libraries);
+    if (run_result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = run_result.diagnostics.render(result.source_file->path().string()),
+        };
+    }
+    return CompileResult {.exit_code = run_result.exit_code};
+}
+
+auto test_only_runtime_indexed_member_cleanup_run(std::filesystem::path const& source_path) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.emit_object(source_path, runtime_indexed_member_cleanup_run_options());
     if (result.has_errors()) {
         return CompileResult {
             .exit_code = 1,
@@ -1464,6 +1495,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-constructor-move-run") {
         return test_only_runtime_indexed_constructor_move_run(std::filesystem::path(args[2]));
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-member-cleanup-run") {
+        return test_only_runtime_indexed_member_cleanup_run(std::filesystem::path(args[2]));
     }
 
     if (args.size() == command_index + 4 && std::string_view(args[command_index]) == "--emit-object" &&
