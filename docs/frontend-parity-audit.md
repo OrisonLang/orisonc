@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member-cleanup helper Drop bindings now flow as typed LLVM/pipeline records. The
+  constructor-move production-readiness report shows concrete nested sibling Drop binding counts, Drop definition
+  readiness, helper-definition readiness, and production-disabled status without inspecting emitted helper IR.
 - 2026-08-14: Runtime-index member-cleanup guarded-rewrite and rewrite-execution readiness now flow through typed
   lowering, LLVM emission, and pipeline result records. The constructor-move production-readiness report formats the
   mutation verdict, rewrite authorization, execution plan, execution verdict, and promotion status without audit-text

@@ -7955,6 +7955,32 @@ auto main() -> int {
         runtime_indexed_nested_sibling_member_transfer_apply_request
             .runtime_indexed_member_cleanup_sibling_fields.size() == 4
     );
+    assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 1
+    );
+    auto const& nested_helper_drop_bindings =
+        runtime_indexed_nested_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_helper_drop_bindings.front();
+    assert(nested_helper_drop_bindings.owner_name == "items");
+    assert(nested_helper_drop_bindings.index_expression_text == "(index + zero)");
+    assert(nested_helper_drop_bindings.element_source_type_name == "Wrap");
+    assert(nested_helper_drop_bindings.moved_source_type_name == "Inner");
+    assert(nested_helper_drop_bindings.moved_member_path == (std::vector<std::string> {"box", "item"}));
+    assert(nested_helper_drop_bindings.helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
+    assert(nested_helper_drop_bindings.sibling_binding_count == 4);
+    assert(nested_helper_drop_bindings.all_drop_definitions_available);
+    assert(nested_helper_drop_bindings.nested_member_path);
+    assert(nested_helper_drop_bindings.helper_definition_ready);
+    assert(!nested_helper_drop_bindings.production_enabled);
+    assert(
+        orison::lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report(
+            nested_helper_drop_bindings
+        ) ==
+        "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item helper __orison_member_cleanup.Wrap.except.box.item "
+        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
+    );
     auto assert_nested_member_cleanup_field =
         [&](std::size_t index,
             std::string_view field_name,

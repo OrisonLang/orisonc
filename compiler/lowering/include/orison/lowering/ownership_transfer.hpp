@@ -278,6 +278,22 @@ struct RuntimeIndexedMemberCleanupSiblingField {
     auto operator==(RuntimeIndexedMemberCleanupSiblingField const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupHelperDropBindings {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string helper_symbol_name;
+    std::size_t sibling_binding_count = 0;
+    bool all_drop_definitions_available = false;
+    bool nested_member_path = false;
+    bool helper_definition_ready = false;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupHelperDropBindings const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupEmissionGate {
     std::string owner_name;
     std::string index_expression_text;
@@ -1074,6 +1090,10 @@ auto runtime_indexed_member_cleanup_production_readiness_report(
 auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_member_cleanup_helper_drop_bindings_report(
+    RuntimeIndexedMemberCleanupHelperDropBindings const& bindings
+) -> std::string;
 
 auto runtime_indexed_member_cleanup_promotion_checklist(
     RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,

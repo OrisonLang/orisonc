@@ -694,6 +694,67 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
     return fields;
 }
 
+auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan> const& edit_script_plans,
+    std::vector<RuntimeIndexedMemberCleanupSiblingField> const& sibling_fields
+) -> std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> {
+    auto bindings = std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> {};
+    for (auto const& plan : edit_script_plans) {
+        if (plan.member_cleanup_target_symbol_name.empty() ||
+            plan.element_source_type_name.empty() ||
+            plan.moved_member_path.empty()) {
+            continue;
+        }
+
+        auto matching_fields = std::vector<RuntimeIndexedMemberCleanupSiblingField const*> {};
+        for (auto const& field : sibling_fields) {
+            if (field.owner_name == plan.owner_name &&
+                field.index_expression_text == plan.index_expression_text &&
+                field.element_source_type_name == plan.element_source_type_name &&
+                field.moved_source_type_name == plan.moved_source_type_name &&
+                field.moved_member_path == plan.moved_member_path) {
+                matching_fields.push_back(&field);
+            }
+        }
+
+        auto const all_drop_definitions_available = std::ranges::all_of(
+            matching_fields,
+            [](RuntimeIndexedMemberCleanupSiblingField const* field) {
+                return field != nullptr &&
+                    field->drop_definition_available &&
+                    !field->drop_symbol_name.empty() &&
+                    !field->field_llvm_type_name.empty();
+            }
+        );
+        auto const helper_definition_ready =
+            all_drop_definitions_available &&
+            std::ranges::all_of(
+                matching_fields,
+                [](RuntimeIndexedMemberCleanupSiblingField const* field) {
+                    return field != nullptr &&
+                        !field->field_path.empty() &&
+                        field->field_indices.size() == field->field_path.size() &&
+                        field->container_llvm_type_names.size() == field->field_path.size();
+                }
+            );
+
+        bindings.push_back(RuntimeIndexedMemberCleanupHelperDropBindings {
+            .owner_name = plan.owner_name,
+            .index_expression_text = plan.index_expression_text,
+            .element_source_type_name = plan.element_source_type_name,
+            .moved_source_type_name = plan.moved_source_type_name,
+            .moved_member_path = plan.moved_member_path,
+            .helper_symbol_name = plan.member_cleanup_target_symbol_name,
+            .sibling_binding_count = matching_fields.size(),
+            .all_drop_definitions_available = all_drop_definitions_available,
+            .nested_member_path = plan.moved_member_path.size() > 1,
+            .helper_definition_ready = helper_definition_ready,
+            .production_enabled = false,
+        });
+    }
+    return bindings;
+}
+
 auto declared_drop_declarations_for_runtime_indexed_cleanup(
     syntax::ModuleSyntax const& module
 ) -> std::vector<PlannedDropDeclaration> {
@@ -3576,6 +3637,19 @@ auto emit_module(
         collect_source_drop_definition_symbols(module, context, result.semantic_drop_lowering_authorizations, options);
     auto function_options = options;
     function_options.source_drop_definition_symbols = source_defined_drop_symbols;
+    auto refresh_runtime_indexed_member_cleanup_binding_metadata = [&]() {
+        result.runtime_indexed_member_cleanup_sibling_fields =
+            collect_runtime_indexed_member_cleanup_sibling_fields(
+                context,
+                result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
+                source_defined_drop_symbols
+            );
+        result.runtime_indexed_member_cleanup_helper_drop_bindings =
+            collect_runtime_indexed_member_cleanup_helper_drop_bindings(
+                result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
+                result.runtime_indexed_member_cleanup_sibling_fields
+            );
+    };
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);
     if (!validate_prelude_module_symbols(
             module,
@@ -3640,6 +3714,7 @@ auto emit_module(
         append_function_emission_reports(result, function_emission);
         output << "\n";
     }
+    refresh_runtime_indexed_member_cleanup_binding_metadata();
 
     auto method_index = std::size_t {0};
     auto emit_method = [&](syntax::TypeSyntax const& receiver_type, syntax::FunctionSyntax const& method) -> bool {
@@ -3663,6 +3738,10 @@ auto emit_module(
         output << function_emission.ir_text;
         append_function_emission_reports(result, function_emission);
         output << "\n";
+        if (result.has_errors()) {
+            refresh_runtime_indexed_member_cleanup_binding_metadata();
+            return false;
+        }
         return !result.has_errors();
     };
 
@@ -3710,16 +3789,12 @@ auto emit_module(
         append_function_emission_reports(result, function_emission);
         output << "\n";
         if (result.has_errors()) {
+            refresh_runtime_indexed_member_cleanup_binding_metadata();
             return result;
         }
     }
 
-    result.runtime_indexed_member_cleanup_sibling_fields =
-        collect_runtime_indexed_member_cleanup_sibling_fields(
-            context,
-            result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
-            source_defined_drop_symbols
-        );
+    refresh_runtime_indexed_member_cleanup_binding_metadata();
 
     for (auto const& line : result.computed_dynamic_array_for_production_sequence_module_ir) {
         output << line;

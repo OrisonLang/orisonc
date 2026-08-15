@@ -1691,6 +1691,24 @@ auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
     return diagnostics;
 }
 
+auto runtime_indexed_member_cleanup_helper_drop_bindings_report(
+    RuntimeIndexedMemberCleanupHelperDropBindings const& bindings
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup helper-drop-bindings owner " << bindings.owner_name
+           << " index " << bindings.index_expression_text
+           << " element " << bindings.element_source_type_name
+           << " moved " << bindings.moved_source_type_name
+           << " member-path " << dotted_path(bindings.moved_member_path)
+           << " helper " << (bindings.helper_symbol_name.empty() ? "missing" : bindings.helper_symbol_name)
+           << " sibling-bindings " << bindings.sibling_binding_count
+           << " drop-definitions " << (bindings.all_drop_definitions_available ? "ready" : "missing")
+           << " nested-path " << (bindings.nested_member_path ? "true" : "false")
+           << " helper-definition " << (bindings.helper_definition_ready ? "ready" : "blocked")
+           << " production " << (bindings.production_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
 auto runtime_indexed_member_cleanup_promotion_checklist(
     RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan,

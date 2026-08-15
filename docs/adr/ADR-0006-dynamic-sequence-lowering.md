@@ -1773,6 +1773,9 @@ representation.
 - Member-cleanup guarded-rewrite and rewrite-execution readiness now cross the lowering, LLVM emission, and pipeline
   boundaries as typed records. The driver report formats mutation verdict, rewrite authorization, execution plan,
   execution verdict, and promotion status directly from those records.
+- Member-cleanup helper Drop bindings now have a typed readiness record derived from concrete sibling cleanup fields.
+  The driver production-readiness report can show nested sibling binding count, Drop definition readiness, helper
+  definition readiness, and production-disabled status without inspecting emitted helper IR.
 
 ## Follow-up work
 

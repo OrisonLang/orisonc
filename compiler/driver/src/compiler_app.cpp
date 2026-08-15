@@ -309,6 +309,7 @@ auto runtime_indexed_member_cleanup_run_options() -> pipeline::CompilePipelineOp
 
 auto runtime_indexed_constructor_move_production_readiness_options() -> pipeline::CompilePipelineOptions {
     auto options = default_driver_options();
+    options.source_drop_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
     options.dynamic_array_production_construction_lowering_enabled = true;
     options.dynamic_array_production_append_lowering_enabled = true;
@@ -326,6 +327,9 @@ auto runtime_indexed_member_cleanup_production_readiness_report_lines(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
+    for (auto const& bindings : result.runtime_indexed_member_cleanup_helper_drop_bindings) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report(bindings));
+    }
     for (auto const& readiness : result.runtime_indexed_member_cleanup_production_readiness) {
         lines.push_back(lowering::runtime_indexed_member_cleanup_production_readiness_report(readiness));
         auto diagnostics = lowering::runtime_indexed_member_cleanup_production_blocker_diagnostics(readiness);
