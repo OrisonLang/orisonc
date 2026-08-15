@@ -7557,6 +7557,35 @@ auto main() -> int {
         }
     );
     assert(runtime_indexed_member_transfer_ir_mutation_request.has_errors());
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_apply_previews.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_post_apply_verifications.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_promotion_summaries.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
+            .blockers.size() == 3
+    );
+    assert(
+        !std::ranges::contains(
+            runtime_indexed_member_transfer_ir_mutation_request
+                .runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
+                .blockers,
+            "member-helper-drop-bindings"
+        )
+    );
     auto has_requested_member_transfer_audit_line =
         [&](std::string_view expected_line) {
             return std::any_of(
@@ -7612,6 +7641,24 @@ auto main() -> int {
         }
     );
     assert(runtime_indexed_member_transfer_production_gate_request.has_errors());
+    assert(
+        runtime_indexed_member_transfer_production_gate_request
+            .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_production_gate_request
+            .runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
+            .blockers.empty()
+    );
+    assert(
+        runtime_indexed_member_transfer_production_gate_request
+            .runtime_indexed_member_cleanup_mutation_post_apply_verifications.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_production_gate_request
+            .runtime_indexed_member_cleanup_mutation_post_apply_verifications.front()
+            .blockers.size() == 2
+    );
     auto has_production_gate_member_transfer_audit_line =
         [&](std::string_view expected_line) {
             return std::any_of(
@@ -7664,6 +7711,33 @@ auto main() -> int {
         }
     );
     assert(!runtime_indexed_member_transfer_apply_request.has_errors());
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
+            .blockers.empty()
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_post_apply_verifications.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_post_apply_verifications.front()
+            .blockers.empty()
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_promotion_summaries.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_promotion_summaries.front()
+            .blockers.empty()
+    );
     auto has_apply_requested_member_transfer_audit_line =
         [&](std::string_view expected_line) {
             return std::any_of(

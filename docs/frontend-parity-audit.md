@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup apply authorization, apply preview, post-apply verification, and promotion
+  summary now flow through typed pipeline records and the driver production-readiness report. Driver output no longer
+  needs audit-line filtering to expose those mutation-stage readiness details.
 - 2026-08-15: Runtime-index member-cleanup helper Drop-binding refresh now updates the mutation readiness chain and
   regenerated audit lines. Operation validation, conflict detection, apply authorization, apply preview, post-apply
   verification, promotion summary, production readiness, and verdict reports remove `member-helper-drop-bindings` when

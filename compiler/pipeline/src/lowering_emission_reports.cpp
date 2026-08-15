@@ -3132,6 +3132,14 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_helper_drop_bindings);
     result.runtime_indexed_member_cleanup_production_readiness =
         std::move(emission.runtime_indexed_member_cleanup_production_readiness);
+    result.runtime_indexed_member_cleanup_mutation_apply_authorizations =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_apply_authorizations);
+    result.runtime_indexed_member_cleanup_mutation_apply_previews =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_apply_previews);
+    result.runtime_indexed_member_cleanup_mutation_post_apply_verifications =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_post_apply_verifications);
+    result.runtime_indexed_member_cleanup_mutation_promotion_summaries =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_promotion_summaries);
     result.runtime_indexed_member_cleanup_mutation_production_readiness =
         std::move(emission.runtime_indexed_member_cleanup_mutation_production_readiness);
     result.runtime_indexed_member_cleanup_mutation_readiness_verdicts =

@@ -351,6 +351,25 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(
     return lines;
 }
 
+auto runtime_indexed_member_cleanup_mutation_apply_readiness_report_lines(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto const& authorization : result.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(authorization));
+    }
+    for (auto const& preview : result.runtime_indexed_member_cleanup_mutation_apply_previews) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(preview));
+    }
+    for (auto const& verification : result.runtime_indexed_member_cleanup_mutation_post_apply_verifications) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification_report(verification));
+    }
+    for (auto const& summary : result.runtime_indexed_member_cleanup_mutation_promotion_summaries) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_promotion_summary_report(summary));
+    }
+    return lines;
+}
+
 auto runtime_indexed_member_cleanup_mutation_rewrite_readiness_report_lines(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
@@ -400,6 +419,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
     for (auto const& line : runtime_indexed_member_cleanup_production_readiness_report_lines(result)) {
+        report << '\n' << line;
+    }
+    for (auto const& line : runtime_indexed_member_cleanup_mutation_apply_readiness_report_lines(result)) {
         report << '\n' << line;
     }
     for (auto const& line : runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(result)) {

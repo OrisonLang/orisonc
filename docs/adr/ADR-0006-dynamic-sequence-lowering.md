@@ -1786,6 +1786,9 @@ representation.
   lines. Once concrete helper binding evidence exists for a member path, mutation operation validation, conflict
   detection, apply authorization, apply preview, post-apply verification, promotion summary, production readiness, and
   verdict reporting all remove `member-helper-drop-bindings`.
+- Member-cleanup apply authorization, apply preview, post-apply verification, and promotion summary now cross the
+  lowering, pipeline, and driver boundaries as typed records. The constructor-move production-readiness report renders
+  those mutation-stage details directly instead of relying on audit-line filtering.
 
 ## Follow-up work
 
