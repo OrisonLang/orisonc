@@ -7606,13 +7606,29 @@ auto main() -> int {
         "blocker member-cleanup-module-mutation blocker production-member-cleanup "
         "blocker member-helper-drop-bindings"
     );
-    auto runtime_indexed_member_transfer_execution_summary =
-        orison::pipeline::runtime_indexed_member_cleanup_execution_summary_report_lines(
-            runtime_indexed_member_transfer_apply_request
-        );
-    assert(runtime_indexed_member_transfer_execution_summary.size() == 1);
+    assert(runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_execution_summaries.size() == 1);
+    auto const& runtime_indexed_member_transfer_execution_summary =
+        runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_execution_summaries.front();
+    assert(runtime_indexed_member_transfer_execution_summary.owner_name == "items");
+    assert(runtime_indexed_member_transfer_execution_summary.index_expression_text == "(index + zero)");
+    assert(runtime_indexed_member_transfer_execution_summary.element_source_type_name == "Box");
+    assert(runtime_indexed_member_transfer_execution_summary.moved_source_type_name == "Inner");
+    assert(runtime_indexed_member_transfer_execution_summary.moved_member_path == std::vector<std::string> {"item"});
+    assert(runtime_indexed_member_transfer_execution_summary.helper_symbol_name == "__orison_member_cleanup.Box.except.item");
+    assert(runtime_indexed_member_transfer_execution_summary.helper_binding_count == 1);
+    assert(runtime_indexed_member_transfer_execution_summary.helper_sibling_binding_count == 0);
+    assert(runtime_indexed_member_transfer_execution_summary.typed_gate_ready);
+    assert(runtime_indexed_member_transfer_execution_summary.apply_authorized);
+    assert(runtime_indexed_member_transfer_execution_summary.rewrite_authorized);
+    assert(runtime_indexed_member_transfer_execution_summary.rewrite_execution_enabled);
+    assert(runtime_indexed_member_transfer_execution_summary.rewrite_verdict_enabled);
+    assert(runtime_indexed_member_transfer_execution_summary.rewrite_promotion_ready);
+    assert(runtime_indexed_member_transfer_execution_summary.helper_definition_ready);
+    assert(runtime_indexed_member_transfer_execution_summary.production_enabled);
     assert(
-        runtime_indexed_member_transfer_execution_summary.front() ==
+        orison::pipeline::runtime_indexed_member_cleanup_execution_summary_report(
+            runtime_indexed_member_transfer_execution_summary
+        ) ==
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
         "element Box moved Inner member-path item typed-gate ready apply authorized "
         "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "

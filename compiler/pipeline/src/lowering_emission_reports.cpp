@@ -4,6 +4,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 #include "orison/semantics/drop_model.hpp"
 
 #include "dynamic_array_cleanup_readiness.hpp"
@@ -3160,6 +3161,8 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts);
     result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses =
         std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses);
+    result.runtime_indexed_member_cleanup_execution_summaries =
+        runtime_indexed_member_cleanup_execution_summaries(result);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
 }
 

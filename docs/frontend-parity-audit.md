@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup execution summaries now flow as typed pipeline result records. Consumers can
+  inspect promotion, apply, rewrite, helper Drop-binding, and production fields directly before formatting the compact
+  summary line.
 - 2026-08-15: Runtime-index member-cleanup execution-summary rendering now lives in the pipeline layer with direct
   pipeline smoke coverage. The driver consumes the shared report helper instead of assembling typed execution state
   locally.

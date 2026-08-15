@@ -19,11 +19,33 @@
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace orison::pipeline {
+
+struct RuntimeIndexedMemberCleanupExecutionSummary {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string helper_symbol_name;
+    std::size_t helper_binding_count = 0;
+    std::size_t helper_sibling_binding_count = 0;
+    bool typed_gate_ready = false;
+    bool apply_authorized = false;
+    bool rewrite_authorized = false;
+    bool rewrite_execution_enabled = false;
+    bool rewrite_verdict_enabled = false;
+    bool rewrite_promotion_ready = false;
+    bool helper_definition_ready = false;
+    bool production_enabled = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupExecutionSummary const&) const -> bool = default;
+};
 
 struct CompilePipelineResult {
     std::optional<source::SourceFile> source_file;
@@ -144,6 +166,8 @@ struct CompilePipelineResult {
         runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts;
     std::vector<lowering::RuntimeIndexedMemberCleanupMutationRewritePromotionStatus>
         runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses;
+    std::vector<RuntimeIndexedMemberCleanupExecutionSummary>
+        runtime_indexed_member_cleanup_execution_summaries;
     std::vector<std::string> runtime_indexed_cleanup_audit_lines;
     std::vector<std::string> link_libraries;
     std::string error_text;

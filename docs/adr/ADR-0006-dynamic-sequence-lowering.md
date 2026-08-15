@@ -1809,6 +1809,9 @@ representation.
   and helper Drop-binding target/counts from pipeline records after successful host execution.
 - Member-cleanup execution-summary rendering now lives in the pipeline layer with direct pipeline smoke coverage. The
   driver consumes the shared helper rather than locally assembling execution state from result vectors.
+- Member-cleanup execution summaries now also cross the pipeline boundary as typed result records. Consumers can inspect
+  promotion, apply, guarded rewrite, helper Drop-binding, and production fields directly before choosing a formatted
+  report line.
 
 ## Follow-up work
 
