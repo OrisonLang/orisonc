@@ -7559,6 +7559,31 @@ auto main() -> int {
     assert(runtime_indexed_member_transfer_ir_mutation_request.has_errors());
     assert(
         runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_operation_plans.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_operation_validations.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_conflict_detections.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
+            .runtime_indexed_member_cleanup_mutation_operation_validations.front()
+            .blockers.size() == 4
+    );
+    assert(
+        !std::ranges::contains(
+            runtime_indexed_member_transfer_ir_mutation_request
+                .runtime_indexed_member_cleanup_mutation_operation_validations.front()
+                .blockers,
+            "member-helper-drop-bindings"
+        )
+    );
+    assert(
+        runtime_indexed_member_transfer_ir_mutation_request
             .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1
     );
     assert(

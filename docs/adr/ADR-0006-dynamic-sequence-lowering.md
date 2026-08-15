@@ -1789,6 +1789,9 @@ representation.
 - Member-cleanup apply authorization, apply preview, post-apply verification, and promotion summary now cross the
   lowering, pipeline, and driver boundaries as typed records. The constructor-move production-readiness report renders
   those mutation-stage details directly instead of relying on audit-line filtering.
+- Member-cleanup mutation operation plan, operation validation, and conflict detection now cross the lowering,
+  pipeline, and driver boundaries as typed records. The constructor-move production-readiness report renders the full
+  mutation-stage readiness sequence before final mutation production readiness.
 
 ## Follow-up work
 

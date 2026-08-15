@@ -639,6 +639,29 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "detail production member cleanup is disabled"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index member cleanup mutation-operation-plan owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item seam selected operations 3 operations-ready ready "
+        "operations-applied false report-only true production disabled blockers 4 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item seam selected count valid order valid "
+        "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid operations-ready ready "
+        "no-operations-applied true validation ready report-only true production disabled blockers 4 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation-conflict-detection owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item validation ready branch-anchor-matches 1 "
+        "branch-anchor unique closing-anchor-matches 1 closing-anchor unique phi-predecessor-matches 1 "
+        "phi-predecessor unique conflict-free true apply-allowed false report-only true production disabled "
+        "blockers 4 blocker member-cleanup-module-mutation blocker production-member-cleanup "
+        "blocker member-cleanup-ir-mutation blocker production-member-cleanup-ir-mutation"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item validation ready conflict-free true "
         "ir-mutation blocked production-gate disabled apply-requested false authorization blocked "

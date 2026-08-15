@@ -355,6 +355,15 @@ auto runtime_indexed_member_cleanup_mutation_apply_readiness_report_lines(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
+    for (auto const& plan : result.runtime_indexed_member_cleanup_mutation_operation_plans) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_operation_plan_report(plan));
+    }
+    for (auto const& validation : result.runtime_indexed_member_cleanup_mutation_operation_validations) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_operation_validation_report(validation));
+    }
+    for (auto const& detection : result.runtime_indexed_member_cleanup_mutation_conflict_detections) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(detection));
+    }
     for (auto const& authorization : result.runtime_indexed_member_cleanup_mutation_apply_authorizations) {
         lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(authorization));
     }

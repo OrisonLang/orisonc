@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup mutation operation plan, operation validation, and conflict detection now
+  flow through typed pipeline records and the driver production-readiness report. This removes another audit-text
+  dependency from mutation-stage visibility.
 - 2026-08-15: Runtime-index member-cleanup apply authorization, apply preview, post-apply verification, and promotion
   summary now flow through typed pipeline records and the driver production-readiness report. Driver output no longer
   needs audit-line filtering to expose those mutation-stage readiness details.
