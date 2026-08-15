@@ -347,6 +347,33 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(
     return lines;
 }
 
+auto runtime_indexed_member_cleanup_mutation_rewrite_readiness_report_lines(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto const& verdict : result.runtime_indexed_member_cleanup_mutation_readiness_verdicts) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_readiness_verdict_report(verdict));
+    }
+    for (auto const& authorization : result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(authorization));
+        auto diagnostics =
+            lowering::runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(authorization);
+        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
+    }
+    for (auto const& plan : result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(plan));
+        auto diagnostics = lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(plan);
+        lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
+    }
+    for (auto const& verdict : result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(verdict));
+    }
+    for (auto const& status : result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses) {
+        lines.push_back(lowering::runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(status));
+    }
+    return lines;
+}
+
 auto runtime_indexed_constructor_move_production_readiness_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::string {
@@ -372,6 +399,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
         report << '\n' << line;
     }
     for (auto const& line : runtime_indexed_member_cleanup_mutation_production_readiness_report_lines(result)) {
+        report << '\n' << line;
+    }
+    for (auto const& line : runtime_indexed_member_cleanup_mutation_rewrite_readiness_report_lines(result)) {
         report << '\n' << line;
     }
     return report.str();

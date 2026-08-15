@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-14: Runtime-index member-cleanup guarded-rewrite and rewrite-execution readiness now flow through typed
+  lowering, LLVM emission, and pipeline result records. The constructor-move production-readiness report formats the
+  mutation verdict, rewrite authorization, execution plan, execution verdict, and promotion status without audit-text
+  filtering.
 - 2026-08-14: Runtime-index member-cleanup mutation-production readiness now formats from typed pipeline records in
   the constructor-move production-readiness report. Driver coverage asserts the mutation gate blockers without reading
   them back out of audit text.

@@ -2343,10 +2343,30 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_mutation_production_readiness.begin(),
         function_emission.runtime_indexed_member_cleanup_mutation_production_readiness.end()
     );
+    result.runtime_indexed_member_cleanup_mutation_readiness_verdicts.insert(
+        result.runtime_indexed_member_cleanup_mutation_readiness_verdicts.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_readiness_verdicts.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_readiness_verdicts.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.insert(
+        result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_authorizations.end()
+    );
     result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.insert(
         result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.end(),
         function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.begin(),
         function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts.insert(
+        result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts.end()
+    );
+    result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.insert(
+        result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.end(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.begin(),
+        function_emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.end()
     );
     for (auto plan : function_emission.runtime_indexed_cleanup_emission_plans) {
         plan.function_symbol_name = function_emission.function_symbol_name;

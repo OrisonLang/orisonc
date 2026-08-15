@@ -1770,6 +1770,9 @@ representation.
 - Member-cleanup mutation-production readiness now uses the same typed driver reporting path from
   `RuntimeIndexedMemberCleanupMutationProductionReadiness` records, covering the next promotion gate without depending
   on audit-line filtering.
+- Member-cleanup guarded-rewrite and rewrite-execution readiness now cross the lowering, LLVM emission, and pipeline
+  boundaries as typed records. The driver report formats mutation verdict, rewrite authorization, execution plan,
+  execution verdict, and promotion status directly from those records.
 
 ## Follow-up work
 

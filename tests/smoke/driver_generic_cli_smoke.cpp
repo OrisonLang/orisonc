@@ -651,6 +651,45 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "element Wrap moved Inner member-path box.item blocker production-member-cleanup-ir-mutation "
         "detail production member cleanup IR mutation is disabled"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item readiness blocked guarded-rewrite blocked "
+        "blockers 8 diagnostics 8 report-only true production disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item verdict blocked guarded-rewrite blocked "
+        "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
+        "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
+        "blocker member-cleanup-mutation-guarded-rewrite"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite authorization blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker member-cleanup-mutation-readiness-verdict "
+        "detail member cleanup mutation readiness verdict is blocked"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item authorization blocked rewrite-authorized false "
+        "execution-plan blocked execution-requested false execution disabled report-only true production disabled "
+        "blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
+        "blocker member-cleanup-mutation-rewrite-not-authorized"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite execution-plan blocker owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item blocker member-cleanup-mutation-rewrite-not-authorized "
+        "detail member cleanup mutation rewrite is not authorized"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item execution-plan blocked execution disabled blockers 2 "
+        "diagnostics 2 report-only true production disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item authorization blocked execution-plan blocked "
+        "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true production disabled"
+    ) != std::string::npos);
 }
 
 void assert_cli_run_fixture_success(

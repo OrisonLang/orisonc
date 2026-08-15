@@ -1423,11 +1423,19 @@ void preserve_function_emission_metadata(
             state.ownership_transfers.runtime_indexed_member_cleanup_production_readiness;
         result->runtime_indexed_member_cleanup_mutation_production_readiness =
             state.ownership_transfers.runtime_indexed_member_cleanup_mutation_production_readiness;
+        result->runtime_indexed_member_cleanup_mutation_readiness_verdicts =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_readiness_verdicts;
+        result->runtime_indexed_member_cleanup_mutation_rewrite_authorizations =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_rewrite_authorizations;
         result->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans =
             state.ownership_transfers.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans;
         for (auto& plan : result->runtime_indexed_member_cleanup_mutation_rewrite_execution_plans) {
             plan.function_symbol_name = result->function_symbol_name;
         }
+        result->runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts;
+        result->runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses =
+            state.ownership_transfers.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses;
         if (!state.ownership_transfers.runtime_indexed_partial_owners.empty() ||
             !state.ownership_transfers.runtime_indexed_cleanup_skip_plans.empty() ||
             !state.ownership_transfers.runtime_indexed_cleanup_proof_gates.empty() ||

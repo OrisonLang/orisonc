@@ -3132,6 +3132,16 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_production_readiness);
     result.runtime_indexed_member_cleanup_mutation_production_readiness =
         std::move(emission.runtime_indexed_member_cleanup_mutation_production_readiness);
+    result.runtime_indexed_member_cleanup_mutation_readiness_verdicts =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_readiness_verdicts);
+    result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_authorizations);
+    result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans);
+    result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts);
+    result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses =
+        std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
 }
 
