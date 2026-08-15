@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index constructor-move production-readiness promotion state now lives in the pipeline and uses
+  the shared member-cleanup match key. The headline can report `ready` only when every typed promotion gate has
+  matching production-readiness, mutation-readiness, and rewrite-promotion records.
 - 2026-08-15: Runtime-index constructor-move production-readiness member-cleanup detail lines now render through a
   pipeline helper that groups each promotion gate's readiness, mutation, rewrite, helper Drop-binding, and diagnostics
   records by the shared member-cleanup match key.

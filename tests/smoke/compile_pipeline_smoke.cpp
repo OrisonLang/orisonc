@@ -8017,6 +8017,103 @@ auto main() -> int {
     assert(left_gate_line < left_rewrite_status_line);
     assert(left_rewrite_status_line < right_helper_line);
     assert(right_helper_line < right_gate_line);
+    auto const synthetic_member_cleanup_promotion_state =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state(
+            synthetic_member_cleanup_summary_result
+        );
+    assert(synthetic_member_cleanup_promotion_state.state == "blocked");
+    assert(synthetic_member_cleanup_promotion_state.production_readiness_count == 2);
+    assert(synthetic_member_cleanup_promotion_state.typed_gate_count == 2);
+    assert(synthetic_member_cleanup_promotion_state.mutation_readiness_count == 2);
+    assert(synthetic_member_cleanup_promotion_state.rewrite_promotion_count == 2);
+
+    auto synthetic_ready_member_cleanup_promotion_result = orison::pipeline::CompilePipelineResult {};
+    synthetic_ready_member_cleanup_promotion_result.runtime_indexed_member_cleanup_typed_promotion_gates = {
+        orison::lowering::RuntimeIndexedMemberCleanupTypedPromotionGate {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .production_enabled = true,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupTypedPromotionGate {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .production_enabled = true,
+        },
+    };
+    synthetic_ready_member_cleanup_promotion_result.runtime_indexed_member_cleanup_production_readiness = {
+        orison::lowering::RuntimeIndexedMemberCleanupProductionReadiness {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .production_ready = true,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupProductionReadiness {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .production_ready = true,
+        },
+    };
+    synthetic_ready_member_cleanup_promotion_result.runtime_indexed_member_cleanup_mutation_production_readiness = {
+        orison::lowering::RuntimeIndexedMemberCleanupMutationProductionReadiness {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .production_enabled = true,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupMutationProductionReadiness {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .production_enabled = true,
+        },
+    };
+    synthetic_ready_member_cleanup_promotion_result
+        .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses = {
+            orison::lowering::RuntimeIndexedMemberCleanupMutationRewritePromotionStatus {
+                .owner_name = "rights",
+                .index_expression_text = "j",
+                .element_source_type_name = "RightBox",
+                .moved_source_type_name = "Payload",
+                .moved_member_path = {"inner", "payload"},
+                .production_enabled = true,
+            },
+            orison::lowering::RuntimeIndexedMemberCleanupMutationRewritePromotionStatus {
+                .owner_name = "lefts",
+                .index_expression_text = "i",
+                .element_source_type_name = "LeftBox",
+                .moved_source_type_name = "Payload",
+                .moved_member_path = {"payload"},
+                .production_enabled = true,
+            },
+        };
+    auto const ready_member_cleanup_promotion_state =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state(
+            synthetic_ready_member_cleanup_promotion_result
+        );
+    assert(ready_member_cleanup_promotion_state.state == "ready");
+
+    synthetic_ready_member_cleanup_promotion_result
+        .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.pop_back();
+    auto const incomplete_member_cleanup_promotion_state =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state(
+            synthetic_ready_member_cleanup_promotion_result
+        );
+    assert(incomplete_member_cleanup_promotion_state.state == "blocked");
     assert(
         runtime_indexed_member_transfer_apply_request
             .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1

@@ -277,6 +277,58 @@ void append_ungated_member_cleanup_lines(
 
 }  // namespace
 
+auto runtime_indexed_member_cleanup_promotion_state(
+    CompilePipelineResult const& result
+) -> RuntimeIndexedMemberCleanupPromotionState {
+    auto state = RuntimeIndexedMemberCleanupPromotionState {
+        .production_readiness_count = result.runtime_indexed_member_cleanup_production_readiness.size(),
+        .typed_gate_count = result.runtime_indexed_member_cleanup_typed_promotion_gates.size(),
+        .mutation_readiness_count = result.runtime_indexed_member_cleanup_mutation_production_readiness.size(),
+        .rewrite_promotion_count = result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.size(),
+    };
+    auto const has_member_cleanup_records =
+        state.production_readiness_count > 0 ||
+        state.typed_gate_count > 0 ||
+        state.mutation_readiness_count > 0 ||
+        state.rewrite_promotion_count > 0;
+    if (!has_member_cleanup_records) {
+        return state;
+    }
+
+    if (result.runtime_indexed_member_cleanup_typed_promotion_gates.empty()) {
+        state.state = "blocked";
+        return state;
+    }
+
+    auto ready = true;
+    for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
+        auto const key = runtime_indexed_member_cleanup_match_key(gate);
+        auto const* production_readiness = find_member_cleanup_record_by_key(
+            key,
+            result.runtime_indexed_member_cleanup_production_readiness
+        );
+        auto const* mutation_readiness = find_member_cleanup_record_by_key(
+            key,
+            result.runtime_indexed_member_cleanup_mutation_production_readiness
+        );
+        auto const* rewrite_promotion = find_member_cleanup_record_by_key(
+            key,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
+        );
+        ready =
+            ready &&
+            production_readiness != nullptr &&
+            mutation_readiness != nullptr &&
+            rewrite_promotion != nullptr &&
+            production_readiness->production_ready &&
+            gate.production_enabled &&
+            mutation_readiness->production_enabled &&
+            rewrite_promotion->production_enabled;
+    }
+    state.state = ready ? "ready" : "blocked";
+    return state;
+}
+
 auto runtime_indexed_member_cleanup_readiness_report_lines(
     CompilePipelineResult const& result
 ) -> std::vector<std::string> {

@@ -1822,6 +1822,9 @@ representation.
   each promotion gate's helper Drop-binding, production, apply, mutation, rewrite, and diagnostic records by that
   shared key. Synthetic coverage pins two out-of-order promotion chains so report assembly no longer relies on vector
   position.
+- Constructor-move production-readiness member-cleanup promotion state now also lives in the pipeline. It derives
+  `none|blocked|ready` per typed promotion gate through the shared key and requires matching production-readiness,
+  mutation-readiness, and rewrite-promotion records before reporting `ready`.
 
 ## Follow-up work
 
