@@ -2,61 +2,9 @@
 
 #include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 
-#include <algorithm>
-#include <cstddef>
 #include <sstream>
 
 namespace orison::pipeline {
-namespace {
-
-auto dotted_path(std::vector<std::string> const& path) -> std::string {
-    if (path.empty()) {
-        return "none";
-    }
-
-    auto text = std::ostringstream {};
-    for (auto index = std::size_t {0}; index < path.size(); ++index) {
-        if (index > 0) {
-            text << '.';
-        }
-        text << path[index];
-    }
-    return text.str();
-}
-
-template <typename Record>
-auto find_member_cleanup_record(
-    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
-    std::vector<Record> const& records
-) -> Record const* {
-    auto const found = std::find_if(
-        records.begin(),
-        records.end(),
-        [&](Record const& record) {
-            return same_runtime_indexed_member_cleanup_key(gate, record);
-        }
-    );
-    if (found == records.end()) {
-        return nullptr;
-    }
-    return &*found;
-}
-
-template <typename Record>
-auto count_member_cleanup_records(
-    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
-    std::vector<Record> const& records
-) -> std::size_t {
-    return static_cast<std::size_t>(std::count_if(
-        records.begin(),
-        records.end(),
-        [&](Record const& record) {
-            return same_runtime_indexed_member_cleanup_key(gate, record);
-        }
-    ));
-}
-
-}  // namespace
 
 auto runtime_indexed_member_cleanup_execution_summary_report_lines(
     CompilePipelineResult const& result
@@ -74,27 +22,27 @@ auto runtime_indexed_member_cleanup_execution_summaries(
     auto summaries = std::vector<RuntimeIndexedMemberCleanupExecutionSummary> {};
     summaries.reserve(result.runtime_indexed_member_cleanup_typed_promotion_gates.size());
     for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
-        auto const* apply_authorization = find_member_cleanup_record(
+        auto const* apply_authorization = find_runtime_indexed_member_cleanup_record(
             gate,
             result.runtime_indexed_member_cleanup_mutation_apply_authorizations
         );
-        auto const* rewrite_authorization = find_member_cleanup_record(
+        auto const* rewrite_authorization = find_runtime_indexed_member_cleanup_record(
             gate,
             result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations
         );
-        auto const* execution_plan = find_member_cleanup_record(
+        auto const* execution_plan = find_runtime_indexed_member_cleanup_record(
             gate,
             result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans
         );
-        auto const* execution_verdict = find_member_cleanup_record(
+        auto const* execution_verdict = find_runtime_indexed_member_cleanup_record(
             gate,
             result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts
         );
-        auto const* promotion_status = find_member_cleanup_record(
+        auto const* promotion_status = find_runtime_indexed_member_cleanup_record(
             gate,
             result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
         );
-        auto const* helper_bindings = find_member_cleanup_record(
+        auto const* helper_bindings = find_runtime_indexed_member_cleanup_record(
             gate,
             result.runtime_indexed_member_cleanup_helper_drop_bindings
         );
@@ -105,7 +53,7 @@ auto runtime_indexed_member_cleanup_execution_summaries(
             .moved_source_type_name = gate.moved_source_type_name,
             .moved_member_path = gate.moved_member_path,
             .helper_symbol_name = helper_bindings != nullptr ? helper_bindings->helper_symbol_name : std::string {},
-            .helper_binding_count = count_member_cleanup_records(
+            .helper_binding_count = count_runtime_indexed_member_cleanup_records(
                 gate,
                 result.runtime_indexed_member_cleanup_helper_drop_bindings
             ),
@@ -133,7 +81,7 @@ auto runtime_indexed_member_cleanup_execution_summary_report(
            << " index " << summary.index_expression_text
            << " element " << summary.element_source_type_name
            << " moved " << summary.moved_source_type_name
-           << " member-path " << dotted_path(summary.moved_member_path)
+           << " member-path " << runtime_indexed_member_cleanup_dotted_path(summary.moved_member_path)
            << " typed-gate " << (summary.typed_gate_ready ? "ready" : "blocked")
            << " apply " << (summary.apply_authorized ? "authorized" : "blocked")
            << " rewrite-authorization " << (summary.rewrite_authorized ? "authorized" : "blocked")

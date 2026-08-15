@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup keyed lookup, count, report-line append, diagnostics append, and dotted
+  member-path formatting now live in the shared pipeline match-key utility. Readiness reports and execution summaries
+  consume the same helpers.
 - 2026-08-15: Runtime-index constructor-move production-readiness now prints keyed member-cleanup promotion blocker
   lines. The lines identify the owner, index, element type, moved type, member path, blocker kind, and missing or
   blocked keyed record detail.

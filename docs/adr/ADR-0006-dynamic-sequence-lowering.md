@@ -1828,6 +1828,9 @@ representation.
 - Constructor-move production-readiness now formats keyed member-cleanup promotion blocker lines. Each line names the
   gate owner, index, element type, moved type, member path, blocker kind, and detail for missing or blocked production,
   mutation, or rewrite promotion records.
+- Runtime-index member-cleanup keyed lookup, keyed counting, report-line appending, diagnostics appending, and dotted
+  member-path formatting now live in the shared pipeline match-key utility. Readiness reporting and execution-summary
+  derivation use that utility instead of local helper copies.
 
 ## Follow-up work
 
