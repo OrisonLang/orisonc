@@ -11,6 +11,7 @@ add_library(orison_pipeline STATIC
     src/lowering_emission_reports.cpp
     src/lowering_emission_options.cpp
     src/runtime_indexed_cleanup_ir_composition.cpp
+    src/runtime_indexed_member_cleanup_execution_summary.cpp
     src/semantic_analysis_stage.cpp
     src/semantic_drop_reports.cpp
 )

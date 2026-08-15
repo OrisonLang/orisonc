@@ -11,6 +11,7 @@
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
+#include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -7604,6 +7605,20 @@ auto main() -> int {
         "gate ready report-only false production enabled blockers 3 "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup "
         "blocker member-helper-drop-bindings"
+    );
+    auto runtime_indexed_member_transfer_execution_summary =
+        orison::pipeline::runtime_indexed_member_cleanup_execution_summary_report_lines(
+            runtime_indexed_member_transfer_apply_request
+        );
+    assert(runtime_indexed_member_transfer_execution_summary.size() == 1);
+    assert(
+        runtime_indexed_member_transfer_execution_summary.front() ==
+        "runtime-index member cleanup execution-summary owner items index (index + zero) "
+        "element Box moved Inner member-path item typed-gate ready apply authorized "
+        "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
+        "rewrite-promotion ready helper-bindings 1 helper-target "
+        "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
+        "helper-definition ready production enabled"
     );
     assert(
         runtime_indexed_member_transfer_apply_request

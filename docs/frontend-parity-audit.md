@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup execution-summary rendering now lives in the pipeline layer with direct
+  pipeline smoke coverage. The driver consumes the shared report helper instead of assembling typed execution state
+  locally.
 - 2026-08-15: The executable test-only member-cleanup run seam now appends a compact typed execution summary after
   successful host execution. The summary reports promotion gate state, apply authorization, guarded rewrite
   authorization, rewrite execution, rewrite promotion, and helper Drop-binding target/counts from pipeline records.

@@ -1807,6 +1807,8 @@ representation.
 - The executable test-only member-cleanup run seam now also appends a compact typed execution summary. The line reports
   promotion gate readiness, apply authorization, guarded rewrite authorization, rewrite execution, rewrite promotion,
   and helper Drop-binding target/counts from pipeline records after successful host execution.
+- Member-cleanup execution-summary rendering now lives in the pipeline layer with direct pipeline smoke coverage. The
+  driver consumes the shared helper rather than locally assembling execution state from result vectors.
 
 ## Follow-up work
 
