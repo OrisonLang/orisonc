@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: The executable test-only member-cleanup run seam now appends a compact typed execution summary after
+  successful host execution. The summary reports promotion gate state, apply authorization, guarded rewrite
+  authorization, rewrite execution, rewrite promotion, and helper Drop-binding target/counts from pipeline records.
 - 2026-08-15: Runtime-index constructor-move production-readiness now reports typed member-cleanup promotion state
   from member production-readiness, mutation production-readiness, and rewrite promotion-status records. The headline
   reports `member-cleanup-promotion none|blocked|ready` plus typed record counts without consulting audit text.

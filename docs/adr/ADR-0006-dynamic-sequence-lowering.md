@@ -1804,6 +1804,9 @@ representation.
 - The executable test-only member-cleanup run seam now prints the same typed promotion gate report after successful
   host execution. This keeps gated run observability aligned with constructor-move production-readiness reporting while
   leaving ordinary `--emit-llvm` behavior unchanged.
+- The executable test-only member-cleanup run seam now also appends a compact typed execution summary. The line reports
+  promotion gate readiness, apply authorization, guarded rewrite authorization, rewrite execution, rewrite promotion,
+  and helper Drop-binding target/counts from pipeline records after successful host execution.
 
 ## Follow-up work
 
