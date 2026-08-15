@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup execution summary derivation now emits one typed summary per promotion
+  gate. Apply, rewrite, helper Drop-binding, and promotion records are matched by owner, index, element type, moved
+  type, and moved member path rather than by vector position.
 - 2026-08-15: Runtime-index member-cleanup execution summaries now flow as typed pipeline result records. Consumers can
   inspect promotion, apply, rewrite, helper Drop-binding, and production fields directly before formatting the compact
   summary line.

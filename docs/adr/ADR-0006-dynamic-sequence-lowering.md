@@ -1812,6 +1812,9 @@ representation.
 - Member-cleanup execution summaries now also cross the pipeline boundary as typed result records. Consumers can inspect
   promotion, apply, guarded rewrite, helper Drop-binding, and production fields directly before choosing a formatted
   report line.
+- Member-cleanup execution summary derivation now emits one summary per typed promotion gate. Downstream apply,
+  guarded rewrite, execution, promotion, and helper Drop-binding records are matched by owner, index, element type,
+  moved type, and moved member path instead of vector position.
 
 ## Follow-up work
 

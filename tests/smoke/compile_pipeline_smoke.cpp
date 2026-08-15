@@ -7636,6 +7636,167 @@ auto main() -> int {
         "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
         "helper-definition ready production enabled"
     );
+    auto synthetic_member_cleanup_summary_result = orison::pipeline::CompilePipelineResult {};
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates = {
+        orison::lowering::RuntimeIndexedMemberCleanupTypedPromotionGate {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .gate_ready = true,
+            .production_enabled = true,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupTypedPromotionGate {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .gate_ready = true,
+            .production_enabled = false,
+        },
+    };
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_apply_authorizations = {
+        orison::lowering::RuntimeIndexedMemberCleanupMutationApplyAuthorization {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .apply_authorized = false,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupMutationApplyAuthorization {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .apply_authorized = true,
+        },
+    };
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations = {
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .rewrite_authorized = false,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .rewrite_authorized = true,
+        },
+    };
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans = {
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .execution_enabled = false,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .execution_enabled = true,
+        },
+    };
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts = {
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .execution_enabled = false,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .execution_enabled = true,
+        },
+    };
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses = {
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewritePromotionStatus {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .promotion_ready = false,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupMutationRewritePromotionStatus {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .promotion_ready = true,
+        },
+    };
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_helper_drop_bindings = {
+        orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings {
+            .owner_name = "rights",
+            .index_expression_text = "j",
+            .element_source_type_name = "RightBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"inner", "payload"},
+            .helper_symbol_name = "__orison_member_cleanup.RightBox.except.inner.payload",
+            .sibling_binding_count = 2,
+            .helper_definition_ready = true,
+        },
+        orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings {
+            .owner_name = "lefts",
+            .index_expression_text = "i",
+            .element_source_type_name = "LeftBox",
+            .moved_source_type_name = "Payload",
+            .moved_member_path = {"payload"},
+            .helper_symbol_name = "__orison_member_cleanup.LeftBox.except.payload",
+            .sibling_binding_count = 1,
+            .helper_definition_ready = true,
+        },
+    };
+    auto synthetic_member_cleanup_summaries =
+        orison::pipeline::runtime_indexed_member_cleanup_execution_summaries(
+            synthetic_member_cleanup_summary_result
+        );
+    assert(synthetic_member_cleanup_summaries.size() == 2);
+    assert(synthetic_member_cleanup_summaries[0].owner_name == "lefts");
+    assert(synthetic_member_cleanup_summaries[0].helper_symbol_name == "__orison_member_cleanup.LeftBox.except.payload");
+    assert(synthetic_member_cleanup_summaries[0].helper_binding_count == 1);
+    assert(synthetic_member_cleanup_summaries[0].helper_sibling_binding_count == 1);
+    assert(synthetic_member_cleanup_summaries[0].apply_authorized);
+    assert(synthetic_member_cleanup_summaries[0].rewrite_authorized);
+    assert(synthetic_member_cleanup_summaries[0].rewrite_execution_enabled);
+    assert(synthetic_member_cleanup_summaries[0].rewrite_verdict_enabled);
+    assert(synthetic_member_cleanup_summaries[0].rewrite_promotion_ready);
+    assert(synthetic_member_cleanup_summaries[0].production_enabled);
+    assert(synthetic_member_cleanup_summaries[1].owner_name == "rights");
+    assert(
+        synthetic_member_cleanup_summaries[1].helper_symbol_name ==
+        "__orison_member_cleanup.RightBox.except.inner.payload"
+    );
+    assert(synthetic_member_cleanup_summaries[1].helper_binding_count == 1);
+    assert(synthetic_member_cleanup_summaries[1].helper_sibling_binding_count == 2);
+    assert(!synthetic_member_cleanup_summaries[1].apply_authorized);
+    assert(!synthetic_member_cleanup_summaries[1].rewrite_authorized);
+    assert(!synthetic_member_cleanup_summaries[1].rewrite_execution_enabled);
+    assert(!synthetic_member_cleanup_summaries[1].rewrite_verdict_enabled);
+    assert(!synthetic_member_cleanup_summaries[1].rewrite_promotion_ready);
+    assert(!synthetic_member_cleanup_summaries[1].production_enabled);
     assert(
         runtime_indexed_member_transfer_apply_request
             .runtime_indexed_member_cleanup_mutation_apply_authorizations.size() == 1
