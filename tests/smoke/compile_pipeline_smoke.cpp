@@ -8200,6 +8200,30 @@ auto main() -> int {
             .runtime_indexed_member_cleanup_mutation_promotion_summaries.front()
             .blockers.empty()
     );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_promotion_summaries.front()
+            .promotion_ready
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_promotion_summaries.front()
+            .production_enabled
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_production_readiness.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_production_readiness.front()
+            .readiness_ready
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_production_readiness.front()
+            .production_enabled
+    );
     auto has_apply_requested_member_transfer_audit_line =
         [&](std::string_view expected_line) {
             return std::any_of(
@@ -8228,6 +8252,14 @@ auto main() -> int {
             "report-only false production enabled blockers 0 expected-check branch-target items.final-cleanup "
             "expected-check cfg-appended items.member_cleanup.exit "
             "expected-check phi-predecessor items.member_cleanup.exit"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation-promotion-summary owner items index (index + zero) "
+            "element Box moved Inner member-path item operations 3 operations-ready ready validation ready "
+            "conflict-free true authorization ready preview ready actions 3 post-apply-verification ready "
+            "expected-checks 3 promotion ready report-only false production enabled blockers 0"
         )
     );
     assert(

@@ -1842,6 +1842,9 @@ representation.
 - Member-cleanup helper Drop-binding refresh now also applies to typed promotion gate records and regenerated audit
   lines. Once concrete helper metadata exists for a keyed member path, ready test-only gates no longer retain stale
   `member-helper-drop-bindings` blockers.
+- The same helper Drop-binding refresh now recomputes mutation promotion-summary and mutation production-readiness
+  booleans after blocker removal. Fully requested member-cleanup seams can report promotion and readiness as
+  ready/enabled instead of retaining stale blocked fields with zero blockers.
 
 ## Follow-up work
 

@@ -972,15 +972,50 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
         "runtime-index member cleanup mutation-post-apply-verification",
         runtime_indexed_member_cleanup_mutation_post_apply_verification_report
     );
-    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
-        promotion_summaries,
-        audit_lines,
-        helper_drop_bindings,
-        "runtime-index member cleanup mutation-promotion-summary",
-        runtime_indexed_member_cleanup_mutation_promotion_summary_report
-    );
+    for (auto& summary : promotion_summaries) {
+        if (remove_helper_drop_binding_blocker_if_ready(summary, helper_drop_bindings)) {
+            summary.promotion_ready =
+                summary.operations_ready &&
+                summary.validation_ready &&
+                summary.conflict_free &&
+                summary.authorization_ready &&
+                summary.preview_ready &&
+                summary.post_apply_verification_ready &&
+                summary.blockers.empty();
+            summary.report_only = !summary.promotion_ready;
+            summary.production_enabled = summary.promotion_ready;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                "runtime-index member cleanup mutation-promotion-summary",
+                summary,
+                runtime_indexed_member_cleanup_mutation_promotion_summary_report(summary)
+            );
+        }
+    }
     for (auto& entry : readiness) {
         if (remove_helper_drop_binding_blocker_if_ready(entry, helper_drop_bindings)) {
+            for (auto const& summary : promotion_summaries) {
+                if (summary.owner_name != entry.owner_name ||
+                    summary.index_expression_text != entry.index_expression_text ||
+                    summary.element_source_type_name != entry.element_source_type_name ||
+                    summary.moved_source_type_name != entry.moved_source_type_name ||
+                    summary.moved_member_path != entry.moved_member_path) {
+                    continue;
+                }
+                entry.promotion_ready = summary.promotion_ready;
+                entry.post_apply_verification_ready = summary.post_apply_verification_ready;
+                entry.authorization_ready = summary.authorization_ready;
+                break;
+            }
+            entry.readiness_ready =
+                entry.promotion_ready &&
+                entry.post_apply_verification_ready &&
+                entry.authorization_ready &&
+                entry.ir_mutation_requested &&
+                entry.production_gate_enabled &&
+                entry.blockers.empty();
+            entry.report_only = !entry.readiness_ready;
+            entry.production_enabled = entry.readiness_ready;
             replace_runtime_indexed_member_cleanup_audit_line(
                 audit_lines,
                 "runtime-index member cleanup mutation-production-readiness",
