@@ -1208,9 +1208,7 @@ int main() {
     assert(requested_member_typed_promotion_gate.gate_ready);
     assert(!requested_member_typed_promotion_gate.report_only);
     assert(requested_member_typed_promotion_gate.production_enabled);
-    assert(requested_member_typed_promotion_gate.blockers.size() == 2);
-    assert(requested_member_typed_promotion_gate.blockers[0] == "member-cleanup-module-mutation");
-    assert(requested_member_typed_promotion_gate.blockers[1] == "production-member-cleanup");
+    assert(requested_member_typed_promotion_gate.blockers.empty());
     assert(
         orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
             requested_member_typed_promotion_gate
@@ -1218,8 +1216,7 @@ int main() {
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
         "element Box moved Inner member-path item checklist ready ir-mutation-requested true "
         "production-gate-requested true ir-mutation enabled production-gate enabled "
-        "gate ready report-only false production enabled blockers 2 "
-        "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+        "gate ready report-only false production enabled blockers 0"
     );
     auto member_mutation_operation_plan =
         orison::lowering::runtime_indexed_member_cleanup_mutation_operation_plan(

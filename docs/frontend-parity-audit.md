@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-15: Runtime-index member-cleanup typed promotion gates now clear stale module-mutation and
+  production-member-cleanup blockers when both internal IR-mutation and production-gate requests are enabled. Ready
+  gates no longer report disabled-gate blockers; helper Drop-binding blockers remain independent until concrete
+  helper evidence exists.
 - 2026-08-15: Runtime-index member-cleanup keyed lookup, count, report-line append, diagnostics append, and dotted
   member-path formatting now live in the shared pipeline match-key utility. Readiness reports and execution summaries
   consume the same helpers.

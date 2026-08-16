@@ -1831,6 +1831,10 @@ representation.
 - Runtime-index member-cleanup keyed lookup, keyed counting, report-line appending, diagnostics appending, and dotted
   member-path formatting now live in the shared pipeline match-key utility. Readiness reporting and execution-summary
   derivation use that utility instead of local helper copies.
+- Runtime-index member-cleanup typed promotion gates now remove stale `member-cleanup-module-mutation` and
+  `production-member-cleanup` blockers once the internal IR-mutation request and production-gate request are both
+  enabled. This keeps ready gate reports aligned with their `production enabled` state while leaving helper
+  Drop-binding blockers intact until concrete helper metadata is available.
 
 ## Follow-up work
 

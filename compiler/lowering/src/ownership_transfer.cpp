@@ -1867,6 +1867,10 @@ auto runtime_indexed_member_cleanup_typed_promotion_gate(
     } else {
         std::erase(blockers, "production-member-cleanup-ir-mutation");
     }
+    if (ir_mutation_enabled && production_gate_enabled) {
+        std::erase(blockers, "member-cleanup-module-mutation");
+        std::erase(blockers, "production-member-cleanup");
+    }
 
     return RuntimeIndexedMemberCleanupTypedPromotionGate {
         .owner_name = checklist.owner_name,
