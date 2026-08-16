@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-16: Runtime-index member-cleanup helper Drop-binding refresh now propagates refreshed mutation readiness into
+  readiness verdicts, rewrite authorization, rewrite execution plans, execution verdicts, and rewrite promotion status.
+  Fully requested member-cleanup seams now report the guarded rewrite chain as ready/enabled from typed state.
 - 2026-08-16: Runtime-index member-cleanup helper Drop-binding refresh now recomputes mutation promotion-summary and
   mutation production-readiness booleans after blocker removal. Fully requested member-cleanup seams report promotion
   and readiness as ready/enabled instead of retaining stale blocked fields with zero blockers.

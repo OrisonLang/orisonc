@@ -8224,6 +8224,51 @@ auto main() -> int {
             .runtime_indexed_member_cleanup_mutation_production_readiness.front()
             .production_enabled
     );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_readiness_verdicts.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_readiness_verdicts.front()
+            .guarded_rewrite_ready
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_authorizations.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_authorizations.front()
+            .rewrite_authorized
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.front()
+            .execution_enabled
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts.front()
+            .execution_enabled
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.size() == 1
+    );
+    assert(
+        runtime_indexed_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.front()
+            .promotion_ready
+    );
     auto has_apply_requested_member_transfer_audit_line =
         [&](std::string_view expected_line) {
             return std::any_of(
@@ -8268,6 +8313,44 @@ auto main() -> int {
             "element Box moved Inner member-path item promotion ready post-apply-verification ready "
             "authorization ready ir-mutation requested production-gate enabled readiness ready "
             "report-only false production enabled blockers 0"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
+            "element Box moved Inner member-path item readiness ready guarded-rewrite ready "
+            "blockers 0 diagnostics 0 report-only false production enabled"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
+            "element Box moved Inner member-path item verdict ready guarded-rewrite ready "
+            "authorization ready rewrite-requested true rewrite-authorized true report-only false "
+            "production enabled blockers 0"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
+            "element Box moved Inner member-path item authorization ready rewrite-authorized true "
+            "execution-plan ready execution-requested true execution enabled report-only false "
+            "production enabled blockers 0"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
+            "element Box moved Inner member-path item execution-plan ready execution enabled blockers 0 "
+            "diagnostics 0 report-only false production enabled"
+        )
+    );
+    assert(
+        has_apply_requested_member_transfer_audit_line(
+            "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
+            "element Box moved Inner member-path item authorization ready execution-plan ready "
+            "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false "
+            "production enabled"
         )
     );
     assert(

@@ -920,6 +920,10 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     std::vector<RuntimeIndexedMemberCleanupMutationPromotionSummary>& promotion_summaries,
     std::vector<RuntimeIndexedMemberCleanupMutationProductionReadiness>& readiness,
     std::vector<RuntimeIndexedMemberCleanupMutationReadinessVerdict>& verdicts,
+    std::vector<RuntimeIndexedMemberCleanupMutationRewriteAuthorization>& rewrite_authorizations,
+    std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan>& rewrite_execution_plans,
+    std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict>& rewrite_execution_verdicts,
+    std::vector<RuntimeIndexedMemberCleanupMutationRewritePromotionStatus>& rewrite_promotion_statuses,
     std::vector<std::string>& audit_lines,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) {
@@ -1040,6 +1044,8 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
                 entry.readiness_ready &&
                 entry.ir_mutation_requested &&
                 entry.production_gate_enabled;
+            verdict.report_only = !verdict.guarded_rewrite_ready;
+            verdict.production_enabled = verdict.guarded_rewrite_ready;
             replace_runtime_indexed_member_cleanup_audit_line(
                 audit_lines,
                 "runtime-index member cleanup mutation readiness verdict",
@@ -1047,6 +1053,150 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
                 runtime_indexed_member_cleanup_mutation_readiness_verdict_report(verdict)
             );
         }
+    }
+    for (auto& authorization : rewrite_authorizations) {
+        for (auto const& verdict : verdicts) {
+            if (verdict.owner_name != authorization.owner_name ||
+                verdict.index_expression_text != authorization.index_expression_text ||
+                verdict.element_source_type_name != authorization.element_source_type_name ||
+                verdict.moved_source_type_name != authorization.moved_source_type_name ||
+                verdict.moved_member_path != authorization.moved_member_path) {
+                continue;
+            }
+            authorization.verdict_ready = verdict.readiness_ready;
+            authorization.guarded_rewrite_ready = verdict.guarded_rewrite_ready;
+            authorization.authorization_ready = verdict.readiness_ready && verdict.guarded_rewrite_ready;
+            authorization.rewrite_authorized =
+                authorization.authorization_ready && authorization.rewrite_authorization_requested;
+            authorization.blockers.clear();
+            if (!authorization.verdict_ready) {
+                authorization.blockers.push_back("member-cleanup-mutation-readiness-verdict");
+            }
+            if (!authorization.guarded_rewrite_ready) {
+                authorization.blockers.push_back("member-cleanup-mutation-guarded-rewrite");
+            }
+            authorization.report_only = !authorization.rewrite_authorized;
+            authorization.production_enabled = authorization.rewrite_authorized;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                "runtime-index member cleanup mutation rewrite authorization",
+                authorization,
+                runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(authorization)
+            );
+            break;
+        }
+    }
+    for (auto& plan : rewrite_execution_plans) {
+        for (auto const& authorization : rewrite_authorizations) {
+            if (authorization.owner_name != plan.owner_name ||
+                authorization.index_expression_text != plan.index_expression_text ||
+                authorization.element_source_type_name != plan.element_source_type_name ||
+                authorization.moved_source_type_name != plan.moved_source_type_name ||
+                authorization.moved_member_path != plan.moved_member_path) {
+                continue;
+            }
+            plan.authorization_ready = authorization.authorization_ready;
+            plan.rewrite_authorized = authorization.rewrite_authorized;
+            plan.execution_plan_ready = authorization.authorization_ready && authorization.rewrite_authorized;
+            plan.execution_enabled = plan.execution_plan_ready && plan.execution_requested;
+            plan.blockers.clear();
+            if (!plan.authorization_ready) {
+                plan.blockers.push_back("member-cleanup-mutation-rewrite-authorization");
+            }
+            if (!plan.rewrite_authorized) {
+                plan.blockers.push_back("member-cleanup-mutation-rewrite-not-authorized");
+            }
+            plan.report_only = !plan.execution_enabled;
+            plan.production_enabled = plan.execution_enabled;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                "runtime-index member cleanup mutation rewrite execution-plan",
+                plan,
+                runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(plan)
+            );
+            break;
+        }
+    }
+    for (auto& verdict : rewrite_execution_verdicts) {
+        for (auto const& plan : rewrite_execution_plans) {
+            if (plan.owner_name != verdict.owner_name ||
+                plan.index_expression_text != verdict.index_expression_text ||
+                plan.element_source_type_name != verdict.element_source_type_name ||
+                plan.moved_source_type_name != verdict.moved_source_type_name ||
+                plan.moved_member_path != verdict.moved_member_path) {
+                continue;
+            }
+            auto const diagnostics = runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(plan);
+            verdict.blocker_count = static_cast<int>(plan.blockers.size());
+            verdict.diagnostic_count = static_cast<int>(diagnostics.size());
+            verdict.execution_plan_ready = plan.execution_plan_ready;
+            verdict.execution_enabled = plan.execution_enabled;
+            verdict.report_only = !verdict.execution_enabled;
+            verdict.production_enabled = verdict.execution_enabled;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                audit_lines,
+                "runtime-index member cleanup mutation rewrite execution verdict",
+                verdict,
+                runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(verdict)
+            );
+            break;
+        }
+    }
+    for (auto& status : rewrite_promotion_statuses) {
+        auto const* matched_authorization = static_cast<RuntimeIndexedMemberCleanupMutationRewriteAuthorization const*>(nullptr);
+        auto const* matched_plan = static_cast<RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const*>(nullptr);
+        auto const* matched_verdict = static_cast<RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const*>(nullptr);
+        for (auto const& authorization : rewrite_authorizations) {
+            if (authorization.owner_name == status.owner_name &&
+                authorization.index_expression_text == status.index_expression_text &&
+                authorization.element_source_type_name == status.element_source_type_name &&
+                authorization.moved_source_type_name == status.moved_source_type_name &&
+                authorization.moved_member_path == status.moved_member_path) {
+                matched_authorization = &authorization;
+                break;
+            }
+        }
+        for (auto const& plan : rewrite_execution_plans) {
+            if (plan.owner_name == status.owner_name &&
+                plan.index_expression_text == status.index_expression_text &&
+                plan.element_source_type_name == status.element_source_type_name &&
+                plan.moved_source_type_name == status.moved_source_type_name &&
+                plan.moved_member_path == status.moved_member_path) {
+                matched_plan = &plan;
+                break;
+            }
+        }
+        for (auto const& verdict : rewrite_execution_verdicts) {
+            if (verdict.owner_name == status.owner_name &&
+                verdict.index_expression_text == status.index_expression_text &&
+                verdict.element_source_type_name == status.element_source_type_name &&
+                verdict.moved_source_type_name == status.moved_source_type_name &&
+                verdict.moved_member_path == status.moved_member_path) {
+                matched_verdict = &verdict;
+                break;
+            }
+        }
+        if (matched_authorization == nullptr || matched_plan == nullptr || matched_verdict == nullptr) {
+            continue;
+        }
+        status.authorization_ready =
+            matched_authorization->authorization_ready && matched_authorization->rewrite_authorized;
+        status.execution_plan_ready =
+            matched_plan->execution_plan_ready && matched_plan->execution_enabled;
+        status.execution_verdict_ready =
+            matched_verdict->execution_plan_ready && matched_verdict->execution_enabled;
+        status.promotion_ready =
+            status.authorization_ready && status.execution_plan_ready && status.execution_verdict_ready;
+        status.blocker_count = matched_verdict->blocker_count;
+        status.diagnostic_count = matched_verdict->diagnostic_count;
+        status.report_only = !status.promotion_ready;
+        status.production_enabled = status.promotion_ready;
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup mutation rewrite promotion-status",
+            status,
+            runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(status)
+        );
     }
 }
 
@@ -4000,6 +4150,10 @@ auto emit_module(
             result.runtime_indexed_member_cleanup_mutation_promotion_summaries,
             result.runtime_indexed_member_cleanup_mutation_production_readiness,
             result.runtime_indexed_member_cleanup_mutation_readiness_verdicts,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_authorizations,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_execution_plans,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses,
             result.runtime_indexed_cleanup_audit_lines,
             result.runtime_indexed_member_cleanup_helper_drop_bindings
         );

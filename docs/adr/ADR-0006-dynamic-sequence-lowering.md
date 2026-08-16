@@ -1845,6 +1845,9 @@ representation.
 - The same helper Drop-binding refresh now recomputes mutation promotion-summary and mutation production-readiness
   booleans after blocker removal. Fully requested member-cleanup seams can report promotion and readiness as
   ready/enabled instead of retaining stale blocked fields with zero blockers.
+- Helper Drop-binding refresh now also propagates refreshed mutation readiness into the readiness verdict, rewrite
+  authorization, rewrite execution plan, execution verdict, and rewrite promotion status records. Fully requested
+  member-cleanup seams can report the guarded rewrite chain as ready/enabled from typed state.
 
 ## Follow-up work
 
