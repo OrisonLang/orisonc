@@ -796,8 +796,7 @@ void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item checklist ready ir-mutation-requested true "
         "production-gate-requested true ir-mutation enabled production-gate enabled "
-        "gate ready report-only false production enabled blockers 1 "
-        "blocker member-helper-drop-bindings"
+        "gate ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup execution-summary owner items index (index + zero) "

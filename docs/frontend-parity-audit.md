@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-16: Runtime-index member-cleanup helper Drop-binding refresh now also updates typed promotion gate records
+  and regenerated audit lines. Ready test-only gates no longer retain stale `member-helper-drop-bindings` blockers
+  after concrete helper metadata exists.
 - 2026-08-16: Runtime-index member-cleanup promotion state now lets a ready typed promotion gate supersede stale
   upstream production-readiness records whose only blockers are disabled module-mutation and production-member-cleanup
   gates. Missing records, real upstream blockers, and downstream mutation/rewrite blockers still block promotion.

@@ -1839,6 +1839,9 @@ representation.
   as superseded when the keyed typed promotion gate is production-enabled and the upstream proof, metadata, helper
   binding, and CFG prerequisites are ready. Missing keyed records, non-stale upstream blockers, and downstream
   mutation/rewrite blockers still prevent a `ready` promotion state.
+- Member-cleanup helper Drop-binding refresh now also applies to typed promotion gate records and regenerated audit
+  lines. Once concrete helper metadata exists for a keyed member path, ready test-only gates no longer retain stale
+  `member-helper-drop-bindings` blockers.
 
 ## Follow-up work
 

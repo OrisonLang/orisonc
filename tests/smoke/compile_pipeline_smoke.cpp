@@ -7604,8 +7604,7 @@ auto main() -> int {
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
         "element Box moved Inner member-path item checklist ready ir-mutation-requested true "
         "production-gate-requested true ir-mutation enabled production-gate enabled "
-        "gate ready report-only false production enabled blockers 1 "
-        "blocker member-helper-drop-bindings"
+        "gate ready report-only false production enabled blockers 0"
     );
     assert(runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_execution_summaries.size() == 1);
     auto const& runtime_indexed_member_transfer_execution_summary =

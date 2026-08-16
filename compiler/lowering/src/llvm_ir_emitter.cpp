@@ -910,6 +910,7 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
 }
 
 void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+    std::vector<RuntimeIndexedMemberCleanupTypedPromotionGate>& typed_promotion_gates,
     std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>& operation_plans,
     std::vector<RuntimeIndexedMemberCleanupMutationOperationValidation>& operation_validations,
     std::vector<RuntimeIndexedMemberCleanupMutationConflictDetection>& conflict_detections,
@@ -922,6 +923,13 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     std::vector<std::string>& audit_lines,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) {
+    refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
+        typed_promotion_gates,
+        audit_lines,
+        helper_drop_bindings,
+        "runtime-index member cleanup typed-promotion-gate",
+        runtime_indexed_member_cleanup_typed_promotion_gate_report
+    );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         operation_plans,
         audit_lines,
@@ -3947,6 +3955,7 @@ auto emit_module(
             result.runtime_indexed_member_cleanup_helper_drop_bindings
         );
         refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+            result.runtime_indexed_member_cleanup_typed_promotion_gates,
             result.runtime_indexed_member_cleanup_mutation_operation_plans,
             result.runtime_indexed_member_cleanup_mutation_operation_validations,
             result.runtime_indexed_member_cleanup_mutation_conflict_detections,
