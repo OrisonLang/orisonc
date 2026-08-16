@@ -2571,3 +2571,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-15: The executable `--test-only-runtime-indexed-member-cleanup-run` seam now emits the same typed promotion
   gate report used by readiness reporting after successful host execution, keeping run-path observability aligned with
   the production-readiness path.
+- 2026-08-16: Runtime-index member cleanup helper Drop-binding refresh now uses a single LLVM-local refresh-key helper
+  aligned with the shared owner/index/element/moved/member-path key fields when propagating typed readiness into
+  mutation production, guarded rewrite authorization, execution, and promotion records. This removes repeated local
+  comparison copies without changing the guarded rewrite audit surface.

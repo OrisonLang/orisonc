@@ -1848,6 +1848,10 @@ representation.
 - Helper Drop-binding refresh now also propagates refreshed mutation readiness into the readiness verdict, rewrite
   authorization, rewrite execution plan, execution verdict, and rewrite promotion status records. Fully requested
   member-cleanup seams can report the guarded rewrite chain as ready/enabled from typed state.
+- Helper Drop-binding refresh now uses a single LLVM-local refresh-key helper aligned with the shared
+  owner/index/element/moved/member-path key fields when propagating readiness through mutation production, guarded
+  rewrite authorization, execution, and promotion records. LLVM emission no longer carries repeated local copies of the
+  same comparison.
 
 ## Follow-up work
 

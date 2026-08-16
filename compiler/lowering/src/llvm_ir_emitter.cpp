@@ -909,6 +909,35 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
     }
 }
 
+template <typename LeftRecord, typename RightRecord>
+auto same_runtime_indexed_member_cleanup_refresh_key(
+    LeftRecord const& left,
+    RightRecord const& right
+) -> bool {
+    return left.owner_name == right.owner_name &&
+        left.index_expression_text == right.index_expression_text &&
+        left.element_source_type_name == right.element_source_type_name &&
+        left.moved_source_type_name == right.moved_source_type_name &&
+        left.moved_member_path == right.moved_member_path;
+}
+
+template <typename KeyRecord, typename Record>
+auto find_runtime_indexed_member_cleanup_refresh_record(
+    KeyRecord const& key_record,
+    std::vector<Record> const& records
+) -> Record const* {
+    auto const found = std::ranges::find_if(
+        records,
+        [&](Record const& record) {
+            return same_runtime_indexed_member_cleanup_refresh_key(key_record, record);
+        }
+    );
+    if (found == records.end()) {
+        return nullptr;
+    }
+    return &*found;
+}
+
 void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
     std::vector<RuntimeIndexedMemberCleanupTypedPromotionGate>& typed_promotion_gates,
     std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>& operation_plans,
@@ -999,11 +1028,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     for (auto& entry : readiness) {
         if (remove_helper_drop_binding_blocker_if_ready(entry, helper_drop_bindings)) {
             for (auto const& summary : promotion_summaries) {
-                if (summary.owner_name != entry.owner_name ||
-                    summary.index_expression_text != entry.index_expression_text ||
-                    summary.element_source_type_name != entry.element_source_type_name ||
-                    summary.moved_source_type_name != entry.moved_source_type_name ||
-                    summary.moved_member_path != entry.moved_member_path) {
+                if (!same_runtime_indexed_member_cleanup_refresh_key(summary, entry)) {
                     continue;
                 }
                 entry.promotion_ready = summary.promotion_ready;
@@ -1030,11 +1055,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     }
     for (auto& verdict : verdicts) {
         for (auto const& entry : readiness) {
-            if (entry.owner_name != verdict.owner_name ||
-                entry.index_expression_text != verdict.index_expression_text ||
-                entry.element_source_type_name != verdict.element_source_type_name ||
-                entry.moved_source_type_name != verdict.moved_source_type_name ||
-                entry.moved_member_path != verdict.moved_member_path) {
+            if (!same_runtime_indexed_member_cleanup_refresh_key(entry, verdict)) {
                 continue;
             }
             verdict.blocker_count = static_cast<int>(entry.blockers.size());
@@ -1056,11 +1077,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     }
     for (auto& authorization : rewrite_authorizations) {
         for (auto const& verdict : verdicts) {
-            if (verdict.owner_name != authorization.owner_name ||
-                verdict.index_expression_text != authorization.index_expression_text ||
-                verdict.element_source_type_name != authorization.element_source_type_name ||
-                verdict.moved_source_type_name != authorization.moved_source_type_name ||
-                verdict.moved_member_path != authorization.moved_member_path) {
+            if (!same_runtime_indexed_member_cleanup_refresh_key(verdict, authorization)) {
                 continue;
             }
             authorization.verdict_ready = verdict.readiness_ready;
@@ -1088,11 +1105,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     }
     for (auto& plan : rewrite_execution_plans) {
         for (auto const& authorization : rewrite_authorizations) {
-            if (authorization.owner_name != plan.owner_name ||
-                authorization.index_expression_text != plan.index_expression_text ||
-                authorization.element_source_type_name != plan.element_source_type_name ||
-                authorization.moved_source_type_name != plan.moved_source_type_name ||
-                authorization.moved_member_path != plan.moved_member_path) {
+            if (!same_runtime_indexed_member_cleanup_refresh_key(authorization, plan)) {
                 continue;
             }
             plan.authorization_ready = authorization.authorization_ready;
@@ -1119,11 +1132,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     }
     for (auto& verdict : rewrite_execution_verdicts) {
         for (auto const& plan : rewrite_execution_plans) {
-            if (plan.owner_name != verdict.owner_name ||
-                plan.index_expression_text != verdict.index_expression_text ||
-                plan.element_source_type_name != verdict.element_source_type_name ||
-                plan.moved_source_type_name != verdict.moved_source_type_name ||
-                plan.moved_member_path != verdict.moved_member_path) {
+            if (!same_runtime_indexed_member_cleanup_refresh_key(plan, verdict)) {
                 continue;
             }
             auto const diagnostics = runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(plan);
@@ -1143,39 +1152,12 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
         }
     }
     for (auto& status : rewrite_promotion_statuses) {
-        auto const* matched_authorization = static_cast<RuntimeIndexedMemberCleanupMutationRewriteAuthorization const*>(nullptr);
-        auto const* matched_plan = static_cast<RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const*>(nullptr);
-        auto const* matched_verdict = static_cast<RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const*>(nullptr);
-        for (auto const& authorization : rewrite_authorizations) {
-            if (authorization.owner_name == status.owner_name &&
-                authorization.index_expression_text == status.index_expression_text &&
-                authorization.element_source_type_name == status.element_source_type_name &&
-                authorization.moved_source_type_name == status.moved_source_type_name &&
-                authorization.moved_member_path == status.moved_member_path) {
-                matched_authorization = &authorization;
-                break;
-            }
-        }
-        for (auto const& plan : rewrite_execution_plans) {
-            if (plan.owner_name == status.owner_name &&
-                plan.index_expression_text == status.index_expression_text &&
-                plan.element_source_type_name == status.element_source_type_name &&
-                plan.moved_source_type_name == status.moved_source_type_name &&
-                plan.moved_member_path == status.moved_member_path) {
-                matched_plan = &plan;
-                break;
-            }
-        }
-        for (auto const& verdict : rewrite_execution_verdicts) {
-            if (verdict.owner_name == status.owner_name &&
-                verdict.index_expression_text == status.index_expression_text &&
-                verdict.element_source_type_name == status.element_source_type_name &&
-                verdict.moved_source_type_name == status.moved_source_type_name &&
-                verdict.moved_member_path == status.moved_member_path) {
-                matched_verdict = &verdict;
-                break;
-            }
-        }
+        auto const* matched_authorization =
+            find_runtime_indexed_member_cleanup_refresh_record(status, rewrite_authorizations);
+        auto const* matched_plan =
+            find_runtime_indexed_member_cleanup_refresh_record(status, rewrite_execution_plans);
+        auto const* matched_verdict =
+            find_runtime_indexed_member_cleanup_refresh_record(status, rewrite_execution_verdicts);
         if (matched_authorization == nullptr || matched_plan == nullptr || matched_verdict == nullptr) {
             continue;
         }
