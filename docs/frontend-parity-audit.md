@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-16: Runtime-index member-cleanup promotion state now lets a ready typed promotion gate supersede stale
+  upstream production-readiness records whose only blockers are disabled module-mutation and production-member-cleanup
+  gates. Missing records, real upstream blockers, and downstream mutation/rewrite blockers still block promotion.
 - 2026-08-15: Runtime-index member-cleanup typed promotion gates now clear stale module-mutation and
   production-member-cleanup blockers when both internal IR-mutation and production-gate requests are enabled. Ready
   gates no longer report disabled-gate blockers; helper Drop-binding blockers remain independent until concrete

@@ -223,6 +223,33 @@ void append_promotion_blocker_line(
     lines.push_back(line.str());
 }
 
+auto has_only_stale_production_readiness_blockers(
+    lowering::RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> bool {
+    for (auto const& blocker : readiness.blockers) {
+        if (blocker != "member-cleanup-module-mutation" &&
+            blocker != "production-member-cleanup") {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto production_readiness_satisfied_for_promotion(
+    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    lowering::RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> bool {
+    if (readiness.production_ready) {
+        return true;
+    }
+    return gate.production_enabled &&
+        readiness.proof_ready &&
+        readiness.target_metadata_ready &&
+        readiness.helper_drop_bindings_ready &&
+        readiness.cfg_slice_ready &&
+        has_only_stale_production_readiness_blockers(readiness);
+}
+
 }  // namespace
 
 auto runtime_indexed_member_cleanup_promotion_state(
@@ -268,7 +295,7 @@ auto runtime_indexed_member_cleanup_promotion_state(
             production_readiness != nullptr &&
             mutation_readiness != nullptr &&
             rewrite_promotion != nullptr &&
-            production_readiness->production_ready &&
+            production_readiness_satisfied_for_promotion(gate, *production_readiness) &&
             gate.production_enabled &&
             mutation_readiness->production_enabled &&
             rewrite_promotion->production_enabled;
@@ -307,7 +334,7 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 "missing-production-readiness",
                 "matching member cleanup production-readiness record is missing"
             );
-        } else if (!production_readiness->production_ready) {
+        } else if (!production_readiness_satisfied_for_promotion(gate, *production_readiness)) {
             append_promotion_blocker_line(
                 lines,
                 gate,

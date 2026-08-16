@@ -8080,7 +8080,16 @@ auto main() -> int {
             .element_source_type_name = "RightBox",
             .moved_source_type_name = "Payload",
             .moved_member_path = {"inner", "payload"},
-            .production_ready = true,
+            .blockers = {"member-cleanup-module-mutation", "production-member-cleanup"},
+            .proof_ready = true,
+            .target_metadata_ready = true,
+            .helper_drop_bindings_ready = true,
+            .cfg_slice_ready = true,
+            .module_mutation_ready = false,
+            .production_member_cleanup_ready = false,
+            .production_gate_ready = false,
+            .production_enabled = false,
+            .production_ready = false,
         },
         orison::lowering::RuntimeIndexedMemberCleanupProductionReadiness {
             .owner_name = "lefts",
@@ -8088,7 +8097,16 @@ auto main() -> int {
             .element_source_type_name = "LeftBox",
             .moved_source_type_name = "Payload",
             .moved_member_path = {"payload"},
-            .production_ready = true,
+            .blockers = {"member-cleanup-module-mutation", "production-member-cleanup"},
+            .proof_ready = true,
+            .target_metadata_ready = true,
+            .helper_drop_bindings_ready = true,
+            .cfg_slice_ready = true,
+            .module_mutation_ready = false,
+            .production_member_cleanup_ready = false,
+            .production_gate_ready = false,
+            .production_enabled = false,
+            .production_ready = false,
         },
     };
     synthetic_ready_member_cleanup_promotion_result.runtime_indexed_member_cleanup_mutation_production_readiness = {
@@ -8133,6 +8151,11 @@ auto main() -> int {
             synthetic_ready_member_cleanup_promotion_result
         );
     assert(ready_member_cleanup_promotion_state.state == "ready");
+    assert(
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(
+            synthetic_ready_member_cleanup_promotion_result
+        ).empty()
+    );
 
     synthetic_ready_member_cleanup_promotion_result
         .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.pop_back();

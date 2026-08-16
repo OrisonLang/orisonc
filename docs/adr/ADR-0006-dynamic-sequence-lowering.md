@@ -1835,6 +1835,10 @@ representation.
   `production-member-cleanup` blockers once the internal IR-mutation request and production-gate request are both
   enabled. This keeps ready gate reports aligned with their `production enabled` state while leaving helper
   Drop-binding blockers intact until concrete helper metadata is available.
+- Constructor-move member-cleanup promotion state now treats stale upstream production-readiness disabled-gate blockers
+  as superseded when the keyed typed promotion gate is production-enabled and the upstream proof, metadata, helper
+  binding, and CFG prerequisites are ready. Missing keyed records, non-stale upstream blockers, and downstream
+  mutation/rewrite blockers still prevent a `ready` promotion state.
 
 ## Follow-up work
 
