@@ -1902,6 +1902,9 @@ representation.
 - Runtime-index cleanup module-IR production readiness now gates on typed cleanup IR shape. Plans with rendered cleanup
   IR must expose a complete common loop/drop shape and either descriptor-backed or inline-storage cleanup shape before
   the module-IR production state reports ready.
+- Runtime-index cleanup production-readiness derivation is now exposed as a typed pipeline helper. Smoke coverage uses
+  that helper to verify malformed rendered cleanup slices fail through the real `ir-shape` gate while otherwise-ready
+  insertion, candidate, mutation, and function-integration states stay ready.
 
 ## Follow-up work
 

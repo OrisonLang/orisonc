@@ -1,6 +1,9 @@
 #pragma once
 
 #include "orison/pipeline/runtime_indexed_cleanup_composition_failures.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_emission.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_module_ir_insertion.hpp"
+#include "orison/pipeline/runtime_indexed_cleanup_module_ir_rewrite_candidates.hpp"
 #include "orison/pipeline/runtime_indexed_cleanup_ranges.hpp"
 
 #include <cstddef>
@@ -89,5 +92,16 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
 auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
     RuntimeIndexedCleanupModuleIrProductionReadinessState const& state
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_cleanup_module_ir_production_readiness_state(
+    RuntimeIndexedCleanupEmissionPlanState const& emission_plan_state,
+    RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
+    RuntimeIndexedCleanupModuleIrInsertionPreviewState const& preview_state,
+    RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state,
+    RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state,
+    RuntimeIndexedCleanupModuleIrMutationState const& mutation_state,
+    RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
+    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state
+) -> RuntimeIndexedCleanupModuleIrProductionReadinessState;
 
 } // namespace orison::pipeline

@@ -2628,3 +2628,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: Runtime-index cleanup module-IR production readiness now includes an `ir-shape` gate. Production
   readiness requires each emitted cleanup plan with rendered IR to have a complete common loop/drop shape and either
   descriptor-backed or inline-storage cleanup shape.
+- 2026-08-17: Runtime-index cleanup `ir-shape` blocking now has builder-path coverage. Pipeline smoke synthesizes
+  ready upstream insertion/candidate/mutation states with a malformed rendered cleanup slice and verifies the real
+  production-readiness helper reports only the `ir-shape` blocker.

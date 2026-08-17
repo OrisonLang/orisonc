@@ -2299,7 +2299,9 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
     readiness_state.diagnostic_source_line = blocker.source_line;
 }
 
-auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
+} // namespace
+
+auto runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupEmissionPlanState const& emission_plan_state,
     RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
     RuntimeIndexedCleanupModuleIrInsertionPreviewState const& preview_state,
@@ -2451,6 +2453,8 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness_state);
     return readiness_state;
 }
+
+namespace {
 
 auto build_computed_dynamic_array_for_descriptor_render_state(
     lowering::LlvmIrEmissionResult const& emission
@@ -3385,7 +3389,7 @@ void populate_lowering_emission_reports(
             result.ir_text
         );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
-        build_runtime_indexed_cleanup_module_ir_production_readiness_state(
+        runtime_indexed_cleanup_module_ir_production_readiness_state(
             result.runtime_indexed_cleanup_emission_plan_state,
             result.runtime_indexed_cleanup_module_ir_insertion_gate_state,
             result.runtime_indexed_cleanup_module_ir_insertion_preview_state,

@@ -11642,6 +11642,135 @@ auto main() -> int {
         "kind ir-shape stage cleanup ir shape function main source-line 44"
     );
 
+    auto malformed_ir_shape_builder_readiness =
+        orison::pipeline::runtime_indexed_cleanup_module_ir_production_readiness_state(
+            orison::pipeline::RuntimeIndexedCleanupEmissionPlanState {
+                .plans = {
+                    orison::lowering::RuntimeIndexedCleanupEmissionPlan {
+                        .function_symbol_name = "main",
+                        .owner_name = "items",
+                        .gated_ir_slice_lines = {
+                            "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
+                        },
+                        .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
+                            .owner_name = "items",
+                            .element_llvm_type_name = "%record.Inner",
+                            .owner_llvm_type_name = "[2 x %record.Inner]",
+                            .owner_address_name = "%items.addr",
+                            .condition_block_name = "items.runtime_cleanup.condition",
+                            .live_check_block_name = "items.runtime_cleanup.live",
+                            .skip_block_name = "items.runtime_cleanup.skip",
+                            .drop_block_name = "items.runtime_cleanup.drop",
+                            .element_address_name = "%items.runtime_cleanup.element.addr",
+                            .drop_callee_name = "__orison_drop.Inner",
+                            .continue_block_name = "items.runtime_cleanup.continue",
+                            .exit_block_name = "items.runtime_cleanup.exit",
+                            .complete = true,
+                        },
+                    },
+                },
+                .plan_metadata_available = true,
+                .all_prerequisites_ready = true,
+                .any_production_gate_requested = true,
+                .any_production_enabled = true,
+                .gated_ir_slice_line_count = 1,
+                .structured_ir_plan_count = 1,
+            },
+            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionGateState {
+                .insertion_requested = true,
+                .artifact_available = true,
+                .render_parity_verified = true,
+                .insertion_enabled = true,
+            },
+            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionPreviewState {
+                .preview_available = true,
+                .insertion_point_found = true,
+                .would_modify_module_ir = true,
+            },
+            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateState {
+                .candidate_available = true,
+                .separate_from_module_ir = true,
+            },
+            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateVerificationState {
+                .verification_available = true,
+                .candidate_contains_cleanup_block_once = true,
+                .emitted_module_excludes_cleanup_block = true,
+                .verified = true,
+                .candidate_cleanup_block_count = 1,
+            },
+            orison::pipeline::RuntimeIndexedCleanupModuleIrMutationState {
+                .mutation_requested = true,
+                .candidate_verified = true,
+                .mutation_applied = true,
+                .module_matches_candidate = true,
+                .final_module_cleanup_block_count = 1,
+            },
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
+                .verifications = {
+                    orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
+                        .function_symbol_name = "main",
+                        .verification_available = true,
+                        .candidate_function_found = true,
+                        .candidate_function_matches_verified_candidate = true,
+                        .replacement_target_unique = true,
+                        .module_ir_changed = true,
+                        .separate_from_module_ir = true,
+                        .llvm_verifier_ran = true,
+                        .llvm_verifier_passed = true,
+                        .verified = true,
+                        .source_line = 44,
+                        .function_replacement_count = 1,
+                    },
+                },
+                .verification_metadata_available = true,
+                .all_candidate_functions_found = true,
+                .all_candidate_functions_match_verified_candidates = true,
+                .all_replacement_targets_unique = true,
+                .all_module_ir_changed = true,
+                .all_candidates_separate_from_module_ir = true,
+                .same_function_splice_ranges_non_overlapping = true,
+                .any_llvm_verifier_ran = true,
+                .all_llvm_verifier_passed = true,
+                .all_verified = true,
+                .verification_count = 1,
+                .verified_count = 1,
+                .llvm_verified_count = 1,
+            },
+            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
+                .mutation_requested = true,
+                .candidate_verified = true,
+                .replacement_targets_unique = true,
+                .mutation_applied = true,
+                .module_matches_candidate = true,
+                .llvm_verifier_passed = true,
+                .candidate_count = 1,
+            }
+        );
+    assert(!malformed_ir_shape_builder_readiness.production_ready);
+    assert(!malformed_ir_shape_builder_readiness.ir_shape_ready);
+    assert(malformed_ir_shape_builder_readiness.insertion_gate_ready);
+    assert(malformed_ir_shape_builder_readiness.insertion_preview_ready);
+    assert(malformed_ir_shape_builder_readiness.candidate_ready);
+    assert(malformed_ir_shape_builder_readiness.candidate_verified);
+    assert(malformed_ir_shape_builder_readiness.module_mutation_enabled);
+    assert(malformed_ir_shape_builder_readiness.function_integration_ready);
+    assert(malformed_ir_shape_builder_readiness.function_splice_conflict_free);
+    assert(malformed_ir_shape_builder_readiness.blockers.size() == 1);
+    assert(
+        malformed_ir_shape_builder_readiness.blockers.front().kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
+    );
+    assert(
+        malformed_ir_shape_builder_readiness.diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
+    );
+    assert(malformed_ir_shape_builder_readiness.diagnostic_function_symbol_name == "main");
+    assert(malformed_ir_shape_builder_readiness.diagnostic_source_line == 44);
+    assert(
+        malformed_ir_shape_builder_readiness.diagnostic_text ==
+        "runtime-index cleanup blocked: cleanup ir shape blocked"
+    );
+
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
     {
