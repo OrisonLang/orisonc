@@ -1840,6 +1840,37 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
     return diagnostic.str();
 }
 
+auto runtime_indexed_constructor_move_plan_report(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& plan
+) -> std::string {
+    auto line = std::ostringstream {};
+    line << "runtime-index cleanup constructor-move plan"
+         << " owner " << plan.owner_name
+         << " index " << plan.index_expression_text
+         << " element " << plan.element_source_type_name
+         << " element-llvm " << plan.element_llvm_type_name
+         << " owner-llvm " << plan.owner_llvm_type_name
+         << " static-length " << (plan.static_length_value.empty() ? "none" : plan.static_length_value)
+         << " element-size " << (plan.element_size_value.empty() ? "unknown" : plan.element_size_value)
+         << " drop-callee " << plan.ir_plan.drop_callee_name
+         << " operation-count " << plan.operation_count
+         << " descriptor-owner " << (plan.ir_plan.descriptor_owner_ready ? "ready" : "blocked")
+         << " static-length-ready " << (plan.ir_plan.static_length_ready ? "true" : "false")
+         << " production " << (plan.production_enabled ? "enabled" : "disabled");
+    return line.str();
+}
+
+auto runtime_indexed_constructor_move_plan_report_lines(
+    RuntimeIndexedCleanupEmissionPlanState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.plans.size());
+    for (auto const& plan : state.plans) {
+        lines.push_back(runtime_indexed_constructor_move_plan_report(plan));
+    }
+    return lines;
+}
+
 auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
 ) -> std::string_view {

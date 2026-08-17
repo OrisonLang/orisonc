@@ -48,4 +48,12 @@ struct RuntimeIndexedCleanupIrRenderState {
     std::size_t rendered_ir_line_count = 0;
 };
 
+auto runtime_indexed_constructor_move_plan_report(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& plan
+) -> std::string;
+
+auto runtime_indexed_constructor_move_plan_report_lines(
+    RuntimeIndexedCleanupEmissionPlanState const& state
+) -> std::vector<std::string>;
+
 } // namespace orison::pipeline

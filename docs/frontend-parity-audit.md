@@ -2613,3 +2613,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: Driver-facing constructor-move production-readiness now emits typed cleanup-plan metadata lines. CLI
   smoke coverage asserts the same-layout fixed-array and source-backed `DynamicArray<Inner>` fixtures both report
   `element-size 4` while preserving storage-specific owner LLVM type, static length, and descriptor-owner readiness.
+- 2026-08-17: Runtime-index constructor-move cleanup-plan metadata formatting now lives in the pipeline layer.
+  Pipeline smoke coverage pins the reusable formatter directly, and the driver consumes the same report lines for
+  production-readiness output.

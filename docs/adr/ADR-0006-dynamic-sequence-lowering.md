@@ -1888,6 +1888,8 @@ representation.
 - Constructor-move production-readiness reporting now includes one typed cleanup-plan metadata line per runtime-index
   cleanup emission plan. Driver smoke coverage pins same-layout fixed-array and source-backed `DynamicArray<Inner>`
   element-size parity at that CLI boundary while preserving storage-specific owner representation fields.
+- Runtime-index constructor-move cleanup-plan metadata formatting now lives in the pipeline layer. The driver consumes
+  those shared formatter lines, and pipeline smoke coverage pins the formatter independently from CLI execution.
 
 ## Follow-up work
 

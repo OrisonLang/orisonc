@@ -10614,6 +10614,27 @@ auto main() -> int {
         runtime_indexed_fixed_array_same_shape_plan.ir_plan.drop_callee_name ==
         runtime_indexed_dynamic_array_plan.ir_plan.drop_callee_name
     );
+    assert(
+        orison::pipeline::runtime_indexed_constructor_move_plan_report(
+            runtime_indexed_fixed_array_same_shape_plan
+        ) ==
+        "runtime-index cleanup constructor-move plan owner items index index element Inner "
+        "element-llvm %record.Inner owner-llvm [2 x %record.Inner] static-length 2 "
+        "element-size 4 drop-callee __orison_drop.Inner operation-count 5 "
+        "descriptor-owner blocked static-length-ready true production enabled"
+    );
+    auto same_shape_plan_report_lines =
+        orison::pipeline::runtime_indexed_constructor_move_plan_report_lines(
+            runtime_indexed_fixed_array_same_shape_cleanup
+                .runtime_indexed_cleanup_emission_plan_state
+        );
+    assert(same_shape_plan_report_lines.size() == 1);
+    assert(
+        same_shape_plan_report_lines.front() ==
+        orison::pipeline::runtime_indexed_constructor_move_plan_report(
+            runtime_indexed_fixed_array_same_shape_plan
+        )
+    );
     assert(runtime_indexed_fixed_array_same_shape_plan.owner_llvm_type_name == "[2 x %record.Inner]");
     assert(runtime_indexed_fixed_array_same_shape_plan.static_length_value == "2");
     assert(runtime_indexed_fixed_array_same_shape_plan.ir_plan.static_length_ready);
