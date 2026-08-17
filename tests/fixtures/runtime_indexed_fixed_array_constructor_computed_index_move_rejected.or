@@ -1,0 +1,24 @@
+package tests.fixtures.runtime_indexed_fixed_array_constructor_computed_index_move_rejected
+
+record Inner
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var items: Array<Inner, 2> = [Inner(7 as UInt32), Inner(11 as UInt32)]
+    let index: UInt64 = 0 as UInt64
+    var outer: Outer = Outer(items[index])
+    0 as UInt32

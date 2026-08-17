@@ -2607,3 +2607,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup emission plans at the typed metadata layer. The plans share index, element source type, element LLVM type,
   Drop callee, and operation sequence, while keeping static array length, element size, and descriptor-owner metadata
   storage-specific.
+- 2026-08-17: A same-layout fixed-array fixture now mirrors the source-backed `DynamicArray<Inner>` runtime-index
+  constructor move fixture. Pipeline smoke coverage uses the pair to assert element-size metadata parity while still
+  keeping static length and descriptor-owner readiness storage-specific.

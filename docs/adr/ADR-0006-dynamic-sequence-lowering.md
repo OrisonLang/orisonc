@@ -1882,6 +1882,9 @@ representation.
   source-backed `DynamicArray<T>` runtime-index moves. Shared index, element, Drop callee, and operation metadata must
   match across storage forms, while static length, element size, and descriptor-owner readiness remain deliberately
   storage-specific.
+- A same-layout fixed-array fixture now mirrors the source-backed `DynamicArray<Inner>` runtime-index constructor move
+  fixture. Pipeline parity coverage uses this pair to assert element-size metadata equality across storage forms while
+  continuing to keep static length and descriptor-owner readiness storage-specific.
 
 ## Follow-up work
 
