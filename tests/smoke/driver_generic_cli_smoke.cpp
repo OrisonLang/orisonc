@@ -768,6 +768,56 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     ) != std::string::npos);
 }
 
+void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --runtime-indexed-constructor-move-production-readiness " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup constructor-move production-readiness "
+        "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
+        "capability-count 2 ordinary-emit rejected member-cleanup-promotion blocked "
+        "member-production-records 2 member-gate-records 2 member-mutation-records 2 "
+        "member-rewrite-records 2 diagnostic none"
+    ) != std::string::npos);
+    auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
+        auto const owner = std::string {owner_name};
+        auto const index = std::string {index_expression};
+        assert(output.find(
+            "runtime-index member cleanup promotion blocker owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item blocker blocked-production-readiness "
+            "detail matching member cleanup production-readiness record is blocked"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup helper-drop-bindings owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
+            "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup production-readiness owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings ready "
+            "cfg-slice ready module-mutation blocked production-member-cleanup blocked production-gate blocked "
+            "production-enabled false production blocked blockers 2 blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup mutation-production-readiness owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item promotion blocked post-apply-verification blocked "
+            "authorization blocked ir-mutation blocked production-gate disabled readiness blocked report-only true "
+            "production disabled blockers 8"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup mutation rewrite promotion-status owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item authorization blocked execution-plan blocked "
+            "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true production disabled"
+        ) != std::string::npos);
+    };
+    assert_owner_lines("left_items", "(left_index + left_zero)");
+    assert_owner_lines("right_items", "(right_index + right_zero)");
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3767,6 +3817,10 @@ auto main() -> int {
     assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
+    );
+    assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_function_member_transfers_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,

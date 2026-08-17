@@ -85,6 +85,17 @@ auto member_cleanup_target_symbol_from_preview_operations(
     return {};
 }
 
+auto same_runtime_indexed_partial_owner_record(
+    RuntimeIndexedPartialOwner const& lhs,
+    RuntimeIndexedPartialOwner const& rhs
+) -> bool {
+    return lhs.owner_name == rhs.owner_name &&
+        lhs.index_expression_text == rhs.index_expression_text &&
+        lhs.element_source_type_name == rhs.element_source_type_name &&
+        lhs.moved_source_type_name == rhs.moved_source_type_name &&
+        lhs.moved_member_path == rhs.moved_member_path;
+}
+
 }  // namespace
 
 auto mark_owned_binding_consumed(
@@ -104,6 +115,15 @@ auto record_runtime_indexed_partial_owner(
     bool member_cleanup_apply_authorization_requested,
     bool member_cleanup_rewrite_execution_requested
 ) -> void {
+    if (std::ranges::any_of(
+            state.runtime_indexed_partial_owners,
+            [&](RuntimeIndexedPartialOwner const& recorded) {
+                return same_runtime_indexed_partial_owner_record(recorded, owner);
+            }
+        )) {
+        return;
+    }
+
     auto plan = runtime_indexed_cleanup_skip_plan(owner);
     auto gate = runtime_indexed_cleanup_proof_gate(plan);
     auto sketch = runtime_indexed_cleanup_emission_sketch(gate);

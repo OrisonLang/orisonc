@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-16: Runtime-index constructor-move production-readiness now pre-collects report-only member-cleanup
+  candidates for annotated local `DynamicArray<T>` owners before ordinary lowering rejects the first unsupported owned
+  member transfer. The CLI report can show multiple keyed default blockers without enabling the internal rewrite seam.
 - 2026-08-16: Runtime-index member-cleanup helper Drop-binding refresh now propagates refreshed mutation readiness into
   readiness verdicts, rewrite authorization, rewrite execution plans, execution verdicts, and rewrite promotion status.
   Fully requested member-cleanup seams now report the guarded rewrite chain as ready/enabled from typed state.

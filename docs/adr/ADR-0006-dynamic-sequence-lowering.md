@@ -1865,6 +1865,10 @@ representation.
   lines appear in the internal test-seam output.
 - Driver CLI smoke coverage now also pins the same two-owner fixture on the ordinary `--emit-llvm` path, confirming
   owned DynamicArray member transfers still require the internal test seam and remain rejected by default.
+- Runtime-index constructor-move production-readiness now runs a conservative report-only pre-scan over annotated local
+  bindings and constructor-call arguments. This records every keyed source-backed `DynamicArray<T>` member-cleanup
+  candidate visible in the function before ordinary lowering stops at the first unsupported owned member transfer,
+  while the internal rewrite execution seam remains responsible for executable IR mutation.
 
 ## Follow-up work
 

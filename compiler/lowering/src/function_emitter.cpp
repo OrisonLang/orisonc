@@ -23,11 +23,13 @@
 #include "orison/lowering/nonvalue_switch_lowering.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
+#include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unit_deferred_cleanup.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
@@ -236,6 +238,215 @@ auto concurrency_expression_name(syntax::ExpressionSyntax const& expression) -> 
         return "await";
     }
     return expression.text;
+}
+
+void prescan_runtime_indexed_member_cleanup_readiness_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringState& state
+);
+
+auto same_runtime_indexed_member_cleanup_prescan_key(
+    RuntimeIndexedPartialOwner const& lhs,
+    RuntimeIndexedPartialOwner const& rhs
+) -> bool {
+    return lhs.owner_name == rhs.owner_name &&
+        lhs.index_expression_text == rhs.index_expression_text &&
+        lhs.element_source_type_name == rhs.element_source_type_name &&
+        lhs.moved_source_type_name == rhs.moved_source_type_name &&
+        lhs.moved_member_path == rhs.moved_member_path;
+}
+
+auto has_runtime_indexed_member_cleanup_prescan_record(
+    FunctionLoweringState const& state,
+    RuntimeIndexedPartialOwner const& candidate
+) -> bool {
+    return std::ranges::any_of(
+        state.ownership_transfers.runtime_indexed_partial_owners,
+        [&](RuntimeIndexedPartialOwner const& recorded) {
+            return same_runtime_indexed_member_cleanup_prescan_key(recorded, candidate);
+        }
+    );
+}
+
+auto runtime_indexed_member_cleanup_owner_for_readiness_argument(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<RuntimeIndexedPartialOwner> {
+    if (!is_owned_transfer_source_type(expected_source_type, context)) {
+        return std::nullopt;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() ||
+        path->base_expression == nullptr ||
+        path->steps.size() < 2 ||
+        path->steps.front().kind != AggregatePathStepKind::index ||
+        path->steps.front().index_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto source_type = state.source_type_names.find(path->base_expression->text);
+    if (source_type == state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+    if (!element_source_type.has_value() ||
+        !is_owned_transfer_source_type(*element_source_type, context)) {
+        return std::nullopt;
+    }
+
+    auto current_source_type_name = *element_source_type;
+    auto moved_source_type_name = std::optional<std::string> {};
+    auto moved_member_path = std::vector<std::string> {};
+    for (auto step_index = std::size_t {1}; step_index < path->steps.size(); ++step_index) {
+        auto const& step = path->steps[step_index];
+        if (step.kind != AggregatePathStepKind::member) {
+            return std::nullopt;
+        }
+        auto record = context.records.find(current_source_type_name);
+        if (record == context.records.end()) {
+            return std::nullopt;
+        }
+        auto const* field = find_record_field(record->second, step.field_name);
+        if (field == nullptr) {
+            return std::nullopt;
+        }
+        current_source_type_name = field->source_type_name;
+        moved_source_type_name = current_source_type_name;
+        moved_member_path.push_back(step.field_name);
+    }
+
+    if (!moved_source_type_name.has_value() || *moved_source_type_name != expected_source_type) {
+        return std::nullopt;
+    }
+
+    auto element_llvm_type = llvm_type_for_source_type_name(*element_source_type, context);
+    if (!element_llvm_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto owner_llvm_type = llvm_type_for_source_type_name(source_type->second, context);
+    auto element_size_bytes = lowered_type_size_bytes(*element_llvm_type, context);
+    return RuntimeIndexedPartialOwner {
+        .owner_name = path->base_expression->text,
+        .index_expression_text = runtime_index_expression_key(*path->steps.front().index_expression),
+        .element_source_type_name = *element_source_type,
+        .element_llvm_type_name = *element_llvm_type,
+        .owner_llvm_type_name = owner_llvm_type.value_or(std::string {}),
+        .owner_address_name = {},
+        .owner_address_ir_lines = {},
+        .static_length_value = {},
+        .element_size_value = element_size_bytes.has_value()
+            ? std::to_string(*element_size_bytes)
+            : std::string {},
+        .moved_source_type_name = *moved_source_type_name,
+        .moved_member_path = std::move(moved_member_path),
+        .cleanup_strategy = "skip-moved-element",
+        .constructor_move_enabled = true,
+        .source_line = argument.line,
+    };
+}
+
+void prescan_runtime_indexed_member_cleanup_readiness_expression(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringState& state
+) {
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        if (auto record = context.lowering.records.find(expression.left->text);
+            record != context.lowering.records.end()) {
+            auto const argument_count = std::min(expression.arguments.size(), record->second.fields.size());
+            for (auto index = std::size_t {0}; index < argument_count; ++index) {
+                auto owner = runtime_indexed_member_cleanup_owner_for_readiness_argument(
+                    expression.arguments[index],
+                    record->second.fields[index].source_type_name,
+                    context.lowering,
+                    state
+                );
+                if (owner.has_value() && !has_runtime_indexed_member_cleanup_prescan_record(state, *owner)) {
+                    record_runtime_indexed_partial_owner(
+                        state.ownership_transfers,
+                        *owner,
+                        state.current_block,
+                        context.options.enable_runtime_indexed_cleanup_emission,
+                        context.options.enable_runtime_indexed_member_cleanup_ir_mutation_request,
+                        context.options.enable_runtime_indexed_member_cleanup_production_gate_request,
+                        context.options.enable_runtime_indexed_member_cleanup_apply_authorization_request,
+                        context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request
+                    );
+                }
+            }
+        }
+    }
+
+    for (auto const& argument : expression.arguments) {
+        prescan_runtime_indexed_member_cleanup_readiness_expression(argument, context, state);
+    }
+    if (expression.left != nullptr) {
+        prescan_runtime_indexed_member_cleanup_readiness_expression(*expression.left, context, state);
+    }
+    if (expression.right != nullptr) {
+        prescan_runtime_indexed_member_cleanup_readiness_expression(*expression.right, context, state);
+    }
+    if (expression.alternate != nullptr) {
+        prescan_runtime_indexed_member_cleanup_readiness_expression(*expression.alternate, context, state);
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        if (nested_statement != nullptr) {
+            prescan_runtime_indexed_member_cleanup_readiness_statement(*nested_statement, context, state);
+        }
+    }
+}
+
+void prescan_runtime_indexed_member_cleanup_readiness_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringState& state
+) {
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.annotated_type.name.empty()) {
+        state.source_type_names[statement.name] = render_source_type_name(statement.annotated_type);
+    }
+
+    prescan_runtime_indexed_member_cleanup_readiness_expression(statement.expression, context, state);
+    prescan_runtime_indexed_member_cleanup_readiness_expression(statement.assignment_target, context, state);
+    for (auto const& nested_statement : statement.nested_statements) {
+        prescan_runtime_indexed_member_cleanup_readiness_statement(nested_statement, context, state);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        prescan_runtime_indexed_member_cleanup_readiness_statement(alternate_statement, context, state);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        prescan_runtime_indexed_member_cleanup_readiness_expression(switch_case.pattern, context, state);
+        for (auto const& nested_statement : switch_case.statements) {
+            if (nested_statement != nullptr) {
+                prescan_runtime_indexed_member_cleanup_readiness_statement(*nested_statement, context, state);
+            }
+        }
+    }
+}
+
+void prescan_runtime_indexed_member_cleanup_readiness(
+    std::vector<syntax::StatementSyntax> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringState& state
+) {
+    if (!context.options.enable_runtime_indexed_cleanup_emission ||
+        !context.options.enable_runtime_indexed_constructor_move ||
+        context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request) {
+        return;
+    }
+
+    for (auto const& statement : statements) {
+        prescan_runtime_indexed_member_cleanup_readiness_statement(statement, context, state);
+    }
 }
 
 auto is_thread_join_expression(
@@ -1608,6 +1819,7 @@ void emit_function_body(
             session
         );
     }
+    prescan_runtime_indexed_member_cleanup_readiness(function.body_statements, context, state);
     [[maybe_unused]] auto function_scope = DeferredCleanupScope {state};
 
     if (signature.return_type == "void") {
