@@ -2603,3 +2603,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-16: Driver CLI smoke coverage now also pins the same two-owner member-cleanup fixture on the ordinary
   `--emit-llvm` path, confirming the default compiler path still rejects owned DynamicArray member transfers without
   the internal test seam.
+- 2026-08-17: Pipeline smoke coverage now compares fixed-array and source-backed `DynamicArray<T>` runtime-index
+  cleanup emission plans at the typed metadata layer. The plans share index, element source type, element LLVM type,
+  Drop callee, and operation sequence, while keeping static array length, element size, and descriptor-owner metadata
+  storage-specific.

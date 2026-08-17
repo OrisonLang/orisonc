@@ -10510,6 +10510,8 @@ auto main() -> int {
     );
     auto const& runtime_indexed_dynamic_array_plan =
         runtime_indexed_dynamic_array_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.front();
+    auto const& runtime_indexed_fixed_array_plan =
+        runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front();
     assert(runtime_indexed_dynamic_array_plan.owner_name == "items");
     assert(runtime_indexed_dynamic_array_plan.element_source_type_name == "Inner");
     assert(runtime_indexed_dynamic_array_plan.element_llvm_type_name == "%record.Inner");
@@ -10520,6 +10522,56 @@ auto main() -> int {
     assert(runtime_indexed_dynamic_array_plan.ir_plan.complete);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.descriptor_owner_ready);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.owner_deallocation_required);
+    assert(
+        runtime_indexed_dynamic_array_plan.index_expression_text ==
+        runtime_indexed_fixed_array_plan.index_expression_text
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.element_source_type_name ==
+        runtime_indexed_fixed_array_plan.element_source_type_name
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.element_llvm_type_name ==
+        runtime_indexed_fixed_array_plan.element_llvm_type_name
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.operation_names ==
+        runtime_indexed_fixed_array_plan.operation_names
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.ir_plan.index_expression_text ==
+        runtime_indexed_fixed_array_plan.ir_plan.index_expression_text
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.ir_plan.element_source_type_name ==
+        runtime_indexed_fixed_array_plan.ir_plan.element_source_type_name
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.ir_plan.element_llvm_type_name ==
+        runtime_indexed_fixed_array_plan.ir_plan.element_llvm_type_name
+    );
+    assert(
+        runtime_indexed_dynamic_array_plan.ir_plan.drop_callee_name ==
+        runtime_indexed_fixed_array_plan.ir_plan.drop_callee_name
+    );
+    assert(runtime_indexed_fixed_array_plan.owner_llvm_type_name == "[2 x %record.Inner]");
+    assert(runtime_indexed_fixed_array_plan.static_length_value == "2");
+    assert(!runtime_indexed_fixed_array_plan.element_size_value.empty());
+    assert(!runtime_indexed_fixed_array_plan.ir_plan.element_size_value.empty());
+    assert(
+        runtime_indexed_fixed_array_plan.element_size_value !=
+        runtime_indexed_dynamic_array_plan.element_size_value
+    );
+    assert(
+        runtime_indexed_fixed_array_plan.ir_plan.element_size_value !=
+        runtime_indexed_dynamic_array_plan.ir_plan.element_size_value
+    );
+    assert(!runtime_indexed_fixed_array_plan.ir_plan.descriptor_owner_ready);
+    assert(runtime_indexed_fixed_array_plan.ir_plan.static_length_ready);
+    assert(runtime_indexed_dynamic_array_plan.owner_llvm_type_name == "{ ptr, i64, i64 }");
+    assert(runtime_indexed_dynamic_array_plan.static_length_value.empty());
+    assert(runtime_indexed_dynamic_array_plan.ir_plan.descriptor_owner_ready);
+    assert(!runtime_indexed_dynamic_array_plan.ir_plan.static_length_ready);
     assert(
         runtime_indexed_dynamic_array_plan.gated_ir_slice_lines[0] ==
         "  %items.runtime_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"

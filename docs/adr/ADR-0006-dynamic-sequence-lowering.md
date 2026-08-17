@@ -1878,6 +1878,10 @@ representation.
 - Fixed-array and source-backed `DynamicArray<T>` runtime-index constructor owner keys now have direct parity coverage
   for their overlapping metadata fields. The same ownership-transfer smoke keeps owner storage shape distinct while
   asserting shared index, element, moved member path, cleanup strategy, and element-size metadata.
+- Pipeline smoke coverage now also compares the typed cleanup emission plans produced for fixed-array and
+  source-backed `DynamicArray<T>` runtime-index moves. Shared index, element, Drop callee, and operation metadata must
+  match across storage forms, while static length, element size, and descriptor-owner readiness remain deliberately
+  storage-specific.
 
 ## Follow-up work
 
