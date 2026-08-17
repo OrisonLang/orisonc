@@ -134,4 +134,12 @@ auto runtime_indexed_cleanup_ir_shape_parity_summary_report(
     RuntimeIndexedCleanupIrShapeParitySummary const& summary
 ) -> std::string;
 
+auto runtime_indexed_constructor_move_ir_shape_report(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& plan
+) -> std::string;
+
+auto runtime_indexed_constructor_move_ir_shape_report_lines(
+    RuntimeIndexedCleanupEmissionPlanState const& state
+) -> std::vector<std::string>;
+
 } // namespace orison::pipeline

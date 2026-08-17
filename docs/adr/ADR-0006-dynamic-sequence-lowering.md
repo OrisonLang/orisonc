@@ -1896,6 +1896,9 @@ representation.
 - Runtime-index cleanup emission plans now also have a typed IR-shape parity summary. The summary checks the rendered
   cleanup loop/drop shape independently from storage-specific descriptor loads, inline element GEPs, zeroing, and
   deallocation tails.
+- Runtime-index constructor-move production-readiness reporting now appends typed cleanup IR-shape lines. The driver
+  exposes the same common-loop/drop readiness and descriptor-versus-inline storage facts that pipeline smoke coverage
+  compares.
 
 ## Follow-up work
 

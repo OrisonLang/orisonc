@@ -10612,6 +10612,20 @@ auto main() -> int {
         "common-loop matched drop-call matched storage-ir distinct cleanup-tail distinct "
         "line-count distinct"
     );
+    auto same_shape_ir_shape_report_lines =
+        orison::pipeline::runtime_indexed_constructor_move_ir_shape_report_lines(
+            runtime_indexed_fixed_array_same_shape_cleanup
+                .runtime_indexed_cleanup_emission_plan_state
+        );
+    assert(same_shape_ir_shape_report_lines.size() == 1);
+    assert(
+        same_shape_ir_shape_report_lines.front() ==
+        "runtime-index cleanup constructor-move ir-shape owner items lines 19 "
+        "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
+        "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+        "descriptor-storage blocked inline-storage ready descriptor-load absent "
+        "descriptor-gep absent inline-gep present zero-store present deallocate absent"
+    );
     assert(
         orison::pipeline::runtime_indexed_constructor_move_plan_report(
             runtime_indexed_fixed_array_same_shape_plan

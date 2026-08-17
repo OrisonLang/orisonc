@@ -2043,6 +2043,43 @@ auto runtime_indexed_cleanup_ir_shape_parity_summary_report(
     return report.str();
 }
 
+auto runtime_indexed_constructor_move_ir_shape_report(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& plan
+) -> std::string {
+    auto const summary = runtime_indexed_cleanup_ir_shape_summary(plan);
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup constructor-move ir-shape"
+           << " owner " << summary.owner_name
+           << " lines " << summary.gated_ir_slice_line_count
+           << " common-loop " << (summary.common_loop_shape_ready ? "ready" : "blocked")
+           << " condition-blocks " << summary.condition_block_count
+           << " live-check-blocks " << summary.live_check_block_count
+           << " skip-blocks " << summary.skip_block_count
+           << " drop-blocks " << summary.drop_block_count
+           << " continue-blocks " << summary.continue_block_count
+           << " exit-blocks " << summary.exit_block_count
+           << " drop-call " << (summary.drop_call_found ? "ready" : "blocked")
+           << " descriptor-storage " << (summary.descriptor_storage_shape_ready ? "ready" : "blocked")
+           << " inline-storage " << (summary.inline_storage_shape_ready ? "ready" : "blocked")
+           << " descriptor-load " << (summary.descriptor_load_found ? "present" : "absent")
+           << " descriptor-gep " << (summary.descriptor_element_gep_found ? "present" : "absent")
+           << " inline-gep " << (summary.inline_element_gep_found ? "present" : "absent")
+           << " zero-store " << (summary.zero_store_found ? "present" : "absent")
+           << " deallocate " << (summary.deallocate_call_found ? "present" : "absent");
+    return report.str();
+}
+
+auto runtime_indexed_constructor_move_ir_shape_report_lines(
+    RuntimeIndexedCleanupEmissionPlanState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(state.plans.size());
+    for (auto const& plan : state.plans) {
+        lines.push_back(runtime_indexed_constructor_move_ir_shape_report(plan));
+    }
+    return lines;
+}
+
 auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
 ) -> std::string_view {

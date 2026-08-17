@@ -626,6 +626,36 @@ void assert_cli_runtime_indexed_constructor_move_plan_metadata(
     ) != std::string::npos);
 }
 
+void assert_cli_runtime_indexed_constructor_move_ir_shape(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view line_count,
+    std::string_view descriptor_storage,
+    std::string_view inline_storage,
+    std::string_view descriptor_load,
+    std::string_view descriptor_gep,
+    std::string_view inline_gep,
+    std::string_view zero_store,
+    std::string_view deallocate
+) {
+    auto command =
+        executable.string() + " --runtime-indexed-constructor-move-production-readiness " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup constructor-move ir-shape owner items lines " +
+        std::string(line_count) +
+        " common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
+        "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+        "descriptor-storage " + std::string(descriptor_storage) +
+        " inline-storage " + std::string(inline_storage) +
+        " descriptor-load " + std::string(descriptor_load) +
+        " descriptor-gep " + std::string(descriptor_gep) +
+        " inline-gep " + std::string(inline_gep) +
+        " zero-store " + std::string(zero_store) +
+        " deallocate " + std::string(deallocate)
+    ) != std::string::npos);
+}
+
 void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3873,6 +3903,18 @@ auto main() -> int {
         "ready",
         "false"
     );
+    assert_cli_runtime_indexed_constructor_move_ir_shape(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
+        "23",
+        "ready",
+        "blocked",
+        "present",
+        "present",
+        "absent",
+        "absent",
+        "present"
+    );
     assert_cli_runtime_indexed_constructor_move_plan_metadata(
         executable,
         fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or",
@@ -3880,6 +3922,18 @@ auto main() -> int {
         "2",
         "blocked",
         "true"
+    );
+    assert_cli_runtime_indexed_constructor_move_ir_shape(
+        executable,
+        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or",
+        "19",
+        "blocked",
+        "ready",
+        "absent",
+        "absent",
+        "present",
+        "present",
+        "absent"
     );
     assert_cli_run_fixture_success(
         executable,

@@ -358,6 +358,11 @@ auto runtime_indexed_constructor_move_production_readiness_report(
          )) {
         report << '\n' << line;
     }
+    for (auto const& line : pipeline::runtime_indexed_constructor_move_ir_shape_report_lines(
+             result.runtime_indexed_cleanup_emission_plan_state
+         )) {
+        report << '\n' << line;
+    }
     for (auto const& line : pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(result)) {
         report << '\n' << line;
     }
