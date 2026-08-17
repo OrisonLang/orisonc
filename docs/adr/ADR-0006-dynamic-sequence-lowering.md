@@ -1875,6 +1875,9 @@ representation.
 - Runtime-index constructor owner-key construction now lives in the ownership-transfer layer. Expression lowering and
   the report-only member-cleanup readiness pre-scan now share one builder for owner, index, element type, moved type,
   moved member path, owner LLVM type, and cleanup sizing metadata.
+- Fixed-array and source-backed `DynamicArray<T>` runtime-index constructor owner keys now have direct parity coverage
+  for their overlapping metadata fields. The same ownership-transfer smoke keeps owner storage shape distinct while
+  asserting shared index, element, moved member path, cleanup strategy, and element-size metadata.
 
 ## Follow-up work
 

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-17: Shared runtime-index constructor owner-key coverage now compares fixed-array and source-backed
+  `DynamicArray<Box>` member-transfer metadata. The smoke test asserts matching runtime index, element type, moved
+  type, member path, cleanup strategy, and element sizing while preserving distinct owner storage metadata.
 - 2026-08-16: Runtime-index constructor owner-key construction now lives in the ownership-transfer layer and is shared
   by expression lowering and report-only member-cleanup readiness pre-scan. Direct ownership-transfer smoke coverage
   pins the source-backed `DynamicArray<Box>` member-transfer key shape.

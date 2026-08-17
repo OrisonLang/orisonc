@@ -2023,33 +2023,37 @@ int main() {
     assert(orison::lowering::is_owned_transfer_source_type("Box", context));
     assert(orison::lowering::is_owned_transfer_source_type("MaybePayload", context));
 
+    auto make_runtime_indexed_member_argument = [](std::string owner_name) {
+        auto index_argument = orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .line = 7,
+            .text = "index",
+        };
+        auto index_access = orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::index_access,
+            .line = 7,
+            .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                orison::syntax::ExpressionSyntax {
+                    .kind = orison::syntax::ExpressionKind::name,
+                    .line = 7,
+                    .text = std::move(owner_name),
+                }
+            ),
+        };
+        index_access.arguments.push_back(std::move(index_argument));
+        return orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::member_access,
+            .line = 7,
+            .text = "payload",
+            .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                std::move(index_access)
+            ),
+        };
+    };
+
     auto runtime_indexed_state = orison::lowering::FunctionLoweringState {};
     runtime_indexed_state.source_type_names.emplace("items", "DynamicArray<Box>");
-    auto runtime_indexed_index_argument = orison::syntax::ExpressionSyntax {
-        .kind = orison::syntax::ExpressionKind::name,
-        .line = 7,
-        .text = "index",
-    };
-    auto runtime_indexed_index_access = orison::syntax::ExpressionSyntax {
-        .kind = orison::syntax::ExpressionKind::index_access,
-        .line = 7,
-        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
-            orison::syntax::ExpressionSyntax {
-                .kind = orison::syntax::ExpressionKind::name,
-                .line = 7,
-                .text = "items",
-            }
-        ),
-    };
-    runtime_indexed_index_access.arguments.push_back(std::move(runtime_indexed_index_argument));
-    auto runtime_indexed_argument = orison::syntax::ExpressionSyntax {
-        .kind = orison::syntax::ExpressionKind::member_access,
-        .line = 7,
-        .text = "payload",
-        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
-            std::move(runtime_indexed_index_access)
-        ),
-    };
+    auto runtime_indexed_argument = make_runtime_indexed_member_argument("items");
     auto runtime_indexed_owner = orison::lowering::runtime_indexed_partial_owner_for_constructor_argument(
         runtime_indexed_argument,
         "Payload",
@@ -2067,6 +2071,30 @@ int main() {
     assert((runtime_indexed_owner->moved_member_path == std::vector<std::string> {"payload"}));
     assert(runtime_indexed_owner->cleanup_strategy == "skip-moved-element");
     assert(!runtime_indexed_owner->constructor_move_enabled);
+
+    auto fixed_runtime_indexed_state = orison::lowering::FunctionLoweringState {};
+    fixed_runtime_indexed_state.source_type_names.emplace("fixed_items", "Array<Box, 2>");
+    auto fixed_runtime_indexed_argument = make_runtime_indexed_member_argument("fixed_items");
+    auto fixed_runtime_indexed_owner =
+        orison::lowering::runtime_indexed_partial_owner_for_constructor_argument(
+            fixed_runtime_indexed_argument,
+            "Payload",
+            context,
+            fixed_runtime_indexed_state
+        );
+    assert(fixed_runtime_indexed_owner.has_value());
+    assert(fixed_runtime_indexed_owner->owner_name == "fixed_items");
+    assert(fixed_runtime_indexed_owner->index_expression_text == runtime_indexed_owner->index_expression_text);
+    assert(fixed_runtime_indexed_owner->element_source_type_name == runtime_indexed_owner->element_source_type_name);
+    assert(fixed_runtime_indexed_owner->element_llvm_type_name == runtime_indexed_owner->element_llvm_type_name);
+    assert(fixed_runtime_indexed_owner->moved_source_type_name == runtime_indexed_owner->moved_source_type_name);
+    assert(fixed_runtime_indexed_owner->moved_member_path == runtime_indexed_owner->moved_member_path);
+    assert(fixed_runtime_indexed_owner->cleanup_strategy == runtime_indexed_owner->cleanup_strategy);
+    assert(fixed_runtime_indexed_owner->constructor_move_enabled == runtime_indexed_owner->constructor_move_enabled);
+    assert(fixed_runtime_indexed_owner->owner_llvm_type_name == "[2 x %record.Box]");
+    assert(fixed_runtime_indexed_owner->static_length_value == "2");
+    assert(runtime_indexed_owner->static_length_value.empty());
+    assert(fixed_runtime_indexed_owner->element_size_value == runtime_indexed_owner->element_size_value);
 
     auto scalar_field = orison::lowering::owned_record_field_transfer("box", "Box", "count", context);
     assert(!scalar_field.has_value());
