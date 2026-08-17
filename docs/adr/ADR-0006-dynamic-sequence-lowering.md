@@ -1885,6 +1885,9 @@ representation.
 - A same-layout fixed-array fixture now mirrors the source-backed `DynamicArray<Inner>` runtime-index constructor move
   fixture. Pipeline parity coverage uses this pair to assert element-size metadata equality across storage forms while
   continuing to keep static length and descriptor-owner readiness storage-specific.
+- Constructor-move production-readiness reporting now includes one typed cleanup-plan metadata line per runtime-index
+  cleanup emission plan. Driver smoke coverage pins same-layout fixed-array and source-backed `DynamicArray<Inner>`
+  element-size parity at that CLI boundary while preserving storage-specific owner representation fields.
 
 ## Follow-up work
 

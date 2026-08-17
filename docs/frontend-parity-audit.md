@@ -2610,3 +2610,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: A same-layout fixed-array fixture now mirrors the source-backed `DynamicArray<Inner>` runtime-index
   constructor move fixture. Pipeline smoke coverage uses the pair to assert element-size metadata parity while still
   keeping static length and descriptor-owner readiness storage-specific.
+- 2026-08-17: Driver-facing constructor-move production-readiness now emits typed cleanup-plan metadata lines. CLI
+  smoke coverage asserts the same-layout fixed-array and source-backed `DynamicArray<Inner>` fixtures both report
+  `element-size 4` while preserving storage-specific owner LLVM type, static length, and descriptor-owner readiness.

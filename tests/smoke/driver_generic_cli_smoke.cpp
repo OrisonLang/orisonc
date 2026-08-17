@@ -604,6 +604,28 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
     ) != std::string::npos);
 }
 
+void assert_cli_runtime_indexed_constructor_move_plan_metadata(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view owner_llvm_type,
+    std::string_view static_length,
+    std::string_view descriptor_owner,
+    std::string_view static_length_ready
+) {
+    auto command =
+        executable.string() + " --runtime-indexed-constructor-move-production-readiness " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup constructor-move plan owner items index index element Inner "
+        "element-llvm %record.Inner owner-llvm " + std::string(owner_llvm_type) +
+        " static-length " + std::string(static_length) +
+        " element-size 4 drop-callee __orison_drop.Inner operation-count 5 "
+        "descriptor-owner " + std::string(descriptor_owner) +
+        " static-length-ready " + std::string(static_length_ready) +
+        " production enabled"
+    ) != std::string::npos);
+}
+
 void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3842,6 +3864,22 @@ auto main() -> int {
     assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_runtime_indexed_constructor_move_plan_metadata(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
+        "{ ptr, i64, i64 }",
+        "none",
+        "ready",
+        "false"
+    );
+    assert_cli_runtime_indexed_constructor_move_plan_metadata(
+        executable,
+        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or",
+        "[2 x %record.Inner]",
+        "2",
+        "blocked",
+        "true"
     );
     assert_cli_run_fixture_success(
         executable,

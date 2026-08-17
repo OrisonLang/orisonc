@@ -325,6 +325,31 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_report(
     return pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
 }
 
+auto runtime_indexed_constructor_move_plan_report_lines(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(result.runtime_indexed_cleanup_emission_plan_state.plans.size());
+    for (auto const& plan : result.runtime_indexed_cleanup_emission_plan_state.plans) {
+        auto line = std::ostringstream {};
+        line << "runtime-index cleanup constructor-move plan"
+             << " owner " << plan.owner_name
+             << " index " << plan.index_expression_text
+             << " element " << plan.element_source_type_name
+             << " element-llvm " << plan.element_llvm_type_name
+             << " owner-llvm " << plan.owner_llvm_type_name
+             << " static-length " << (plan.static_length_value.empty() ? "none" : plan.static_length_value)
+             << " element-size " << (plan.element_size_value.empty() ? "unknown" : plan.element_size_value)
+             << " drop-callee " << plan.ir_plan.drop_callee_name
+             << " operation-count " << plan.operation_count
+             << " descriptor-owner " << (plan.ir_plan.descriptor_owner_ready ? "ready" : "blocked")
+             << " static-length-ready " << (plan.ir_plan.static_length_ready ? "true" : "false")
+             << " production " << (plan.production_enabled ? "enabled" : "disabled");
+        lines.push_back(line.str());
+    }
+    return lines;
+}
+
 auto runtime_indexed_constructor_move_production_readiness_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::string {
@@ -353,6 +378,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " member-rewrite-records " << member_cleanup_typed_promotion.rewrite_promotion_count
            << " diagnostic "
            << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
+    for (auto const& line : runtime_indexed_constructor_move_plan_report_lines(result)) {
+        report << '\n' << line;
+    }
     for (auto const& line : pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(result)) {
         report << '\n' << line;
     }
