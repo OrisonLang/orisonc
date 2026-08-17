@@ -2582,3 +2582,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-16: The same two-owner member-cleanup fixture now asserts generated LLVM IR for both owner-specific cleanup
   CFGs. Coverage pins independent cleanup entry/drop/deallocate blocks, helper calls, element Drop calls, descriptor
   finalization, and a single emitted member-cleanup helper definition.
+- 2026-08-16: The two-owner source-backed member-cleanup fixture now object-emits, host-links, and runs through the
+  fully requested internal gated path. This extends the multiple owner/index cleanup proof from typed readiness and IR
+  shape to native executable behavior.

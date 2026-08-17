@@ -7831,6 +7831,21 @@ auto main() -> int {
             "declare void @__orison_member_cleanup.Box.except.item(ptr)"
         ) == std::string::npos
     );
+    auto runtime_indexed_two_member_transfers_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(two_member_transfers_ir);
+    assert(!runtime_indexed_two_member_transfers_object.has_errors());
+    auto runtime_indexed_two_member_transfers_executable =
+        smoke_temp_root / "runtime_indexed_two_member_transfers";
+    auto runtime_indexed_two_member_transfers_link =
+        orison::link::HostLinker {}.link(
+            runtime_indexed_two_member_transfers_object.object_bytes,
+            runtime_indexed_two_member_transfers_executable
+        );
+    assert(!runtime_indexed_two_member_transfers_link.has_errors());
+    auto runtime_indexed_two_member_transfers_status =
+        std::system(runtime_indexed_two_member_transfers_executable.string().c_str());
+    assert(WIFEXITED(runtime_indexed_two_member_transfers_status));
+    assert(WEXITSTATUS(runtime_indexed_two_member_transfers_status) == 0);
 
     auto synthetic_member_cleanup_summary_result = orison::pipeline::CompilePipelineResult {};
     synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates = {

@@ -1858,6 +1858,8 @@ representation.
 - The two-owner source-backed member-cleanup fixture now also pins generated LLVM IR for both owner-specific cleanup
   CFGs, including cleanup entry/drop/deallocate blocks, member helper calls, element Drop calls, descriptor
   finalization, and one shared helper definition.
+- The two-owner source-backed member-cleanup fixture now also object-emits, host-links, and runs successfully through
+  the fully requested internal gated path, extending the proof from typed readiness and IR shape to native execution.
 
 ## Follow-up work
 
