@@ -7636,6 +7636,118 @@ auto main() -> int {
         "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
         "helper-definition ready production enabled"
     );
+
+    auto runtime_indexed_two_member_transfers_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or";
+    auto runtime_indexed_two_member_transfers_apply_request = pipeline.emit_llvm(
+        runtime_indexed_two_member_transfers_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .test_only_runtime_indexed_member_cleanup_ir_mutation_request = true,
+            .test_only_runtime_indexed_member_cleanup_production_gate_request = true,
+            .test_only_runtime_indexed_member_cleanup_apply_authorization_request = true,
+            .test_only_runtime_indexed_member_cleanup_rewrite_execution_request = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_two_member_transfers_apply_request.has_errors());
+    auto const left_member_cleanup_key = orison::pipeline::RuntimeIndexedMemberCleanupMatchKey {
+        .owner_name = "left_items",
+        .index_expression_text = "(left_index + left_zero)",
+        .element_source_type_name = "Box",
+        .moved_source_type_name = "Inner",
+        .moved_member_path = {"item"},
+    };
+    auto const right_member_cleanup_key = orison::pipeline::RuntimeIndexedMemberCleanupMatchKey {
+        .owner_name = "right_items",
+        .index_expression_text = "(right_index + right_zero)",
+        .element_source_type_name = "Box",
+        .moved_source_type_name = "Inner",
+        .moved_member_path = {"item"},
+    };
+    auto assert_ready_member_cleanup_refresh_chain =
+        [&](orison::pipeline::RuntimeIndexedMemberCleanupMatchKey const& key) {
+            auto const* summary = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_execution_summaries
+            );
+            assert(summary != nullptr);
+            assert(summary->typed_gate_ready);
+            assert(summary->apply_authorized);
+            assert(summary->rewrite_authorized);
+            assert(summary->rewrite_execution_enabled);
+            assert(summary->rewrite_verdict_enabled);
+            assert(summary->rewrite_promotion_ready);
+            assert(summary->helper_definition_ready);
+            assert(summary->production_enabled);
+
+            auto const* readiness = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_mutation_production_readiness
+            );
+            assert(readiness != nullptr);
+            assert(readiness->readiness_ready);
+            assert(readiness->production_enabled);
+
+            auto const* authorization = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_mutation_rewrite_authorizations
+            );
+            assert(authorization != nullptr);
+            assert(authorization->rewrite_authorized);
+
+            auto const* execution_plan = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_mutation_rewrite_execution_plans
+            );
+            assert(execution_plan != nullptr);
+            assert(execution_plan->execution_enabled);
+
+            auto const* promotion_status = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
+            );
+            assert(promotion_status != nullptr);
+            assert(promotion_status->promotion_ready);
+            assert(promotion_status->production_enabled);
+        };
+    assert(
+        runtime_indexed_two_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_execution_summaries.size() == 2
+    );
+    assert(
+        runtime_indexed_two_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_mutation_production_readiness.size() == 2
+    );
+    assert(
+        runtime_indexed_two_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_authorizations.size() == 2
+    );
+    assert(
+        runtime_indexed_two_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_execution_plans.size() == 2
+    );
+    assert(
+        runtime_indexed_two_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.size() == 2
+    );
+    assert_ready_member_cleanup_refresh_chain(left_member_cleanup_key);
+    assert_ready_member_cleanup_refresh_chain(right_member_cleanup_key);
+
     auto synthetic_member_cleanup_summary_result = orison::pipeline::CompilePipelineResult {};
     synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates = {
         orison::lowering::RuntimeIndexedMemberCleanupTypedPromotionGate {

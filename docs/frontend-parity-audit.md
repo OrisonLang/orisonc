@@ -2575,3 +2575,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   aligned with the shared owner/index/element/moved/member-path key fields when propagating typed readiness into
   mutation production, guarded rewrite authorization, execution, and promotion records. This removes repeated local
   comparison copies without changing the guarded rewrite audit surface.
+- 2026-08-16: Pipeline smoke coverage now includes a source-backed `DynamicArray<Box>` fixture with two computed
+  member transfers in one function. The fully requested internal member-cleanup path asserts both owner/index keys
+  refresh independently to ready/enabled across mutation readiness, guarded rewrite authorization, execution, and
+  promotion records.

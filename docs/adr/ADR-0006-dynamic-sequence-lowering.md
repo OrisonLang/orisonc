@@ -1852,6 +1852,9 @@ representation.
   owner/index/element/moved/member-path key fields when propagating readiness through mutation production, guarded
   rewrite authorization, execution, and promotion records. LLVM emission no longer carries repeated local copies of the
   same comparison.
+- Source-backed `DynamicArray<Box>` member-cleanup pipeline coverage now includes two computed member transfers in one
+  function. The fully requested internal path asserts each keyed owner/index chain reaches ready/enabled mutation,
+  guarded rewrite, execution, and promotion records independently.
 
 ## Follow-up work
 

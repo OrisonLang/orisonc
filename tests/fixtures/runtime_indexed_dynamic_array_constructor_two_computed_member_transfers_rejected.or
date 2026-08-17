@@ -1,0 +1,42 @@
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected
+
+record Inner
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Box
+    item: Inner
+
+implements Drop for Box
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var left_items: DynamicArray<Box> = DynamicArray()
+    left_items.push(Box(Inner(7 as UInt32)))
+    left_items.push(Box(Inner(11 as UInt32)))
+    let left_index: UInt64 = 0 as UInt64
+    let left_zero: UInt64 = 0 as UInt64
+    var left_outer: Outer = Outer(left_items[left_index + left_zero].item)
+
+    var right_items: DynamicArray<Box> = DynamicArray()
+    right_items.push(Box(Inner(17 as UInt32)))
+    right_items.push(Box(Inner(19 as UInt32)))
+    let right_index: UInt64 = 1 as UInt64
+    let right_zero: UInt64 = 0 as UInt64
+    var right_outer: Outer = Outer(right_items[right_index + right_zero].item)
+
+    0 as UInt32
