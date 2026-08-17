@@ -1890,6 +1890,9 @@ representation.
   element-size parity at that CLI boundary while preserving storage-specific owner representation fields.
 - Runtime-index constructor-move cleanup-plan metadata formatting now lives in the pipeline layer. The driver consumes
   those shared formatter lines, and pipeline smoke coverage pins the formatter independently from CLI execution.
+- Runtime-index cleanup emission plans now have a typed parity summary in the pipeline. The summary captures shared
+  metadata equality across storage forms and expected storage-representation differences so tests and future tools do
+  not need to repeat field-by-field comparison logic.
 
 ## Follow-up work
 

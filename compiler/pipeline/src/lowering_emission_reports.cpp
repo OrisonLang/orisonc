@@ -1871,6 +1871,59 @@ auto runtime_indexed_constructor_move_plan_report_lines(
     return lines;
 }
 
+auto runtime_indexed_cleanup_plan_parity_summary(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& left,
+    lowering::RuntimeIndexedCleanupEmissionPlan const& right
+) -> RuntimeIndexedCleanupPlanParitySummary {
+    auto summary = RuntimeIndexedCleanupPlanParitySummary {
+        .left_owner_name = left.owner_name,
+        .right_owner_name = right.owner_name,
+        .index_expression_matches = left.index_expression_text == right.index_expression_text,
+        .element_source_type_matches = left.element_source_type_name == right.element_source_type_name,
+        .element_llvm_type_matches = left.element_llvm_type_name == right.element_llvm_type_name,
+        .element_size_matches = left.element_size_value == right.element_size_value,
+        .drop_callee_matches = left.ir_plan.drop_callee_name == right.ir_plan.drop_callee_name,
+        .operation_sequence_matches = left.operation_names == right.operation_names,
+        .owner_llvm_type_differs = left.owner_llvm_type_name != right.owner_llvm_type_name,
+        .static_length_differs = left.static_length_value != right.static_length_value,
+        .descriptor_owner_readiness_differs =
+            left.ir_plan.descriptor_owner_ready != right.ir_plan.descriptor_owner_ready,
+    };
+    summary.shared_metadata_matches =
+        summary.index_expression_matches &&
+        summary.element_source_type_matches &&
+        summary.element_llvm_type_matches &&
+        summary.element_size_matches &&
+        summary.drop_callee_matches &&
+        summary.operation_sequence_matches;
+    summary.storage_metadata_differs =
+        summary.owner_llvm_type_differs &&
+        summary.static_length_differs &&
+        summary.descriptor_owner_readiness_differs;
+    return summary;
+}
+
+auto runtime_indexed_cleanup_plan_parity_summary_report(
+    RuntimeIndexedCleanupPlanParitySummary const& summary
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup plan parity"
+           << " left-owner " << summary.left_owner_name
+           << " right-owner " << summary.right_owner_name
+           << " shared-metadata " << (summary.shared_metadata_matches ? "matched" : "mismatched")
+           << " index " << (summary.index_expression_matches ? "matched" : "mismatched")
+           << " element-source " << (summary.element_source_type_matches ? "matched" : "mismatched")
+           << " element-llvm " << (summary.element_llvm_type_matches ? "matched" : "mismatched")
+           << " element-size " << (summary.element_size_matches ? "matched" : "mismatched")
+           << " drop-callee " << (summary.drop_callee_matches ? "matched" : "mismatched")
+           << " operations " << (summary.operation_sequence_matches ? "matched" : "mismatched")
+           << " storage-metadata " << (summary.storage_metadata_differs ? "distinct" : "not-distinct")
+           << " owner-llvm " << (summary.owner_llvm_type_differs ? "distinct" : "same")
+           << " static-length " << (summary.static_length_differs ? "distinct" : "same")
+           << " descriptor-owner " << (summary.descriptor_owner_readiness_differs ? "distinct" : "same");
+    return report.str();
+}
+
 auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
 ) -> std::string_view {

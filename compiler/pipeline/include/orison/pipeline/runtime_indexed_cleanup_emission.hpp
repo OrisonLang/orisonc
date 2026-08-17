@@ -48,6 +48,24 @@ struct RuntimeIndexedCleanupIrRenderState {
     std::size_t rendered_ir_line_count = 0;
 };
 
+struct RuntimeIndexedCleanupPlanParitySummary {
+    std::string left_owner_name;
+    std::string right_owner_name;
+    bool index_expression_matches = false;
+    bool element_source_type_matches = false;
+    bool element_llvm_type_matches = false;
+    bool element_size_matches = false;
+    bool drop_callee_matches = false;
+    bool operation_sequence_matches = false;
+    bool owner_llvm_type_differs = false;
+    bool static_length_differs = false;
+    bool descriptor_owner_readiness_differs = false;
+    bool shared_metadata_matches = false;
+    bool storage_metadata_differs = false;
+
+    auto operator==(RuntimeIndexedCleanupPlanParitySummary const&) const -> bool = default;
+};
+
 auto runtime_indexed_constructor_move_plan_report(
     lowering::RuntimeIndexedCleanupEmissionPlan const& plan
 ) -> std::string;
@@ -55,5 +73,14 @@ auto runtime_indexed_constructor_move_plan_report(
 auto runtime_indexed_constructor_move_plan_report_lines(
     RuntimeIndexedCleanupEmissionPlanState const& state
 ) -> std::vector<std::string>;
+
+auto runtime_indexed_cleanup_plan_parity_summary(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& left,
+    lowering::RuntimeIndexedCleanupEmissionPlan const& right
+) -> RuntimeIndexedCleanupPlanParitySummary;
+
+auto runtime_indexed_cleanup_plan_parity_summary_report(
+    RuntimeIndexedCleanupPlanParitySummary const& summary
+) -> std::string;
 
 } // namespace orison::pipeline

@@ -2616,3 +2616,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: Runtime-index constructor-move cleanup-plan metadata formatting now lives in the pipeline layer.
   Pipeline smoke coverage pins the reusable formatter directly, and the driver consumes the same report lines for
   production-readiness output.
+- 2026-08-17: Runtime-index cleanup emission plans now have a typed pipeline parity summary. The summary reports
+  shared-field equality for index, element type, element size, Drop callee, and operation sequence while also recording
+  expected storage-specific differences for owner LLVM type, static length, and descriptor-owner readiness.

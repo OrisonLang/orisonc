@@ -10541,38 +10541,17 @@ auto main() -> int {
     assert(runtime_indexed_dynamic_array_plan.ir_plan.complete);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.descriptor_owner_ready);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.owner_deallocation_required);
-    assert(
-        runtime_indexed_dynamic_array_plan.index_expression_text ==
-        runtime_indexed_fixed_array_plan.index_expression_text
+    auto different_layout_parity = orison::pipeline::runtime_indexed_cleanup_plan_parity_summary(
+        runtime_indexed_fixed_array_plan,
+        runtime_indexed_dynamic_array_plan
     );
-    assert(
-        runtime_indexed_dynamic_array_plan.element_source_type_name ==
-        runtime_indexed_fixed_array_plan.element_source_type_name
-    );
-    assert(
-        runtime_indexed_dynamic_array_plan.element_llvm_type_name ==
-        runtime_indexed_fixed_array_plan.element_llvm_type_name
-    );
-    assert(
-        runtime_indexed_dynamic_array_plan.operation_names ==
-        runtime_indexed_fixed_array_plan.operation_names
-    );
-    assert(
-        runtime_indexed_dynamic_array_plan.ir_plan.index_expression_text ==
-        runtime_indexed_fixed_array_plan.ir_plan.index_expression_text
-    );
-    assert(
-        runtime_indexed_dynamic_array_plan.ir_plan.element_source_type_name ==
-        runtime_indexed_fixed_array_plan.ir_plan.element_source_type_name
-    );
-    assert(
-        runtime_indexed_dynamic_array_plan.ir_plan.element_llvm_type_name ==
-        runtime_indexed_fixed_array_plan.ir_plan.element_llvm_type_name
-    );
-    assert(
-        runtime_indexed_dynamic_array_plan.ir_plan.drop_callee_name ==
-        runtime_indexed_fixed_array_plan.ir_plan.drop_callee_name
-    );
+    assert(!different_layout_parity.shared_metadata_matches);
+    assert(!different_layout_parity.element_size_matches);
+    assert(different_layout_parity.index_expression_matches);
+    assert(different_layout_parity.element_source_type_matches);
+    assert(different_layout_parity.element_llvm_type_matches);
+    assert(different_layout_parity.drop_callee_matches);
+    assert(different_layout_parity.operation_sequence_matches);
     assert(runtime_indexed_fixed_array_plan.owner_llvm_type_name == "[2 x %record.Inner]");
     assert(runtime_indexed_fixed_array_plan.static_length_value == "2");
     assert(!runtime_indexed_fixed_array_plan.element_size_value.empty());
@@ -10586,33 +10565,22 @@ auto main() -> int {
         runtime_indexed_dynamic_array_plan.ir_plan.element_size_value
     );
     assert(runtime_indexed_fixed_array_same_shape_plan.owner_name == "items");
-    assert(
-        runtime_indexed_fixed_array_same_shape_plan.index_expression_text ==
-        runtime_indexed_dynamic_array_plan.index_expression_text
+    auto same_layout_parity = orison::pipeline::runtime_indexed_cleanup_plan_parity_summary(
+        runtime_indexed_fixed_array_same_shape_plan,
+        runtime_indexed_dynamic_array_plan
     );
+    assert(same_layout_parity.shared_metadata_matches);
+    assert(same_layout_parity.element_size_matches);
+    assert(same_layout_parity.storage_metadata_differs);
+    assert(same_layout_parity.owner_llvm_type_differs);
+    assert(same_layout_parity.static_length_differs);
+    assert(same_layout_parity.descriptor_owner_readiness_differs);
     assert(
-        runtime_indexed_fixed_array_same_shape_plan.element_source_type_name ==
-        runtime_indexed_dynamic_array_plan.element_source_type_name
-    );
-    assert(
-        runtime_indexed_fixed_array_same_shape_plan.element_llvm_type_name ==
-        runtime_indexed_dynamic_array_plan.element_llvm_type_name
-    );
-    assert(
-        runtime_indexed_fixed_array_same_shape_plan.element_size_value ==
-        runtime_indexed_dynamic_array_plan.element_size_value
-    );
-    assert(
-        runtime_indexed_fixed_array_same_shape_plan.operation_names ==
-        runtime_indexed_dynamic_array_plan.operation_names
-    );
-    assert(
-        runtime_indexed_fixed_array_same_shape_plan.ir_plan.element_size_value ==
-        runtime_indexed_dynamic_array_plan.ir_plan.element_size_value
-    );
-    assert(
-        runtime_indexed_fixed_array_same_shape_plan.ir_plan.drop_callee_name ==
-        runtime_indexed_dynamic_array_plan.ir_plan.drop_callee_name
+        orison::pipeline::runtime_indexed_cleanup_plan_parity_summary_report(same_layout_parity) ==
+        "runtime-index cleanup plan parity left-owner items right-owner items "
+        "shared-metadata matched index matched element-source matched element-llvm matched "
+        "element-size matched drop-callee matched operations matched storage-metadata distinct "
+        "owner-llvm distinct static-length distinct descriptor-owner distinct"
     );
     assert(
         orison::pipeline::runtime_indexed_constructor_move_plan_report(
