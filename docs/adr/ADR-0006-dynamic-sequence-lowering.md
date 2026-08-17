@@ -1863,6 +1863,8 @@ representation.
 - Driver CLI smoke coverage now runs that two-owner source-backed fixture through
   `--test-only-runtime-indexed-member-cleanup-run` and asserts both keyed typed-promotion-gate and execution-summary
   lines appear in the internal test-seam output.
+- Driver CLI smoke coverage now also pins the same two-owner fixture on the ordinary `--emit-llvm` path, confirming
+  owned DynamicArray member transfers still require the internal test seam and remain rejected by default.
 
 ## Follow-up work
 

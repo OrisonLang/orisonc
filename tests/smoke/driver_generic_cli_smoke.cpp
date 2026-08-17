@@ -3759,6 +3759,11 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or",
         "DynamicArray element path read of owned projection requires a non-owning scalar projection"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or",
+        "DynamicArray element path read of owned projection requires a non-owning scalar projection"
+    );
     assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"

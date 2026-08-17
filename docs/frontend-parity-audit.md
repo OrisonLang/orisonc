@@ -2588,3 +2588,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-16: Driver CLI smoke coverage now runs the same two-owner source-backed member-cleanup fixture through
   `--test-only-runtime-indexed-member-cleanup-run` and asserts both owner/index typed promotion gates plus execution
   summaries appear in the test-seam output.
+- 2026-08-16: Driver CLI smoke coverage now also pins the same two-owner member-cleanup fixture on the ordinary
+  `--emit-llvm` path, confirming the default compiler path still rejects owned DynamicArray member transfers without
+  the internal test seam.
