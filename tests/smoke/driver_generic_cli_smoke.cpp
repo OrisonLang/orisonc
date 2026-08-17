@@ -3820,7 +3820,7 @@ auto main() -> int {
     );
     assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_function_member_transfers_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-16: Driver CLI smoke coverage now pins same-function runtime-index member-cleanup readiness aggregation for
+  two source-backed `DynamicArray<Box>` owned member transfers. The ordinary production-readiness report shows both
+  keyed default blockers without relying on split-function fixture shape.
 - 2026-08-16: Runtime-index constructor-move production-readiness now pre-collects report-only member-cleanup
   candidates for annotated local `DynamicArray<T>` owners before ordinary lowering rejects the first unsupported owned
   member transfer. The CLI report can show multiple keyed default blockers without enabling the internal rewrite seam.

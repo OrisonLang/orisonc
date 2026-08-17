@@ -1869,6 +1869,9 @@ representation.
   bindings and constructor-call arguments. This records every keyed source-backed `DynamicArray<T>` member-cleanup
   candidate visible in the function before ordinary lowering stops at the first unsupported owned member transfer,
   while the internal rewrite execution seam remains responsible for executable IR mutation.
+- Driver CLI smoke coverage now asserts the same-function two-owner fixture on the ordinary production-readiness path.
+  The split-function readiness fixture was removed so the test directly pins aggregation across multiple blocked
+  member transfers in one function.
 
 ## Follow-up work
 
