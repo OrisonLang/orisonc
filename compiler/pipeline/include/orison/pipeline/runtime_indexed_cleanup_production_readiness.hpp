@@ -19,6 +19,7 @@ enum class RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind {
     ModuleMutation,
     FunctionIntegration,
     FunctionSpliceConflict,
+    IrShape,
 };
 
 struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
@@ -47,6 +48,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool module_mutation_enabled = false;
     bool function_integration_ready = false;
     bool function_splice_conflict_free = false;
+    bool ir_shape_ready = true;
     bool production_ready = false;
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind diagnostic_blocker_kind =
         RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;

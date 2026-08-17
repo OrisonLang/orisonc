@@ -1816,6 +1816,9 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
                        << " right-line " << state.diagnostic_right_source_line;
         }
         break;
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape:
+        diagnostic << "cleanup ir shape blocked";
+        break;
     }
     if (state.diagnostic_composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
         diagnostic << " composition-failure "
@@ -2100,6 +2103,8 @@ auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
         return "function-integration";
     case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict:
         return "function-splice-conflict";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape:
+        return "ir-shape";
     }
     return "unknown";
 }
@@ -2124,6 +2129,8 @@ auto runtime_indexed_cleanup_production_readiness_blocker_stage_name(
         return "function integration";
     case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict:
         return "function splice conflict";
+    case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape:
+        return "cleanup ir shape";
     }
     return {};
 }
@@ -2141,6 +2148,7 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
            << " function-integration " << (state.function_integration_ready ? "ready" : "blocked")
            << " splice-conflicts " << state.function_splice_conflict_count
            << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
+           << " ir-shape " << (state.ir_shape_ready ? "ready" : "blocked")
            << " production " << (state.production_ready ? "ready" : "blocked")
            << " blocker-count " << state.blockers.size()
            << " blocker-kind "
@@ -2292,6 +2300,7 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
 }
 
 auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
+    RuntimeIndexedCleanupEmissionPlanState const& emission_plan_state,
     RuntimeIndexedCleanupModuleIrInsertionGateState const& insertion_gate_state,
     RuntimeIndexedCleanupModuleIrInsertionPreviewState const& preview_state,
     RuntimeIndexedCleanupModuleIrCandidateState const& candidate_state,
@@ -2302,6 +2311,17 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
     auto const function_splice_conflict_free =
         function_verification_state.splice_conflict_count == 0;
+    auto ir_shape_ready = true;
+    for (auto const& plan : emission_plan_state.plans) {
+        if (plan.gated_ir_slice_lines.empty()) {
+            continue;
+        }
+        auto const shape = runtime_indexed_cleanup_ir_shape_summary(plan);
+        ir_shape_ready = ir_shape_ready &&
+            shape.common_loop_shape_ready &&
+            shape.drop_call_found &&
+            (shape.descriptor_storage_shape_ready || shape.inline_storage_shape_ready);
+    }
     auto const function_composition_failure =
         function_mutation_state.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none
             ? function_mutation_state.composition_failure
@@ -2333,6 +2353,7 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             function_mutation_ready,
         .function_integration_ready = function_mutation_ready,
         .function_splice_conflict_free = function_splice_conflict_free,
+        .ir_shape_ready = ir_shape_ready,
         .function_splice_conflict_count = function_verification_state.splice_conflict_count,
     };
     readiness_state.production_ready =
@@ -2342,7 +2363,8 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
         readiness_state.candidate_verified &&
         readiness_state.module_mutation_enabled &&
         readiness_state.function_integration_ready &&
-        readiness_state.function_splice_conflict_free;
+        readiness_state.function_splice_conflict_free &&
+        readiness_state.ir_shape_ready;
     if (!readiness_state.function_splice_conflict_free) {
         if (!function_verification_state.splice_conflicts.empty()) {
             auto const& conflict = function_verification_state.splice_conflicts.front();
@@ -2415,6 +2437,13 @@ auto build_runtime_indexed_cleanup_module_ir_production_readiness_state(
             function_mutation_state.branch_replacements_applied,
             function_mutation_state.cleanup_cfg_appended,
             function_mutation_state.phi_predecessors_retargeted
+        );
+    }
+    if (!readiness_state.ir_shape_ready) {
+        append_runtime_indexed_cleanup_readiness_blocker(
+            readiness_state,
+            RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape,
+            function_verification_state
         );
     }
     apply_runtime_indexed_cleanup_first_readiness_blocker(readiness_state);
@@ -3357,6 +3386,7 @@ void populate_lowering_emission_reports(
         );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
         build_runtime_indexed_cleanup_module_ir_production_readiness_state(
+            result.runtime_indexed_cleanup_emission_plan_state,
             result.runtime_indexed_cleanup_module_ir_insertion_gate_state,
             result.runtime_indexed_cleanup_module_ir_insertion_preview_state,
             result.runtime_indexed_cleanup_module_ir_candidate_state,

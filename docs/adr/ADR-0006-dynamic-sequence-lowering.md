@@ -1899,6 +1899,9 @@ representation.
 - Runtime-index constructor-move production-readiness reporting now appends typed cleanup IR-shape lines. The driver
   exposes the same common-loop/drop readiness and descriptor-versus-inline storage facts that pipeline smoke coverage
   compares.
+- Runtime-index cleanup module-IR production readiness now gates on typed cleanup IR shape. Plans with rendered cleanup
+  IR must expose a complete common loop/drop shape and either descriptor-backed or inline-storage cleanup shape before
+  the module-IR production state reports ready.
 
 ## Follow-up work
 

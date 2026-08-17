@@ -2625,3 +2625,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: Runtime-index constructor-move production-readiness reporting now includes typed cleanup IR-shape lines.
   Driver smoke coverage pins source-backed `DynamicArray<T>` descriptor cleanup shape and fixed-array inline cleanup
   shape through the CLI.
+- 2026-08-17: Runtime-index cleanup module-IR production readiness now includes an `ir-shape` gate. Production
+  readiness requires each emitted cleanup plan with rendered IR to have a complete common loop/drop shape and either
+  descriptor-backed or inline-storage cleanup shape.

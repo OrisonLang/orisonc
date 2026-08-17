@@ -154,7 +154,7 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready"
+        "splice-conflict-check clear ir-shape ready production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -195,7 +195,7 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready"
+        "splice-conflict-check clear ir-shape ready production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -342,7 +342,7 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready"
+        "splice-conflict-check clear ir-shape ready production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -375,7 +375,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked production blocked blocker-count 2 blocker-kind function-splice-conflict "
+        "splice-conflict-check blocked ir-shape ready production blocked "
+        "blocker-count 2 blocker-kind function-splice-conflict "
         "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
@@ -414,7 +415,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready blocker-count 0 blocker-kind none"
+        "splice-conflict-check clear ir-shape ready production ready blocker-count 0 blocker-kind none"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness blocker index") == std::string::npos);
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
@@ -545,7 +546,8 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked production blocked blocker-count 2 blocker-kind function-splice-conflict "
+        "splice-conflict-check blocked ir-shape ready production blocked "
+        "blocker-count 2 blocker-kind function-splice-conflict "
         "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
@@ -563,7 +565,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_blocked(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked production blocked blocker-count 2 blocker-kind function-splice-conflict "
+        "splice-conflict-check blocked ir-shape ready production blocked "
+        "blocker-count 2 blocker-kind function-splice-conflict "
         "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51"
     ) != std::string::npos);
@@ -583,7 +586,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_readiness_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready blocker-count 0 blocker-kind none"
+        "splice-conflict-check clear ir-shape ready production ready blocker-count 0 blocker-kind none"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup audit entries") == std::string::npos);
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);

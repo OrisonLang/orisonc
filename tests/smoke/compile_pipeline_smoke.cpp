@@ -6821,7 +6821,9 @@ auto main() -> int {
     assert(
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
-        ).find("production blocked blocker-count 6 blocker-kind insertion-gate function main source-line ") !=
+        ).find(
+            "ir-shape ready production blocked blocker-count 6 blocker-kind insertion-gate function main source-line "
+        ) !=
         std::string::npos
     );
     assert(
@@ -10327,7 +10329,7 @@ auto main() -> int {
             runtime_indexed_cleanup_constructor_move_on
                 .runtime_indexed_cleanup_module_ir_production_readiness_state
         ).find(
-            "production blocked blocker-count 1 blocker-kind function-integration function " +
+            "ir-shape ready production blocked blocker-count 1 blocker-kind function-integration function " +
             runtime_indexed_cleanup_function_candidate.function_symbol_name +
             " source-line " +
             std::to_string(runtime_indexed_cleanup_function_candidate.source_line) +
@@ -11167,7 +11169,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
         ).find(
-            "production blocked blocker-count 2 blocker-kind function-splice-conflict function select_both "
+            "ir-shape ready production blocked blocker-count 2 blocker-kind function-splice-conflict "
+            "function select_both "
             "source-line 46 "
             "diagnostic runtime-index cleanup blocked: "
             "overlapping same-function splice ranges left-line 46 right-line 51"
@@ -11479,7 +11482,7 @@ auto main() -> int {
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear production ready blocker-count 0 blocker-kind none"
+        "splice-conflict-check clear ir-shape ready production ready blocker-count 0 blocker-kind none"
     );
     assert(non_overlap_readiness_report.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
     auto const non_overlap_blocker_report =
@@ -11562,7 +11565,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             composition_failure_readiness
         ).find(
-            "blocker-count 1 blocker-kind module-mutation function main source-line 55 "
+            "ir-shape ready production blocked blocker-count 1 blocker-kind module-mutation function main "
+            "source-line 55 "
             "diagnostic runtime-index cleanup blocked: module mutation disabled "
             "composition-failure missing-cleanup-cfg-tail composition-part 2 splice-range 144..188 "
             "apply-stages available branch-replacements true cleanup-cfg-appended true phi-retargeted false"
@@ -11579,6 +11583,63 @@ auto main() -> int {
             "composition-failure missing-cleanup-cfg-tail composition-part 2 splice-range 144..188 "
             "apply-stages available branch-replacements true cleanup-cfg-appended true phi-retargeted false"
         ) != std::string::npos
+    );
+
+    auto ir_shape_blocked_readiness =
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+            .insertion_gate_ready = true,
+            .insertion_preview_ready = true,
+            .candidate_ready = true,
+            .candidate_verified = true,
+            .module_mutation_enabled = true,
+            .function_integration_ready = true,
+            .function_splice_conflict_free = true,
+            .ir_shape_ready = false,
+            .production_ready = false,
+            .diagnostic_blocker_kind =
+                orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape,
+            .blockers = {
+                orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+                    .kind =
+                        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape,
+                    .stage_name = "cleanup ir shape",
+                    .function_symbol_name = "main",
+                    .source_available = true,
+                    .source_line = 44,
+                },
+            },
+            .function_splice_conflict_count = 0,
+            .diagnostic_blocker_stage_name = "cleanup ir shape",
+            .diagnostic_function_symbol_name = "main",
+            .diagnostic_source_available = true,
+            .diagnostic_source_line = 44,
+        };
+    ir_shape_blocked_readiness.diagnostic_text =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
+            ir_shape_blocked_readiness
+        );
+    assert(
+        ir_shape_blocked_readiness.diagnostic_text ==
+        "runtime-index cleanup blocked: cleanup ir shape blocked"
+    );
+    assert(
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
+            ir_shape_blocked_readiness
+        ).find(
+            "splice-conflict-check clear ir-shape blocked production blocked blocker-count 1 "
+            "blocker-kind ir-shape function main source-line 44 "
+            "diagnostic runtime-index cleanup blocked: cleanup ir shape blocked"
+        ) != std::string::npos
+    );
+    auto const ir_shape_blockers =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
+            ir_shape_blocked_readiness
+        );
+    assert(ir_shape_blockers.size() == 1);
+    assert(
+        ir_shape_blockers.front() ==
+        "runtime-index cleanup module-ir production-readiness blocker index 0 "
+        "kind ir-shape stage cleanup ir shape function main source-line 44"
     );
 
     auto parsed_drop_readiness_path =
