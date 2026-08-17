@@ -1872,6 +1872,9 @@ representation.
 - Driver CLI smoke coverage now asserts the same-function two-owner fixture on the ordinary production-readiness path.
   The split-function readiness fixture was removed so the test directly pins aggregation across multiple blocked
   member transfers in one function.
+- Runtime-index constructor owner-key construction now lives in the ownership-transfer layer. Expression lowering and
+  the report-only member-cleanup readiness pre-scan now share one builder for owner, index, element type, moved type,
+  moved member path, owner LLVM type, and cleanup sizing metadata.
 
 ## Follow-up work
 

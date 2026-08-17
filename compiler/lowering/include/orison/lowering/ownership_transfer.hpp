@@ -8,9 +8,14 @@
 #include <unordered_set>
 #include <vector>
 
+namespace orison::syntax {
+struct ExpressionSyntax;
+}
+
 namespace orison::lowering {
 
 struct LoweringContext;
+struct FunctionLoweringState;
 
 struct RuntimeIndexedPartialOwner {
     std::string owner_name;
@@ -934,6 +939,13 @@ auto record_runtime_indexed_partial_owner(
     bool member_cleanup_apply_authorization_requested = false,
     bool member_cleanup_rewrite_execution_requested = false
 ) -> void;
+
+auto runtime_indexed_partial_owner_for_constructor_argument(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<RuntimeIndexedPartialOwner>;
 
 auto runtime_indexed_partial_owner_report(
     RuntimeIndexedPartialOwner const& owner

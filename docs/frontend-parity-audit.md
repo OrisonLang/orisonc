@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-16: Runtime-index constructor owner-key construction now lives in the ownership-transfer layer and is shared
+  by expression lowering and report-only member-cleanup readiness pre-scan. Direct ownership-transfer smoke coverage
+  pins the source-backed `DynamicArray<Box>` member-transfer key shape.
 - 2026-08-16: Driver CLI smoke coverage now pins same-function runtime-index member-cleanup readiness aggregation for
   two source-backed `DynamicArray<Box>` owned member transfers. The ordinary production-readiness report shows both
   keyed default blockers without relying on split-function fixture shape.
