@@ -808,6 +808,34 @@ void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
     ) != std::string::npos);
 }
 
+void assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --test-only-runtime-indexed-member-cleanup-run " + path.string();
+    auto output = read_command_output(command);
+    auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
+        auto const owner = std::string {owner_name};
+        auto const index = std::string {index_expression};
+        assert(output.find(
+            "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item checklist ready ir-mutation-requested true "
+            "production-gate-requested true ir-mutation enabled production-gate enabled "
+            "gate ready report-only false production enabled blockers 0"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item typed-gate ready apply authorized "
+            "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
+            "rewrite-promotion ready helper-bindings 1 helper-target "
+            "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
+            "helper-definition ready production enabled"
+        ) != std::string::npos);
+    };
+    assert_owner_lines("left_items", "(left_index + left_zero)");
+    assert_owner_lines("right_items", "(right_index + right_zero)");
+}
+
 void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -3738,6 +3766,10 @@ auto main() -> int {
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
+    );
+    assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,

@@ -1860,6 +1860,9 @@ representation.
   finalization, and one shared helper definition.
 - The two-owner source-backed member-cleanup fixture now also object-emits, host-links, and runs successfully through
   the fully requested internal gated path, extending the proof from typed readiness and IR shape to native execution.
+- Driver CLI smoke coverage now runs that two-owner source-backed fixture through
+  `--test-only-runtime-indexed-member-cleanup-run` and asserts both keyed typed-promotion-gate and execution-summary
+  lines appear in the internal test-seam output.
 
 ## Follow-up work
 
