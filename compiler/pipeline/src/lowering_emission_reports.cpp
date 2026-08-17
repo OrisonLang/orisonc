@@ -1924,6 +1924,125 @@ auto runtime_indexed_cleanup_plan_parity_summary_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_ir_shape_summary(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& plan
+) -> RuntimeIndexedCleanupIrShapeSummary {
+    auto text = joined_lines(plan.gated_ir_slice_lines);
+    auto has = [&text](std::string const& needle) {
+        return text.find(needle) != std::string::npos;
+    };
+    auto count = [&text](std::string const& needle) {
+        return occurrence_count(text, needle);
+    };
+
+    auto summary = RuntimeIndexedCleanupIrShapeSummary {
+        .owner_name = plan.owner_name,
+        .gated_ir_slice_line_count = plan.gated_ir_slice_lines.size(),
+        .condition_block_count = count(plan.ir_plan.condition_block_name + ":\n"),
+        .live_check_block_count = count(plan.ir_plan.live_check_block_name + ":\n"),
+        .skip_block_count = count(plan.ir_plan.skip_block_name + ":\n"),
+        .drop_block_count = count(plan.ir_plan.drop_block_name + ":\n"),
+        .continue_block_count = count(plan.ir_plan.continue_block_name + ":\n"),
+        .exit_block_count = count(plan.ir_plan.exit_block_name + ":\n"),
+        .branch_to_condition_found = has("  br label %" + plan.ir_plan.condition_block_name + "\n"),
+        .bounds_check_found = has("  " + plan.ir_plan.bounds_check_name + " = icmp ult i64 "),
+        .skip_check_found = has("  " + plan.ir_plan.skip_check_name + " = icmp eq i64 "),
+        .drop_call_found = has("  call void @" + plan.ir_plan.drop_callee_name + "(ptr "),
+        .next_index_found = has("  " + plan.ir_plan.next_index_name + " = add i64 "),
+        .descriptor_load_found = has(
+            "  " + plan.ir_plan.descriptor_value_name + " = load " +
+            plan.ir_plan.owner_llvm_type_name + ", ptr " + plan.ir_plan.owner_address_name + "\n"
+        ),
+        .descriptor_element_gep_found = has(
+            "  " + plan.ir_plan.element_address_name + " = getelementptr " +
+            plan.ir_plan.element_llvm_type_name + ", ptr " +
+            plan.ir_plan.descriptor_data_value_name + ", i64 " +
+            plan.ir_plan.cleanup_index_name + "\n"
+        ),
+        .inline_element_gep_found = has(
+            "  " + plan.ir_plan.element_address_name + " = getelementptr " +
+            plan.ir_plan.owner_llvm_type_name + ", ptr " +
+            plan.ir_plan.owner_address_name + ", i64 0, i64 " +
+            plan.ir_plan.cleanup_index_name + "\n"
+        ),
+        .zero_store_found = has(
+            "  store " + plan.ir_plan.element_llvm_type_name + " zeroinitializer, ptr " +
+            plan.ir_plan.element_address_name + "\n"
+        ),
+        .deallocate_call_found = has(
+            "  call void @" + plan.ir_plan.deallocate_callee_name + "(ptr " +
+            plan.ir_plan.descriptor_data_value_name + ", i64 "
+        ),
+    };
+    summary.common_loop_shape_ready =
+        summary.condition_block_count == 1 &&
+        summary.live_check_block_count == 1 &&
+        summary.skip_block_count == 1 &&
+        summary.drop_block_count == 1 &&
+        summary.continue_block_count == 1 &&
+        summary.exit_block_count == 1 &&
+        summary.branch_to_condition_found &&
+        summary.bounds_check_found &&
+        summary.skip_check_found &&
+        summary.drop_call_found &&
+        summary.next_index_found;
+    summary.descriptor_storage_shape_ready =
+        summary.descriptor_load_found &&
+        summary.descriptor_element_gep_found &&
+        summary.deallocate_call_found &&
+        !summary.inline_element_gep_found &&
+        !summary.zero_store_found;
+    summary.inline_storage_shape_ready =
+        summary.inline_element_gep_found &&
+        summary.zero_store_found &&
+        !summary.descriptor_load_found &&
+        !summary.descriptor_element_gep_found &&
+        !summary.deallocate_call_found;
+    return summary;
+}
+
+auto runtime_indexed_cleanup_ir_shape_parity_summary(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& left,
+    lowering::RuntimeIndexedCleanupEmissionPlan const& right
+) -> RuntimeIndexedCleanupIrShapeParitySummary {
+    auto const left_shape = runtime_indexed_cleanup_ir_shape_summary(left);
+    auto const right_shape = runtime_indexed_cleanup_ir_shape_summary(right);
+    return RuntimeIndexedCleanupIrShapeParitySummary {
+        .left_owner_name = left.owner_name,
+        .right_owner_name = right.owner_name,
+        .common_loop_shape_matches =
+            left_shape.common_loop_shape_ready &&
+            right_shape.common_loop_shape_ready,
+        .drop_call_shape_matches =
+            left_shape.drop_call_found &&
+            right_shape.drop_call_found &&
+            left.ir_plan.drop_callee_name == right.ir_plan.drop_callee_name,
+        .storage_ir_shape_differs =
+            (left_shape.inline_storage_shape_ready && right_shape.descriptor_storage_shape_ready) ||
+            (left_shape.descriptor_storage_shape_ready && right_shape.inline_storage_shape_ready),
+        .cleanup_tail_differs =
+            left_shape.zero_store_found != right_shape.zero_store_found &&
+            left_shape.deallocate_call_found != right_shape.deallocate_call_found,
+        .line_count_differs =
+            left_shape.gated_ir_slice_line_count != right_shape.gated_ir_slice_line_count,
+    };
+}
+
+auto runtime_indexed_cleanup_ir_shape_parity_summary_report(
+    RuntimeIndexedCleanupIrShapeParitySummary const& summary
+) -> std::string {
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup ir-shape parity"
+           << " left-owner " << summary.left_owner_name
+           << " right-owner " << summary.right_owner_name
+           << " common-loop " << (summary.common_loop_shape_matches ? "matched" : "mismatched")
+           << " drop-call " << (summary.drop_call_shape_matches ? "matched" : "mismatched")
+           << " storage-ir " << (summary.storage_ir_shape_differs ? "distinct" : "not-distinct")
+           << " cleanup-tail " << (summary.cleanup_tail_differs ? "distinct" : "same")
+           << " line-count " << (summary.line_count_differs ? "distinct" : "same");
+    return report.str();
+}
+
 auto runtime_indexed_cleanup_production_readiness_blocker_kind_name(
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind kind
 ) -> std::string_view {

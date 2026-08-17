@@ -10582,6 +10582,36 @@ auto main() -> int {
         "element-size matched drop-callee matched operations matched storage-metadata distinct "
         "owner-llvm distinct static-length distinct descriptor-owner distinct"
     );
+    auto same_layout_fixed_shape = orison::pipeline::runtime_indexed_cleanup_ir_shape_summary(
+        runtime_indexed_fixed_array_same_shape_plan
+    );
+    auto same_layout_dynamic_shape = orison::pipeline::runtime_indexed_cleanup_ir_shape_summary(
+        runtime_indexed_dynamic_array_plan
+    );
+    assert(same_layout_fixed_shape.common_loop_shape_ready);
+    assert(same_layout_fixed_shape.inline_storage_shape_ready);
+    assert(!same_layout_fixed_shape.descriptor_storage_shape_ready);
+    assert(same_layout_dynamic_shape.common_loop_shape_ready);
+    assert(same_layout_dynamic_shape.descriptor_storage_shape_ready);
+    assert(!same_layout_dynamic_shape.inline_storage_shape_ready);
+    auto same_layout_ir_shape_parity =
+        orison::pipeline::runtime_indexed_cleanup_ir_shape_parity_summary(
+            runtime_indexed_fixed_array_same_shape_plan,
+            runtime_indexed_dynamic_array_plan
+        );
+    assert(same_layout_ir_shape_parity.common_loop_shape_matches);
+    assert(same_layout_ir_shape_parity.drop_call_shape_matches);
+    assert(same_layout_ir_shape_parity.storage_ir_shape_differs);
+    assert(same_layout_ir_shape_parity.cleanup_tail_differs);
+    assert(same_layout_ir_shape_parity.line_count_differs);
+    assert(
+        orison::pipeline::runtime_indexed_cleanup_ir_shape_parity_summary_report(
+            same_layout_ir_shape_parity
+        ) ==
+        "runtime-index cleanup ir-shape parity left-owner items right-owner items "
+        "common-loop matched drop-call matched storage-ir distinct cleanup-tail distinct "
+        "line-count distinct"
+    );
     assert(
         orison::pipeline::runtime_indexed_constructor_move_plan_report(
             runtime_indexed_fixed_array_same_shape_plan

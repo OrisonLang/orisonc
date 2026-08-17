@@ -2619,3 +2619,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: Runtime-index cleanup emission plans now have a typed pipeline parity summary. The summary reports
   shared-field equality for index, element type, element size, Drop callee, and operation sequence while also recording
   expected storage-specific differences for owner LLVM type, static length, and descriptor-owner readiness.
+- 2026-08-17: Runtime-index cleanup emission plans now also expose a typed IR-shape parity summary. Pipeline smoke
+  coverage compares same-layout fixed-array and source-backed `DynamicArray<T>` cleanup slices for common loop/drop
+  shape while preserving descriptor-versus-inline storage differences.

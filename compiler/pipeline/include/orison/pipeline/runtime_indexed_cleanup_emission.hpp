@@ -66,6 +66,44 @@ struct RuntimeIndexedCleanupPlanParitySummary {
     auto operator==(RuntimeIndexedCleanupPlanParitySummary const&) const -> bool = default;
 };
 
+struct RuntimeIndexedCleanupIrShapeSummary {
+    std::string owner_name;
+    std::size_t gated_ir_slice_line_count = 0;
+    std::size_t condition_block_count = 0;
+    std::size_t live_check_block_count = 0;
+    std::size_t skip_block_count = 0;
+    std::size_t drop_block_count = 0;
+    std::size_t continue_block_count = 0;
+    std::size_t exit_block_count = 0;
+    bool branch_to_condition_found = false;
+    bool bounds_check_found = false;
+    bool skip_check_found = false;
+    bool drop_call_found = false;
+    bool next_index_found = false;
+    bool descriptor_load_found = false;
+    bool descriptor_element_gep_found = false;
+    bool inline_element_gep_found = false;
+    bool zero_store_found = false;
+    bool deallocate_call_found = false;
+    bool common_loop_shape_ready = false;
+    bool descriptor_storage_shape_ready = false;
+    bool inline_storage_shape_ready = false;
+
+    auto operator==(RuntimeIndexedCleanupIrShapeSummary const&) const -> bool = default;
+};
+
+struct RuntimeIndexedCleanupIrShapeParitySummary {
+    std::string left_owner_name;
+    std::string right_owner_name;
+    bool common_loop_shape_matches = false;
+    bool drop_call_shape_matches = false;
+    bool storage_ir_shape_differs = false;
+    bool cleanup_tail_differs = false;
+    bool line_count_differs = false;
+
+    auto operator==(RuntimeIndexedCleanupIrShapeParitySummary const&) const -> bool = default;
+};
+
 auto runtime_indexed_constructor_move_plan_report(
     lowering::RuntimeIndexedCleanupEmissionPlan const& plan
 ) -> std::string;
@@ -81,6 +119,19 @@ auto runtime_indexed_cleanup_plan_parity_summary(
 
 auto runtime_indexed_cleanup_plan_parity_summary_report(
     RuntimeIndexedCleanupPlanParitySummary const& summary
+) -> std::string;
+
+auto runtime_indexed_cleanup_ir_shape_summary(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& plan
+) -> RuntimeIndexedCleanupIrShapeSummary;
+
+auto runtime_indexed_cleanup_ir_shape_parity_summary(
+    lowering::RuntimeIndexedCleanupEmissionPlan const& left,
+    lowering::RuntimeIndexedCleanupEmissionPlan const& right
+) -> RuntimeIndexedCleanupIrShapeParitySummary;
+
+auto runtime_indexed_cleanup_ir_shape_parity_summary_report(
+    RuntimeIndexedCleanupIrShapeParitySummary const& summary
 ) -> std::string;
 
 } // namespace orison::pipeline

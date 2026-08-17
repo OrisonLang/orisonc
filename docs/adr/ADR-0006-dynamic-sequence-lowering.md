@@ -1893,6 +1893,9 @@ representation.
 - Runtime-index cleanup emission plans now have a typed parity summary in the pipeline. The summary captures shared
   metadata equality across storage forms and expected storage-representation differences so tests and future tools do
   not need to repeat field-by-field comparison logic.
+- Runtime-index cleanup emission plans now also have a typed IR-shape parity summary. The summary checks the rendered
+  cleanup loop/drop shape independently from storage-specific descriptor loads, inline element GEPs, zeroing, and
+  deallocation tails.
 
 ## Follow-up work
 
