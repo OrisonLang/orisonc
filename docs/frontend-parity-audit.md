@@ -2579,3 +2579,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   member transfers in one function. The fully requested internal member-cleanup path asserts both owner/index keys
   refresh independently to ready/enabled across mutation readiness, guarded rewrite authorization, execution, and
   promotion records.
+- 2026-08-16: The same two-owner member-cleanup fixture now asserts generated LLVM IR for both owner-specific cleanup
+  CFGs. Coverage pins independent cleanup entry/drop/deallocate blocks, helper calls, element Drop calls, descriptor
+  finalization, and a single emitted member-cleanup helper definition.

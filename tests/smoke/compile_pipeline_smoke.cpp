@@ -7747,6 +7747,90 @@ auto main() -> int {
     );
     assert_ready_member_cleanup_refresh_chain(left_member_cleanup_key);
     assert_ready_member_cleanup_refresh_chain(right_member_cleanup_key);
+    auto const& two_member_transfers_ir = runtime_indexed_two_member_transfers_apply_request.ir_text;
+    auto assert_owner_member_cleanup_ir =
+        [&](std::string_view owner_name) {
+            auto const owner = std::string {owner_name};
+            assert(
+                two_member_transfers_ir.find(
+                    "  br label %" + owner + ".member_cleanup.entry\n"
+                ) != std::string::npos
+            );
+            assert(
+                two_member_transfers_ir.find(
+                    owner + ".member_cleanup.entry:\n"
+                ) != std::string::npos
+            );
+            assert(
+                two_member_transfers_ir.find(
+                    owner + ".member_cleanup.drop_siblings:\n"
+                    "  %" + owner + ".member_cleanup.descriptor = load { ptr, i64, i64 }, ptr %" +
+                    owner + ".addr\n"
+                ) != std::string::npos
+            );
+            assert(
+                two_member_transfers_ir.find(
+                    owner + ".member_cleanup.drop_siblings_for_moved:\n"
+                    "  %" + owner + ".member_cleanup.moved.addr = getelementptr %record.Box, ptr %" +
+                    owner + ".member_cleanup.cleanup.data, i64 %" + owner + ".member_cleanup.index\n"
+                    "  call void @__orison_member_cleanup.Box.except.item(ptr %" +
+                    owner + ".member_cleanup.moved.addr)\n"
+                ) != std::string::npos
+            );
+            assert(
+                two_member_transfers_ir.find(
+                    owner + ".member_cleanup.drop_element:\n"
+                    "  %" + owner + ".member_cleanup.element.addr = getelementptr %record.Box, ptr %" +
+                    owner + ".member_cleanup.cleanup.data, i64 %" + owner + ".member_cleanup.index\n"
+                    "  call void @__orison_drop.Box(ptr %" + owner + ".member_cleanup.element.addr)\n"
+                    "  store %record.Box zeroinitializer, ptr %" + owner + ".member_cleanup.element.addr\n"
+                ) != std::string::npos
+            );
+            assert(
+                two_member_transfers_ir.find(
+                    owner + ".member_cleanup.deallocate:\n"
+                    "  call void @__orison_dynamic_array_deallocate(ptr %" +
+                    owner + ".member_cleanup.cleanup.data, i64 "
+                ) != std::string::npos
+            );
+            assert(
+                two_member_transfers_ir.find(
+                    "  store { ptr, i64, i64 } zeroinitializer, ptr %" + owner + ".addr\n"
+                    "  br label %" + owner + ".member_cleanup.preserve_moved\n"
+                ) != std::string::npos
+            );
+        };
+    assert_owner_member_cleanup_ir("left_items");
+    assert_owner_member_cleanup_ir("right_items");
+    assert(
+        occurrence_count(
+            two_member_transfers_ir,
+            "call void @__orison_member_cleanup.Box.except.item"
+        ) == 2
+    );
+    assert(
+        occurrence_count(
+            two_member_transfers_ir,
+            "call void @__orison_drop.Box"
+        ) == 2
+    );
+    assert(
+        occurrence_count(
+            two_member_transfers_ir,
+            "call void @__orison_dynamic_array_deallocate"
+        ) == 2
+    );
+    assert(
+        occurrence_count(
+            two_member_transfers_ir,
+            "define void @__orison_member_cleanup.Box.except.item(ptr %value)"
+        ) == 1
+    );
+    assert(
+        two_member_transfers_ir.find(
+            "declare void @__orison_member_cleanup.Box.except.item(ptr)"
+        ) == std::string::npos
+    );
 
     auto synthetic_member_cleanup_summary_result = orison::pipeline::CompilePipelineResult {};
     synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates = {

@@ -1855,6 +1855,9 @@ representation.
 - Source-backed `DynamicArray<Box>` member-cleanup pipeline coverage now includes two computed member transfers in one
   function. The fully requested internal path asserts each keyed owner/index chain reaches ready/enabled mutation,
   guarded rewrite, execution, and promotion records independently.
+- The two-owner source-backed member-cleanup fixture now also pins generated LLVM IR for both owner-specific cleanup
+  CFGs, including cleanup entry/drop/deallocate blocks, member helper calls, element Drop calls, descriptor
+  finalization, and one shared helper definition.
 
 ## Follow-up work
 
