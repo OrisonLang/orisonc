@@ -2680,3 +2680,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: A test-only constructor-move CLI seam now removes the descriptor deallocation tail after real
   source-backed `DynamicArray<T>` runtime-index cleanup lowering, letting driver smoke coverage pin the blocked
   `member-module-ir-shape` detail on a real fixture without changing production lowering.
+- 2026-08-18: Runtime-index cleanup IR-shape fault coverage now lives in pipeline smoke through typed
+  `CompilePipelineOptions` instead of test-only driver commands. The driver no longer exposes the four blocked-shape
+  fault commands.

@@ -1944,6 +1944,8 @@ representation.
   wrapper keeps its command and expected report shape explicit.
 - Runtime-index cleanup IR-shape fault smoke coverage now uses explicit expectation rows and a shared table-driven
   assertion loop for descriptor-backed and inline-storage fault cases.
+- Runtime-index cleanup IR-shape fault coverage now lives in pipeline smoke through typed `CompilePipelineOptions`
+  instead of test-only driver commands. The driver no longer exposes the four blocked-shape fault commands.
 
 ## Follow-up work
 

@@ -772,6 +772,53 @@ void assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
     assert(readiness.diagnostic_text == "runtime-index cleanup blocked: cleanup ir shape blocked");
 }
 
+struct RuntimeIndexedConstructorMoveIrShapeFaultExpectation {
+    orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection fault =
+        orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::None;
+    std::string_view expected_shape_detail;
+    std::string_view expected_ir_shape;
+};
+
+auto runtime_indexed_constructor_move_shape_fault_options(
+    orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection fault
+) -> orison::pipeline::CompilePipelineOptions {
+    return orison::pipeline::CompilePipelineOptions {
+        .source_drop_lowering_enabled = true,
+        .collect_runtime_indexed_cleanup_audit = true,
+        .runtime_indexed_cleanup_emission_enabled = true,
+        .runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true,
+        .runtime_indexed_constructor_move_enabled = true,
+        .test_only_runtime_indexed_cleanup_ir_shape_fault = fault,
+        .dynamic_array_production_construction_lowering_enabled = true,
+        .dynamic_array_production_index_lowering_enabled = true,
+        .dynamic_array_production_append_lowering_enabled = true,
+    };
+}
+
+void assert_runtime_indexed_constructor_move_shape_faults(
+    orison::pipeline::CompilePipeline& pipeline,
+    std::filesystem::path const& path,
+    std::vector<RuntimeIndexedConstructorMoveIrShapeFaultExpectation> const& expectations
+) {
+    for (auto const& expectation : expectations) {
+        auto result = pipeline.emit_llvm(
+            path,
+            runtime_indexed_constructor_move_shape_fault_options(expectation.fault)
+        );
+        assert(!result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready);
+        assert(!result.runtime_indexed_cleanup_module_ir_production_readiness_state.production_ready);
+        auto const promotion_state = orison::pipeline::runtime_indexed_member_cleanup_promotion_state(result);
+        assert(!promotion_state.module_ir_shape_ready);
+        assert(promotion_state.module_ir_shape_blocker_detail == expectation.expected_shape_detail);
+        auto const ir_shape_lines =
+            orison::pipeline::runtime_indexed_constructor_move_ir_shape_report_lines(
+                result.runtime_indexed_cleanup_emission_plan_state
+            );
+        assert(ir_shape_lines.size() == 1);
+        assert(ir_shape_lines.front() == expectation.expected_ir_shape);
+    }
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -10941,6 +10988,75 @@ auto main() -> int {
         "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
         "descriptor-storage blocked inline-storage ready descriptor-load absent "
         "descriptor-gep absent inline-gep present zero-store present deallocate absent"
+    );
+    assert_runtime_indexed_constructor_move_shape_faults(
+        pipeline,
+        runtime_indexed_dynamic_array_cleanup_path,
+        {
+            {
+                .fault = orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::
+                    OmitDescriptorDeallocateTail,
+                .expected_shape_detail =
+                    "runtime-index cleanup module-ir shape is blocked owner items "
+                    "common-loop ready drop-call ready descriptor-storage blocked inline-storage blocked "
+                    "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
+                    "deallocate absent",
+                .expected_ir_shape =
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+                    "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
+                    "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+                    "descriptor-storage blocked inline-storage blocked descriptor-load present descriptor-gep present "
+                    "inline-gep absent zero-store absent deallocate absent",
+            },
+            {
+                .fault = orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDropCall,
+                .expected_shape_detail =
+                    "runtime-index cleanup module-ir shape is blocked owner items "
+                    "common-loop blocked drop-call blocked descriptor-storage ready inline-storage blocked "
+                    "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
+                    "deallocate present",
+                .expected_ir_shape =
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+                    "common-loop blocked condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
+                    "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call blocked "
+                    "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
+                    "inline-gep absent zero-store absent deallocate present",
+            },
+            {
+                .fault = orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock,
+                .expected_shape_detail =
+                    "runtime-index cleanup module-ir shape is blocked owner items "
+                    "common-loop blocked drop-call ready descriptor-storage ready inline-storage blocked "
+                    "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
+                    "deallocate present",
+                .expected_ir_shape =
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+                    "common-loop blocked condition-blocks 0 live-check-blocks 1 skip-blocks 1 "
+                    "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+                    "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
+                    "inline-gep absent zero-store absent deallocate present",
+            },
+        }
+    );
+    assert_runtime_indexed_constructor_move_shape_faults(
+        pipeline,
+        runtime_indexed_fixed_array_same_shape_cleanup_path,
+        {
+            {
+                .fault = orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitInlineZeroStore,
+                .expected_shape_detail =
+                    "runtime-index cleanup module-ir shape is blocked owner items "
+                    "common-loop ready drop-call ready descriptor-storage blocked inline-storage blocked "
+                    "descriptor-load absent descriptor-gep absent inline-gep present zero-store absent "
+                    "deallocate absent",
+                .expected_ir_shape =
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 18 "
+                    "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
+                    "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+                    "descriptor-storage blocked inline-storage blocked descriptor-load absent descriptor-gep absent "
+                    "inline-gep present zero-store absent deallocate absent",
+            },
+        }
     );
     assert(
         orison::pipeline::runtime_indexed_constructor_move_plan_report(
