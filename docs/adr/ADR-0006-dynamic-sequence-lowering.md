@@ -1946,6 +1946,9 @@ representation.
   assertion loop for descriptor-backed and inline-storage fault cases.
 - Runtime-index cleanup IR-shape fault coverage now lives in pipeline smoke through typed `CompilePipelineOptions`
   instead of test-only driver commands. The driver no longer exposes the four blocked-shape fault commands.
+- Runtime-index cleanup module-IR production-readiness success and splice-conflict coverage now lives in pipeline smoke
+  and the ordinary `--runtime-indexed-cleanup-emit-llvm` diagnostic path. The driver no longer exposes the
+  readiness-only `--test-only-runtime-indexed-cleanup-production-readiness` command.
 
 ## Follow-up work
 

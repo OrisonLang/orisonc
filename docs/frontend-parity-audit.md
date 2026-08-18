@@ -2683,3 +2683,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index cleanup IR-shape fault coverage now lives in pipeline smoke through typed
   `CompilePipelineOptions` instead of test-only driver commands. The driver no longer exposes the four blocked-shape
   fault commands.
+- 2026-08-18: Runtime-index cleanup module-IR production-readiness success and splice-conflict coverage now lives in
+  pipeline smoke and the ordinary `--runtime-indexed-cleanup-emit-llvm` diagnostic path. The driver no longer exposes
+  the readiness-only `--test-only-runtime-indexed-cleanup-production-readiness` command.

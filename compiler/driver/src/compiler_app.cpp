@@ -179,7 +179,6 @@ auto usage_text() -> std::string {
            "--runtime-indexed-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-emit-llvm <file> | "
            "--runtime-indexed-constructor-move-production-readiness <file> | "
-           "--test-only-runtime-indexed-cleanup-production-readiness <file> | "
            "--test-only-runtime-indexed-constructor-move-run <file> | "
            "--test-only-runtime-indexed-member-cleanup-run <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
@@ -840,31 +839,6 @@ auto runtime_indexed_cleanup_emit_llvm(std::filesystem::path const& source_path)
     return CompileResult {
         .exit_code = 0,
         .stdout_text = std::move(result.ir_text),
-    };
-}
-
-auto test_only_runtime_indexed_cleanup_production_readiness(std::filesystem::path const& source_path) -> CompileResult {
-    pipeline::CompilePipeline pipeline;
-    auto result = pipeline.emit_llvm(source_path, runtime_indexed_cleanup_audit_options());
-    auto readiness_report = runtime_indexed_cleanup_module_ir_production_readiness_report(
-        result.runtime_indexed_cleanup_module_ir_production_readiness_state
-    ) + "\n";
-    if (result.has_errors()) {
-        return CompileResult {
-            .exit_code = 1,
-            .stdout_text = std::move(readiness_report),
-            .stderr_text = std::move(result.error_text),
-        };
-    }
-    if (!result.runtime_indexed_cleanup_module_ir_production_readiness_state.production_ready) {
-        return CompileResult {
-            .exit_code = 1,
-            .stdout_text = std::move(readiness_report),
-        };
-    }
-    return CompileResult {
-        .exit_code = 0,
-        .stdout_text = std::move(readiness_report),
     };
 }
 
@@ -1541,10 +1515,6 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--runtime-indexed-constructor-move-production-readiness") {
         return runtime_indexed_constructor_move_production_readiness(std::filesystem::path(args[2]));
-    }
-
-    if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-cleanup-production-readiness") {
-        return test_only_runtime_indexed_cleanup_production_readiness(std::filesystem::path(args[2]));
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-constructor-move-run") {
