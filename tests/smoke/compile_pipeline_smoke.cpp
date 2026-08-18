@@ -746,6 +746,32 @@ auto descriptor_runtime_indexed_cleanup_ir_shape_plan_without_deallocate_tail()
     return plan;
 }
 
+void assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
+    orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState const& readiness
+) {
+    assert(!readiness.production_ready);
+    assert(!readiness.ir_shape_ready);
+    assert(readiness.insertion_gate_ready);
+    assert(readiness.insertion_preview_ready);
+    assert(readiness.candidate_ready);
+    assert(readiness.candidate_verified);
+    assert(readiness.module_mutation_enabled);
+    assert(readiness.function_integration_ready);
+    assert(readiness.function_splice_conflict_free);
+    assert(readiness.blockers.size() == 1);
+    assert(
+        readiness.blockers.front().kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
+    );
+    assert(
+        readiness.diagnostic_blocker_kind ==
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
+    );
+    assert(readiness.diagnostic_function_symbol_name == "main");
+    assert(readiness.diagnostic_source_line == 44);
+    assert(readiness.diagnostic_text == "runtime-index cleanup blocked: cleanup ir shape blocked");
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -11908,29 +11934,8 @@ auto main() -> int {
                 },
             }
         );
-    assert(!malformed_ir_shape_builder_readiness.production_ready);
-    assert(!malformed_ir_shape_builder_readiness.ir_shape_ready);
-    assert(malformed_ir_shape_builder_readiness.insertion_gate_ready);
-    assert(malformed_ir_shape_builder_readiness.insertion_preview_ready);
-    assert(malformed_ir_shape_builder_readiness.candidate_ready);
-    assert(malformed_ir_shape_builder_readiness.candidate_verified);
-    assert(malformed_ir_shape_builder_readiness.module_mutation_enabled);
-    assert(malformed_ir_shape_builder_readiness.function_integration_ready);
-    assert(malformed_ir_shape_builder_readiness.function_splice_conflict_free);
-    assert(malformed_ir_shape_builder_readiness.blockers.size() == 1);
-    assert(
-        malformed_ir_shape_builder_readiness.blockers.front().kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
-    );
-    assert(
-        malformed_ir_shape_builder_readiness.diagnostic_blocker_kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
-    );
-    assert(malformed_ir_shape_builder_readiness.diagnostic_function_symbol_name == "main");
-    assert(malformed_ir_shape_builder_readiness.diagnostic_source_line == 44);
-    assert(
-        malformed_ir_shape_builder_readiness.diagnostic_text ==
-        "runtime-index cleanup blocked: cleanup ir shape blocked"
+    assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
+        malformed_ir_shape_builder_readiness
     );
 
     auto well_formed_ir_shape_builder_readiness =
@@ -11958,29 +11963,8 @@ auto main() -> int {
         ready_runtime_indexed_cleanup_module_ir_production_readiness(
             inline_runtime_indexed_cleanup_ir_shape_plan_without_zero_store()
         );
-    assert(!inline_missing_zero_store_readiness.production_ready);
-    assert(!inline_missing_zero_store_readiness.ir_shape_ready);
-    assert(inline_missing_zero_store_readiness.insertion_gate_ready);
-    assert(inline_missing_zero_store_readiness.insertion_preview_ready);
-    assert(inline_missing_zero_store_readiness.candidate_ready);
-    assert(inline_missing_zero_store_readiness.candidate_verified);
-    assert(inline_missing_zero_store_readiness.module_mutation_enabled);
-    assert(inline_missing_zero_store_readiness.function_integration_ready);
-    assert(inline_missing_zero_store_readiness.function_splice_conflict_free);
-    assert(inline_missing_zero_store_readiness.blockers.size() == 1);
-    assert(
-        inline_missing_zero_store_readiness.blockers.front().kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
-    );
-    assert(
-        inline_missing_zero_store_readiness.diagnostic_blocker_kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
-    );
-    assert(inline_missing_zero_store_readiness.diagnostic_function_symbol_name == "main");
-    assert(inline_missing_zero_store_readiness.diagnostic_source_line == 44);
-    assert(
-        inline_missing_zero_store_readiness.diagnostic_text ==
-        "runtime-index cleanup blocked: cleanup ir shape blocked"
+    assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
+        inline_missing_zero_store_readiness
     );
 
     auto well_formed_descriptor_ir_shape_builder_readiness =
@@ -12008,29 +11992,8 @@ auto main() -> int {
         ready_runtime_indexed_cleanup_module_ir_production_readiness(
             descriptor_runtime_indexed_cleanup_ir_shape_plan_without_deallocate_tail()
         );
-    assert(!descriptor_missing_deallocate_tail_readiness.production_ready);
-    assert(!descriptor_missing_deallocate_tail_readiness.ir_shape_ready);
-    assert(descriptor_missing_deallocate_tail_readiness.insertion_gate_ready);
-    assert(descriptor_missing_deallocate_tail_readiness.insertion_preview_ready);
-    assert(descriptor_missing_deallocate_tail_readiness.candidate_ready);
-    assert(descriptor_missing_deallocate_tail_readiness.candidate_verified);
-    assert(descriptor_missing_deallocate_tail_readiness.module_mutation_enabled);
-    assert(descriptor_missing_deallocate_tail_readiness.function_integration_ready);
-    assert(descriptor_missing_deallocate_tail_readiness.function_splice_conflict_free);
-    assert(descriptor_missing_deallocate_tail_readiness.blockers.size() == 1);
-    assert(
-        descriptor_missing_deallocate_tail_readiness.blockers.front().kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
-    );
-    assert(
-        descriptor_missing_deallocate_tail_readiness.diagnostic_blocker_kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape
-    );
-    assert(descriptor_missing_deallocate_tail_readiness.diagnostic_function_symbol_name == "main");
-    assert(descriptor_missing_deallocate_tail_readiness.diagnostic_source_line == 44);
-    assert(
-        descriptor_missing_deallocate_tail_readiness.diagnostic_text ==
-        "runtime-index cleanup blocked: cleanup ir shape blocked"
+    assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
+        descriptor_missing_deallocate_tail_readiness
     );
 
     auto parsed_drop_readiness_path =
