@@ -1767,6 +1767,9 @@ representation.
 - Ordinary driver defaults now enable only the first member-cleanup mutation gate. Default production-readiness reports
   show IR mutation requested/enabled, while production-gate, apply authorization, and rewrite execution remain disabled
   so ordinary `--emit-llvm` continues to reject owned member projections.
+- Ordinary driver defaults now also enable the member-cleanup production gate. Mutation planning, validation, conflict
+  detection, apply authorization readiness, and previews can report cleanly on default production-readiness paths while
+  apply authorization and rewrite execution remain disabled.
 - Runtime-index constructor-move production-readiness now appends member-cleanup readiness and blocker details when
   member-granular cleanup state exists. This gives the non-test driver report an explicit default-promotion blocker for
   member cleanup while keeping the ordinary emission path rejected.
