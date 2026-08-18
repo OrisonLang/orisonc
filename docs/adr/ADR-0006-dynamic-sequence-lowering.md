@@ -1908,6 +1908,9 @@ representation.
 - Runtime-index cleanup `ir-shape` readiness now also has positive builder-path coverage. The same typed helper accepts
   a well-formed fixed-array cleanup slice when insertion, candidate, mutation, and function-integration states are
   ready, producing production-ready state with zero blockers.
+- Runtime-index cleanup `ir-shape` readiness now has equivalent descriptor-backed positive builder-path coverage. The
+  typed helper accepts a well-formed `DynamicArray<T>` cleanup slice with descriptor load, descriptor-data element GEP,
+  Drop call, and descriptor deallocation when upstream states are ready.
 
 ## Follow-up work
 
