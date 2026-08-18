@@ -9452,6 +9452,60 @@ auto main() -> int {
             "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );
+    auto runtime_indexed_nested_missing_sibling_drop_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_missing_sibling_drop_rejected.or";
+    auto runtime_indexed_nested_missing_sibling_drop_result = pipeline.emit_llvm(
+        runtime_indexed_nested_missing_sibling_drop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .runtime_indexed_member_cleanup_ir_mutation_enabled = true,
+            .runtime_indexed_member_cleanup_production_gate_enabled = true,
+            .runtime_indexed_member_cleanup_apply_authorization_enabled = true,
+            .runtime_indexed_member_cleanup_rewrite_execution_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(runtime_indexed_nested_missing_sibling_drop_result.has_errors());
+    assert(
+        runtime_indexed_nested_missing_sibling_drop_result.error_text.find(
+            "member cleanup helper Drop bindings are missing"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_missing_sibling_drop_result
+            .runtime_indexed_member_cleanup_sibling_fields.size() == 4
+    );
+    assert(
+        runtime_indexed_nested_missing_sibling_drop_result
+            .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 1
+    );
+    auto const& missing_sibling_drop_bindings =
+        runtime_indexed_nested_missing_sibling_drop_result
+            .runtime_indexed_member_cleanup_helper_drop_bindings.front();
+    assert(!missing_sibling_drop_bindings.all_drop_definitions_available);
+    assert(!missing_sibling_drop_bindings.helper_definition_ready);
+    auto const missing_tail_field = std::ranges::find_if(
+        runtime_indexed_nested_missing_sibling_drop_result.runtime_indexed_member_cleanup_sibling_fields,
+        [](auto const& field) {
+            return field.field_path == (std::vector<std::string> {"tail"});
+        }
+    );
+    assert(
+        missing_tail_field !=
+        runtime_indexed_nested_missing_sibling_drop_result.runtime_indexed_member_cleanup_sibling_fields.end()
+    );
+    assert(missing_tail_field->field_source_type_name == "Tail");
+    assert(missing_tail_field->drop_symbol_name == "__orison_drop.Tail");
+    assert(!missing_tail_field->drop_definition_available);
     auto runtime_indexed_nested_sibling_member_transfer_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
             runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text

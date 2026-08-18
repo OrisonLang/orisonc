@@ -6,9 +6,47 @@
 #include "lowering_emission_options.hpp"
 #include "lowering_emission_reports.hpp"
 
+#include <cstddef>
+#include <sstream>
 #include <utility>
 
 namespace orison::pipeline {
+
+namespace {
+
+auto runtime_indexed_member_cleanup_binding_error_text(
+    CompilePipelineResult const& result,
+    CompilePipelineOptions const& options
+) -> std::string {
+    if (!options.runtime_indexed_member_cleanup_rewrite_execution_enabled) {
+        return {};
+    }
+
+    for (auto const& bindings : result.runtime_indexed_member_cleanup_helper_drop_bindings) {
+        if (bindings.all_drop_definitions_available && bindings.helper_definition_ready) {
+            continue;
+        }
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup blocked: member cleanup helper Drop bindings are missing"
+                   << " owner " << bindings.owner_name
+                   << " index " << bindings.index_expression_text
+                   << " element " << bindings.element_source_type_name
+                   << " moved " << bindings.moved_source_type_name
+                   << " member-path ";
+        for (auto index = std::size_t {0}; index < bindings.moved_member_path.size(); ++index) {
+            if (index != 0) {
+                diagnostic << ".";
+            }
+            diagnostic << bindings.moved_member_path[index];
+        }
+        diagnostic << " helper " << bindings.helper_symbol_name;
+        return diagnostic.str();
+    }
+
+    return {};
+}
+
+}  // namespace
 
 auto run_llvm_emission_stage(
     CompilePipeline const& pipeline,
@@ -43,6 +81,10 @@ auto run_llvm_emission_stage(
         return result;
     }
     populate_lowering_emission_reports(result, std::move(emission), options);
+    if (auto error_text = runtime_indexed_member_cleanup_binding_error_text(result, options);
+        !error_text.empty()) {
+        result.error_text = std::move(error_text);
+    }
     return result;
 }
 

@@ -598,6 +598,26 @@ auto collect_source_drop_definition_symbols(
     return symbols;
 }
 
+auto collect_direct_source_drop_definition_symbols(
+    syntax::ModuleSyntax const& module
+) -> std::vector<std::string> {
+    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto symbols = std::vector<std::string> {};
+    for (auto const& implementation : implementations) {
+        if (implementation.origin != semantics::DropImplementationOrigin::source_derived ||
+            !implementation.proven ||
+            !implementation.body.finite) {
+            continue;
+        }
+        if (std::ranges::find(symbols, implementation.abi_symbol_name) != symbols.end()) {
+            continue;
+        }
+        symbols.push_back(implementation.abi_symbol_name);
+    }
+    return symbols;
+}
+
 auto collect_runtime_indexed_member_cleanup_sibling_fields(
     LoweringContext const& context,
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan> const& edit_script_plans,
@@ -639,10 +659,9 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
                     continue;
                 }
                 auto drop_symbol_name = semantics::drop_abi_symbol_name(field.source_type_name);
-                if (std::ranges::find(source_defined_drop_symbols, drop_symbol_name) ==
-                    source_defined_drop_symbols.end()) {
-                    continue;
-                }
+                auto const drop_definition_available =
+                    std::ranges::find(source_defined_drop_symbols, drop_symbol_name) !=
+                    source_defined_drop_symbols.end();
 
                 auto field_path = field_path_prefix;
                 field_path.push_back(field.name);
@@ -662,7 +681,7 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
                     .field_llvm_type_name = field.llvm_type,
                     .drop_symbol_name = std::move(drop_symbol_name),
                     .field_index = field.index,
-                    .drop_definition_available = true,
+                    .drop_definition_available = drop_definition_available,
                 });
             }
 
@@ -4102,6 +4121,7 @@ auto emit_module(
     }
     auto source_defined_drop_symbols =
         collect_source_drop_definition_symbols(module, context, result.semantic_drop_lowering_authorizations, options);
+    auto direct_source_defined_drop_symbols = collect_direct_source_drop_definition_symbols(module);
     auto function_options = options;
     function_options.source_drop_definition_symbols = source_defined_drop_symbols;
     auto refresh_runtime_indexed_member_cleanup_binding_metadata = [&]() {
@@ -4109,7 +4129,7 @@ auto emit_module(
             collect_runtime_indexed_member_cleanup_sibling_fields(
                 context,
                 result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
-                source_defined_drop_symbols
+                direct_source_defined_drop_symbols
             );
         result.runtime_indexed_member_cleanup_helper_drop_bindings =
             collect_runtime_indexed_member_cleanup_helper_drop_bindings(

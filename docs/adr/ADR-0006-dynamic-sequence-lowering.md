@@ -1972,6 +1972,9 @@ representation.
   against another owner or cleanup-loop index.
 - Runtime-index `DynamicArray<T>` computed-expression member-transfer fixtures now use positive filenames after the
   default-path promotion. The rename is test/documentation hygiene only and does not alter source syntax.
+- Runtime-index member-cleanup helper synthesis now requires direct source-backed `Drop` definitions for every live
+  sibling field. Missing sibling `Drop` metadata blocks production-gated `emit_llvm` instead of allowing incomplete
+  cleanup IR to omit or reference unavailable helper calls.
 
 ## Follow-up work
 

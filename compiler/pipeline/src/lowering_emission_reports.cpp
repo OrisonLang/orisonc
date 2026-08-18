@@ -1586,8 +1586,7 @@ auto member_cleanup_sibling_fields(
             field.index_expression_text == plan.index_expression_text &&
             field.element_source_type_name == plan.element_source_type_name &&
             field.moved_source_type_name == plan.moved_source_type_name &&
-            field.moved_member_path == plan.moved_member_path &&
-            field.drop_definition_available) {
+            field.moved_member_path == plan.moved_member_path) {
             fields.push_back(field);
         }
     }
@@ -1609,7 +1608,10 @@ auto member_cleanup_helper_definition(
     if (!sibling_fields.empty()) {
         auto emitted_address_names = std::unordered_set<std::string> {};
         for (auto const& field : sibling_fields) {
-            if (field.field_path.empty() ||
+            if (!field.drop_definition_available ||
+                field.drop_symbol_name.empty() ||
+                field.field_llvm_type_name.empty() ||
+                field.field_path.empty() ||
                 field.field_indices.size() != field.field_path.size() ||
                 field.container_llvm_type_names.size() != field.field_path.size()) {
                 return {};

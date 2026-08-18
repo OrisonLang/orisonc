@@ -2713,3 +2713,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index `DynamicArray<T>` computed-expression member-transfer fixture names now match their
   promoted default behavior. The former `*_rejected.or` member-cleanup fixtures were renamed without changing source
   syntax.
+- 2026-08-18: Runtime-index member-cleanup helper synthesis now records sibling fields even when their direct
+  source-backed `Drop` definition is missing. Production-gated `emit_llvm` now rejects that path with a helper Drop
+  binding diagnostic instead of silently emitting incomplete cleanup IR.
