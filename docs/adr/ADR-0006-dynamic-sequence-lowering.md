@@ -1914,6 +1914,9 @@ representation.
 - Runtime-index cleanup `ir-shape` readiness now also rejects descriptor-backed cleanup slices that omit descriptor
   deallocation. Smoke coverage derives that negative fixture from the positive `DynamicArray<T>` fixture and verifies
   only the `ir-shape` blocker remains when upstream states are ready.
+- Runtime-index cleanup `ir-shape` readiness now also rejects inline-storage cleanup slices that omit post-Drop
+  zeroing. Smoke coverage derives that negative fixture from the positive fixed-array fixture and verifies only the
+  `ir-shape` blocker remains when upstream states are ready.
 
 ## Follow-up work
 

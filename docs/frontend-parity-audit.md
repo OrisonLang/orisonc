@@ -2646,3 +2646,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index cleanup `ir-shape` negative smoke coverage now includes a descriptor-backed
   `DynamicArray<T>` slice missing only the deallocate tail, proving the production-readiness helper rejects incomplete
   descriptor cleanup tails while otherwise-ready upstream states remain ready.
+- 2026-08-18: Runtime-index cleanup `ir-shape` negative smoke coverage now includes an inline-storage slice missing
+  only the post-Drop zero-store, proving the production-readiness helper rejects incomplete inline cleanup tails while
+  otherwise-ready upstream states remain ready.
