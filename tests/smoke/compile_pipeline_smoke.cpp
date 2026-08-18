@@ -25,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <sys/wait.h>
+#include <utility>
 #include <vector>
 #include <unistd.h>
 
@@ -503,6 +504,94 @@ void assert_aggregate_projection_access_plan_state(
     assert(state.source_type_names[2] == "Payload");
     assert(state.diagnostics[2].empty());
     assert(!state.receiver_projections[2]);
+}
+
+auto ready_runtime_indexed_cleanup_module_ir_production_readiness(
+    orison::lowering::RuntimeIndexedCleanupEmissionPlan plan,
+    std::string function_symbol_name = "main",
+    std::size_t source_line = 44
+) -> orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+    auto gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
+    return orison::pipeline::runtime_indexed_cleanup_module_ir_production_readiness_state(
+        orison::pipeline::RuntimeIndexedCleanupEmissionPlanState {
+            .plans = {std::move(plan)},
+            .plan_metadata_available = true,
+            .all_prerequisites_ready = true,
+            .any_production_gate_requested = true,
+            .any_production_enabled = true,
+            .gated_ir_slice_line_count = gated_ir_slice_line_count,
+            .structured_ir_plan_count = 1,
+        },
+        orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionGateState {
+            .insertion_requested = true,
+            .artifact_available = true,
+            .render_parity_verified = true,
+            .insertion_enabled = true,
+        },
+        orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionPreviewState {
+            .preview_available = true,
+            .insertion_point_found = true,
+            .would_modify_module_ir = true,
+        },
+        orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateState {
+            .candidate_available = true,
+            .separate_from_module_ir = true,
+        },
+        orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateVerificationState {
+            .verification_available = true,
+            .candidate_contains_cleanup_block_once = true,
+            .emitted_module_excludes_cleanup_block = true,
+            .verified = true,
+            .candidate_cleanup_block_count = 1,
+        },
+        orison::pipeline::RuntimeIndexedCleanupModuleIrMutationState {
+            .mutation_requested = true,
+            .candidate_verified = true,
+            .mutation_applied = true,
+            .module_matches_candidate = true,
+            .final_module_cleanup_block_count = 1,
+        },
+        orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
+            .verifications = {
+                orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
+                    .function_symbol_name = std::move(function_symbol_name),
+                    .verification_available = true,
+                    .candidate_function_found = true,
+                    .candidate_function_matches_verified_candidate = true,
+                    .replacement_target_unique = true,
+                    .module_ir_changed = true,
+                    .separate_from_module_ir = true,
+                    .llvm_verifier_ran = true,
+                    .llvm_verifier_passed = true,
+                    .verified = true,
+                    .source_line = source_line,
+                    .function_replacement_count = 1,
+                },
+            },
+            .verification_metadata_available = true,
+            .all_candidate_functions_found = true,
+            .all_candidate_functions_match_verified_candidates = true,
+            .all_replacement_targets_unique = true,
+            .all_module_ir_changed = true,
+            .all_candidates_separate_from_module_ir = true,
+            .same_function_splice_ranges_non_overlapping = true,
+            .any_llvm_verifier_ran = true,
+            .all_llvm_verifier_passed = true,
+            .all_verified = true,
+            .verification_count = 1,
+            .verified_count = 1,
+            .llvm_verified_count = 1,
+        },
+        orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
+            .mutation_requested = true,
+            .candidate_verified = true,
+            .replacement_targets_unique = true,
+            .mutation_applied = true,
+            .module_matches_candidate = true,
+            .llvm_verifier_passed = true,
+            .candidate_count = 1,
+        }
+    );
 }
 
 }  // namespace
@@ -11643,107 +11732,28 @@ auto main() -> int {
     );
 
     auto malformed_ir_shape_builder_readiness =
-        orison::pipeline::runtime_indexed_cleanup_module_ir_production_readiness_state(
-            orison::pipeline::RuntimeIndexedCleanupEmissionPlanState {
-                .plans = {
-                    orison::lowering::RuntimeIndexedCleanupEmissionPlan {
-                        .function_symbol_name = "main",
-                        .owner_name = "items",
-                        .gated_ir_slice_lines = {
-                            "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
-                        },
-                        .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
-                            .owner_name = "items",
-                            .element_llvm_type_name = "%record.Inner",
-                            .owner_llvm_type_name = "[2 x %record.Inner]",
-                            .owner_address_name = "%items.addr",
-                            .condition_block_name = "items.runtime_cleanup.condition",
-                            .live_check_block_name = "items.runtime_cleanup.live",
-                            .skip_block_name = "items.runtime_cleanup.skip",
-                            .drop_block_name = "items.runtime_cleanup.drop",
-                            .element_address_name = "%items.runtime_cleanup.element.addr",
-                            .drop_callee_name = "__orison_drop.Inner",
-                            .continue_block_name = "items.runtime_cleanup.continue",
-                            .exit_block_name = "items.runtime_cleanup.exit",
-                            .complete = true,
-                        },
-                    },
+        ready_runtime_indexed_cleanup_module_ir_production_readiness(
+            orison::lowering::RuntimeIndexedCleanupEmissionPlan {
+                .function_symbol_name = "main",
+                .owner_name = "items",
+                .gated_ir_slice_lines = {
+                    "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
                 },
-                .plan_metadata_available = true,
-                .all_prerequisites_ready = true,
-                .any_production_gate_requested = true,
-                .any_production_enabled = true,
-                .gated_ir_slice_line_count = 1,
-                .structured_ir_plan_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionGateState {
-                .insertion_requested = true,
-                .artifact_available = true,
-                .render_parity_verified = true,
-                .insertion_enabled = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionPreviewState {
-                .preview_available = true,
-                .insertion_point_found = true,
-                .would_modify_module_ir = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateState {
-                .candidate_available = true,
-                .separate_from_module_ir = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateVerificationState {
-                .verification_available = true,
-                .candidate_contains_cleanup_block_once = true,
-                .emitted_module_excludes_cleanup_block = true,
-                .verified = true,
-                .candidate_cleanup_block_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrMutationState {
-                .mutation_requested = true,
-                .candidate_verified = true,
-                .mutation_applied = true,
-                .module_matches_candidate = true,
-                .final_module_cleanup_block_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
-                .verifications = {
-                    orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
-                        .function_symbol_name = "main",
-                        .verification_available = true,
-                        .candidate_function_found = true,
-                        .candidate_function_matches_verified_candidate = true,
-                        .replacement_target_unique = true,
-                        .module_ir_changed = true,
-                        .separate_from_module_ir = true,
-                        .llvm_verifier_ran = true,
-                        .llvm_verifier_passed = true,
-                        .verified = true,
-                        .source_line = 44,
-                        .function_replacement_count = 1,
-                    },
+                .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
+                    .owner_name = "items",
+                    .element_llvm_type_name = "%record.Inner",
+                    .owner_llvm_type_name = "[2 x %record.Inner]",
+                    .owner_address_name = "%items.addr",
+                    .condition_block_name = "items.runtime_cleanup.condition",
+                    .live_check_block_name = "items.runtime_cleanup.live",
+                    .skip_block_name = "items.runtime_cleanup.skip",
+                    .drop_block_name = "items.runtime_cleanup.drop",
+                    .element_address_name = "%items.runtime_cleanup.element.addr",
+                    .drop_callee_name = "__orison_drop.Inner",
+                    .continue_block_name = "items.runtime_cleanup.continue",
+                    .exit_block_name = "items.runtime_cleanup.exit",
+                    .complete = true,
                 },
-                .verification_metadata_available = true,
-                .all_candidate_functions_found = true,
-                .all_candidate_functions_match_verified_candidates = true,
-                .all_replacement_targets_unique = true,
-                .all_module_ir_changed = true,
-                .all_candidates_separate_from_module_ir = true,
-                .same_function_splice_ranges_non_overlapping = true,
-                .any_llvm_verifier_ran = true,
-                .all_llvm_verifier_passed = true,
-                .all_verified = true,
-                .verification_count = 1,
-                .verified_count = 1,
-                .llvm_verified_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
-                .mutation_requested = true,
-                .candidate_verified = true,
-                .replacement_targets_unique = true,
-                .mutation_applied = true,
-                .module_matches_candidate = true,
-                .llvm_verifier_passed = true,
-                .candidate_count = 1,
             }
         );
     assert(!malformed_ir_shape_builder_readiness.production_ready);
@@ -11772,137 +11782,58 @@ auto main() -> int {
     );
 
     auto well_formed_ir_shape_builder_readiness =
-        orison::pipeline::runtime_indexed_cleanup_module_ir_production_readiness_state(
-            orison::pipeline::RuntimeIndexedCleanupEmissionPlanState {
-                .plans = {
-                    orison::lowering::RuntimeIndexedCleanupEmissionPlan {
-                        .function_symbol_name = "main",
-                        .owner_name = "items",
-                        .gated_ir_slice_lines = {
-                            "  br label %items.runtime_cleanup.condition\n",
-                            "items.runtime_cleanup.condition:\n",
-                            "  %items.runtime_cleanup.index = phi i64 [ 0, %entry ], "
-                                "[ %items.runtime_cleanup.next, %items.runtime_cleanup.continue ]\n",
-                            "  %items.runtime_cleanup.bounds = icmp ult i64 %items.runtime_cleanup.index, 2\n",
-                            "  br i1 %items.runtime_cleanup.bounds, "
-                                "label %items.runtime_cleanup.live, "
-                                "label %items.runtime_cleanup.exit\n",
-                            "items.runtime_cleanup.live:\n",
-                            "  %items.runtime_cleanup.skip = icmp eq i64 "
-                                "%items.runtime_cleanup.index, %index\n",
-                            "  br i1 %items.runtime_cleanup.skip, "
-                                "label %items.runtime_cleanup.skip, "
-                                "label %items.runtime_cleanup.drop\n",
-                            "items.runtime_cleanup.skip:\n",
-                            "  br label %items.runtime_cleanup.continue\n",
-                            "items.runtime_cleanup.drop:\n",
-                            "  %items.runtime_cleanup.element.addr = getelementptr [2 x %record.Inner], "
-                                "ptr %items.addr, i64 0, i64 %items.runtime_cleanup.index\n",
-                            "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
-                            "  store %record.Inner zeroinitializer, ptr %items.runtime_cleanup.element.addr\n",
-                            "  br label %items.runtime_cleanup.continue\n",
-                            "items.runtime_cleanup.continue:\n",
-                            "  %items.runtime_cleanup.next = add i64 %items.runtime_cleanup.index, 1\n",
-                            "  br label %items.runtime_cleanup.condition\n",
-                            "items.runtime_cleanup.exit:\n",
-                            "  ret void\n",
-                        },
-                        .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
-                            .owner_name = "items",
-                            .element_llvm_type_name = "%record.Inner",
-                            .owner_llvm_type_name = "[2 x %record.Inner]",
-                            .owner_address_name = "%items.addr",
-                            .condition_block_name = "items.runtime_cleanup.condition",
-                            .cleanup_index_name = "%items.runtime_cleanup.index",
-                            .bounds_check_name = "%items.runtime_cleanup.bounds",
-                            .live_check_block_name = "items.runtime_cleanup.live",
-                            .skip_check_name = "%items.runtime_cleanup.skip",
-                            .skip_block_name = "items.runtime_cleanup.skip",
-                            .drop_block_name = "items.runtime_cleanup.drop",
-                            .element_address_name = "%items.runtime_cleanup.element.addr",
-                            .drop_callee_name = "__orison_drop.Inner",
-                            .continue_block_name = "items.runtime_cleanup.continue",
-                            .next_index_name = "%items.runtime_cleanup.next",
-                            .exit_block_name = "items.runtime_cleanup.exit",
-                            .complete = true,
-                        },
-                    },
+        ready_runtime_indexed_cleanup_module_ir_production_readiness(
+            orison::lowering::RuntimeIndexedCleanupEmissionPlan {
+                .function_symbol_name = "main",
+                .owner_name = "items",
+                .gated_ir_slice_lines = {
+                    "  br label %items.runtime_cleanup.condition\n",
+                    "items.runtime_cleanup.condition:\n",
+                    "  %items.runtime_cleanup.index = phi i64 [ 0, %entry ], "
+                        "[ %items.runtime_cleanup.next, %items.runtime_cleanup.continue ]\n",
+                    "  %items.runtime_cleanup.bounds = icmp ult i64 %items.runtime_cleanup.index, 2\n",
+                    "  br i1 %items.runtime_cleanup.bounds, "
+                        "label %items.runtime_cleanup.live, "
+                        "label %items.runtime_cleanup.exit\n",
+                    "items.runtime_cleanup.live:\n",
+                    "  %items.runtime_cleanup.skip = icmp eq i64 "
+                        "%items.runtime_cleanup.index, %index\n",
+                    "  br i1 %items.runtime_cleanup.skip, "
+                        "label %items.runtime_cleanup.skip, "
+                        "label %items.runtime_cleanup.drop\n",
+                    "items.runtime_cleanup.skip:\n",
+                    "  br label %items.runtime_cleanup.continue\n",
+                    "items.runtime_cleanup.drop:\n",
+                    "  %items.runtime_cleanup.element.addr = getelementptr [2 x %record.Inner], "
+                        "ptr %items.addr, i64 0, i64 %items.runtime_cleanup.index\n",
+                    "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
+                    "  store %record.Inner zeroinitializer, ptr %items.runtime_cleanup.element.addr\n",
+                    "  br label %items.runtime_cleanup.continue\n",
+                    "items.runtime_cleanup.continue:\n",
+                    "  %items.runtime_cleanup.next = add i64 %items.runtime_cleanup.index, 1\n",
+                    "  br label %items.runtime_cleanup.condition\n",
+                    "items.runtime_cleanup.exit:\n",
+                    "  ret void\n",
                 },
-                .plan_metadata_available = true,
-                .all_prerequisites_ready = true,
-                .any_production_gate_requested = true,
-                .any_production_enabled = true,
-                .gated_ir_slice_line_count = 18,
-                .structured_ir_plan_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionGateState {
-                .insertion_requested = true,
-                .artifact_available = true,
-                .render_parity_verified = true,
-                .insertion_enabled = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionPreviewState {
-                .preview_available = true,
-                .insertion_point_found = true,
-                .would_modify_module_ir = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateState {
-                .candidate_available = true,
-                .separate_from_module_ir = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateVerificationState {
-                .verification_available = true,
-                .candidate_contains_cleanup_block_once = true,
-                .emitted_module_excludes_cleanup_block = true,
-                .verified = true,
-                .candidate_cleanup_block_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrMutationState {
-                .mutation_requested = true,
-                .candidate_verified = true,
-                .mutation_applied = true,
-                .module_matches_candidate = true,
-                .final_module_cleanup_block_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
-                .verifications = {
-                    orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
-                        .function_symbol_name = "main",
-                        .verification_available = true,
-                        .candidate_function_found = true,
-                        .candidate_function_matches_verified_candidate = true,
-                        .replacement_target_unique = true,
-                        .module_ir_changed = true,
-                        .separate_from_module_ir = true,
-                        .llvm_verifier_ran = true,
-                        .llvm_verifier_passed = true,
-                        .verified = true,
-                        .source_line = 44,
-                        .function_replacement_count = 1,
-                    },
+                .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
+                    .owner_name = "items",
+                    .element_llvm_type_name = "%record.Inner",
+                    .owner_llvm_type_name = "[2 x %record.Inner]",
+                    .owner_address_name = "%items.addr",
+                    .condition_block_name = "items.runtime_cleanup.condition",
+                    .cleanup_index_name = "%items.runtime_cleanup.index",
+                    .bounds_check_name = "%items.runtime_cleanup.bounds",
+                    .live_check_block_name = "items.runtime_cleanup.live",
+                    .skip_check_name = "%items.runtime_cleanup.skip",
+                    .skip_block_name = "items.runtime_cleanup.skip",
+                    .drop_block_name = "items.runtime_cleanup.drop",
+                    .element_address_name = "%items.runtime_cleanup.element.addr",
+                    .drop_callee_name = "__orison_drop.Inner",
+                    .continue_block_name = "items.runtime_cleanup.continue",
+                    .next_index_name = "%items.runtime_cleanup.next",
+                    .exit_block_name = "items.runtime_cleanup.exit",
+                    .complete = true,
                 },
-                .verification_metadata_available = true,
-                .all_candidate_functions_found = true,
-                .all_candidate_functions_match_verified_candidates = true,
-                .all_replacement_targets_unique = true,
-                .all_module_ir_changed = true,
-                .all_candidates_separate_from_module_ir = true,
-                .same_function_splice_ranges_non_overlapping = true,
-                .any_llvm_verifier_ran = true,
-                .all_llvm_verifier_passed = true,
-                .all_verified = true,
-                .verification_count = 1,
-                .verified_count = 1,
-                .llvm_verified_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
-                .mutation_requested = true,
-                .candidate_verified = true,
-                .replacement_targets_unique = true,
-                .mutation_applied = true,
-                .module_matches_candidate = true,
-                .llvm_verifier_passed = true,
-                .candidate_count = 1,
             }
         );
     assert(well_formed_ir_shape_builder_readiness.production_ready);
@@ -11923,153 +11854,74 @@ auto main() -> int {
     );
 
     auto well_formed_descriptor_ir_shape_builder_readiness =
-        orison::pipeline::runtime_indexed_cleanup_module_ir_production_readiness_state(
-            orison::pipeline::RuntimeIndexedCleanupEmissionPlanState {
-                .plans = {
-                    orison::lowering::RuntimeIndexedCleanupEmissionPlan {
-                        .function_symbol_name = "main",
-                        .owner_name = "items",
-                        .gated_ir_slice_lines = {
-                            "  %items.runtime_cleanup.descriptor = load { ptr, i64, i64 }, "
-                                "ptr %items.addr\n",
-                            "  %items.runtime_cleanup.data = extractvalue { ptr, i64, i64 } "
-                                "%items.runtime_cleanup.descriptor, 0\n",
-                            "  %items.runtime_cleanup.length = extractvalue { ptr, i64, i64 } "
-                                "%items.runtime_cleanup.descriptor, 1\n",
-                            "  %items.runtime_cleanup.capacity = extractvalue { ptr, i64, i64 } "
-                                "%items.runtime_cleanup.descriptor, 2\n",
-                            "  br label %items.runtime_cleanup.condition\n",
-                            "items.runtime_cleanup.condition:\n",
-                            "  %items.runtime_cleanup.index = phi i64 [ 0, %entry ], "
-                                "[ %items.runtime_cleanup.next, %items.runtime_cleanup.continue ]\n",
-                            "  %items.runtime_cleanup.bounds = icmp ult i64 "
-                                "%items.runtime_cleanup.index, %items.runtime_cleanup.length\n",
-                            "  br i1 %items.runtime_cleanup.bounds, "
-                                "label %items.runtime_cleanup.live, "
-                                "label %items.runtime_cleanup.exit\n",
-                            "items.runtime_cleanup.live:\n",
-                            "  %items.runtime_cleanup.skip = icmp eq i64 "
-                                "%items.runtime_cleanup.index, %index\n",
-                            "  br i1 %items.runtime_cleanup.skip, "
-                                "label %items.runtime_cleanup.skip, "
-                                "label %items.runtime_cleanup.drop\n",
-                            "items.runtime_cleanup.skip:\n",
-                            "  br label %items.runtime_cleanup.continue\n",
-                            "items.runtime_cleanup.drop:\n",
-                            "  %items.runtime_cleanup.element.addr = getelementptr %record.Inner, "
-                                "ptr %items.runtime_cleanup.data, i64 %items.runtime_cleanup.index\n",
-                            "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
-                            "  br label %items.runtime_cleanup.continue\n",
-                            "items.runtime_cleanup.continue:\n",
-                            "  %items.runtime_cleanup.next = add i64 %items.runtime_cleanup.index, 1\n",
-                            "  br label %items.runtime_cleanup.condition\n",
-                            "items.runtime_cleanup.exit:\n",
-                            "  call void @__orison_dynamic_array_deallocate("
-                                "ptr %items.runtime_cleanup.data, i64 4, "
-                                "i64 %items.runtime_cleanup.capacity)\n",
-                            "  ret void\n",
-                        },
-                        .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
-                            .owner_name = "items",
-                            .element_llvm_type_name = "%record.Inner",
-                            .owner_llvm_type_name = "{ ptr, i64, i64 }",
-                            .owner_address_name = "%items.addr",
-                            .descriptor_value_name = "%items.runtime_cleanup.descriptor",
-                            .descriptor_data_value_name = "%items.runtime_cleanup.data",
-                            .descriptor_capacity_value_name = "%items.runtime_cleanup.capacity",
-                            .length_value_name = "%items.runtime_cleanup.length",
-                            .condition_block_name = "items.runtime_cleanup.condition",
-                            .cleanup_index_name = "%items.runtime_cleanup.index",
-                            .bounds_check_name = "%items.runtime_cleanup.bounds",
-                            .live_check_block_name = "items.runtime_cleanup.live",
-                            .skip_check_name = "%items.runtime_cleanup.skip",
-                            .skip_block_name = "items.runtime_cleanup.skip",
-                            .drop_block_name = "items.runtime_cleanup.drop",
-                            .element_address_name = "%items.runtime_cleanup.element.addr",
-                            .drop_callee_name = "__orison_drop.Inner",
-                            .continue_block_name = "items.runtime_cleanup.continue",
-                            .next_index_name = "%items.runtime_cleanup.next",
-                            .exit_block_name = "items.runtime_cleanup.exit",
-                            .deallocate_callee_name = "__orison_dynamic_array_deallocate",
-                            .complete = true,
-                        },
-                    },
+        ready_runtime_indexed_cleanup_module_ir_production_readiness(
+            orison::lowering::RuntimeIndexedCleanupEmissionPlan {
+                .function_symbol_name = "main",
+                .owner_name = "items",
+                .gated_ir_slice_lines = {
+                    "  %items.runtime_cleanup.descriptor = load { ptr, i64, i64 }, "
+                        "ptr %items.addr\n",
+                    "  %items.runtime_cleanup.data = extractvalue { ptr, i64, i64 } "
+                        "%items.runtime_cleanup.descriptor, 0\n",
+                    "  %items.runtime_cleanup.length = extractvalue { ptr, i64, i64 } "
+                        "%items.runtime_cleanup.descriptor, 1\n",
+                    "  %items.runtime_cleanup.capacity = extractvalue { ptr, i64, i64 } "
+                        "%items.runtime_cleanup.descriptor, 2\n",
+                    "  br label %items.runtime_cleanup.condition\n",
+                    "items.runtime_cleanup.condition:\n",
+                    "  %items.runtime_cleanup.index = phi i64 [ 0, %entry ], "
+                        "[ %items.runtime_cleanup.next, %items.runtime_cleanup.continue ]\n",
+                    "  %items.runtime_cleanup.bounds = icmp ult i64 "
+                        "%items.runtime_cleanup.index, %items.runtime_cleanup.length\n",
+                    "  br i1 %items.runtime_cleanup.bounds, "
+                        "label %items.runtime_cleanup.live, "
+                        "label %items.runtime_cleanup.exit\n",
+                    "items.runtime_cleanup.live:\n",
+                    "  %items.runtime_cleanup.skip = icmp eq i64 "
+                        "%items.runtime_cleanup.index, %index\n",
+                    "  br i1 %items.runtime_cleanup.skip, "
+                        "label %items.runtime_cleanup.skip, "
+                        "label %items.runtime_cleanup.drop\n",
+                    "items.runtime_cleanup.skip:\n",
+                    "  br label %items.runtime_cleanup.continue\n",
+                    "items.runtime_cleanup.drop:\n",
+                    "  %items.runtime_cleanup.element.addr = getelementptr %record.Inner, "
+                        "ptr %items.runtime_cleanup.data, i64 %items.runtime_cleanup.index\n",
+                    "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
+                    "  br label %items.runtime_cleanup.continue\n",
+                    "items.runtime_cleanup.continue:\n",
+                    "  %items.runtime_cleanup.next = add i64 %items.runtime_cleanup.index, 1\n",
+                    "  br label %items.runtime_cleanup.condition\n",
+                    "items.runtime_cleanup.exit:\n",
+                    "  call void @__orison_dynamic_array_deallocate("
+                        "ptr %items.runtime_cleanup.data, i64 4, "
+                        "i64 %items.runtime_cleanup.capacity)\n",
+                    "  ret void\n",
                 },
-                .plan_metadata_available = true,
-                .all_prerequisites_ready = true,
-                .any_production_gate_requested = true,
-                .any_production_enabled = true,
-                .gated_ir_slice_line_count = 23,
-                .structured_ir_plan_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionGateState {
-                .insertion_requested = true,
-                .artifact_available = true,
-                .render_parity_verified = true,
-                .insertion_enabled = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrInsertionPreviewState {
-                .preview_available = true,
-                .insertion_point_found = true,
-                .would_modify_module_ir = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateState {
-                .candidate_available = true,
-                .separate_from_module_ir = true,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrCandidateVerificationState {
-                .verification_available = true,
-                .candidate_contains_cleanup_block_once = true,
-                .emitted_module_excludes_cleanup_block = true,
-                .verified = true,
-                .candidate_cleanup_block_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupModuleIrMutationState {
-                .mutation_requested = true,
-                .candidate_verified = true,
-                .mutation_applied = true,
-                .module_matches_candidate = true,
-                .final_module_cleanup_block_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
-                .verifications = {
-                    orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
-                        .function_symbol_name = "main",
-                        .verification_available = true,
-                        .candidate_function_found = true,
-                        .candidate_function_matches_verified_candidate = true,
-                        .replacement_target_unique = true,
-                        .module_ir_changed = true,
-                        .separate_from_module_ir = true,
-                        .llvm_verifier_ran = true,
-                        .llvm_verifier_passed = true,
-                        .verified = true,
-                        .source_line = 44,
-                        .function_replacement_count = 1,
-                    },
+                .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
+                    .owner_name = "items",
+                    .element_llvm_type_name = "%record.Inner",
+                    .owner_llvm_type_name = "{ ptr, i64, i64 }",
+                    .owner_address_name = "%items.addr",
+                    .descriptor_value_name = "%items.runtime_cleanup.descriptor",
+                    .descriptor_data_value_name = "%items.runtime_cleanup.data",
+                    .descriptor_capacity_value_name = "%items.runtime_cleanup.capacity",
+                    .length_value_name = "%items.runtime_cleanup.length",
+                    .condition_block_name = "items.runtime_cleanup.condition",
+                    .cleanup_index_name = "%items.runtime_cleanup.index",
+                    .bounds_check_name = "%items.runtime_cleanup.bounds",
+                    .live_check_block_name = "items.runtime_cleanup.live",
+                    .skip_check_name = "%items.runtime_cleanup.skip",
+                    .skip_block_name = "items.runtime_cleanup.skip",
+                    .drop_block_name = "items.runtime_cleanup.drop",
+                    .element_address_name = "%items.runtime_cleanup.element.addr",
+                    .drop_callee_name = "__orison_drop.Inner",
+                    .continue_block_name = "items.runtime_cleanup.continue",
+                    .next_index_name = "%items.runtime_cleanup.next",
+                    .exit_block_name = "items.runtime_cleanup.exit",
+                    .deallocate_callee_name = "__orison_dynamic_array_deallocate",
+                    .complete = true,
                 },
-                .verification_metadata_available = true,
-                .all_candidate_functions_found = true,
-                .all_candidate_functions_match_verified_candidates = true,
-                .all_replacement_targets_unique = true,
-                .all_module_ir_changed = true,
-                .all_candidates_separate_from_module_ir = true,
-                .same_function_splice_ranges_non_overlapping = true,
-                .any_llvm_verifier_ran = true,
-                .all_llvm_verifier_passed = true,
-                .all_verified = true,
-                .verification_count = 1,
-                .verified_count = 1,
-                .llvm_verified_count = 1,
-            },
-            orison::pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState {
-                .mutation_requested = true,
-                .candidate_verified = true,
-                .replacement_targets_unique = true,
-                .mutation_applied = true,
-                .module_matches_candidate = true,
-                .llvm_verifier_passed = true,
-                .candidate_count = 1,
             }
         );
     assert(well_formed_descriptor_ir_shape_builder_readiness.production_ready);

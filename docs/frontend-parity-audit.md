@@ -2637,3 +2637,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index cleanup `ir-shape` readiness now has descriptor-backed positive builder-path coverage.
   Pipeline smoke synthesizes a well-formed `DynamicArray<T>` descriptor load/data GEP/deallocate cleanup slice and
   verifies the real production-readiness helper reports production ready with zero blockers.
+- 2026-08-18: Runtime-index cleanup production-readiness smoke coverage now shares one helper for ready upstream
+  insertion, candidate, mutation, and function-integration states, keeping `ir-shape` fixtures focused on malformed,
+  inline-storage, and descriptor-backed rendered cleanup slices.
