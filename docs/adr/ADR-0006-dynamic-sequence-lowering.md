@@ -1927,6 +1927,9 @@ representation.
 - A test-only constructor-move CLI seam can remove a descriptor deallocation tail after real source-backed
   `DynamicArray<T>` runtime-index cleanup lowering. This pins blocked module-IR shape detail at the driver boundary
   without changing production lowering or source-language behavior.
+- Runtime-index cleanup blocked-shape test seams now use a typed test-only IR-shape fault injection enum. The current
+  driver seam selects the descriptor-deallocate-tail omission through that enum, and the same mechanism can target
+  inline zero-store, Drop-call, or loop-shape omissions as future negative coverage expands.
 
 ## Follow-up work
 

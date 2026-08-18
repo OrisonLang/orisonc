@@ -907,7 +907,8 @@ auto test_only_runtime_indexed_constructor_move_blocked_ir_shape(
     std::filesystem::path const& source_path
 ) -> CompileResult {
     auto options = runtime_indexed_constructor_move_production_readiness_options();
-    options.test_only_runtime_indexed_cleanup_omit_descriptor_deallocate_tail = true;
+    options.test_only_runtime_indexed_cleanup_ir_shape_fault =
+        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDescriptorDeallocateTail;
     return runtime_indexed_constructor_move_production_readiness(source_path, options);
 }
 

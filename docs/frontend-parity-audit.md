@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-18: Runtime-index cleanup blocked-shape test seams now use a typed test-only IR-shape fault injection enum.
+  The current driver seam selects the descriptor-deallocate-tail omission through that enum, while future negative
+  coverage can target inline zero-store, Drop-call, or loop-shape blockers without adding one-off pipeline booleans.
 - 2026-08-17: Shared runtime-index constructor owner-key coverage now compares fixed-array and source-backed
   `DynamicArray<Box>` member-transfer metadata. The smoke test asserts matching runtime index, element type, moved
   type, member path, cleanup strategy, and element sizing while preserving distinct owner storage metadata.

@@ -27,24 +27,72 @@ auto runtime_indexed_cleanup_function_ir_rewrite_requested(
         options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled;
 }
 
-auto remove_test_only_runtime_indexed_descriptor_deallocate_tail(
-    RuntimeIndexedCleanupEmissionPlanState& state
-) -> void {
-    for (auto& plan : state.plans) {
-        auto const deallocate_token = "  call void @" + plan.ir_plan.deallocate_callee_name + "(ptr ";
-        auto const deallocate_line = std::find_if(
-            plan.gated_ir_slice_lines.begin(),
-            plan.gated_ir_slice_lines.end(),
-            [&deallocate_token](std::string const& line) {
-                return line.find(deallocate_token) != std::string::npos;
-            }
-        );
-        if (deallocate_line == plan.gated_ir_slice_lines.end()) {
-            continue;
+auto erase_first_runtime_indexed_cleanup_ir_line_containing(
+    lowering::RuntimeIndexedCleanupEmissionPlan& plan,
+    std::string const& token
+) -> bool {
+    if (token.empty()) {
+        return false;
+    }
+
+    auto const line = std::find_if(
+        plan.gated_ir_slice_lines.begin(),
+        plan.gated_ir_slice_lines.end(),
+        [&token](std::string const& candidate) {
+            return candidate.find(token) != std::string::npos;
         }
-        plan.gated_ir_slice_lines.erase(deallocate_line);
-        plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
+    );
+    if (line == plan.gated_ir_slice_lines.end()) {
+        return false;
+    }
+
+    plan.gated_ir_slice_lines.erase(line);
+    plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
+    return true;
+}
+
+auto apply_test_only_runtime_indexed_cleanup_ir_shape_fault(
+    RuntimeIndexedCleanupEmissionPlanState& state,
+    RuntimeIndexedCleanupIrShapeFaultInjection fault
+) -> void {
+    if (fault == RuntimeIndexedCleanupIrShapeFaultInjection::None) {
         return;
+    }
+
+    for (auto& plan : state.plans) {
+        auto removed = false;
+        switch (fault) {
+            case RuntimeIndexedCleanupIrShapeFaultInjection::None:
+                return;
+            case RuntimeIndexedCleanupIrShapeFaultInjection::OmitDescriptorDeallocateTail:
+                removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
+                    plan,
+                    "  call void @" + plan.ir_plan.deallocate_callee_name + "(ptr "
+                );
+                break;
+            case RuntimeIndexedCleanupIrShapeFaultInjection::OmitInlineZeroStore:
+                removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
+                    plan,
+                    "  store " + plan.ir_plan.element_llvm_type_name + " zeroinitializer, ptr " +
+                        plan.ir_plan.element_address_name
+                );
+                break;
+            case RuntimeIndexedCleanupIrShapeFaultInjection::OmitDropCall:
+                removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
+                    plan,
+                    "  call void @" + plan.ir_plan.drop_callee_name + "(ptr "
+                );
+                break;
+            case RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock:
+                removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
+                    plan,
+                    plan.ir_plan.condition_block_name + ":"
+                );
+                break;
+        }
+        if (removed) {
+            return;
+        }
     }
 }
 
@@ -3409,11 +3457,10 @@ void populate_lowering_emission_reports(
             emission,
             result.ir_text
         );
-    if (options.test_only_runtime_indexed_cleanup_omit_descriptor_deallocate_tail) {
-        remove_test_only_runtime_indexed_descriptor_deallocate_tail(
-            result.runtime_indexed_cleanup_emission_plan_state
-        );
-    }
+    apply_test_only_runtime_indexed_cleanup_ir_shape_fault(
+        result.runtime_indexed_cleanup_emission_plan_state,
+        options.test_only_runtime_indexed_cleanup_ir_shape_fault
+    );
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
         runtime_indexed_cleanup_module_ir_production_readiness_state(
             result.runtime_indexed_cleanup_emission_plan_state,
