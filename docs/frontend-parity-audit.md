@@ -2631,3 +2631,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-17: Runtime-index cleanup `ir-shape` blocking now has builder-path coverage. Pipeline smoke synthesizes
   ready upstream insertion/candidate/mutation states with a malformed rendered cleanup slice and verifies the real
   production-readiness helper reports only the `ir-shape` blocker.
+- 2026-08-18: Runtime-index cleanup `ir-shape` readiness now has positive builder-path coverage. Pipeline smoke
+  synthesizes ready upstream insertion/candidate/mutation states with a well-formed fixed-array cleanup slice and
+  verifies the real production-readiness helper reports production ready with zero blockers.

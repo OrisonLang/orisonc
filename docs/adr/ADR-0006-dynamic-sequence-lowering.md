@@ -1905,6 +1905,9 @@ representation.
 - Runtime-index cleanup production-readiness derivation is now exposed as a typed pipeline helper. Smoke coverage uses
   that helper to verify malformed rendered cleanup slices fail through the real `ir-shape` gate while otherwise-ready
   insertion, candidate, mutation, and function-integration states stay ready.
+- Runtime-index cleanup `ir-shape` readiness now also has positive builder-path coverage. The same typed helper accepts
+  a well-formed fixed-array cleanup slice when insertion, candidate, mutation, and function-integration states are
+  ready, producing production-ready state with zero blockers.
 
 ## Follow-up work
 
