@@ -190,3 +190,19 @@ This repository currently captures the initial language design and development c
   the default driver path.
 - Multi-owner member cleanup rewrites now select owner-specific lowered index operands, preventing one cleanup walk from
   reusing another owner/index temporary.
+
+## DynamicArray Lowering Gap Analysis - 2026-08-18
+
+- Strongest completed area: local source-backed `DynamicArray<T>` construction, append, indexing, owned-element cleanup,
+  runtime-index whole-element cleanup, and checked runtime-index member cleanup now reach LLVM IR, object emission,
+  host linking, and `run` for covered fixtures.
+- Safety gates now reject missing direct sibling `Drop` helpers for member cleanup, malformed cleanup IR shape, reuse of
+  moved elements, owner mismatches, and missing owned-element cleanup proofs.
+- Remaining lowering gaps: owned `DynamicArray<T>` parameters and returns still need a unified ABI/lifetime model before
+  broad production lowering, especially across function calls, branch joins, and forwarding paths.
+- Remaining semantic gaps: borrow/exclusivity checks, interface constraint enforcement, access control, and concurrency
+  transfer/share rules need dedicated passes rather than fixture-local lowering checks.
+- Remaining backend gaps: dynamic C binding IR generation, portable target validation, runtime/standard-library
+  integration, and richer source-span diagnostics are still incomplete.
+- Next highest-value step: promote one owned `DynamicArray<T>` parameter/return path from fixture-specific coverage into
+  a typed ABI/lifetime model, then use that model to simplify the current cleanup lowering seams.

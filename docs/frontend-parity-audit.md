@@ -2718,3 +2718,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   binding diagnostic instead of silently emitting incomplete cleanup IR.
 - 2026-08-18: Two-owner nested source-backed `DynamicArray<Wrap>` member transfers now compile, link, and run while
   proving each owner has ready `Wrap.box.item` helper bindings with four direct sibling `Drop` targets.
+- 2026-08-18: README now records the current `DynamicArray<T>` lowering gap: local source-backed construction,
+  append/indexing, owned cleanup, runtime-index whole-element cleanup, and checked member cleanup are executable, while
+  owned parameter/return ABI, broader semantic enforcement, dynamic C binding IR generation, and runtime/library
+  integration remain open.
