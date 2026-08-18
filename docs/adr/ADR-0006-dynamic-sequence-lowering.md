@@ -1911,6 +1911,9 @@ representation.
 - Runtime-index cleanup `ir-shape` readiness now has equivalent descriptor-backed positive builder-path coverage. The
   typed helper accepts a well-formed `DynamicArray<T>` cleanup slice with descriptor load, descriptor-data element GEP,
   Drop call, and descriptor deallocation when upstream states are ready.
+- Runtime-index cleanup `ir-shape` readiness now also rejects descriptor-backed cleanup slices that omit descriptor
+  deallocation. Smoke coverage derives that negative fixture from the positive `DynamicArray<T>` fixture and verifies
+  only the `ir-shape` blocker remains when upstream states are ready.
 
 ## Follow-up work
 
