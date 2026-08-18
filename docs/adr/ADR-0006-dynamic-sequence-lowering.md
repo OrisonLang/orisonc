@@ -1924,6 +1924,9 @@ representation.
   the owner and reports common-loop/drop readiness plus descriptor/inline storage-tail presence for the blocked slice.
 - Runtime-index constructor-move production-readiness CLI output now surfaces the same typed member module-IR shape
   status used by promotion, and includes the blocked shape detail when a malformed cleanup slice is present.
+- A test-only constructor-move CLI seam can remove a descriptor deallocation tail after real source-backed
+  `DynamicArray<T>` runtime-index cleanup lowering. This pins blocked module-IR shape detail at the driver boundary
+  without changing production lowering or source-language behavior.
 
 ## Follow-up work
 

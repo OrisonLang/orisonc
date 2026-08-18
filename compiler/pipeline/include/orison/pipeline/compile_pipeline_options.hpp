@@ -46,6 +46,7 @@ struct CompilePipelineOptions {
     bool test_only_runtime_indexed_member_cleanup_production_gate_request = false;
     bool test_only_runtime_indexed_member_cleanup_apply_authorization_request = false;
     bool test_only_runtime_indexed_member_cleanup_rewrite_execution_request = false;
+    bool test_only_runtime_indexed_cleanup_omit_descriptor_deallocate_tail = false;
     bool runtime_indexed_fixed_array_constructor_move_only = false;
     bool suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;

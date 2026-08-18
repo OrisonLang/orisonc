@@ -179,6 +179,7 @@ auto usage_text() -> std::string {
            "--runtime-indexed-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-emit-llvm <file> | "
            "--runtime-indexed-constructor-move-production-readiness <file> | "
+           "--test-only-runtime-indexed-constructor-move-blocked-ir-shape <file> | "
            "--test-only-runtime-indexed-cleanup-production-readiness <file> | "
            "--test-only-runtime-indexed-constructor-move-run <file> | "
            "--test-only-runtime-indexed-member-cleanup-run <file> | "
@@ -868,9 +869,12 @@ auto test_only_runtime_indexed_cleanup_production_readiness(std::filesystem::pat
     };
 }
 
-auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path const& source_path) -> CompileResult {
+auto runtime_indexed_constructor_move_production_readiness(
+    std::filesystem::path const& source_path,
+    pipeline::CompilePipelineOptions const& options
+) -> CompileResult {
     pipeline::CompilePipeline pipeline;
-    auto result = pipeline.emit_llvm(source_path, runtime_indexed_constructor_move_production_readiness_options());
+    auto result = pipeline.emit_llvm(source_path, options);
     auto readiness_report = runtime_indexed_constructor_move_production_readiness_report(result) + "\n";
     auto const has_member_cleanup_readiness =
         !pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result).empty();
@@ -890,6 +894,21 @@ auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path
         .exit_code = 0,
         .stdout_text = std::move(readiness_report),
     };
+}
+
+auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path const& source_path) -> CompileResult {
+    return runtime_indexed_constructor_move_production_readiness(
+        source_path,
+        runtime_indexed_constructor_move_production_readiness_options()
+    );
+}
+
+auto test_only_runtime_indexed_constructor_move_blocked_ir_shape(
+    std::filesystem::path const& source_path
+) -> CompileResult {
+    auto options = runtime_indexed_constructor_move_production_readiness_options();
+    options.test_only_runtime_indexed_cleanup_omit_descriptor_deallocate_tail = true;
+    return runtime_indexed_constructor_move_production_readiness(source_path, options);
 }
 
 auto test_only_runtime_indexed_constructor_move_run(std::filesystem::path const& source_path) -> CompileResult {
@@ -1531,6 +1550,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--runtime-indexed-constructor-move-production-readiness") {
         return runtime_indexed_constructor_move_production_readiness(std::filesystem::path(args[2]));
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) ==
+        "--test-only-runtime-indexed-constructor-move-blocked-ir-shape") {
+        return test_only_runtime_indexed_constructor_move_blocked_ir_shape(std::filesystem::path(args[2]));
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-cleanup-production-readiness") {

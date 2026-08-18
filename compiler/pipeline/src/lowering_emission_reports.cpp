@@ -27,6 +27,27 @@ auto runtime_indexed_cleanup_function_ir_rewrite_requested(
         options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled;
 }
 
+auto remove_test_only_runtime_indexed_descriptor_deallocate_tail(
+    RuntimeIndexedCleanupEmissionPlanState& state
+) -> void {
+    for (auto& plan : state.plans) {
+        auto const deallocate_token = "  call void @" + plan.ir_plan.deallocate_callee_name + "(ptr ";
+        auto const deallocate_line = std::find_if(
+            plan.gated_ir_slice_lines.begin(),
+            plan.gated_ir_slice_lines.end(),
+            [&deallocate_token](std::string const& line) {
+                return line.find(deallocate_token) != std::string::npos;
+            }
+        );
+        if (deallocate_line == plan.gated_ir_slice_lines.end()) {
+            continue;
+        }
+        plan.gated_ir_slice_lines.erase(deallocate_line);
+        plan.gated_ir_slice_line_count = plan.gated_ir_slice_lines.size();
+        return;
+    }
+}
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -3388,6 +3409,11 @@ void populate_lowering_emission_reports(
             emission,
             result.ir_text
         );
+    if (options.test_only_runtime_indexed_cleanup_omit_descriptor_deallocate_tail) {
+        remove_test_only_runtime_indexed_descriptor_deallocate_tail(
+            result.runtime_indexed_cleanup_emission_plan_state
+        );
+    }
     result.runtime_indexed_cleanup_module_ir_production_readiness_state =
         runtime_indexed_cleanup_module_ir_production_readiness_state(
             result.runtime_indexed_cleanup_emission_plan_state,

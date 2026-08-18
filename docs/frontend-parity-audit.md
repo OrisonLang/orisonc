@@ -2659,3 +2659,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index constructor-move production-readiness CLI output now includes the typed
   `member-module-ir-shape` status and appends the first blocked shape detail when available. Driver smoke coverage pins
   the real fixture headline for ready shape paths.
+- 2026-08-18: A test-only constructor-move CLI seam now removes the descriptor deallocation tail after real
+  source-backed `DynamicArray<T>` runtime-index cleanup lowering, letting driver smoke coverage pin the blocked
+  `member-module-ir-shape` detail on a real fixture without changing production lowering.
