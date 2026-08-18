@@ -1942,6 +1942,8 @@ representation.
   accepts the typed fault enum, preserving command behavior while keeping option setup in one place.
 - Driver smoke coverage now also shares one assertion helper for those four shape-fault reports while each named fault
   wrapper keeps its command and expected report shape explicit.
+- Runtime-index cleanup IR-shape fault smoke coverage now uses explicit expectation rows and a shared table-driven
+  assertion loop for descriptor-backed and inline-storage fault cases.
 
 ## Follow-up work
 

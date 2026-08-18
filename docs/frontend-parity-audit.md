@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-18: Runtime-index cleanup IR-shape fault smoke coverage now uses explicit expectation rows and a shared
+  table-driven assertion loop for the descriptor-backed and inline-storage fault cases.
 - 2026-08-18: Driver smoke coverage now shares one assertion helper for the four test-only runtime-index cleanup
   IR-shape fault reports. Each fault wrapper still carries its command name and expected shape text explicitly.
 - 2026-08-18: The driver now routes all four test-only runtime-index cleanup IR-shape fault commands through one
