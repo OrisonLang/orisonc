@@ -1,0 +1,81 @@
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers
+
+record Inner
+    value: UInt32
+
+record Head
+    value: UInt32
+
+record Left
+    value: UInt32
+
+record Right
+    value: UInt32
+
+record Tail
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Head
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Left
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Right
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Tail
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Box
+    left: Left
+    item: Inner
+    right: Right
+
+implements Drop for Box
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Wrap
+    head: Head
+    box: Box
+    tail: Tail
+
+implements Drop for Wrap
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var left_items: DynamicArray<Wrap> = DynamicArray()
+    left_items.push(Wrap(Head(17 as UInt32), Box(Left(7 as UInt32), Inner(11 as UInt32), Right(13 as UInt32)), Tail(19 as UInt32)))
+    left_items.push(Wrap(Head(23 as UInt32), Box(Left(29 as UInt32), Inner(31 as UInt32), Right(37 as UInt32)), Tail(41 as UInt32)))
+    let left_index: UInt64 = 0 as UInt64
+    let left_zero: UInt64 = 0 as UInt64
+    var left_outer: Outer = Outer(left_items[left_index + left_zero].box.item)
+
+    var right_items: DynamicArray<Wrap> = DynamicArray()
+    right_items.push(Wrap(Head(43 as UInt32), Box(Left(47 as UInt32), Inner(53 as UInt32), Right(59 as UInt32)), Tail(61 as UInt32)))
+    right_items.push(Wrap(Head(67 as UInt32), Box(Left(71 as UInt32), Inner(73 as UInt32), Right(79 as UInt32)), Tail(83 as UInt32)))
+    let right_index: UInt64 = 1 as UInt64
+    let right_zero: UInt64 = 0 as UInt64
+    var right_outer: Outer = Outer(right_items[right_index + right_zero].box.item)
+
+    0 as UInt32

@@ -8283,6 +8283,123 @@ auto main() -> int {
     assert(WIFEXITED(runtime_indexed_two_member_transfers_status));
     assert(WEXITSTATUS(runtime_indexed_two_member_transfers_status) == 0);
 
+    auto runtime_indexed_two_nested_member_transfers_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or";
+    auto runtime_indexed_two_nested_member_transfers_apply_request = pipeline.emit_llvm(
+        runtime_indexed_two_nested_member_transfers_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .collect_runtime_indexed_cleanup_audit = true,
+            .runtime_indexed_cleanup_emission_enabled = true,
+            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
+            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
+            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
+            .runtime_indexed_constructor_move_enabled = true,
+            .runtime_indexed_member_cleanup_ir_mutation_enabled = true,
+            .runtime_indexed_member_cleanup_production_gate_enabled = true,
+            .runtime_indexed_member_cleanup_apply_authorization_enabled = true,
+            .runtime_indexed_member_cleanup_rewrite_execution_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+        }
+    );
+    assert(!runtime_indexed_two_nested_member_transfers_apply_request.has_errors());
+    assert(
+        runtime_indexed_two_nested_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_execution_summaries.size() == 2
+    );
+    assert(
+        runtime_indexed_two_nested_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 2
+    );
+    assert(
+        runtime_indexed_two_nested_member_transfers_apply_request
+            .runtime_indexed_member_cleanup_sibling_fields.size() == 8
+    );
+    auto assert_ready_nested_member_cleanup_binding =
+        [&](std::string_view owner_name, std::string_view index_expression) {
+            auto const key = orison::pipeline::RuntimeIndexedMemberCleanupMatchKey {
+                .owner_name = std::string {owner_name},
+                .index_expression_text = std::string {index_expression},
+                .element_source_type_name = "Wrap",
+                .moved_source_type_name = "Inner",
+                .moved_member_path = {"box", "item"},
+            };
+            auto const* summary = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_nested_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_execution_summaries
+            );
+            assert(summary != nullptr);
+            assert(summary->helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
+            assert(summary->helper_binding_count == 1);
+            assert(summary->helper_sibling_binding_count == 4);
+            assert(summary->helper_definition_ready);
+            assert(summary->production_enabled);
+
+            auto const* bindings = orison::pipeline::find_runtime_indexed_member_cleanup_record(
+                key,
+                runtime_indexed_two_nested_member_transfers_apply_request
+                    .runtime_indexed_member_cleanup_helper_drop_bindings
+            );
+            assert(bindings != nullptr);
+            assert(bindings->sibling_binding_count == 4);
+            assert(bindings->all_drop_definitions_available);
+            assert(bindings->nested_member_path);
+            assert(bindings->helper_definition_ready);
+            assert(!bindings->production_enabled);
+        };
+    assert_ready_nested_member_cleanup_binding("left_items", "(left_index + left_zero)");
+    assert_ready_nested_member_cleanup_binding("right_items", "(right_index + right_zero)");
+    auto const& two_nested_member_transfers_ir =
+        runtime_indexed_two_nested_member_transfers_apply_request.ir_text;
+    assert(
+        occurrence_count(
+            two_nested_member_transfers_ir,
+            "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"
+        ) == 1
+    );
+    assert(
+        occurrence_count(
+            two_nested_member_transfers_ir,
+            "call void @__orison_member_cleanup.Wrap.except.box.item"
+        ) == 2
+    );
+    assert(
+        occurrence_count(
+            two_nested_member_transfers_ir,
+            "call void @__orison_drop.Wrap"
+        ) == 2
+    );
+    assert(
+        occurrence_count(
+            two_nested_member_transfers_ir,
+            "call void @__orison_drop.Tail"
+        ) == 2
+    );
+    assert(
+        two_nested_member_transfers_ir.find(
+            "declare void @__orison_member_cleanup.Wrap.except.box.item(ptr)"
+        ) == std::string::npos
+    );
+    auto runtime_indexed_two_nested_member_transfers_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(two_nested_member_transfers_ir);
+    assert(!runtime_indexed_two_nested_member_transfers_object.has_errors());
+    auto runtime_indexed_two_nested_member_transfers_executable =
+        smoke_temp_root / "runtime_indexed_two_nested_member_transfers";
+    auto runtime_indexed_two_nested_member_transfers_link =
+        orison::link::HostLinker {}.link(
+            runtime_indexed_two_nested_member_transfers_object.object_bytes,
+            runtime_indexed_two_nested_member_transfers_executable
+        );
+    assert(!runtime_indexed_two_nested_member_transfers_link.has_errors());
+    auto runtime_indexed_two_nested_member_transfers_status =
+        std::system(runtime_indexed_two_nested_member_transfers_executable.string().c_str());
+    assert(WIFEXITED(runtime_indexed_two_nested_member_transfers_status));
+    assert(WEXITSTATUS(runtime_indexed_two_nested_member_transfers_status) == 0);
+
     auto synthetic_member_cleanup_summary_result = orison::pipeline::CompilePipelineResult {};
     synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_typed_promotion_gates = {
         orison::lowering::RuntimeIndexedMemberCleanupTypedPromotionGate {

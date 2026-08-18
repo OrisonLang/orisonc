@@ -1975,6 +1975,9 @@ representation.
 - Runtime-index member-cleanup helper synthesis now requires direct source-backed `Drop` definitions for every live
   sibling field. Missing sibling `Drop` metadata blocks production-gated `emit_llvm` instead of allowing incomplete
   cleanup IR to omit or reference unavailable helper calls.
+- Two-owner nested source-backed `DynamicArray<Wrap>` member transfers now have positive helper-binding coverage. Each
+  owner independently proves the same `Wrap.box.item` helper target with four sibling `Drop` bindings before native
+  object emission and linking.
 
 ## Follow-up work
 

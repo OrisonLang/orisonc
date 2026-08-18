@@ -2716,3 +2716,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index member-cleanup helper synthesis now records sibling fields even when their direct
   source-backed `Drop` definition is missing. Production-gated `emit_llvm` now rejects that path with a helper Drop
   binding diagnostic instead of silently emitting incomplete cleanup IR.
+- 2026-08-18: Two-owner nested source-backed `DynamicArray<Wrap>` member transfers now compile, link, and run while
+  proving each owner has ready `Wrap.box.item` helper bindings with four direct sibling `Drop` targets.
