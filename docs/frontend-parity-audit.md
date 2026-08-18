@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-18: Driver smoke coverage now exercises the typed runtime-index cleanup IR-shape fault injector for both
+  descriptor-backed deallocate-tail omission and fixed-array inline zero-store omission. Both cases must block
+  `member-module-ir-shape` while preserving common loop/drop readiness.
 - 2026-08-18: Runtime-index cleanup blocked-shape test seams now use a typed test-only IR-shape fault injection enum.
   The current driver seam selects the descriptor-deallocate-tail omission through that enum, while future negative
   coverage can target inline zero-store, Drop-call, or loop-shape blockers without adding one-off pipeline booleans.

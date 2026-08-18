@@ -682,6 +682,29 @@ void assert_cli_test_only_runtime_indexed_constructor_move_blocked_ir_shape(
     ) != std::string::npos);
 }
 
+void assert_cli_test_only_runtime_indexed_constructor_move_inline_zero_store_blocked_ir_shape(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --test-only-runtime-indexed-constructor-move-inline-zero-store-blocked-ir-shape " +
+        path.string();
+    auto output = read_command_output(command);
+    assert(output.find("diagnostic none member-module-ir-shape blocked") != std::string::npos);
+    assert(output.find(
+        "member-module-ir-shape-detail runtime-index cleanup module-ir shape is blocked owner items "
+        "common-loop ready drop-call ready descriptor-storage blocked inline-storage blocked "
+        "descriptor-load absent descriptor-gep absent inline-gep present zero-store absent deallocate absent"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup constructor-move ir-shape owner items lines 18 "
+        "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
+        "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+        "descriptor-storage blocked inline-storage blocked descriptor-load absent descriptor-gep absent "
+        "inline-gep present zero-store absent deallocate absent"
+    ) != std::string::npos);
+}
+
 void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3968,6 +3991,10 @@ auto main() -> int {
         "present",
         "present",
         "absent"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_inline_zero_store_blocked_ir_shape(
+        executable,
+        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or"
     );
     assert_cli_run_fixture_success(
         executable,

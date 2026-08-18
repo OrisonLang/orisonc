@@ -1930,6 +1930,9 @@ representation.
 - Runtime-index cleanup blocked-shape test seams now use a typed test-only IR-shape fault injection enum. The current
   driver seam selects the descriptor-deallocate-tail omission through that enum, and the same mechanism can target
   inline zero-store, Drop-call, or loop-shape omissions as future negative coverage expands.
+- Driver smoke coverage now exercises the typed fault injector for both descriptor-backed deallocate-tail omission and
+  fixed-array inline zero-store omission. These negative cases keep common loop/drop readiness intact while proving the
+  storage-tail gate blocks malformed cleanup slices.
 
 ## Follow-up work
 
