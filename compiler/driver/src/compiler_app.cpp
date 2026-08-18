@@ -163,17 +163,11 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-emission-gate <file> | "
            "--dynamic-array-cleanup-capability <file> | "
            "--computed-dynamic-array-cleanup-call-insertion-capability <file> | "
-           "--test-only-computed-dynamic-array-cleanup-call-insertion-capability <file> | "
            "--computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
-           "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
            "--computed-dynamic-array-inserted-cleanup-handoffs <file> | "
-           "--test-only-computed-dynamic-array-inserted-cleanup-handoffs <file> | "
            "--computed-dynamic-array-inserted-cleanup-calls <file> | "
-           "--test-only-computed-dynamic-array-inserted-cleanup-calls <file> | "
            "--computed-dynamic-array-consumed-cleanup-descriptors <file> | "
-           "--test-only-computed-dynamic-array-consumed-cleanup-descriptors <file> | "
            "--computed-dynamic-array-cleanup-proof-summary <file> | "
-           "--test-only-computed-dynamic-array-cleanup-proof-summary <file> | "
            "--test-only-aggregate-projection-access-plans <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-audit <file> | "
@@ -247,16 +241,6 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
         .collect_computed_dynamic_array_for_production_sequences = true,
         .dynamic_array_production_cleanup_emission_enabled = true,
     };
-}
-
-auto test_only_computed_cleanup_insertion_seam_options() -> pipeline::CompilePipelineOptions {
-    auto options = dynamic_array_cleanup_report_options();
-    options.fixture_authorize_computed_dynamic_array_cleanup_calls = true;
-    options.fixture_insert_computed_dynamic_array_cleanup_calls = true;
-    options.computed_dynamic_array_local_cleanup_call_insertion_enabled = false;
-    options.dynamic_array_production_construction_lowering_enabled = true;
-    options.dynamic_array_production_for_lowering_enabled = true;
-    return options;
 }
 
 auto computed_cleanup_call_insertion_readiness_options() -> pipeline::CompilePipelineOptions {
@@ -1329,36 +1313,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return std::move(*result);
     }
 
-    if (auto result = try_dynamic_array_cleanup_report_command(
-            args,
-            "--test-only-computed-dynamic-array-cleanup-call-insertion-capability",
-            test_only_computed_cleanup_insertion_seam_options(),
-            [](auto const& result) {
-                return computed_cleanup_call_insertion_capability_report(
-                    result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
-                );
-            }
-        )) {
-        return std::move(*result);
-    }
-
     if (auto result = try_emit_llvm_report_command(
             args,
             "--computed-dynamic-array-cleanup-call-insertion-readiness",
             computed_cleanup_call_insertion_readiness_options(),
-            [](auto const& result) {
-                return computed_cleanup_call_insertion_readiness_report(
-                    result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
-                );
-            }
-        )) {
-        return std::move(*result);
-    }
-
-    if (auto result = try_emit_llvm_report_command(
-            args,
-            "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness",
-            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_readiness_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
@@ -1383,34 +1341,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (auto result = try_emit_llvm_report_command(
             args,
-            "--test-only-computed-dynamic-array-inserted-cleanup-handoffs",
-            test_only_computed_cleanup_insertion_seam_options(),
-            [](auto const& result) {
-                return computed_inserted_cleanup_handoff_state_report(
-                    result.computed_dynamic_array_for_inserted_cleanup_handoff_state
-                );
-            }
-        )) {
-        return std::move(*result);
-    }
-
-    if (auto result = try_emit_llvm_report_command(
-            args,
             "--computed-dynamic-array-inserted-cleanup-calls",
             computed_cleanup_call_insertion_readiness_options(),
-            [](auto const& result) {
-                return computed_inserted_cleanup_call_state_report(
-                    result.computed_dynamic_array_for_inserted_cleanup_call_state
-                );
-            }
-        )) {
-        return std::move(*result);
-    }
-
-    if (auto result = try_emit_llvm_report_command(
-            args,
-            "--test-only-computed-dynamic-array-inserted-cleanup-calls",
-            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_inserted_cleanup_call_state_report(
                     result.computed_dynamic_array_for_inserted_cleanup_call_state
@@ -1435,34 +1367,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (auto result = try_emit_llvm_report_command(
             args,
-            "--test-only-computed-dynamic-array-consumed-cleanup-descriptors",
-            test_only_computed_cleanup_insertion_seam_options(),
-            [](auto const& result) {
-                return computed_consumed_cleanup_descriptor_state_report(
-                    result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
-                );
-            }
-        )) {
-        return std::move(*result);
-    }
-
-    if (auto result = try_emit_llvm_report_command(
-            args,
             "--computed-dynamic-array-cleanup-proof-summary",
             computed_cleanup_call_insertion_readiness_options(),
-            [](auto const& result) {
-                return computed_cleanup_proof_summary_state_report(
-                    result.computed_dynamic_array_for_cleanup_proof_summary_state
-                );
-            }
-        )) {
-        return std::move(*result);
-    }
-
-    if (auto result = try_emit_llvm_report_command(
-            args,
-            "--test-only-computed-dynamic-array-cleanup-proof-summary",
-            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_cleanup_proof_summary_state_report(
                     result.computed_dynamic_array_for_cleanup_proof_summary_state

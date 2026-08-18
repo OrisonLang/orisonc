@@ -173,25 +173,11 @@ auto run_computed_dynamic_array_cleanup_call_insertion_capability(
     return run_single_file_command(app, "--computed-dynamic-array-cleanup-call-insertion-capability", path);
 }
 
-auto run_test_only_computed_dynamic_array_cleanup_call_insertion_capability(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--test-only-computed-dynamic-array-cleanup-call-insertion-capability", path);
-}
-
 auto run_computed_dynamic_array_cleanup_call_insertion_readiness(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
 ) -> orison::driver::CompileResult {
     return run_single_file_command(app, "--computed-dynamic-array-cleanup-call-insertion-readiness", path);
-}
-
-auto run_test_only_computed_dynamic_array_cleanup_call_insertion_readiness(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness", path);
 }
 
 auto run_computed_dynamic_array_inserted_cleanup_handoffs(
@@ -201,25 +187,11 @@ auto run_computed_dynamic_array_inserted_cleanup_handoffs(
     return run_single_file_command(app, "--computed-dynamic-array-inserted-cleanup-handoffs", path);
 }
 
-auto run_test_only_computed_dynamic_array_inserted_cleanup_handoffs(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--test-only-computed-dynamic-array-inserted-cleanup-handoffs", path);
-}
-
 auto run_computed_dynamic_array_inserted_cleanup_calls(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
 ) -> orison::driver::CompileResult {
     return run_single_file_command(app, "--computed-dynamic-array-inserted-cleanup-calls", path);
-}
-
-auto run_test_only_computed_dynamic_array_inserted_cleanup_calls(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--test-only-computed-dynamic-array-inserted-cleanup-calls", path);
 }
 
 auto run_computed_dynamic_array_consumed_cleanup_descriptors(
@@ -229,25 +201,11 @@ auto run_computed_dynamic_array_consumed_cleanup_descriptors(
     return run_single_file_command(app, "--computed-dynamic-array-consumed-cleanup-descriptors", path);
 }
 
-auto run_test_only_computed_dynamic_array_consumed_cleanup_descriptors(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--test-only-computed-dynamic-array-consumed-cleanup-descriptors", path);
-}
-
 auto run_computed_dynamic_array_cleanup_proof_summary(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
 ) -> orison::driver::CompileResult {
     return run_single_file_command(app, "--computed-dynamic-array-cleanup-proof-summary", path);
-}
-
-auto run_test_only_computed_dynamic_array_cleanup_proof_summary(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--test-only-computed-dynamic-array-cleanup-proof-summary", path);
 }
 
 auto run_dynamic_array_cleanup_production_readiness(
@@ -1310,33 +1268,10 @@ int main() {
             smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
         }
     );
-    auto dynamic_array_computed_local_same_owner_test_only_insertion_capability =
-        run_test_only_computed_dynamic_array_cleanup_call_insertion_capability(
-            app,
-            dynamic_array_computed_local_same_owner_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_local_same_owner_test_only_insertion_capability,
-        {
-            smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
-        }
-    );
     auto dynamic_array_computed_local_same_owner_insertion_readiness =
         run_computed_dynamic_array_cleanup_call_insertion_readiness(app, dynamic_array_computed_local_same_owner_path);
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_insertion_readiness,
-        {
-            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_ready_report,
-            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report,
-        }
-    );
-    auto dynamic_array_computed_local_same_owner_test_only_insertion_readiness =
-        run_test_only_computed_dynamic_array_cleanup_call_insertion_readiness(
-            app,
-            dynamic_array_computed_local_same_owner_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_local_same_owner_test_only_insertion_readiness,
         {
             smoke::computed_dynamic_array_cleanup_call_insertion_readiness_ready_report,
             smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report,
@@ -1351,31 +1286,10 @@ int main() {
             smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report,
         }
     );
-    auto dynamic_array_computed_local_same_owner_test_only_inserted_cleanup_handoffs =
-        run_test_only_computed_dynamic_array_inserted_cleanup_handoffs(
-            app,
-            dynamic_array_computed_local_same_owner_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_local_same_owner_test_only_inserted_cleanup_handoffs,
-        {
-            smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_fixture_enabled_report,
-            smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report,
-        }
-    );
     auto dynamic_array_computed_local_same_owner_inserted_cleanup_calls =
         run_computed_dynamic_array_inserted_cleanup_calls(app, dynamic_array_computed_local_same_owner_path);
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_inserted_cleanup_calls,
-        {
-            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
-            smoke::computed_dynamic_array_inserted_cleanup_call_state_detail_report,
-        }
-    );
-    auto dynamic_array_computed_local_same_owner_test_only_inserted_cleanup_calls =
-        run_test_only_computed_dynamic_array_inserted_cleanup_calls(app, dynamic_array_computed_local_same_owner_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_local_same_owner_test_only_inserted_cleanup_calls,
         {
             smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
             smoke::computed_dynamic_array_inserted_cleanup_call_state_detail_report,
@@ -1390,30 +1304,10 @@ int main() {
             smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
         }
     );
-    auto dynamic_array_computed_local_same_owner_test_only_consumed_cleanup_descriptors =
-        run_test_only_computed_dynamic_array_consumed_cleanup_descriptors(
-            app,
-            dynamic_array_computed_local_same_owner_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_local_same_owner_test_only_consumed_cleanup_descriptors,
-        {
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
-        }
-    );
     auto dynamic_array_computed_local_same_owner_cleanup_proof_summary =
         run_computed_dynamic_array_cleanup_proof_summary(app, dynamic_array_computed_local_same_owner_path);
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_cleanup_proof_summary,
-        {
-            smoke::computed_dynamic_array_cleanup_proof_summary_inserted_report,
-        }
-    );
-    auto dynamic_array_computed_local_same_owner_test_only_cleanup_proof_summary =
-        run_test_only_computed_dynamic_array_cleanup_proof_summary(app, dynamic_array_computed_local_same_owner_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_local_same_owner_test_only_cleanup_proof_summary,
         {
             smoke::computed_dynamic_array_cleanup_proof_summary_inserted_report,
         }

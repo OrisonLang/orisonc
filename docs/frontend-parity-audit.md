@@ -2686,3 +2686,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index cleanup module-IR production-readiness success and splice-conflict coverage now lives in
   pipeline smoke and the ordinary `--runtime-indexed-cleanup-emit-llvm` diagnostic path. The driver no longer exposes
   the readiness-only `--test-only-runtime-indexed-cleanup-production-readiness` command.
+- 2026-08-18: Computed DynamicArray cleanup-call report coverage now uses the public computed cleanup report commands
+  plus pipeline formatter/state smoke coverage. The driver no longer exposes the six duplicate test-only computed
+  cleanup report aliases.
