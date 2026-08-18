@@ -2710,3 +2710,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index member-cleanup module rewrite now selects the owner-specific
   `%<owner>.dynamic_array_element_path*.element.addr` temporary before deriving the moved-index operand. Pipeline smoke
   coverage pins left/right owner operands in the two-owner fixture to prevent cross-owner cleanup comparisons.
+- 2026-08-18: Runtime-index `DynamicArray<T>` computed-expression member-transfer fixture names now match their
+  promoted default behavior. The former `*_rejected.or` member-cleanup fixtures were renamed without changing source
+  syntax.

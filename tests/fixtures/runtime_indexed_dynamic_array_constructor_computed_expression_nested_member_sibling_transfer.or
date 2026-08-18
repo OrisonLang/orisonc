@@ -1,4 +1,4 @@
-package tests.fixtures.runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer
 
 record Inner
     value: UInt32

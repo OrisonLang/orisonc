@@ -1,4 +1,4 @@
-package tests.fixtures.runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_two_computed_member_transfers
 
 record Inner
     value: UInt32

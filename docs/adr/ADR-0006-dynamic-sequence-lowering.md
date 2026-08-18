@@ -1970,6 +1970,8 @@ representation.
 - Runtime-index member-cleanup rewrite selection is keyed by owner-specific lowered DynamicArray element-path
   temporaries before deriving the moved-index operand. This keeps multi-owner rewrites from comparing one cleanup walk
   against another owner or cleanup-loop index.
+- Runtime-index `DynamicArray<T>` computed-expression member-transfer fixtures now use positive filenames after the
+  default-path promotion. The rename is test/documentation hygiene only and does not alter source syntax.
 
 ## Follow-up work
 

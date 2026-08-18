@@ -3791,27 +3791,27 @@ auto main() -> int {
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
     );
     assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
     );
     assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
     );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
     );
     assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
@@ -4057,7 +4057,7 @@ auto main() -> int {
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
         executable,

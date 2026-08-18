@@ -7743,7 +7743,7 @@ auto main() -> int {
 
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer_rejected.or";
+        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or";
     auto runtime_indexed_member_transfer_audit = pipeline.emit_llvm(
         runtime_indexed_member_transfer_path,
         orison::pipeline::CompilePipelineOptions {
@@ -8051,7 +8051,7 @@ auto main() -> int {
 
     auto runtime_indexed_two_member_transfers_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or";
+        "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or";
     auto runtime_indexed_two_member_transfers_apply_request = pipeline.emit_llvm(
         runtime_indexed_two_member_transfers_path,
         orison::pipeline::CompilePipelineOptions {
@@ -9278,7 +9278,7 @@ auto main() -> int {
 
     auto runtime_indexed_nested_sibling_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or";
+        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or";
     auto runtime_indexed_nested_sibling_member_transfer_apply_request = pipeline.emit_llvm(
         runtime_indexed_nested_sibling_member_transfer_path,
         orison::pipeline::CompilePipelineOptions {
