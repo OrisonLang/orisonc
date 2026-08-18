@@ -1940,6 +1940,8 @@ representation.
   storage evidence remains intact while the common-loop shape gate blocks module-IR readiness.
 - The driver routes all four test-only runtime-index cleanup IR-shape fault commands through one internal helper that
   accepts the typed fault enum, preserving command behavior while keeping option setup in one place.
+- Driver smoke coverage now also shares one assertion helper for those four shape-fault reports while each named fault
+  wrapper keeps its command and expected report shape explicit.
 
 ## Follow-up work
 
