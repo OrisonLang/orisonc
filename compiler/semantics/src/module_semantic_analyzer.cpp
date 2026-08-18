@@ -5852,6 +5852,7 @@ private:
         std::string const& owner_name,
         std::string const& type_name,
         std::size_t declaration_line,
+        DynamicArrayDescriptorOriginKind origin_kind,
         std::size_t depth = 0
     ) {
         if (depth > 16) {
@@ -5864,6 +5865,7 @@ private:
                 .owner_name = owner_name,
                 .source_type_name = type_name,
                 .element_source_type_name = direct_element_type_name,
+                .origin_kind = origin_kind,
                 .line = declaration_line,
             });
             planned_drop_sites_.push_back(PlannedDropSite {
@@ -5876,6 +5878,7 @@ private:
                 owner_name + ".element",
                 direct_element_type_name,
                 declaration_line,
+                origin_kind,
                 depth + 1
             );
             return;
@@ -5888,6 +5891,7 @@ private:
                     owner_name + ".element" + std::to_string(index),
                     array->element_type_name,
                     declaration_line,
+                    origin_kind,
                     depth + 1
                 );
             }
@@ -5917,6 +5921,7 @@ private:
                     .owner_name = field_owner_name,
                     .source_type_name = field_type_name,
                     .element_source_type_name = element_type_name,
+                    .origin_kind = origin_kind,
                     .line = declaration_line,
                 });
                 planned_drop_sites_.push_back(PlannedDropSite {
@@ -5929,6 +5934,7 @@ private:
                     field_owner_name + ".element",
                     element_type_name,
                     declaration_line,
+                    origin_kind,
                     depth + 1
                 );
                 continue;
@@ -5938,6 +5944,7 @@ private:
                 field_owner_name,
                 field_type_name,
                 declaration_line,
+                origin_kind,
                 depth + 1
             );
         }
@@ -5947,8 +5954,14 @@ private:
         collect_record_type_dynamic_array_drop_sites(
             binding.name,
             binding.type_name,
-            binding.declaration_line
+            binding.declaration_line,
+            dynamic_array_descriptor_origin_kind(binding)
         );
+    }
+
+    static auto dynamic_array_descriptor_origin_kind(Binding const& binding) -> DynamicArrayDescriptorOriginKind {
+        return binding.parameter_binding ? DynamicArrayDescriptorOriginKind::parameter_binding
+                                         : DynamicArrayDescriptorOriginKind::local_binding;
     }
 
     void collect_planned_drop_sites(std::vector<Binding> const& bindings) {
@@ -5966,6 +5979,7 @@ private:
                     .owner_name = binding.name,
                     .source_type_name = binding.type_name,
                     .element_source_type_name = dynamic_array_element_type,
+                    .origin_kind = dynamic_array_descriptor_origin_kind(binding),
                     .line = binding.declaration_line,
                 });
             }
@@ -5986,7 +6000,8 @@ private:
                 collect_record_type_dynamic_array_drop_sites(
                     binding.name + ".element",
                     element_type_name,
-                    binding.declaration_line
+                    binding.declaration_line,
+                    dynamic_array_descriptor_origin_kind(binding)
                 );
             }
             if (element_type_name.empty()) {
@@ -6137,6 +6152,16 @@ auto ModuleSemanticAnalyzer::analyze(syntax::ModuleSyntax const& module) const -
     return Analyzer(module).analyze();
 }
 
+auto format_dynamic_array_descriptor_origin_kind(DynamicArrayDescriptorOriginKind origin_kind) -> std::string_view {
+    switch (origin_kind) {
+        case DynamicArrayDescriptorOriginKind::local_binding:
+            return "local";
+        case DynamicArrayDescriptorOriginKind::parameter_binding:
+            return "parameter";
+    }
+    return "unknown";
+}
+
 auto format_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin const& origin) -> std::string {
     auto output = std::string {"dynamic array descriptor origin "};
     output += origin.source_type_name;
@@ -6152,6 +6177,8 @@ auto format_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin const& 
         output += " at line ";
         output += std::to_string(origin.line);
     }
+    output += " origin ";
+    output += format_dynamic_array_descriptor_origin_kind(origin.origin_kind);
     output += " (metadata only)";
     return output;
 }

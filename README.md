@@ -206,3 +206,12 @@ This repository currently captures the initial language design and development c
   integration, and richer source-span diagnostics are still incomplete.
 - Next highest-value step: promote one owned `DynamicArray<T>` parameter/return path from fixture-specific coverage into
   a typed ABI/lifetime model, then use that model to simplify the current cleanup lowering seams.
+
+## DynamicArray ABI Metadata Update - 2026-08-18
+
+- Semantic descriptor origins now distinguish `origin local` from `origin parameter`, giving lowering a typed boundary
+  for local descriptors versus ABI-bound owned-parameter descriptors.
+- Returned `DynamicArray<T>` descriptors still need a distinct semantic origin before the parameter/return ABI model is
+  complete.
+- Next highest-value step: add returned-descriptor origin tracking for function-call results, then connect all three
+  origin kinds to one cleanup/lifetime plan.

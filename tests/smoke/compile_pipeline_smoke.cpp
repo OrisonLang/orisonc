@@ -1212,7 +1212,8 @@ auto main() -> int {
     assert(dynamic_array_source_owner_descriptor_origin_report.size() == 1);
     assert(
         dynamic_array_source_owner_descriptor_origin_report.front() ==
-        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 6 (metadata only)"
+        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 6 origin parameter "
+        "(metadata only)"
     );
     auto dynamic_array_source_owner_semantic_planned_drop_report =
         semantic_planned_drop_report(dynamic_array_source_owner);

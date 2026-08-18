@@ -2722,3 +2722,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   append/indexing, owned cleanup, runtime-index whole-element cleanup, and checked member cleanup are executable, while
   owned parameter/return ABI, broader semantic enforcement, dynamic C binding IR generation, and runtime/library
   integration remain open.
+- 2026-08-18: Semantic DynamicArray descriptor origins now classify the owner boundary as `origin local` or
+  `origin parameter`. Smoke coverage pins both local source-backed descriptors and bound owned-parameter descriptors so
+  later ABI/lifetime lowering can consume a typed boundary instead of inferring it from names.

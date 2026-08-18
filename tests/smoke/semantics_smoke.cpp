@@ -13342,12 +13342,17 @@ void test_dynamic_array_binding_planned_drop_sites_success() {
     assert(analysis.dynamic_array_descriptor_origins.front().owner_name == "items");
     assert(analysis.dynamic_array_descriptor_origins.front().source_type_name == "DynamicArray<Payload>");
     assert(analysis.dynamic_array_descriptor_origins.front().element_source_type_name == "Payload");
+    assert(
+        analysis.dynamic_array_descriptor_origins.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+    );
     assert(analysis.dynamic_array_descriptor_origins.front().line == 4);
     assert(
         orison::semantics::format_dynamic_array_descriptor_origin(
             analysis.dynamic_array_descriptor_origins.front()
         ) ==
-        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 4 (metadata only)"
+        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 4 origin parameter "
+        "(metadata only)"
     );
     assert(analysis.planned_drop_sites.size() == 2);
     assert(
@@ -13379,12 +13384,44 @@ void test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success()
         orison::semantics::format_dynamic_array_descriptor_origin_report(
             analysis.dynamic_array_descriptor_origins
         ).front() ==
-        "dynamic array descriptor origin DynamicArray<UInt32> owner words element UInt32 at line 2 (metadata only)"
+        "dynamic array descriptor origin DynamicArray<UInt32> owner words element UInt32 at line 2 origin parameter "
+        "(metadata only)"
     );
     assert(analysis.planned_drop_sites.size() == 1);
     assert(
         orison::semantics::format_planned_drop_site(analysis.planned_drop_sites.front()) ==
         "drop site __orison_drop.DynamicArray_UInt32_ for DynamicArray<UInt32> owner words at line 2"
+    );
+}
+
+void test_local_dynamic_array_descriptor_origin_kind_success() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_local_dynamic_array_descriptor_origin_kind_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.drop",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "function main() -> UInt32",
+            "    var items: DynamicArray<Payload> = DynamicArray()",
+            "    0 as UInt32",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.dynamic_array_descriptor_origins.size() == 1);
+    assert(
+        analysis.dynamic_array_descriptor_origins.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::local_binding
+    );
+    assert(
+        orison::semantics::format_dynamic_array_descriptor_origin_report(
+            analysis.dynamic_array_descriptor_origins
+        ).front() ==
+        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 5 origin local "
+        "(metadata only)"
     );
 }
 
@@ -14090,6 +14127,7 @@ int main() {
     test_owned_binding_planned_drop_sites_success();
     test_dynamic_array_binding_planned_drop_sites_success();
     test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success();
+    test_local_dynamic_array_descriptor_origin_kind_success();
     test_trivial_binding_planned_drop_sites_ignored_success();
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
