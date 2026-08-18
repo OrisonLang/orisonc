@@ -1938,6 +1938,8 @@ representation.
   blocks common-loop and module-IR shape readiness.
 - Driver smoke coverage now also exercises condition-block omission through the typed fault injector. Descriptor-backed
   storage evidence remains intact while the common-loop shape gate blocks module-IR readiness.
+- The driver routes all four test-only runtime-index cleanup IR-shape fault commands through one internal helper that
+  accepts the typed fault enum, preserving command behavior while keeping option setup in one place.
 
 ## Follow-up work
 

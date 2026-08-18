@@ -906,40 +906,49 @@ auto runtime_indexed_constructor_move_production_readiness(std::filesystem::path
     );
 }
 
+auto test_only_runtime_indexed_constructor_move_ir_shape_fault(
+    std::filesystem::path const& source_path,
+    pipeline::RuntimeIndexedCleanupIrShapeFaultInjection fault
+) -> CompileResult {
+    auto options = runtime_indexed_constructor_move_production_readiness_options();
+    options.test_only_runtime_indexed_cleanup_ir_shape_fault = fault;
+    return runtime_indexed_constructor_move_production_readiness(source_path, options);
+}
+
 auto test_only_runtime_indexed_constructor_move_blocked_ir_shape(
     std::filesystem::path const& source_path
 ) -> CompileResult {
-    auto options = runtime_indexed_constructor_move_production_readiness_options();
-    options.test_only_runtime_indexed_cleanup_ir_shape_fault =
-        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDescriptorDeallocateTail;
-    return runtime_indexed_constructor_move_production_readiness(source_path, options);
+    return test_only_runtime_indexed_constructor_move_ir_shape_fault(
+        source_path,
+        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDescriptorDeallocateTail
+    );
 }
 
 auto test_only_runtime_indexed_constructor_move_inline_zero_store_blocked_ir_shape(
     std::filesystem::path const& source_path
 ) -> CompileResult {
-    auto options = runtime_indexed_constructor_move_production_readiness_options();
-    options.test_only_runtime_indexed_cleanup_ir_shape_fault =
-        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitInlineZeroStore;
-    return runtime_indexed_constructor_move_production_readiness(source_path, options);
+    return test_only_runtime_indexed_constructor_move_ir_shape_fault(
+        source_path,
+        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitInlineZeroStore
+    );
 }
 
 auto test_only_runtime_indexed_constructor_move_drop_call_blocked_ir_shape(
     std::filesystem::path const& source_path
 ) -> CompileResult {
-    auto options = runtime_indexed_constructor_move_production_readiness_options();
-    options.test_only_runtime_indexed_cleanup_ir_shape_fault =
-        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDropCall;
-    return runtime_indexed_constructor_move_production_readiness(source_path, options);
+    return test_only_runtime_indexed_constructor_move_ir_shape_fault(
+        source_path,
+        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDropCall
+    );
 }
 
 auto test_only_runtime_indexed_constructor_move_loop_shape_blocked_ir_shape(
     std::filesystem::path const& source_path
 ) -> CompileResult {
-    auto options = runtime_indexed_constructor_move_production_readiness_options();
-    options.test_only_runtime_indexed_cleanup_ir_shape_fault =
-        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock;
-    return runtime_indexed_constructor_move_production_readiness(source_path, options);
+    return test_only_runtime_indexed_constructor_move_ir_shape_fault(
+        source_path,
+        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock
+    );
 }
 
 auto test_only_runtime_indexed_constructor_move_run(std::filesystem::path const& source_path) -> CompileResult {

@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-18: The driver now routes all four test-only runtime-index cleanup IR-shape fault commands through one
+  internal helper that accepts the typed fault enum. Command names and report behavior stay unchanged.
 - 2026-08-18: Driver smoke coverage now exercises condition-block omission through the typed runtime-index cleanup
   IR-shape fault injector. The descriptor-backed storage evidence remains present while the common-loop shape gate
   blocks module-IR readiness.
