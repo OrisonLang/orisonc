@@ -250,17 +250,55 @@ auto production_readiness_satisfied_for_promotion(
         has_only_stale_production_readiness_blockers(readiness);
 }
 
+auto runtime_indexed_cleanup_module_ir_shape_blocker_detail(
+    CompilePipelineResult const& result
+) -> std::string {
+    for (auto const& plan : result.runtime_indexed_cleanup_emission_plan_state.plans) {
+        if (plan.gated_ir_slice_lines.empty()) {
+            continue;
+        }
+        auto const shape = runtime_indexed_cleanup_ir_shape_summary(plan);
+        auto const shape_ready =
+            shape.common_loop_shape_ready &&
+            shape.drop_call_found &&
+            (shape.descriptor_storage_shape_ready || shape.inline_storage_shape_ready);
+        if (shape_ready) {
+            continue;
+        }
+        auto detail = std::ostringstream {};
+        detail << "runtime-index cleanup module-ir shape is blocked"
+               << " owner " << shape.owner_name
+               << " common-loop " << (shape.common_loop_shape_ready ? "ready" : "blocked")
+               << " drop-call " << (shape.drop_call_found ? "ready" : "blocked")
+               << " descriptor-storage " << (shape.descriptor_storage_shape_ready ? "ready" : "blocked")
+               << " inline-storage " << (shape.inline_storage_shape_ready ? "ready" : "blocked")
+               << " descriptor-load " << (shape.descriptor_load_found ? "present" : "absent")
+               << " descriptor-gep " << (shape.descriptor_element_gep_found ? "present" : "absent")
+               << " inline-gep " << (shape.inline_element_gep_found ? "present" : "absent")
+               << " zero-store " << (shape.zero_store_found ? "present" : "absent")
+               << " deallocate " << (shape.deallocate_call_found ? "present" : "absent");
+        return detail.str();
+    }
+    return "runtime-index cleanup module-ir shape is blocked";
+}
+
 }  // namespace
 
 auto runtime_indexed_member_cleanup_promotion_state(
     CompilePipelineResult const& result
 ) -> RuntimeIndexedMemberCleanupPromotionState {
+    auto const module_ir_shape_blocker_detail =
+        runtime_indexed_cleanup_module_ir_shape_blocker_detail(result);
     auto state = RuntimeIndexedMemberCleanupPromotionState {
         .production_readiness_count = result.runtime_indexed_member_cleanup_production_readiness.size(),
         .typed_gate_count = result.runtime_indexed_member_cleanup_typed_promotion_gates.size(),
         .mutation_readiness_count = result.runtime_indexed_member_cleanup_mutation_production_readiness.size(),
         .rewrite_promotion_count = result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.size(),
         .module_ir_shape_ready = result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready,
+        .module_ir_shape_blocker_detail =
+            result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready
+                ? std::string {}
+                : module_ir_shape_blocker_detail,
     };
     auto const has_member_cleanup_records =
         state.production_readiness_count > 0 ||
@@ -314,6 +352,8 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
         return lines;
     }
 
+    auto const module_ir_shape_blocker_detail =
+        runtime_indexed_cleanup_module_ir_shape_blocker_detail(result);
     for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
         auto const key = runtime_indexed_member_cleanup_match_key(gate);
         auto const* production_readiness = find_runtime_indexed_member_cleanup_record(
@@ -349,7 +389,7 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 lines,
                 gate,
                 "blocked-module-ir-shape",
-                "runtime-index cleanup module-ir shape is blocked"
+                module_ir_shape_blocker_detail
             );
         }
         if (!gate.production_enabled) {

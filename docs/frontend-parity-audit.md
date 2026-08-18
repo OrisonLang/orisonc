@@ -2654,3 +2654,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index member-cleanup promotion now treats the shared module-IR `ir-shape` gate as an explicit
   prerequisite. Synthetic pipeline smoke coverage verifies keyed member promotion stays blocked when cleanup IR shape
   is blocked even if keyed member production, mutation, and rewrite records are otherwise ready.
+- 2026-08-18: Runtime-index member-cleanup promotion blockers now include the first blocked cleanup IR-shape detail,
+  including owner, common-loop/drop readiness, storage-shape readiness, and descriptor/inline tail presence.

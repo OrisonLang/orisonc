@@ -1920,6 +1920,8 @@ representation.
 - Runtime-index member-cleanup promotion now consumes the shared runtime-index cleanup module-IR `ir-shape` gate as a
   typed prerequisite. Keyed member production, mutation, and rewrite records cannot report overall promotion ready while
   the shared cleanup IR shape gate is blocked.
+- Runtime-index member-cleanup promotion blockers now carry the first blocked cleanup IR-shape detail. The detail names
+  the owner and reports common-loop/drop readiness plus descriptor/inline storage-tail presence for the blocked slice.
 
 ## Follow-up work
 

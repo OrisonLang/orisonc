@@ -15,6 +15,7 @@ struct RuntimeIndexedMemberCleanupPromotionState {
     std::size_t mutation_readiness_count = 0;
     std::size_t rewrite_promotion_count = 0;
     bool module_ir_shape_ready = true;
+    std::string module_ir_shape_blocker_detail;
 };
 
 auto runtime_indexed_member_cleanup_promotion_state(
