@@ -352,7 +352,13 @@ auto runtime_indexed_constructor_move_production_readiness_report(
            << " member-mutation-records " << member_cleanup_typed_promotion.mutation_readiness_count
            << " member-rewrite-records " << member_cleanup_typed_promotion.rewrite_promotion_count
            << " diagnostic "
-           << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none");
+           << (has_constructor_move_gate_diagnostic ? "runtime-index constructor move gate disabled" : "none")
+           << " member-module-ir-shape "
+           << (member_cleanup_typed_promotion.module_ir_shape_ready ? "ready" : "blocked");
+    if (!member_cleanup_typed_promotion.module_ir_shape_blocker_detail.empty()) {
+        report << " member-module-ir-shape-detail "
+               << member_cleanup_typed_promotion.module_ir_shape_blocker_detail;
+    }
     for (auto const& line : pipeline::runtime_indexed_constructor_move_plan_report_lines(
              result.runtime_indexed_cleanup_emission_plan_state
          )) {

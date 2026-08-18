@@ -2656,3 +2656,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   is blocked even if keyed member production, mutation, and rewrite records are otherwise ready.
 - 2026-08-18: Runtime-index member-cleanup promotion blockers now include the first blocked cleanup IR-shape detail,
   including owner, common-loop/drop readiness, storage-shape readiness, and descriptor/inline tail presence.
+- 2026-08-18: Runtime-index constructor-move production-readiness CLI output now includes the typed
+  `member-module-ir-shape` status and appends the first blocked shape detail when available. Driver smoke coverage pins
+  the real fixture headline for ready shape paths.

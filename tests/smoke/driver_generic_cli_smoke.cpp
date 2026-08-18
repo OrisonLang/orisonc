@@ -605,6 +605,7 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         "capability-count 1 ordinary-emit accepted member-cleanup-promotion blocked "
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1"
     ) != std::string::npos);
+    assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
 }
 
 void assert_cli_runtime_indexed_constructor_move_plan_metadata(
@@ -673,6 +674,8 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
         "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
+    assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
+    assert(output.find("member-module-ir-shape-detail") == std::string::npos);
     auto const promotion_blocker = output.find(
         "runtime-index member cleanup promotion blocker owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item blocker blocked-production-readiness"
@@ -837,6 +840,8 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
         "member-production-records 2 member-gate-records 2 member-mutation-records 2 "
         "member-rewrite-records 2 diagnostic none"
     ) != std::string::npos);
+    assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
+    assert(output.find("member-module-ir-shape-detail") == std::string::npos);
     auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
         auto const owner = std::string {owner_name};
         auto const index = std::string {index_expression};

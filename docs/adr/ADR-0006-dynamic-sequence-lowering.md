@@ -1922,6 +1922,8 @@ representation.
   the shared cleanup IR shape gate is blocked.
 - Runtime-index member-cleanup promotion blockers now carry the first blocked cleanup IR-shape detail. The detail names
   the owner and reports common-loop/drop readiness plus descriptor/inline storage-tail presence for the blocked slice.
+- Runtime-index constructor-move production-readiness CLI output now surfaces the same typed member module-IR shape
+  status used by promotion, and includes the blocked shape detail when a malformed cleanup slice is present.
 
 ## Follow-up work
 
