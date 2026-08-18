@@ -8215,6 +8215,30 @@ auto main() -> int {
     assert_owner_member_cleanup_ir("left_items");
     assert_owner_member_cleanup_ir("right_items");
     assert(
+        two_member_transfers_ir.find(
+            "  %left_items.member_cleanup.is_moved = icmp eq i64 "
+            "%left_items.member_cleanup.index, %tmp6\n"
+        ) != std::string::npos
+    );
+    assert(
+        two_member_transfers_ir.find(
+            "  %right_items.member_cleanup.is_moved = icmp eq i64 "
+            "%right_items.member_cleanup.index, %tmp17\n"
+        ) != std::string::npos
+    );
+    assert(
+        two_member_transfers_ir.find(
+            "  %left_items.member_cleanup.is_moved = icmp eq i64 "
+            "%left_items.member_cleanup.index, %tmp17\n"
+        ) == std::string::npos
+    );
+    assert(
+        two_member_transfers_ir.find(
+            "  %right_items.member_cleanup.is_moved = icmp eq i64 "
+            "%right_items.member_cleanup.index, %left_items.member_cleanup.index\n"
+        ) == std::string::npos
+    );
+    assert(
         occurrence_count(
             two_member_transfers_ir,
             "call void @__orison_member_cleanup.Box.except.item"

@@ -1386,6 +1386,7 @@ auto selected_runtime_indexed_member_cleanup_element_address(
     std::string const& function_ir
 ) -> std::string {
     auto const needle = " = getelementptr %record." + plan.element_source_type_name + ", ptr ";
+    auto const owner_element_path_marker = "%" + plan.owner_name + ".dynamic_array_element_path";
     auto position = std::string::size_type {0};
     auto selected = std::string {};
     while ((position = function_ir.find(needle, position)) != std::string::npos) {
@@ -1398,9 +1399,12 @@ auto selected_runtime_indexed_member_cleanup_element_address(
         }
         if (trimmed_value_start < value_end &&
             function_ir[trimmed_value_start] == '%' &&
+            function_ir.substr(trimmed_value_start, value_end - trimmed_value_start).find(
+                owner_element_path_marker
+            ) == 0 &&
             function_ir.substr(trimmed_value_start, value_end - trimmed_value_start).find(".element.addr") !=
                 std::string::npos) {
-            selected = function_ir.substr(trimmed_value_start, value_end - trimmed_value_start);
+            return function_ir.substr(trimmed_value_start, value_end - trimmed_value_start);
         }
         position += needle.size();
     }

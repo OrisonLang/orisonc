@@ -2704,3 +2704,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup report aliases.
 - 2026-08-18: Aggregate projection access-plan coverage now lives in pipeline typed-state smoke plus formatter smoke.
   The driver no longer exposes the test-only aggregate projection access-plan report command.
+- 2026-08-18: Ordinary driver defaults now enable runtime-index member-cleanup rewrite execution after the typed
+  promotion chain reports ready. Source-backed `DynamicArray<T>` computed-index member-transfer fixtures now compile,
+  link, and run on the default path.
+- 2026-08-18: Runtime-index member-cleanup module rewrite now selects the owner-specific
+  `%<owner>.dynamic_array_element_path*.element.addr` temporary before deriving the moved-index operand. Pipeline smoke
+  coverage pins left/right owner operands in the two-owner fixture to prevent cross-owner cleanup comparisons.

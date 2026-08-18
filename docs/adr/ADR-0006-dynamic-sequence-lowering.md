@@ -1964,6 +1964,12 @@ representation.
 - Computed DynamicArray cleanup-call report coverage now uses the public computed cleanup report commands plus pipeline
   formatter/state smoke coverage. The driver no longer exposes the six duplicate test-only computed cleanup report
   aliases.
+- Ordinary driver defaults now enable runtime-index member-cleanup rewrite execution for checked source-backed
+  `DynamicArray<T>` computed-index member transfers. The promoted path requires typed member proof, helper Drop
+  binding, mutation authorization, rewrite authorization/execution readiness, and shared module IR-shape readiness.
+- Runtime-index member-cleanup rewrite selection is keyed by owner-specific lowered DynamicArray element-path
+  temporaries before deriving the moved-index operand. This keeps multi-owner rewrites from comparing one cleanup walk
+  against another owner or cleanup-loop index.
 
 ## Follow-up work
 

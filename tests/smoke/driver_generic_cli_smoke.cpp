@@ -622,7 +622,7 @@ void assert_cli_runtime_indexed_constructor_move_ir_shape(
     ) != std::string::npos);
 }
 
-void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
+void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -632,16 +632,12 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     assert(output.find(
         "runtime-index cleanup constructor-move production-readiness "
         "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
-        "capability-count 1 ordinary-emit rejected member-cleanup-promotion blocked "
+        "capability-count 1 ordinary-emit accepted member-cleanup-promotion ready "
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
         "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
     assert(output.find("member-module-ir-shape-detail") == std::string::npos);
-    auto const promotion_blocker = output.find(
-        "runtime-index member cleanup promotion blocker owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item blocker blocked-rewrite-promotion"
-    );
     auto const helper_bindings = output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
@@ -650,10 +646,8 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
     );
-    assert(promotion_blocker != std::string::npos);
     assert(helper_bindings != std::string::npos);
     assert(production_readiness != std::string::npos);
-    assert(promotion_blocker < helper_bindings);
     assert(helper_bindings < production_readiness);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
@@ -730,33 +724,29 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     assert(output.find(
         "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item verdict ready guarded-rewrite ready "
-        "authorization ready rewrite-requested false rewrite-authorized false report-only true "
-        "production disabled blockers 0"
+        "authorization ready rewrite-requested true rewrite-authorized true report-only false "
+        "production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item authorization ready rewrite-authorized false "
-        "execution-plan blocked execution-requested false execution disabled report-only true production disabled "
-        "blockers 1 blocker member-cleanup-mutation-rewrite-not-authorized"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup mutation rewrite execution-plan blocker owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item blocker member-cleanup-mutation-rewrite-not-authorized "
-        "detail member cleanup mutation rewrite is not authorized"
+        "element Wrap moved Inner member-path box.item authorization ready rewrite-authorized true "
+        "execution-plan ready execution-requested true execution enabled report-only false production enabled "
+        "blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item execution-plan blocked execution disabled blockers 1 "
-        "diagnostics 1 report-only true production disabled"
+        "element Wrap moved Inner member-path box.item execution-plan ready execution enabled blockers 0 "
+        "diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item authorization blocked execution-plan blocked "
-        "execution-verdict blocked promotion blocked blockers 1 diagnostics 1 report-only true production disabled"
+        "element Wrap moved Inner member-path box.item authorization ready execution-plan ready "
+        "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
+    assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }
 
-void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
+void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -766,7 +756,7 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
     assert(output.find(
         "runtime-index cleanup constructor-move production-readiness "
         "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
-        "capability-count 2 ordinary-emit rejected member-cleanup-promotion blocked "
+        "capability-count 2 ordinary-emit accepted member-cleanup-promotion ready "
         "member-production-records 2 member-gate-records 2 member-mutation-records 2 "
         "member-rewrite-records 2 diagnostic none"
     ) != std::string::npos);
@@ -775,11 +765,6 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
     auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
         auto const owner = std::string {owner_name};
         auto const index = std::string {index_expression};
-        assert(output.find(
-            "runtime-index member cleanup promotion blocker owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item blocker blocked-rewrite-promotion "
-            "detail matching member cleanup rewrite-promotion record production is disabled"
-        ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup helper-drop-bindings owner " + owner + " index " + index + " "
             "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
@@ -800,12 +785,26 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation rewrite promotion-status owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item authorization blocked execution-plan blocked "
-            "execution-verdict blocked promotion blocked blockers 1 diagnostics 1 report-only true production disabled"
+            "element Box moved Inner member-path item authorization ready execution-plan ready "
+            "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup mutation rewrite authorization owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item verdict ready guarded-rewrite ready "
+            "authorization ready rewrite-requested true rewrite-authorized true report-only false "
+            "production enabled blockers 0"
+        ) != std::string::npos);
+        assert(output.find(
+            "runtime-index member cleanup mutation rewrite execution-plan owner " + owner + " index " + index + " "
+            "element Box moved Inner member-path item authorization ready rewrite-authorized true "
+            "execution-plan ready execution-requested true execution enabled report-only false production enabled "
+            "blockers 0"
         ) != std::string::npos);
     };
     assert_owner_lines("left_items", "(left_index + left_zero)");
     assert_owner_lines("right_items", "(right_index + right_zero)");
+    assert(output.find("blocker blocked-rewrite-promotion") == std::string::npos);
+    assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }
 
 void assert_cli_run_fixture_success(
@@ -3790,21 +3789,19 @@ auto main() -> int {
         fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or",
         smoke_temp_root / "runtime_indexed_cleanup_choice_payload_source_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or",
-        "DynamicArray element path read of owned projection requires a non-owning scalar projection"
-    );
-    assert_cli_emit_llvm_existing_fixture_failure(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or",
-        "DynamicArray element path read of owned projection requires a non-owning scalar projection"
-    );
-    assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
+    assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
     );
-    assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
+    );
+    assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer_rejected.or"
+    );
+    assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers_rejected.or"
     );
@@ -4058,10 +4055,9 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
         "use after move: items[(index + zero)]"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer_rejected.or",
-        "DynamicArray element path read of owned projection requires a non-owning scalar projection"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
         executable,

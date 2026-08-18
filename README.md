@@ -103,6 +103,10 @@ constructor-move acceptance, and ordinary LLVM emission are ready for the checke
 DynamicArray fixtures. DynamicArray runtime-index owners use verified function-level cleanup CFG insertion with
 skip-aware element drops and descriptor deallocation.
 
+Ordinary `--emit-llvm` also accepts the checked source-backed `DynamicArray<T>` runtime-index member-transfer fixtures.
+Member-granular cleanup inserts a verified cleanup walk that skips the moved computed index, drops the remaining whole
+elements, drops live sibling members at the moved index through a finite helper, and deallocates the descriptor.
+
 The gated executable smoke path uses `tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_run.or`
 with `--test-only-runtime-indexed-constructor-move-run`. That command is a compiler test seam, not user-facing
 language syntax; it validates constructor-move acceptance without enabling the pseudo module-mutation artifact.
@@ -177,3 +181,12 @@ This repository currently captures the initial language design and development c
   splice member cleanup blocks without changing ordinary constructor-move acceptance.
 - The promotion boundary should stay narrow: keep whole-element runtime-index moves working, keep member-path moves
   rejected on ordinary `--emit-llvm`, and expose any new readiness through audit or test-only seams first.
+
+## Runtime-Index Member Cleanup Update - 2026-08-18
+
+- Ordinary driver defaults now enable member-cleanup rewrite execution after typed proof, helper binding, mutation
+  authorization, rewrite authorization, execution planning, and module IR-shape checks all report ready.
+- Checked source-backed `DynamicArray<T>` computed-index member-transfer fixtures now compile, link, and run through
+  the default driver path.
+- Multi-owner member cleanup rewrites now select owner-specific lowered index operands, preventing one cleanup walk from
+  reusing another owner/index temporary.
