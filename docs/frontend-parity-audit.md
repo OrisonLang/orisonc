@@ -152,6 +152,9 @@
 - 2026-08-18: Ordinary driver defaults now also enable the runtime-index member-cleanup production gate. Default
   readiness reports show mutation planning, validation, conflict checks, apply authorization readiness, and previews
   clean while still leaving apply authorization and rewrite execution disabled.
+- 2026-08-18: Ordinary driver defaults now enable runtime-index member-cleanup apply authorization. Default readiness
+  reports can verify applied mutation previews end-to-end, but rewrite execution remains disabled so ordinary
+  `--emit-llvm` still rejects owned member projections.
 - 2026-08-13: DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as

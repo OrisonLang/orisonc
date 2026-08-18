@@ -1770,6 +1770,9 @@ representation.
 - Ordinary driver defaults now also enable the member-cleanup production gate. Mutation planning, validation, conflict
   detection, apply authorization readiness, and previews can report cleanly on default production-readiness paths while
   apply authorization and rewrite execution remain disabled.
+- Ordinary driver defaults now enable member-cleanup apply authorization. Default production-readiness paths can prove
+  mutation application and post-apply checks, while rewrite execution stays disabled to keep ordinary `--emit-llvm`
+  rejection intact until final guarded rewrite promotion.
 - Runtime-index constructor-move production-readiness now appends member-cleanup readiness and blocker details when
   member-granular cleanup state exists. This gives the non-test driver report an explicit default-promotion blocker for
   member cleanup while keeping the ordinary emission path rejected.

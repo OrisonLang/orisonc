@@ -640,7 +640,7 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     assert(output.find("member-module-ir-shape-detail") == std::string::npos);
     auto const promotion_blocker = output.find(
         "runtime-index member cleanup promotion blocker owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item blocker blocked-mutation-readiness"
+        "element Wrap moved Inner member-path box.item blocker blocked-rewrite-promotion"
     );
     auto const helper_bindings = output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
@@ -699,59 +699,45 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     assert(output.find(
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item validation ready conflict-free true "
-        "ir-mutation requested production-gate enabled apply-requested false authorization ready "
-        "apply-authorized false report-only true production disabled blockers 0"
+        "ir-mutation requested production-gate enabled apply-requested true authorization ready "
+        "apply-authorized true report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item preview ready apply-authorized false "
-        "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
-        "report-only true production disabled blockers 2 "
-        "blocker member-cleanup-mutation-apply-authorization "
-        "blocker member-cleanup-mutation-actions-applied"
+        "element Wrap moved Inner member-path box.item preview ready apply-authorized true "
+        "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
+        "report-only false production enabled blockers 0 "
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-promotion-summary owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item operations 3 operations-ready ready validation ready "
-        "conflict-free true authorization ready preview ready actions 3 post-apply-verification blocked "
-        "expected-checks 3 promotion blocked report-only true production disabled blockers 2 "
-        "blocker member-cleanup-mutation-apply-authorization "
-        "blocker member-cleanup-mutation-actions-applied"
+        "conflict-free true authorization ready preview ready actions 3 post-apply-verification ready "
+        "expected-checks 3 promotion ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item promotion blocked post-apply-verification blocked "
-        "authorization ready ir-mutation requested production-gate enabled readiness blocked report-only true "
-        "production disabled blockers 4 "
-        "blocker member-cleanup-mutation-apply-authorization "
-        "blocker member-cleanup-mutation-actions-applied blocker member-cleanup-mutation-promotion "
-        "blocker member-cleanup-mutation-post-apply-verification"
+        "element Wrap moved Inner member-path box.item promotion ready post-apply-verification ready "
+        "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
+        "production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find("blocker member-cleanup-ir-mutation ") == std::string::npos);
     assert(output.find("blocker production-member-cleanup-ir-mutation ") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item readiness blocked guarded-rewrite blocked "
-        "blockers 4 diagnostics 4 report-only true production disabled"
+        "element Wrap moved Inner member-path box.item readiness ready guarded-rewrite ready "
+        "blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item verdict blocked guarded-rewrite blocked "
-        "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
-        "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
-        "blocker member-cleanup-mutation-guarded-rewrite"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup mutation rewrite authorization blocker owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item blocker member-cleanup-mutation-readiness-verdict "
-        "detail member cleanup mutation readiness verdict is blocked"
+        "element Wrap moved Inner member-path box.item verdict ready guarded-rewrite ready "
+        "authorization ready rewrite-requested false rewrite-authorized false report-only true "
+        "production disabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item authorization blocked rewrite-authorized false "
+        "element Wrap moved Inner member-path box.item authorization ready rewrite-authorized false "
         "execution-plan blocked execution-requested false execution disabled report-only true production disabled "
-        "blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
-        "blocker member-cleanup-mutation-rewrite-not-authorized"
+        "blockers 1 blocker member-cleanup-mutation-rewrite-not-authorized"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution-plan blocker owner items index (index + zero) "
@@ -760,13 +746,13 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item execution-plan blocked execution disabled blockers 2 "
-        "diagnostics 2 report-only true production disabled"
+        "element Wrap moved Inner member-path box.item execution-plan blocked execution disabled blockers 1 "
+        "diagnostics 1 report-only true production disabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item authorization blocked execution-plan blocked "
-        "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true production disabled"
+        "execution-verdict blocked promotion blocked blockers 1 diagnostics 1 report-only true production disabled"
     ) != std::string::npos);
 }
 
@@ -791,8 +777,8 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
         auto const index = std::string {index_expression};
         assert(output.find(
             "runtime-index member cleanup promotion blocker owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item blocker blocked-mutation-readiness "
-            "detail matching member cleanup mutation-readiness record production is disabled"
+            "element Box moved Inner member-path item blocker blocked-rewrite-promotion "
+            "detail matching member cleanup rewrite-promotion record production is disabled"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup helper-drop-bindings owner " + owner + " index " + index + " "
@@ -808,14 +794,14 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_blocked(
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation-production-readiness owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item promotion blocked post-apply-verification blocked "
-            "authorization ready ir-mutation requested production-gate enabled readiness blocked report-only true "
-            "production disabled blockers 4"
+            "element Box moved Inner member-path item promotion ready post-apply-verification ready "
+            "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
+            "production enabled blockers 0"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation rewrite promotion-status owner " + owner + " index " + index + " "
             "element Box moved Inner member-path item authorization blocked execution-plan blocked "
-            "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true production disabled"
+            "execution-verdict blocked promotion blocked blockers 1 diagnostics 1 report-only true production disabled"
         ) != std::string::npos);
     };
     assert_owner_lines("left_items", "(left_index + left_zero)");
