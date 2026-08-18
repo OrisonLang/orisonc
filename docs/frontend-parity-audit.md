@@ -146,6 +146,9 @@
   production gate, apply authorization, and rewrite execution. The external `--test-only-runtime-indexed-member-cleanup-run`
   diagnostic seam remains unchanged, while the internal pipeline no longer depends on test-only option names for the
   executable member-cleanup path.
+- 2026-08-18: Ordinary driver defaults now enable the first runtime-index member-cleanup mutation gate. Production
+  readiness reports show IR mutation requested/enabled while keeping production-gate, apply authorization, and rewrite
+  execution disabled, so owned member projections remain rejected outside the executable diagnostic seam.
 - 2026-08-13: DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as

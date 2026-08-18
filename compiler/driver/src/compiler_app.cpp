@@ -254,6 +254,7 @@ auto default_driver_options() -> pipeline::CompilePipelineOptions {
     options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
+    options.runtime_indexed_member_cleanup_ir_mutation_enabled = true;
     return options;
 }
 

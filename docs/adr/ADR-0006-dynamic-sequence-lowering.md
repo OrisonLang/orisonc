@@ -1764,6 +1764,9 @@ representation.
 - Runtime-index member cleanup mutation gates now use production-named pipeline options internally for IR mutation,
   production gate, apply authorization, and rewrite execution. The driver seam name stays diagnostic/test-only, but the
   compile pipeline no longer exposes those controls as test-only fields.
+- Ordinary driver defaults now enable only the first member-cleanup mutation gate. Default production-readiness reports
+  show IR mutation requested/enabled, while production-gate, apply authorization, and rewrite execution remain disabled
+  so ordinary `--emit-llvm` continues to reject owned member projections.
 - Runtime-index constructor-move production-readiness now appends member-cleanup readiness and blocker details when
   member-granular cleanup state exists. This gives the non-test driver report an explicit default-promotion blocker for
   member cleanup while keeping the ordinary emission path rejected.
