@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-18: Driver smoke coverage now exercises the typed runtime-index cleanup IR-shape fault injector for Drop-call
+  omission. The descriptor-backed cleanup slice keeps descriptor load/GEP/deallocate evidence present, while
+  missing `drop-call` evidence blocks common-loop and shared module-IR shape readiness.
 - 2026-08-18: Driver smoke coverage now exercises the typed runtime-index cleanup IR-shape fault injector for both
   descriptor-backed deallocate-tail omission and fixed-array inline zero-store omission. Both cases must block
   `member-module-ir-shape` while preserving common loop/drop readiness.

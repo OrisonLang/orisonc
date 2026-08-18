@@ -1933,6 +1933,9 @@ representation.
 - Driver smoke coverage now exercises the typed fault injector for both descriptor-backed deallocate-tail omission and
   fixed-array inline zero-store omission. These negative cases keep common loop/drop readiness intact while proving the
   storage-tail gate blocks malformed cleanup slices.
+- Driver smoke coverage now also exercises Drop-call omission through the same typed fault injector. The
+  descriptor-backed slice keeps descriptor load/GEP/deallocate evidence intact while missing `drop-call` evidence
+  blocks common-loop and module-IR shape readiness.
 
 ## Follow-up work
 
