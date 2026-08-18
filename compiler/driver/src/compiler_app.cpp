@@ -182,6 +182,7 @@ auto usage_text() -> std::string {
            "--test-only-runtime-indexed-constructor-move-blocked-ir-shape <file> | "
            "--test-only-runtime-indexed-constructor-move-inline-zero-store-blocked-ir-shape <file> | "
            "--test-only-runtime-indexed-constructor-move-drop-call-blocked-ir-shape <file> | "
+           "--test-only-runtime-indexed-constructor-move-loop-shape-blocked-ir-shape <file> | "
            "--test-only-runtime-indexed-cleanup-production-readiness <file> | "
            "--test-only-runtime-indexed-constructor-move-run <file> | "
            "--test-only-runtime-indexed-member-cleanup-run <file> | "
@@ -932,6 +933,15 @@ auto test_only_runtime_indexed_constructor_move_drop_call_blocked_ir_shape(
     return runtime_indexed_constructor_move_production_readiness(source_path, options);
 }
 
+auto test_only_runtime_indexed_constructor_move_loop_shape_blocked_ir_shape(
+    std::filesystem::path const& source_path
+) -> CompileResult {
+    auto options = runtime_indexed_constructor_move_production_readiness_options();
+    options.test_only_runtime_indexed_cleanup_ir_shape_fault =
+        pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock;
+    return runtime_indexed_constructor_move_production_readiness(source_path, options);
+}
+
 auto test_only_runtime_indexed_constructor_move_run(std::filesystem::path const& source_path) -> CompileResult {
     pipeline::CompilePipeline pipeline;
     auto result = pipeline.emit_object(source_path, runtime_indexed_constructor_move_run_options());
@@ -1588,6 +1598,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) ==
         "--test-only-runtime-indexed-constructor-move-drop-call-blocked-ir-shape") {
         return test_only_runtime_indexed_constructor_move_drop_call_blocked_ir_shape(std::filesystem::path(args[2]));
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) ==
+        "--test-only-runtime-indexed-constructor-move-loop-shape-blocked-ir-shape") {
+        return test_only_runtime_indexed_constructor_move_loop_shape_blocked_ir_shape(std::filesystem::path(args[2]));
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-cleanup-production-readiness") {

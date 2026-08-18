@@ -1936,6 +1936,8 @@ representation.
 - Driver smoke coverage now also exercises Drop-call omission through the same typed fault injector. The
   descriptor-backed slice keeps descriptor load/GEP/deallocate evidence intact while missing `drop-call` evidence
   blocks common-loop and module-IR shape readiness.
+- Driver smoke coverage now also exercises condition-block omission through the typed fault injector. Descriptor-backed
+  storage evidence remains intact while the common-loop shape gate blocks module-IR readiness.
 
 ## Follow-up work
 

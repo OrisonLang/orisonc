@@ -728,6 +728,29 @@ void assert_cli_test_only_runtime_indexed_constructor_move_drop_call_blocked_ir_
     ) != std::string::npos);
 }
 
+void assert_cli_test_only_runtime_indexed_constructor_move_loop_shape_blocked_ir_shape(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --test-only-runtime-indexed-constructor-move-loop-shape-blocked-ir-shape " +
+        path.string();
+    auto output = read_command_output(command);
+    assert(output.find("diagnostic none member-module-ir-shape blocked") != std::string::npos);
+    assert(output.find(
+        "member-module-ir-shape-detail runtime-index cleanup module-ir shape is blocked owner items "
+        "common-loop blocked drop-call ready descriptor-storage ready inline-storage blocked "
+        "descriptor-load present descriptor-gep present inline-gep absent zero-store absent deallocate present"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+        "common-loop blocked condition-blocks 0 live-check-blocks 1 skip-blocks 1 "
+        "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
+        "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
+        "inline-gep absent zero-store absent deallocate present"
+    ) != std::string::npos);
+}
+
 void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3996,6 +4019,10 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_drop_call_blocked_ir_shape(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+    );
+    assert_cli_test_only_runtime_indexed_constructor_move_loop_shape_blocked_ir_shape(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
     );
