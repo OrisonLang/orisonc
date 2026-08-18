@@ -2640,3 +2640,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Runtime-index cleanup production-readiness smoke coverage now shares one helper for ready upstream
   insertion, candidate, mutation, and function-integration states, keeping `ir-shape` fixtures focused on malformed,
   inline-storage, and descriptor-backed rendered cleanup slices.
+- 2026-08-18: Runtime-index cleanup `ir-shape` positive smoke coverage now uses focused inline-storage and
+  descriptor-backed fixture builders, so each storage strategy has one local rendered-slice source for helper-boundary
+  production-readiness assertions.
