@@ -50,10 +50,10 @@ struct CompilePipelineOptions {
     bool runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = false;
     bool runtime_indexed_cleanup_source_drop_emission_enabled = false;
     bool runtime_indexed_constructor_move_enabled = false;
-    bool test_only_runtime_indexed_member_cleanup_ir_mutation_request = false;
-    bool test_only_runtime_indexed_member_cleanup_production_gate_request = false;
-    bool test_only_runtime_indexed_member_cleanup_apply_authorization_request = false;
-    bool test_only_runtime_indexed_member_cleanup_rewrite_execution_request = false;
+    bool runtime_indexed_member_cleanup_ir_mutation_enabled = false;
+    bool runtime_indexed_member_cleanup_production_gate_enabled = false;
+    bool runtime_indexed_member_cleanup_apply_authorization_enabled = false;
+    bool runtime_indexed_member_cleanup_rewrite_execution_enabled = false;
     RuntimeIndexedCleanupIrShapeFaultInjection test_only_runtime_indexed_cleanup_ir_shape_fault =
         RuntimeIndexedCleanupIrShapeFaultInjection::None;
     bool runtime_indexed_fixed_array_constructor_move_only = false;

@@ -142,6 +142,10 @@
   `runtime_indexed_member_cleanup_sibling_fields` records for the two-sibling `Box.except.item` fixture, pinning owner,
   index expression, moved path, sibling field names, field indexes, LLVM field types, and Drop symbols separately from
   helper-body IR rendering.
+- 2026-08-18: Runtime-index member cleanup mutation gates now use production-named pipeline options for IR mutation,
+  production gate, apply authorization, and rewrite execution. The external `--test-only-runtime-indexed-member-cleanup-run`
+  diagnostic seam remains unchanged, while the internal pipeline no longer depends on test-only option names for the
+  executable member-cleanup path.
 - 2026-08-13: DynamicArray runtime-index constructor moves now cover nested scalar sibling reads after a computed
   whole-element move, such as moving `items[index + zero]` and reading `items[1].item.value`.
 - 2026-08-13: nested owned member transfer from a runtime-indexed DynamicArray element, such as
