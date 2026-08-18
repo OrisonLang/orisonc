@@ -8630,11 +8630,33 @@ auto main() -> int {
             synthetic_ready_member_cleanup_promotion_result
         );
     assert(ready_member_cleanup_promotion_state.state == "ready");
+    assert(ready_member_cleanup_promotion_state.module_ir_shape_ready);
     assert(
         orison::pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(
             synthetic_ready_member_cleanup_promotion_result
         ).empty()
     );
+
+    synthetic_ready_member_cleanup_promotion_result
+        .runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready = false;
+    auto const ir_shape_blocked_member_cleanup_promotion_state =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state(
+            synthetic_ready_member_cleanup_promotion_result
+        );
+    assert(ir_shape_blocked_member_cleanup_promotion_state.state == "blocked");
+    assert(!ir_shape_blocked_member_cleanup_promotion_state.module_ir_shape_ready);
+    auto const ir_shape_blocked_member_cleanup_promotion_lines =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(
+            synthetic_ready_member_cleanup_promotion_result
+        );
+    assert_any_line_contains(
+        ir_shape_blocked_member_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner lefts index i "
+        "element LeftBox moved Payload member-path payload "
+        "blocker blocked-module-ir-shape"
+    );
+    synthetic_ready_member_cleanup_promotion_result
+        .runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready = true;
 
     synthetic_ready_member_cleanup_promotion_result
         .runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.pop_back();

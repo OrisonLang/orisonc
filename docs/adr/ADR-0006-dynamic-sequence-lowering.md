@@ -1917,6 +1917,9 @@ representation.
 - Runtime-index cleanup `ir-shape` readiness now also rejects inline-storage cleanup slices that omit post-Drop
   zeroing. Smoke coverage derives that negative fixture from the positive fixed-array fixture and verifies only the
   `ir-shape` blocker remains when upstream states are ready.
+- Runtime-index member-cleanup promotion now consumes the shared runtime-index cleanup module-IR `ir-shape` gate as a
+  typed prerequisite. Keyed member production, mutation, and rewrite records cannot report overall promotion ready while
+  the shared cleanup IR shape gate is blocked.
 
 ## Follow-up work
 

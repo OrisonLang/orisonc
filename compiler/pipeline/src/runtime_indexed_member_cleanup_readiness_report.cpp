@@ -260,6 +260,7 @@ auto runtime_indexed_member_cleanup_promotion_state(
         .typed_gate_count = result.runtime_indexed_member_cleanup_typed_promotion_gates.size(),
         .mutation_readiness_count = result.runtime_indexed_member_cleanup_mutation_production_readiness.size(),
         .rewrite_promotion_count = result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.size(),
+        .module_ir_shape_ready = result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready,
     };
     auto const has_member_cleanup_records =
         state.production_readiness_count > 0 ||
@@ -296,6 +297,7 @@ auto runtime_indexed_member_cleanup_promotion_state(
             mutation_readiness != nullptr &&
             rewrite_promotion != nullptr &&
             production_readiness_satisfied_for_promotion(gate, *production_readiness) &&
+            state.module_ir_shape_ready &&
             gate.production_enabled &&
             mutation_readiness->production_enabled &&
             rewrite_promotion->production_enabled;
@@ -340,6 +342,14 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 gate,
                 "blocked-production-readiness",
                 "matching member cleanup production-readiness record is blocked"
+            );
+        }
+        if (!result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready) {
+            append_promotion_blocker_line(
+                lines,
+                gate,
+                "blocked-module-ir-shape",
+                "runtime-index cleanup module-ir shape is blocked"
             );
         }
         if (!gate.production_enabled) {
