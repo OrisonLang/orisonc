@@ -35,11 +35,9 @@ inventing semantics outside the spec/tour.
   source type, receiver status, and diagnostic text when present. This is debugging/audit metadata only.
 - A lowering metadata option can collect aggregate projection access-plan records into function and module emission
   results. Normal compiler output remains unchanged.
-- The driver exposes those aggregate projection access-plan records as report output only through the explicit
-  `--test-only-aggregate-projection-access-plans` report command.
-- That test-only report command preserves access-plan output on lowering failure, so rejection-boundary tests can assert
-  the blocked plan and diagnostic without changing normal compiler output.
-- Driver smoke coverage now pins receiver projection access reports, including `this.payload` as an allowed owned
+- Pipeline smoke coverage preserves access-plan output on lowering failure, so rejection-boundary tests can assert the
+  typed blocked plan and diagnostic without changing normal compiler output.
+- Pipeline smoke coverage now pins receiver projection access state, including `this.payload` as an allowed owned
   receiver projection.
 - Pipeline results now expose typed aggregate projection access-plan state, including function symbols, intents,
   statuses, bindings, source types, diagnostics, receiver flags, and summary counts. Tests and future tooling should
@@ -99,6 +97,9 @@ inventing semantics outside the spec/tour.
 - Pipeline results no longer expose raw semantic planned-drop, drop-implementation, drop-resolution, drop-diagnostic,
   drop-lowering-authorization, or drop-summary report strings. Pipeline consumers render from `SemanticDropState`,
   `SemanticAnalysisResult::planned_drop_sites`, and typed lowering authorizations.
+- The aggregate projection access-plan CLI report seam is superseded by typed pipeline-state coverage. Real pipeline
+  smoke fixtures now cover allowed transfers, blocked owned value reads, and receiver projections, while formatter smoke
+  keeps exact report text pinned without exposing a test-only driver command.
 - Pipeline results no longer duplicate DynamicArray missing element-drop pairs as a standalone top-level vector.
   Consumers use typed cleanup availability or cleanup emission capability state.
 - Pipeline results expose computed DynamicArray production sequence module comment IR through a named artifact state

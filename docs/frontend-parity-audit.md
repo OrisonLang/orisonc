@@ -2689,3 +2689,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Computed DynamicArray cleanup-call report coverage now uses the public computed cleanup report commands
   plus pipeline formatter/state smoke coverage. The driver no longer exposes the six duplicate test-only computed
   cleanup report aliases.
+- 2026-08-18: Aggregate projection access-plan coverage now lives in pipeline typed-state smoke plus formatter smoke.
+  The driver no longer exposes the test-only aggregate projection access-plan report command.

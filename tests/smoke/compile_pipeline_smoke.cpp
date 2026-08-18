@@ -504,6 +504,102 @@ void assert_aggregate_projection_access_plan_state(
     assert(state.source_type_names[2] == "Payload");
     assert(state.diagnostics[2].empty());
     assert(!state.receiver_projections[2]);
+
+    auto rejected_source_path = smoke_temp_root / "aggregate_projection_access_plan_state_rejected.or";
+    {
+        auto output = std::ofstream(rejected_source_path);
+        output <<
+            "package smoke.aggregate_access_plan_state_rejected\n"
+            "\n"
+            "record Payload\n"
+            "    public value: UInt32\n"
+            "\n"
+            "record Box\n"
+            "    public payload: Payload\n"
+            "\n"
+            "function main() -> Payload\n"
+            "    let box: Box = Box(Payload(13 as UInt32))\n"
+            "    box.payload\n";
+    }
+
+    auto rejected_result = pipeline.emit_llvm(
+        rejected_source_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_aggregate_projection_access_metadata = true,
+        }
+    );
+    assert(rejected_result.has_errors());
+    auto const& rejected_state = rejected_result.aggregate_projection_access_plan_state;
+    assert(rejected_state.access_plans_available);
+    assert(rejected_state.plan_count == 1);
+    assert(rejected_state.allowed_count == 0);
+    assert(rejected_state.blocked_count == 1);
+    assert(rejected_state.receiver_projection_count == 0);
+    assert(rejected_state.function_symbol_names.size() == 1);
+    assert(rejected_state.function_symbol_names[0] == "main");
+    assert(rejected_state.intents[0] == orison::lowering::AggregateProjectionAccessIntent::value_read);
+    assert(
+        rejected_state.statuses[0] ==
+        orison::lowering::AggregateProjectionAccessStatus::requires_explicit_boundary
+    );
+    assert(rejected_state.binding_names[0] == "box.payload");
+    assert(rejected_state.source_type_names[0] == "Payload");
+    assert(
+        rejected_state.diagnostics[0] ==
+        "aggregate path read of owned projection requires an explicit ownership transfer"
+    );
+    assert(!rejected_state.receiver_projections[0]);
+
+    auto receiver_source_path = smoke_temp_root / "aggregate_projection_access_plan_state_receiver.or";
+    {
+        auto output = std::ofstream(receiver_source_path);
+        output <<
+            "package smoke.aggregate_access_plan_state_receiver\n"
+            "\n"
+            "record Payload\n"
+            "    public value: UInt32\n"
+            "\n"
+            "record Box\n"
+            "    public payload: Payload\n"
+            "\n"
+            "extend Box\n"
+            "    function payload(this: shared This) -> Payload\n"
+            "        this.payload\n"
+            "\n"
+            "function main() -> UInt32\n"
+            "    let box: Box = Box(Payload(13 as UInt32))\n"
+            "    let payload: Payload = box.payload()\n"
+            "    payload.value\n";
+    }
+
+    auto receiver_result = pipeline.emit_llvm(
+        receiver_source_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_aggregate_projection_access_metadata = true,
+        }
+    );
+    assert(!receiver_result.has_errors());
+    auto const& receiver_state = receiver_result.aggregate_projection_access_plan_state;
+    assert(receiver_state.access_plans_available);
+    assert(receiver_state.plan_count == 2);
+    assert(receiver_state.allowed_count == 2);
+    assert(receiver_state.blocked_count == 0);
+    assert(receiver_state.receiver_projection_count == 1);
+    assert(receiver_state.function_symbol_names.size() == 2);
+    assert(receiver_state.function_symbol_names[0] == "main");
+    assert(receiver_state.intents[0] == orison::lowering::AggregateProjectionAccessIntent::value_read);
+    assert(receiver_state.statuses[0] == orison::lowering::AggregateProjectionAccessStatus::non_owned_projection);
+    assert(receiver_state.binding_names[0] == "payload.value");
+    assert(receiver_state.source_type_names[0] == "UInt32");
+    assert(receiver_state.diagnostics[0].empty());
+    assert(!receiver_state.receiver_projections[0]);
+    assert(receiver_state.function_symbol_names[1] == "method.Box.payload");
+    assert(receiver_state.intents[1] == orison::lowering::AggregateProjectionAccessIntent::value_read);
+    assert(receiver_state.statuses[1] == orison::lowering::AggregateProjectionAccessStatus::allowed);
+    assert(receiver_state.binding_names[1] == "this.payload");
+    assert(receiver_state.source_type_names[1] == "Payload");
+    assert(receiver_state.diagnostics[1].empty());
+    assert(receiver_state.receiver_projections[1]);
 }
 
 auto ready_runtime_indexed_cleanup_module_ir_production_readiness(

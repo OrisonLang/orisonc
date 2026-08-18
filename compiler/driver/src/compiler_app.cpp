@@ -168,7 +168,6 @@ auto usage_text() -> std::string {
            "--computed-dynamic-array-inserted-cleanup-calls <file> | "
            "--computed-dynamic-array-consumed-cleanup-descriptors <file> | "
            "--computed-dynamic-array-cleanup-proof-summary <file> | "
-           "--test-only-aggregate-projection-access-plans <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-emit-llvm <file> | "
@@ -1376,20 +1375,6 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             }
         )) {
         return std::move(*result);
-    }
-
-    if (args.size() == 3 && std::string_view(args[1]) == "--test-only-aggregate-projection-access-plans") {
-        return emit_llvm_report_with_failure_output(
-            std::filesystem::path(args[2]),
-            pipeline::CompilePipelineOptions {
-                .collect_aggregate_projection_access_metadata = true,
-            },
-            [](auto const& result) {
-                return aggregate_projection_access_plan_state_report(
-                    result.aggregate_projection_access_plan_state
-                );
-            }
-        );
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-production-readiness") {
