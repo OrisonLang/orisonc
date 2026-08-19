@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/target_layout.hpp"
+#include "orison/semantics/module_semantic_analyzer.hpp"
 
 #include <cstddef>
 #include <optional>
@@ -79,6 +80,20 @@ struct DynamicArrayReturnedDescriptorLifetimePlan {
     bool caller_owns_returned_cleanup = false;
 };
 
+struct DynamicArrayDescriptorLifetimePlan {
+    std::string owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    semantics::DynamicArrayDescriptorOriginKind origin_kind =
+        semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    DynamicArrayDescriptorStorageStatus descriptor_storage_status =
+        DynamicArrayDescriptorStorageStatus::predicted_owner_local;
+    std::string descriptor_storage_name;
+    std::string cleanup_responsibility;
+    bool cleanup_plan_available = false;
+    std::size_t source_line = 0;
+};
+
 auto dynamic_array_runtime_call(
     DynamicArrayRuntimeOperation operation
 ) -> DynamicArrayRuntimeCall;
@@ -106,11 +121,29 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;
 
+auto plan_dynamic_array_bound_parameter_lifetime(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    std::string_view descriptor_storage_name,
+    bool drop_proof_available,
+    LoweringContext const& context,
+    TargetLayout const& layout = native_target_layout()
+) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;
+
 auto plan_dynamic_array_returned_descriptor_lifetime(
     std::string_view returned_owner_name,
     std::string_view returned_source_type_name,
     DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
 ) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan>;
+
+auto plan_dynamic_array_returned_descriptor_lifetime(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
+) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan>;
+
+auto plan_dynamic_array_descriptor_lifetime(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    DynamicArrayDescriptorCleanupPlan const* cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan;
 
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan

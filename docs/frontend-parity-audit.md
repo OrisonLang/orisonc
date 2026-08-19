@@ -2737,3 +2737,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Returned `DynamicArray<T>` descriptor cleanup transfer now consumes a typed
   `DynamicArrayReturnedDescriptorLifetimePlan` helper before erasing callee-local descriptor cleanup. This records the
   caller-owned returned cleanup handoff in lowering instead of matching raw cleanup-plan fields inline.
+- 2026-08-19: Pipeline descriptor lifetime reports and lowering parameter/return cleanup decisions now share the
+  semantic-origin-backed lowering lifetime helper. Bound-parameter cleanup now requires a parameter origin, and
+  returned cleanup transfer now requires a returned origin before descriptor cleanup ownership changes.

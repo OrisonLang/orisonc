@@ -678,9 +678,17 @@ auto emit_function_return_cleanup(
     return emit_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 
+auto matching_dynamic_array_descriptor_origin(
+    semantics::SemanticAnalysisResult const* semantic_result,
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    semantics::DynamicArrayDescriptorOriginKind origin_kind
+) -> semantics::DynamicArrayDescriptorOrigin const*;
+
 void release_returned_dynamic_array_local_cleanup(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
+    semantics::SemanticAnalysisResult const* semantic_result,
     FunctionLoweringState& state
 ) {
     release_moved_owned_cleanup_expression(expression, state);
@@ -696,12 +704,21 @@ void release_returned_dynamic_array_local_cleanup(
         return;
     }
 
+    auto const* origin = matching_dynamic_array_descriptor_origin(
+        semantic_result,
+        expression.text,
+        *return_source_type_name,
+        semantics::DynamicArrayDescriptorOriginKind::returned_binding
+    );
+    if (origin == nullptr) {
+        return;
+    }
+
     for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
          cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
          ++cleanup_plan) {
         auto lifetime_plan = plan_dynamic_array_returned_descriptor_lifetime(
-            expression.text,
-            *return_source_type_name,
+            *origin,
             *cleanup_plan
         );
         if (lifetime_plan.has_value() && lifetime_plan->caller_owns_returned_cleanup) {
@@ -841,6 +858,30 @@ auto dynamic_array_parameter_element_cleanup_proven(
     });
 }
 
+auto matching_dynamic_array_descriptor_origin(
+    semantics::SemanticAnalysisResult const* semantic_result,
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    semantics::DynamicArrayDescriptorOriginKind origin_kind
+) -> semantics::DynamicArrayDescriptorOrigin const* {
+    if (semantic_result == nullptr) {
+        return nullptr;
+    }
+
+    auto const match = std::ranges::find_if(
+        semantic_result->dynamic_array_descriptor_origins,
+        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
+            return origin.owner_name == owner_name &&
+                origin.source_type_name == source_type_name &&
+                origin.origin_kind == origin_kind;
+        }
+    );
+    if (match == semantic_result->dynamic_array_descriptor_origins.end()) {
+        return nullptr;
+    }
+    return &*match;
+}
+
 void seed_bound_dynamic_array_parameter_cleanup_owner(
     std::string_view parameter_name,
     std::string_view source_type_name,
@@ -862,13 +903,20 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
         return;
     }
 
-    auto lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
+    auto const* origin = matching_dynamic_array_descriptor_origin(
+        session.semantics,
         parameter_name,
         source_type_name,
-        *storage,
-        dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
-        context.lowering
+        semantics::DynamicArrayDescriptorOriginKind::parameter_binding
     );
+    auto lifetime_plan = origin == nullptr
+        ? std::optional<DynamicArrayBoundParameterLifetimePlan> {}
+        : plan_dynamic_array_bound_parameter_lifetime(
+            *origin,
+            *storage,
+            dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
+            context.lowering
+        );
     if (!lifetime_plan.has_value()) {
         return;
     }
@@ -1199,7 +1247,12 @@ auto lower_guard_return_statement(
         return StatementFlow::failed;
     }
 
-    release_returned_dynamic_array_local_cleanup(statement.expression, return_source_type_name, session.state);
+    release_returned_dynamic_array_local_cleanup(
+        statement.expression,
+        return_source_type_name,
+        session.semantics,
+        session.state
+    );
     release_returned_choice_dynamic_array_payload_cleanup(
         statement.expression,
         return_source_type_name,
@@ -2126,7 +2179,12 @@ void emit_function_body(
     }
 
     if (expression != nullptr) {
-        release_returned_dynamic_array_local_cleanup(*expression, return_source_type_name, session.state);
+        release_returned_dynamic_array_local_cleanup(
+            *expression,
+            return_source_type_name,
+            session.semantics,
+            session.state
+        );
         release_returned_choice_dynamic_array_payload_cleanup(
             *expression,
             return_source_type_name,

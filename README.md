@@ -227,5 +227,7 @@ This repository currently captures the initial language design and development c
   emission, retiring the duplicate inline descriptor-storage mutation on that path.
 - Returned descriptor cleanup transfer now uses a typed lowering-local lifetime helper before suppressing callee-local
   cleanup, making caller-owned returned cleanup explicit at the lowering boundary.
-- Next highest-value step: connect the lowering-local lifetime helpers to the pipeline descriptor lifetime state so
-  bound-parameter and returned-descriptor cleanup decisions are sourced from one typed plan.
+- Pipeline descriptor lifetime reporting and lowering parameter/return cleanup decisions now share the same
+  semantic-origin-backed lifetime helper, so origin kind selects cleanup responsibility in one lowering API.
+- Next highest-value step: add a negative regression proving missing semantic descriptor origins cannot silently enable
+  owned `DynamicArray<T>` parameter or returned cleanup transfers.

@@ -203,20 +203,6 @@ auto build_dynamic_array_descriptor_cleanup_plan_state(
     };
 }
 
-auto dynamic_array_descriptor_lifetime_cleanup_responsibility(
-    semantics::DynamicArrayDescriptorOriginKind origin_kind
-) -> std::string {
-    switch (origin_kind) {
-        case semantics::DynamicArrayDescriptorOriginKind::local_binding:
-            return "caller-owned-local-cleanup";
-        case semantics::DynamicArrayDescriptorOriginKind::parameter_binding:
-            return "callee-owned-parameter-cleanup";
-        case semantics::DynamicArrayDescriptorOriginKind::returned_binding:
-            return "caller-owned-returned-cleanup";
-    }
-    return "unknown-cleanup";
-}
-
 auto matching_dynamic_array_descriptor_cleanup_plan(
     semantics::DynamicArrayDescriptorOrigin const& origin,
     std::vector<lowering::DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
@@ -257,20 +243,19 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
         auto const* cleanup_plan =
             matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
+        auto lowering_plan = lowering::plan_dynamic_array_descriptor_lifetime(origin, cleanup_plan);
         auto plan = DynamicArrayDescriptorLifetimePlan {
-            .owner_name = origin.owner_name,
-            .source_type_name = origin.source_type_name,
-            .element_source_type_name = origin.element_source_type_name,
-            .origin_kind = origin.origin_kind,
-            .cleanup_responsibility =
-                dynamic_array_descriptor_lifetime_cleanup_responsibility(origin.origin_kind),
-            .cleanup_plan_available = cleanup_plan != nullptr,
-            .source_line = origin.line,
+            .owner_name = std::move(lowering_plan.owner_name),
+            .source_type_name = std::move(lowering_plan.source_type_name),
+            .element_source_type_name = std::move(lowering_plan.element_source_type_name),
+            .origin_kind = lowering_plan.origin_kind,
+            .descriptor_storage_status = lowering_plan.descriptor_storage_status,
+            .descriptor_storage_name = std::move(lowering_plan.descriptor_storage_name),
+            .cleanup_responsibility = std::move(lowering_plan.cleanup_responsibility),
+            .cleanup_plan_available = lowering_plan.cleanup_plan_available,
+            .source_line = lowering_plan.source_line,
         };
-        if (cleanup_plan != nullptr) {
-            plan.descriptor_storage_status = cleanup_plan->descriptor_storage_status;
-            plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
-        } else {
+        if (cleanup_plan == nullptr) {
             state.all_origins_have_cleanup_plans = false;
         }
         state.plans.push_back(std::move(plan));

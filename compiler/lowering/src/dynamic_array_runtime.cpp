@@ -64,6 +64,20 @@ auto format_dynamic_array_descriptor_storage_status(
     return "unknown";
 }
 
+auto dynamic_array_descriptor_lifetime_cleanup_responsibility(
+    semantics::DynamicArrayDescriptorOriginKind origin_kind
+) -> std::string {
+    switch (origin_kind) {
+    case semantics::DynamicArrayDescriptorOriginKind::local_binding:
+        return "caller-owned-local-cleanup";
+    case semantics::DynamicArrayDescriptorOriginKind::parameter_binding:
+        return "callee-owned-parameter-cleanup";
+    case semantics::DynamicArrayDescriptorOriginKind::returned_binding:
+        return "caller-owned-returned-cleanup";
+    }
+    return "unknown-cleanup";
+}
+
 }  // namespace
 
 auto dynamic_array_runtime_call(
@@ -197,9 +211,31 @@ auto plan_dynamic_array_bound_parameter_lifetime(
 
     return DynamicArrayBoundParameterLifetimePlan {
         .descriptor_cleanup = std::move(*descriptor_cleanup),
-        .cleanup_responsibility = "callee-owned-parameter-cleanup",
+        .cleanup_responsibility = dynamic_array_descriptor_lifetime_cleanup_responsibility(
+            semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+        ),
         .drop_proof_available = drop_proof_available,
     };
+}
+
+auto plan_dynamic_array_bound_parameter_lifetime(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    std::string_view descriptor_storage_name,
+    bool drop_proof_available,
+    LoweringContext const& context,
+    TargetLayout const& layout
+) -> std::optional<DynamicArrayBoundParameterLifetimePlan> {
+    if (origin.origin_kind != semantics::DynamicArrayDescriptorOriginKind::parameter_binding) {
+        return std::nullopt;
+    }
+    return plan_dynamic_array_bound_parameter_lifetime(
+        origin.owner_name,
+        origin.source_type_name,
+        descriptor_storage_name,
+        drop_proof_available,
+        context,
+        layout
+    );
 }
 
 auto plan_dynamic_array_returned_descriptor_lifetime(
@@ -221,9 +257,46 @@ auto plan_dynamic_array_returned_descriptor_lifetime(
 
     return DynamicArrayReturnedDescriptorLifetimePlan {
         .descriptor_cleanup = candidate_cleanup,
-        .cleanup_responsibility = "caller-owned-returned-cleanup",
+        .cleanup_responsibility = dynamic_array_descriptor_lifetime_cleanup_responsibility(
+            semantics::DynamicArrayDescriptorOriginKind::returned_binding
+        ),
         .caller_owns_returned_cleanup = true,
     };
+}
+
+auto plan_dynamic_array_returned_descriptor_lifetime(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
+) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan> {
+    if (origin.origin_kind != semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
+        return std::nullopt;
+    }
+    return plan_dynamic_array_returned_descriptor_lifetime(
+        origin.owner_name,
+        origin.source_type_name,
+        candidate_cleanup
+    );
+}
+
+auto plan_dynamic_array_descriptor_lifetime(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    DynamicArrayDescriptorCleanupPlan const* cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan {
+    auto plan = DynamicArrayDescriptorLifetimePlan {
+        .owner_name = origin.owner_name,
+        .source_type_name = origin.source_type_name,
+        .element_source_type_name = origin.element_source_type_name,
+        .origin_kind = origin.origin_kind,
+        .cleanup_responsibility =
+            dynamic_array_descriptor_lifetime_cleanup_responsibility(origin.origin_kind),
+        .cleanup_plan_available = cleanup_plan != nullptr,
+        .source_line = origin.line,
+    };
+    if (cleanup_plan != nullptr) {
+        plan.descriptor_storage_status = cleanup_plan->descriptor_storage_status;
+        plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
+    }
+    return plan;
 }
 
 auto format_dynamic_array_construction_plan(

@@ -221,8 +221,23 @@ int main() {
             "%items.bound.addr",
             true,
             context
-        );
+    );
     assert(dynamic_array_bound_parameter_lifetime_plan.has_value());
+    auto bound_parameter_origin = orison::semantics::DynamicArrayDescriptorOrigin {
+        .owner_name = "items",
+        .source_type_name = "DynamicArray<Payload>",
+        .element_source_type_name = "Payload",
+        .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+        .line = 12,
+    };
+    auto dynamic_array_bound_parameter_origin_lifetime_plan =
+        orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
+            bound_parameter_origin,
+            "%items.bound.addr",
+            true,
+            context
+        );
+    assert(dynamic_array_bound_parameter_origin_lifetime_plan.has_value());
     assert(dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.owner_name == "items");
     assert(
         dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.descriptor_storage_name ==
@@ -251,6 +266,16 @@ int main() {
             context
         ).has_value()
     );
+    auto local_origin = bound_parameter_origin;
+    local_origin.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    assert(
+        !orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
+            local_origin,
+            "%items.bound.addr",
+            true,
+            context
+        ).has_value()
+    );
     auto returned_cleanup_plan = *dynamic_array_cleanup_plan;
     returned_cleanup_plan.descriptor_storage_status =
         orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
@@ -261,6 +286,14 @@ int main() {
             returned_cleanup_plan
         );
     assert(dynamic_array_returned_lifetime_plan.has_value());
+    auto returned_origin = bound_parameter_origin;
+    returned_origin.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding;
+    auto dynamic_array_returned_origin_lifetime_plan =
+        orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
+            returned_origin,
+            returned_cleanup_plan
+        );
+    assert(dynamic_array_returned_origin_lifetime_plan.has_value());
     assert(dynamic_array_returned_lifetime_plan->descriptor_cleanup.owner_name == "items");
     assert(
         dynamic_array_returned_lifetime_plan->descriptor_cleanup.descriptor_storage_status ==
@@ -289,6 +322,20 @@ int main() {
             "DynamicArray<Payload>",
             returned_cleanup_plan
         ).has_value()
+    );
+    assert(
+        !orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
+            local_origin,
+            returned_cleanup_plan
+        ).has_value()
+    );
+    auto descriptor_lifetime_plan =
+        orison::lowering::plan_dynamic_array_descriptor_lifetime(returned_origin, &returned_cleanup_plan);
+    assert(descriptor_lifetime_plan.cleanup_plan_available);
+    assert(descriptor_lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup");
+    assert(
+        descriptor_lifetime_plan.descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor
     );
     assert(
         orison::lowering::emit_dynamic_array_descriptor_load("%items.descriptor", "%items.addr") ==
