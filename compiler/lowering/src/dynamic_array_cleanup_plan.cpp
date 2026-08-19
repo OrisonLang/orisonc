@@ -11,6 +11,7 @@
 #include "orison/semantics/drop_model.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <iterator>
 #include <sstream>
 #include <string_view>
@@ -23,6 +24,104 @@ auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
     auto output = std::ostringstream {};
     output << "__orison_dynamic_array_cleanup." << ordinal;
     return output.str();
+}
+
+auto is_single_generic_parameter_placeholder(std::string_view source_type_name) -> bool {
+    return source_type_name.size() == 1 &&
+        std::isupper(static_cast<unsigned char>(source_type_name.front())) != 0;
+}
+
+auto source_type_constructor_name(std::string_view source_type_name) -> std::string_view {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos) {
+        return source_type_name;
+    }
+    return source_type_name.substr(0, generic_start);
+}
+
+auto source_type_generic_argument_text(std::string_view source_type_name) -> std::optional<std::string_view> {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos || !source_type_name.ends_with(">")) {
+        return std::nullopt;
+    }
+    return source_type_name.substr(generic_start + 1, source_type_name.size() - generic_start - 2);
+}
+
+auto generic_source_type_pattern_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool {
+    if (origin_source_type_name == lowered_source_type_name ||
+        is_single_generic_parameter_placeholder(origin_source_type_name)) {
+        return true;
+    }
+
+    if (source_type_constructor_name(origin_source_type_name) != source_type_constructor_name(lowered_source_type_name)) {
+        return false;
+    }
+
+    auto origin_arguments_text = source_type_generic_argument_text(origin_source_type_name);
+    auto lowered_arguments_text = source_type_generic_argument_text(lowered_source_type_name);
+    if (!origin_arguments_text.has_value() || !lowered_arguments_text.has_value()) {
+        return false;
+    }
+
+    auto origin_arguments = split_top_level_generic_arguments(*origin_arguments_text);
+    auto lowered_arguments = split_top_level_generic_arguments(*lowered_arguments_text);
+    if (origin_arguments.size() != lowered_arguments.size()) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < origin_arguments.size(); ++index) {
+        if (!generic_source_type_pattern_matches(origin_arguments[index], lowered_arguments[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto dynamic_array_origin_source_type_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool {
+    if (origin_source_type_name == lowered_source_type_name) {
+        return true;
+    }
+
+    auto origin_sequence = dynamic_sequence_source_type(origin_source_type_name);
+    auto lowered_sequence = dynamic_sequence_source_type(lowered_source_type_name);
+    return origin_sequence.has_value() &&
+        lowered_sequence.has_value() &&
+        origin_sequence->kind == DynamicSequenceKind::dynamic_array &&
+        lowered_sequence->kind == DynamicSequenceKind::dynamic_array &&
+        generic_source_type_pattern_matches(
+            origin_sequence->element_source_type_name,
+            lowered_sequence->element_source_type_name
+        );
+}
+
+auto matching_dynamic_array_descriptor_origin(
+    semantics::SemanticAnalysisResult const* semantic_result,
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    semantics::DynamicArrayDescriptorOriginKind origin_kind
+) -> semantics::DynamicArrayDescriptorOrigin const* {
+    if (semantic_result == nullptr) {
+        return nullptr;
+    }
+
+    auto const match = std::ranges::find_if(
+        semantic_result->dynamic_array_descriptor_origins,
+        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
+            return origin.owner_name == owner_name &&
+                dynamic_array_origin_source_type_matches(origin.source_type_name, source_type_name) &&
+                origin.origin_kind == origin_kind;
+        }
+    );
+    if (match == semantic_result->dynamic_array_descriptor_origins.end()) {
+        return nullptr;
+    }
+    return &*match;
 }
 
 auto dynamic_array_descriptor_element_drop_action(
@@ -672,6 +771,16 @@ auto plan_bound_dynamic_array_parameter_cleanups(
             continue;
         }
 
+        auto const* origin = matching_dynamic_array_descriptor_origin(
+            session.semantics,
+            name,
+            source_type_name,
+            semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+        );
+        if (origin == nullptr) {
+            continue;
+        }
+
         auto storage = aggregate_storage_for_name(name, session.state);
         if (!storage.has_value()) {
             continue;
@@ -681,7 +790,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         if (!descriptor_cleanup.has_value()) {
             return std::nullopt;
         }
-        descriptor_cleanup->descriptor_storage_name = std::move(*storage);
+        descriptor_cleanup->descriptor_storage_name = *storage;
         descriptor_cleanup->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
 
         auto drop_symbol_name = std::optional<std::string> {};
@@ -695,6 +804,18 @@ auto plan_bound_dynamic_array_parameter_cleanups(
                 continue;
             }
         }
+
+        auto lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
+            name,
+            source_type_name,
+            *storage,
+            is_scalar_or_nonowning_source_type(sequence->element_source_type_name) || drop_symbol_name.has_value(),
+            context.lowering
+        );
+        if (!lifetime_plan.has_value()) {
+            continue;
+        }
+        descriptor_cleanup = std::move(lifetime_plan->descriptor_cleanup);
 
         auto actions = std::vector<PlannedDropAction> {};
         if (drop_symbol_name.has_value()) {

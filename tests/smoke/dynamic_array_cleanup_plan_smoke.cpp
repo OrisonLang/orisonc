@@ -4,10 +4,12 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/semantics/module_semantic_analyzer.hpp"
 
 #include <cassert>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -28,12 +30,33 @@ auto test_context() -> orison::lowering::LoweringContext {
     return context;
 }
 
-auto test_session(orison::lowering::FunctionLoweringState& state, orison::lowering::LoweringFailures& failures)
+auto test_session(
+    orison::lowering::FunctionLoweringState& state,
+    orison::lowering::LoweringFailures& failures,
+    orison::semantics::SemanticAnalysisResult const* semantics = nullptr
+)
     -> orison::lowering::FunctionLoweringSession {
     return orison::lowering::FunctionLoweringSession {
         .state = state,
         .failures = failures,
+        .semantics = semantics,
     };
+}
+
+void add_dynamic_array_parameter_origin(
+    orison::semantics::SemanticAnalysisResult& semantics,
+    std::string owner_name,
+    std::string source_type_name,
+    std::string element_source_type_name
+) {
+    semantics.dynamic_array_descriptor_origins.push_back(
+        orison::semantics::DynamicArrayDescriptorOrigin {
+            .owner_name = std::move(owner_name),
+            .source_type_name = std::move(source_type_name),
+            .element_source_type_name = std::move(element_source_type_name),
+            .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+        }
+    );
 }
 
 void bind_dynamic_array_parameter(
@@ -56,9 +79,12 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     auto strings = orison::lowering::StringConstantTable {};
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};
+    auto semantics = orison::semantics::SemanticAnalysisResult {};
     bind_dynamic_array_parameter(state, "z_items", "DynamicArray<UInt32>");
     bind_dynamic_array_parameter(state, "a_items", "DynamicArray<UInt32>");
-    auto session = test_session(state, failures);
+    add_dynamic_array_parameter_origin(semantics, "z_items", "DynamicArray<UInt32>", "UInt32");
+    add_dynamic_array_parameter_origin(semantics, "a_items", "DynamicArray<UInt32>", "UInt32");
+    auto session = test_session(state, failures, &semantics);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,
@@ -188,8 +214,10 @@ void test_suppresses_unauthorized_owned_element_cleanup() {
     auto strings = orison::lowering::StringConstantTable {};
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};
+    auto semantics = orison::semantics::SemanticAnalysisResult {};
     bind_dynamic_array_parameter(state, "items", "DynamicArray<Payload>");
-    auto session = test_session(state, failures);
+    add_dynamic_array_parameter_origin(semantics, "items", "DynamicArray<Payload>", "Payload");
+    auto session = test_session(state, failures, &semantics);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,
@@ -214,8 +242,10 @@ void test_authorizes_owned_element_cleanup() {
     auto strings = orison::lowering::StringConstantTable {};
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};
+    auto semantics = orison::semantics::SemanticAnalysisResult {};
     bind_dynamic_array_parameter(state, "items", "DynamicArray<Payload>");
-    auto session = test_session(state, failures);
+    add_dynamic_array_parameter_origin(semantics, "items", "DynamicArray<Payload>", "Payload");
+    auto session = test_session(state, failures, &semantics);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,
@@ -345,10 +375,13 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
     auto strings = orison::lowering::StringConstantTable {};
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};
+    auto semantics = orison::semantics::SemanticAnalysisResult {};
     bind_dynamic_array_parameter(state, "forwarded", "DynamicArray<Payload>");
     bind_dynamic_array_parameter(state, "retained", "DynamicArray<Payload>");
+    add_dynamic_array_parameter_origin(semantics, "forwarded", "DynamicArray<Payload>", "Payload");
+    add_dynamic_array_parameter_origin(semantics, "retained", "DynamicArray<Payload>", "Payload");
     state.ownership_transfers.consumed_owned_bindings.insert("forwarded");
-    auto session = test_session(state, failures);
+    auto session = test_session(state, failures, &semantics);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,

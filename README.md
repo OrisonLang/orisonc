@@ -229,5 +229,11 @@ This repository currently captures the initial language design and development c
   cleanup, making caller-owned returned cleanup explicit at the lowering boundary.
 - Pipeline descriptor lifetime reporting and lowering parameter/return cleanup decisions now share the same
   semantic-origin-backed lifetime helper, so origin kind selects cleanup responsibility in one lowering API.
-- Next highest-value step: add a negative regression proving missing semantic descriptor origins cannot silently enable
-  owned `DynamicArray<T>` parameter or returned cleanup transfers.
+- Negative coverage now proves missing or mismatched semantic descriptor origins cannot silently enable owned
+  `DynamicArray<T>` parameter cleanup, and the returned-transfer helper rejects mismatched returned origins.
+- Specialized generic function lowering now seeds parameter source types from concrete signature metadata, so checked
+  owned `DynamicArray<T>` generic fixtures keep emitting concrete element cleanup once descriptor origin and Drop
+  authorization both match. Descriptor-origin matching accepts concrete specializations of generic element patterns such
+  as `DynamicArray<Box<T>>`.
+- Next highest-value step: surface missing or mismatched descriptor-origin blockers as explicit diagnostics in the
+  relevant audit reports.

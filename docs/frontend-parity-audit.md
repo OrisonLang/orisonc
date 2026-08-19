@@ -2740,3 +2740,11 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-19: Pipeline descriptor lifetime reports and lowering parameter/return cleanup decisions now share the
   semantic-origin-backed lowering lifetime helper. Bound-parameter cleanup now requires a parameter origin, and
   returned cleanup transfer now requires a returned origin before descriptor cleanup ownership changes.
+- 2026-08-19: Lowering smoke coverage now pins the negative descriptor-origin gate for owned `DynamicArray<T>`
+  parameter cleanup: missing and mismatched semantic origins cannot enable cleanup through name-only inference. Type
+  lowering smoke also pins returned-transfer helper rejection for mismatched returned origins.
+- 2026-08-19: Specialized generic function lowering now seeds parameter source types from concrete signature metadata,
+  keeping source-backed owned `DynamicArray<T>` generic fixtures on the ordinary `--emit-llvm` path while descriptor
+  origins and Drop authorization remain explicit gates.
+- 2026-08-19: DynamicArray descriptor-origin matching now accepts concrete specializations of nested generic element
+  patterns such as `DynamicArray<Box<T>>`, while still rejecting owner or origin-kind mismatches.

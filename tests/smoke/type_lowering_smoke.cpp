@@ -329,6 +329,14 @@ int main() {
             returned_cleanup_plan
         ).has_value()
     );
+    auto mismatched_returned_origin = returned_origin;
+    mismatched_returned_origin.owner_name = "other";
+    assert(
+        !orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
+            mismatched_returned_origin,
+            returned_cleanup_plan
+        ).has_value()
+    );
     auto descriptor_lifetime_plan =
         orison::lowering::plan_dynamic_array_descriptor_lifetime(returned_origin, &returned_cleanup_plan);
     assert(descriptor_lifetime_plan.cleanup_plan_available);

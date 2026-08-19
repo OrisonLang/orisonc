@@ -1735,6 +1735,54 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(cleanup_call < cleanup_clear);
     assert(cleanup_clear < return_instruction);
 
+    auto missing_parameter_origin = lower_source_with_semantics(
+        path,
+        source,
+        orison::semantics::SemanticAnalysisResult {},
+        orison::lowering::LlvmIrEmissionOptions {
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!missing_parameter_origin.has_errors());
+    assert_ir_contains(missing_parameter_origin, "define i32 @use_items({ ptr, i64, i64 } %items)");
+    assert(missing_parameter_origin.dynamic_array_descriptor_cleanup_plans.empty());
+    assert(
+        missing_parameter_origin.ir_text.find("call void @__orison_dynamic_array_deallocate") ==
+        std::string::npos
+    );
+
+    auto mismatched_parameter_origin_semantics = orison::semantics::SemanticAnalysisResult {};
+    mismatched_parameter_origin_semantics.dynamic_array_descriptor_origins.push_back(
+        orison::semantics::DynamicArrayDescriptorOrigin {
+            .owner_name = "other",
+            .source_type_name = "DynamicArray<UInt32>",
+            .element_source_type_name = "UInt32",
+            .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+            .line = 3,
+        }
+    );
+    auto mismatched_parameter_origin = lower_source_with_semantics(
+        path,
+        source,
+        mismatched_parameter_origin_semantics,
+        orison::lowering::LlvmIrEmissionOptions {
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!mismatched_parameter_origin.has_errors());
+    assert(mismatched_parameter_origin.dynamic_array_descriptor_cleanup_plans.size() == 1);
+    assert(mismatched_parameter_origin.dynamic_array_descriptor_cleanup_plans.front().owner_name == "other");
+    assert(
+        mismatched_parameter_origin.ir_text.find("call void @__orison_dynamic_array_deallocate") ==
+        std::string::npos
+    );
+
     auto production_parameter_length = lower_source(
         path,
         "package demo.dynamicarray\n"

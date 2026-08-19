@@ -34,6 +34,7 @@
 #include "orison/lowering/while_emitter.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <optional>
 #include <memory>
 #include <span>
@@ -858,6 +859,80 @@ auto dynamic_array_parameter_element_cleanup_proven(
     });
 }
 
+auto is_single_generic_parameter_placeholder(std::string_view source_type_name) -> bool {
+    return source_type_name.size() == 1 &&
+        std::isupper(static_cast<unsigned char>(source_type_name.front())) != 0;
+}
+
+auto source_type_constructor_name(std::string_view source_type_name) -> std::string_view {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos) {
+        return source_type_name;
+    }
+    return source_type_name.substr(0, generic_start);
+}
+
+auto source_type_generic_argument_text(std::string_view source_type_name) -> std::optional<std::string_view> {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos || !source_type_name.ends_with(">")) {
+        return std::nullopt;
+    }
+    return source_type_name.substr(generic_start + 1, source_type_name.size() - generic_start - 2);
+}
+
+auto generic_source_type_pattern_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool {
+    if (origin_source_type_name == lowered_source_type_name ||
+        is_single_generic_parameter_placeholder(origin_source_type_name)) {
+        return true;
+    }
+
+    if (source_type_constructor_name(origin_source_type_name) != source_type_constructor_name(lowered_source_type_name)) {
+        return false;
+    }
+
+    auto origin_arguments_text = source_type_generic_argument_text(origin_source_type_name);
+    auto lowered_arguments_text = source_type_generic_argument_text(lowered_source_type_name);
+    if (!origin_arguments_text.has_value() || !lowered_arguments_text.has_value()) {
+        return false;
+    }
+
+    auto origin_arguments = split_top_level_generic_arguments(*origin_arguments_text);
+    auto lowered_arguments = split_top_level_generic_arguments(*lowered_arguments_text);
+    if (origin_arguments.size() != lowered_arguments.size()) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < origin_arguments.size(); ++index) {
+        if (!generic_source_type_pattern_matches(origin_arguments[index], lowered_arguments[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto dynamic_array_origin_source_type_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool {
+    if (origin_source_type_name == lowered_source_type_name) {
+        return true;
+    }
+
+    auto origin_sequence = dynamic_sequence_source_type(origin_source_type_name);
+    auto lowered_sequence = dynamic_sequence_source_type(lowered_source_type_name);
+    return origin_sequence.has_value() &&
+        lowered_sequence.has_value() &&
+        origin_sequence->kind == DynamicSequenceKind::dynamic_array &&
+        lowered_sequence->kind == DynamicSequenceKind::dynamic_array &&
+        generic_source_type_pattern_matches(
+            origin_sequence->element_source_type_name,
+            lowered_sequence->element_source_type_name
+        );
+}
+
 auto matching_dynamic_array_descriptor_origin(
     semantics::SemanticAnalysisResult const* semantic_result,
     std::string_view owner_name,
@@ -872,7 +947,7 @@ auto matching_dynamic_array_descriptor_origin(
         semantic_result->dynamic_array_descriptor_origins,
         [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
             return origin.owner_name == owner_name &&
-                origin.source_type_name == source_type_name &&
+                dynamic_array_origin_source_type_matches(origin.source_type_name, source_type_name) &&
                 origin.origin_kind == origin_kind;
         }
     );
@@ -912,7 +987,8 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
     auto lifetime_plan = origin == nullptr
         ? std::optional<DynamicArrayBoundParameterLifetimePlan> {}
         : plan_dynamic_array_bound_parameter_lifetime(
-            *origin,
+            parameter_name,
+            source_type_name,
             *storage,
             dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
             context.lowering
@@ -1780,7 +1856,10 @@ void emit_function_body(
             .value = llvm_local_value_name(function.parameters[index].name),
             .signedness = signature.parameter_signedness[index],
         });
-        auto source_type_name = render_source_type_name(function.parameters[index].type);
+        auto source_type_name =
+            index < signature.parameter_source_type_names.size() && !signature.parameter_source_type_names[index].empty()
+                ? signature.parameter_source_type_names[index]
+                : render_source_type_name(function.parameters[index].type);
         if (is_receiver_self_source_type(source_type_name)) {
             if (auto concrete_source_type =
                     source_type_name_for_llvm_type(signature.parameter_types[index], context.lowering)) {

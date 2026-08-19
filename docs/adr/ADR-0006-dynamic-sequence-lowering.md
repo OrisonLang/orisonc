@@ -1993,13 +1993,20 @@ representation.
 - Pipeline descriptor lifetime reporting and lowering parameter/return cleanup decisions now share the same
   semantic-origin-backed lowering helper. A matching parameter or returned origin is required before descriptor cleanup
   ownership changes.
+- Lowering smoke coverage now proves missing or mismatched semantic descriptor origins cannot silently enable owned
+  parameter cleanup through name-only fallback. Type lowering smoke separately pins returned-transfer helper rejection
+  for mismatched returned origins.
+- Specialized generic function lowering now seeds parameter source types from concrete signature metadata, so
+  source-backed owned `DynamicArray<T>` generic fixtures stay on the ordinary `--emit-llvm` path while
+  descriptor-origin and Drop-authorization checks remain required.
+- Descriptor-origin matching accepts concrete specializations of generic element patterns such as
+  `DynamicArray<Box<T>>`, while owner and origin-kind mismatches still block cleanup ownership changes.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for missing or mismatched semantic descriptor origins so owned parameter and returned cleanup
-  transfers cannot fall back to name-only inference.
+- Surface missing or mismatched descriptor-origin blockers explicitly in the relevant audit and diagnostic reports.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
