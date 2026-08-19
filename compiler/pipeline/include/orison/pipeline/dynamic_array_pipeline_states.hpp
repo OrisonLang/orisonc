@@ -54,9 +54,21 @@ struct DynamicArrayDescriptorLifetimePlan {
     std::size_t source_line = 0;
 };
 
+struct DynamicArrayDescriptorOriginBlocker {
+    std::string owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    semantics::DynamicArrayDescriptorOriginKind origin_kind =
+        semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    std::string reason;
+    std::size_t source_line = 0;
+};
+
 struct DynamicArrayDescriptorLifetimePlanState {
     std::vector<DynamicArrayDescriptorLifetimePlan> plans;
+    std::vector<DynamicArrayDescriptorOriginBlocker> origin_blockers;
     bool all_origins_have_cleanup_plans = false;
+    bool all_cleanup_plans_have_origins = false;
 };
 
 struct DynamicArrayConstructionPlanState {

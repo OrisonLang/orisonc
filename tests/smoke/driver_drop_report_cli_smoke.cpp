@@ -1,5 +1,6 @@
 #include "computed_dynamic_array_audit_expectations.hpp"
 
+#include "../../compiler/driver/src/computed_cleanup_reports.hpp"
 #include "orison/driver/compiler_app.hpp"
 
 #include <array>
@@ -17,6 +18,45 @@
 namespace {
 
 namespace smoke = orison::tests::smoke;
+
+void test_dynamic_array_descriptor_lifetime_plan_origin_blocker_report() {
+    auto state = orison::pipeline::DynamicArrayDescriptorLifetimePlanState {
+        .origin_blockers = {
+            orison::pipeline::DynamicArrayDescriptorOriginBlocker {
+                .owner_name = "items",
+                .source_type_name = "DynamicArray<Payload>",
+                .element_source_type_name = "Payload",
+                .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+                .reason = "cleanup-plan-missing",
+                .source_line = 12,
+            },
+            orison::pipeline::DynamicArrayDescriptorOriginBlocker {
+                .owner_name = "other",
+                .source_type_name = "DynamicArray<Box<UInt32>>",
+                .element_source_type_name = "Box<UInt32>",
+                .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::local_binding,
+                .reason = "semantic-origin-mismatched",
+                .source_line = 18,
+            },
+        },
+        .all_origins_have_cleanup_plans = false,
+        .all_cleanup_plans_have_origins = false,
+    };
+
+    auto report = orison::driver::dynamic_array_descriptor_lifetime_plan_state_report(state);
+    assert(report.size() == 3);
+    assert(report[0] == "dynamic array descriptor lifetime plan blocked origins 0 origin-blockers 2");
+    assert(
+        report[1] ==
+        "dynamic array descriptor lifetime blocker cleanup-plan-missing DynamicArray<Payload> owner items "
+        "element Payload origin parameter line 12 (metadata only)"
+    );
+    assert(
+        report[2] ==
+        "dynamic array descriptor lifetime blocker semantic-origin-mismatched DynamicArray<Box<UInt32>> owner other "
+        "element Box<UInt32> origin local line 18 (metadata only)"
+    );
+}
 
 void write_fixture(
     std::filesystem::path const& path,
@@ -308,6 +348,8 @@ void assert_success_with_empty_stdout(orison::driver::CompileResult const& resul
 }  // namespace
 
 int main() {
+    test_dynamic_array_descriptor_lifetime_plan_origin_blocker_report();
+
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
         original_temp_root / ("orison_driver_drop_report_cli_smoke_" + std::to_string(static_cast<long long>(::getpid())));

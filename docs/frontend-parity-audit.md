@@ -2748,3 +2748,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   origins and Drop authorization remain explicit gates.
 - 2026-08-19: DynamicArray descriptor-origin matching now accepts concrete specializations of nested generic element
   patterns such as `DynamicArray<Box<T>>`, while still rejecting owner or origin-kind mismatches.
+- 2026-08-19: DynamicArray descriptor lifetime reporting now surfaces origin blockers explicitly, including missing
+  cleanup plans and cleanup plans without matching semantic descriptor origins.

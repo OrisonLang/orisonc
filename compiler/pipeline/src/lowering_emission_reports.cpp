@@ -4,6 +4,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 #include "orison/semantics/drop_model.hpp"
 
@@ -12,6 +13,7 @@
 #include "runtime_indexed_cleanup_ir_composition.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <optional>
 #include <sstream>
 #include <unordered_set>
@@ -203,6 +205,69 @@ auto build_dynamic_array_descriptor_cleanup_plan_state(
     };
 }
 
+auto is_single_generic_parameter_placeholder(std::string_view source_type_name) -> bool {
+    return source_type_name.size() == 1 &&
+        std::isupper(static_cast<unsigned char>(source_type_name.front())) != 0;
+}
+
+auto source_type_constructor_name(std::string_view source_type_name) -> std::string_view {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos) {
+        return source_type_name;
+    }
+    return source_type_name.substr(0, generic_start);
+}
+
+auto source_type_generic_argument_text(std::string_view source_type_name) -> std::optional<std::string_view> {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos || !source_type_name.ends_with(">")) {
+        return std::nullopt;
+    }
+    return source_type_name.substr(generic_start + 1, source_type_name.size() - generic_start - 2);
+}
+
+auto generic_source_type_pattern_matches(
+    std::string_view origin_source_type_name,
+    std::string_view cleanup_source_type_name
+) -> bool {
+    if (origin_source_type_name == cleanup_source_type_name ||
+        is_single_generic_parameter_placeholder(origin_source_type_name)) {
+        return true;
+    }
+
+    if (source_type_constructor_name(origin_source_type_name) != source_type_constructor_name(cleanup_source_type_name)) {
+        return false;
+    }
+
+    auto origin_arguments_text = source_type_generic_argument_text(origin_source_type_name);
+    auto cleanup_arguments_text = source_type_generic_argument_text(cleanup_source_type_name);
+    if (!origin_arguments_text.has_value() || !cleanup_arguments_text.has_value()) {
+        return false;
+    }
+
+    auto origin_arguments = lowering::split_top_level_generic_arguments(*origin_arguments_text);
+    auto cleanup_arguments = lowering::split_top_level_generic_arguments(*cleanup_arguments_text);
+    if (origin_arguments.size() != cleanup_arguments.size()) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < origin_arguments.size(); ++index) {
+        if (!generic_source_type_pattern_matches(origin_arguments[index], cleanup_arguments[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto dynamic_array_descriptor_origin_matches_cleanup_plan(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan
+) -> bool {
+    return origin.owner_name == cleanup_plan.owner_name &&
+        generic_source_type_pattern_matches(origin.source_type_name, cleanup_plan.source_type_name) &&
+        generic_source_type_pattern_matches(origin.element_source_type_name, cleanup_plan.element_source_type_name);
+}
+
 auto matching_dynamic_array_descriptor_cleanup_plan(
     semantics::DynamicArrayDescriptorOrigin const& origin,
     std::vector<lowering::DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
@@ -211,9 +276,7 @@ auto matching_dynamic_array_descriptor_cleanup_plan(
         cleanup_plans.begin(),
         cleanup_plans.end(),
         [&](lowering::DynamicArrayDescriptorCleanupPlan const& plan) {
-            return plan.owner_name == origin.owner_name &&
-                plan.source_type_name == origin.source_type_name &&
-                plan.element_source_type_name == origin.element_source_type_name &&
+            return dynamic_array_descriptor_origin_matches_cleanup_plan(origin, plan) &&
                 plan.source_line == origin.line;
         }
     );
@@ -225,12 +288,38 @@ auto matching_dynamic_array_descriptor_cleanup_plan(
         cleanup_plans.begin(),
         cleanup_plans.end(),
         [&](lowering::DynamicArrayDescriptorCleanupPlan const& plan) {
-            return plan.owner_name == origin.owner_name &&
-                plan.source_type_name == origin.source_type_name &&
-                plan.element_source_type_name == origin.element_source_type_name;
+            return dynamic_array_descriptor_origin_matches_cleanup_plan(origin, plan);
         }
     );
     return fallback == cleanup_plans.end() ? nullptr : &*fallback;
+}
+
+auto matching_dynamic_array_descriptor_origin(
+    lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan,
+    std::vector<semantics::DynamicArrayDescriptorOrigin> const& origins
+) -> semantics::DynamicArrayDescriptorOrigin const* {
+    auto const match = std::find_if(
+        origins.begin(),
+        origins.end(),
+        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
+            return dynamic_array_descriptor_origin_matches_cleanup_plan(origin, cleanup_plan);
+        }
+    );
+    return match == origins.end() ? nullptr : &*match;
+}
+
+auto cleanup_plan_origin_blocker_reason(
+    lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan,
+    std::vector<semantics::DynamicArrayDescriptorOrigin> const& origins
+) -> std::string {
+    auto const same_owner = std::any_of(
+        origins.begin(),
+        origins.end(),
+        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
+            return origin.owner_name == cleanup_plan.owner_name;
+        }
+    );
+    return same_owner ? "semantic-origin-mismatched" : "semantic-origin-missing";
 }
 
 auto build_dynamic_array_descriptor_lifetime_plan_state(
@@ -240,6 +329,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     auto state = DynamicArrayDescriptorLifetimePlanState {};
     state.plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
     state.all_origins_have_cleanup_plans = !semantic_result.dynamic_array_descriptor_origins.empty();
+    state.all_cleanup_plans_have_origins = true;
     for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
         auto const* cleanup_plan =
             matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
@@ -257,8 +347,34 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
         };
         if (cleanup_plan == nullptr) {
             state.all_origins_have_cleanup_plans = false;
+            state.origin_blockers.push_back(DynamicArrayDescriptorOriginBlocker {
+                .owner_name = origin.owner_name,
+                .source_type_name = origin.source_type_name,
+                .element_source_type_name = origin.element_source_type_name,
+                .origin_kind = origin.origin_kind,
+                .reason = "cleanup-plan-missing",
+                .source_line = origin.line,
+            });
         }
         state.plans.push_back(std::move(plan));
+    }
+    for (auto const& cleanup_plan : cleanup_plan_state.plans) {
+        if (matching_dynamic_array_descriptor_origin(cleanup_plan, semantic_result.dynamic_array_descriptor_origins) !=
+            nullptr) {
+            continue;
+        }
+        state.all_cleanup_plans_have_origins = false;
+        state.origin_blockers.push_back(DynamicArrayDescriptorOriginBlocker {
+            .owner_name = cleanup_plan.owner_name,
+            .source_type_name = cleanup_plan.source_type_name,
+            .element_source_type_name = cleanup_plan.element_source_type_name,
+            .origin_kind = semantics::DynamicArrayDescriptorOriginKind::local_binding,
+            .reason = cleanup_plan_origin_blocker_reason(
+                cleanup_plan,
+                semantic_result.dynamic_array_descriptor_origins
+            ),
+            .source_line = cleanup_plan.source_line,
+        });
     }
     return state;
 }

@@ -2001,12 +2001,16 @@ representation.
   descriptor-origin and Drop-authorization checks remain required.
 - Descriptor-origin matching accepts concrete specializations of generic element patterns such as
   `DynamicArray<Box<T>>`, while owner and origin-kind mismatches still block cleanup ownership changes.
+- Descriptor lifetime reporting now surfaces origin blockers explicitly. The report counts blocked origin pairs and
+  emits detail lines for semantic origins with missing cleanup plans and cleanup plans without matching semantic
+  descriptor origins.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Surface missing or mismatched descriptor-origin blockers explicitly in the relevant audit and diagnostic reports.
+- Use descriptor-origin blocker detail to gate one broader owned `DynamicArray<T>` parameter/return forwarding path
+  through the shared lifetime state.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

@@ -91,8 +91,9 @@ auto dynamic_array_descriptor_lifetime_plan_state_report(
     lines.reserve(state.plans.size() + 1);
     lines.push_back(
         std::string {"dynamic array descriptor lifetime plan "} +
-        (state.all_origins_have_cleanup_plans ? "ready" : "blocked") +
-        " origins " + std::to_string(state.plans.size())
+        (state.all_origins_have_cleanup_plans && state.all_cleanup_plans_have_origins ? "ready" : "blocked") +
+        " origins " + std::to_string(state.plans.size()) +
+        " origin-blockers " + std::to_string(state.origin_blockers.size())
     );
     for (auto const& plan : state.plans) {
         auto line = std::ostringstream {};
@@ -108,6 +109,19 @@ auto dynamic_array_descriptor_lifetime_plan_state_report(
         line << " cleanup-plan " << (plan.cleanup_plan_available ? "available" : "missing");
         if (plan.source_line != 0) {
             line << " line " << plan.source_line;
+        }
+        line << " (metadata only)";
+        lines.push_back(line.str());
+    }
+    for (auto const& blocker : state.origin_blockers) {
+        auto line = std::ostringstream {};
+        line << "dynamic array descriptor lifetime blocker " << blocker.reason
+             << " " << blocker.source_type_name
+             << " owner " << blocker.owner_name
+             << " element " << blocker.element_source_type_name
+             << " origin " << format_dynamic_array_descriptor_origin_kind(blocker.origin_kind);
+        if (blocker.source_line != 0) {
+            line << " line " << blocker.source_line;
         }
         line << " (metadata only)";
         lines.push_back(line.str());

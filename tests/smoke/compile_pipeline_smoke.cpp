@@ -1246,6 +1246,8 @@ auto main() -> int {
     );
     assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.size() == 1);
     assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_origins_have_cleanup_plans);
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_cleanup_plans_have_origins);
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty());
     assert(
         dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front().origin_kind ==
         orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding

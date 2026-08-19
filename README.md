@@ -235,5 +235,7 @@ This repository currently captures the initial language design and development c
   owned `DynamicArray<T>` generic fixtures keep emitting concrete element cleanup once descriptor origin and Drop
   authorization both match. Descriptor-origin matching accepts concrete specializations of generic element patterns such
   as `DynamicArray<Box<T>>`.
-- Next highest-value step: surface missing or mismatched descriptor-origin blockers as explicit diagnostics in the
-  relevant audit reports.
+- The descriptor lifetime report now includes `origin-blockers` and detail lines for missing cleanup plans or cleanup
+  plans that lack matching semantic descriptor origins.
+- Next highest-value step: use those descriptor-origin blocker details to gate one broader owned `DynamicArray<T>`
+  parameter/return forwarding path through the shared lifetime state.
