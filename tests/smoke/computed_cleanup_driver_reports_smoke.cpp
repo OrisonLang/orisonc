@@ -902,6 +902,7 @@ void assert_computed_dynamic_array_production_reports() {
     auto ready = driver::dynamic_array_cleanup_production_readiness_state_report(
         pipeline::DynamicArrayCleanupProductionReadiness {
             .descriptor_origins_available = true,
+            .descriptor_origin_blockers_absent = true,
             .descriptor_cleanup_plans_available = true,
             .cleanup_obligations_available = true,
             .sequence_verification_available = true,
@@ -915,15 +916,17 @@ void assert_computed_dynamic_array_production_reports() {
     assert(ready.size() == 1);
     assert(
         ready.front() ==
-        "dynamic array cleanup production readiness ready [descriptor origins ok] [cleanup plans ok] "
-        "[cleanup obligations ok] [sequence verification ok] [sequence passed ok] [cleanup capability ok] "
-        "[production signatures ok] [production construction ok] [production cleanup emission ok] (metadata only)"
+        "dynamic array cleanup production readiness ready [descriptor origins ok] "
+        "[descriptor origin blockers absent] [cleanup plans ok] [cleanup obligations ok] "
+        "[sequence verification ok] [sequence passed ok] [cleanup capability ok] [production signatures ok] "
+        "[production construction ok] [production cleanup emission ok] (metadata only)"
     );
 
     auto blocked = driver::dynamic_array_cleanup_production_readiness_state_report(
         pipeline::DynamicArrayCleanupProductionReadiness {
             .missing_element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
             .descriptor_origins_available = true,
+            .descriptor_origin_blockers_absent = true,
             .descriptor_cleanup_plans_available = true,
             .cleanup_obligations_available = true,
             .sequence_verification_available = true,
@@ -937,9 +940,33 @@ void assert_computed_dynamic_array_production_reports() {
     assert(blocked.size() == 1);
     assert(
         blocked.front() ==
-        "dynamic array cleanup production readiness blocked [descriptor origins ok] [cleanup plans ok] "
-        "[cleanup obligations ok] [sequence verification ok] [sequence passed ok] [cleanup capability missing] "
-        "missing-element-drop-pairs [items:items.element:__orison_drop.Payload] [production signatures ok] "
+        "dynamic array cleanup production readiness blocked [descriptor origins ok] "
+        "[descriptor origin blockers absent] [cleanup plans ok] [cleanup obligations ok] "
+        "[sequence verification ok] [sequence passed ok] [cleanup capability missing] missing-element-drop-pairs "
+        "[items:items.element:__orison_drop.Payload] [production signatures ok] [production construction ok] "
+        "[production cleanup emission ok] (metadata only)"
+    );
+
+    auto blocked_by_origin_blockers = driver::dynamic_array_cleanup_production_readiness_state_report(
+        pipeline::DynamicArrayCleanupProductionReadiness {
+            .descriptor_origins_available = true,
+            .descriptor_origin_blockers_absent = false,
+            .descriptor_cleanup_plans_available = true,
+            .cleanup_obligations_available = true,
+            .sequence_verification_available = true,
+            .sequence_verification_passed = true,
+            .cleanup_capability_proven = true,
+            .production_signature_lowering_enabled = true,
+            .production_construction_lowering_enabled = true,
+            .production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(blocked_by_origin_blockers.size() == 1);
+    assert(
+        blocked_by_origin_blockers.front() ==
+        "dynamic array cleanup production readiness blocked [descriptor origins ok] "
+        "[descriptor origin blockers present] [cleanup plans ok] [cleanup obligations ok] "
+        "[sequence verification ok] [sequence passed ok] [cleanup capability ok] [production signatures ok] "
         "[production construction ok] [production cleanup emission ok] (metadata only)"
     );
 }

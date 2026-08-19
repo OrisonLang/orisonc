@@ -5934,6 +5934,44 @@ auto main() -> int {
             forwarding_deallocate + 1
         ) == std::string::npos
     );
+    assert(dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.size() == 3);
+    auto const forwarding_parameter_lifetime_plans = std::count_if(
+        dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+        dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+        [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
+        }
+    );
+    auto const forwarding_local_lifetime_plans = std::count_if(
+        dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+        dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+        [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::local_binding &&
+                plan.cleanup_responsibility == "caller-owned-local-cleanup";
+        }
+    );
+    assert(forwarding_parameter_lifetime_plans == 2);
+    assert(forwarding_local_lifetime_plans == 1);
+    assert(
+        !dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+            .all_origins_have_cleanup_plans
+    );
+    assert(!dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty());
+    assert(
+        !dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
+            .descriptor_origin_blockers_absent
+    );
+    assert(
+        !orison::pipeline::dynamic_array_cleanup_production_ready(
+            dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
+        )
+    );
+    assert(
+        orison::pipeline::format_dynamic_array_cleanup_production_readiness(
+            dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
+        ).find("[descriptor origin blockers present]") != std::string::npos
+    );
     auto dynamic_array_owned_parameter_forwarding_run =
         pipeline.emit_object(dynamic_array_owned_parameter_forwarding_run_path);
     assert(!dynamic_array_owned_parameter_forwarding_run.has_errors());

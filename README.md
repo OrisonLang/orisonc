@@ -237,5 +237,8 @@ This repository currently captures the initial language design and development c
   as `DynamicArray<Box<T>>`.
 - The descriptor lifetime report now includes `origin-blockers` and detail lines for missing cleanup plans or cleanup
   plans that lack matching semantic descriptor origins.
-- Next highest-value step: use those descriptor-origin blocker details to gate one broader owned `DynamicArray<T>`
-  parameter/return forwarding path through the shared lifetime state.
+- DynamicArray cleanup production readiness now consumes descriptor-origin blocker state, so broader owned
+  `DynamicArray<T>` forwarding paths stay blocked from production-ready status until every semantic origin is paired
+  with cleanup responsibility metadata.
+- Next highest-value step: connect returned descriptor cleanup transfer to the pipeline descriptor lifetime state as the
+  shared source of truth, then remove the remaining lowering-local returned-transfer duplication.

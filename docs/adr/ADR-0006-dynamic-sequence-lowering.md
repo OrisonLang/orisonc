@@ -2004,13 +2004,16 @@ representation.
 - Descriptor lifetime reporting now surfaces origin blockers explicitly. The report counts blocked origin pairs and
   emits detail lines for semantic origins with missing cleanup plans and cleanup plans without matching semantic
   descriptor origins.
+- DynamicArray cleanup production readiness now consumes descriptor-origin blocker state. Checked forwarding paths can
+  still emit through their current lowering seams, but they do not report production-ready unless every semantic
+  descriptor origin has a matching cleanup plan and every cleanup plan has a matching semantic origin.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Use descriptor-origin blocker detail to gate one broader owned `DynamicArray<T>` parameter/return forwarding path
-  through the shared lifetime state.
+- Connect returned descriptor cleanup transfer to the pipeline descriptor lifetime state as the shared source of truth,
+  then remove the remaining lowering-local returned-transfer duplication.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

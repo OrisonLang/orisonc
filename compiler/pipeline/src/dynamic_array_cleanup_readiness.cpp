@@ -14,6 +14,7 @@ auto plan_dynamic_array_cleanup_production_readiness(
     return DynamicArrayCleanupProductionReadiness {
         .missing_element_drop_pairs = availability.missing_element_drop_pairs,
         .descriptor_origins_available = availability.descriptor_origins_available,
+        .descriptor_origin_blockers_absent = availability.descriptor_origin_blockers_absent,
         .descriptor_cleanup_plans_available = availability.descriptor_cleanup_plans_available,
         .cleanup_obligations_available = availability.cleanup_obligations_available,
         .sequence_verification_available = availability.sequence_verification_available,
@@ -32,6 +33,7 @@ auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool {
     return readiness.descriptor_origins_available &&
+        readiness.descriptor_origin_blockers_absent &&
         readiness.descriptor_cleanup_plans_available &&
         readiness.cleanup_obligations_available &&
         readiness.sequence_verification_available &&
@@ -48,10 +50,14 @@ auto format_dynamic_array_cleanup_production_readiness(
     auto const status = [](bool value) {
         return value ? "ok" : "missing";
     };
+    auto const blocker_status = [](bool blockers_absent) {
+        return blockers_absent ? "absent" : "present";
+    };
     auto output = std::ostringstream {};
     output << "dynamic array cleanup production readiness ";
     output << (dynamic_array_cleanup_production_ready(readiness) ? "ready" : "blocked");
     output << " [descriptor origins " << status(readiness.descriptor_origins_available) << "]";
+    output << " [descriptor origin blockers " << blocker_status(readiness.descriptor_origin_blockers_absent) << "]";
     output << " [cleanup plans " << status(readiness.descriptor_cleanup_plans_available) << "]";
     output << " [cleanup obligations " << status(readiness.cleanup_obligations_available) << "]";
     output << " [sequence verification " << status(readiness.sequence_verification_available) << "]";

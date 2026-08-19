@@ -3474,6 +3474,8 @@ void populate_lowering_emission_reports(
         .missing_element_drop_pairs =
             result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
         .descriptor_origins_available = !result.semantic_result.dynamic_array_descriptor_origins.empty(),
+        .descriptor_origin_blockers_absent =
+            result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty(),
         .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),
         .cleanup_obligations_available = !emission.dynamic_array_cleanup_obligations.empty(),
         .sequence_verification_available = !emission.dynamic_array_cleanup_sequence_verifications.empty(),
