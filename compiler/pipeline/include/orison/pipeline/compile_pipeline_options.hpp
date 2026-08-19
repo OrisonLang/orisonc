@@ -15,6 +15,11 @@ enum class RuntimeIndexedCleanupIrShapeFaultInjection {
     OmitConditionBlock,
 };
 
+enum class DynamicArrayDescriptorLifetimePlanFaultInjection {
+    None,
+    MismatchCleanupPlanOwners,
+};
+
 struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
     std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
@@ -56,6 +61,8 @@ struct CompilePipelineOptions {
     bool runtime_indexed_member_cleanup_rewrite_execution_enabled = false;
     RuntimeIndexedCleanupIrShapeFaultInjection test_only_runtime_indexed_cleanup_ir_shape_fault =
         RuntimeIndexedCleanupIrShapeFaultInjection::None;
+    DynamicArrayDescriptorLifetimePlanFaultInjection test_only_dynamic_array_descriptor_lifetime_plan_fault =
+        DynamicArrayDescriptorLifetimePlanFaultInjection::None;
     bool runtime_indexed_fixed_array_constructor_move_only = false;
     bool suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;

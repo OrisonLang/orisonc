@@ -2013,13 +2013,17 @@ representation.
 - Bound owned-parameter cleanup seeding and cleanup-plan emission now also prefer the lowering-owned descriptor
   lifetime plan vector. Semantic-origin lookup remains only as a direct lower-level fallback when no shared plan vector
   is present.
+- Descriptor-lifetime matching now lives in one DynamicArray lowering utility used by function emission, cleanup-plan
+  emission, and pipeline reporting. Shared lifetime-plan mismatches now block descriptor lifetime reporting instead of
+  being hidden by cleanup-plan recomputation.
+- Pipeline smoke coverage now injects mismatched shared lifetime metadata and verifies the resulting
+  `shared-lifetime-plan-mismatched` origin blocker prevents DynamicArray cleanup production readiness.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Collapse duplicate descriptor-lifetime matching helpers into one lowering utility and add a negative pipeline fixture
-  for mismatched shared lifetime metadata.
+- Add explicit user-facing diagnostics for descriptor-origin and shared-lifetime metadata blockers.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

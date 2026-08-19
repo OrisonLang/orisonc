@@ -98,6 +98,27 @@ auto apply_test_only_runtime_indexed_cleanup_ir_shape_fault(
     }
 }
 
+auto apply_test_only_dynamic_array_descriptor_lifetime_plan_fault(
+    std::vector<lowering::DynamicArrayDescriptorLifetimePlan>& plans,
+    DynamicArrayDescriptorLifetimePlanFaultInjection fault
+) -> void {
+    if (fault == DynamicArrayDescriptorLifetimePlanFaultInjection::None || plans.empty()) {
+        return;
+    }
+
+    switch (fault) {
+        case DynamicArrayDescriptorLifetimePlanFaultInjection::None:
+            return;
+        case DynamicArrayDescriptorLifetimePlanFaultInjection::MismatchCleanupPlanOwners:
+            for (auto& plan : plans) {
+                if (plan.cleanup_plan_available) {
+                    plan.owner_name += ".mismatch";
+                }
+            }
+            return;
+    }
+}
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -308,23 +329,6 @@ auto matching_dynamic_array_descriptor_origin(
     return match == origins.end() ? nullptr : &*match;
 }
 
-auto matching_dynamic_array_descriptor_lifetime_plan(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
-    std::vector<lowering::DynamicArrayDescriptorLifetimePlan> const& lifetime_plans
-) -> lowering::DynamicArrayDescriptorLifetimePlan const* {
-    auto const match = std::find_if(
-        lifetime_plans.begin(),
-        lifetime_plans.end(),
-        [&](lowering::DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
-            return lifetime_plan.owner_name == origin.owner_name &&
-                lifetime_plan.source_type_name == origin.source_type_name &&
-                lifetime_plan.element_source_type_name == origin.element_source_type_name &&
-                lifetime_plan.origin_kind == origin.origin_kind;
-        }
-    );
-    return match == lifetime_plans.end() ? nullptr : &*match;
-}
-
 auto cleanup_plan_origin_blocker_reason(
     lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan,
     std::vector<semantics::DynamicArrayDescriptorOrigin> const& origins
@@ -352,10 +356,15 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
         auto const* cleanup_plan =
             matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
         auto const* lowering_lifetime_plan =
-            matching_dynamic_array_descriptor_lifetime_plan(origin, lowering_lifetime_plans);
-        auto lowering_plan = lowering_lifetime_plan == nullptr
+            lowering::matching_dynamic_array_descriptor_lifetime_plan(lowering_lifetime_plans, origin);
+        auto lowering_plan = lowering_lifetime_plans.empty() || lowering_lifetime_plan != nullptr
             ? lowering::plan_dynamic_array_descriptor_lifetime(origin, cleanup_plan)
-            : *lowering_lifetime_plan;
+            : lowering::plan_dynamic_array_descriptor_lifetime(origin, nullptr);
+        if (lowering_lifetime_plan != nullptr) {
+            lowering_plan = *lowering_lifetime_plan;
+        }
+        auto const shared_lifetime_plan_mismatched =
+            !lowering_lifetime_plans.empty() && lowering_lifetime_plan == nullptr && cleanup_plan != nullptr;
         auto plan = DynamicArrayDescriptorLifetimePlan {
             .owner_name = std::move(lowering_plan.owner_name),
             .source_type_name = std::move(lowering_plan.source_type_name),
@@ -367,14 +376,16 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
             .cleanup_plan_available = lowering_plan.cleanup_plan_available,
             .source_line = lowering_plan.source_line,
         };
-        if (cleanup_plan == nullptr) {
+        if (cleanup_plan == nullptr || shared_lifetime_plan_mismatched) {
             state.all_origins_have_cleanup_plans = false;
             state.origin_blockers.push_back(DynamicArrayDescriptorOriginBlocker {
                 .owner_name = origin.owner_name,
                 .source_type_name = origin.source_type_name,
                 .element_source_type_name = origin.element_source_type_name,
                 .origin_kind = origin.origin_kind,
-                .reason = "cleanup-plan-missing",
+                .reason = shared_lifetime_plan_mismatched
+                    ? "shared-lifetime-plan-mismatched"
+                    : "cleanup-plan-missing",
                 .source_line = origin.line,
             });
         }
@@ -3468,6 +3479,10 @@ void populate_lowering_emission_reports(
         );
     result.dynamic_array_descriptor_cleanup_plan_state =
         build_dynamic_array_descriptor_cleanup_plan_state(emission);
+    apply_test_only_dynamic_array_descriptor_lifetime_plan_fault(
+        emission.dynamic_array_descriptor_lifetime_plans,
+        options.test_only_dynamic_array_descriptor_lifetime_plan_fault
+    );
     result.dynamic_array_descriptor_lifetime_plan_state =
         build_dynamic_array_descriptor_lifetime_plan_state(
             result.semantic_result,

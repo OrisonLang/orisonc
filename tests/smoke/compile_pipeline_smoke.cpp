@@ -6014,6 +6014,36 @@ auto main() -> int {
     assert(
         dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty()
     );
+    auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
+        dynamic_array_returned_payload_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            .test_only_dynamic_array_descriptor_lifetime_plan_fault =
+                orison::pipeline::DynamicArrayDescriptorLifetimePlanFaultInjection::MismatchCleanupPlanOwners,
+        }
+    );
+    assert(!dynamic_array_returned_payload_mismatched_lifetime_ir.has_errors());
+    assert(
+        !dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_descriptor_lifetime_plan_state
+            .all_origins_have_cleanup_plans
+    );
+    assert(
+        std::any_of(
+            dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_descriptor_lifetime_plan_state
+                .origin_blockers.begin(),
+            dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_descriptor_lifetime_plan_state
+                .origin_blockers.end(),
+            [](orison::pipeline::DynamicArrayDescriptorOriginBlocker const& blocker) {
+                return blocker.reason == "shared-lifetime-plan-mismatched";
+            }
+        )
+    );
+    assert(
+        !orison::pipeline::dynamic_array_cleanup_production_ready(
+            dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_cleanup_production_readiness
+        )
+    );
 
     auto dynamic_array_owned_parameter_forwarding_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_forwarding_reuse.or";

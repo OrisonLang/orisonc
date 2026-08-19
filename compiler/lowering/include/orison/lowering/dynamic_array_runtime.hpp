@@ -145,6 +145,28 @@ auto plan_dynamic_array_descriptor_lifetime(
     DynamicArrayDescriptorCleanupPlan const* cleanup_plan
 ) -> DynamicArrayDescriptorLifetimePlan;
 
+auto dynamic_array_descriptor_lifetime_source_type_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool;
+
+auto matching_dynamic_array_descriptor_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    semantics::DynamicArrayDescriptorOrigin const& origin
+) -> DynamicArrayDescriptorLifetimePlan const*;
+
+auto matching_bound_dynamic_array_parameter_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name
+) -> DynamicArrayDescriptorLifetimePlan const*;
+
+auto matching_returned_dynamic_array_descriptor_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    DynamicArrayDescriptorCleanupPlan const& cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan const*;
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string;

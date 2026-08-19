@@ -4,6 +4,8 @@
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/target_layout.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <sstream>
 #include <utility>
 
@@ -76,6 +78,60 @@ auto dynamic_array_descriptor_lifetime_cleanup_responsibility(
         return "caller-owned-returned-cleanup";
     }
     return "unknown-cleanup";
+}
+
+auto is_single_generic_parameter_placeholder(std::string_view source_type_name) -> bool {
+    return source_type_name.size() == 1 &&
+        std::isupper(static_cast<unsigned char>(source_type_name.front())) != 0;
+}
+
+auto source_type_constructor_name(std::string_view source_type_name) -> std::string_view {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos) {
+        return source_type_name;
+    }
+    return source_type_name.substr(0, generic_start);
+}
+
+auto source_type_generic_argument_text(std::string_view source_type_name) -> std::optional<std::string_view> {
+    auto const generic_start = source_type_name.find('<');
+    if (generic_start == std::string_view::npos || !source_type_name.ends_with(">")) {
+        return std::nullopt;
+    }
+    return source_type_name.substr(generic_start + 1, source_type_name.size() - generic_start - 2);
+}
+
+auto generic_source_type_pattern_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool {
+    if (origin_source_type_name == lowered_source_type_name ||
+        is_single_generic_parameter_placeholder(origin_source_type_name)) {
+        return true;
+    }
+
+    if (source_type_constructor_name(origin_source_type_name) != source_type_constructor_name(lowered_source_type_name)) {
+        return false;
+    }
+
+    auto origin_arguments_text = source_type_generic_argument_text(origin_source_type_name);
+    auto lowered_arguments_text = source_type_generic_argument_text(lowered_source_type_name);
+    if (!origin_arguments_text.has_value() || !lowered_arguments_text.has_value()) {
+        return false;
+    }
+
+    auto origin_arguments = split_top_level_generic_arguments(*origin_arguments_text);
+    auto lowered_arguments = split_top_level_generic_arguments(*lowered_arguments_text);
+    if (origin_arguments.size() != lowered_arguments.size()) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < origin_arguments.size(); ++index) {
+        if (!generic_source_type_pattern_matches(origin_arguments[index], lowered_arguments[index])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 }  // namespace
@@ -297,6 +353,104 @@ auto plan_dynamic_array_descriptor_lifetime(
         plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
     }
     return plan;
+}
+
+auto dynamic_array_descriptor_lifetime_source_type_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool {
+    if (origin_source_type_name == lowered_source_type_name) {
+        return true;
+    }
+
+    auto origin_sequence = dynamic_sequence_source_type(origin_source_type_name);
+    auto lowered_sequence = dynamic_sequence_source_type(lowered_source_type_name);
+    return origin_sequence.has_value() &&
+        lowered_sequence.has_value() &&
+        origin_sequence->kind == DynamicSequenceKind::dynamic_array &&
+        lowered_sequence->kind == DynamicSequenceKind::dynamic_array &&
+        generic_source_type_pattern_matches(
+            origin_sequence->element_source_type_name,
+            lowered_sequence->element_source_type_name
+        );
+}
+
+auto matching_dynamic_array_descriptor_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    semantics::DynamicArrayDescriptorOrigin const& origin
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        lifetime_plans.begin(),
+        lifetime_plans.end(),
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.owner_name == origin.owner_name &&
+                dynamic_array_descriptor_lifetime_source_type_matches(
+                    lifetime_plan.source_type_name,
+                    origin.source_type_name
+                ) &&
+                generic_source_type_pattern_matches(
+                    lifetime_plan.element_source_type_name,
+                    origin.element_source_type_name
+                ) &&
+                lifetime_plan.origin_kind == origin.origin_kind;
+        }
+    );
+    return match == lifetime_plans.end() ? nullptr : &*match;
+}
+
+auto matching_bound_dynamic_array_parameter_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        lifetime_plans.begin(),
+        lifetime_plans.end(),
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.origin_kind ==
+                    semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                lifetime_plan.cleanup_plan_available &&
+                lifetime_plan.owner_name == parameter_name &&
+                dynamic_array_descriptor_lifetime_source_type_matches(
+                    lifetime_plan.source_type_name,
+                    source_type_name
+                ) &&
+                lifetime_plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
+                lifetime_plan.descriptor_storage_name == descriptor_storage_name &&
+                lifetime_plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
+        }
+    );
+    return match == lifetime_plans.end() ? nullptr : &*match;
+}
+
+auto matching_returned_dynamic_array_descriptor_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    DynamicArrayDescriptorCleanupPlan const& cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        lifetime_plans.begin(),
+        lifetime_plans.end(),
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.origin_kind ==
+                    semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                lifetime_plan.cleanup_plan_available &&
+                lifetime_plan.owner_name == cleanup_plan.owner_name &&
+                dynamic_array_descriptor_lifetime_source_type_matches(
+                    lifetime_plan.source_type_name,
+                    cleanup_plan.source_type_name
+                ) &&
+                generic_source_type_pattern_matches(
+                    lifetime_plan.element_source_type_name,
+                    cleanup_plan.element_source_type_name
+                ) &&
+                lifetime_plan.descriptor_storage_status == cleanup_plan.descriptor_storage_status &&
+                lifetime_plan.descriptor_storage_name == cleanup_plan.descriptor_storage_name &&
+                lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup";
+        }
+    );
+    return match == lifetime_plans.end() ? nullptr : &*match;
 }
 
 auto format_dynamic_array_construction_plan(

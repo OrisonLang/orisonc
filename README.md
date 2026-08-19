@@ -246,5 +246,9 @@ This repository currently captures the initial language design and development c
 - Bound owned-parameter cleanup seeding and cleanup-plan emission now prefer the same lowering-owned descriptor
   lifetime plan vector, so parameter cleanup no longer relies on semantic-origin fallback when shared lifetime metadata
   is available.
-- Next highest-value step: collapse the duplicate descriptor-lifetime matching helpers into one lowering utility and
-  add a negative pipeline fixture for mismatched shared lifetime metadata.
+- Descriptor-lifetime matching now lives in one DynamicArray lowering utility shared by function emission, cleanup-plan
+  emission, and pipeline reporting.
+- Negative pipeline coverage now injects mismatched shared lifetime metadata and verifies descriptor lifetime reporting
+  blocks production-readiness instead of silently recomputing a cleanup-backed plan.
+- Next highest-value step: add explicit user-facing diagnostics for descriptor-origin and shared-lifetime metadata
+  blockers, then continue reducing owned `DynamicArray<T>` parameter/return ABI seams.
