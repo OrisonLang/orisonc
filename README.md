@@ -223,5 +223,7 @@ This repository currently captures the initial language design and development c
   descriptors.
 - The `--dynamic-array-descriptor-lifetime-plan` diagnostic now consumes all three origin kinds and pairs them with
   cleanup responsibility metadata.
-- Next highest-value step: make lowering consume the lifetime plan directly, then retire name-based parameter cleanup
-  inference seams.
+- Bound owned-parameter cleanup now uses a typed lowering-local lifetime plan helper before entering descriptor cleanup
+  emission, retiring the duplicate inline descriptor-storage mutation on that path.
+- Next highest-value step: extend the same lifetime-plan consumption pattern to returned descriptors, then remove the
+  remaining returned-descriptor inference seams.

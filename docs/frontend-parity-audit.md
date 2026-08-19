@@ -2731,3 +2731,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: DynamicArray descriptor lifetime planning now consumes semantic origins and cleanup plans into one typed
   pipeline state. The public `--dynamic-array-descriptor-lifetime-plan` report shows local, parameter, and returned
   cleanup responsibility before lowering consumes that state directly.
+- 2026-08-18: Bound owned-parameter cleanup lowering now consumes a typed `DynamicArrayBoundParameterLifetimePlan`
+  helper that combines source type, descriptor storage, cleanup responsibility, and Drop-proof availability before
+  descriptor cleanup emission. Returned-descriptor lifetime consumption remains the next ABI seam.

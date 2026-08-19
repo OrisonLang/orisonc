@@ -214,6 +214,43 @@ int main() {
             "lowers to %record.Payload descriptor %items.addr predicted element_size 16 (metadata only)"
         })
     );
+    auto dynamic_array_bound_parameter_lifetime_plan =
+        orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
+            "items",
+            "DynamicArray<Payload>",
+            "%items.bound.addr",
+            true,
+            context
+        );
+    assert(dynamic_array_bound_parameter_lifetime_plan.has_value());
+    assert(dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.owner_name == "items");
+    assert(
+        dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.descriptor_storage_name ==
+        "%items.bound.addr"
+    );
+    assert(
+        dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
+    );
+    assert(dynamic_array_bound_parameter_lifetime_plan->cleanup_responsibility == "callee-owned-parameter-cleanup");
+    assert(dynamic_array_bound_parameter_lifetime_plan->drop_proof_available);
+    assert(
+        orison::lowering::format_dynamic_array_bound_parameter_lifetime_plan(
+            *dynamic_array_bound_parameter_lifetime_plan
+        ) ==
+        "dynamic array bound parameter lifetime DynamicArray<Payload> owner items element Payload "
+        "lowers to %record.Payload descriptor %items.bound.addr bound cleanup callee-owned-parameter-cleanup "
+        "drop-proof available element_size 16 (metadata only)"
+    );
+    assert(
+        !orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
+            "items",
+            "DynamicArray<Payload>",
+            "%items.bound.addr",
+            false,
+            context
+        ).has_value()
+    );
     assert(
         orison::lowering::emit_dynamic_array_descriptor_load("%items.descriptor", "%items.addr") ==
         "  %items.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"

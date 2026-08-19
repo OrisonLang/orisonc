@@ -1986,13 +1986,15 @@ representation.
 - DynamicArray descriptor lifetime planning now pairs semantic origins with descriptor cleanup plans. The typed pipeline
   state records owner, source type, element type, origin kind, descriptor storage status, and cleanup responsibility for
   local, parameter, and returned descriptors.
+- Bound owned-parameter cleanup lowering now consumes a lowering-local typed lifetime helper before descriptor cleanup
+  emission. That narrows the remaining ABI/lifetime gap to returned descriptors and broader call-forwarding paths.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Make lowering consume the descriptor lifetime plan directly, then remove duplicated name-based parameter cleanup
-  inference where the typed plan fully covers the path.
+- Extend lowering-side lifetime-plan consumption from bound parameters to returned descriptors, then remove remaining
+  returned-descriptor inference seams where the typed plan fully covers the path.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

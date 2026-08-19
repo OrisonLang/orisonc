@@ -67,6 +67,12 @@ struct DynamicArrayDescriptorCleanupPlan {
     std::size_t source_line = 0;
 };
 
+struct DynamicArrayBoundParameterLifetimePlan {
+    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
+    std::string cleanup_responsibility;
+    bool drop_proof_available = false;
+};
+
 auto dynamic_array_runtime_call(
     DynamicArrayRuntimeOperation operation
 ) -> DynamicArrayRuntimeCall;
@@ -85,6 +91,15 @@ auto plan_dynamic_array_descriptor_cleanup(
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayDescriptorCleanupPlan>;
 
+auto plan_dynamic_array_bound_parameter_lifetime(
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name,
+    bool drop_proof_available,
+    LoweringContext const& context,
+    TargetLayout const& layout = native_target_layout()
+) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string;
@@ -95,6 +110,10 @@ auto format_dynamic_array_construction_plan_report(
 
 auto format_dynamic_array_descriptor_cleanup_plan(
     DynamicArrayDescriptorCleanupPlan const& plan
+) -> std::string;
+
+auto format_dynamic_array_bound_parameter_lifetime_plan(
+    DynamicArrayBoundParameterLifetimePlan const& plan
 ) -> std::string;
 
 auto format_dynamic_array_descriptor_cleanup_plan_report(

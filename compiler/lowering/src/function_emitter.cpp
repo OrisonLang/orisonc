@@ -810,6 +810,35 @@ auto owned_aggregate_projection_value_read_diagnostic(
     return aggregate_projection_access_diagnostic(plan);
 }
 
+auto dynamic_array_parameter_element_cleanup_proven(
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    if (parameter_name == "this") {
+        return true;
+    }
+
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        sequence->kind != DynamicSequenceKind::dynamic_array ||
+        is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        return true;
+    }
+    if (options.fixture_enable_dynamic_array_parameter_descriptors) {
+        return true;
+    }
+
+    auto const expected_owner_name = std::string {parameter_name} + ".element";
+    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
+    return std::ranges::any_of(options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+        return authorization.authorized &&
+            authorization.site.owner_name == expected_owner_name &&
+            authorization.site.source_type_name == sequence->element_source_type_name &&
+            authorization.site.abi_symbol_name == expected_symbol_name;
+    });
+}
+
 void seed_bound_dynamic_array_parameter_cleanup_owner(
     std::string_view parameter_name,
     std::string_view source_type_name,
@@ -826,36 +855,25 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
         return;
     }
 
-    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
-    auto lowerable_parameter =
-        is_scalar_or_nonowning_source_type(sequence->element_source_type_name) ||
-        std::ranges::any_of(context.options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
-            return authorization.authorized &&
-                authorization.site.owner_name == std::string {parameter_name} + ".element" &&
-                authorization.site.source_type_name == sequence->element_source_type_name &&
-                authorization.site.abi_symbol_name == expected_symbol_name;
-        });
-    if (!lowerable_parameter) {
-        return;
-    }
-
     auto storage = aggregate_storage_for_name(parameter_name, session.state);
     if (!storage.has_value()) {
         return;
     }
 
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-        std::string {parameter_name},
-        std::string {source_type_name},
+    auto lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
+        parameter_name,
+        source_type_name,
+        *storage,
+        dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
         context.lowering
     );
-    if (!cleanup_plan.has_value()) {
+    if (!lifetime_plan.has_value()) {
         return;
     }
 
-    cleanup_plan->descriptor_storage_name = std::move(*storage);
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
-    session.state.dynamic_array_iterable_cleanup_owner_plans.push_back(std::move(*cleanup_plan));
+    session.state.dynamic_array_iterable_cleanup_owner_plans.push_back(
+        std::move(lifetime_plan->descriptor_cleanup)
+    );
 }
 
 auto unsupported_dynamic_array_parameter_diagnostic(
@@ -877,29 +895,11 @@ auto dynamic_array_owned_parameter_has_drop_proof(
     syntax::ParameterSyntax const& parameter,
     LlvmIrEmissionOptions const& options
 ) -> bool {
-    if (parameter.name == "this") {
-        return true;
-    }
-
-    auto source_type_name = render_source_type_name(parameter.type);
-    auto sequence = dynamic_sequence_source_type(source_type_name);
-    if (!sequence.has_value() ||
-        sequence->kind != DynamicSequenceKind::dynamic_array ||
-        is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
-        return true;
-    }
-    if (options.fixture_enable_dynamic_array_parameter_descriptors) {
-        return true;
-    }
-
-    auto const expected_owner_name = parameter.name + ".element";
-    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
-    return std::ranges::any_of(options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
-        return authorization.authorized &&
-            authorization.site.owner_name == expected_owner_name &&
-            authorization.site.source_type_name == sequence->element_source_type_name &&
-            authorization.site.abi_symbol_name == expected_symbol_name;
-    });
+    return dynamic_array_parameter_element_cleanup_proven(
+        parameter.name,
+        render_source_type_name(parameter.type),
+        options
+    );
 }
 
 auto infer_unit_binding_type(

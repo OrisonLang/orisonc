@@ -5,6 +5,7 @@
 #include "orison/lowering/target_layout.hpp"
 
 #include <sstream>
+#include <utility>
 
 namespace orison::lowering {
 namespace {
@@ -169,6 +170,38 @@ auto plan_dynamic_array_descriptor_cleanup(
     };
 }
 
+auto plan_dynamic_array_bound_parameter_lifetime(
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name,
+    bool drop_proof_available,
+    LoweringContext const& context,
+    TargetLayout const& layout
+) -> std::optional<DynamicArrayBoundParameterLifetimePlan> {
+    if (parameter_name.empty() || descriptor_storage_name.empty() || !drop_proof_available) {
+        return std::nullopt;
+    }
+
+    auto descriptor_cleanup = plan_dynamic_array_descriptor_cleanup(
+        parameter_name,
+        source_type_name,
+        context,
+        layout
+    );
+    if (!descriptor_cleanup.has_value()) {
+        return std::nullopt;
+    }
+
+    descriptor_cleanup->descriptor_storage_name = descriptor_storage_name;
+    descriptor_cleanup->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
+
+    return DynamicArrayBoundParameterLifetimePlan {
+        .descriptor_cleanup = std::move(*descriptor_cleanup),
+        .cleanup_responsibility = "callee-owned-parameter-cleanup",
+        .drop_proof_available = drop_proof_available,
+    };
+}
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string {
@@ -213,6 +246,31 @@ auto format_dynamic_array_descriptor_cleanup_plan(
         output << " " << format_dynamic_array_descriptor_storage_status(plan.descriptor_storage_status);
     }
     output << " element_size " << plan.element_size_bytes;
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_bound_parameter_lifetime_plan(
+    DynamicArrayBoundParameterLifetimePlan const& plan
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "dynamic array bound parameter lifetime "
+           << plan.descriptor_cleanup.source_type_name;
+    if (!plan.descriptor_cleanup.owner_name.empty()) {
+        output << " owner " << plan.descriptor_cleanup.owner_name;
+    }
+    output << " element " << plan.descriptor_cleanup.element_source_type_name;
+    output << " lowers to " << plan.descriptor_cleanup.element_llvm_type;
+    if (!plan.descriptor_cleanup.descriptor_storage_name.empty()) {
+        output << " descriptor " << plan.descriptor_cleanup.descriptor_storage_name;
+        output << " "
+               << format_dynamic_array_descriptor_storage_status(
+                      plan.descriptor_cleanup.descriptor_storage_status
+                  );
+    }
+    output << " cleanup " << plan.cleanup_responsibility;
+    output << " drop-proof " << (plan.drop_proof_available ? "available" : "missing");
+    output << " element_size " << plan.descriptor_cleanup.element_size_bytes;
     output << " (metadata only)";
     return output.str();
 }
