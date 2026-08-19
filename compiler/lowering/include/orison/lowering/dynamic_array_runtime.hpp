@@ -73,6 +73,12 @@ struct DynamicArrayBoundParameterLifetimePlan {
     bool drop_proof_available = false;
 };
 
+struct DynamicArrayReturnedDescriptorLifetimePlan {
+    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
+    std::string cleanup_responsibility;
+    bool caller_owns_returned_cleanup = false;
+};
+
 auto dynamic_array_runtime_call(
     DynamicArrayRuntimeOperation operation
 ) -> DynamicArrayRuntimeCall;
@@ -100,6 +106,12 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;
 
+auto plan_dynamic_array_returned_descriptor_lifetime(
+    std::string_view returned_owner_name,
+    std::string_view returned_source_type_name,
+    DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
+) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan>;
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string;
@@ -114,6 +126,10 @@ auto format_dynamic_array_descriptor_cleanup_plan(
 
 auto format_dynamic_array_bound_parameter_lifetime_plan(
     DynamicArrayBoundParameterLifetimePlan const& plan
+) -> std::string;
+
+auto format_dynamic_array_returned_descriptor_lifetime_plan(
+    DynamicArrayReturnedDescriptorLifetimePlan const& plan
 ) -> std::string;
 
 auto format_dynamic_array_descriptor_cleanup_plan_report(

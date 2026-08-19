@@ -2734,3 +2734,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Bound owned-parameter cleanup lowering now consumes a typed `DynamicArrayBoundParameterLifetimePlan`
   helper that combines source type, descriptor storage, cleanup responsibility, and Drop-proof availability before
   descriptor cleanup emission. Returned-descriptor lifetime consumption remains the next ABI seam.
+- 2026-08-18: Returned `DynamicArray<T>` descriptor cleanup transfer now consumes a typed
+  `DynamicArrayReturnedDescriptorLifetimePlan` helper before erasing callee-local descriptor cleanup. This records the
+  caller-owned returned cleanup handoff in lowering instead of matching raw cleanup-plan fields inline.

@@ -251,6 +251,45 @@ int main() {
             context
         ).has_value()
     );
+    auto returned_cleanup_plan = *dynamic_array_cleanup_plan;
+    returned_cleanup_plan.descriptor_storage_status =
+        orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    auto dynamic_array_returned_lifetime_plan =
+        orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
+            "items",
+            "DynamicArray<Payload>",
+            returned_cleanup_plan
+        );
+    assert(dynamic_array_returned_lifetime_plan.has_value());
+    assert(dynamic_array_returned_lifetime_plan->descriptor_cleanup.owner_name == "items");
+    assert(
+        dynamic_array_returned_lifetime_plan->descriptor_cleanup.descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor
+    );
+    assert(dynamic_array_returned_lifetime_plan->cleanup_responsibility == "caller-owned-returned-cleanup");
+    assert(dynamic_array_returned_lifetime_plan->caller_owns_returned_cleanup);
+    assert(
+        orison::lowering::format_dynamic_array_returned_descriptor_lifetime_plan(
+            *dynamic_array_returned_lifetime_plan
+        ) ==
+        "dynamic array returned descriptor lifetime DynamicArray<Payload> owner items element Payload "
+        "lowers to %record.Payload descriptor %items.addr local cleanup caller-owned-returned-cleanup "
+        "caller-owned yes element_size 16 (metadata only)"
+    );
+    assert(
+        !orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
+            "items",
+            "DynamicArray<Payload>",
+            *dynamic_array_cleanup_plan
+        ).has_value()
+    );
+    assert(
+        !orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
+            "other",
+            "DynamicArray<Payload>",
+            returned_cleanup_plan
+        ).has_value()
+    );
     assert(
         orison::lowering::emit_dynamic_array_descriptor_load("%items.descriptor", "%items.addr") ==
         "  %items.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"

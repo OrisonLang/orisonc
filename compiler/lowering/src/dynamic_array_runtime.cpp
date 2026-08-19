@@ -202,6 +202,30 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     };
 }
 
+auto plan_dynamic_array_returned_descriptor_lifetime(
+    std::string_view returned_owner_name,
+    std::string_view returned_source_type_name,
+    DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
+) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan> {
+    if (returned_owner_name.empty() ||
+        returned_source_type_name.empty() ||
+        dynamic_array_element_source_type_name(returned_source_type_name) == std::nullopt) {
+        return std::nullopt;
+    }
+    if (candidate_cleanup.owner_name != returned_owner_name ||
+        candidate_cleanup.source_type_name != returned_source_type_name ||
+        candidate_cleanup.descriptor_storage_status !=
+            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor) {
+        return std::nullopt;
+    }
+
+    return DynamicArrayReturnedDescriptorLifetimePlan {
+        .descriptor_cleanup = candidate_cleanup,
+        .cleanup_responsibility = "caller-owned-returned-cleanup",
+        .caller_owns_returned_cleanup = true,
+    };
+}
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string {
@@ -270,6 +294,31 @@ auto format_dynamic_array_bound_parameter_lifetime_plan(
     }
     output << " cleanup " << plan.cleanup_responsibility;
     output << " drop-proof " << (plan.drop_proof_available ? "available" : "missing");
+    output << " element_size " << plan.descriptor_cleanup.element_size_bytes;
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_returned_descriptor_lifetime_plan(
+    DynamicArrayReturnedDescriptorLifetimePlan const& plan
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "dynamic array returned descriptor lifetime "
+           << plan.descriptor_cleanup.source_type_name;
+    if (!plan.descriptor_cleanup.owner_name.empty()) {
+        output << " owner " << plan.descriptor_cleanup.owner_name;
+    }
+    output << " element " << plan.descriptor_cleanup.element_source_type_name;
+    output << " lowers to " << plan.descriptor_cleanup.element_llvm_type;
+    if (!plan.descriptor_cleanup.descriptor_storage_name.empty()) {
+        output << " descriptor " << plan.descriptor_cleanup.descriptor_storage_name;
+        output << " "
+               << format_dynamic_array_descriptor_storage_status(
+                      plan.descriptor_cleanup.descriptor_storage_status
+                  );
+    }
+    output << " cleanup " << plan.cleanup_responsibility;
+    output << " caller-owned " << (plan.caller_owns_returned_cleanup ? "yes" : "no");
     output << " element_size " << plan.descriptor_cleanup.element_size_bytes;
     output << " (metadata only)";
     return output.str();

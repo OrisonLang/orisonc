@@ -699,10 +699,12 @@ void release_returned_dynamic_array_local_cleanup(
     for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
          cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
          ++cleanup_plan) {
-        if (cleanup_plan->owner_name == expression.text &&
-            cleanup_plan->source_type_name == *return_source_type_name &&
-            cleanup_plan->descriptor_storage_status ==
-                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor) {
+        auto lifetime_plan = plan_dynamic_array_returned_descriptor_lifetime(
+            expression.text,
+            *return_source_type_name,
+            *cleanup_plan
+        );
+        if (lifetime_plan.has_value() && lifetime_plan->caller_owns_returned_cleanup) {
             state.dynamic_array_local_cleanup_plans.erase(cleanup_plan);
             return;
         }

@@ -1988,13 +1988,15 @@ representation.
   local, parameter, and returned descriptors.
 - Bound owned-parameter cleanup lowering now consumes a lowering-local typed lifetime helper before descriptor cleanup
   emission. That narrows the remaining ABI/lifetime gap to returned descriptors and broader call-forwarding paths.
+- Returned descriptor cleanup transfer now consumes a lowering-local typed lifetime helper before callee-local cleanup
+  is suppressed, making the caller-owned returned cleanup handoff explicit.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend lowering-side lifetime-plan consumption from bound parameters to returned descriptors, then remove remaining
-  returned-descriptor inference seams where the typed plan fully covers the path.
+- Connect lowering-local lifetime helpers to the pipeline descriptor lifetime state so bound-parameter and
+  returned-descriptor cleanup decisions share one typed source of truth.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

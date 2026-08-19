@@ -225,5 +225,7 @@ This repository currently captures the initial language design and development c
   cleanup responsibility metadata.
 - Bound owned-parameter cleanup now uses a typed lowering-local lifetime plan helper before entering descriptor cleanup
   emission, retiring the duplicate inline descriptor-storage mutation on that path.
-- Next highest-value step: extend the same lifetime-plan consumption pattern to returned descriptors, then remove the
-  remaining returned-descriptor inference seams.
+- Returned descriptor cleanup transfer now uses a typed lowering-local lifetime helper before suppressing callee-local
+  cleanup, making caller-owned returned cleanup explicit at the lowering boundary.
+- Next highest-value step: connect the lowering-local lifetime helpers to the pipeline descriptor lifetime state so
+  bound-parameter and returned-descriptor cleanup decisions are sourced from one typed plan.
