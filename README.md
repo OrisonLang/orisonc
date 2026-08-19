@@ -240,5 +240,8 @@ This repository currently captures the initial language design and development c
 - DynamicArray cleanup production readiness now consumes descriptor-origin blocker state, so broader owned
   `DynamicArray<T>` forwarding paths stay blocked from production-ready status until every semantic origin is paired
   with cleanup responsibility metadata.
-- Next highest-value step: connect returned descriptor cleanup transfer to the pipeline descriptor lifetime state as the
-  shared source of truth, then remove the remaining lowering-local returned-transfer duplication.
+- Lowering now derives descriptor lifetime plans before function emission and passes them into returned descriptor
+  cleanup transfer, so returned `DynamicArray<T>` cleanup handoff can use shared plan metadata instead of recomputing
+  from semantic origins alone.
+- Next highest-value step: make bound owned-parameter cleanup consume the same lowering-owned descriptor lifetime plan
+  vector, then retire the remaining parameter-specific lookup duplication.

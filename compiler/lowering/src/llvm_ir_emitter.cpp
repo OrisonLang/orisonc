@@ -3034,9 +3034,44 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor;
         } else if (has_dynamic_array_local_constructor_origin(origin, module)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        } else if (origin.origin_kind == semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
+            plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
         }
         plan->source_line = origin.line;
         plans.push_back(std::move(*plan));
+    }
+    return plans;
+}
+
+auto matching_dynamic_array_descriptor_cleanup_plan(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
+) -> DynamicArrayDescriptorCleanupPlan const* {
+    auto const match = std::find_if(
+        cleanup_plans.begin(),
+        cleanup_plans.end(),
+        [&](DynamicArrayDescriptorCleanupPlan const& cleanup_plan) {
+            return cleanup_plan.owner_name == origin.owner_name &&
+                cleanup_plan.source_type_name == origin.source_type_name &&
+                cleanup_plan.element_source_type_name == origin.element_source_type_name;
+        }
+    );
+    return match == cleanup_plans.end() ? nullptr : &*match;
+}
+
+auto collect_dynamic_array_descriptor_lifetime_plans(
+    semantics::SemanticAnalysisResult const& semantic_result,
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
+) -> std::vector<DynamicArrayDescriptorLifetimePlan> {
+    auto plans = std::vector<DynamicArrayDescriptorLifetimePlan> {};
+    plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
+    for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
+        plans.push_back(
+            plan_dynamic_array_descriptor_lifetime(
+                origin,
+                matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plans)
+            )
+        );
     }
     return plans;
 }
@@ -3690,6 +3725,11 @@ auto emit_module(
         if (result.has_errors()) {
             return result;
         }
+        result.dynamic_array_descriptor_lifetime_plans =
+            collect_dynamic_array_descriptor_lifetime_plans(
+                semantic_result,
+                result.dynamic_array_descriptor_cleanup_plans
+            );
         result.dynamic_array_cleanup_obligations = plan_dynamic_array_descriptor_cleanup_obligations(
             result.dynamic_array_descriptor_cleanup_plans,
             result.dynamic_array_construction_plans.size()
@@ -4124,6 +4164,8 @@ auto emit_module(
     auto direct_source_defined_drop_symbols = collect_direct_source_drop_definition_symbols(module);
     auto function_options = options;
     function_options.source_drop_definition_symbols = source_defined_drop_symbols;
+    function_options.dynamic_array_descriptor_lifetime_plans =
+        result.dynamic_array_descriptor_lifetime_plans;
     auto refresh_runtime_indexed_member_cleanup_binding_metadata = [&]() {
         result.runtime_indexed_member_cleanup_sibling_fields =
             collect_runtime_indexed_member_cleanup_sibling_fields(

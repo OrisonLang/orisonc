@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/semantics/drop_model.hpp"
 
 #include <cstddef>
@@ -73,6 +74,7 @@ struct LlvmIrEmissionOptions {
     bool enable_runtime_indexed_member_cleanup_apply_authorization_request = false;
     bool enable_runtime_indexed_member_cleanup_rewrite_execution_request = false;
     bool enable_runtime_indexed_fixed_array_constructor_move_only = false;
+    std::vector<DynamicArrayDescriptorLifetimePlan> dynamic_array_descriptor_lifetime_plans;
     std::vector<std::string> source_drop_definition_symbols;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };

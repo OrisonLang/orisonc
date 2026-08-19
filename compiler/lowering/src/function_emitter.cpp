@@ -686,10 +686,33 @@ auto matching_dynamic_array_descriptor_origin(
     semantics::DynamicArrayDescriptorOriginKind origin_kind
 ) -> semantics::DynamicArrayDescriptorOrigin const*;
 
+auto matching_returned_dynamic_array_descriptor_lifetime_plan(
+    LlvmIrEmissionOptions const& options,
+    DynamicArrayDescriptorCleanupPlan const& cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        options.dynamic_array_descriptor_lifetime_plans.begin(),
+        options.dynamic_array_descriptor_lifetime_plans.end(),
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.origin_kind ==
+                    semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                lifetime_plan.cleanup_plan_available &&
+                lifetime_plan.owner_name == cleanup_plan.owner_name &&
+                lifetime_plan.source_type_name == cleanup_plan.source_type_name &&
+                lifetime_plan.element_source_type_name == cleanup_plan.element_source_type_name &&
+                lifetime_plan.descriptor_storage_status == cleanup_plan.descriptor_storage_status &&
+                lifetime_plan.descriptor_storage_name == cleanup_plan.descriptor_storage_name &&
+                lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup";
+        }
+    );
+    return match == options.dynamic_array_descriptor_lifetime_plans.end() ? nullptr : &*match;
+}
+
 void release_returned_dynamic_array_local_cleanup(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
     semantics::SemanticAnalysisResult const* semantic_result,
+    LlvmIrEmissionOptions const& options,
     FunctionLoweringState& state
 ) {
     release_moved_owned_cleanup_expression(expression, state);
@@ -718,6 +741,14 @@ void release_returned_dynamic_array_local_cleanup(
     for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
          cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
          ++cleanup_plan) {
+        if (!options.dynamic_array_descriptor_lifetime_plans.empty()) {
+            if (matching_returned_dynamic_array_descriptor_lifetime_plan(options, *cleanup_plan) != nullptr) {
+                state.dynamic_array_local_cleanup_plans.erase(cleanup_plan);
+                return;
+            }
+            continue;
+        }
+
         auto lifetime_plan = plan_dynamic_array_returned_descriptor_lifetime(
             *origin,
             *cleanup_plan
@@ -1327,6 +1358,7 @@ auto lower_guard_return_statement(
         statement.expression,
         return_source_type_name,
         session.semantics,
+        context.options,
         session.state
     );
     release_returned_choice_dynamic_array_payload_cleanup(
@@ -2262,6 +2294,7 @@ void emit_function_body(
             *expression,
             return_source_type_name,
             session.semantics,
+            context.options,
             session.state
         );
         release_returned_choice_dynamic_array_payload_cleanup(

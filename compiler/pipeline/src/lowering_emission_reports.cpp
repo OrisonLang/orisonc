@@ -308,6 +308,23 @@ auto matching_dynamic_array_descriptor_origin(
     return match == origins.end() ? nullptr : &*match;
 }
 
+auto matching_dynamic_array_descriptor_lifetime_plan(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    std::vector<lowering::DynamicArrayDescriptorLifetimePlan> const& lifetime_plans
+) -> lowering::DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        lifetime_plans.begin(),
+        lifetime_plans.end(),
+        [&](lowering::DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.owner_name == origin.owner_name &&
+                lifetime_plan.source_type_name == origin.source_type_name &&
+                lifetime_plan.element_source_type_name == origin.element_source_type_name &&
+                lifetime_plan.origin_kind == origin.origin_kind;
+        }
+    );
+    return match == lifetime_plans.end() ? nullptr : &*match;
+}
+
 auto cleanup_plan_origin_blocker_reason(
     lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan,
     std::vector<semantics::DynamicArrayDescriptorOrigin> const& origins
@@ -324,7 +341,8 @@ auto cleanup_plan_origin_blocker_reason(
 
 auto build_dynamic_array_descriptor_lifetime_plan_state(
     semantics::SemanticAnalysisResult const& semantic_result,
-    DynamicArrayDescriptorCleanupPlanState const& cleanup_plan_state
+    DynamicArrayDescriptorCleanupPlanState const& cleanup_plan_state,
+    std::vector<lowering::DynamicArrayDescriptorLifetimePlan> const& lowering_lifetime_plans
 ) -> DynamicArrayDescriptorLifetimePlanState {
     auto state = DynamicArrayDescriptorLifetimePlanState {};
     state.plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
@@ -333,7 +351,11 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
         auto const* cleanup_plan =
             matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
-        auto lowering_plan = lowering::plan_dynamic_array_descriptor_lifetime(origin, cleanup_plan);
+        auto const* lowering_lifetime_plan =
+            matching_dynamic_array_descriptor_lifetime_plan(origin, lowering_lifetime_plans);
+        auto lowering_plan = lowering_lifetime_plan == nullptr
+            ? lowering::plan_dynamic_array_descriptor_lifetime(origin, cleanup_plan)
+            : *lowering_lifetime_plan;
         auto plan = DynamicArrayDescriptorLifetimePlan {
             .owner_name = std::move(lowering_plan.owner_name),
             .source_type_name = std::move(lowering_plan.source_type_name),
@@ -3449,7 +3471,8 @@ void populate_lowering_emission_reports(
     result.dynamic_array_descriptor_lifetime_plan_state =
         build_dynamic_array_descriptor_lifetime_plan_state(
             result.semantic_result,
-            result.dynamic_array_descriptor_cleanup_plan_state
+            result.dynamic_array_descriptor_cleanup_plan_state,
+            emission.dynamic_array_descriptor_lifetime_plans
         );
     result.dynamic_array_cleanup_obligation_state =
         build_dynamic_array_cleanup_obligation_state(emission);

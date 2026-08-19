@@ -2007,13 +2007,16 @@ representation.
 - DynamicArray cleanup production readiness now consumes descriptor-origin blocker state. Checked forwarding paths can
   still emit through their current lowering seams, but they do not report production-ready unless every semantic
   descriptor origin has a matching cleanup plan and every cleanup plan has a matching semantic origin.
+- Lowering now derives descriptor lifetime plans before function emission and threads them through `LlvmIrEmissionOptions`.
+  Returned descriptor cleanup transfer consumes that lowering-owned shared plan vector when available, while direct
+  function-emitter tests retain a narrow fallback path.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Connect returned descriptor cleanup transfer to the pipeline descriptor lifetime state as the shared source of truth,
-  then remove the remaining lowering-local returned-transfer duplication.
+- Make bound owned-parameter cleanup consume the same lowering-owned descriptor lifetime plan vector, then retire the
+  remaining parameter-specific lookup duplication.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

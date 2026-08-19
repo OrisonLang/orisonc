@@ -5988,6 +5988,33 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_owned_parameter_forwarding_run_status));
     assert(WEXITSTATUS(dynamic_array_owned_parameter_forwarding_run_status) == 0);
 
+    auto dynamic_array_returned_payload_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "choice_dynamic_array_return_payload_run.or";
+    auto dynamic_array_returned_payload_ir = pipeline.emit_llvm(
+        dynamic_array_returned_payload_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_returned_payload_ir.has_errors());
+    auto const returned_payload_lifetime_plans = std::count_if(
+        dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+        dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+        [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                plan.cleanup_plan_available &&
+                plan.cleanup_responsibility == "caller-owned-returned-cleanup" &&
+                plan.descriptor_storage_status ==
+                    orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        }
+    );
+    assert(returned_payload_lifetime_plans == 1);
+    assert(
+        dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty()
+    );
+
     auto dynamic_array_owned_parameter_forwarding_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_forwarding_reuse.or";
     {

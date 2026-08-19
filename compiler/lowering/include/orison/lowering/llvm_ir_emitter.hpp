@@ -257,6 +257,7 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayRuntimeOperation> dynamic_array_runtime_operations;
     std::vector<DynamicArrayConstructionPlan> dynamic_array_construction_plans;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_descriptor_cleanup_plans;
+    std::vector<DynamicArrayDescriptorLifetimePlan> dynamic_array_descriptor_lifetime_plans;
     std::vector<DynamicArrayCleanupObligation> dynamic_array_cleanup_obligations;
     std::vector<DynamicArrayCleanupSequencePlan> dynamic_array_cleanup_sequence_plans;
     std::vector<DynamicArrayCleanupSequenceVerification> dynamic_array_cleanup_sequence_verifications;
