@@ -40,6 +40,25 @@ struct DynamicArrayDescriptorCleanupPlanState {
     std::vector<lowering::DynamicArrayDescriptorCleanupPlan> plans;
 };
 
+struct DynamicArrayDescriptorLifetimePlan {
+    std::string owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    semantics::DynamicArrayDescriptorOriginKind origin_kind =
+        semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    lowering::DynamicArrayDescriptorStorageStatus descriptor_storage_status =
+        lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local;
+    std::string descriptor_storage_name;
+    std::string cleanup_responsibility;
+    bool cleanup_plan_available = false;
+    std::size_t source_line = 0;
+};
+
+struct DynamicArrayDescriptorLifetimePlanState {
+    std::vector<DynamicArrayDescriptorLifetimePlan> plans;
+    bool all_origins_have_cleanup_plans = false;
+};
+
 struct DynamicArrayConstructionPlanState {
     std::vector<lowering::DynamicArrayConstructionPlan> plans;
 };

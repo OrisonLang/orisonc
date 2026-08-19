@@ -133,6 +133,13 @@ auto run_dynamic_array_descriptor_cleanup_plan(
     return run_single_file_command(app, "--dynamic-array-descriptor-cleanup-plan", path);
 }
 
+auto run_dynamic_array_descriptor_lifetime_plan(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-descriptor-lifetime-plan", path);
+}
+
 auto run_dynamic_array_cleanup_obligations(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
@@ -822,6 +829,58 @@ int main() {
             "descriptor %items.addr audit",
         }
     );
+    auto dynamic_array_blocked_lifetime_plan =
+        run_dynamic_array_descriptor_lifetime_plan(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_lifetime_plan,
+        {
+            "dynamic array descriptor lifetime plan ready origins 1",
+            "dynamic array descriptor lifetime DynamicArray<Payload>",
+            "owner items",
+            "origin parameter",
+            "cleanup callee-owned-parameter-cleanup",
+            "storage audit",
+            "descriptor %items.addr",
+            "cleanup-plan available",
+        }
+    );
+
+    auto dynamic_array_all_origin_lifetime_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_dynamic_array_all_origin_lifetime.or";
+    std::filesystem::remove(dynamic_array_all_origin_lifetime_path, remove_error);
+    write_fixture(
+        dynamic_array_all_origin_lifetime_path,
+        "demo.dynamicarrayalloriginlifetime",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "function make_items() -> DynamicArray<Payload>",
+            "    DynamicArray()",
+            "function use_items(items: DynamicArray<Payload>) -> UInt32",
+            "    1 as UInt32",
+            "function main() -> UInt32",
+            "    var local_items: DynamicArray<Payload> = DynamicArray()",
+            "    var returned_items: DynamicArray<Payload> = make_items()",
+            "    use_items(returned_items)",
+        }
+    );
+    auto dynamic_array_all_origin_lifetime_plan =
+        run_dynamic_array_descriptor_lifetime_plan(app, dynamic_array_all_origin_lifetime_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_all_origin_lifetime_plan,
+        {
+            "dynamic array descriptor lifetime plan ready origins 3",
+            "owner items",
+            "origin parameter",
+            "cleanup callee-owned-parameter-cleanup",
+            "owner local_items",
+            "origin local",
+            "cleanup caller-owned-local-cleanup",
+            "owner returned_items",
+            "origin returned",
+            "cleanup caller-owned-returned-cleanup",
+        }
+    );
     auto dynamic_array_blocked_cleanup_obligations =
         run_dynamic_array_cleanup_obligations(app, dynamic_array_blocked_cleanup_capability_path);
     assert_success_with_stdout_contains(
@@ -869,6 +928,8 @@ int main() {
         {
             "dynamic array descriptor origin DynamicArray<Payload>",
             "dynamic array descriptor cleanup DynamicArray<Payload>",
+            "dynamic array descriptor lifetime plan ready origins 1",
+            "dynamic array descriptor lifetime DynamicArray<Payload>",
             "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
             "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
             "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
@@ -1000,6 +1061,8 @@ int main() {
         {
             "dynamic array descriptor origin DynamicArray<Payload>",
             "dynamic array descriptor cleanup DynamicArray<Payload>",
+            "dynamic array descriptor lifetime plan ready origins 1",
+            "dynamic array descriptor lifetime DynamicArray<Payload>",
             "function use_items dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
             "function use_items dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
             "function use_items dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
@@ -1038,7 +1101,9 @@ int main() {
         {
             "dynamic array descriptor origin DynamicArray<UInt32>",
             "dynamic array descriptor cleanup DynamicArray<UInt32>",
-            "descriptor %items.addr local",
+            "dynamic array descriptor lifetime plan ready origins",
+            "dynamic array descriptor lifetime DynamicArray<UInt32>",
+            "storage local descriptor %items.addr",
             "dynamic array cleanup emission capability proven",
             "[descriptor storage ok]",
             "computed DynamicArray descriptor render planned renders 1 snippets 4 [metadata available] "

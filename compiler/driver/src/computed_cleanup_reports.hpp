@@ -11,6 +11,10 @@ auto dynamic_array_descriptor_cleanup_plan_state_report(
     pipeline::DynamicArrayDescriptorCleanupPlanState const& state
 ) -> std::vector<std::string>;
 
+auto dynamic_array_descriptor_lifetime_plan_state_report(
+    pipeline::DynamicArrayDescriptorLifetimePlanState const& state
+) -> std::vector<std::string>;
+
 auto dynamic_array_cleanup_obligation_state_report(
     pipeline::DynamicArrayCleanupObligationState const& state
 ) -> std::vector<std::string>;

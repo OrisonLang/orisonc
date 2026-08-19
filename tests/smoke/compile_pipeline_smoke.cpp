@@ -1244,6 +1244,21 @@ auto main() -> int {
         dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.front().descriptor_storage_name ==
         "%items.addr"
     );
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.size() == 1);
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_origins_have_cleanup_plans);
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+    );
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front()
+            .cleanup_responsibility == "callee-owned-parameter-cleanup"
+    );
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front()
+            .descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
+    );
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.size() == 1);
     assert(
         dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_state.obligations.front()

@@ -87,10 +87,19 @@ Runtime-index partial-owner cleanup metadata for computed-index constructor move
 build/tools/orisonc/orisonc --runtime-indexed-cleanup-audit tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_rejected.or
 ```
 
-This prints semantic descriptor origins, descriptor cleanup plans, cleanup obligations, sequence plans, verification,
-emission gate, capability proof, and production-readiness status in order. Ordinary `--emit-llvm` keeps computed-index
-constructor moves rejected; this audit command explicitly enables the runtime-index constructor-move, cleanup-emission,
-module-insertion, and module-mutation gates for inspection.
+This prints semantic descriptor origins, descriptor cleanup plans, descriptor lifetime plans, cleanup obligations,
+sequence plans, verification, emission gate, capability proof, and production-readiness status in order. Ordinary
+`--emit-llvm` keeps computed-index constructor moves rejected; this audit command explicitly enables the runtime-index
+constructor-move, cleanup-emission, module-insertion, and module-mutation gates for inspection.
+
+To inspect the unified descriptor origin and cleanup responsibility model, run:
+
+```sh
+build/tools/orisonc/orisonc --dynamic-array-descriptor-lifetime-plan tests/fixtures/dynamic_array_owned_parameter_forwarding_run.or
+```
+
+This report classifies each tracked descriptor as `origin local`, `origin parameter`, or `origin returned`, then pairs it
+with the cleanup responsibility lowering should honor.
 
 To inspect the default production gate without enabling constructor-move acceptance, run:
 
@@ -212,6 +221,7 @@ This repository currently captures the initial language design and development c
 - Semantic descriptor origins now distinguish `origin local`, `origin parameter`, and `origin returned`, giving lowering
   a typed boundary for local descriptors, ABI-bound owned-parameter descriptors, and direct Orison function-call result
   descriptors.
-- Full parameter/return ABI lowering still needs one cleanup/lifetime plan that consumes all three origin kinds.
-- Next highest-value step: connect descriptor origin kinds to a unified cleanup/lifetime plan, then use that plan to
-  simplify current parameter cleanup seams.
+- The `--dynamic-array-descriptor-lifetime-plan` diagnostic now consumes all three origin kinds and pairs them with
+  cleanup responsibility metadata.
+- Next highest-value step: make lowering consume the lifetime plan directly, then retire name-based parameter cleanup
+  inference seams.

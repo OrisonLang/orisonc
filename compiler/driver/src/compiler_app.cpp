@@ -157,6 +157,7 @@ auto usage_text() -> std::string {
            "--drop-readiness-summary <file> | --drop-readiness-relations <file> | "
            "--drop-readiness-blockers <file> | --drop-readiness-source-correlations <file> | "
            "--dynamic-array-descriptor-cleanup-plan <file> | "
+           "--dynamic-array-descriptor-lifetime-plan <file> | "
            "--dynamic-array-cleanup-obligations <file> | "
            "--dynamic-array-cleanup-sequence-plan <file> | "
            "--dynamic-array-cleanup-sequence-verification <file> | "
@@ -571,6 +572,10 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(
         report,
         dynamic_array_descriptor_cleanup_plan_state_report(result.dynamic_array_descriptor_cleanup_plan_state)
+    );
+    append_report_lines(
+        report,
+        dynamic_array_descriptor_lifetime_plan_state_report(result.dynamic_array_descriptor_lifetime_plan_state)
     );
     append_report_lines(report, dynamic_array_cleanup_obligation_state_report(
         result.dynamic_array_cleanup_obligation_state
@@ -1242,6 +1247,18 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             [](auto const& result) {
                 return dynamic_array_descriptor_cleanup_plan_state_report(
                     result.dynamic_array_descriptor_cleanup_plan_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-descriptor-lifetime-plan") {
+        return dynamic_array_cleanup_report(
+            std::filesystem::path(args[2]),
+            dynamic_array_cleanup_report_options(),
+            [](auto const& result) {
+                return dynamic_array_descriptor_lifetime_plan_state_report(
+                    result.dynamic_array_descriptor_lifetime_plan_state
                 );
             }
         );

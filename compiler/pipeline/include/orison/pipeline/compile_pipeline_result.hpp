@@ -56,6 +56,7 @@ struct CompilePipelineResult {
     SemanticDropState semantic_drop_state;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
     DynamicArrayDescriptorCleanupPlanState dynamic_array_descriptor_cleanup_plan_state;
+    DynamicArrayDescriptorLifetimePlanState dynamic_array_descriptor_lifetime_plan_state;
     DynamicArrayConstructionPlanState dynamic_array_construction_plan_state;
     DynamicArrayRuntimeRequestState dynamic_array_runtime_request_state;
     DynamicArrayAllocationCallEmissionState dynamic_array_allocation_call_emission_state;

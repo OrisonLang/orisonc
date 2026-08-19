@@ -203,6 +203,81 @@ auto build_dynamic_array_descriptor_cleanup_plan_state(
     };
 }
 
+auto dynamic_array_descriptor_lifetime_cleanup_responsibility(
+    semantics::DynamicArrayDescriptorOriginKind origin_kind
+) -> std::string {
+    switch (origin_kind) {
+        case semantics::DynamicArrayDescriptorOriginKind::local_binding:
+            return "caller-owned-local-cleanup";
+        case semantics::DynamicArrayDescriptorOriginKind::parameter_binding:
+            return "callee-owned-parameter-cleanup";
+        case semantics::DynamicArrayDescriptorOriginKind::returned_binding:
+            return "caller-owned-returned-cleanup";
+    }
+    return "unknown-cleanup";
+}
+
+auto matching_dynamic_array_descriptor_cleanup_plan(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    std::vector<lowering::DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
+) -> lowering::DynamicArrayDescriptorCleanupPlan const* {
+    auto const exact = std::find_if(
+        cleanup_plans.begin(),
+        cleanup_plans.end(),
+        [&](lowering::DynamicArrayDescriptorCleanupPlan const& plan) {
+            return plan.owner_name == origin.owner_name &&
+                plan.source_type_name == origin.source_type_name &&
+                plan.element_source_type_name == origin.element_source_type_name &&
+                plan.source_line == origin.line;
+        }
+    );
+    if (exact != cleanup_plans.end()) {
+        return &*exact;
+    }
+
+    auto const fallback = std::find_if(
+        cleanup_plans.begin(),
+        cleanup_plans.end(),
+        [&](lowering::DynamicArrayDescriptorCleanupPlan const& plan) {
+            return plan.owner_name == origin.owner_name &&
+                plan.source_type_name == origin.source_type_name &&
+                plan.element_source_type_name == origin.element_source_type_name;
+        }
+    );
+    return fallback == cleanup_plans.end() ? nullptr : &*fallback;
+}
+
+auto build_dynamic_array_descriptor_lifetime_plan_state(
+    semantics::SemanticAnalysisResult const& semantic_result,
+    DynamicArrayDescriptorCleanupPlanState const& cleanup_plan_state
+) -> DynamicArrayDescriptorLifetimePlanState {
+    auto state = DynamicArrayDescriptorLifetimePlanState {};
+    state.plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
+    state.all_origins_have_cleanup_plans = !semantic_result.dynamic_array_descriptor_origins.empty();
+    for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
+        auto const* cleanup_plan =
+            matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
+        auto plan = DynamicArrayDescriptorLifetimePlan {
+            .owner_name = origin.owner_name,
+            .source_type_name = origin.source_type_name,
+            .element_source_type_name = origin.element_source_type_name,
+            .origin_kind = origin.origin_kind,
+            .cleanup_responsibility =
+                dynamic_array_descriptor_lifetime_cleanup_responsibility(origin.origin_kind),
+            .cleanup_plan_available = cleanup_plan != nullptr,
+            .source_line = origin.line,
+        };
+        if (cleanup_plan != nullptr) {
+            plan.descriptor_storage_status = cleanup_plan->descriptor_storage_status;
+            plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
+        } else {
+            state.all_origins_have_cleanup_plans = false;
+        }
+        state.plans.push_back(std::move(plan));
+    }
+    return state;
+}
+
 auto build_dynamic_array_construction_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayConstructionPlanState {
@@ -3270,6 +3345,11 @@ void populate_lowering_emission_reports(
         );
     result.dynamic_array_descriptor_cleanup_plan_state =
         build_dynamic_array_descriptor_cleanup_plan_state(emission);
+    result.dynamic_array_descriptor_lifetime_plan_state =
+        build_dynamic_array_descriptor_lifetime_plan_state(
+            result.semantic_result,
+            result.dynamic_array_descriptor_cleanup_plan_state
+        );
     result.dynamic_array_cleanup_obligation_state =
         build_dynamic_array_cleanup_obligation_state(emission);
     result.dynamic_array_cleanup_sequence_plan_state =

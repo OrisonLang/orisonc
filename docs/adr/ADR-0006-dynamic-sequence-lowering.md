@@ -1983,13 +1983,16 @@ representation.
   lifetime boundary before broader owned parameter/return work expands.
 - Returned `DynamicArray<T>` descriptors from direct Orison function-call result bindings now use `origin returned`.
   Constructors, intrinsics, and foreign calls remain excluded so the ABI/lifetime model has a narrow, auditable source.
+- DynamicArray descriptor lifetime planning now pairs semantic origins with descriptor cleanup plans. The typed pipeline
+  state records owner, source type, element type, origin kind, descriptor storage status, and cleanup responsibility for
+  local, parameter, and returned descriptors.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Connect local, parameter, and returned descriptor origins to one cleanup/lifetime plan that lowering can consume
-  without name-based inference.
+- Make lowering consume the descriptor lifetime plan directly, then remove duplicated name-based parameter cleanup
+  inference where the typed plan fully covers the path.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

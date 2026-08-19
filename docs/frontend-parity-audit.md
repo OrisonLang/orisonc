@@ -2728,3 +2728,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Semantic DynamicArray descriptor origins now also classify direct Orison function-call result bindings as
   `origin returned`. This gives the upcoming owned parameter/return ABI plan a typed returned-descriptor boundary while
   keeping constructors, intrinsics, and foreign calls out of that class.
+- 2026-08-18: DynamicArray descriptor lifetime planning now consumes semantic origins and cleanup plans into one typed
+  pipeline state. The public `--dynamic-array-descriptor-lifetime-plan` report shows local, parameter, and returned
+  cleanup responsibility before lowering consumes that state directly.
