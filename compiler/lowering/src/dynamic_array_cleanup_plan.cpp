@@ -124,6 +124,29 @@ auto matching_dynamic_array_descriptor_origin(
     return &*match;
 }
 
+auto matching_bound_dynamic_array_parameter_lifetime_plan(
+    LlvmIrEmissionOptions const& options,
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::ranges::find_if(
+        options.dynamic_array_descriptor_lifetime_plans,
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.origin_kind ==
+                    semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                lifetime_plan.cleanup_plan_available &&
+                lifetime_plan.owner_name == parameter_name &&
+                dynamic_array_origin_source_type_matches(lifetime_plan.source_type_name, source_type_name) &&
+                lifetime_plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
+                lifetime_plan.descriptor_storage_name == descriptor_storage_name &&
+                lifetime_plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
+        }
+    );
+    return match == options.dynamic_array_descriptor_lifetime_plans.end() ? nullptr : &*match;
+}
+
 auto dynamic_array_descriptor_element_drop_action(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::size_t ordinal
@@ -771,18 +794,26 @@ auto plan_bound_dynamic_array_parameter_cleanups(
             continue;
         }
 
-        auto const* origin = matching_dynamic_array_descriptor_origin(
-            session.semantics,
-            name,
-            source_type_name,
-            semantics::DynamicArrayDescriptorOriginKind::parameter_binding
-        );
-        if (origin == nullptr) {
+        auto storage = aggregate_storage_for_name(name, session.state);
+        if (!storage.has_value()) {
             continue;
         }
 
-        auto storage = aggregate_storage_for_name(name, session.state);
-        if (!storage.has_value()) {
+        if (!context.options.dynamic_array_descriptor_lifetime_plans.empty()) {
+            if (matching_bound_dynamic_array_parameter_lifetime_plan(
+                    context.options,
+                    name,
+                    source_type_name,
+                    *storage
+                ) == nullptr) {
+                continue;
+            }
+        } else if (matching_dynamic_array_descriptor_origin(
+                       session.semantics,
+                       name,
+                       source_type_name,
+                       semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+                   ) == nullptr) {
             continue;
         }
 

@@ -409,6 +409,46 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
     assert(plans->front().descriptor_cleanup.owner_name == "retained");
 }
 
+void test_bound_parameter_cleanup_prefers_shared_lifetime_plans() {
+    auto lowering = test_context();
+    auto strings = orison::lowering::StringConstantTable {};
+    auto state = orison::lowering::FunctionLoweringState {};
+    auto failures = orison::lowering::LoweringFailures {};
+    auto semantics = orison::semantics::SemanticAnalysisResult {};
+    bind_dynamic_array_parameter(state, "planned", "DynamicArray<UInt32>");
+    bind_dynamic_array_parameter(state, "origin_only", "DynamicArray<UInt32>");
+    add_dynamic_array_parameter_origin(semantics, "planned", "DynamicArray<UInt32>", "UInt32");
+    add_dynamic_array_parameter_origin(semantics, "origin_only", "DynamicArray<UInt32>", "UInt32");
+    auto session = test_session(state, failures, &semantics);
+    auto context = orison::lowering::LoweringEmissionContext {
+        .lowering = lowering,
+        .string_constants = strings,
+        .options = orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_cleanup_emission = true,
+            .dynamic_array_descriptor_lifetime_plans = {
+                orison::lowering::DynamicArrayDescriptorLifetimePlan {
+                    .owner_name = "planned",
+                    .source_type_name = "DynamicArray<UInt32>",
+                    .element_source_type_name = "UInt32",
+                    .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+                    .descriptor_storage_status =
+                        orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor,
+                    .descriptor_storage_name = "%planned.addr",
+                    .cleanup_responsibility = "callee-owned-parameter-cleanup",
+                    .cleanup_plan_available = true,
+                },
+            },
+        },
+    };
+
+    auto plans = orison::lowering::plan_bound_dynamic_array_parameter_cleanups(context, session);
+    assert(plans.has_value());
+    assert(plans->size() == 1);
+    assert(plans->front().descriptor_cleanup.owner_name == "planned");
+    assert(plans->front().descriptor_cleanup.descriptor_storage_name == "%planned.addr");
+}
+
 void test_plans_descriptor_cleanup_obligations() {
     auto lowering = test_context();
     auto scalar_plan = orison::lowering::plan_dynamic_array_descriptor_cleanup(
@@ -576,6 +616,7 @@ auto main() -> int {
     test_authorizes_owned_element_cleanup();
     test_skips_consumed_owned_dynamic_array_local_cleanup();
     test_skips_consumed_owned_dynamic_array_parameter_cleanup();
+    test_bound_parameter_cleanup_prefers_shared_lifetime_plans();
     test_plans_descriptor_cleanup_obligations();
     return 0;
 }

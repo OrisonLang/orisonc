@@ -686,6 +686,11 @@ auto matching_dynamic_array_descriptor_origin(
     semantics::DynamicArrayDescriptorOriginKind origin_kind
 ) -> semantics::DynamicArrayDescriptorOrigin const*;
 
+auto dynamic_array_origin_source_type_matches(
+    std::string_view origin_source_type_name,
+    std::string_view lowered_source_type_name
+) -> bool;
+
 auto matching_returned_dynamic_array_descriptor_lifetime_plan(
     LlvmIrEmissionOptions const& options,
     DynamicArrayDescriptorCleanupPlan const& cleanup_plan
@@ -703,6 +708,30 @@ auto matching_returned_dynamic_array_descriptor_lifetime_plan(
                 lifetime_plan.descriptor_storage_status == cleanup_plan.descriptor_storage_status &&
                 lifetime_plan.descriptor_storage_name == cleanup_plan.descriptor_storage_name &&
                 lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup";
+        }
+    );
+    return match == options.dynamic_array_descriptor_lifetime_plans.end() ? nullptr : &*match;
+}
+
+auto matching_bound_dynamic_array_parameter_lifetime_plan(
+    LlvmIrEmissionOptions const& options,
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    std::string_view descriptor_storage_name
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        options.dynamic_array_descriptor_lifetime_plans.begin(),
+        options.dynamic_array_descriptor_lifetime_plans.end(),
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.origin_kind ==
+                    semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                lifetime_plan.cleanup_plan_available &&
+                lifetime_plan.owner_name == parameter_name &&
+                dynamic_array_origin_source_type_matches(lifetime_plan.source_type_name, source_type_name) &&
+                lifetime_plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
+                lifetime_plan.descriptor_storage_name == descriptor_storage_name &&
+                lifetime_plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
     return match == options.dynamic_array_descriptor_lifetime_plans.end() ? nullptr : &*match;
@@ -1009,21 +1038,38 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
         return;
     }
 
-    auto const* origin = matching_dynamic_array_descriptor_origin(
-        session.semantics,
-        parameter_name,
-        source_type_name,
-        semantics::DynamicArrayDescriptorOriginKind::parameter_binding
-    );
-    auto lifetime_plan = origin == nullptr
-        ? std::optional<DynamicArrayBoundParameterLifetimePlan> {}
-        : plan_dynamic_array_bound_parameter_lifetime(
+    auto lifetime_plan = std::optional<DynamicArrayBoundParameterLifetimePlan> {};
+    if (!context.options.dynamic_array_descriptor_lifetime_plans.empty()) {
+        if (matching_bound_dynamic_array_parameter_lifetime_plan(
+                context.options,
+                parameter_name,
+                source_type_name,
+                *storage
+            ) == nullptr) {
+            return;
+        }
+        lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
             parameter_name,
             source_type_name,
             *storage,
             dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
             context.lowering
         );
+    } else if (auto const* origin = matching_dynamic_array_descriptor_origin(
+                   session.semantics,
+                   parameter_name,
+                   source_type_name,
+                   semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+               );
+        origin != nullptr) {
+        lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
+            parameter_name,
+            source_type_name,
+            *storage,
+            dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
+            context.lowering
+        );
+    }
     if (!lifetime_plan.has_value()) {
         return;
     }

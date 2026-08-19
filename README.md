@@ -243,5 +243,8 @@ This repository currently captures the initial language design and development c
 - Lowering now derives descriptor lifetime plans before function emission and passes them into returned descriptor
   cleanup transfer, so returned `DynamicArray<T>` cleanup handoff can use shared plan metadata instead of recomputing
   from semantic origins alone.
-- Next highest-value step: make bound owned-parameter cleanup consume the same lowering-owned descriptor lifetime plan
-  vector, then retire the remaining parameter-specific lookup duplication.
+- Bound owned-parameter cleanup seeding and cleanup-plan emission now prefer the same lowering-owned descriptor
+  lifetime plan vector, so parameter cleanup no longer relies on semantic-origin fallback when shared lifetime metadata
+  is available.
+- Next highest-value step: collapse the duplicate descriptor-lifetime matching helpers into one lowering utility and
+  add a negative pipeline fixture for mismatched shared lifetime metadata.

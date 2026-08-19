@@ -2010,13 +2010,16 @@ representation.
 - Lowering now derives descriptor lifetime plans before function emission and threads them through `LlvmIrEmissionOptions`.
   Returned descriptor cleanup transfer consumes that lowering-owned shared plan vector when available, while direct
   function-emitter tests retain a narrow fallback path.
+- Bound owned-parameter cleanup seeding and cleanup-plan emission now also prefer the lowering-owned descriptor
+  lifetime plan vector. Semantic-origin lookup remains only as a direct lower-level fallback when no shared plan vector
+  is present.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Make bound owned-parameter cleanup consume the same lowering-owned descriptor lifetime plan vector, then retire the
-  remaining parameter-specific lookup duplication.
+- Collapse duplicate descriptor-lifetime matching helpers into one lowering utility and add a negative pipeline fixture
+  for mismatched shared lifetime metadata.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
