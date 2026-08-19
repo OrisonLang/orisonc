@@ -33,6 +33,7 @@ struct ConcurrencyCapture {
 enum class DynamicArrayDescriptorOriginKind {
     local_binding,
     parameter_binding,
+    returned_binding,
 };
 
 struct DynamicArrayDescriptorOrigin {

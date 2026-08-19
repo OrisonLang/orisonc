@@ -2725,3 +2725,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-18: Semantic DynamicArray descriptor origins now classify the owner boundary as `origin local` or
   `origin parameter`. Smoke coverage pins both local source-backed descriptors and bound owned-parameter descriptors so
   later ABI/lifetime lowering can consume a typed boundary instead of inferring it from names.
+- 2026-08-18: Semantic DynamicArray descriptor origins now also classify direct Orison function-call result bindings as
+  `origin returned`. This gives the upcoming owned parameter/return ABI plan a typed returned-descriptor boundary while
+  keeping constructors, intrinsics, and foreign calls out of that class.

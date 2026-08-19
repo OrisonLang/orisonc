@@ -13425,6 +13425,39 @@ void test_local_dynamic_array_descriptor_origin_kind_success() {
     );
 }
 
+void test_returned_dynamic_array_descriptor_origin_kind_success() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_returned_dynamic_array_descriptor_origin_kind_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.drop",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "function make_items() -> DynamicArray<Payload>",
+            "    DynamicArray()",
+            "function main() -> UInt32",
+            "    var items: DynamicArray<Payload> = make_items()",
+            "    0 as UInt32",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.dynamic_array_descriptor_origins.size() == 1);
+    assert(
+        analysis.dynamic_array_descriptor_origins.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding
+    );
+    assert(
+        orison::semantics::format_dynamic_array_descriptor_origin_report(
+            analysis.dynamic_array_descriptor_origins
+        ).front() ==
+        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 7 origin returned "
+        "(metadata only)"
+    );
+}
+
 void test_trivial_binding_planned_drop_sites_ignored_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_trivial_binding_drop_sites_ignored.or";
     write_concurrency_fixture(
@@ -14128,6 +14161,7 @@ int main() {
     test_dynamic_array_binding_planned_drop_sites_success();
     test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success();
     test_local_dynamic_array_descriptor_origin_kind_success();
+    test_returned_dynamic_array_descriptor_origin_kind_success();
     test_trivial_binding_planned_drop_sites_ignored_success();
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

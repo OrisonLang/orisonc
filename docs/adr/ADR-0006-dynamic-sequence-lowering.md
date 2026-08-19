@@ -1981,13 +1981,15 @@ representation.
 - Semantic DynamicArray descriptor origins now carry an internal owner-boundary classification. `origin local` marks
   source-backed local descriptors and `origin parameter` marks ABI-bound parameter descriptors, giving lowering a typed
   lifetime boundary before broader owned parameter/return work expands.
+- Returned `DynamicArray<T>` descriptors from direct Orison function-call result bindings now use `origin returned`.
+  Constructors, intrinsics, and foreign calls remain excluded so the ABI/lifetime model has a narrow, auditable source.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add a distinct returned-descriptor origin class once function-call result ownership is tracked as semantic value
-  metadata instead of a normal local binding initializer.
+- Connect local, parameter, and returned descriptor origins to one cleanup/lifetime plan that lowering can consume
+  without name-based inference.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

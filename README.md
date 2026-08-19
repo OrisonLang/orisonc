@@ -209,9 +209,9 @@ This repository currently captures the initial language design and development c
 
 ## DynamicArray ABI Metadata Update - 2026-08-18
 
-- Semantic descriptor origins now distinguish `origin local` from `origin parameter`, giving lowering a typed boundary
-  for local descriptors versus ABI-bound owned-parameter descriptors.
-- Returned `DynamicArray<T>` descriptors still need a distinct semantic origin before the parameter/return ABI model is
-  complete.
-- Next highest-value step: add returned-descriptor origin tracking for function-call results, then connect all three
-  origin kinds to one cleanup/lifetime plan.
+- Semantic descriptor origins now distinguish `origin local`, `origin parameter`, and `origin returned`, giving lowering
+  a typed boundary for local descriptors, ABI-bound owned-parameter descriptors, and direct Orison function-call result
+  descriptors.
+- Full parameter/return ABI lowering still needs one cleanup/lifetime plan that consumes all three origin kinds.
+- Next highest-value step: connect descriptor origin kinds to a unified cleanup/lifetime plan, then use that plan to
+  simplify current parameter cleanup seams.

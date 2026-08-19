@@ -19,6 +19,7 @@ enum class ConcurrencyMarkerKind {
 
 enum class ValueOriginKind {
     none,
+    function_call,
     task,
     thread,
     async_call,
@@ -1774,6 +1775,31 @@ private:
         return ValueOriginKind::none;
     }
 
+    auto is_declared_function_call(syntax::ExpressionSyntax const& expression) const -> bool {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
+            expression.left->kind != syntax::ExpressionKind::name) {
+            return false;
+        }
+
+        auto const& callee_name = expression.left->text;
+        if (callee_name == "address_of" || callee_name == "Pointer" || callee_name == "raw_offset" ||
+            callee_name == "raw_read" || callee_name == "volatile_read") {
+            return false;
+        }
+        if (!find_record_constructor_type_name(expression).empty() ||
+            !find_choice_constructor_type_name(expression).empty()) {
+            return false;
+        }
+
+        for (auto const& signature : callable_signatures_) {
+            if (!signature.foreign && signature.name == callee_name &&
+                signature.parameters.size() == expression.arguments.size()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     auto snapshot_scope_stack() const -> ScopeSnapshot {
         return scope_stack_;
     }
@@ -1825,7 +1851,10 @@ private:
                 expression.left->text == "join") {
                 return ValueOriginKind::none;
             }
-            return is_declared_async_call(expression) ? ValueOriginKind::async_call : ValueOriginKind::none;
+            if (is_declared_async_call(expression)) {
+                return ValueOriginKind::async_call;
+            }
+            return is_declared_function_call(expression) ? ValueOriginKind::function_call : ValueOriginKind::none;
         case syntax::ExpressionKind::name: {
             auto const* binding = find_binding(expression.text);
             return binding == nullptr ? ValueOriginKind::none : binding->value_origin;
@@ -3236,6 +3265,11 @@ private:
         return origin == ValueOriginKind::task || origin == ValueOriginKind::async_call;
     }
 
+    static auto is_async_boundary_value_origin(ValueOriginKind origin) -> bool {
+        return origin == ValueOriginKind::task || origin == ValueOriginKind::thread ||
+               origin == ValueOriginKind::async_call;
+    }
+
     auto validate_await_operand(syntax::ExpressionSyntax const& operand, std::size_t line) -> void {
         auto origin = infer_expression_value_origin(operand);
         if (origin == ValueOriginKind::task || origin == ValueOriginKind::async_call) {
@@ -3297,7 +3331,7 @@ private:
 
     auto validate_return_expression(syntax::ExpressionSyntax const& expression, std::size_t line) -> void {
         auto origin = infer_expression_value_origin(expression);
-        if (origin == ValueOriginKind::none) {
+        if (!is_async_boundary_value_origin(origin)) {
             return;
         }
 
@@ -5313,7 +5347,7 @@ private:
             analyze_expression(statement.expression, in_async_function);
             auto expression_value_origin = infer_expression_value_origin(statement.expression);
             auto assignment_type_mismatch = false;
-            if (expression_value_origin == ValueOriginKind::none) {
+            if (!is_async_boundary_value_origin(expression_value_origin)) {
                 auto read_result_type_mismatch = validate_read_result_type(
                     statement.expression,
                     target_type_name,
@@ -5960,8 +5994,13 @@ private:
     }
 
     static auto dynamic_array_descriptor_origin_kind(Binding const& binding) -> DynamicArrayDescriptorOriginKind {
-        return binding.parameter_binding ? DynamicArrayDescriptorOriginKind::parameter_binding
-                                         : DynamicArrayDescriptorOriginKind::local_binding;
+        if (binding.parameter_binding) {
+            return DynamicArrayDescriptorOriginKind::parameter_binding;
+        }
+        if (binding.value_origin == ValueOriginKind::function_call) {
+            return DynamicArrayDescriptorOriginKind::returned_binding;
+        }
+        return DynamicArrayDescriptorOriginKind::local_binding;
     }
 
     void collect_planned_drop_sites(std::vector<Binding> const& bindings) {
@@ -6158,6 +6197,8 @@ auto format_dynamic_array_descriptor_origin_kind(DynamicArrayDescriptorOriginKin
             return "local";
         case DynamicArrayDescriptorOriginKind::parameter_binding:
             return "parameter";
+        case DynamicArrayDescriptorOriginKind::returned_binding:
+            return "returned";
     }
     return "unknown";
 }
