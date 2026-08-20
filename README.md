@@ -270,5 +270,7 @@ This repository currently captures the initial language design and development c
   The field-level returned origin is tracked as `returned.values`, and cleanup remains with the callee parameter.
 - Nested returned record fields can now carry owned-element `DynamicArray<T>` descriptors into the same final-consumer
   cleanup path. The lifetime report tracks both `inner.values` and `returned.inner.values` returned origins.
+- Nested returned record fields can now flow through branch forwarding before final consumption. Both branches transfer
+  to the same final `items` cleanup owner, while the returned aggregate path does not emit stale cleanup.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  next nested aggregate-field branch-forwarding path that can be proven end-to-end.
+  next returned aggregate-field choice-payload composition path that can be proven end-to-end.
