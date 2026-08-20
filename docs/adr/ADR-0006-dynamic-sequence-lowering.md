@@ -2058,13 +2058,16 @@ representation.
 - Stored local choice-payload forwarding now composes with nested aggregate-field owners. The fixture wraps
   `returned.inner.values` in a stored `Packet`, unwraps it, records `inner.values`, `returned.inner.values`, and
   `unwrapped` returned origins, and leaves cleanup with the final consuming parameter.
+- Recent DynamicArray forwarding smoke coverage now uses shared helpers for repeated lifetime-plan counting,
+  returned-owner checks, production-readiness checks, no-`main` cleanup checks, and object/link/run validation. This
+  keeps new forwarding fixtures smaller while preserving the same coverage points.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Collapse repeated DynamicArray lifetime/cleanup smoke assertions into reusable helpers before adding broader
-  forwarding shapes.
+- Add the next broader forwarding shape using the shared smoke helpers, starting with stored choice-payload forwarding
+  through both nested aggregate owners and branch wrappers together.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

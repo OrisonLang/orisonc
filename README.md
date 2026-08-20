@@ -282,5 +282,8 @@ This repository currently captures the initial language design and development c
 - Stored local choice-payload forwarding now composes with nested aggregate-field owners such as
   `returned.inner.values`. The lifetime report tracks the intermediate and final returned owners while cleanup remains
   with the final consuming parameter.
-- Next highest-value step: collapse the repeated DynamicArray lifetime/cleanup assertions into reusable smoke helpers
-  before adding broader forwarding shapes.
+- DynamicArray forwarding smoke coverage now shares helper assertions for repeated lifetime-plan counts, returned
+  owners, readiness checks, no-`main` cleanup checks, and object/link/run validation in the recent choice-payload
+  forwarding cases.
+- Next highest-value step: add the next broader forwarding shape using those helpers, starting with stored
+  choice-payload forwarding through both nested aggregate owners and branch wrappers together.

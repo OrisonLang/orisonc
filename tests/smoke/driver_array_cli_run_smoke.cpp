@@ -43,6 +43,25 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+void assert_contains(std::string const& text, std::string_view expected_fragment) {
+    assert(text.find(expected_fragment) != std::string::npos);
+}
+
+void assert_excludes(std::string const& text, std::string_view unexpected_fragment) {
+    assert(text.find(unexpected_fragment) == std::string::npos);
+}
+
+void assert_dynamic_array_payload_consumer_cleanup(std::string const& output) {
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup");
+}
+
+void assert_no_main_dynamic_array_deallocate(std::string const& output) {
+    auto const main_start = output.find("define i32 @main");
+    assert(main_start != std::string::npos);
+    assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
+}
+
 void assert_run_success(std::filesystem::path const& executable, std::filesystem::path const& source_path) {
     auto status = std::system((executable.string() + " run " + source_path.string()).c_str());
     assert(WIFEXITED(status));
@@ -489,30 +508,25 @@ void assert_returned_dynamic_array_aggregate_field_choice_payload_forwarding_emi
     std::filesystem::path const& source_path
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("%record.PayloadBox = type { { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("define %record.PayloadBox @make_box()") != std::string::npos);
-    assert(output.find("define { ptr, i64, i64 } @unwrap_payload") != std::string::npos);
-    assert(output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") != std::string::npos);
-    assert(output.find("%returned.addr = alloca %record.PayloadBox") != std::string::npos);
-    assert(output.find("%returned.values.addr") != std::string::npos);
-    assert(output.find("%unwrapped.addr = alloca { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp") !=
-        std::string::npos);
-    assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
-    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
-        std::string::npos);
-    assert(output.find("%returned.values.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%unwrapped.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find(".choice_dynamic_array_cleanup0.cleanup.entry") == std::string::npos);
+    assert_contains(output, "%record.PayloadBox = type { { ptr, i64, i64 } }");
+    assert_contains(output, "define %record.PayloadBox @make_box()");
+    assert_contains(output, "define { ptr, i64, i64 } @unwrap_payload");
+    assert_contains(output, "define i32 @consume_items({ ptr, i64, i64 } %items)");
+    assert_contains(output, "%returned.addr = alloca %record.PayloadBox");
+    assert_contains(output, "%returned.values.addr");
+    assert_contains(output, "%unwrapped.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp");
+    assert_contains(output, "call i32 @consume_items({ ptr, i64, i64 } %tmp");
+    assert_dynamic_array_payload_consumer_cleanup(output);
+    assert_excludes(output, "%returned.values.dynamic_array_cleanup");
+    assert_excludes(output, "%unwrapped.dynamic_array_cleanup");
+    assert_excludes(output, ".choice_dynamic_array_cleanup0.cleanup.entry");
     auto const unwrap_start = output.find("define { ptr, i64, i64 } @unwrap_payload");
     auto const consume_start = output.find("define i32 @consume_items", unwrap_start);
     assert(unwrap_start != std::string::npos);
     assert(consume_start != std::string::npos);
     assert(output.find("__orison_dynamic_array_deallocate", unwrap_start) > consume_start);
-    auto const main_start = output.find("define i32 @main");
-    assert(main_start != std::string::npos);
-    assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
+    assert_no_main_dynamic_array_deallocate(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_emit_llvm_success(
@@ -520,30 +534,25 @@ void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_forward
     std::filesystem::path const& source_path
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("%record.PayloadBox = type { { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("define %record.PayloadBox @make_box()") != std::string::npos);
-    assert(output.find("define { ptr, i64, i64 } @unwrap_payload") != std::string::npos);
-    assert(output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") != std::string::npos);
-    assert(output.find("%returned.addr = alloca %record.PayloadBox") != std::string::npos);
-    assert(output.find("%packet.addr = alloca { i32, { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("%unwrapped.addr = alloca { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp") !=
-        std::string::npos);
-    assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
-    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
-        std::string::npos);
-    assert(output.find("%returned.values.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%unwrapped.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry") == std::string::npos);
+    assert_contains(output, "%record.PayloadBox = type { { ptr, i64, i64 } }");
+    assert_contains(output, "define %record.PayloadBox @make_box()");
+    assert_contains(output, "define { ptr, i64, i64 } @unwrap_payload");
+    assert_contains(output, "define i32 @consume_items({ ptr, i64, i64 } %items)");
+    assert_contains(output, "%returned.addr = alloca %record.PayloadBox");
+    assert_contains(output, "%packet.addr = alloca { i32, { ptr, i64, i64 } }");
+    assert_contains(output, "%unwrapped.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp");
+    assert_contains(output, "call i32 @consume_items({ ptr, i64, i64 } %tmp");
+    assert_dynamic_array_payload_consumer_cleanup(output);
+    assert_excludes(output, "%returned.values.dynamic_array_cleanup");
+    assert_excludes(output, "%unwrapped.dynamic_array_cleanup");
+    assert_excludes(output, "%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry");
     auto const unwrap_start = output.find("define { ptr, i64, i64 } @unwrap_payload");
     auto const consume_start = output.find("define i32 @consume_items", unwrap_start);
     assert(unwrap_start != std::string::npos);
     assert(consume_start != std::string::npos);
     assert(output.find("__orison_dynamic_array_deallocate", unwrap_start) > consume_start);
-    auto const main_start = output.find("define i32 @main");
-    assert(main_start != std::string::npos);
-    assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
+    assert_no_main_dynamic_array_deallocate(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_branch_forwarding_emit_llvm_success(
@@ -551,27 +560,24 @@ void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_branch_
     std::filesystem::path const& source_path
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("%record.PayloadBox = type { { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("define %record.PayloadBox @make_box()") != std::string::npos);
-    assert(output.find("define { ptr, i64, i64 } @unwrap_payload") != std::string::npos);
-    assert(output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") != std::string::npos);
-    assert(output.find("define i32 @choose_items(i1 %flag, { ptr, i64, i64 } %items)") != std::string::npos);
+    assert_contains(output, "%record.PayloadBox = type { { ptr, i64, i64 } }");
+    assert_contains(output, "define %record.PayloadBox @make_box()");
+    assert_contains(output, "define { ptr, i64, i64 } @unwrap_payload");
+    assert_contains(output, "define i32 @consume_items({ ptr, i64, i64 } %items)");
+    assert_contains(output, "define i32 @choose_items(i1 %flag, { ptr, i64, i64 } %items)");
     auto const first_consume = output.find("call i32 @consume_items({ ptr, i64, i64 } %items)");
     assert(first_consume != std::string::npos);
     assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %items)", first_consume + 1) !=
         std::string::npos);
-    assert(output.find("%returned.addr = alloca %record.PayloadBox") != std::string::npos);
-    assert(output.find("%packet.addr = alloca { i32, { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("%unwrapped.addr = alloca { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp") !=
-        std::string::npos);
-    assert(output.find("call i32 @choose_items(i1 0, { ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
-    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
-        std::string::npos);
-    assert(output.find("%returned.values.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%unwrapped.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry") == std::string::npos);
+    assert_contains(output, "%returned.addr = alloca %record.PayloadBox");
+    assert_contains(output, "%packet.addr = alloca { i32, { ptr, i64, i64 } }");
+    assert_contains(output, "%unwrapped.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp");
+    assert_contains(output, "call i32 @choose_items(i1 0, { ptr, i64, i64 } %tmp");
+    assert_dynamic_array_payload_consumer_cleanup(output);
+    assert_excludes(output, "%returned.values.dynamic_array_cleanup");
+    assert_excludes(output, "%unwrapped.dynamic_array_cleanup");
+    assert_excludes(output, "%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry");
     auto const unwrap_start = output.find("define { ptr, i64, i64 } @unwrap_payload");
     auto const consume_start = output.find("define i32 @consume_items", unwrap_start);
     auto const choose_start = output.find("define i32 @choose_items", consume_start);
@@ -582,7 +588,7 @@ void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_branch_
     assert(main_start != std::string::npos);
     assert(output.find("__orison_dynamic_array_deallocate", unwrap_start) > consume_start);
     assert(output.find("__orison_dynamic_array_deallocate", choose_start) > main_start);
-    assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
+    assert_no_main_dynamic_array_deallocate(output);
 }
 
 void assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_emit_llvm_success(
@@ -590,25 +596,22 @@ void assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_
     std::filesystem::path const& source_path
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("%record.PayloadBox = type { { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("%record.OuterBox = type { %record.PayloadBox }") != std::string::npos);
-    assert(output.find("define %record.OuterBox @make_outer_box()") != std::string::npos);
-    assert(output.find("define { ptr, i64, i64 } @unwrap_payload") != std::string::npos);
-    assert(output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") != std::string::npos);
-    assert(output.find("%returned.addr = alloca %record.OuterBox") != std::string::npos);
-    assert(output.find("%returned.inner.values.addr") != std::string::npos);
-    assert(output.find("%packet.addr = alloca { i32, { ptr, i64, i64 } }") != std::string::npos);
-    assert(output.find("%unwrapped.addr = alloca { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp") !=
-        std::string::npos);
-    assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
-    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
-        std::string::npos);
-    assert(output.find("%inner.values.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%returned.inner.values.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%unwrapped.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry") == std::string::npos);
+    assert_contains(output, "%record.PayloadBox = type { { ptr, i64, i64 } }");
+    assert_contains(output, "%record.OuterBox = type { %record.PayloadBox }");
+    assert_contains(output, "define %record.OuterBox @make_outer_box()");
+    assert_contains(output, "define { ptr, i64, i64 } @unwrap_payload");
+    assert_contains(output, "define i32 @consume_items({ ptr, i64, i64 } %items)");
+    assert_contains(output, "%returned.addr = alloca %record.OuterBox");
+    assert_contains(output, "%returned.inner.values.addr");
+    assert_contains(output, "%packet.addr = alloca { i32, { ptr, i64, i64 } }");
+    assert_contains(output, "%unwrapped.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp");
+    assert_contains(output, "call i32 @consume_items({ ptr, i64, i64 } %tmp");
+    assert_dynamic_array_payload_consumer_cleanup(output);
+    assert_excludes(output, "%inner.values.dynamic_array_cleanup");
+    assert_excludes(output, "%returned.inner.values.dynamic_array_cleanup");
+    assert_excludes(output, "%unwrapped.dynamic_array_cleanup");
+    assert_excludes(output, "%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry");
     auto const make_outer_start = output.find("define %record.OuterBox @make_outer_box");
     auto const unwrap_start = output.find("define { ptr, i64, i64 } @unwrap_payload", make_outer_start);
     auto const consume_start = output.find("define i32 @consume_items", unwrap_start);
@@ -619,7 +622,7 @@ void assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_
     assert(main_start != std::string::npos);
     assert(output.find("__orison_dynamic_array_deallocate", make_outer_start) > unwrap_start);
     assert(output.find("__orison_dynamic_array_deallocate", unwrap_start) > consume_start);
-    assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
+    assert_no_main_dynamic_array_deallocate(output);
 }
 
 void assert_emit_object_success(
