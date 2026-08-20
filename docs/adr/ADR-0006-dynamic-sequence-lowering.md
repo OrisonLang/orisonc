@@ -2034,13 +2034,16 @@ representation.
   pass the descriptor to the same consuming shape. The lifetime report records local, returned, and both parameter
   origins; emitted cleanup belongs to the consuming parameter; and neither the branch wrapper nor the caller emits
   stale cleanup.
+- Returned owned-element `DynamicArray<T>` choice payloads can now compose with branch forwarding. The fixture returns
+  a choice payload through a switch, binds the returned descriptor, forwards it through a branch wrapper, and leaves
+  cleanup only at the final consuming parameter.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  next returned choice/branch composition path that can be proven end-to-end.
+  next returned aggregate-field composition path that can be proven end-to-end.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
