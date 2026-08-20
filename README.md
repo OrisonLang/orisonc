@@ -261,5 +261,8 @@ This repository currently captures the initial language design and development c
 - Returned owned-element `DynamicArray<T>` values can now cross a two-call forwarding chain:
   returned local -> forwarding parameter -> final consuming parameter. The final consumer owns cleanup, while the
   intermediate forwarder and caller do not emit stale cleanup.
+- Returned owned-element `DynamicArray<T>` values can now enter a branch-join forwarding function where both branches
+  pass the descriptor to the same consuming shape. The consumer owns cleanup, and neither the branch wrapper nor caller
+  emits stale cleanup.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  next branch-join forwarding path that can be proven end-to-end.
+  next returned choice/branch composition path that can be proven end-to-end.
