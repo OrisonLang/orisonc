@@ -298,6 +298,21 @@ void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
     );
 }
 
+void assert_returned_dynamic_array_parameter_forwarding_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("define { ptr, i64, i64 } @make_items()") != std::string::npos);
+    assert(output.find("define i32 @use_items({ ptr, i64, i64 } %items)") != std::string::npos);
+    assert(output.find("%returned.addr = alloca { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("call i32 @use_items({ ptr, i64, i64 } %tmp") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
+}
+
 void assert_emit_object_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -367,6 +382,8 @@ auto main() -> int {
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
+    auto returned_dynamic_array_parameter_forwarding_path =
+        fixtures / "dynamic_array_returned_parameter_forwarding_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -449,6 +466,20 @@ auto main() -> int {
         executable,
         owned_dynamic_array_parameter_forwarding_path,
         smoke_temp_root / "dynamic_array_owned_parameter_forwarding"
+    );
+    assert_returned_dynamic_array_parameter_forwarding_emit_llvm_success(
+        executable,
+        returned_dynamic_array_parameter_forwarding_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_parameter_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_parameter_forwarding.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_parameter_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_parameter_forwarding"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

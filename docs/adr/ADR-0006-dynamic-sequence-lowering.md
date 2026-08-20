@@ -2024,13 +2024,16 @@ representation.
 - DynamicArray cleanup production readiness now prefers emitted function-level cleanup capabilities over global
   predicted capability metadata when emitted cleanup reports exist. This lets returned owned-element choice payloads
   report ready from the actual lowered caller cleanup path.
+- Returned owned-element `DynamicArray<T>` values can now be bound then forwarded into an owned parameter exactly once.
+  The lifetime report records local, returned, and parameter origins; emitted cleanup belongs to the callee parameter;
+  and the caller's moved returned local does not emit stale cleanup.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  remaining forwarding path that can be proven end-to-end.
+  next multi-hop forwarding path that can be proven end-to-end.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

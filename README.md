@@ -255,5 +255,8 @@ This repository currently captures the initial language design and development c
 - Returned owned-element `DynamicArray<T>` choice payloads now report production-ready from actual emitted function
   cleanup capabilities when the caller-owned returned descriptor cleanup path is proven, and the checked fixture emits
   an object, host-links, and runs.
+- Returned owned-element `DynamicArray<T>` values can now be forwarded into an owned parameter exactly once with
+  production-ready cleanup metadata. The callee parameter owns the cleanup, and the caller's moved returned local does
+  not emit stale cleanup.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  narrowest remaining forwarding path that can be proven end-to-end.
+  next multi-hop forwarding path that can be proven end-to-end.
