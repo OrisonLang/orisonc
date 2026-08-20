@@ -2040,13 +2040,16 @@ representation.
 - Returned owned-element `DynamicArray<T>` fields inside returned records can now forward through aggregate projection
   into a final consuming parameter. The lifetime report records the field-level returned owner as `returned.values`,
   and neither the returned aggregate helper nor the caller emits stale descriptor cleanup.
+- Nested returned record fields can now forward owned-element `DynamicArray<T>` descriptors into the same final
+  consuming parameter path. The fixture records both the intermediate `inner.values` returned origin and the final
+  `returned.inner.values` returned origin while keeping cleanup at the callee parameter.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  next nested aggregate-field forwarding path that can be proven end-to-end.
+  next nested aggregate-field branch-forwarding path that can be proven end-to-end.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

@@ -268,5 +268,7 @@ This repository currently captures the initial language design and development c
   consuming owner without cleanup in the choice-return helper, branch wrapper, or caller.
 - Returned owned-element `DynamicArray<T>` fields inside returned records can now move into a single consuming owner.
   The field-level returned origin is tracked as `returned.values`, and cleanup remains with the callee parameter.
+- Nested returned record fields can now carry owned-element `DynamicArray<T>` descriptors into the same final-consumer
+  cleanup path. The lifetime report tracks both `inner.values` and `returned.inner.values` returned origins.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  next nested aggregate-field forwarding path that can be proven end-to-end.
+  next nested aggregate-field branch-forwarding path that can be proven end-to-end.

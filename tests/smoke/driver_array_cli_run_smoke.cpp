@@ -418,6 +418,35 @@ void assert_returned_dynamic_array_aggregate_field_forwarding_emit_llvm_success(
     assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
 }
 
+void assert_returned_dynamic_array_nested_aggregate_field_forwarding_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("%record.PayloadBox = type { { ptr, i64, i64 } }") != std::string::npos);
+    assert(output.find("%record.OuterBox = type { %record.PayloadBox }") != std::string::npos);
+    assert(output.find("define %record.OuterBox @make_outer_box()") != std::string::npos);
+    assert(output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") != std::string::npos);
+    assert(output.find("%returned.addr = alloca %record.OuterBox") != std::string::npos);
+    assert(output.find("%returned.inner.values.addr") != std::string::npos);
+    assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %tmp") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("%inner.values.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("%returned.inner.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("%returned.inner.values.dynamic_array_cleanup") == std::string::npos);
+    auto const make_outer_start = output.find("define %record.OuterBox @make_outer_box");
+    auto const consume_start = output.find("define i32 @consume_items", make_outer_start);
+    assert(make_outer_start != std::string::npos);
+    assert(consume_start != std::string::npos);
+    assert(output.find("__orison_dynamic_array_deallocate", make_outer_start) > consume_start);
+    auto const main_start = output.find("define i32 @main");
+    assert(main_start != std::string::npos);
+    assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
+}
+
 void assert_emit_object_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -497,6 +526,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_choice_branch_forwarding_run.or";
     auto returned_dynamic_array_aggregate_field_forwarding_path =
         fixtures / "dynamic_array_returned_aggregate_field_forwarding_run.or";
+    auto returned_dynamic_array_nested_aggregate_field_forwarding_path =
+        fixtures / "dynamic_array_returned_nested_aggregate_field_forwarding_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -649,6 +680,20 @@ auto main() -> int {
         executable,
         returned_dynamic_array_aggregate_field_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_forwarding"
+    );
+    assert_returned_dynamic_array_nested_aggregate_field_forwarding_emit_llvm_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_forwarding_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_forwarding.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_forwarding"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,
