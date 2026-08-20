@@ -260,6 +260,24 @@ void assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
     );
 }
 
+void assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "if branch ownership mismatch: owned transfers must match across all continuing branches");
+    assert_contains(
+        output,
+        "branch-local cleanup plan: owner left consumed-arms 0 cleanup-arms 1 emission blocked "
+        "blocker branch-local cleanup emission not implemented"
+    );
+    assert_contains(
+        output,
+        "branch-local cleanup plan: owner right consumed-arms 1 cleanup-arms 0 emission blocked "
+        "blocker branch-local cleanup emission not implemented"
+    );
+}
+
 void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1013,7 +1031,7 @@ auto main() -> int {
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding"
     );
-    assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
+    assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_failure(
         executable,
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path
     );

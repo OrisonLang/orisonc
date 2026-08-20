@@ -2068,13 +2068,16 @@ representation.
 - Distinct stored choice-payload owners in separate final branch arms remain rejected. Current ownership-transfer
   merging requires the same consumed-owner set across continuing arms; accepting distinct owners also requires
   branch-local cleanup for the owner not forwarded by the selected arm.
+- Ownership mismatch diagnostics for final control-flow now include a typed branch-local cleanup plan. The plan records
+  each owner consumed in only some arms, the consumed-arm indices, the cleanup-arm indices, and the current blocker that
+  branch-local cleanup emission is not implemented.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add a branch-local cleanup plan for final control-flow arms so distinct stored choice-payload owners can converge on
-  one final consumer without leaking or double-cleaning the unselected owner.
+- Emit branch-local cleanup for final control-flow arms from the new typed plan, then promote distinct stored
+  choice-payload owners to a runnable convergence path.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

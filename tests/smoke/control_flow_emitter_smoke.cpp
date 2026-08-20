@@ -271,10 +271,12 @@ int main() {
         aggregate_if_output
     );
     assert(!aggregate_if_lowered.has_value());
-    assert(
-        orison::lowering::render_control_flow_lowering_failure(aggregate_if_failures.control_flow) ==
+    auto aggregate_if_failure =
+        orison::lowering::render_control_flow_lowering_failure(aggregate_if_failures.control_flow);
+    assert(aggregate_if_failure.find(
         "if branch ownership mismatch: owned transfers must match across all continuing branches"
-    );
+    ) != std::string::npos);
+    assert(aggregate_if_failure.find("branch-local cleanup plan: owner box.payload") != std::string::npos);
 
     aggregate_diagnostics = {};
     auto aggregate_switch_state = seed_box_state();
@@ -294,10 +296,12 @@ int main() {
         aggregate_switch_output
     );
     assert(!aggregate_switch_lowered.has_value());
-    assert(
-        orison::lowering::render_control_flow_lowering_failure(aggregate_switch_failures.control_flow) ==
+    auto aggregate_switch_failure =
+        orison::lowering::render_control_flow_lowering_failure(aggregate_switch_failures.control_flow);
+    assert(aggregate_switch_failure.find(
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
-    );
+    ) != std::string::npos);
+    assert(aggregate_switch_failure.find("branch-local cleanup plan: owner box.payload") != std::string::npos);
 
     aggregate_diagnostics = {};
     auto aggregate_if_balanced_state = seed_box_state();
@@ -379,10 +383,12 @@ int main() {
         nested_if_output
     );
     assert(!nested_if_lowered.has_value());
-    assert(
-        orison::lowering::render_control_flow_lowering_failure(nested_if_failures.control_flow) ==
+    auto nested_if_failure =
+        orison::lowering::render_control_flow_lowering_failure(nested_if_failures.control_flow);
+    assert(nested_if_failure.find(
         "if branch ownership mismatch: owned transfers must match across all continuing branches"
-    );
+    ) != std::string::npos);
+    assert(nested_if_failure.find("branch-local cleanup plan: owner nested.box.payload") != std::string::npos);
 
     aggregate_diagnostics = {};
     auto nested_switch_state = seed_nested_state();
@@ -402,10 +408,12 @@ int main() {
         nested_switch_output
     );
     assert(!nested_switch_lowered.has_value());
-    assert(
-        orison::lowering::render_control_flow_lowering_failure(nested_switch_failures.control_flow) ==
+    auto nested_switch_failure =
+        orison::lowering::render_control_flow_lowering_failure(nested_switch_failures.control_flow);
+    assert(nested_switch_failure.find(
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
-    );
+    ) != std::string::npos);
+    assert(nested_switch_failure.find("branch-local cleanup plan: owner nested.box.payload") != std::string::npos);
 
     aggregate_diagnostics = {};
     auto nested_if_balanced_state = seed_nested_state();

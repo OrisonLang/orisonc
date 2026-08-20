@@ -42,6 +42,33 @@ int main() {
     });
     assert(!mismatched.has_value());
 
+    auto branch_local_cleanup_plans = orison::lowering::plan_branch_local_cleanups({
+        orison::lowering::OwnershipTransferState {.consumed_owned_bindings = {"left_packet", "unwrapped"}},
+        orison::lowering::OwnershipTransferState {.consumed_owned_bindings = {"right_packet", "unwrapped"}},
+    });
+    assert(branch_local_cleanup_plans.size() == 2);
+    assert(branch_local_cleanup_plans[0].owner_name == "left_packet");
+    assert(branch_local_cleanup_plans[0].consumed_arm_indices == std::vector<std::size_t> {0});
+    assert(branch_local_cleanup_plans[0].cleanup_arm_indices == std::vector<std::size_t> {1});
+    assert(!branch_local_cleanup_plans[0].cleanup_emission_supported);
+    assert(branch_local_cleanup_plans[1].owner_name == "right_packet");
+    assert(branch_local_cleanup_plans[1].consumed_arm_indices == std::vector<std::size_t> {1});
+    assert(branch_local_cleanup_plans[1].cleanup_arm_indices == std::vector<std::size_t> {0});
+    assert(!branch_local_cleanup_plans[1].cleanup_emission_supported);
+    auto branch_local_cleanup_report =
+        orison::lowering::format_branch_local_cleanup_plan_report(branch_local_cleanup_plans);
+    assert(branch_local_cleanup_report.size() == 2);
+    assert(
+        branch_local_cleanup_report[0] ==
+        "branch-local cleanup plan: owner left_packet consumed-arms 0 cleanup-arms 1 emission blocked "
+        "blocker branch-local cleanup emission not implemented"
+    );
+    assert(
+        branch_local_cleanup_report[1] ==
+        "branch-local cleanup plan: owner right_packet consumed-arms 1 cleanup-arms 0 emission blocked "
+        "blocker branch-local cleanup emission not implemented"
+    );
+
     auto empty = orison::lowering::merge_ownership_transfer_states({});
     assert(empty.has_value());
     assert(!orison::lowering::is_owned_binding_consumed(*empty, "items"));

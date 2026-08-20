@@ -290,5 +290,8 @@ This repository currently captures the initial language design and development c
   leaving cleanup with the final consuming parameter.
 - Distinct stored choice-payload owners in separate branch arms are now pinned as a rejection. The compiler keeps
   rejecting this shape until branch-local cleanup can clean the owner not forwarded by the selected arm.
-- Next highest-value step: add a branch-local cleanup plan for final control-flow arms so distinct owners can converge
-  on one final consumer without leaking or double-cleaning the unselected owner.
+- Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
+  each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
+  can be promoted.
+- Next highest-value step: emit branch-local cleanup for final control-flow arms using the new plan, then promote the
+  distinct-owner stored choice-payload fixture from rejection to a runnable path.

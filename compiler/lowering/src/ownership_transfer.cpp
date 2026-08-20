@@ -3592,6 +3592,81 @@ auto normalize_consumed_owned_descendants(
     }
 }
 
+auto plan_branch_local_cleanups(
+    std::vector<OwnershipTransferState> const& branch_states
+) -> std::vector<BranchLocalCleanupPlan> {
+    auto owner_names = std::vector<std::string> {};
+    auto seen = std::unordered_set<std::string> {};
+    for (auto const& state : branch_states) {
+        for (auto const& owner_name : state.consumed_owned_bindings) {
+            if (seen.insert(owner_name).second) {
+                owner_names.push_back(owner_name);
+            }
+        }
+    }
+    std::ranges::sort(owner_names);
+
+    auto plans = std::vector<BranchLocalCleanupPlan> {};
+    for (auto const& owner_name : owner_names) {
+        auto consumed_arm_indices = std::vector<std::size_t> {};
+        auto cleanup_arm_indices = std::vector<std::size_t> {};
+        for (auto index = std::size_t {0}; index < branch_states.size(); ++index) {
+            if (branch_states[index].consumed_owned_bindings.contains(owner_name)) {
+                consumed_arm_indices.push_back(index);
+            } else {
+                cleanup_arm_indices.push_back(index);
+            }
+        }
+        if (consumed_arm_indices.empty() || cleanup_arm_indices.empty()) {
+            continue;
+        }
+        plans.push_back(BranchLocalCleanupPlan {
+            .owner_name = owner_name,
+            .consumed_arm_indices = std::move(consumed_arm_indices),
+            .cleanup_arm_indices = std::move(cleanup_arm_indices),
+            .cleanup_emission_supported = false,
+            .blocker = "branch-local cleanup emission not implemented",
+        });
+    }
+    return plans;
+}
+
+auto format_indices(std::vector<std::size_t> const& indices) -> std::string {
+    auto output = std::ostringstream {};
+    for (auto index = std::size_t {0}; index < indices.size(); ++index) {
+        if (index != 0) {
+            output << ",";
+        }
+        output << indices[index];
+    }
+    return output.str();
+}
+
+auto format_branch_local_cleanup_plan(
+    BranchLocalCleanupPlan const& plan
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "branch-local cleanup plan: owner " << plan.owner_name
+           << " consumed-arms " << format_indices(plan.consumed_arm_indices)
+           << " cleanup-arms " << format_indices(plan.cleanup_arm_indices)
+           << " emission " << (plan.cleanup_emission_supported ? "supported" : "blocked");
+    if (!plan.blocker.empty()) {
+        output << " blocker " << plan.blocker;
+    }
+    return output.str();
+}
+
+auto format_branch_local_cleanup_plan_report(
+    std::vector<BranchLocalCleanupPlan> const& plans
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(plans.size());
+    for (auto const& plan : plans) {
+        report.push_back(format_branch_local_cleanup_plan(plan));
+    }
+    return report;
+}
+
 auto merge_ownership_transfer_states(
     std::vector<OwnershipTransferState> const& branch_states
 ) -> std::optional<OwnershipTransferState> {

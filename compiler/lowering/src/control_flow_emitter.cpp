@@ -264,10 +264,17 @@ auto lower_final_if_statement(
     auto merged_transfers =
         merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
     if (!merged_transfers.has_value()) {
+        auto detail = std::string {"owned transfers must match across all continuing branches"};
+        for (auto const& line : format_branch_local_cleanup_plan_report(
+                 plan_branch_local_cleanups(arm_context.ownership_transfers_by_arm)
+             )) {
+            detail += "\n";
+            detail += line;
+        }
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_branch_ownership_mismatch,
-            "owned transfers must match across all continuing branches"
+            std::move(detail)
         );
         return std::nullopt;
     }
@@ -518,10 +525,17 @@ auto lower_final_switch_statement(
     auto merged_transfers =
         merge_ownership_transfer_states(case_context.ownership_transfers_by_case);
     if (!merged_transfers.has_value()) {
+        auto detail = std::string {"owned transfers must match across all continuing cases"};
+        for (auto const& line : format_branch_local_cleanup_plan_report(
+                 plan_branch_local_cleanups(case_context.ownership_transfers_by_case)
+             )) {
+            detail += "\n";
+            detail += line;
+        }
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
-            "owned transfers must match across all continuing cases"
+            std::move(detail)
         );
         return std::nullopt;
     }

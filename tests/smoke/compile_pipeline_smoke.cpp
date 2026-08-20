@@ -7392,6 +7392,20 @@ auto main() -> int {
                 "if branch ownership mismatch: owned transfers must match across all continuing branches"
             ) != std::string::npos
     );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
+            .error_text.find(
+                "branch-local cleanup plan: owner left consumed-arms 0 cleanup-arms 1 emission blocked "
+                "blocker branch-local cleanup emission not implemented"
+            ) != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
+            .error_text.find(
+                "branch-local cleanup plan: owner right consumed-arms 1 cleanup-arms 0 emission blocked "
+                "blocker branch-local cleanup emission not implemented"
+            ) != std::string::npos
+    );
 
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,

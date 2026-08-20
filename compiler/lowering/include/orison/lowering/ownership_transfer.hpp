@@ -924,6 +924,14 @@ struct OwnedAggregateMemberTransfer {
     std::string source_type_name;
 };
 
+struct BranchLocalCleanupPlan {
+    std::string owner_name;
+    std::vector<std::size_t> consumed_arm_indices;
+    std::vector<std::size_t> cleanup_arm_indices;
+    bool cleanup_emission_supported = false;
+    std::string blocker;
+};
+
 auto mark_owned_binding_consumed(
     OwnershipTransferState& state,
     std::string binding_name
@@ -1329,6 +1337,18 @@ auto normalize_consumed_owned_descendants(
     std::vector<OwnershipTransferState>& states,
     std::vector<std::string> const& consumed_descendant_names
 ) -> void;
+
+auto plan_branch_local_cleanups(
+    std::vector<OwnershipTransferState> const& branch_states
+) -> std::vector<BranchLocalCleanupPlan>;
+
+auto format_branch_local_cleanup_plan(
+    BranchLocalCleanupPlan const& plan
+) -> std::string;
+
+auto format_branch_local_cleanup_plan_report(
+    std::vector<BranchLocalCleanupPlan> const& plans
+) -> std::vector<std::string>;
 
 auto merge_ownership_transfer_states(
     std::vector<OwnershipTransferState> const& branch_states
