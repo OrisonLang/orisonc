@@ -2055,13 +2055,16 @@ representation.
 - Stored local choice-payload forwarding now composes with branch forwarding. The fixture unwraps a stored `Packet`,
   forwards the returned descriptor through `choose_items`, records both branch `items` parameter cleanup plans, and
   leaves `main` without stale descriptor cleanup.
+- Stored local choice-payload forwarding now composes with nested aggregate-field owners. The fixture wraps
+  `returned.inner.values` in a stored `Packet`, unwraps it, records `inner.values`, `returned.inner.values`, and
+  `unwrapped` returned origins, and leaves cleanup with the final consuming parameter.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Continue reducing owned `DynamicArray<T>` parameter/return ABI seams by composing stored choice-payload forwarding
-  with nested aggregate-field owners.
+- Collapse repeated DynamicArray lifetime/cleanup smoke assertions into reusable helpers before adding broader
+  forwarding shapes.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

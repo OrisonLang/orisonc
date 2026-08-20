@@ -279,5 +279,8 @@ This repository currently captures the initial language design and development c
   avoids stale payload cleanup after transfer.
 - Stored local choice-payload forwarding now composes with a branch wrapper. Both branch arms forward to the same
   final consuming parameter, and cleanup remains outside `main`.
-- Next highest-value step: compose stored choice-payload forwarding with a nested aggregate-field owner, then keep
-  collapsing the repeated lifetime/cleanup assertions into reusable smoke helpers.
+- Stored local choice-payload forwarding now composes with nested aggregate-field owners such as
+  `returned.inner.values`. The lifetime report tracks the intermediate and final returned owners while cleanup remains
+  with the final consuming parameter.
+- Next highest-value step: collapse the repeated DynamicArray lifetime/cleanup assertions into reusable smoke helpers
+  before adding broader forwarding shapes.
