@@ -6014,6 +6014,55 @@ auto main() -> int {
     assert(
         dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty()
     );
+    assert(dynamic_array_returned_payload_ir.dynamic_array_cleanup_capability_proven);
+    assert(dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
+    assert(dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state.proven);
+    assert(dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state.descriptor_storage_bound);
+    assert(
+        std::find(
+            dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state
+                .function_symbol_names.begin(),
+            dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state
+                .function_symbol_names.end(),
+            "main"
+        ) != dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state
+            .function_symbol_names.end()
+    );
+    assert(
+        std::find(
+            dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state
+                .cleanup_owner_names.begin(),
+            dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state
+                .cleanup_owner_names.end(),
+            "returned"
+        ) != dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state
+            .cleanup_owner_names.end()
+    );
+    assert(
+        orison::pipeline::dynamic_array_cleanup_production_ready(
+            dynamic_array_returned_payload_ir.dynamic_array_cleanup_production_readiness
+        )
+    );
+    auto dynamic_array_returned_payload_object = pipeline.emit_object(
+        dynamic_array_returned_payload_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_returned_payload_object.has_errors());
+    assert(!dynamic_array_returned_payload_object.object_bytes.empty());
+    auto dynamic_array_returned_payload_executable =
+        smoke_temp_root / "dynamic_array_returned_payload_run";
+    auto dynamic_array_returned_payload_link = orison::link::HostLinker {}.link(
+        dynamic_array_returned_payload_object.object_bytes,
+        dynamic_array_returned_payload_executable
+    );
+    assert(!dynamic_array_returned_payload_link.has_errors());
+    auto dynamic_array_returned_payload_status =
+        std::system(dynamic_array_returned_payload_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_returned_payload_status));
+    assert(WEXITSTATUS(dynamic_array_returned_payload_status) == 0);
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {

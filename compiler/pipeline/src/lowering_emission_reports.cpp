@@ -559,6 +559,62 @@ auto build_computed_dynamic_array_for_production_sequence_state(
 auto build_dynamic_array_cleanup_emission_capability_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupEmissionCapabilityState {
+    if (!emission.emitted_dynamic_array_cleanup_emission_capabilities.empty()) {
+        auto state = DynamicArrayCleanupEmissionCapabilityState {
+            .capability_metadata_available = true,
+            .proven = true,
+            .emission_enabled = true,
+            .descriptor_storage_bound = true,
+            .sequence_verified = true,
+            .element_cleanup_authorized_or_not_required = true,
+            .descriptor_deallocation_authorized = true,
+        };
+        state.function_symbol_names.reserve(
+            emission.emitted_dynamic_array_cleanup_emission_capabilities.size()
+        );
+        for (auto const& emitted_capability : emission.emitted_dynamic_array_cleanup_emission_capabilities) {
+            auto const& capability = emitted_capability.capability;
+            state.function_symbol_names.push_back(emitted_capability.function_symbol_name);
+            state.cleanup_pairs.insert(
+                state.cleanup_pairs.end(),
+                capability.cleanup_pairs.begin(),
+                capability.cleanup_pairs.end()
+            );
+            state.cleanup_operation_names.insert(
+                state.cleanup_operation_names.end(),
+                capability.cleanup_operation_names.begin(),
+                capability.cleanup_operation_names.end()
+            );
+            state.cleanup_owner_names.insert(
+                state.cleanup_owner_names.end(),
+                capability.cleanup_owner_names.begin(),
+                capability.cleanup_owner_names.end()
+            );
+            state.element_drop_pairs.insert(
+                state.element_drop_pairs.end(),
+                capability.element_drop_pairs.begin(),
+                capability.element_drop_pairs.end()
+            );
+            state.missing_element_drop_pairs.insert(
+                state.missing_element_drop_pairs.end(),
+                capability.missing_element_drop_pairs.begin(),
+                capability.missing_element_drop_pairs.end()
+            );
+            state.proven = state.proven &&
+                lowering::dynamic_array_cleanup_emission_capability_proven(capability);
+            state.emission_enabled = state.emission_enabled && capability.emission_enabled;
+            state.descriptor_storage_bound =
+                state.descriptor_storage_bound && capability.descriptor_storage_bound;
+            state.sequence_verified = state.sequence_verified && capability.sequence_verified;
+            state.element_cleanup_authorized_or_not_required =
+                state.element_cleanup_authorized_or_not_required &&
+                capability.element_cleanup_authorized_or_not_required;
+            state.descriptor_deallocation_authorized =
+                state.descriptor_deallocation_authorized && capability.descriptor_deallocation_authorized;
+        }
+        return state;
+    }
+
     auto const& capability = emission.dynamic_array_cleanup_emission_capability;
     if (!capability.has_value()) {
         return {};
@@ -3500,14 +3556,10 @@ void populate_lowering_emission_reports(
         lowering::dynamic_array_cleanup_sequence_verification_report_passed(
             emission.dynamic_array_cleanup_sequence_verifications
         );
-    if (emission.dynamic_array_cleanup_emission_capability.has_value()) {
-        result.dynamic_array_cleanup_capability_proven =
-            lowering::dynamic_array_cleanup_emission_capability_proven(
-                *emission.dynamic_array_cleanup_emission_capability
-            );
-    }
     result.dynamic_array_cleanup_emission_capability_state =
         build_dynamic_array_cleanup_emission_capability_state(emission);
+    result.dynamic_array_cleanup_capability_proven =
+        result.dynamic_array_cleanup_emission_capability_state.proven;
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
         .missing_element_drop_pairs =
             result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,

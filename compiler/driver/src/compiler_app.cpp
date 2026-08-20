@@ -425,6 +425,11 @@ auto runtime_indexed_cleanup_function_module_verification_detail_report(
     return report.str();
 }
 
+void prefer_emitted_dynamic_array_cleanup_reports(
+    pipeline::CompilePipelineResult& result,
+    pipeline::CompilePipelineResult&& emitted_result
+);
+
 auto dynamic_array_cleanup_report(
     std::filesystem::path const& source_path,
     pipeline::CompilePipelineOptions const& options,
@@ -437,6 +442,10 @@ auto dynamic_array_cleanup_report(
             .exit_code = 1,
             .stderr_text = std::move(result.error_text),
         };
+    }
+    auto emitted_result = pipeline.emit_llvm(source_path, options);
+    if (!emitted_result.has_errors()) {
+        prefer_emitted_dynamic_array_cleanup_reports(result, std::move(emitted_result));
     }
 
     return CompileResult {
@@ -498,6 +507,16 @@ void prefer_emitted_dynamic_array_cleanup_reports(
     if (emitted_result.dynamic_array_cleanup_emission_capability_state.capability_metadata_available) {
         result.dynamic_array_cleanup_emission_capability_state =
             std::move(emitted_result.dynamic_array_cleanup_emission_capability_state);
+        result.dynamic_array_cleanup_capability_proven =
+            result.dynamic_array_cleanup_emission_capability_state.proven;
+        result.dynamic_array_cleanup_availability.missing_element_drop_pairs =
+            result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs;
+        result.dynamic_array_cleanup_availability.cleanup_capability_proven =
+            result.dynamic_array_cleanup_emission_capability_state.proven;
+        result.dynamic_array_cleanup_production_readiness.missing_element_drop_pairs =
+            result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs;
+        result.dynamic_array_cleanup_production_readiness.cleanup_capability_proven =
+            result.dynamic_array_cleanup_emission_capability_state.proven;
     }
     if (emitted_result.computed_dynamic_array_for_descriptor_render_state.render_count > 0) {
         result.computed_dynamic_array_for_descriptor_render_state =

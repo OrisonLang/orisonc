@@ -359,6 +359,8 @@ int main() {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     orison::driver::CompilerApp app;
+    auto fixture_root = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+    auto dynamic_array_returned_payload_path = fixture_root / "choice_dynamic_array_return_payload_run.or";
 
     auto clean_emit_path = std::filesystem::temp_directory_path() / "orison_driver_drop_report_clean_emit.or";
     write_fixture(
@@ -833,6 +835,18 @@ int main() {
         {
             "dynamic array cleanup production readiness blocked",
             "[descriptor origins missing]",
+            "[production cleanup emission ok]",
+        }
+    );
+
+    auto dynamic_array_returned_payload_readiness =
+        run_dynamic_array_cleanup_production_readiness(app, dynamic_array_returned_payload_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_returned_payload_readiness,
+        {
+            "dynamic array cleanup production readiness ready",
+            "[descriptor origin blockers absent]",
+            "[cleanup capability ok]",
             "[production cleanup emission ok]",
         }
     );

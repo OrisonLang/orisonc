@@ -252,5 +252,8 @@ This repository currently captures the initial language design and development c
   blocks production-readiness instead of silently recomputing a cleanup-backed plan.
 - DynamicArray cleanup production-readiness reports now emit explicit descriptor lifetime metadata diagnostics that name
   the blocker reason, owner, source type, element type, origin kind, and source line when available.
+- Returned owned-element `DynamicArray<T>` choice payloads now report production-ready from actual emitted function
+  cleanup capabilities when the caller-owned returned descriptor cleanup path is proven, and the checked fixture emits
+  an object, host-links, and runs.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  narrowest callable return or forwarding path that can be proven end-to-end.
+  narrowest remaining forwarding path that can be proven end-to-end.

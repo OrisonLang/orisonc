@@ -2021,13 +2021,16 @@ representation.
 - DynamicArray cleanup production-readiness reports now include explicit descriptor lifetime metadata diagnostics for
   origin blockers. Each diagnostic names the blocker reason, owner, source type, element type, origin kind, and source
   line when available.
+- DynamicArray cleanup production readiness now prefers emitted function-level cleanup capabilities over global
+  predicted capability metadata when emitted cleanup reports exist. This lets returned owned-element choice payloads
+  report ready from the actual lowered caller cleanup path.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  forwarding path that can be proven end-to-end.
+  remaining forwarding path that can be proven end-to-end.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
