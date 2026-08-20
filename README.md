@@ -250,5 +250,7 @@ This repository currently captures the initial language design and development c
   emission, and pipeline reporting.
 - Negative pipeline coverage now injects mismatched shared lifetime metadata and verifies descriptor lifetime reporting
   blocks production-readiness instead of silently recomputing a cleanup-backed plan.
-- Next highest-value step: add explicit user-facing diagnostics for descriptor-origin and shared-lifetime metadata
-  blockers, then continue reducing owned `DynamicArray<T>` parameter/return ABI seams.
+- DynamicArray cleanup production-readiness reports now emit explicit descriptor lifetime metadata diagnostics that name
+  the blocker reason, owner, source type, element type, origin kind, and source line when available.
+- Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
+  narrowest callable return or forwarding path that can be proven end-to-end.

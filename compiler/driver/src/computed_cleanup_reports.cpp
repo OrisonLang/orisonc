@@ -984,7 +984,10 @@ auto computed_dynamic_array_for_production_sequence_state_report(
 auto dynamic_array_cleanup_production_readiness_state_report(
     pipeline::DynamicArrayCleanupProductionReadiness const& state
 ) -> std::vector<std::string> {
-    return {pipeline::format_dynamic_array_cleanup_production_readiness(state)};
+    auto lines = std::vector<std::string> {pipeline::format_dynamic_array_cleanup_production_readiness(state)};
+    auto diagnostics = pipeline::format_dynamic_array_cleanup_production_readiness_diagnostics(state);
+    lines.insert(lines.end(), diagnostics.begin(), diagnostics.end());
+    return lines;
 }
 
 auto dynamic_array_cleanup_emission_capability_state_report(

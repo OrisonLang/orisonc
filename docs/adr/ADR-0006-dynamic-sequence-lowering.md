@@ -2018,12 +2018,16 @@ representation.
   being hidden by cleanup-plan recomputation.
 - Pipeline smoke coverage now injects mismatched shared lifetime metadata and verifies the resulting
   `shared-lifetime-plan-mismatched` origin blocker prevents DynamicArray cleanup production readiness.
+- DynamicArray cleanup production-readiness reports now include explicit descriptor lifetime metadata diagnostics for
+  origin blockers. Each diagnostic names the blocker reason, owner, source type, element type, origin kind, and source
+  line when available.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add explicit user-facing diagnostics for descriptor-origin and shared-lifetime metadata blockers.
+- Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
+  forwarding path that can be proven end-to-end.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

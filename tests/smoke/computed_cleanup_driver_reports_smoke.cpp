@@ -949,6 +949,16 @@ void assert_computed_dynamic_array_production_reports() {
 
     auto blocked_by_origin_blockers = driver::dynamic_array_cleanup_production_readiness_state_report(
         pipeline::DynamicArrayCleanupProductionReadiness {
+            .descriptor_origin_blockers = {
+                pipeline::DynamicArrayDescriptorOriginBlocker {
+                    .owner_name = "items",
+                    .source_type_name = "DynamicArray<Payload>",
+                    .element_source_type_name = "Payload",
+                    .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding,
+                    .reason = "shared-lifetime-plan-mismatched",
+                    .source_line = 17,
+                },
+            },
             .descriptor_origins_available = true,
             .descriptor_origin_blockers_absent = false,
             .descriptor_cleanup_plans_available = true,
@@ -961,13 +971,19 @@ void assert_computed_dynamic_array_production_reports() {
             .production_cleanup_emission_enabled = true,
         }
     );
-    assert(blocked_by_origin_blockers.size() == 1);
+    assert(blocked_by_origin_blockers.size() == 2);
     assert(
-        blocked_by_origin_blockers.front() ==
+        blocked_by_origin_blockers[0] ==
         "dynamic array cleanup production readiness blocked [descriptor origins ok] "
         "[descriptor origin blockers present] [cleanup plans ok] [cleanup obligations ok] "
         "[sequence verification ok] [sequence passed ok] [cleanup capability ok] [production signatures ok] "
         "[production construction ok] [production cleanup emission ok] (metadata only)"
+    );
+    assert(
+        blocked_by_origin_blockers[1] ==
+        "dynamic array cleanup production blocked: descriptor lifetime metadata "
+        "shared-lifetime-plan-mismatched owner items source DynamicArray<Payload> element Payload origin returned "
+        "line 17"
     );
 }
 

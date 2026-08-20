@@ -6039,6 +6039,24 @@ auto main() -> int {
             }
         )
     );
+    auto mismatched_lifetime_diagnostics =
+        orison::pipeline::format_dynamic_array_cleanup_production_readiness_diagnostics(
+            dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_cleanup_production_readiness
+        );
+    assert(
+        std::any_of(
+            mismatched_lifetime_diagnostics.begin(),
+            mismatched_lifetime_diagnostics.end(),
+            [](std::string const& diagnostic) {
+                return diagnostic.find(
+                    "dynamic array cleanup production blocked: descriptor lifetime metadata "
+                    "shared-lifetime-plan-mismatched"
+                ) != std::string::npos &&
+                    diagnostic.find("source DynamicArray<Payload>") != std::string::npos &&
+                    diagnostic.find("origin returned") != std::string::npos;
+            }
+        )
+    );
     assert(
         !orison::pipeline::dynamic_array_cleanup_production_ready(
             dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_cleanup_production_readiness

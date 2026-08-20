@@ -5,6 +5,7 @@
 #include "orison/pipeline/dynamic_array_pipeline_states.hpp"
 
 #include <string>
+#include <vector>
 
 namespace orison::pipeline {
 
@@ -15,6 +16,10 @@ auto dynamic_array_cleanup_production_ready(
 auto format_dynamic_array_cleanup_production_readiness(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> std::string;
+
+auto format_dynamic_array_cleanup_production_readiness_diagnostics(
+    DynamicArrayCleanupProductionReadiness const& readiness
+) -> std::vector<std::string>;
 
 auto plan_computed_dynamic_array_for_production_readiness(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,

@@ -130,6 +130,7 @@ struct DynamicArrayCleanupSequenceVerificationState {
 
 struct DynamicArrayCleanupProductionReadiness {
     std::vector<std::string> missing_element_drop_pairs;
+    std::vector<DynamicArrayDescriptorOriginBlocker> descriptor_origin_blockers;
     bool descriptor_origins_available = false;
     bool descriptor_origin_blockers_absent = false;
     bool descriptor_cleanup_plans_available = false;

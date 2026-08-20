@@ -5,6 +5,23 @@
 #include <sstream>
 
 namespace orison::pipeline {
+namespace {
+
+auto format_dynamic_array_descriptor_origin_kind(
+    semantics::DynamicArrayDescriptorOriginKind origin_kind
+) -> std::string_view {
+    switch (origin_kind) {
+        case semantics::DynamicArrayDescriptorOriginKind::local_binding:
+            return "local";
+        case semantics::DynamicArrayDescriptorOriginKind::parameter_binding:
+            return "parameter";
+        case semantics::DynamicArrayDescriptorOriginKind::returned_binding:
+            return "returned";
+    }
+    return "unknown";
+}
+
+}  // namespace
 
 auto plan_dynamic_array_cleanup_production_readiness(
     CompilePipelineResult const& result,
@@ -13,6 +30,7 @@ auto plan_dynamic_array_cleanup_production_readiness(
     auto const& availability = result.dynamic_array_cleanup_availability;
     return DynamicArrayCleanupProductionReadiness {
         .missing_element_drop_pairs = availability.missing_element_drop_pairs,
+        .descriptor_origin_blockers = result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers,
         .descriptor_origins_available = availability.descriptor_origins_available,
         .descriptor_origin_blockers_absent = availability.descriptor_origin_blockers_absent,
         .descriptor_cleanup_plans_available = availability.descriptor_cleanup_plans_available,
@@ -74,6 +92,27 @@ auto format_dynamic_array_cleanup_production_readiness(
     output << " [production cleanup emission " << status(readiness.production_cleanup_emission_enabled) << "]";
     output << " (metadata only)";
     return output.str();
+}
+
+auto format_dynamic_array_cleanup_production_readiness_diagnostics(
+    DynamicArrayCleanupProductionReadiness const& readiness
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    diagnostics.reserve(readiness.descriptor_origin_blockers.size());
+    for (auto const& blocker : readiness.descriptor_origin_blockers) {
+        auto output = std::ostringstream {};
+        output << "dynamic array cleanup production blocked: descriptor lifetime metadata "
+               << blocker.reason
+               << " owner " << blocker.owner_name
+               << " source " << blocker.source_type_name
+               << " element " << blocker.element_source_type_name
+               << " origin " << format_dynamic_array_descriptor_origin_kind(blocker.origin_kind);
+        if (blocker.source_line != 0) {
+            output << " line " << blocker.source_line;
+        }
+        diagnostics.push_back(output.str());
+    }
+    return diagnostics;
 }
 
 }  // namespace orison::pipeline
