@@ -8,6 +8,7 @@
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <span>
 #include <sstream>
@@ -53,6 +54,33 @@ auto is_owned_dynamic_array_source_type(std::string_view source_type_name) -> bo
     auto sequence = dynamic_sequence_source_type(source_type_name);
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array &&
         sequence->owns_storage;
+}
+
+auto source_type_has_dynamic_array_cleanup_descendant(
+    std::string_view source_type_name,
+    LoweringContext const& context
+) -> bool {
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        return true;
+    }
+
+    auto record = context.records.find(std::string {source_type_name});
+    if (record != context.records.end()) {
+        return std::ranges::any_of(record->second.fields, [&](LoweredRecordField const& field) {
+            return source_type_has_dynamic_array_cleanup_descendant(field.source_type_name, context);
+        });
+    }
+
+    auto choice = context.choices.find(std::string {source_type_name});
+    if (choice != context.choices.end()) {
+        return std::ranges::any_of(choice->second.variants, [&](LoweredChoiceVariant const& variant) {
+            return std::ranges::any_of(variant.payloads, [&](LoweredChoicePayload const& payload) {
+                return source_type_has_dynamic_array_cleanup_descendant(payload.source_type_name, context);
+            });
+        });
+    }
+
+    return false;
 }
 
 auto has_local_dynamic_array_cleanup_plan(
@@ -103,6 +131,28 @@ auto consumed_owned_dynamic_array_argument_name(
     if (actual_source_type == session.state.source_type_names.end() ||
         actual_source_type->second != *expected_source_type ||
         !is_owned_dynamic_array_source_type(actual_source_type->second)) {
+        return std::nullopt;
+    }
+
+    return argument.text;
+}
+
+auto consumed_owned_cleanup_aggregate_argument_name(
+    syntax::ExpressionSyntax const& argument,
+    std::optional<std::string_view> expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (!expected_source_type.has_value() ||
+        !is_owned_transfer_source_type(*expected_source_type, context.lowering) ||
+        !source_type_has_dynamic_array_cleanup_descendant(*expected_source_type, context.lowering) ||
+        argument.kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto actual_source_type = session.state.source_type_names.find(argument.text);
+    if (actual_source_type == session.state.source_type_names.end() ||
+        actual_source_type->second != *expected_source_type) {
         return std::nullopt;
     }
 
@@ -254,6 +304,14 @@ auto lower_call_arguments_impl(
         if (auto consumed_name = consumed_owned_dynamic_array_argument_name(
                 arguments[index],
                 expected_source_type,
+                session
+            )) {
+            mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
+        }
+        if (auto consumed_name = consumed_owned_cleanup_aggregate_argument_name(
+                arguments[index],
+                expected_source_type,
+                context,
                 session
             )) {
             mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));

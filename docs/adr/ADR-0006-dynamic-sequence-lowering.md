@@ -2048,15 +2048,17 @@ representation.
   consuming parameter owner.
 - Returned aggregate fields can now compose with direct choice-payload unwrap forwarding. The fixture constructs the
   choice payload at the transfer site, records returned origins for `returned.values` and `unwrapped`, and leaves
-  cleanup only at the final consuming parameter. Stored local choice payloads still need cleanup-transfer work before
-  they can safely avoid duplicate payload cleanup after unwrap.
+  cleanup only at the final consuming parameter.
+- Stored local choice payloads can now compose with returned aggregate-field forwarding. By-value call lowering marks
+  the same-typed owned aggregate argument consumed when its source type has `DynamicArray` cleanup descendants, so the
+  caller does not emit stale `Packet` payload cleanup after unwrap transfers the descriptor.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  stored local choice-payload cleanup-transfer seam for aggregate-field payloads.
+- Continue reducing owned `DynamicArray<T>` parameter/return ABI seams by composing stored choice-payload forwarding
+  with branch wrappers and nested aggregate-field owners.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

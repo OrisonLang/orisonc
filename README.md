@@ -274,5 +274,8 @@ This repository currently captures the initial language design and development c
   to the same final `items` cleanup owner, while the returned aggregate path does not emit stale cleanup.
 - Returned aggregate fields can now compose with direct choice-payload unwrap forwarding. The checked path builds the
   choice payload at the transfer site, unwraps it to `unwrapped`, and leaves cleanup with the final consumer.
-- Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  stored local choice-payload cleanup-transfer seam for aggregate-field payloads.
+- Stored local choice payloads can now forward returned aggregate-field `DynamicArray<T>` descriptors through unwrap
+  into a final consuming parameter. The caller marks the stored `Packet` consumed at the by-value call boundary and
+  avoids stale payload cleanup after transfer.
+- Next highest-value step: compose stored choice-payload forwarding with a branch wrapper or nested aggregate-field
+  owner, then keep collapsing the repeated lifetime/cleanup assertions into reusable smoke helpers.
