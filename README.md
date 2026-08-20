@@ -285,5 +285,8 @@ This repository currently captures the initial language design and development c
 - DynamicArray forwarding smoke coverage now shares helper assertions for repeated lifetime-plan counts, returned
   owners, readiness checks, no-`main` cleanup checks, and object/link/run validation in the recent choice-payload
   forwarding cases.
-- Next highest-value step: add the next broader forwarding shape using those helpers, starting with stored
-  choice-payload forwarding through both nested aggregate owners and branch wrappers together.
+- Stored choice-payload forwarding now composes with both nested aggregate owners and branch wrappers. The checked
+  fixture tracks `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners while
+  leaving cleanup with the final consuming parameter.
+- Next highest-value step: broaden stored choice-payload forwarding to a fixture with distinct nested aggregate
+  owners in separate branch arms, then require the ownership join to prove they converge on one final consumer.

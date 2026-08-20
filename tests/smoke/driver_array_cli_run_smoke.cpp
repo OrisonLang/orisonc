@@ -625,6 +625,48 @@ void assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_
     assert_no_main_dynamic_array_deallocate(output);
 }
 
+void assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "%record.PayloadBox = type { { ptr, i64, i64 } }");
+    assert_contains(output, "%record.OuterBox = type { %record.PayloadBox }");
+    assert_contains(output, "define %record.OuterBox @make_outer_box()");
+    assert_contains(output, "define { ptr, i64, i64 } @unwrap_payload");
+    assert_contains(output, "define i32 @consume_items({ ptr, i64, i64 } %items)");
+    assert_contains(output, "define i32 @choose_items(i1 %flag, { ptr, i64, i64 } %items)");
+    auto const first_consume = output.find("call i32 @consume_items({ ptr, i64, i64 } %items)");
+    assert(first_consume != std::string::npos);
+    assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %items)", first_consume + 1) !=
+        std::string::npos);
+    assert_contains(output, "%returned.addr = alloca %record.OuterBox");
+    assert_contains(output, "%returned.inner.values.addr");
+    assert_contains(output, "%packet.addr = alloca { i32, { ptr, i64, i64 } }");
+    assert_contains(output, "%unwrapped.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "call { ptr, i64, i64 } @unwrap_payload({ i32, { ptr, i64, i64 } } %tmp");
+    assert_contains(output, "call i32 @choose_items(i1 0, { ptr, i64, i64 } %tmp");
+    assert_dynamic_array_payload_consumer_cleanup(output);
+    assert_excludes(output, "%inner.values.dynamic_array_cleanup");
+    assert_excludes(output, "%returned.inner.values.dynamic_array_cleanup");
+    assert_excludes(output, "%unwrapped.dynamic_array_cleanup");
+    assert_excludes(output, "%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry");
+    auto const make_outer_start = output.find("define %record.OuterBox @make_outer_box");
+    auto const unwrap_start = output.find("define { ptr, i64, i64 } @unwrap_payload", make_outer_start);
+    auto const consume_start = output.find("define i32 @consume_items", unwrap_start);
+    auto const choose_start = output.find("define i32 @choose_items", consume_start);
+    auto const main_start = output.find("define i32 @main", choose_start);
+    assert(make_outer_start != std::string::npos);
+    assert(unwrap_start != std::string::npos);
+    assert(consume_start != std::string::npos);
+    assert(choose_start != std::string::npos);
+    assert(main_start != std::string::npos);
+    assert(output.find("__orison_dynamic_array_deallocate", make_outer_start) > unwrap_start);
+    assert(output.find("__orison_dynamic_array_deallocate", unwrap_start) > consume_start);
+    assert(output.find("__orison_dynamic_array_deallocate", choose_start) > main_start);
+    assert_no_main_dynamic_array_deallocate(output);
+}
+
 void assert_emit_object_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -716,6 +758,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
     auto returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_run.or";
+    auto returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path =
+        fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -952,6 +996,20 @@ auto main() -> int {
         executable,
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding"
+    );
+    assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_emit_llvm_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

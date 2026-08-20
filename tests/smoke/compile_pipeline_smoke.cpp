@@ -7297,6 +7297,83 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_run"
     );
 
+    auto dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
+    auto dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir =
+        pipeline.emit_llvm(
+            dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(!dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.has_errors());
+    assert(dynamic_array_payload_lifetime_plan_count(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir
+    ) == 7);
+    assert(dynamic_array_payload_parameter_lifetime_plan_count(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir,
+        "items"
+    ) == 2);
+    assert_dynamic_array_payload_returned_lifetime_owner(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir,
+        "inner.values"
+    );
+    assert_dynamic_array_payload_returned_lifetime_owner(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir,
+        "returned.inner.values"
+    );
+    assert_dynamic_array_payload_returned_lifetime_owner(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir,
+        "unwrapped"
+    );
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "%record.OuterBox = type { %record.PayloadBox }"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "%packet.addr = alloca { i32, { ptr, i64, i64 } }"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry"
+        ) == std::string::npos
+    );
+    auto const nested_aggregate_field_stored_choice_payload_branch_choose_start =
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "define i32 @choose_items"
+        );
+    auto const nested_aggregate_field_stored_choice_payload_branch_main_start =
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "define i32 @main",
+            nested_aggregate_field_stored_choice_payload_branch_choose_start
+        );
+    assert(nested_aggregate_field_stored_choice_payload_branch_choose_start != std::string::npos);
+    assert(nested_aggregate_field_stored_choice_payload_branch_main_start != std::string::npos);
+    assert(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "__orison_dynamic_array_deallocate",
+            nested_aggregate_field_stored_choice_payload_branch_choose_start
+        ) > nested_aggregate_field_stored_choice_payload_branch_main_start
+    );
+    assert_no_deallocate_after_function(
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text,
+        "define i32 @main"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
+        smoke_temp_root /
+            "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run"
+    );
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {
