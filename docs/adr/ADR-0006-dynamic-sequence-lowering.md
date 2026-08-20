@@ -2037,13 +2037,16 @@ representation.
 - Returned owned-element `DynamicArray<T>` choice payloads can now compose with branch forwarding. The fixture returns
   a choice payload through a switch, binds the returned descriptor, forwards it through a branch wrapper, and leaves
   cleanup only at the final consuming parameter.
+- Returned owned-element `DynamicArray<T>` fields inside returned records can now forward through aggregate projection
+  into a final consuming parameter. The lifetime report records the field-level returned owner as `returned.values`,
+  and neither the returned aggregate helper nor the caller emits stale descriptor cleanup.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  next returned aggregate-field composition path that can be proven end-to-end.
+  next nested aggregate-field forwarding path that can be proven end-to-end.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

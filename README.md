@@ -266,5 +266,7 @@ This repository currently captures the initial language design and development c
   emits stale cleanup.
 - Returned owned-element `DynamicArray<T>` choice payloads can now flow through branch forwarding into a single
   consuming owner without cleanup in the choice-return helper, branch wrapper, or caller.
+- Returned owned-element `DynamicArray<T>` fields inside returned records can now move into a single consuming owner.
+  The field-level returned origin is tracked as `returned.values`, and cleanup remains with the callee parameter.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  next returned aggregate-field composition path that can be proven end-to-end.
+  next nested aggregate-field forwarding path that can be proven end-to-end.

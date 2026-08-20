@@ -6505,6 +6505,138 @@ auto main() -> int {
         std::system(dynamic_array_returned_choice_branch_forwarding_executable.string().c_str());
     assert(WIFEXITED(dynamic_array_returned_choice_branch_forwarding_status));
     assert(WEXITSTATUS(dynamic_array_returned_choice_branch_forwarding_status) == 0);
+
+    auto dynamic_array_returned_aggregate_field_forwarding_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_aggregate_field_forwarding_run.or";
+    auto dynamic_array_returned_aggregate_field_forwarding_ir = pipeline.emit_llvm(
+        dynamic_array_returned_aggregate_field_forwarding_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_returned_aggregate_field_forwarding_ir.has_errors());
+    auto const aggregate_field_lifetime_plans = std::count_if(
+        dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+        dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+        [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+            return plan.source_type_name == "DynamicArray<Payload>" &&
+                plan.cleanup_plan_available;
+        }
+    );
+    assert(aggregate_field_lifetime_plans == 3);
+    assert(
+        std::any_of(
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+                .plans.begin(),
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+                .plans.end(),
+            [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+                return plan.owner_name == "returned.values" &&
+                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.cleanup_responsibility == "caller-owned-returned-cleanup";
+            }
+        )
+    );
+    assert(
+        std::any_of(
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+                .plans.begin(),
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+                .plans.end(),
+            [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+                return plan.owner_name == "items" &&
+                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                    plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
+            }
+        )
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+            .origin_blockers.empty()
+    );
+    assert(dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_capability_proven);
+    assert(dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state.proven);
+    assert(
+        std::find(
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state
+                .function_symbol_names.begin(),
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state
+                .function_symbol_names.end(),
+            "consume_items"
+        ) != dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state
+            .function_symbol_names.end()
+    );
+    assert(
+        std::find(
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state
+                .cleanup_owner_names.begin(),
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state
+                .cleanup_owner_names.end(),
+            "items"
+        ) != dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state
+            .cleanup_owner_names.end()
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find("%returned.dynamic_array_cleanup") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find(
+            "%returned.values.dynamic_array_cleanup"
+        ) == std::string::npos
+    );
+    auto const aggregate_field_make_start =
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find("define %record.PayloadBox @make_box");
+    auto const aggregate_field_consume_start =
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find(
+            "define i32 @consume_items",
+            aggregate_field_make_start
+        );
+    assert(aggregate_field_make_start != std::string::npos);
+    assert(aggregate_field_consume_start != std::string::npos);
+    assert(
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find(
+            "__orison_dynamic_array_deallocate",
+            aggregate_field_make_start
+        ) > aggregate_field_consume_start
+    );
+    auto const aggregate_field_main_start =
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find("define i32 @main");
+    assert(aggregate_field_main_start != std::string::npos);
+    assert(
+        dynamic_array_returned_aggregate_field_forwarding_ir.ir_text.find(
+            "__orison_dynamic_array_deallocate",
+            aggregate_field_main_start
+        ) == std::string::npos
+    );
+    assert(
+        orison::pipeline::dynamic_array_cleanup_production_ready(
+            dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_production_readiness
+        )
+    );
+    auto dynamic_array_returned_aggregate_field_forwarding_object = pipeline.emit_object(
+        dynamic_array_returned_aggregate_field_forwarding_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_returned_aggregate_field_forwarding_object.has_errors());
+    assert(!dynamic_array_returned_aggregate_field_forwarding_object.object_bytes.empty());
+    auto dynamic_array_returned_aggregate_field_forwarding_executable =
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_forwarding_run";
+    auto dynamic_array_returned_aggregate_field_forwarding_link = orison::link::HostLinker {}.link(
+        dynamic_array_returned_aggregate_field_forwarding_object.object_bytes,
+        dynamic_array_returned_aggregate_field_forwarding_executable
+    );
+    assert(!dynamic_array_returned_aggregate_field_forwarding_link.has_errors());
+    auto dynamic_array_returned_aggregate_field_forwarding_status =
+        std::system(dynamic_array_returned_aggregate_field_forwarding_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_returned_aggregate_field_forwarding_status));
+    assert(WEXITSTATUS(dynamic_array_returned_aggregate_field_forwarding_status) == 0);
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {
