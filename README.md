@@ -288,5 +288,7 @@ This repository currently captures the initial language design and development c
 - Stored choice-payload forwarding now composes with both nested aggregate owners and branch wrappers. The checked
   fixture tracks `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners while
   leaving cleanup with the final consuming parameter.
-- Next highest-value step: broaden stored choice-payload forwarding to a fixture with distinct nested aggregate
-  owners in separate branch arms, then require the ownership join to prove they converge on one final consumer.
+- Distinct stored choice-payload owners in separate branch arms are now pinned as a rejection. The compiler keeps
+  rejecting this shape until branch-local cleanup can clean the owner not forwarded by the selected arm.
+- Next highest-value step: add a branch-local cleanup plan for final control-flow arms so distinct owners can converge
+  on one final consumer without leaking or double-cleaning the unselected owner.

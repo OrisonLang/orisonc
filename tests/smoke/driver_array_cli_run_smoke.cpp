@@ -760,6 +760,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_run.or";
     auto returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
+    auto returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path =
+        fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_rejected.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -1010,6 +1012,10 @@ auto main() -> int {
         executable,
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding"
+    );
+    assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

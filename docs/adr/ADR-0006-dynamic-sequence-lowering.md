@@ -2065,13 +2065,16 @@ representation.
   fixture wraps `returned.inner.values` in a stored `Packet`, unwraps it, forwards through a two-arm branch wrapper,
   records `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners, and leaves
   cleanup only at the final consuming parameter.
+- Distinct stored choice-payload owners in separate final branch arms remain rejected. Current ownership-transfer
+  merging requires the same consumed-owner set across continuing arms; accepting distinct owners also requires
+  branch-local cleanup for the owner not forwarded by the selected arm.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Broaden stored choice-payload forwarding to a fixture with distinct nested aggregate owners in separate branch arms,
-  then require the ownership join to prove they converge on one final consumer.
+- Add a branch-local cleanup plan for final control-flow arms so distinct stored choice-payload owners can converge on
+  one final consumer without leaking or double-cleaning the unselected owner.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
