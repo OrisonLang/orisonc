@@ -288,10 +288,10 @@ This repository currently captures the initial language design and development c
 - Stored choice-payload forwarding now composes with both nested aggregate owners and branch wrappers. The checked
   fixture tracks `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners while
   leaving cleanup with the final consuming parameter.
-- Distinct stored choice-payload owners in separate branch arms are now pinned as a rejection. The compiler keeps
-  rejecting this shape until branch-local cleanup can clean the owner not forwarded by the selected arm.
+- Distinct stored choice-payload owners in scalar final branch arms now compile by emitting branch-local cleanup for
+  the owner not forwarded by the selected arm before the merge.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
-  can be promoted.
-- Next highest-value step: emit branch-local cleanup for final control-flow arms using the new plan, then promote the
-  distinct-owner stored choice-payload fixture from rejection to a runnable path.
+  can be promoted for broader unsupported shapes.
+- Next highest-value step: generalize branch-local cleanup beyond scalar final-if stored choice payloads, starting with
+  switch cases or owned-result branch expressions.

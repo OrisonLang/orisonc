@@ -260,21 +260,30 @@ void assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
     );
 }
 
-void assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_failure(
+void assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
 ) {
-    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert_contains(output, "if branch ownership mismatch: owned transfers must match across all continuing branches");
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(
         output,
-        "branch-local cleanup plan: owner left consumed-arms 0 cleanup-arms 1 emission blocked "
-        "blocker branch-local cleanup emission not implemented"
+        "right.Primary.values.choice_dynamic_array_cleanup"
     );
     assert_contains(
         output,
-        "branch-local cleanup plan: owner right consumed-arms 1 cleanup-arms 0 emission blocked "
-        "blocker branch-local cleanup emission not implemented"
+        "left.Primary.values.choice_dynamic_array_cleanup"
+    );
+    assert_contains(
+        output,
+        "phi i32 [%tmp2, %right.Primary.values.choice_dynamic_array_cleanup"
+    );
+    assert_contains(
+        output,
+        "[%tmp8, %left.Primary.values.choice_dynamic_array_cleanup"
+    );
+    assert_excludes(
+        output,
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
     );
 }
 
@@ -779,7 +788,7 @@ auto main() -> int {
     auto returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
     auto returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path =
-        fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_rejected.or";
+        fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -1031,9 +1040,19 @@ auto main() -> int {
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding"
     );
-    assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_failure(
+    assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_success(
         executable,
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

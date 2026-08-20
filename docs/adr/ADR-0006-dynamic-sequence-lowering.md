@@ -2065,19 +2065,19 @@ representation.
   fixture wraps `returned.inner.values` in a stored `Packet`, unwraps it, forwards through a two-arm branch wrapper,
   records `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners, and leaves
   cleanup only at the final consuming parameter.
-- Distinct stored choice-payload owners in separate final branch arms remain rejected. Current ownership-transfer
-  merging requires the same consumed-owner set across continuing arms; accepting distinct owners also requires
-  branch-local cleanup for the owner not forwarded by the selected arm.
+- Distinct stored choice-payload owners in scalar final branch arms can now converge. Each arm emits cleanup for the
+  stored choice payload owner not forwarded by that arm, then marks that owner consumed before ownership-transfer
+  merging.
 - Ownership mismatch diagnostics for final control-flow now include a typed branch-local cleanup plan. The plan records
-  each owner consumed in only some arms, the consumed-arm indices, the cleanup-arm indices, and the current blocker that
-  branch-local cleanup emission is not implemented.
+  each owner consumed in only some arms, the consumed-arm indices, and the cleanup-arm indices when broader unsupported
+  branch-local cleanup shapes still fail.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Emit branch-local cleanup for final control-flow arms from the new typed plan, then promote distinct stored
-  choice-payload owners to a runnable convergence path.
+- Generalize branch-local cleanup beyond scalar final-if stored choice payloads so local DynamicArray owners, switch
+  cases, and owned-result branch expressions can use the same typed cleanup-plan model.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

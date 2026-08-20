@@ -119,6 +119,20 @@ auto switch_case_final_expression(syntax::SwitchCaseSyntax const& syntax_case)
     return &statement->expression;
 }
 
+auto stored_choice_payload_owner_names(
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::vector<std::string> {
+    auto names = std::vector<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (context.lowering.choices.contains(source_type_name)) {
+            names.push_back(name);
+        }
+    }
+    return names;
+}
+
 auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -207,6 +221,17 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_choice_dynamic_array_payload_cleanups_for_names(
+                        arm.context,
+                        arm.session,
+                        arm.output,
+                        stored_choice_payload_owner_names(arm.context, arm.session)
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
                 if (value.has_value()) {
                     arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
                 }
@@ -229,6 +254,17 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_choice_dynamic_array_payload_cleanups_for_names(
+                        arm.context,
+                        arm.session,
+                        arm.output,
+                        stored_choice_payload_owner_names(arm.context, arm.session)
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
                 if (value.has_value()) {
                     arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
                 }

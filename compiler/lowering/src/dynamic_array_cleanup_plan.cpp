@@ -14,6 +14,7 @@
 #include <iterator>
 #include <sstream>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 
 namespace orison::lowering {
@@ -1034,10 +1035,11 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
     return true;
 }
 
-auto emit_choice_dynamic_array_payload_cleanups(
+auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostream& output
+    std::ostream& output,
+    std::unordered_set<std::string> const* owner_filter
 ) -> bool {
     if (!context.options.enable_dynamic_array_construction_lowering ||
         !dynamic_array_cleanup_emission_enabled(context.options)) {
@@ -1054,6 +1056,9 @@ auto emit_choice_dynamic_array_payload_cleanups(
     std::ranges::sort(names);
 
     for (auto const& name : names) {
+        if (owner_filter != nullptr && !owner_filter->contains(name)) {
+            continue;
+        }
         if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
             continue;
         }
@@ -1191,6 +1196,7 @@ auto emit_choice_dynamic_array_payload_cleanups(
                 }
             }
         }
+        mark_owned_binding_consumed(session.state.ownership_transfers, name);
     }
     return true;
 }
@@ -1245,6 +1251,34 @@ auto emit_local_dynamic_array_cleanups(
         }
     }
     return true;
+}
+
+auto emit_choice_dynamic_array_payload_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool {
+    return emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
+        context,
+        session,
+        output,
+        nullptr
+    );
+}
+
+auto emit_choice_dynamic_array_payload_cleanups_for_names(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output,
+    std::vector<std::string> const& owner_names
+) -> bool {
+    auto owner_filter = std::unordered_set<std::string> {owner_names.begin(), owner_names.end()};
+    return emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
+        context,
+        session,
+        output,
+        &owner_filter
+    );
 }
 
 auto emit_bound_dynamic_array_parameter_cleanups(

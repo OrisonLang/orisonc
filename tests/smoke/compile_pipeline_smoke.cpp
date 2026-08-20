@@ -7376,7 +7376,7 @@ auto main() -> int {
 
     auto dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_rejected.or";
+        "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_run.or";
     auto dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir =
         pipeline.emit_llvm(
             dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
@@ -7385,26 +7385,26 @@ auto main() -> int {
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
-    assert(dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir.has_errors());
+    assert(!dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir.has_errors());
     assert(
         dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
-            .error_text.find(
+            .ir_text.find("right.Primary.values.choice_dynamic_array_cleanup") != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
+            .ir_text.find("left.Primary.values.choice_dynamic_array_cleanup") != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
+            .ir_text.find(
                 "if branch ownership mismatch: owned transfers must match across all continuing branches"
-            ) != std::string::npos
+            ) == std::string::npos
     );
-    assert(
-        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
-            .error_text.find(
-                "branch-local cleanup plan: owner left consumed-arms 0 cleanup-arms 1 emission blocked "
-                "blocker branch-local cleanup emission not implemented"
-            ) != std::string::npos
-    );
-    assert(
-        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_ir
-            .error_text.find(
-                "branch-local cleanup plan: owner right consumed-arms 1 cleanup-arms 0 emission blocked "
-                "blocker branch-local cleanup emission not implemented"
-            ) != std::string::npos
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
+        smoke_temp_root /
+            "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_run"
     );
 
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
