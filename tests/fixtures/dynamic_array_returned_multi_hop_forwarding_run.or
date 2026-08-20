@@ -1,0 +1,28 @@
+package fixtures.dynamicarrayreturnedmultihopforwardingrun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_items() -> DynamicArray<Payload>
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7 as UInt32))
+    items.push(Payload(11 as UInt32))
+    items.push(Payload(13 as UInt32))
+    items
+
+function consume_items(items: DynamicArray<Payload>) -> UInt32
+    items.length() == 3 ? 0 as UInt32 : 1 as UInt32
+
+function forward_items(items: DynamicArray<Payload>) -> UInt32
+    consume_items(items)
+
+function main() -> UInt32
+    var returned: DynamicArray<Payload> = make_items()
+    forward_items(returned)
