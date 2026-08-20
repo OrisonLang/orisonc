@@ -2046,13 +2046,17 @@ representation.
 - Nested returned record fields can now compose with branch forwarding before final consumption. The fixture records
   both returned aggregate-field origins, both branch parameter lifetime plans, and leaves cleanup only at the final
   consuming parameter owner.
+- Returned aggregate fields can now compose with direct choice-payload unwrap forwarding. The fixture constructs the
+  choice payload at the transfer site, records returned origins for `returned.values` and `unwrapped`, and leaves
+  cleanup only at the final consuming parameter. Stored local choice payloads still need cleanup-transfer work before
+  they can safely avoid duplicate payload cleanup after unwrap.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the narrowest callable return or
-  next returned aggregate-field choice-payload composition path that can be proven end-to-end.
+  stored local choice-payload cleanup-transfer seam for aggregate-field payloads.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

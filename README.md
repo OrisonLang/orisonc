@@ -272,5 +272,7 @@ This repository currently captures the initial language design and development c
   cleanup path. The lifetime report tracks both `inner.values` and `returned.inner.values` returned origins.
 - Nested returned record fields can now flow through branch forwarding before final consumption. Both branches transfer
   to the same final `items` cleanup owner, while the returned aggregate path does not emit stale cleanup.
+- Returned aggregate fields can now compose with direct choice-payload unwrap forwarding. The checked path builds the
+  choice payload at the transfer site, unwraps it to `unwrapped`, and leaves cleanup with the final consumer.
 - Next highest-value step: continue reducing owned `DynamicArray<T>` parameter/return ABI seams, starting with the
-  next returned aggregate-field choice-payload composition path that can be proven end-to-end.
+  stored local choice-payload cleanup-transfer seam for aggregate-field payloads.
