@@ -1,0 +1,45 @@
+package fixtures.dynamicarrayreturnedaggregatefieldstoredchoicepayloadbranchforwardingrun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(7 as UInt32))
+    values.push(Payload(11 as UInt32))
+    values
+
+function make_box() -> PayloadBox
+    PayloadBox(make_values())
+
+function unwrap_payload(packet: Packet) -> DynamicArray<Payload>
+    switch packet
+        Primary(values) => values
+
+function consume_items(items: DynamicArray<Payload>) -> UInt32
+    items.length() == 2 ? 0 as UInt32 : 1 as UInt32
+
+function choose_items(flag: Bool, items: DynamicArray<Payload>) -> UInt32
+    if flag
+        consume_items(items)
+    else
+        consume_items(items)
+
+function main() -> UInt32
+    var returned: PayloadBox = make_box()
+    var packet: Packet = Primary(returned.values)
+    var unwrapped: DynamicArray<Payload> = unwrap_payload(packet)
+    choose_items(false, unwrapped)

@@ -7215,6 +7215,138 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_status));
     assert(WEXITSTATUS(dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_status) == 0);
 
+    auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
+    auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir = pipeline.emit_llvm(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.has_errors());
+    auto const aggregate_field_stored_choice_payload_branch_lifetime_plans = std::count_if(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+            .dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+            .dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+        [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+            return plan.source_type_name == "DynamicArray<Payload>" &&
+                plan.cleanup_plan_available;
+        }
+    );
+    assert(aggregate_field_stored_choice_payload_branch_lifetime_plans == 6);
+    auto const aggregate_field_stored_choice_payload_branch_parameter_lifetime_plans = std::count_if(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+            .dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+            .dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+        [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+            return plan.owner_name == "items" &&
+                plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
+        }
+    );
+    assert(aggregate_field_stored_choice_payload_branch_parameter_lifetime_plans == 2);
+    assert(
+        std::any_of(
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+                .dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+                .dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+            [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+                return plan.owner_name == "returned.values" &&
+                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.cleanup_responsibility == "caller-owned-returned-cleanup";
+            }
+        )
+    );
+    assert(
+        std::any_of(
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+                .dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+                .dynamic_array_descriptor_lifetime_plan_state.plans.end(),
+            [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
+                return plan.owner_name == "unwrapped" &&
+                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.cleanup_responsibility == "caller-owned-returned-cleanup";
+            }
+        )
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+            .dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty()
+    );
+    assert(dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.dynamic_array_cleanup_capability_proven);
+    assert(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+            .dynamic_array_cleanup_emission_capability_state.proven
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "%packet.addr = alloca { i32, { ptr, i64, i64 } }"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "%packet.Primary.values.choice_dynamic_array_cleanup0.cleanup.entry"
+        ) == std::string::npos
+    );
+    auto const aggregate_field_stored_choice_payload_branch_choose_start =
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "define i32 @choose_items"
+        );
+    auto const aggregate_field_stored_choice_payload_branch_main_start =
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "define i32 @main",
+            aggregate_field_stored_choice_payload_branch_choose_start
+        );
+    assert(aggregate_field_stored_choice_payload_branch_choose_start != std::string::npos);
+    assert(aggregate_field_stored_choice_payload_branch_main_start != std::string::npos);
+    assert(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "__orison_dynamic_array_deallocate",
+            aggregate_field_stored_choice_payload_branch_choose_start
+        ) > aggregate_field_stored_choice_payload_branch_main_start
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir.ir_text.find(
+            "__orison_dynamic_array_deallocate",
+            aggregate_field_stored_choice_payload_branch_main_start
+        ) == std::string::npos
+    );
+    assert(
+        orison::pipeline::dynamic_array_cleanup_production_ready(
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir
+                .dynamic_array_cleanup_production_readiness
+        )
+    );
+    auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_object =
+        pipeline.emit_object(
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(!dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_object.has_errors());
+    assert(!dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_object.object_bytes.empty());
+    auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_executable =
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_run";
+    auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_link =
+        orison::link::HostLinker {}.link(
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_object.object_bytes,
+            dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_executable
+        );
+    assert(!dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_link.has_errors());
+    auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_status = std::system(
+        dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_executable.string().c_str()
+    );
+    assert(WIFEXITED(dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_status));
+    assert(WEXITSTATUS(dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_status) == 0);
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {

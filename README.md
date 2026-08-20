@@ -277,5 +277,7 @@ This repository currently captures the initial language design and development c
 - Stored local choice payloads can now forward returned aggregate-field `DynamicArray<T>` descriptors through unwrap
   into a final consuming parameter. The caller marks the stored `Packet` consumed at the by-value call boundary and
   avoids stale payload cleanup after transfer.
-- Next highest-value step: compose stored choice-payload forwarding with a branch wrapper or nested aggregate-field
-  owner, then keep collapsing the repeated lifetime/cleanup assertions into reusable smoke helpers.
+- Stored local choice-payload forwarding now composes with a branch wrapper. Both branch arms forward to the same
+  final consuming parameter, and cleanup remains outside `main`.
+- Next highest-value step: compose stored choice-payload forwarding with a nested aggregate-field owner, then keep
+  collapsing the repeated lifetime/cleanup assertions into reusable smoke helpers.
