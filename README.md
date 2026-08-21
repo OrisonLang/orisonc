@@ -309,7 +309,10 @@ This repository currently captures the initial language design and development c
   containing final `if`.
 - Asymmetric owned-result cleanup is now covered when one outer branch returns a branch-local owner directly and the
   other outer branch uses nested final `if` or final `switch` cleanup.
+- Three-case owned-result final `switch` cleanup is now covered with distinct branch-local returned owners and one
+  cleaned scratch owner per case before the owned-result PHI.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-local owned-result cleanup across three or more final `switch` cases.
+- Next highest-value step: audit three-or-more-case final `switch` cleanup where one case returns directly and another
+  case uses nested final control-flow.
