@@ -299,8 +299,9 @@ This repository currently captures the initial language design and development c
   branch-local scratch owners before the owned-result merge PHI.
 - Owned-result final `switch` cases now use the same returned-owner preservation and scratch-owner cleanup behavior
   before the owned-result switch merge PHI.
+- Branch-local DynamicArray cleanup smoke coverage now uses shared assertion helpers for local-owner and owned-result
+  scratch-owner fixtures across final `if` and final `switch`.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: reduce repeated branch-local DynamicArray cleanup smoke assertions into a shared helper, then
-  look for the next unsupported branch-local owned-result shape.
+- Next highest-value step: audit for the next unsupported branch-local owned-result shape.

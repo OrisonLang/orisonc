@@ -2082,13 +2082,14 @@ representation.
 - Owned-result final `switch` cases now use the same returned-owner preservation helper. The checked case fixture keeps
   the returned `DynamicArray<T>` descriptor live while cleaning branch-local scratch descriptors before the switch merge
   PHI.
+- Branch-local DynamicArray cleanup smoke coverage now uses shared assertion helpers for the local-owner and
+  owned-result scratch-owner fixtures across final `if` and final `switch`.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Reduce repeated branch-local DynamicArray cleanup smoke assertions into shared helpers, then audit the next
-  unsupported branch-local owned-result shape.
+- Audit the next unsupported branch-local owned-result shape.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

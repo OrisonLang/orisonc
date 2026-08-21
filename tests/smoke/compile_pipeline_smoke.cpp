@@ -131,6 +131,43 @@ void assert_no_deallocate_after_function(
     assert(ir_text.find("__orison_dynamic_array_deallocate", function_start) == std::string::npos);
 }
 
+void assert_ir_contains(std::string const& ir_text, std::string_view expected_fragment) {
+    assert(ir_text.find(expected_fragment) != std::string::npos);
+}
+
+void assert_ir_excludes(std::string const& ir_text, std::string_view unexpected_fragment) {
+    assert(ir_text.find(unexpected_fragment) == std::string::npos);
+}
+
+void assert_branch_local_named_dynamic_array_cleanup_ir(
+    std::string const& ir_text,
+    std::string_view left_owner,
+    std::string_view right_owner,
+    std::string_view phi_type
+) {
+    auto left_cleanup = std::string {left_owner} + ".dynamic_array_cleanup";
+    auto right_cleanup = std::string {right_owner} + ".dynamic_array_cleanup";
+    assert_ir_contains(ir_text, left_cleanup);
+    assert_ir_contains(ir_text, right_cleanup);
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %" + left_cleanup);
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %" + right_cleanup);
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %" + left_cleanup);
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %" + right_cleanup);
+    assert_ir_contains(ir_text, "phi " + std::string {phi_type} + " [0, %" + left_cleanup);
+    assert_ir_contains(ir_text, "[1, %" + right_cleanup);
+}
+
+void assert_branch_local_scratch_dynamic_array_cleanup_ir(
+    std::string const& ir_text
+) {
+    assert_ir_contains(ir_text, "scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
+    assert_ir_contains(ir_text, "%scratch.dynamic_array_cleanup");
+    assert_ir_excludes(ir_text, "returned.dynamic_array_cleanup");
+}
+
 void assert_emit_object_link_run_success(
     orison::pipeline::CompilePipeline& pipeline,
     std::filesystem::path const& source_path,
@@ -7452,45 +7489,11 @@ auto main() -> int {
     );
     assert(!dynamic_array_local_final_if_branch_cleanup_ir.has_errors());
     assert_dynamic_array_payload_cleanup_ready(dynamic_array_local_final_if_branch_cleanup_ir);
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "right_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "phi i32 [0, %left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
-            "[1, %right_values.dynamic_array_cleanup"
-        ) != std::string::npos
+    assert_branch_local_named_dynamic_array_cleanup_ir(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text,
+        "left_values",
+        "right_values",
+        "i32"
     );
     assert_emit_object_link_run_success(
         pipeline,
@@ -7510,50 +7513,12 @@ auto main() -> int {
     );
     assert(!dynamic_array_local_final_switch_case_cleanup_ir.has_errors());
     assert_dynamic_array_payload_cleanup_ready(dynamic_array_local_final_switch_case_cleanup_ir);
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "switch i1 %flag"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "right_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "phi i32 [0, %left_values.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_local_final_switch_case_cleanup_ir.ir_text.find(
-            "[1, %right_values.dynamic_array_cleanup"
-        ) != std::string::npos
+    assert_ir_contains(dynamic_array_local_final_switch_case_cleanup_ir.ir_text, "switch i1 %flag");
+    assert_branch_local_named_dynamic_array_cleanup_ir(
+        dynamic_array_local_final_switch_case_cleanup_ir.ir_text,
+        "left_values",
+        "right_values",
+        "i32"
     );
     assert_emit_object_link_run_success(
         pipeline,
@@ -7573,35 +7538,12 @@ auto main() -> int {
     );
     assert(!dynamic_array_owned_result_final_if_branch_cleanup_ir.has_errors());
     assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_final_if_branch_cleanup_ir);
-    assert(
-        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
-            "define { ptr, i64, i64 } @choose(i1 %flag)"
-        ) != std::string::npos
+    assert_ir_contains(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %flag)"
     );
-    assert(
-        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
-            "scratch.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
-            "phi { ptr, i64, i64 } [%tmp"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
-            "returned.dynamic_array_cleanup"
-        ) == std::string::npos
+    assert_branch_local_scratch_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text
     );
     assert_emit_object_link_run_success(
         pipeline,
@@ -7621,40 +7563,13 @@ auto main() -> int {
     );
     assert(!dynamic_array_owned_result_final_switch_case_cleanup_ir.has_errors());
     assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_final_switch_case_cleanup_ir);
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "define { ptr, i64, i64 } @choose(i1 %flag)"
-        ) != std::string::npos
+    assert_ir_contains(
+        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %flag)"
     );
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "switch i1 %flag"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "scratch.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "phi { ptr, i64, i64 } [%tmp"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text.find(
-            "returned.dynamic_array_cleanup"
-        ) == std::string::npos
+    assert_ir_contains(dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text, "switch i1 %flag");
+    assert_branch_local_scratch_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_final_switch_case_cleanup_ir.ir_text
     );
     assert_emit_object_link_run_success(
         pipeline,

@@ -291,20 +291,42 @@ void assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emi
     );
 }
 
+void assert_branch_local_named_dynamic_array_cleanup(
+    std::string const& output,
+    std::string_view left_owner,
+    std::string_view right_owner,
+    std::string_view phi_type
+) {
+    auto left_cleanup = std::string {left_owner} + ".dynamic_array_cleanup";
+    auto right_cleanup = std::string {right_owner} + ".dynamic_array_cleanup";
+    assert_contains(output, left_cleanup);
+    assert_contains(output, right_cleanup);
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %" + left_cleanup);
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %" + right_cleanup);
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %" + left_cleanup);
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %" + right_cleanup);
+    assert_contains(output, "phi " + std::string {phi_type} + " [0, %" + left_cleanup);
+    assert_contains(output, "[1, %" + right_cleanup);
+}
+
+void assert_branch_local_scratch_dynamic_array_cleanup(
+    std::string const& output
+) {
+    assert_contains(output, "scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
+    assert_contains(output, "phi { ptr, i64, i64 } [%tmp");
+    assert_contains(output, "%scratch.dynamic_array_cleanup");
+    assert_excludes(output, "returned.dynamic_array_cleanup");
+}
+
 void assert_dynamic_array_local_final_if_branch_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "define i32 @choose(i1 %flag)");
-    assert_contains(output, "left_values.dynamic_array_cleanup");
-    assert_contains(output, "right_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup");
-    assert_contains(output, "phi i32 [0, %left_values.dynamic_array_cleanup");
-    assert_contains(output, "[1, %right_values.dynamic_array_cleanup");
+    assert_branch_local_named_dynamic_array_cleanup(output, "left_values", "right_values", "i32");
 }
 
 void assert_dynamic_array_local_final_switch_case_cleanup_emit_llvm_success(
@@ -314,14 +336,7 @@ void assert_dynamic_array_local_final_switch_case_cleanup_emit_llvm_success(
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "define i32 @choose(i1 %flag)");
     assert_contains(output, "switch i1 %flag");
-    assert_contains(output, "left_values.dynamic_array_cleanup");
-    assert_contains(output, "right_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup");
-    assert_contains(output, "phi i32 [0, %left_values.dynamic_array_cleanup");
-    assert_contains(output, "[1, %right_values.dynamic_array_cleanup");
+    assert_branch_local_named_dynamic_array_cleanup(output, "left_values", "right_values", "i32");
 }
 
 void assert_dynamic_array_owned_result_final_if_branch_cleanup_emit_llvm_success(
@@ -330,12 +345,7 @@ void assert_dynamic_array_owned_result_final_if_branch_cleanup_emit_llvm_success
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "define { ptr, i64, i64 } @choose(i1 %flag)");
-    assert_contains(output, "scratch.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
-    assert_contains(output, "phi { ptr, i64, i64 } [%tmp");
-    assert_contains(output, "%scratch.dynamic_array_cleanup");
-    assert_excludes(output, "returned.dynamic_array_cleanup");
+    assert_branch_local_scratch_dynamic_array_cleanup(output);
 }
 
 void assert_dynamic_array_owned_result_final_switch_case_cleanup_emit_llvm_success(
@@ -345,12 +355,7 @@ void assert_dynamic_array_owned_result_final_switch_case_cleanup_emit_llvm_succe
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "define { ptr, i64, i64 } @choose(i1 %flag)");
     assert_contains(output, "switch i1 %flag");
-    assert_contains(output, "scratch.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
-    assert_contains(output, "phi { ptr, i64, i64 } [%tmp");
-    assert_contains(output, "%scratch.dynamic_array_cleanup");
-    assert_excludes(output, "returned.dynamic_array_cleanup");
+    assert_branch_local_scratch_dynamic_array_cleanup(output);
 }
 
 void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
