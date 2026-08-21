@@ -18,6 +18,7 @@
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unit_deferred_cleanup.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <sstream>
@@ -141,24 +142,47 @@ auto final_statement_expression(
     return value_expression_for(statements.back());
 }
 
-void mark_returned_dynamic_array_owner_consumed(
+auto branch_local_dynamic_array_cleanup_owner(
+    std::size_t cleanup_plan_depth,
+    std::string_view owner_name,
+    FunctionLoweringSession const& session
+) -> bool {
+    auto const& cleanup_plans = session.state.dynamic_array_local_cleanup_plans;
+    if (cleanup_plan_depth >= cleanup_plans.size()) {
+        return false;
+    }
+    return std::ranges::any_of(
+        cleanup_plans.begin() + static_cast<std::ptrdiff_t>(cleanup_plan_depth),
+        cleanup_plans.end(),
+        [&](DynamicArrayDescriptorCleanupPlan const& cleanup_plan) {
+            return cleanup_plan.owner_name == owner_name;
+        }
+    );
+}
+
+auto mark_returned_dynamic_array_owner_consumed(
     syntax::ExpressionSyntax const* final_expression,
     LoweredExpression const& value,
     std::optional<std::string_view> expected_source_type_name,
-    FunctionLoweringSession& session
-) {
+    FunctionLoweringSession& session,
+    std::size_t cleanup_plan_depth
+) -> std::optional<std::string> {
     if (final_expression == nullptr ||
         final_expression->kind != syntax::ExpressionKind::name ||
         !expected_source_type_name.has_value() ||
         !dynamic_array_element_source_type_name(*expected_source_type_name).has_value() ||
         value.type != std::string {dynamic_array_descriptor_llvm_type()}) {
-        return;
+        return std::nullopt;
     }
     auto source_type = session.state.source_type_names.find(final_expression->text);
     if (source_type != session.state.source_type_names.end() &&
         source_type->second == *expected_source_type_name) {
         mark_owned_binding_consumed(session.state.ownership_transfers, final_expression->text);
+        if (branch_local_dynamic_array_cleanup_owner(cleanup_plan_depth, final_expression->text, session)) {
+            return final_expression->text;
+        }
     }
+    return std::nullopt;
 }
 
 auto stored_choice_payload_owner_names(
@@ -312,12 +336,14 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                auto branch_local_returned_owner = std::optional<std::string> {};
                 if (value.has_value()) {
-                    mark_returned_dynamic_array_owner_consumed(
+                    branch_local_returned_owner = mark_returned_dynamic_array_owner_consumed(
                         final_statement_expression(arm.statement.nested_statements),
                         *value,
                         arm.expected_source_type_name,
-                        arm.session
+                        arm.session,
+                        cleanup_plan_depth
                     );
                 }
                 if (value.has_value() &&
@@ -341,7 +367,11 @@ auto lower_final_if_statement(
                     return std::optional<LoweredExpression> {};
                 }
                 if (value.has_value()) {
-                    arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
+                    auto branch_transfers = arm.session.state.ownership_transfers;
+                    if (branch_local_returned_owner.has_value()) {
+                        branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
+                    }
+                    arm.ownership_transfers_by_arm.push_back(std::move(branch_transfers));
                 }
                 return value;
             },
@@ -363,12 +393,14 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                auto branch_local_returned_owner = std::optional<std::string> {};
                 if (value.has_value()) {
-                    mark_returned_dynamic_array_owner_consumed(
+                    branch_local_returned_owner = mark_returned_dynamic_array_owner_consumed(
                         final_statement_expression(arm.statement.alternate_statements),
                         *value,
                         arm.expected_source_type_name,
-                        arm.session
+                        arm.session,
+                        cleanup_plan_depth
                     );
                 }
                 if (value.has_value() &&
@@ -392,7 +424,11 @@ auto lower_final_if_statement(
                     return std::optional<LoweredExpression> {};
                 }
                 if (value.has_value()) {
-                    arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
+                    auto branch_transfers = arm.session.state.ownership_transfers;
+                    if (branch_local_returned_owner.has_value()) {
+                        branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
+                    }
+                    arm.ownership_transfers_by_arm.push_back(std::move(branch_transfers));
                 }
                 return value;
             },
@@ -584,11 +620,12 @@ auto lower_final_switch_statement(
                     current.expected_source_type_name
                 );
                 if (value.has_value()) {
-                    mark_returned_dynamic_array_owner_consumed(
+                    auto branch_local_returned_owner = mark_returned_dynamic_array_owner_consumed(
                         switch_case_final_expression(*planned_case.syntax),
                         *value,
                         current.expected_source_type_name,
-                        current.session
+                        current.session,
+                        current.case_dynamic_array_cleanup_plan_depth
                     );
                     if (!emit_scoped_local_dynamic_array_cleanups(
                             current.case_dynamic_array_cleanup_plan_depth,
@@ -615,6 +652,9 @@ auto lower_final_switch_statement(
                         return std::optional<LoweredExpression> {};
                     }
                     auto branch_transfers = current.session.state.ownership_transfers;
+                    if (branch_local_returned_owner.has_value()) {
+                        branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
+                    }
                     for (auto const& name : branch_local_payload_names) {
                         branch_transfers.consumed_owned_bindings.erase(name);
                     }

@@ -168,6 +168,20 @@ void assert_branch_local_scratch_dynamic_array_cleanup_ir(
     assert_ir_excludes(ir_text, "returned.dynamic_array_cleanup");
 }
 
+void assert_branch_local_returned_dynamic_array_cleanup_ir(
+    std::string const& ir_text
+) {
+    assert_ir_contains(ir_text, "left_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "right_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
+    assert_ir_excludes(ir_text, "if branch ownership mismatch");
+    assert_ir_excludes(ir_text, "switch case ownership mismatch");
+}
+
 void assert_emit_object_link_run_success(
     orison::pipeline::CompilePipeline& pipeline,
     std::filesystem::path const& source_path,
@@ -7575,6 +7589,64 @@ auto main() -> int {
         pipeline,
         dynamic_array_owned_result_final_switch_case_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_final_switch_case_cleanup_run"
+    );
+
+    auto dynamic_array_owned_result_returned_local_final_if_branch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_returned_local_final_if_branch_cleanup_run.or";
+    auto dynamic_array_owned_result_returned_local_final_if_branch_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_returned_local_final_if_branch_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_returned_local_final_if_branch_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_owned_result_returned_local_final_if_branch_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_returned_local_final_if_branch_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %flag)"
+    );
+    assert_branch_local_returned_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_returned_local_final_if_branch_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_returned_local_final_if_branch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_returned_local_final_if_branch_cleanup_run"
+    );
+
+    auto dynamic_array_owned_result_returned_local_final_switch_case_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_returned_local_final_switch_case_cleanup_run.or";
+    auto dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_returned_local_final_switch_case_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %flag)"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir.ir_text,
+        "switch i1 %flag"
+    );
+    assert_branch_local_returned_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_returned_local_final_switch_case_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_returned_local_final_switch_case_cleanup_run"
     );
 
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(

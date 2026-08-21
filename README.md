@@ -301,7 +301,9 @@ This repository currently captures the initial language design and development c
   before the owned-result switch merge PHI.
 - Branch-local DynamicArray cleanup smoke coverage now uses shared assertion helpers for local-owner and owned-result
   scratch-owner fixtures across final `if` and final `switch`.
+- Owned-result final `if` arms and `switch` cases can now return distinct branch-local `DynamicArray<Payload>` owners
+  while cleaning the unreturned branch-local owner before the owned-result merge PHI.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit for the next unsupported branch-local owned-result shape.
+- Next highest-value step: audit branch-local owned-result cleanup through nested final control-flow.

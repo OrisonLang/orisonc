@@ -2084,12 +2084,16 @@ representation.
   PHI.
 - Branch-local DynamicArray cleanup smoke coverage now uses shared assertion helpers for the local-owner and
   owned-result scratch-owner fixtures across final `if` and final `switch`.
+- Owned-result final `if` arms and final `switch` cases now allow distinct branch-local returned
+  `DynamicArray<Payload>` owner names. Lowering marks the returned branch-local owner consumed to suppress local
+  cleanup, erases that local owner name from the post-branch ownership merge, and emits cleanup for the unreturned
+  branch-local owner before the owned-result PHI.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit the next unsupported branch-local owned-result shape.
+- Audit branch-local owned-result cleanup through nested final control-flow.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
