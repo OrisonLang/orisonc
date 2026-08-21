@@ -8023,6 +8023,28 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_multi_nested_switch_scratch_reuse_rejected.or";
+    auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir.has_errors());
+    assert(
+        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir.error_text.find(
+            "switch case ownership mismatch: owned transfers must match across all continuing cases"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir.error_text.find(
+            "branch-local cleanup plan: owner first_left_scratch"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {
