@@ -290,8 +290,11 @@ This repository currently captures the initial language design and development c
   leaving cleanup with the final consuming parameter.
 - Distinct stored choice-payload owners in scalar final `if` arms and `switch` cases now compile by emitting
   branch-local cleanup for the owner not forwarded by the selected arm/case before the merge.
+- Branch-local local `DynamicArray<Payload>` owners in scalar final `if` arms now emit element Drop walks and descriptor
+  deallocation before the merge PHI, with CLI and pipeline smoke coverage that emits LLVM, emits objects, links, and
+  runs.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: generalize branch-local cleanup beyond stored choice payloads, starting with owned-result
-  branch expressions or local DynamicArray owners.
+- Next highest-value step: extend the same branch-local cleanup model to owned-result branch expressions and then
+  mirror the local-owner final-if coverage for final `switch` cases.

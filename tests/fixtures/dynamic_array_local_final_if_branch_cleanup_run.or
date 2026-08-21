@@ -1,0 +1,28 @@
+package fixtures.dynamicarraylocalfinalifbranchcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function choose(flag: Bool) -> UInt32
+    if flag
+        var left_values: DynamicArray<Payload> = make_values(7 as UInt32)
+        0 as UInt32
+    else
+        var right_values: DynamicArray<Payload> = make_values(11 as UInt32)
+        1 as UInt32
+
+function main() -> UInt32
+    choose(true)

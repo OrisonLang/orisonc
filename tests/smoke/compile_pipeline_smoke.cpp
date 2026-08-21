@@ -7440,6 +7440,64 @@ auto main() -> int {
             "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_run"
     );
 
+    auto dynamic_array_local_final_if_branch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_local_final_if_branch_cleanup_run.or";
+    auto dynamic_array_local_final_if_branch_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_local_final_if_branch_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_local_final_if_branch_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_local_final_if_branch_cleanup_ir);
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "left_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "right_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "phi i32 [0, %left_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_final_if_branch_cleanup_ir.ir_text.find(
+            "[1, %right_values.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_local_final_if_branch_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_if_branch_cleanup_run"
+    );
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {

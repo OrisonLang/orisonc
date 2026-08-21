@@ -137,6 +137,50 @@ auto stored_choice_payload_owner_names(
     return names;
 }
 
+auto emit_scoped_local_dynamic_array_cleanups(
+    std::size_t cleanup_plan_depth,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    auto saved_cleanup_plans = session.state.dynamic_array_local_cleanup_plans;
+    auto const cleanup_ordinal_start = session.state.next_temporary_index;
+    auto scoped_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {
+        saved_cleanup_plans.begin() + static_cast<std::ptrdiff_t>(cleanup_plan_depth),
+        saved_cleanup_plans.end(),
+    };
+    for (auto cleanup_plan = scoped_cleanup_plans.begin(); cleanup_plan != scoped_cleanup_plans.end();) {
+        if (is_owned_binding_consumed(session.state.ownership_transfers, cleanup_plan->owner_name)) {
+            cleanup_plan = scoped_cleanup_plans.erase(cleanup_plan);
+            continue;
+        }
+        ++cleanup_plan;
+    }
+
+    auto scoped_cleanup_exit_block = std::optional<std::string> {};
+    if (!scoped_cleanup_plans.empty()) {
+        auto const& final_cleanup_plan = scoped_cleanup_plans.back();
+        auto final_cleanup_ordinal = cleanup_ordinal_start + scoped_cleanup_plans.size() - 1;
+        auto label_prefix = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
+            std::to_string(final_cleanup_ordinal);
+        scoped_cleanup_exit_block =
+            is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
+            ? label_prefix + ".cleanup.entry"
+            : label_prefix + ".drop.done";
+    }
+
+    session.state.dynamic_array_local_cleanup_plans = std::move(scoped_cleanup_plans);
+    if (!emit_local_dynamic_array_cleanups(context, session, output)) {
+        session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+        return false;
+    }
+    session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+    if (scoped_cleanup_exit_block.has_value()) {
+        session.state.current_block = std::move(*scoped_cleanup_exit_block);
+    }
+    return true;
+}
+
 auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -213,6 +257,7 @@ auto lower_final_if_statement(
             .context = &arm_context,
             .lower_then = [](void* opaque) {
                 auto& arm = *static_cast<ArmContext*>(opaque);
+                auto const cleanup_plan_depth = arm.session.state.dynamic_array_local_cleanup_plans.size();
                 auto value = lower_value_statement_block(
                     arm.statement.nested_statements,
                     arm.expected_llvm_type,
@@ -225,6 +270,17 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_scoped_local_dynamic_array_cleanups(
+                        cleanup_plan_depth,
+                        arm.context,
+                        arm.session,
+                        arm.output
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
                 if (value.has_value() &&
                     arm.expected_source_type_name.has_value() &&
                     is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
@@ -246,6 +302,7 @@ auto lower_final_if_statement(
             },
             .lower_else = [](void* opaque) {
                 auto& arm = *static_cast<ArmContext*>(opaque);
+                auto const cleanup_plan_depth = arm.session.state.dynamic_array_local_cleanup_plans.size();
                 auto value = lower_value_statement_block(
                     arm.statement.alternate_statements,
                     arm.expected_llvm_type,
@@ -258,6 +315,17 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_scoped_local_dynamic_array_cleanups(
+                        cleanup_plan_depth,
+                        arm.context,
+                        arm.session,
+                        arm.output
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
                 if (value.has_value() &&
                     arm.expected_source_type_name.has_value() &&
                     is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
@@ -477,47 +545,13 @@ auto lower_final_switch_statement(
                             );
                         }
                     }
-                    auto saved_cleanup_plans = current.session.state.dynamic_array_local_cleanup_plans;
-                    auto const cleanup_ordinal_start = current.session.state.next_temporary_index;
-                    auto scoped_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {
-                        saved_cleanup_plans.begin() +
-                            static_cast<std::ptrdiff_t>(current.case_dynamic_array_cleanup_plan_depth),
-                        saved_cleanup_plans.end(),
-                    };
-                    for (auto cleanup_plan = scoped_cleanup_plans.begin();
-                         cleanup_plan != scoped_cleanup_plans.end();) {
-                        if (is_owned_binding_consumed(
-                                current.session.state.ownership_transfers,
-                                cleanup_plan->owner_name
-                            )) {
-                            cleanup_plan = scoped_cleanup_plans.erase(cleanup_plan);
-                            continue;
-                        }
-                        ++cleanup_plan;
-                    }
-                    auto scoped_cleanup_exit_block = std::optional<std::string> {};
-                    if (!scoped_cleanup_plans.empty()) {
-                        auto const& final_cleanup_plan = scoped_cleanup_plans.back();
-                        auto final_cleanup_ordinal = cleanup_ordinal_start + scoped_cleanup_plans.size() - 1;
-                        auto label_prefix = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
-                            std::to_string(final_cleanup_ordinal);
-                        scoped_cleanup_exit_block =
-                            is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
-                            ? label_prefix + ".cleanup.entry"
-                            : label_prefix + ".drop.done";
-                    }
-                    current.session.state.dynamic_array_local_cleanup_plans = std::move(scoped_cleanup_plans);
-                    if (!emit_local_dynamic_array_cleanups(
+                    if (!emit_scoped_local_dynamic_array_cleanups(
+                            current.case_dynamic_array_cleanup_plan_depth,
                             current.context,
                             current.session,
                             current.output
                         )) {
-                        current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
                         return std::optional<LoweredExpression> {};
-                    }
-                    current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
-                    if (scoped_cleanup_exit_block.has_value()) {
-                        current.session.state.current_block = std::move(*scoped_cleanup_exit_block);
                     }
                     if (current.expected_source_type_name.has_value() &&
                         is_scalar_or_nonowning_source_type(*current.expected_source_type_name) &&
@@ -533,7 +567,6 @@ auto lower_final_switch_statement(
                                     : std::nullopt
                             )
                         )) {
-                        current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
                         return std::optional<LoweredExpression> {};
                     }
                     auto branch_transfers = current.session.state.ownership_transfers;

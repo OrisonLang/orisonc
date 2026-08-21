@@ -2071,13 +2071,16 @@ representation.
 - Ownership mismatch diagnostics for final control-flow now include a typed branch-local cleanup plan. The plan records
   each owner consumed in only some arms, the consumed-arm indices, and the cleanup-arm indices when broader unsupported
   branch-local cleanup shapes still fail.
+- Branch-local local `DynamicArray<Payload>` owners in scalar final `if` arms now share the scoped cleanup emitter used
+  by switch cleanup paths. Each arm emits the local owner's element Drop walk and descriptor deallocation before the
+  merge PHI, and smoke coverage pins LLVM emission plus object/link/run behavior.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Generalize branch-local cleanup beyond stored choice payloads so local DynamicArray owners and owned-result branch
-  expressions can use the same typed cleanup-plan model.
+- Generalize branch-local cleanup to owned-result branch expressions and mirror the local-owner final-if cleanup path
+  for final `switch` cases.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
