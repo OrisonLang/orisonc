@@ -121,11 +121,15 @@ auto switch_case_final_expression(syntax::SwitchCaseSyntax const& syntax_case)
 
 auto stored_choice_payload_owner_names(
     EmissionContext const& context,
-    FunctionLoweringSession const& session
+    FunctionLoweringSession const& session,
+    std::optional<std::string_view> excluded_owner_name = std::nullopt
 ) -> std::vector<std::string> {
     auto names = std::vector<std::string> {};
     names.reserve(session.state.source_type_names.size());
     for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (excluded_owner_name.has_value() && name == *excluded_owner_name) {
+            continue;
+        }
         if (context.lowering.choices.contains(source_type_name)) {
             names.push_back(name);
         }
@@ -514,6 +518,23 @@ auto lower_final_switch_statement(
                     current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
                     if (scoped_cleanup_exit_block.has_value()) {
                         current.session.state.current_block = std::move(*scoped_cleanup_exit_block);
+                    }
+                    if (current.expected_source_type_name.has_value() &&
+                        is_scalar_or_nonowning_source_type(*current.expected_source_type_name) &&
+                        !emit_choice_dynamic_array_payload_cleanups_for_names(
+                            current.context,
+                            current.session,
+                            current.output,
+                            stored_choice_payload_owner_names(
+                                current.context,
+                                current.session,
+                                current.subject_expression.kind == syntax::ExpressionKind::name
+                                    ? std::optional<std::string_view> {current.subject_expression.text}
+                                    : std::nullopt
+                            )
+                        )) {
+                        current.session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+                        return std::optional<LoweredExpression> {};
                     }
                     auto branch_transfers = current.session.state.ownership_transfers;
                     for (auto const& name : branch_local_payload_names) {

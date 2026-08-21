@@ -285,6 +285,10 @@ void assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emi
         output,
         "if branch ownership mismatch: owned transfers must match across all continuing branches"
     );
+    assert_excludes(
+        output,
+        "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
 }
 
 void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
@@ -789,6 +793,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or";
     auto returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_run.or";
+    auto returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path =
+        fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -1053,6 +1059,20 @@ auto main() -> int {
         executable,
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding"
+    );
+    assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

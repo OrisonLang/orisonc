@@ -2065,9 +2065,9 @@ representation.
   fixture wraps `returned.inner.values` in a stored `Packet`, unwraps it, forwards through a two-arm branch wrapper,
   records `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners, and leaves
   cleanup only at the final consuming parameter.
-- Distinct stored choice-payload owners in scalar final branch arms can now converge. Each arm emits cleanup for the
-  stored choice payload owner not forwarded by that arm, then marks that owner consumed before ownership-transfer
-  merging.
+- Distinct stored choice-payload owners in scalar final `if` arms and `switch` cases can now converge. Each arm/case
+  emits cleanup for the stored choice payload owner not forwarded by that arm/case, then marks that owner consumed
+  before ownership-transfer merging.
 - Ownership mismatch diagnostics for final control-flow now include a typed branch-local cleanup plan. The plan records
   each owner consumed in only some arms, the consumed-arm indices, and the cleanup-arm indices when broader unsupported
   branch-local cleanup shapes still fail.
@@ -2076,8 +2076,8 @@ representation.
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Generalize branch-local cleanup beyond scalar final-if stored choice payloads so local DynamicArray owners, switch
-  cases, and owned-result branch expressions can use the same typed cleanup-plan model.
+- Generalize branch-local cleanup beyond stored choice payloads so local DynamicArray owners and owned-result branch
+  expressions can use the same typed cleanup-plan model.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
