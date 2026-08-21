@@ -584,21 +584,12 @@ auto lower_final_switch_statement(
                     current.expected_source_type_name
                 );
                 if (value.has_value()) {
-                    auto const* final_expression = switch_case_final_expression(*planned_case.syntax);
-                    if (final_expression != nullptr &&
-                        final_expression->kind == syntax::ExpressionKind::name &&
-                        current.expected_source_type_name.has_value() &&
-                        dynamic_array_element_source_type_name(*current.expected_source_type_name).has_value() &&
-                        value->type == std::string {dynamic_array_descriptor_llvm_type()}) {
-                        auto source_type = current.session.state.source_type_names.find(final_expression->text);
-                        if (source_type != current.session.state.source_type_names.end() &&
-                            source_type->second == *current.expected_source_type_name) {
-                            mark_owned_binding_consumed(
-                                current.session.state.ownership_transfers,
-                                final_expression->text
-                            );
-                        }
-                    }
+                    mark_returned_dynamic_array_owner_consumed(
+                        switch_case_final_expression(*planned_case.syntax),
+                        *value,
+                        current.expected_source_type_name,
+                        current.session
+                    );
                     if (!emit_scoped_local_dynamic_array_cleanups(
                             current.case_dynamic_array_cleanup_plan_depth,
                             current.context,
