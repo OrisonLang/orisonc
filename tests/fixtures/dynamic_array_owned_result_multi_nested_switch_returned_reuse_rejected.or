@@ -1,0 +1,52 @@
+package fixtures.dynamicarrayownedresultmultinestedswitchreturnedreuserejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function consume_items(items: DynamicArray<Payload>) -> UInt32
+    items.length() == 2 ? 0 as UInt32 : 1 as UInt32
+
+function choose(selector: UInt32, left_selector: Bool, right_selector: Bool) -> DynamicArray<Payload>
+    switch selector
+        0 =>
+            switch left_selector
+                true =>
+                    var first_left_values: DynamicArray<Payload> = make_values(7 as UInt32)
+                    var first_left_scratch: DynamicArray<Payload> = make_values(17 as UInt32)
+                    var consumed: UInt32 = consume_items(first_left_values)
+                    first_left_values
+                false =>
+                    var first_right_values: DynamicArray<Payload> = make_values(19 as UInt32)
+                    var first_right_scratch: DynamicArray<Payload> = make_values(23 as UInt32)
+                    first_right_values
+        1 =>
+            switch right_selector
+                true =>
+                    var second_left_values: DynamicArray<Payload> = make_values(29 as UInt32)
+                    var second_left_scratch: DynamicArray<Payload> = make_values(31 as UInt32)
+                    second_left_values
+                false =>
+                    var second_right_values: DynamicArray<Payload> = make_values(37 as UInt32)
+                    var second_right_scratch: DynamicArray<Payload> = make_values(41 as UInt32)
+                    second_right_values
+        default =>
+            var third_values: DynamicArray<Payload> = make_values(43 as UInt32)
+            var third_scratch: DynamicArray<Payload> = make_values(47 as UInt32)
+            third_values
+
+function main() -> UInt32
+    var selected: DynamicArray<Payload> = choose(1 as UInt32, true, false)
+    consume_items(selected)
