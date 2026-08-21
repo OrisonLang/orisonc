@@ -305,8 +305,10 @@ This repository currently captures the initial language design and development c
   while cleaning the unreturned branch-local owner before the owned-result merge PHI.
 - Nested owned-result final `if` and nested final `switch` cleanup are now covered with branch-local returned owners
   through LLVM, object emission, host linking, and execution.
+- Mixed nested owned-result cleanup is now covered for final `if` containing final `switch` and final `switch`
+  containing final `if`.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit mixed nested final control-flow, such as `if` containing final `switch` and `switch`
-  containing final `if`.
+- Next highest-value step: audit branch-local owned-result cleanup when one outer branch returns directly and the other
+  outer branch uses nested final control-flow.
