@@ -353,6 +353,30 @@ void assert_branch_local_three_case_returned_dynamic_array_cleanup(
     assert_excludes(output, "switch case ownership mismatch");
 }
 
+void assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup(
+    std::string const& output
+) {
+    assert_contains(output, "first_scratch.dynamic_array_cleanup");
+    assert_contains(output, "left_scratch.dynamic_array_cleanup");
+    assert_contains(output, "right_scratch.dynamic_array_cleanup");
+    assert_contains(output, "third_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %first_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %left_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %right_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %third_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %first_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %left_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %right_scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %third_scratch.dynamic_array_cleanup");
+    assert_contains(output, "phi { ptr, i64, i64 } [%tmp");
+    assert_excludes(output, "first_values.dynamic_array_cleanup");
+    assert_excludes(output, "left_values.dynamic_array_cleanup");
+    assert_excludes(output, "right_values.dynamic_array_cleanup");
+    assert_excludes(output, "third_values.dynamic_array_cleanup");
+    assert_excludes(output, "if branch ownership mismatch");
+    assert_excludes(output, "switch case ownership mismatch");
+}
+
 void assert_dynamic_array_local_final_if_branch_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -477,6 +501,16 @@ void assert_dynamic_array_owned_result_three_case_switch_cleanup_emit_llvm_succe
     assert_contains(output, "define { ptr, i64, i64 } @choose(i32 %selector)");
     assert_contains(output, "switch i32 %selector");
     assert_branch_local_three_case_returned_dynamic_array_cleanup(output);
+}
+
+void assert_dynamic_array_owned_result_three_case_mixed_switch_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define { ptr, i64, i64 } @choose(i32 %selector, i1 %flag)");
+    assert_contains(output, "switch i32 %selector");
+    assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup(output);
 }
 
 void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
@@ -1009,6 +1043,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_direct_nested_switch_branch_cleanup_run.or";
     auto dynamic_array_owned_result_three_case_switch_cleanup_path =
         fixtures / "dynamic_array_owned_result_three_case_switch_cleanup_run.or";
+    auto dynamic_array_owned_result_three_case_mixed_switch_cleanup_path =
+        fixtures / "dynamic_array_owned_result_three_case_mixed_switch_cleanup_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -1469,6 +1505,20 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_three_case_switch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_three_case_switch_cleanup"
+    );
+    assert_dynamic_array_owned_result_three_case_mixed_switch_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_three_case_mixed_switch_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_three_case_mixed_switch_cleanup"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

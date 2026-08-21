@@ -311,8 +311,10 @@ This repository currently captures the initial language design and development c
   other outer branch uses nested final `if` or final `switch` cleanup.
 - Three-case owned-result final `switch` cleanup is now covered with distinct branch-local returned owners and one
   cleaned scratch owner per case before the owned-result PHI.
+- Three-case owned-result final `switch` cleanup also covers a mixed direct/nested shape where one case returns
+  directly and another case uses nested final `if` cleanup before the outer switch PHI.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit three-or-more-case final `switch` cleanup where one case returns directly and another
-  case uses nested final control-flow.
+- Next highest-value step: audit three-or-more-case final `switch` cleanup where a case uses nested final `switch`
+  cleanup.

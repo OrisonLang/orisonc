@@ -201,6 +201,30 @@ void assert_branch_local_three_case_returned_dynamic_array_cleanup_ir(
     assert_ir_excludes(ir_text, "switch case ownership mismatch");
 }
 
+void assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup_ir(
+    std::string const& ir_text
+) {
+    assert_ir_contains(ir_text, "first_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "left_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "right_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "third_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %first_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %left_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %right_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %third_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %first_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %left_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %right_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %third_scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
+    assert_ir_excludes(ir_text, "first_values.dynamic_array_cleanup");
+    assert_ir_excludes(ir_text, "left_values.dynamic_array_cleanup");
+    assert_ir_excludes(ir_text, "right_values.dynamic_array_cleanup");
+    assert_ir_excludes(ir_text, "third_values.dynamic_array_cleanup");
+    assert_ir_excludes(ir_text, "if branch ownership mismatch");
+    assert_ir_excludes(ir_text, "switch case ownership mismatch");
+}
+
 void assert_emit_object_link_run_success(
     orison::pipeline::CompilePipeline& pipeline,
     std::filesystem::path const& source_path,
@@ -7854,6 +7878,35 @@ auto main() -> int {
         pipeline,
         dynamic_array_owned_result_three_case_switch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_three_case_switch_cleanup_run"
+    );
+
+    auto dynamic_array_owned_result_three_case_mixed_switch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_three_case_mixed_switch_cleanup_run.or";
+    auto dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i32 %selector, i1 %flag)"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir.ir_text,
+        "switch i32 %selector"
+    );
+    assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_three_case_mixed_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_three_case_mixed_switch_cleanup_run"
     );
 
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
