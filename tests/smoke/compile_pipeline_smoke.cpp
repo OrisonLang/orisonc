@@ -7561,6 +7561,54 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_local_final_switch_case_cleanup_run"
     );
 
+    auto dynamic_array_owned_result_final_if_branch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_final_if_branch_cleanup_run.or";
+    auto dynamic_array_owned_result_final_if_branch_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_final_if_branch_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_final_if_branch_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_final_if_branch_cleanup_ir);
+    assert(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
+            "define { ptr, i64, i64 } @choose(i1 %flag)"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
+            "scratch.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
+            "phi { ptr, i64, i64 } [%tmp"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_final_if_branch_cleanup_ir.ir_text.find(
+            "returned.dynamic_array_cleanup"
+        ) == std::string::npos
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_final_if_branch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_final_if_branch_cleanup_run"
+    );
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {

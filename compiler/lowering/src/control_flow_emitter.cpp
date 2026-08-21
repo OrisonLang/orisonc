@@ -119,6 +119,48 @@ auto switch_case_final_expression(syntax::SwitchCaseSyntax const& syntax_case)
     return &statement->expression;
 }
 
+auto final_statement_expression(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements
+) -> syntax::ExpressionSyntax const* {
+    if (statements.empty()) {
+        return nullptr;
+    }
+    auto const* statement = statements.back().get();
+    if (statement == nullptr) {
+        return nullptr;
+    }
+    return value_expression_for(*statement);
+}
+
+auto final_statement_expression(
+    std::vector<syntax::StatementSyntax> const& statements
+) -> syntax::ExpressionSyntax const* {
+    if (statements.empty()) {
+        return nullptr;
+    }
+    return value_expression_for(statements.back());
+}
+
+void mark_returned_dynamic_array_owner_consumed(
+    syntax::ExpressionSyntax const* final_expression,
+    LoweredExpression const& value,
+    std::optional<std::string_view> expected_source_type_name,
+    FunctionLoweringSession& session
+) {
+    if (final_expression == nullptr ||
+        final_expression->kind != syntax::ExpressionKind::name ||
+        !expected_source_type_name.has_value() ||
+        !dynamic_array_element_source_type_name(*expected_source_type_name).has_value() ||
+        value.type != std::string {dynamic_array_descriptor_llvm_type()}) {
+        return;
+    }
+    auto source_type = session.state.source_type_names.find(final_expression->text);
+    if (source_type != session.state.source_type_names.end() &&
+        source_type->second == *expected_source_type_name) {
+        mark_owned_binding_consumed(session.state.ownership_transfers, final_expression->text);
+    }
+}
+
 auto stored_choice_payload_owner_names(
     EmissionContext const& context,
     FunctionLoweringSession const& session,
@@ -270,9 +312,15 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value()) {
+                    mark_returned_dynamic_array_owner_consumed(
+                        final_statement_expression(arm.statement.nested_statements),
+                        *value,
+                        arm.expected_source_type_name,
+                        arm.session
+                    );
+                }
                 if (value.has_value() &&
-                    arm.expected_source_type_name.has_value() &&
-                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
                     !emit_scoped_local_dynamic_array_cleanups(
                         cleanup_plan_depth,
                         arm.context,
@@ -315,9 +363,15 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value()) {
+                    mark_returned_dynamic_array_owner_consumed(
+                        final_statement_expression(arm.statement.alternate_statements),
+                        *value,
+                        arm.expected_source_type_name,
+                        arm.session
+                    );
+                }
                 if (value.has_value() &&
-                    arm.expected_source_type_name.has_value() &&
-                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
                     !emit_scoped_local_dynamic_array_cleanups(
                         cleanup_plan_depth,
                         arm.context,

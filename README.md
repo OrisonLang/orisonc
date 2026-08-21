@@ -295,7 +295,9 @@ This repository currently captures the initial language design and development c
   runs.
 - Branch-local local `DynamicArray<Payload>` owners in scalar final `switch` cases now share the same scoped cleanup
   path and are covered by the same LLVM/object/link/run smoke checks.
+- Owned-result final `if` arms now preserve the returned `DynamicArray<Payload>` descriptor while cleaning separate
+  branch-local scratch owners before the owned-result merge PHI.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: extend the same branch-local cleanup model to owned-result branch expressions.
+- Next highest-value step: mirror owned-result branch-local scratch cleanup for final `switch` cases.
