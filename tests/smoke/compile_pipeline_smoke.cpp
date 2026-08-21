@@ -262,6 +262,32 @@ void assert_branch_local_multi_nested_switch_dynamic_array_cleanup_ir(
     assert_ir_excludes(ir_text, "switch case ownership mismatch");
 }
 
+void assert_branch_local_if_two_switches_dynamic_array_cleanup_ir(
+    std::string const& ir_text
+) {
+    assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {
+            "first_left_scratch",
+            "first_right_scratch",
+            "second_left_scratch",
+            "second_right_scratch",
+        }
+    );
+    assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
+    assert_no_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {
+            "first_left_values",
+            "first_right_values",
+            "second_left_values",
+            "second_right_values",
+        }
+    );
+    assert_ir_excludes(ir_text, "if branch ownership mismatch");
+    assert_ir_excludes(ir_text, "switch case ownership mismatch");
+}
+
 void assert_emit_object_link_run_success(
     orison::pipeline::CompilePipeline& pipeline,
     std::filesystem::path const& source_path,
@@ -8014,6 +8040,39 @@ auto main() -> int {
         pipeline,
         dynamic_array_owned_result_multi_nested_switch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_cleanup_run"
+    );
+
+    auto dynamic_array_owned_result_if_two_switches_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_if_two_switches_cleanup_run.or";
+    auto dynamic_array_owned_result_if_two_switches_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_if_two_switches_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_if_two_switches_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_if_two_switches_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %outer, i1 %left_selector, i1 %right_selector)"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_cleanup_ir.ir_text,
+        "switch i1 %left_selector"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_cleanup_ir.ir_text,
+        "switch i1 %right_selector"
+    );
+    assert_branch_local_if_two_switches_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_if_two_switches_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_if_two_switches_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_if_two_switches_cleanup_run"
     );
 
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
