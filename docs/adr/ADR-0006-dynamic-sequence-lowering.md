@@ -2093,13 +2093,14 @@ representation.
   inner-result PHIs, object emission, host linking, and execution.
 - Mixed nested owned-result cleanup now has fixture coverage for final `if` containing final `switch` and final
   `switch` containing final `if`, preserving the same branch-local returned-owner cleanup guarantees.
+- Asymmetric owned-result cleanup now has fixture coverage when one outer branch returns a branch-local owner directly
+  and the other outer branch uses nested final `if` or final `switch` cleanup.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-local owned-result cleanup when one outer branch returns directly and the other outer branch uses nested
-  final control-flow.
+- Audit branch-local owned-result cleanup across three or more final `switch` cases.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

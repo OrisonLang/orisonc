@@ -307,8 +307,9 @@ This repository currently captures the initial language design and development c
   through LLVM, object emission, host linking, and execution.
 - Mixed nested owned-result cleanup is now covered for final `if` containing final `switch` and final `switch`
   containing final `if`.
+- Asymmetric owned-result cleanup is now covered when one outer branch returns a branch-local owner directly and the
+  other outer branch uses nested final `if` or final `switch` cleanup.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-local owned-result cleanup when one outer branch returns directly and the other
-  outer branch uses nested final control-flow.
+- Next highest-value step: audit branch-local owned-result cleanup across three or more final `switch` cases.
