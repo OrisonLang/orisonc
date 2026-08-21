@@ -2088,12 +2088,15 @@ representation.
   `DynamicArray<Payload>` owner names. Lowering marks the returned branch-local owner consumed to suppress local
   cleanup, erases that local owner name from the post-branch ownership merge, and emits cleanup for the unreturned
   branch-local owner before the owned-result PHI.
+- Nested owned-result final `if` and nested final `switch` branch-local returned-owner shapes now have fixture
+  coverage through CLI and pipeline smoke paths. The checked paths verify recursive cleanup block threading,
+  inner-result PHIs, object emission, host linking, and execution.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-local owned-result cleanup through nested final control-flow.
+- Audit mixed nested final control-flow, such as `if` containing final `switch` and `switch` containing final `if`.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

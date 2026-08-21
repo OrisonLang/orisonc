@@ -1,0 +1,47 @@
+package fixtures.dynamicarrayownedresultnestedfinalswitchcasecleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function choose(outer: Bool, inner: Bool) -> DynamicArray<Payload>
+    switch outer
+        true =>
+            switch inner
+                true =>
+                    var left_values: DynamicArray<Payload> = make_values(7 as UInt32)
+                    var right_values: DynamicArray<Payload> = make_values(17 as UInt32)
+                    left_values
+                false =>
+                    var left_values: DynamicArray<Payload> = make_values(11 as UInt32)
+                    var right_values: DynamicArray<Payload> = make_values(23 as UInt32)
+                    right_values
+        false =>
+            switch inner
+                true =>
+                    var left_values: DynamicArray<Payload> = make_values(31 as UInt32)
+                    var right_values: DynamicArray<Payload> = make_values(37 as UInt32)
+                    left_values
+                false =>
+                    var left_values: DynamicArray<Payload> = make_values(41 as UInt32)
+                    var right_values: DynamicArray<Payload> = make_values(43 as UInt32)
+                    right_values
+
+function consume_items(items: DynamicArray<Payload>) -> UInt32
+    items.length() == 2 ? 0 as UInt32 : 1 as UInt32
+
+function main() -> UInt32
+    var selected: DynamicArray<Payload> = choose(true, false)
+    consume_items(selected)

@@ -303,7 +303,10 @@ This repository currently captures the initial language design and development c
   scratch-owner fixtures across final `if` and final `switch`.
 - Owned-result final `if` arms and `switch` cases can now return distinct branch-local `DynamicArray<Payload>` owners
   while cleaning the unreturned branch-local owner before the owned-result merge PHI.
+- Nested owned-result final `if` and nested final `switch` cleanup are now covered with branch-local returned owners
+  through LLVM, object emission, host linking, and execution.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-local owned-result cleanup through nested final control-flow.
+- Next highest-value step: audit mixed nested final control-flow, such as `if` containing final `switch` and `switch`
+  containing final `if`.
