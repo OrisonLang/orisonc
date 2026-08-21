@@ -2101,12 +2101,14 @@ representation.
   directly and another case uses nested final `if` cleanup before the outer switch PHI.
 - Three-case owned-result final `switch` cleanup now also covers a direct/nested-switch shape where one case uses
   nested final `switch` cleanup before the outer switch PHI.
+- Three-case owned-result final `switch` cleanup now covers multiple nested cases in the same outer switch, with two
+  outer cases each merging their own nested final `switch` cleanup result before the outer switch PHI.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit three-or-more-case final `switch` cleanup with multiple nested cases in the same outer switch.
+- Add negative coverage for returned-owner misuse in multi-nested final `switch` cleanup paths.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
