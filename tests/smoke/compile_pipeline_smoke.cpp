@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <initializer_list>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -182,45 +183,54 @@ void assert_branch_local_returned_dynamic_array_cleanup_ir(
     assert_ir_excludes(ir_text, "switch case ownership mismatch");
 }
 
+void assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+    std::string const& ir_text,
+    std::initializer_list<std::string_view> owner_names
+) {
+    for (auto const owner_name : owner_names) {
+        auto cleanup_name = std::string {owner_name} + ".dynamic_array_cleanup";
+        assert_ir_contains(ir_text, cleanup_name);
+        assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %" + cleanup_name);
+        assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %" + cleanup_name);
+    }
+}
+
+void assert_no_branch_local_dynamic_array_cleanup_for_owners_ir(
+    std::string const& ir_text,
+    std::initializer_list<std::string_view> owner_names
+) {
+    for (auto const owner_name : owner_names) {
+        assert_ir_excludes(ir_text, std::string {owner_name} + ".dynamic_array_cleanup");
+    }
+}
+
 void assert_branch_local_three_case_returned_dynamic_array_cleanup_ir(
     std::string const& ir_text
 ) {
-    assert_ir_contains(ir_text, "first_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "second_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "third_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %first_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %second_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %third_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %first_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %second_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %third_scratch.dynamic_array_cleanup");
+    assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {"first_scratch", "second_scratch", "third_scratch"}
+    );
     assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
-    assert_ir_excludes(ir_text, "first_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "second_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "third_values.dynamic_array_cleanup");
+    assert_no_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {"first_values", "second_values", "third_values"}
+    );
     assert_ir_excludes(ir_text, "switch case ownership mismatch");
 }
 
 void assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup_ir(
     std::string const& ir_text
 ) {
-    assert_ir_contains(ir_text, "first_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "third_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %first_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %third_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %first_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %third_scratch.dynamic_array_cleanup");
+    assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {"first_scratch", "left_scratch", "right_scratch", "third_scratch"}
+    );
     assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
-    assert_ir_excludes(ir_text, "first_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "left_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "right_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "third_values.dynamic_array_cleanup");
+    assert_no_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {"first_values", "left_values", "right_values", "third_values"}
+    );
     assert_ir_excludes(ir_text, "if branch ownership mismatch");
     assert_ir_excludes(ir_text, "switch case ownership mismatch");
 }
@@ -228,27 +238,27 @@ void assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup_ir(
 void assert_branch_local_multi_nested_switch_dynamic_array_cleanup_ir(
     std::string const& ir_text
 ) {
-    assert_ir_contains(ir_text, "first_left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "first_right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "second_left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "second_right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "third_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %first_left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %first_right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %second_left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %second_right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %third_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %first_left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %first_right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %second_left_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %second_right_scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %third_scratch.dynamic_array_cleanup");
+    assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {
+            "first_left_scratch",
+            "first_right_scratch",
+            "second_left_scratch",
+            "second_right_scratch",
+            "third_scratch",
+        }
+    );
     assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
-    assert_ir_excludes(ir_text, "first_left_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "first_right_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "second_left_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "second_right_values.dynamic_array_cleanup");
-    assert_ir_excludes(ir_text, "third_values.dynamic_array_cleanup");
+    assert_no_branch_local_dynamic_array_cleanup_for_owners_ir(
+        ir_text,
+        {
+            "first_left_values",
+            "first_right_values",
+            "second_left_values",
+            "second_right_values",
+            "third_values",
+        }
+    );
     assert_ir_excludes(ir_text, "switch case ownership mismatch");
 }
 

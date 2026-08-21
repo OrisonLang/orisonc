@@ -321,8 +321,10 @@ This repository currently captures the initial language design and development c
   already consumed in the same nested case.
 - Multi-nested final `switch` cleanup now also rejects consuming a scratch owner in only one nested case while sibling
   cases still require branch-local cleanup insertion for that owner.
+- Branch-local cleanup smoke assertions for three-case and multi-nested final `switch` coverage now share owner-list
+  helpers for expected scratch cleanup and returned-owner cleanup suppression.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: consolidate the repeated branch-local cleanup smoke assertions for three-case and
-  multi-nested switch coverage.
+- Next highest-value step: audit the next unsupported branch-local owned-result shape after the current multi-nested
+  final `switch` matrix.
