@@ -2074,13 +2074,14 @@ representation.
 - Branch-local local `DynamicArray<Payload>` owners in scalar final `if` arms now share the scoped cleanup emitter used
   by switch cleanup paths. Each arm emits the local owner's element Drop walk and descriptor deallocation before the
   merge PHI, and smoke coverage pins LLVM emission plus object/link/run behavior.
+- Branch-local local `DynamicArray<Payload>` owners in scalar final `switch` cases now use the same scoped cleanup
+  emitter. Each case emits the local owner's cleanup before the switch merge PHI, matching the final-if behavior.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Generalize branch-local cleanup to owned-result branch expressions and mirror the local-owner final-if cleanup path
-  for final `switch` cases.
+- Generalize branch-local cleanup to owned-result branch expressions.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

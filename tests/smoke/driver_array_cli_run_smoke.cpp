@@ -307,6 +307,23 @@ void assert_dynamic_array_local_final_if_branch_cleanup_emit_llvm_success(
     assert_contains(output, "[1, %right_values.dynamic_array_cleanup");
 }
 
+void assert_dynamic_array_local_final_switch_case_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define i32 @choose(i1 %flag)");
+    assert_contains(output, "switch i1 %flag");
+    assert_contains(output, "left_values.dynamic_array_cleanup");
+    assert_contains(output, "right_values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup");
+    assert_contains(output, "phi i32 [0, %left_values.dynamic_array_cleanup");
+    assert_contains(output, "[1, %right_values.dynamic_array_cleanup");
+}
+
 void assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -813,6 +830,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_run.or";
     auto dynamic_array_local_final_if_branch_cleanup_path =
         fixtures / "dynamic_array_local_final_if_branch_cleanup_run.or";
+    auto dynamic_array_local_final_switch_case_cleanup_path =
+        fixtures / "dynamic_array_local_final_switch_case_cleanup_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -1105,6 +1124,20 @@ auto main() -> int {
         executable,
         dynamic_array_local_final_if_branch_cleanup_path,
         smoke_temp_root / "dynamic_array_local_final_if_branch_cleanup"
+    );
+    assert_dynamic_array_local_final_switch_case_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_local_final_switch_case_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_local_final_switch_case_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_switch_case_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_local_final_switch_case_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_switch_case_cleanup"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

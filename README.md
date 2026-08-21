@@ -293,8 +293,9 @@ This repository currently captures the initial language design and development c
 - Branch-local local `DynamicArray<Payload>` owners in scalar final `if` arms now emit element Drop walks and descriptor
   deallocation before the merge PHI, with CLI and pipeline smoke coverage that emits LLVM, emits objects, links, and
   runs.
+- Branch-local local `DynamicArray<Payload>` owners in scalar final `switch` cases now share the same scoped cleanup
+  path and are covered by the same LLVM/object/link/run smoke checks.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: extend the same branch-local cleanup model to owned-result branch expressions and then
-  mirror the local-owner final-if coverage for final `switch` cases.
+- Next highest-value step: extend the same branch-local cleanup model to owned-result branch expressions.
