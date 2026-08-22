@@ -711,6 +711,14 @@ void assert_dynamic_array_switch_returned_owner_reuse_emit_llvm_failure(
     assert(output.find("switch case lowering failed: use after move: first_left_values") != std::string::npos);
 }
 
+void assert_dynamic_array_helper_call_returned_owner_reuse_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("switch case lowering failed: use after move: first_left_values") != std::string::npos);
+}
+
 void assert_dynamic_array_switch_scratch_owner_reuse_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1267,6 +1275,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
         fixtures / "dynamic_array_owned_result_multi_nested_switch_returned_reuse_rejected.or";
+    auto dynamic_array_owned_result_helper_call_returned_reuse_path =
+        fixtures / "dynamic_array_owned_result_helper_call_returned_reuse_rejected.or";
     auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path =
         fixtures / "dynamic_array_owned_result_multi_nested_switch_scratch_reuse_rejected.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
@@ -1859,6 +1869,10 @@ auto main() -> int {
     assert_dynamic_array_switch_returned_owner_reuse_emit_llvm_failure(
         executable,
         dynamic_array_owned_result_multi_nested_switch_returned_reuse_path
+    );
+    assert_dynamic_array_helper_call_returned_owner_reuse_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_helper_call_returned_reuse_path
     );
     assert_dynamic_array_switch_scratch_owner_reuse_emit_llvm_failure(
         executable,

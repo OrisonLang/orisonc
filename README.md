@@ -337,8 +337,10 @@ This repository currently captures the initial language design and development c
 - Helper-call returned-owner cleanup now also covers mirrored outer `if`/nested `switch` and outer `switch`/nested `if`
   combinations, preserving returned descriptors across helper calls while branch-local scratch cleanup still runs in
   each nested arm/case.
+- Helper-call returned-owner misuse now has negative coverage: using a branch-local `DynamicArray<T>` owner after it
+  was transferred through a same-type helper call in a nested control-flow leaf is rejected as use-after-move.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative helper-call returned-owner coverage for reuse after transfer inside nested
-  control-flow leaves.
+- Next highest-value step: audit helper-call returned-owner cleanup when the helper call is nested inside a final
+  ternary expression.
