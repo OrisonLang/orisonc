@@ -2131,13 +2131,15 @@ representation.
   the selected owner is returned through the helper call, and the unselected owner is cleaned on its branch path.
 - Final ternary named-owner helper-call transfer now has negative coverage for later reuse of the transferred owner.
   The checked fixture rejects `left_values` after `flag ? forward_values(left_values) : forward_values(right_values)`.
+- Named helper-call ternary cleanup now recursively discovers the source owner through same-source-type helper-call
+  arguments, so `forward_again(forward_values(left_values))` preserves the selected descriptor and cleans the
+  unselected candidate before the ternary merge.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit named helper-call ternary cleanup when the selected owner is forwarded through another helper before final
-  consumption.
+- Add negative coverage for chained helper-call owner reuse after final ternary transfer.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

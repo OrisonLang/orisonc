@@ -345,8 +345,9 @@ This repository currently captures the initial language design and development c
   the selected owner is returned through the helper call, and the unselected owner is cleaned on its branch path.
 - Negative final-ternary coverage now rejects reusing a named owner after helper-call transfer, preserving the
   single-owner handoff rule for preallocated ternary candidates.
+- Named helper-call ternary cleanup now supports a selected owner forwarded through a second same-type helper before
+  final consumption.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit named helper-call ternary cleanup when the selected owner is forwarded through another
-  helper before final consumption.
+- Next highest-value step: add negative coverage for chained helper-call owner reuse after final ternary transfer.

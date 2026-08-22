@@ -112,14 +112,17 @@ auto returned_dynamic_array_owner_name(
 
     for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
         auto const& argument = expression.arguments[index];
-        if (argument.kind != syntax::ExpressionKind::name ||
-            function->second.parameter_source_type_names[index] != *expected_source_type_name) {
+        if (function->second.parameter_source_type_names[index] != *expected_source_type_name) {
             continue;
         }
-        auto source_type = state.source_type_names.find(argument.text);
-        if (source_type != state.source_type_names.end() &&
-            source_type->second == *expected_source_type_name) {
-            return argument.text;
+        auto owner_name = returned_dynamic_array_owner_name(
+            argument,
+            expected_source_type_name,
+            context,
+            state
+        );
+        if (owner_name.has_value()) {
+            return owner_name;
         }
     }
     return std::nullopt;
