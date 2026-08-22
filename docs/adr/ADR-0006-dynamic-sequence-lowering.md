@@ -2118,12 +2118,15 @@ representation.
   scratch owners still clean before the owned-result PHI.
 - Same-type helper functions that return an owned `DynamicArray<T>` parameter now suppress callee-side parameter
   cleanup for that returned descriptor, leaving cleanup with the caller/ultimate consumer and avoiding duplicate frees.
+- Helper-call returned-owner cleanup now covers multiple nested final `switch` cases, preserving returned descriptors
+  through helper calls while cleaning branch-local scratch owners in each nested case.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit helper-call returned-owner cleanup through multiple nested final `switch` cases.
+- Audit helper-call returned-owner cleanup through mirrored outer `if`/nested `switch` and outer `switch`/nested `if`
+  combinations.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

@@ -621,6 +621,20 @@ void assert_dynamic_array_owned_result_multi_nested_switch_cleanup_emit_llvm_suc
     assert_branch_local_multi_nested_switch_dynamic_array_cleanup(output);
 }
 
+void assert_dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define { ptr, i64, i64 } @choose(i32 %selector, i1 %left_selector, i1 %right_selector)");
+    assert_contains(output, "switch i32 %selector");
+    assert_contains(output, "switch i1 %left_selector");
+    assert_contains(output, "switch i1 %right_selector");
+    assert_contains(output, "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %");
+    assert_excludes(output, "%values.dynamic_array_cleanup");
+    assert_branch_local_multi_nested_switch_dynamic_array_cleanup(output);
+}
+
 void assert_dynamic_array_owned_result_if_two_switches_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1211,6 +1225,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_three_case_nested_switch_cleanup_run.or";
     auto dynamic_array_owned_result_multi_nested_switch_cleanup_path =
         fixtures / "dynamic_array_owned_result_multi_nested_switch_cleanup_run.or";
+    auto dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_path =
+        fixtures / "dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_if_two_switches_cleanup_path =
         fixtures / "dynamic_array_owned_result_if_two_switches_cleanup_run.or";
     auto dynamic_array_owned_result_switch_two_ifs_cleanup_path =
@@ -1723,6 +1739,20 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_multi_nested_switch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_cleanup"
+    );
+    assert_dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup"
     );
     assert_dynamic_array_owned_result_if_two_switches_cleanup_emit_llvm_success(
         executable,
