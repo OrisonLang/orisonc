@@ -325,8 +325,10 @@ This repository currently captures the initial language design and development c
   helpers for expected scratch cleanup and returned-owner cleanup suppression.
 - Branch-local owned-result cleanup now covers an outer final `if` where both arms return through separate nested final
   `switch` joins, preserving returned owners while cleaning scratch owners in each nested case.
+- Branch-local owned-result cleanup now also covers the mirror outer final `switch` shape where multiple cases return
+  through nested final `if` joins and the default case returns directly.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit the mirror shape where an outer final `switch` returns through separate nested final
-  `if` joins in multiple cases.
+- Next highest-value step: audit mixed direct/nested branch-local owned-result cleanup where returned values flow
+  through helper calls before the final merge.
