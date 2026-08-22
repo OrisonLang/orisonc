@@ -8150,6 +8150,48 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_if_two_switches_cleanup_run"
     );
 
+    auto dynamic_array_owned_result_if_two_switches_helper_call_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_if_two_switches_helper_call_cleanup_run.or";
+    auto dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %outer, i1 %left_selector, i1 %right_selector)"
+    );
+    assert_ir_contains(dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text, "br i1 %outer");
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text,
+        "switch i1 %left_selector"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text,
+        "switch i1 %right_selector"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text,
+        "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text,
+        "%values.dynamic_array_cleanup"
+    );
+    assert_branch_local_if_two_switches_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_if_two_switches_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_if_two_switches_helper_call_cleanup_run"
+    );
+
     auto dynamic_array_owned_result_switch_two_ifs_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_switch_two_ifs_cleanup_run.or";
@@ -8185,6 +8227,51 @@ auto main() -> int {
         pipeline,
         dynamic_array_owned_result_switch_two_ifs_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_cleanup_run"
+    );
+
+    auto dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run.or";
+    auto dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i32 %selector, i1 %left_selector, i1 %right_selector)"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text,
+        "switch i32 %selector"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text,
+        "br i1 %left_selector"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text,
+        "br i1 %right_selector"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text,
+        "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text,
+        "%values.dynamic_array_cleanup"
+    );
+    assert_branch_local_switch_two_ifs_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run"
     );
 
     auto dynamic_array_owned_result_helper_call_cleanup_path =

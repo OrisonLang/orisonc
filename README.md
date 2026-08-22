@@ -334,8 +334,11 @@ This repository currently captures the initial language design and development c
   cleanup for that returned descriptor, leaving cleanup with the caller/ultimate consumer and avoiding duplicate frees.
 - Helper-call returned-owner cleanup now covers multiple nested final `switch` cases, preserving returned descriptors
   through helper calls while cleaning branch-local scratch owners in each nested case.
+- Helper-call returned-owner cleanup now also covers mirrored outer `if`/nested `switch` and outer `switch`/nested `if`
+  combinations, preserving returned descriptors across helper calls while branch-local scratch cleanup still runs in
+  each nested arm/case.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit helper-call returned-owner cleanup through mirrored outer `if`/nested `switch` and
-  outer `switch`/nested `if` combinations.
+- Next highest-value step: add negative helper-call returned-owner coverage for reuse after transfer inside nested
+  control-flow leaves.
