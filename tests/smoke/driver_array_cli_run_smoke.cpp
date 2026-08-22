@@ -1338,6 +1338,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_ternary_named_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_path =
         fixtures / "dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_path =
+        fixtures / "dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_named_helper_call_reuse_path =
         fixtures / "dynamic_array_owned_result_ternary_named_helper_call_reuse_rejected.or";
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
@@ -1978,6 +1980,10 @@ auto main() -> int {
     assert_dynamic_array_ternary_named_helper_call_returned_owner_reuse_emit_llvm_failure(
         executable,
         dynamic_array_owned_result_ternary_named_helper_call_reuse_path
+    );
+    assert_dynamic_array_ternary_named_helper_call_returned_owner_reuse_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_path
     );
     assert_dynamic_array_switch_returned_owner_reuse_emit_llvm_failure(
         executable,

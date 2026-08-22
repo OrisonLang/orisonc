@@ -347,7 +347,10 @@ This repository currently captures the initial language design and development c
   single-owner handoff rule for preallocated ternary candidates.
 - Named helper-call ternary cleanup now supports a selected owner forwarded through a second same-type helper before
   final consumption.
+- Negative chained-helper ternary coverage now rejects reusing the source owner after
+  `forward_again(forward_values(left_values))` transfers it.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for chained helper-call owner reuse after final ternary transfer.
+- Next highest-value step: audit helper-call ternary cleanup when the selected owner is stored in a local before
+  final return.
