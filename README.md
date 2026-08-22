@@ -341,8 +341,9 @@ This repository currently captures the initial language design and development c
   was transferred through a same-type helper call in a nested control-flow leaf is rejected as use-after-move.
 - Final ternary expressions now have helper-call returned-owner coverage when each branch constructs a fresh
   `DynamicArray<T>` owner and immediately returns it through a same-type helper call.
+- Final ternary expressions now also support named `DynamicArray<T>` candidate owners allocated before the ternary:
+  the selected owner is returned through the helper call, and the unselected owner is cleaned on its branch path.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit named-owner cleanup for final ternary expressions where the candidate owners are
-  allocated before the ternary.
+- Next highest-value step: add negative final-ternary coverage for reusing a named owner after helper-call transfer.

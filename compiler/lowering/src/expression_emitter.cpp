@@ -1,11 +1,13 @@
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
+#include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/generic_call_resolution.hpp"
@@ -73,6 +75,96 @@ auto record_use_after_move_failure(
         ExpressionLoweringFailureReason::use_after_move,
         std::string(owner_name)
     );
+}
+
+auto returned_dynamic_array_owner_name(
+    syntax::ExpressionSyntax const& expression,
+    std::optional<std::string_view> expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (!expected_source_type_name.has_value() ||
+        !dynamic_array_element_source_type_name(*expected_source_type_name).has_value()) {
+        return std::nullopt;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        if (source_type != state.source_type_names.end() &&
+            source_type->second == *expected_source_type_name) {
+            return expression.text;
+        }
+        return std::nullopt;
+    }
+
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto function = context.lowering.functions.find(expression.left->text);
+    if (function == context.lowering.functions.end() ||
+        function->second.source_return_type_name != *expected_source_type_name ||
+        function->second.parameter_source_type_names.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& argument = expression.arguments[index];
+        if (argument.kind != syntax::ExpressionKind::name ||
+            function->second.parameter_source_type_names[index] != *expected_source_type_name) {
+            continue;
+        }
+        auto source_type = state.source_type_names.find(argument.text);
+        if (source_type != state.source_type_names.end() &&
+            source_type->second == *expected_source_type_name) {
+            return argument.text;
+        }
+    }
+    return std::nullopt;
+}
+
+auto emit_dynamic_array_cleanup_for_owner(
+    std::string_view owner_name,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    if (is_owned_binding_consumed(session.state.ownership_transfers, owner_name)) {
+        return true;
+    }
+
+    auto matching_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
+    for (auto const& cleanup_plan : session.state.dynamic_array_local_cleanup_plans) {
+        if (cleanup_plan.owner_name == owner_name) {
+            matching_cleanup_plans.push_back(cleanup_plan);
+        }
+    }
+    if (matching_cleanup_plans.empty()) {
+        return true;
+    }
+
+    auto const cleanup_ordinal_start = session.state.next_temporary_index;
+    auto const& final_cleanup_plan = matching_cleanup_plans.back();
+    auto final_cleanup_ordinal = cleanup_ordinal_start + matching_cleanup_plans.size() - 1;
+    auto label_prefix = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
+        std::to_string(final_cleanup_ordinal);
+    auto cleanup_exit_block = is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
+        ? label_prefix + ".cleanup.entry"
+        : label_prefix + ".drop.done";
+
+    auto saved_cleanup_plans = session.state.dynamic_array_local_cleanup_plans;
+    session.state.dynamic_array_local_cleanup_plans = std::move(matching_cleanup_plans);
+    auto const emitted = emit_local_dynamic_array_cleanups(context, session, output);
+    session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+    if (!emitted) {
+        return false;
+    }
+
+    session.state.current_block = std::move(cleanup_exit_block);
+    mark_owned_binding_consumed(session.state.ownership_transfers, std::string {owner_name});
+    return true;
 }
 
 auto consumed_owned_record_member_path_name(
@@ -4260,6 +4352,25 @@ auto lowered_expression(
             ConditionalPlanKind::ternary,
             next_llvm_block_index(state.next_block_index)
         );
+        auto then_returned_owner = returned_dynamic_array_owner_name(
+            *expression.right,
+            expected_source_type_name,
+            context,
+            state
+        );
+        auto else_returned_owner = returned_dynamic_array_owner_name(
+            *expression.alternate,
+            expected_source_type_name,
+            context,
+            state
+        );
+        auto branch_owned_dynamic_array_return = then_returned_owner.has_value() &&
+            else_returned_owner.has_value() &&
+            *then_returned_owner != *else_returned_owner;
+        auto binding_scope = std::optional<BranchBindingScope> {};
+        if (branch_owned_dynamic_array_return) {
+            binding_scope.emplace(state);
+        }
         struct ArmContext {
             syntax::ExpressionSyntax const& then_expression;
             syntax::ExpressionSyntax const& else_expression;
@@ -4269,6 +4380,10 @@ auto lowered_expression(
             FunctionLoweringSession& session;
             std::ostringstream& output;
             std::optional<std::string_view> expected_source_type_name;
+            std::optional<std::string> then_returned_owner;
+            std::optional<std::string> else_returned_owner;
+            BranchBindingScope* binding_scope = nullptr;
+            std::vector<OwnershipTransferState> ownership_transfers_by_arm;
         };
         auto arm_context = ArmContext {
             .then_expression = *expression.right,
@@ -4279,6 +4394,9 @@ auto lowered_expression(
             .session = session,
             .output = output,
             .expected_source_type_name = expected_source_type_name,
+            .then_returned_owner = then_returned_owner,
+            .else_returned_owner = else_returned_owner,
+            .binding_scope = binding_scope.has_value() ? &*binding_scope : nullptr,
         };
         auto result = emit_conditional_value(
             plan,
@@ -4289,7 +4407,7 @@ auto lowered_expression(
                 .context = &arm_context,
                 .lower_then = [](void* opaque) {
                     auto& arm = *static_cast<ArmContext*>(opaque);
-                    return lowered_expression(
+                    auto value = lowered_expression(
                         arm.then_expression,
                         arm.expected_llvm_type,
                         arm.expected_signedness,
@@ -4298,10 +4416,32 @@ auto lowered_expression(
                         arm.output,
                         arm.expected_source_type_name
                     );
+                    if (!value.has_value()) {
+                        return value;
+                    }
+                    if (arm.else_returned_owner.has_value() &&
+                        !emit_dynamic_array_cleanup_for_owner(
+                            *arm.else_returned_owner,
+                            arm.context,
+                            arm.session,
+                            arm.output
+                        )) {
+                        return std::optional<LoweredExpression> {};
+                    }
+                    if (arm.binding_scope != nullptr) {
+                        arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
+                    }
+                    return value;
+                },
+                .between_arms = [](void* opaque) {
+                    auto& arm = *static_cast<ArmContext*>(opaque);
+                    if (arm.binding_scope != nullptr) {
+                        arm.binding_scope->reset();
+                    }
                 },
                 .lower_else = [](void* opaque) {
                     auto& arm = *static_cast<ArmContext*>(opaque);
-                    return lowered_expression(
+                    auto value = lowered_expression(
                         arm.else_expression,
                         arm.expected_llvm_type,
                         arm.expected_signedness,
@@ -4310,6 +4450,22 @@ auto lowered_expression(
                         arm.output,
                         arm.expected_source_type_name
                     );
+                    if (!value.has_value()) {
+                        return value;
+                    }
+                    if (arm.then_returned_owner.has_value() &&
+                        !emit_dynamic_array_cleanup_for_owner(
+                            *arm.then_returned_owner,
+                            arm.context,
+                            arm.session,
+                            arm.output
+                        )) {
+                        return std::optional<LoweredExpression> {};
+                    }
+                    if (arm.binding_scope != nullptr) {
+                        arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
+                    }
+                    return value;
                 },
             }
         );
@@ -4320,6 +4476,18 @@ auto lowered_expression(
                 "ternary branches"
             );
             return std::nullopt;
+        }
+        if (branch_owned_dynamic_array_return) {
+            auto merged_transfers = merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
+            if (!merged_transfers.has_value()) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::branch_type_mismatch,
+                    "ternary ownership transfers"
+                );
+                return std::nullopt;
+            }
+            binding_scope->commit_ownership_transfers(std::move(*merged_transfers));
         }
         return result.value;
     }

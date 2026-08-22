@@ -8340,6 +8340,44 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_ternary_helper_call_cleanup_run"
     );
 
+    auto dynamic_array_owned_result_ternary_named_helper_call_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_ternary_named_helper_call_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i1 %flag)"
+    );
+    assert_ir_contains(dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text, "br i1 %flag");
+    assert_ir_contains(dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text, "ternary.then.");
+    assert_ir_contains(dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text, "ternary.else.");
+    assert_ir_contains(dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text, "ternary.merge.");
+    assert_ir_contains(
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text,
+        "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %"
+    );
+    assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text,
+        {"left_values", "left_scratch", "right_values", "right_scratch"}
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir.ir_text,
+        "%values.dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_cleanup_run"
+    );
+
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_multi_nested_switch_returned_reuse_rejected.or";

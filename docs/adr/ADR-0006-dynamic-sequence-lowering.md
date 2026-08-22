@@ -2127,12 +2127,14 @@ representation.
   was transferred through a same-type helper call in a nested control-flow leaf is rejected as use-after-move.
 - Final ternary expressions now have helper-call returned-owner coverage when each branch constructs a fresh
   `DynamicArray<T>` owner and immediately returns it through a same-type helper call.
+- Final ternary expressions now also support named `DynamicArray<T>` candidate owners allocated before the ternary:
+  the selected owner is returned through the helper call, and the unselected owner is cleaned on its branch path.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit named-owner cleanup for final ternary expressions where the candidate owners are allocated before the ternary.
+- Add negative final-ternary coverage for reusing a named owner after helper-call transfer.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

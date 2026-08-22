@@ -756,6 +756,24 @@ void assert_dynamic_array_ternary_helper_call_cleanup_emit_llvm_success(
     assert_excludes(output, "%values.dynamic_array_cleanup");
 }
 
+void assert_dynamic_array_ternary_named_helper_call_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define { ptr, i64, i64 } @choose(i1 %flag)");
+    assert_contains(output, "br i1 %flag");
+    assert_contains(output, "ternary.then.");
+    assert_contains(output, "ternary.else.");
+    assert_contains(output, "ternary.merge.");
+    assert_contains(output, "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %");
+    assert_branch_local_dynamic_array_cleanup_for_owners(
+        output,
+        {"left_values", "left_scratch", "right_values", "right_scratch"}
+    );
+    assert_excludes(output, "%values.dynamic_array_cleanup");
+}
+
 void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1289,6 +1307,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_helper_call_cleanup_path =
         fixtures / "dynamic_array_owned_result_ternary_helper_call_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_named_helper_call_cleanup_path =
+        fixtures / "dynamic_array_owned_result_ternary_named_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
         fixtures / "dynamic_array_owned_result_multi_nested_switch_returned_reuse_rejected.or";
     auto dynamic_array_owned_result_helper_call_returned_reuse_path =
@@ -1895,6 +1915,20 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_ternary_helper_call_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_ternary_helper_call_cleanup"
+    );
+    assert_dynamic_array_ternary_named_helper_call_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_owned_result_ternary_named_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_cleanup"
     );
     assert_dynamic_array_switch_returned_owner_reuse_emit_llvm_failure(
         executable,
