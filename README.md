@@ -349,8 +349,9 @@ This repository currently captures the initial language design and development c
   final consumption.
 - Negative chained-helper ternary coverage now rejects reusing the source owner after
   `forward_again(forward_values(left_values))` transfers it.
+- Helper-call ternary cleanup now supports storing the selected owner in a local and returning that local as the final
+  function result without emitting stale cleanup for the local.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit helper-call ternary cleanup when the selected owner is stored in a local before
-  final return.
+- Next highest-value step: add negative coverage for reusing the local selected owner after final ternary transfer.

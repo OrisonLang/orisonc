@@ -8418,6 +8418,34 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_run"
     );
 
+    auto dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_ir
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_ir.ir_text,
+        "%values.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_ir.ir_text,
+        "%selected.dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_run"
+    );
+
     auto dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_rejected.or";

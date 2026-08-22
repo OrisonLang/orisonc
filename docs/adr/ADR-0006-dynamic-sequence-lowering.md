@@ -2136,12 +2136,14 @@ representation.
   unselected candidate before the ternary merge.
 - Negative chained-helper ternary coverage now rejects reuse of `left_values` after that owner transfers through
   `forward_again(forward_values(left_values))`.
+- Helper-call ternary cleanup now supports storing the selected owner in a local before returning that local as the
+  final function result. The checked fixture verifies scratch cleanup while suppressing stale cleanup for `selected`.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit helper-call ternary cleanup when the selected owner is stored in a local before final return.
+- Add negative coverage for reusing the local selected owner after final ternary transfer.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
