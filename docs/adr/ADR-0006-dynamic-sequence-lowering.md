@@ -2113,13 +2113,15 @@ representation.
   `switch` joins, preserving returned owners while cleaning scratch owners in each nested case.
 - Branch-local owned-result cleanup now also covers the mirror outer final `switch` shape where multiple cases return
   through nested final `if` joins and the default case returns directly.
+- Mixed direct/nested branch-local owned-result cleanup now has negative coverage for returned values flowing through
+  helper calls before the final merge; the current blocker is branch-local cleanup emission for the helper-call returned
+  local owners.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit mixed direct/nested branch-local owned-result cleanup where returned values flow through helper calls before the
-  final merge.
+- Implement branch-local cleanup emission for helper-call returned owners in mixed direct/nested owned-result cleanup.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

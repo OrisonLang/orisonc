@@ -8140,6 +8140,33 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_cleanup_run"
     );
 
+    auto dynamic_array_owned_result_helper_call_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_helper_call_cleanup_rejected.or";
+    auto dynamic_array_owned_result_helper_call_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_helper_call_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_result_helper_call_cleanup_ir.has_errors());
+    assert(
+        dynamic_array_owned_result_helper_call_cleanup_ir.error_text.find(
+            "if branch ownership mismatch: owned transfers must match across all continuing branches"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_helper_call_cleanup_ir.error_text.find(
+            "branch-local cleanup plan: owner left_values"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_result_helper_call_cleanup_ir.error_text.find(
+            "branch-local cleanup plan: owner right_values"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_multi_nested_switch_returned_reuse_rejected.or";

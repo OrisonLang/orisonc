@@ -679,6 +679,17 @@ void assert_dynamic_array_switch_scratch_owner_reuse_emit_llvm_failure(
     assert(output.find("branch-local cleanup plan: owner first_left_scratch") != std::string::npos);
 }
 
+void assert_dynamic_array_helper_call_cleanup_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("if branch ownership mismatch: owned transfers must match across all continuing branches") !=
+           std::string::npos);
+    assert(output.find("branch-local cleanup plan: owner left_values") != std::string::npos);
+    assert(output.find("branch-local cleanup plan: owner right_values") != std::string::npos);
+}
+
 void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1202,6 +1213,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_if_two_switches_cleanup_run.or";
     auto dynamic_array_owned_result_switch_two_ifs_cleanup_path =
         fixtures / "dynamic_array_owned_result_switch_two_ifs_cleanup_run.or";
+    auto dynamic_array_owned_result_helper_call_cleanup_path =
+        fixtures / "dynamic_array_owned_result_helper_call_cleanup_rejected.or";
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =
         fixtures / "dynamic_array_owned_result_multi_nested_switch_returned_reuse_rejected.or";
     auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path =
@@ -1736,6 +1749,10 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_switch_two_ifs_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_cleanup"
+    );
+    assert_dynamic_array_helper_call_cleanup_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_helper_call_cleanup_path
     );
     assert_dynamic_array_switch_returned_owner_reuse_emit_llvm_failure(
         executable,
