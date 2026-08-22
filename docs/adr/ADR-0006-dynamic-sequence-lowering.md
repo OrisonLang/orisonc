@@ -2129,12 +2129,15 @@ representation.
   `DynamicArray<T>` owner and immediately returns it through a same-type helper call.
 - Final ternary expressions now also support named `DynamicArray<T>` candidate owners allocated before the ternary:
   the selected owner is returned through the helper call, and the unselected owner is cleaned on its branch path.
+- Final ternary named-owner helper-call transfer now has negative coverage for later reuse of the transferred owner.
+  The checked fixture rejects `left_values` after `flag ? forward_values(left_values) : forward_values(right_values)`.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative final-ternary coverage for reusing a named owner after helper-call transfer.
+- Audit named helper-call ternary cleanup when the selected owner is forwarded through another helper before final
+  consumption.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
