@@ -8142,7 +8142,7 @@ auto main() -> int {
 
     auto dynamic_array_owned_result_helper_call_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_owned_result_helper_call_cleanup_rejected.or";
+        "dynamic_array_owned_result_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
@@ -8150,21 +8150,26 @@ auto main() -> int {
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
-    assert(dynamic_array_owned_result_helper_call_cleanup_ir.has_errors());
-    assert(
-        dynamic_array_owned_result_helper_call_cleanup_ir.error_text.find(
-            "if branch ownership mismatch: owned transfers must match across all continuing branches"
-        ) != std::string::npos
+    assert(!dynamic_array_owned_result_helper_call_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_owned_result_helper_call_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_owned_result_helper_call_cleanup_ir.ir_text,
+        "define { ptr, i64, i64 } @choose(i32 %selector, i1 %inner)"
     );
-    assert(
-        dynamic_array_owned_result_helper_call_cleanup_ir.error_text.find(
-            "branch-local cleanup plan: owner left_values"
-        ) != std::string::npos
+    assert_ir_contains(dynamic_array_owned_result_helper_call_cleanup_ir.ir_text, "switch i32 %selector");
+    assert_ir_contains(dynamic_array_owned_result_helper_call_cleanup_ir.ir_text, "br i1 %inner");
+    assert_ir_contains(
+        dynamic_array_owned_result_helper_call_cleanup_ir.ir_text,
+        "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %"
     );
-    assert(
-        dynamic_array_owned_result_helper_call_cleanup_ir.error_text.find(
-            "branch-local cleanup plan: owner right_values"
-        ) != std::string::npos
+    assert_ir_excludes(dynamic_array_owned_result_helper_call_cleanup_ir.ir_text, "%values.dynamic_array_cleanup");
+    assert_branch_local_three_case_mixed_switch_dynamic_array_cleanup_ir(
+        dynamic_array_owned_result_helper_call_cleanup_ir.ir_text
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_helper_call_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_helper_call_cleanup_run"
     );
 
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_path =

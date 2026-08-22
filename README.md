@@ -327,11 +327,12 @@ This repository currently captures the initial language design and development c
   `switch` joins, preserving returned owners while cleaning scratch owners in each nested case.
 - Branch-local owned-result cleanup now also covers the mirror outer final `switch` shape where multiple cases return
   through nested final `if` joins and the default case returns directly.
-- Mixed direct/nested branch-local owned-result cleanup now has negative coverage for returned values flowing through
-  helper calls before the final merge; the current blocker is branch-local cleanup emission for the helper-call returned
-  local owners.
+- Mixed direct/nested branch-local owned-result cleanup now supports returned values flowing through same-type helper
+  calls before the final merge. Helper-call returned local owners are consumed for branch ownership joins while sibling
+  scratch owners still clean before the owned-result PHI.
+- Same-type helper functions that return an owned `DynamicArray<T>` parameter now suppress callee-side parameter
+  cleanup for that returned descriptor, leaving cleanup with the caller/ultimate consumer and avoiding duplicate frees.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: implement branch-local cleanup emission for helper-call returned owners in mixed
-  direct/nested owned-result cleanup.
+- Next highest-value step: audit helper-call returned-owner cleanup through multiple nested final `switch` cases.

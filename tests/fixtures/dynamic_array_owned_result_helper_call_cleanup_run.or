@@ -1,4 +1,4 @@
-package fixtures.dynamicarrayownedresulthelpercallcleanuprejected
+package fixtures.dynamicarrayownedresulthelpercallcleanuprun
 
 record Payload
     public value: UInt32

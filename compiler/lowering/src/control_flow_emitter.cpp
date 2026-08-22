@@ -160,20 +160,73 @@ auto branch_local_dynamic_array_cleanup_owner(
     );
 }
 
+auto branch_local_returned_dynamic_array_call_argument(
+    syntax::ExpressionSyntax const& final_expression,
+    std::optional<std::string_view> expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (!expected_source_type_name.has_value() ||
+        !dynamic_array_element_source_type_name(*expected_source_type_name).has_value() ||
+        final_expression.kind != syntax::ExpressionKind::call ||
+        final_expression.left == nullptr ||
+        final_expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto function = context.lowering.functions.find(final_expression.left->text);
+    if (function == context.lowering.functions.end() ||
+        function->second.source_return_type_name != *expected_source_type_name ||
+        function->second.parameter_source_type_names.size() != final_expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index < final_expression.arguments.size(); ++index) {
+        auto const& argument = final_expression.arguments[index];
+        if (argument.kind != syntax::ExpressionKind::name ||
+            function->second.parameter_source_type_names[index] != *expected_source_type_name) {
+            continue;
+        }
+        auto source_type = session.state.source_type_names.find(argument.text);
+        if (source_type != session.state.source_type_names.end() &&
+            source_type->second == *expected_source_type_name) {
+            return argument.text;
+        }
+    }
+    return std::nullopt;
+}
+
 auto mark_returned_dynamic_array_owner_consumed(
     syntax::ExpressionSyntax const* final_expression,
     LoweredExpression const& value,
     std::optional<std::string_view> expected_source_type_name,
+    EmissionContext const& context,
     FunctionLoweringSession& session,
     std::size_t cleanup_plan_depth
 ) -> std::optional<std::string> {
     if (final_expression == nullptr ||
-        final_expression->kind != syntax::ExpressionKind::name ||
         !expected_source_type_name.has_value() ||
         !dynamic_array_element_source_type_name(*expected_source_type_name).has_value() ||
         value.type != std::string {dynamic_array_descriptor_llvm_type()}) {
         return std::nullopt;
     }
+
+    if (auto call_argument = branch_local_returned_dynamic_array_call_argument(
+            *final_expression,
+            expected_source_type_name,
+            context,
+            session
+        )) {
+        mark_owned_binding_consumed(session.state.ownership_transfers, *call_argument);
+        if (branch_local_dynamic_array_cleanup_owner(cleanup_plan_depth, *call_argument, session)) {
+            return call_argument;
+        }
+    }
+
+    if (final_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
     auto source_type = session.state.source_type_names.find(final_expression->text);
     if (source_type != session.state.source_type_names.end() &&
         source_type->second == *expected_source_type_name) {
@@ -342,6 +395,7 @@ auto lower_final_if_statement(
                         final_statement_expression(arm.statement.nested_statements),
                         *value,
                         arm.expected_source_type_name,
+                        arm.context,
                         arm.session,
                         cleanup_plan_depth
                     );
@@ -399,6 +453,7 @@ auto lower_final_if_statement(
                         final_statement_expression(arm.statement.alternate_statements),
                         *value,
                         arm.expected_source_type_name,
+                        arm.context,
                         arm.session,
                         cleanup_plan_depth
                     );
@@ -624,6 +679,7 @@ auto lower_final_switch_statement(
                         switch_case_final_expression(*planned_case.syntax),
                         *value,
                         current.expected_source_type_name,
+                        current.context,
                         current.session,
                         current.case_dynamic_array_cleanup_plan_depth
                     );

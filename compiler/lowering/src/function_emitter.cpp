@@ -705,6 +705,28 @@ void release_returned_dynamic_array_local_cleanup(
         return;
     }
 
+    if (std::ranges::find(state.parameter_names, expression.text) != state.parameter_names.end()) {
+        auto const storage = aggregate_storage_for_name(expression.text, state);
+        auto const* parameter_origin = matching_dynamic_array_descriptor_origin(
+            semantic_result,
+            expression.text,
+            *return_source_type_name,
+            semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+        );
+        auto const* parameter_lifetime_plan = storage.has_value()
+            ? matching_bound_dynamic_array_parameter_lifetime_plan(
+                  options.dynamic_array_descriptor_lifetime_plans,
+                  expression.text,
+                  *return_source_type_name,
+                  *storage
+              )
+            : nullptr;
+        if (parameter_origin != nullptr || parameter_lifetime_plan != nullptr) {
+            mark_owned_binding_consumed(state.ownership_transfers, expression.text);
+        }
+        return;
+    }
+
     auto const* origin = matching_dynamic_array_descriptor_origin(
         semantic_result,
         expression.text,
