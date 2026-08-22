@@ -4368,7 +4368,8 @@ auto lowered_expression(
             state
         );
         auto branch_owned_dynamic_array_return = then_returned_owner.has_value() &&
-            else_returned_owner.has_value() &&
+            else_returned_owner.has_value();
+        auto branch_returned_owners_are_distinct = branch_owned_dynamic_array_return &&
             *then_returned_owner != *else_returned_owner;
         auto binding_scope = std::optional<BranchBindingScope> {};
         if (branch_owned_dynamic_array_return) {
@@ -4385,6 +4386,7 @@ auto lowered_expression(
             std::optional<std::string_view> expected_source_type_name;
             std::optional<std::string> then_returned_owner;
             std::optional<std::string> else_returned_owner;
+            bool returned_owners_are_distinct = false;
             BranchBindingScope* binding_scope = nullptr;
             std::vector<OwnershipTransferState> ownership_transfers_by_arm;
         };
@@ -4399,6 +4401,7 @@ auto lowered_expression(
             .expected_source_type_name = expected_source_type_name,
             .then_returned_owner = then_returned_owner,
             .else_returned_owner = else_returned_owner,
+            .returned_owners_are_distinct = branch_returned_owners_are_distinct,
             .binding_scope = binding_scope.has_value() ? &*binding_scope : nullptr,
         };
         auto result = emit_conditional_value(
@@ -4422,7 +4425,8 @@ auto lowered_expression(
                     if (!value.has_value()) {
                         return value;
                     }
-                    if (arm.else_returned_owner.has_value() &&
+                    if (arm.returned_owners_are_distinct &&
+                        arm.else_returned_owner.has_value() &&
                         !emit_dynamic_array_cleanup_for_owner(
                             *arm.else_returned_owner,
                             arm.context,
@@ -4456,7 +4460,8 @@ auto lowered_expression(
                     if (!value.has_value()) {
                         return value;
                     }
-                    if (arm.then_returned_owner.has_value() &&
+                    if (arm.returned_owners_are_distinct &&
+                        arm.then_returned_owner.has_value() &&
                         !emit_dynamic_array_cleanup_for_owner(
                             *arm.then_returned_owner,
                             arm.context,

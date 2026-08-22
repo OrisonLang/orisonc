@@ -353,8 +353,10 @@ This repository currently captures the initial language design and development c
   function result without emitting stale cleanup for the local.
 - Negative local-return ternary coverage now rejects reusing `selected` after passing it to a consuming owned
   parameter before the final return.
+- Local-return ternary cleanup now supports forwarding the stored selected owner through distinct final helper
+  consumers in another ternary before returning that final local owner.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit local-return ternary cleanup with distinct final consumers in each branch before the
-  local return.
+- Next highest-value step: add negative coverage for reusing the final local owner after the branch-consumer ternary
+  transfer.
