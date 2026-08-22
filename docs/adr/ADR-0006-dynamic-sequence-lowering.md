@@ -2138,12 +2138,14 @@ representation.
   `forward_again(forward_values(left_values))`.
 - Helper-call ternary cleanup now supports storing the selected owner in a local before returning that local as the
   final function result. The checked fixture verifies scratch cleanup while suppressing stale cleanup for `selected`.
+- Negative local-return ternary coverage now rejects reusing `selected` after that local has been moved into a
+  consuming owned parameter before the final return.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing the local selected owner after final ternary transfer.
+- Audit local-return ternary cleanup with distinct final consumers in each branch before the local return.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
