@@ -2154,12 +2154,16 @@ representation.
   those scratch owners through same-type helpers, clean the forwarded scratch locally, and return the selected owner.
 - Negative final-consumer scratch coverage now rejects reusing `scratch` after forwarding it through a same-type helper
   inside a branch-consumer helper.
+- Branch-consumer ternary cleanup now supports final consumer helpers that move the selected owner into a local alias
+  and return that alias. The move-consumption tracker treats named `DynamicArray<T>` parameters as consumed even when
+  they have no local cleanup plan, preventing stale parameter cleanup after alias transfer.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-consumer ternary cleanup when final consumer helpers return through local aliases of the selected owner.
+- Add negative coverage for reusing a final-consumer parameter after moving it into a local alias returned by that
+  helper.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

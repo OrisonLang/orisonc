@@ -133,10 +133,16 @@ void assert_no_deallocate_after_function(
 }
 
 void assert_ir_contains(std::string const& ir_text, std::string_view expected_fragment) {
+    if (ir_text.find(expected_fragment) == std::string::npos) {
+        std::cerr << "expected IR to contain '" << expected_fragment << "'\n";
+    }
     assert(ir_text.find(expected_fragment) != std::string::npos);
 }
 
 void assert_ir_excludes(std::string const& ir_text, std::string_view unexpected_fragment) {
+    if (ir_text.find(unexpected_fragment) != std::string::npos) {
+        std::cerr << "expected IR to exclude '" << unexpected_fragment << "'\n";
+    }
     assert(ir_text.find(unexpected_fragment) == std::string::npos);
 }
 
@@ -8576,6 +8582,54 @@ auto main() -> int {
         pipeline,
         dynamic_array_owned_result_ternary_branch_consumer_scratch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_scratch_cleanup_run"
+    );
+
+    auto dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_alias_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "%alias.addr = alloca { ptr, i64, i64 }"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "call { ptr, i64, i64 } @finish_left({ ptr, i64, i64 } %"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "call { ptr, i64, i64 } @finish_right({ ptr, i64, i64 } %"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "%values.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "%alias.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "%selected.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir.ir_text,
+        "%final_selected.dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_run"
     );
 
     auto dynamic_array_owned_result_ternary_branch_consumer_scratch_reuse_path =

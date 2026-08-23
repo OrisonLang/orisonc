@@ -2,6 +2,7 @@
 
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <algorithm>
@@ -46,10 +47,15 @@ void release_moved_owned_cleanup_expression(
     syntax::ExpressionSyntax const& expression,
     FunctionLoweringState& state
 ) {
-    if (expression.kind == syntax::ExpressionKind::name &&
-        owner_has_local_dynamic_array_cleanup_plan(expression.text, state)) {
-        remove_local_dynamic_array_cleanup_plans_for_owner(expression.text, state);
-        mark_owned_binding_consumed(state.ownership_transfers, expression.text);
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        auto has_dynamic_array_source_type = source_type != state.source_type_names.end() &&
+            dynamic_array_element_source_type_name(source_type->second).has_value();
+        if (has_dynamic_array_source_type ||
+            owner_has_local_dynamic_array_cleanup_plan(expression.text, state)) {
+            remove_local_dynamic_array_cleanup_plans_for_owner(expression.text, state);
+            mark_owned_binding_consumed(state.ownership_transfers, expression.text);
+        }
         return;
     }
 
