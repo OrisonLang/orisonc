@@ -357,8 +357,10 @@ This repository currently captures the initial language design and development c
   consumers in another ternary before returning that final local owner.
 - Negative branch-consumer local-return ternary coverage now rejects reusing `final_selected` after it moves into a
   consuming owned parameter before the final return.
+- Nested branch-consumer local-return ternary cleanup now supports final consumer arms that themselves chain same-type
+  helper calls before returning the final local owner.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit nested branch-consumer ternary cleanup where the final consumer arms themselves use
-  chained same-type helper calls.
+- Next highest-value step: add negative coverage for reusing the selected local after a chained branch-consumer
+  ternary transfer.
