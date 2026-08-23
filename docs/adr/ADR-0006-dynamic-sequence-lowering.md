@@ -2144,12 +2144,15 @@ representation.
   consumers in another ternary before returning the final local owner. Ternary lowering snapshots ownership whenever
   both arms return an owned `DynamicArray<T>` owner, including same-owner arms, and only emits unselected-owner cleanup
   when the returned owner names differ.
+- Negative branch-consumer local-return ternary coverage now rejects reusing `final_selected` after it moves into a
+  consuming owned parameter before the final return.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing the final local owner after the branch-consumer ternary transfer.
+- Audit nested branch-consumer ternary cleanup where the final consumer arms themselves use chained same-type helper
+  calls.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
