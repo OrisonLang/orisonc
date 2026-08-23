@@ -385,8 +385,9 @@ This repository currently captures the initial language design and development c
   another local before returning.
 - Negative stored-helper-result branch-consumer coverage now rejects reusing `returned` after it moves into the final
   return owner.
+- Branch-consumer ternary cleanup now supports final consumer helpers that store same-type helper-call results through
+  asymmetric local chains before returning.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-consumer ternary cleanup where both final consumer helpers store helper-call
-  results through asymmetric local chains before returning.
+- Next highest-value step: add negative coverage for reusing `final_return` after an asymmetric stored-helper chain.
