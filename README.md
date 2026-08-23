@@ -377,8 +377,10 @@ This repository currently captures the initial language design and development c
   single alias and the other returning a nested alias chain.
 - Negative asymmetric-alias branch-consumer coverage now rejects reusing the shallow-arm alias after it moves into the
   returned owner.
+- Branch-consumer ternary cleanup now supports final consumer helpers that return locally aliased selected owners
+  through same-type helper-call chains.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-consumer ternary cleanup where final consumer helpers return aliases through
-  helper-call chains after local aliasing.
+- Next highest-value step: add negative coverage for reusing an alias after it moves into a same-type helper-call
+  return path.

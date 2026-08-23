@@ -2168,13 +2168,14 @@ representation.
   alias while the sibling helper returns a nested alias chain, with stale cleanup suppressed for all moved aliases.
 - Negative asymmetric-alias branch-consumer coverage now rejects reusing the shallow-arm alias after it moves into the
   returned owner.
+- Branch-consumer ternary cleanup now supports final consumer helpers that return locally aliased selected owners
+  through same-type helper-call chains, while suppressing stale cleanup for the parameter and intermediate aliases.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-consumer ternary cleanup where final consumer helpers return aliases through helper-call chains after
-  local aliasing.
+- Add negative coverage for reusing an alias after it moves into a same-type helper-call return path.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
