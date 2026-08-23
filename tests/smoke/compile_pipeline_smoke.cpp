@@ -8722,6 +8722,23 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_nested_alias_reuse_rejected.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_ir.has_errors());
+    assert(
+        dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_ir.error_text.find(
+            "use after move: alias"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_owned_result_ternary_chained_branch_consumer_selected_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_chained_selected_reuse_rejected.or";

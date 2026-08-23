@@ -2162,12 +2162,14 @@ representation.
 - Branch-consumer ternary cleanup now supports final consumer helpers that move the selected owner through a nested
   local alias chain and return the final alias, while suppressing stale cleanup for the parameter and each
   intermediate alias.
+- Negative nested-alias branch-consumer coverage now rejects reusing the first alias after it moves into a returned
+  second alias.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing the first alias after moving it into a nested returned alias.
+- Audit branch-consumer ternary cleanup where final consumer helpers split across asymmetric alias depths.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

@@ -371,8 +371,10 @@ This repository currently captures the initial language design and development c
   a returned local alias.
 - Branch-consumer ternary cleanup now supports final consumer helpers that return the selected owner through a nested
   local alias chain without emitting stale cleanup for any intermediate alias.
+- Negative nested-alias branch-consumer coverage now rejects reusing the first alias after it moves into a returned
+  second alias.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing the first alias after moving it into a nested returned
-  alias.
+- Next highest-value step: audit branch-consumer ternary cleanup where final consumer helpers split across asymmetric
+  alias depths.
