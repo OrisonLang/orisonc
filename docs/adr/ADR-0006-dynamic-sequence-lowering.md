@@ -2152,12 +2152,14 @@ representation.
   ternary transfers it.
 - Branch-consumer ternary cleanup now supports final consumer arms that allocate independent scratch owners, forward
   those scratch owners through same-type helpers, clean the forwarded scratch locally, and return the selected owner.
+- Negative final-consumer scratch coverage now rejects reusing `scratch` after forwarding it through a same-type helper
+  inside a branch-consumer helper.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing a final-consumer scratch owner after it has been forwarded.
+- Audit branch-consumer ternary cleanup when final consumer helpers return through local aliases of the selected owner.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
