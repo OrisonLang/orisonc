@@ -361,8 +361,9 @@ This repository currently captures the initial language design and development c
   helper calls before returning the final local owner.
 - Negative chained branch-consumer ternary coverage now rejects reusing `selected` after the chained final-consumer
   ternary transfers it.
+- Branch-consumer ternary cleanup now supports final consumer arms that allocate independent scratch owners, forward
+  those scratch owners through same-type helpers, clean the forwarded scratch locally, and return the selected owner.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-consumer ternary cleanup where the final consumer arms each allocate and
-  forward independent scratch owners before returning the selected owner.
+- Next highest-value step: add negative coverage for reusing a final-consumer scratch owner after it has been forwarded.
