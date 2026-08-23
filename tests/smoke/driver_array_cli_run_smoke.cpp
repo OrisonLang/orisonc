@@ -751,6 +751,14 @@ void assert_dynamic_array_ternary_scratch_owner_reuse_emit_llvm_failure(
     assert(output.find("use after move: scratch") != std::string::npos);
 }
 
+void assert_dynamic_array_ternary_parameter_owner_reuse_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("use after move: values") != std::string::npos);
+}
+
 void assert_dynamic_array_switch_scratch_owner_reuse_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1478,6 +1486,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_scratch_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_path =
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_alias_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_alias_reuse_path =
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_alias_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_scratch_reuse_path =
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_scratch_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_chained_branch_consumer_selected_reuse_path =
@@ -2203,6 +2213,10 @@ auto main() -> int {
     assert_dynamic_array_ternary_scratch_owner_reuse_emit_llvm_failure(
         executable,
         dynamic_array_owned_result_ternary_branch_consumer_scratch_reuse_path
+    );
+    assert_dynamic_array_ternary_parameter_owner_reuse_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_alias_reuse_path
     );
     assert_dynamic_array_ternary_local_owner_reuse_emit_llvm_failure(
         executable,

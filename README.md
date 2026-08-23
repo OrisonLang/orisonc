@@ -367,8 +367,10 @@ This repository currently captures the initial language design and development c
   inside a branch-consumer helper.
 - Branch-consumer ternary cleanup now supports final consumer helpers that return the selected owner through a local
   alias, suppressing stale cleanup for both the moved parameter and the alias.
+- Negative alias-return branch-consumer coverage now rejects reusing the final-consumer parameter after moving it into
+  a returned local alias.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing a final-consumer parameter after moving it into a local
-  alias returned by that helper.
+- Next highest-value step: audit branch-consumer ternary cleanup where final consumer helpers return a nested local
+  alias chain of the selected owner.
