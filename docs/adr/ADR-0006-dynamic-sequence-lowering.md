@@ -2148,12 +2148,15 @@ representation.
   consuming owned parameter before the final return.
 - Nested branch-consumer local-return ternary cleanup now supports final consumer arms that themselves chain same-type
   helper calls before returning the final local owner.
+- Negative chained branch-consumer ternary coverage now rejects reusing `selected` after the chained final-consumer
+  ternary transfers it.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing the selected local after a chained branch-consumer ternary transfer.
+- Audit branch-consumer ternary cleanup where the final consumer arms each allocate and forward independent scratch
+  owners before returning the selected owner.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
