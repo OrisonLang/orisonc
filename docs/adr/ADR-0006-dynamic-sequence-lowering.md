@@ -2178,12 +2178,14 @@ representation.
   return owner.
 - Branch-consumer ternary cleanup now supports final consumer helpers that store same-type helper-call results through
   asymmetric local chains before returning, with stale cleanup suppressed for both stored locals.
+- Negative asymmetric stored-helper branch-consumer coverage now rejects reusing `final_return` after it moves into the
+  final owner.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing `final_return` after an asymmetric stored-helper chain.
+- Audit branch-consumer ternary cleanup where final consumer helpers return through a three-local helper-result chain.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
