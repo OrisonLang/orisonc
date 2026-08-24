@@ -1743,6 +1743,9 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_cleanup_path =
         fixtures /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_mixed_direct_distinct_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_reuse_path =
+        fixtures /
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_mixed_direct_distinct_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_distinct_local_names_reuse_path =
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_distinct_local_names_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_reuse_path =
@@ -2594,6 +2597,11 @@ auto main() -> int {
     assert_dynamic_array_use_after_move_emit_llvm_failure(
         executable,
         dynamic_array_owned_result_ternary_branch_consumer_distinct_local_names_reuse_path,
+        "right_middle"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_reuse_path,
         "right_middle"
     );
     assert_dynamic_array_use_after_move_emit_llvm_failure(
