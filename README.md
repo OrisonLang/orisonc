@@ -411,8 +411,10 @@ This repository currently captures the initial language design and development c
   to a final branch consumer.
 - Branch-consumer ternary cleanup now supports nested helper-call arguments feeding final consumer helpers that return
   through branch-local helper-result chains.
+- Negative nested-argument local-chain branch-consumer coverage now rejects reusing a branch-local helper-result after
+  it moves.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing a branch-local helper-result after a nested helper-call
-  argument feeds a final consumer helper.
+- Next highest-value step: audit branch-consumer ternary cleanup where final consumer helper results feed another
+  branch-consumer ternary before return.
