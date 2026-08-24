@@ -1074,6 +1074,37 @@ void assert_dynamic_array_ternary_branch_consumer_asymmetric_stored_helper_clean
     assert_excludes(output, "%final_selected.dynamic_array_cleanup");
 }
 
+void assert_dynamic_array_ternary_branch_consumer_three_local_helper_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define { ptr, i64, i64 } @choose(i1 %select_left, i1 %finish_left_path)");
+    assert_contains(output, "define { ptr, i64, i64 } @finish_left({ ptr, i64, i64 } %values)");
+    assert_contains(output, "define { ptr, i64, i64 } @finish_right({ ptr, i64, i64 } %values)");
+    assert_contains(output, "%alias.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "%second_alias.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "%returned.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "%middle_return.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "%final_return.addr = alloca { ptr, i64, i64 }");
+    assert_contains(output, "call { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %");
+    assert_contains(output, "call { ptr, i64, i64 } @forward_again({ ptr, i64, i64 } %");
+    assert_contains(output, "call { ptr, i64, i64 } @finish_left({ ptr, i64, i64 } %");
+    assert_contains(output, "call { ptr, i64, i64 } @finish_right({ ptr, i64, i64 } %");
+    assert_branch_local_dynamic_array_cleanup_for_owners(
+        output,
+        {"left_values", "left_scratch", "right_values", "right_scratch"}
+    );
+    assert_excludes(output, "%values.dynamic_array_cleanup");
+    assert_excludes(output, "%alias.dynamic_array_cleanup");
+    assert_excludes(output, "%second_alias.dynamic_array_cleanup");
+    assert_excludes(output, "%returned.dynamic_array_cleanup");
+    assert_excludes(output, "%middle_return.dynamic_array_cleanup");
+    assert_excludes(output, "%final_return.dynamic_array_cleanup");
+    assert_excludes(output, "%selected.dynamic_array_cleanup");
+    assert_excludes(output, "%final_selected.dynamic_array_cleanup");
+}
+
 void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1633,6 +1664,8 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup_path =
         fixtures /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_stored_helper_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path =
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_three_local_helper_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_reuse_path =
         fixtures /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_stored_helper_reuse_rejected.or";
@@ -2434,6 +2467,20 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup"
+    );
+    assert_dynamic_array_ternary_branch_consumer_three_local_helper_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup"
     );
     assert_dynamic_array_use_after_move_emit_llvm_failure(
         executable,
