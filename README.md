@@ -415,8 +415,10 @@ This repository currently captures the initial language design and development c
   it moves.
 - Branch-consumer ternary cleanup now supports final consumer helper results feeding another branch-consumer ternary
   before return.
+- Negative result-nested branch-consumer ternary coverage now rejects reusing `finished` after it feeds the second
+  branch-consumer ternary.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing `finished` after a final consumer helper result feeds
-  another branch-consumer ternary.
+- Next highest-value step: audit branch-consumer ternary cleanup where second-stage wrapper helpers return through
+  asymmetric local chains before final return.
