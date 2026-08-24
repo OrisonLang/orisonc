@@ -419,8 +419,10 @@ This repository currently captures the initial language design and development c
   branch-consumer ternary.
 - Branch-consumer ternary cleanup now supports second-stage wrapper helpers returning through asymmetric local chains
   before final return.
+- Negative asymmetric wrapper-chain coverage now rejects reusing `wrapped_right_middle` after it moves into the final
+  wrapper result.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing a second-stage wrapper local after it moves through an
-  asymmetric local chain.
+- Next highest-value step: audit branch-consumer ternary cleanup where second-stage wrapper helpers mix direct returns
+  with local-chain returns before final return.
