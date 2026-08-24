@@ -2204,13 +2204,15 @@ representation.
   through branch-local helper-result chains.
 - Negative nested-argument local-chain branch-consumer coverage now rejects reusing a branch-local helper-result after
   it moves.
+- Branch-consumer ternary cleanup now supports final consumer helper results feeding another branch-consumer ternary
+  before return.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-consumer ternary cleanup where final consumer helper results feed another branch-consumer ternary before
-  return.
+- Add negative coverage for reusing `finished` after a final consumer helper result feeds another branch-consumer
+  ternary.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

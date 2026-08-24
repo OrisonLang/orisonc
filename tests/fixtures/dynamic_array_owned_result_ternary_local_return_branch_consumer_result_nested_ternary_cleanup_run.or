@@ -1,0 +1,61 @@
+package fixtures.dynamicarrayownedresultternarylocalreturnbranchconsumerresultnestedternarycleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function forward_values(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    values
+
+function forward_again(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    values
+
+function finish_left(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    var left_alias: DynamicArray<Payload> = values
+    var left_result: DynamicArray<Payload> = forward_again(forward_values(left_alias))
+    var left_final: DynamicArray<Payload> = left_result
+    left_final
+
+function finish_right(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    var right_alias: DynamicArray<Payload> = values
+    var right_result: DynamicArray<Payload> = forward_again(forward_values(right_alias))
+    var right_middle: DynamicArray<Payload> = right_result
+    var right_final: DynamicArray<Payload> = right_middle
+    right_final
+
+function wrap_left(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    var wrapped_left: DynamicArray<Payload> = forward_values(values)
+    wrapped_left
+
+function wrap_right(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    var wrapped_right: DynamicArray<Payload> = forward_again(forward_values(values))
+    wrapped_right
+
+function choose(select_left: Bool, finish_left_path: Bool, wrap_left_path: Bool) -> DynamicArray<Payload>
+    var left_values: DynamicArray<Payload> = make_values(7 as UInt32)
+    var left_scratch: DynamicArray<Payload> = make_values(17 as UInt32)
+    var right_values: DynamicArray<Payload> = make_values(19 as UInt32)
+    var right_scratch: DynamicArray<Payload> = make_values(23 as UInt32)
+    var selected: DynamicArray<Payload> = select_left ? forward_again(forward_values(left_values)) : forward_again(forward_values(right_values))
+    var finished: DynamicArray<Payload> = finish_left_path ? finish_left(forward_values(selected)) : finish_right(forward_again(forward_values(selected)))
+    var final_selected: DynamicArray<Payload> = wrap_left_path ? wrap_left(finished) : wrap_right(finished)
+    final_selected
+
+function consume_items(items: DynamicArray<Payload>) -> UInt32
+    items.length() == 2 ? 0 as UInt32 : 1 as UInt32
+
+function main() -> UInt32
+    var selected: DynamicArray<Payload> = choose(false, true, false)
+    consume_items(selected)
