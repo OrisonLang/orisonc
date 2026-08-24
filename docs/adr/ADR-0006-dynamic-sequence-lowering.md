@@ -2220,12 +2220,15 @@ representation.
   nested helper-call arguments.
 - Negative nested wrapper-argument coverage now rejects reusing `finished` after a nested helper-call argument transfers
   it to a second-stage wrapper helper.
+- Branch-consumer ternary cleanup now supports second-stage wrapper results feeding a final consumer helper before
+  return.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-consumer ternary cleanup where second-stage wrapper results feed a final consumer helper before return.
+- Add negative coverage for reusing `final_selected` after second-stage wrapper results feed a final consumer helper
+  before return.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
