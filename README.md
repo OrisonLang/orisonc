@@ -405,8 +405,10 @@ This repository currently captures the initial language design and development c
   same-type helper-call arguments.
 - Negative nested helper-argument branch-consumer coverage now rejects reusing `selected` after it transfers to a final
   branch consumer.
+- Branch-consumer ternary cleanup now supports asymmetric nested same-type helper-call arguments across final consumer
+  branches.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-consumer ternary cleanup where nested helper-call arguments are asymmetric
-  across the final consumer branches.
+- Next highest-value step: add negative coverage for reusing `selected` after an asymmetric nested helper-call argument
+  transfers it to a final branch consumer.
