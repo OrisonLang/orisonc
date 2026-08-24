@@ -427,8 +427,10 @@ This repository currently captures the initial language design and development c
   transfer.
 - Branch-consumer ternary cleanup now supports second-stage wrapper helpers receiving the transferred owner through
   nested helper-call arguments.
+- Negative nested wrapper-argument coverage now rejects reusing `finished` after a nested helper-call argument transfers
+  it to a second-stage wrapper helper.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing `finished` after a nested helper-call argument transfers it
-  to a second-stage wrapper helper.
+- Next highest-value step: audit branch-consumer ternary cleanup where second-stage wrapper results feed a final
+  consumer helper before return.

@@ -1963,6 +1963,9 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_nested_wrapper_argument_cleanup_path =
         fixtures /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_nested_wrapper_argument_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_nested_wrapper_argument_reuse_path =
+        fixtures /
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_nested_wrapper_argument_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_mixed_wrapper_reuse_path =
         fixtures /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_mixed_wrapper_reuse_rejected.or";
@@ -2933,6 +2936,11 @@ auto main() -> int {
     assert_dynamic_array_use_after_move_emit_llvm_failure(
         executable,
         dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_reuse_path,
+        "finished"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_nested_wrapper_argument_reuse_path,
         "finished"
     );
     assert_dynamic_array_use_after_move_emit_llvm_failure(
