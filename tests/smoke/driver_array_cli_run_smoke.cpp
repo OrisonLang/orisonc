@@ -1666,6 +1666,8 @@ auto main() -> int {
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_stored_helper_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path =
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_three_local_helper_cleanup_run.or";
+    auto dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_reuse_path =
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_three_local_helper_reuse_rejected.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_reuse_path =
         fixtures /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_stored_helper_reuse_rejected.or";
@@ -2481,6 +2483,11 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_reuse_path,
+        "middle_return"
     );
     assert_dynamic_array_use_after_move_emit_llvm_failure(
         executable,
