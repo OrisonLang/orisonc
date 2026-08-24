@@ -403,8 +403,10 @@ This repository currently captures the initial language design and development c
   it moves.
 - Branch-consumer ternary cleanup now supports final consumer helpers receiving the selected owner through nested
   same-type helper-call arguments.
+- Negative nested helper-argument branch-consumer coverage now rejects reusing `selected` after it transfers to a final
+  branch consumer.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing `selected` after a nested helper-call argument transfers
-  it to a final branch consumer.
+- Next highest-value step: audit branch-consumer ternary cleanup where nested helper-call arguments are asymmetric
+  across the final consumer branches.
