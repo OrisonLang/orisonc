@@ -2216,13 +2216,15 @@ representation.
   local-chain returns before final return.
 - Negative mixed wrapper-chain coverage now rejects reusing `wrapped_right_middle` after a mixed direct/local wrapper
   transfer.
+- Branch-consumer ternary cleanup now supports second-stage wrapper helpers receiving the transferred owner through
+  nested helper-call arguments.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-consumer ternary cleanup where second-stage wrapper helpers receive the transferred owner through nested
-  helper-call arguments.
+- Add negative coverage for reusing `finished` after a nested helper-call argument transfers it to a second-stage
+  wrapper helper.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
