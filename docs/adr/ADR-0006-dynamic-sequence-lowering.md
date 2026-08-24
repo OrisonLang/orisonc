@@ -2222,6 +2222,8 @@ representation.
   it to a second-stage wrapper helper.
 - Branch-consumer ternary cleanup now supports second-stage wrapper results feeding a final consumer helper before
   return.
+- Negative wrapper-result final-consumer coverage now rejects reusing `final_selected` after the selected wrapper
+  result moves into the final consumer helper.
 
 ## Follow-up work
 

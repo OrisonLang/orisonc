@@ -431,8 +431,10 @@ This repository currently captures the initial language design and development c
   it to a second-stage wrapper helper.
 - Branch-consumer ternary cleanup now supports second-stage wrapper results feeding a final consumer helper before
   return.
+- Negative wrapper-result final-consumer coverage now rejects reusing `final_selected` after the selected wrapper
+  result moves into the final consumer helper.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing `final_selected` after second-stage wrapper results feed a
-  final consumer helper before return.
+- Next highest-value step: promote the typed branch-local cleanup plan into the next narrow positive case for
+  final control-flow ownership mismatch cleanup insertion.
