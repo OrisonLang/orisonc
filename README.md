@@ -409,8 +409,10 @@ This repository currently captures the initial language design and development c
   branches.
 - Negative asymmetric nested helper-argument branch-consumer coverage now rejects reusing `selected` after it transfers
   to a final branch consumer.
+- Branch-consumer ternary cleanup now supports nested helper-call arguments feeding final consumer helpers that return
+  through branch-local helper-result chains.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-consumer ternary cleanup where nested helper-call arguments feed final consumer
-  helpers that return through branch-local helper-result chains.
+- Next highest-value step: add negative coverage for reusing a branch-local helper-result after a nested helper-call
+  argument feeds a final consumer helper.

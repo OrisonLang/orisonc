@@ -2200,13 +2200,15 @@ representation.
   branches.
 - Negative asymmetric nested helper-argument branch-consumer coverage now rejects reusing `selected` after it transfers
   to a final branch consumer.
+- Branch-consumer ternary cleanup now supports nested helper-call arguments feeding final consumer helpers that return
+  through branch-local helper-result chains.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit branch-consumer ternary cleanup where nested helper-call arguments feed final consumer helpers that return
-  through branch-local helper-result chains.
+- Add negative coverage for reusing a branch-local helper-result after a nested helper-call argument feeds a final
+  consumer helper.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
