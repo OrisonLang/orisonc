@@ -401,8 +401,10 @@ This repository currently captures the initial language design and development c
   distinct branch-local helper-result chains.
 - Negative mixed direct/local branch-consumer coverage now rejects reusing a distinct branch-local helper-result after
   it moves.
+- Branch-consumer ternary cleanup now supports final consumer helpers receiving the selected owner through nested
+  same-type helper-call arguments.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit branch-consumer ternary cleanup where the final consumer receives a selected owner
-  through a nested helper-call argument instead of a direct local.
+- Next highest-value step: add negative coverage for reusing `selected` after a nested helper-call argument transfers
+  it to a final branch consumer.
