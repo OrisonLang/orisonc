@@ -395,7 +395,10 @@ This repository currently captures the initial language design and development c
   `final_return`.
 - Branch-consumer ternary cleanup now supports final consumer helpers whose helper-result locals are named differently
   per branch.
+- Negative distinct-local branch-consumer coverage now rejects reusing a branch-specific helper-result local after it
+  moves.
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: add negative coverage for reusing a branch-specific helper-result local after it moves.
+- Next highest-value step: audit branch-consumer ternary cleanup where final consumer helpers mix direct helper-call
+  returns with distinct branch-local chains.

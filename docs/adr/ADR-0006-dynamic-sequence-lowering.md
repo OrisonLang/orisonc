@@ -2186,12 +2186,15 @@ representation.
   `final_return`.
 - Branch-consumer ternary cleanup now supports final consumer helpers whose helper-result locals are named differently
   per branch.
+- Negative distinct-local branch-consumer coverage now rejects reusing a branch-specific helper-result local after it
+  moves.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing a branch-specific helper-result local after it moves.
+- Audit branch-consumer ternary cleanup where final consumer helpers mix direct helper-call returns with distinct
+  branch-local chains.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
