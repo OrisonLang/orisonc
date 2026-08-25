@@ -1,4 +1,5 @@
 #include "orison/lowering/control_flow_emitter.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
@@ -554,9 +555,190 @@ int main() {
         orison::lowering::render_expression_lowering_failure(choice_failures.expression) ==
         "use after move: holder.Loaded.payload"
     );
+
+    auto local_dynamic_array_path =
+        std::filesystem::temp_directory_path() / "orison_control_flow_local_dynamic_array_cleanup_smoke.or";
+    {
+        auto output = std::ofstream(local_dynamic_array_path);
+        output << "package demo.control_flow_local_dynamic_array_cleanup\n"
+                  "\n"
+                  "record Payload\n"
+                  "    public value: Int64\n"
+                  "\n"
+                  "interface Drop\n"
+                  "    function drop(this: exclusive This) -> Unit\n"
+                  "\n"
+                  "implements Drop for Payload\n"
+                  "    function drop(this: exclusive This) -> Unit\n"
+                  "        return\n"
+                  "\n"
+                  "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "function choose_if(flag: Bool) -> UInt32\n"
+                  "    if flag\n"
+                  "        use_items(items)\n"
+                  "    else\n"
+                  "        0 as UInt32\n"
+                  "\n"
+                  "function choose_switch(flag: Bool) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => use_items(items)\n"
+                  "        false => 0 as UInt32\n";
+    }
+
+    auto local_dynamic_array_source = orison::source::SourceFile::read(local_dynamic_array_path);
+    assert(local_dynamic_array_source.has_value());
+    auto local_dynamic_array_parse_result = parser.parse(*local_dynamic_array_source);
+    assert(!local_dynamic_array_parse_result.diagnostics.has_errors());
+
+    auto local_dynamic_array_diagnostics = orison::diagnostics::DiagnosticBag {};
+    auto local_dynamic_array_lowering = orison::lowering::build_lowering_context(
+        local_dynamic_array_parse_result.module,
+        local_dynamic_array_diagnostics
+    );
+    assert(!local_dynamic_array_diagnostics.has_errors());
+    local_dynamic_array_lowering.functions.at("use_items").parameter_types.front() = "{ ptr, i64, i64 }";
+    auto local_dynamic_array_options = orison::lowering::LlvmIrEmissionOptions {
+        .enable_dynamic_array_parameter_descriptors = true,
+        .enable_dynamic_array_construction_lowering = true,
+        .enable_dynamic_array_cleanup_emission = true,
+        .semantic_drop_lowering_authorizations = {
+            orison::semantics::DropLoweringAuthorization {
+                .site = orison::semantics::PlannedDropSite {
+                    .source_type_name = "Payload",
+                    .abi_symbol_name = "__orison_drop.Payload",
+                    .owner_name = "items.element",
+                },
+                .semantic_resolved = true,
+                .source_drop_lowering_enabled = true,
+                .authorized = true,
+            },
+        },
+    };
+    auto local_dynamic_array_context = orison::lowering::LoweringEmissionContext {
+        .lowering = local_dynamic_array_lowering,
+        .string_constants = orison::lowering::collect_string_constants(local_dynamic_array_parse_result.module),
+        .options = local_dynamic_array_options,
+    };
+    auto seed_local_dynamic_array_state = [] {
+        auto state = orison::lowering::FunctionLoweringState {};
+        state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
+            .type = "i1",
+            .value = "%flag",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        });
+        state.immutable_bindings.emplace("items", orison::lowering::LoweredExpression {
+            .type = "{ ptr, i64, i64 }",
+            .value = "%items",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        });
+        state.addressable_bindings.emplace("items", orison::lowering::AddressableBinding {
+            .type = orison::lowering::LoweredType {
+                .type = "{ ptr, i64, i64 }",
+                .signedness = orison::lowering::IntegerSignedness::not_integer,
+            },
+            .storage = "%items.addr",
+        });
+        state.source_type_names.emplace("items", "DynamicArray<Payload>");
+        state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+            .owner_name = "items",
+            .source_type_name = "DynamicArray<Payload>",
+            .element_source_type_name = "Payload",
+            .element_llvm_type = "%record.Payload",
+            .descriptor_storage_name = "%items.addr",
+            .descriptor_storage_status = orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+            .element_size_bytes = 8,
+        });
+        return state;
+    };
+    auto assert_local_dynamic_array_post_merge_reuse_failure = [&local_dynamic_array_context](
+        orison::lowering::FunctionLoweringSession& session,
+        orison::lowering::LoweringFailures const& failures
+    ) {
+        auto post_merge_output = std::ostringstream {};
+        auto post_merge_value = orison::lowering::lower_expression(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "items",
+            },
+            "{ ptr, i64, i64 }",
+            orison::lowering::IntegerSignedness::not_integer,
+            local_dynamic_array_context,
+            session,
+            post_merge_output
+        );
+        assert(!post_merge_value.has_value());
+        assert(post_merge_output.str().empty());
+        assert(orison::lowering::render_expression_lowering_failure(failures.expression) == "use after move: items");
+    };
+
+    local_dynamic_array_diagnostics = {};
+    auto local_dynamic_array_if_state = seed_local_dynamic_array_state();
+    auto local_dynamic_array_if_failures = orison::lowering::LoweringFailures {};
+    auto local_dynamic_array_if_session = orison::lowering::FunctionLoweringSession {
+        .state = local_dynamic_array_if_state,
+        .failures = local_dynamic_array_if_failures,
+        .enclosing_symbol_name = "choose_if",
+    };
+    auto local_dynamic_array_if_output = std::ostringstream {};
+    auto local_dynamic_array_if_lowered = orison::lowering::lower_final_control_flow_statement(
+        local_dynamic_array_parse_result.module.functions[1].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        local_dynamic_array_context,
+        local_dynamic_array_if_session,
+        local_dynamic_array_diagnostics,
+        local_dynamic_array_if_output,
+        std::string_view {"UInt32"}
+    );
+    assert(!local_dynamic_array_diagnostics.has_errors());
+    assert(local_dynamic_array_if_lowered.has_value());
+    assert(local_dynamic_array_if_output.str().find("items.dynamic_array_cleanup") != std::string::npos);
+    assert(orison::lowering::is_owned_binding_consumed(
+        local_dynamic_array_if_state.ownership_transfers,
+        "items"
+    ));
+    assert_local_dynamic_array_post_merge_reuse_failure(
+        local_dynamic_array_if_session,
+        local_dynamic_array_if_failures
+    );
+
+    local_dynamic_array_diagnostics = {};
+    auto local_dynamic_array_switch_state = seed_local_dynamic_array_state();
+    auto local_dynamic_array_switch_failures = orison::lowering::LoweringFailures {};
+    auto local_dynamic_array_switch_session = orison::lowering::FunctionLoweringSession {
+        .state = local_dynamic_array_switch_state,
+        .failures = local_dynamic_array_switch_failures,
+        .enclosing_symbol_name = "choose_switch",
+    };
+    auto local_dynamic_array_switch_output = std::ostringstream {};
+    auto local_dynamic_array_switch_lowered = orison::lowering::lower_final_control_flow_statement(
+        local_dynamic_array_parse_result.module.functions[2].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        local_dynamic_array_context,
+        local_dynamic_array_switch_session,
+        local_dynamic_array_diagnostics,
+        local_dynamic_array_switch_output,
+        std::string_view {"UInt32"}
+    );
+    assert(!local_dynamic_array_diagnostics.has_errors());
+    assert(local_dynamic_array_switch_lowered.has_value());
+    assert(local_dynamic_array_switch_output.str().find("items.dynamic_array_cleanup") != std::string::npos);
+    assert(orison::lowering::is_owned_binding_consumed(
+        local_dynamic_array_switch_state.ownership_transfers,
+        "items"
+    ));
+    assert_local_dynamic_array_post_merge_reuse_failure(
+        local_dynamic_array_switch_session,
+        local_dynamic_array_switch_failures
+    );
+
     std::filesystem::remove(path);
     std::filesystem::remove(aggregate_mismatch_path);
     std::filesystem::remove(choice_path);
+    std::filesystem::remove(local_dynamic_array_path);
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

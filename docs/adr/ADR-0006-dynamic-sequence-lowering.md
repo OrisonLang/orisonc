@@ -2242,13 +2242,14 @@ representation.
 - Final scalar `if` and `switch` cleanup now also supports preexisting local `DynamicArray<T>` cleanup owners. When one
   arm/case transfers the local descriptor into an owned parameter and a sibling leaves it live, the sibling emits the
   local descriptor cleanup before merge and records the owner as consumed for ownership-state merging.
+- Negative lowering-smoke coverage now pins the matching post-merge ownership state for preexisting local
+  `DynamicArray<T>` owners. After the final `if` or `switch` cleanup/transfer merge, a direct internal read of `items`
+  reports `use after move: items`; source-level post-final reuse remains unavailable in ordinary function bodies.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add paired negative coverage for preexisting local `DynamicArray<T>` final-control-flow cleanup ownership state once a
-  source shape can observe post-final-control-flow reuse.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
