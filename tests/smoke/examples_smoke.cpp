@@ -25,7 +25,7 @@ auto main() -> int {
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     orison::pipeline::CompilePipeline pipeline;
-    constexpr auto backend_examples = std::array<std::string_view, 86> {
+    constexpr auto backend_examples = std::array<std::string_view, 87> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
         "dynamic_array_owned_parameter.or",
@@ -44,6 +44,7 @@ auto main() -> int {
         "local_inferred_array_let.or",
         "local_dynamic_array_append.or",
         "local_dynamic_array_nested_computed_for.or",
+        "local_dynamic_array_owned_nested_computed_for.or",
         "local_null_safe_generic_aggregate.or",
         "local_result_choice_switch.or",
         "local_result_distinct_choice_switch.or",
@@ -571,6 +572,54 @@ auto main() -> int {
             "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
         ) != std::string::npos
     );
+
+    auto owned_computed_local_nested_same_owner_dynamic_array_example =
+        pipeline.emit_llvm(examples / "local_dynamic_array_owned_nested_computed_for.or");
+    assert(!owned_computed_local_nested_same_owner_dynamic_array_example.has_errors());
+    assert(
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "define i32 @main()"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "%record.Payload = type { i32 }"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.2.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.2.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.2.exit:\n"
+        ) != std::string::npos
+    );
+    auto const owned_nested_drop =
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+        );
+    auto const owned_nested_deallocation =
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.2.data",
+            owned_nested_drop
+        );
+    auto const owned_nested_finalization =
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr",
+            owned_nested_deallocation
+        );
+    assert(owned_nested_drop != std::string::npos);
+    assert(owned_nested_deallocation != std::string::npos);
+    assert(owned_nested_finalization != std::string::npos);
+    assert(owned_nested_drop < owned_nested_deallocation);
+    assert(owned_nested_deallocation < owned_nested_finalization);
 
     auto choice_dynamic_array_payload =
         pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload.or");

@@ -1056,6 +1056,8 @@ representation.
   cleanup handoff markers, deallocation call, and descriptor finalization store.
 - `examples/local_dynamic_array_nested_computed_for.or` now extends that executable path to nested same-owner
   computed iteration with append/grow, computed loop labels, final-use deallocation, and descriptor finalization.
+- `examples/local_dynamic_array_owned_nested_computed_for.or` now extends nested computed iteration to owned element
+  payloads, requiring source-backed element Drop walks before final-use deallocation and descriptor finalization.
 - Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after

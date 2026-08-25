@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-24: `examples/local_dynamic_array_owned_nested_computed_for.or` now pins executable nested same-owner
+  `DynamicArray<Payload>` computed iteration with append/grow, source-backed final-use element Drop walks,
+  deallocation, descriptor finalization, and CLI run/build smoke coverage.
 - 2026-08-24: `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner
   `DynamicArray<UInt32>` computed iteration with append/grow, final-use deallocation, descriptor finalization, and
   CLI run/build smoke coverage.

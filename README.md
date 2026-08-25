@@ -260,6 +260,8 @@ This repository currently captures the initial language design and development c
   not emit stale cleanup.
 - `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner
   `DynamicArray<UInt32>` computed iteration with append/grow, final-use deallocation, and descriptor finalization.
+- `examples/local_dynamic_array_owned_nested_computed_for.or` now pins the owned-element nested computed path with
+  source-backed element Drop walks before final-use deallocation and descriptor finalization.
 - Returned owned-element `DynamicArray<T>` values can now cross a two-call forwarding chain:
   returned local -> forwarding parameter -> final consuming parameter. The final consumer owns cleanup, while the
   intermediate forwarder and caller do not emit stale cleanup.
