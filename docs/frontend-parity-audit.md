@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or` now pins the
+  branch-returned computed iterable ownership-join rejection when two returned descriptors are bound to different
+  locals before the computed ternary.
 - 2026-08-25: `tests/fixtures/dynamic_array_branch_returned_owned_computed_for_cleanup_run.or` now pins
   branch-returned `DynamicArray<Payload>` descriptors joined through an `if` result before nested same-owner computed
   iteration, with PHI-return, final-use Drop walks, deallocation, descriptor finalization, and executable smoke

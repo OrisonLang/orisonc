@@ -262,6 +262,8 @@ This repository currently captures the initial language design and development c
   `for` iterable with final-use element drops, deallocation, and descriptor finalization.
 - Branch-returned owned-element `DynamicArray<T>` values can now join through an `if` result and then flow into nested
   same-owner computed iteration with the same final-use cleanup sequence.
+- Branch-returned owned-element `DynamicArray<T>` values with different post-join local owners still reject computed
+  iterable ternaries that cannot prove a single cleanup owner.
 - Returned owned-element `DynamicArray<T>` computed cleanup now keeps the same missing-Drop safety gate as local
   computed cleanup, so descriptor deallocation is rejected without authorized element cleanup.
 - `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner

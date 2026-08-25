@@ -1569,6 +1569,25 @@ void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
     );
 }
 
+void assert_branch_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(
+        output.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
+            "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<Payload> "
+            "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+}
+
 void assert_returned_dynamic_array_parameter_forwarding_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2316,6 +2335,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_nested_computed_cleanup_missing_drop.or";
     auto returned_owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_returned_owned_computed_cleanup_missing_drop.or";
+    auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
     auto owned_dynamic_array_parameter_missing_drop_path =
         fixtures / "dynamic_array_owned_parameter_iteration_missing_drop.or";
     auto dynamic_array_parameter_index_assignment_path =
@@ -3552,6 +3573,10 @@ auto main() -> int {
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,
         returned_owned_computed_dynamic_array_missing_drop_path
+    );
+    assert_branch_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
+        executable,
+        branch_returned_owned_computed_dynamic_array_owner_mismatch_path
     );
     assert_owned_dynamic_array_replacement_emit_llvm_success(executable, owned_dynamic_array_replacement_path);
     assert_emit_object_success(
