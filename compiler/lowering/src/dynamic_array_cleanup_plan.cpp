@@ -1253,6 +1253,61 @@ auto emit_local_dynamic_array_cleanups(
     return true;
 }
 
+auto emit_local_dynamic_array_cleanups_for_names(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output,
+    std::vector<std::string> const& owner_names
+) -> bool {
+    if (owner_names.empty()) {
+        return true;
+    }
+
+    auto owner_filter = std::unordered_set<std::string> {owner_names.begin(), owner_names.end()};
+    auto saved_cleanup_plans = session.state.dynamic_array_local_cleanup_plans;
+    auto filtered_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
+    filtered_cleanup_plans.reserve(saved_cleanup_plans.size());
+    for (auto const& cleanup_plan : saved_cleanup_plans) {
+        if (owner_filter.contains(cleanup_plan.owner_name)) {
+            filtered_cleanup_plans.push_back(cleanup_plan);
+        }
+    }
+    if (filtered_cleanup_plans.empty()) {
+        return true;
+    }
+
+    auto planned_session = session;
+    planned_session.state.dynamic_array_local_cleanup_plans = filtered_cleanup_plans;
+    auto plans = plan_local_dynamic_array_cleanups(context, planned_session);
+    if (!plans.has_value()) {
+        return false;
+    }
+    if (plans->empty()) {
+        return true;
+    }
+
+    auto const cleanup_ordinal_start = session.state.next_temporary_index;
+    auto const& final_cleanup_plan = plans->back().descriptor_cleanup;
+    auto final_cleanup_ordinal = cleanup_ordinal_start + plans->size() - 1;
+    auto cleanup_exit_block = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
+        std::to_string(final_cleanup_ordinal);
+    cleanup_exit_block += is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
+        ? ".cleanup.entry"
+        : ".drop.done";
+
+    session.state.dynamic_array_local_cleanup_plans = filtered_cleanup_plans;
+    if (!emit_local_dynamic_array_cleanups(context, session, output)) {
+        session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+        return false;
+    }
+    session.state.dynamic_array_local_cleanup_plans = std::move(saved_cleanup_plans);
+    for (auto const& plan : *plans) {
+        mark_owned_binding_consumed(session.state.ownership_transfers, plan.descriptor_cleanup.owner_name);
+    }
+    session.state.current_block = std::move(cleanup_exit_block);
+    return true;
+}
+
 auto emit_choice_dynamic_array_payload_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

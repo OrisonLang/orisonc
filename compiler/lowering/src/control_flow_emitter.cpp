@@ -208,6 +208,27 @@ auto branch_local_cleanup_bearing_source_names(
     return names;
 }
 
+auto preexisting_local_dynamic_array_cleanup_owner_names(
+    std::size_t cleanup_plan_depth,
+    FunctionLoweringSession const& session
+) -> std::vector<std::string> {
+    auto const& cleanup_plans = session.state.dynamic_array_local_cleanup_plans;
+    if (cleanup_plan_depth == 0 || cleanup_plans.empty()) {
+        return {};
+    }
+
+    auto owner_names = std::unordered_set<std::string> {};
+    owner_names.reserve(cleanup_plan_depth);
+    auto const capped_depth = std::min(cleanup_plan_depth, cleanup_plans.size());
+    for (auto index = std::size_t {0}; index < capped_depth; ++index) {
+        owner_names.insert(cleanup_plans[index].owner_name);
+    }
+
+    auto names = std::vector<std::string> {owner_names.begin(), owner_names.end()};
+    std::ranges::sort(names);
+    return names;
+}
+
 auto preexisting_bound_dynamic_array_parameter_names(
     FunctionLoweringSession const& session
 ) -> std::vector<std::string> {
@@ -509,6 +530,20 @@ auto lower_final_if_statement(
                 if (value.has_value() &&
                     arm.expected_source_type_name.has_value() &&
                     is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_local_dynamic_array_cleanups_for_names(
+                        arm.context,
+                        arm.session,
+                        arm.output,
+                        preexisting_local_dynamic_array_cleanup_owner_names(
+                            cleanup_plan_depth,
+                            arm.session
+                        )
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
                     !emit_bound_dynamic_array_parameter_cleanups_for_names(
                         arm.context,
                         arm.session,
@@ -588,6 +623,20 @@ auto lower_final_if_statement(
                         arm.session,
                         arm.output,
                         stored_choice_payload_owner_names(arm.context, arm.session)
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_local_dynamic_array_cleanups_for_names(
+                        arm.context,
+                        arm.session,
+                        arm.output,
+                        preexisting_local_dynamic_array_cleanup_owner_names(
+                            cleanup_plan_depth,
+                            arm.session
+                        )
                     )) {
                     return std::optional<LoweredExpression> {};
                 }
@@ -846,6 +895,19 @@ auto lower_final_switch_statement(
                                 current.subject_expression.kind == syntax::ExpressionKind::name
                                     ? std::optional<std::string_view> {current.subject_expression.text}
                                     : std::nullopt
+                            )
+                        )) {
+                        return std::optional<LoweredExpression> {};
+                    }
+                    if (current.expected_source_type_name.has_value() &&
+                        is_scalar_or_nonowning_source_type(*current.expected_source_type_name) &&
+                        !emit_local_dynamic_array_cleanups_for_names(
+                            current.context,
+                            current.session,
+                            current.output,
+                            preexisting_local_dynamic_array_cleanup_owner_names(
+                                current.case_dynamic_array_cleanup_plan_depth,
+                                current.session
                             )
                         )) {
                         return std::optional<LoweredExpression> {};

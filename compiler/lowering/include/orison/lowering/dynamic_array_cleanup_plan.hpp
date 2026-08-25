@@ -139,6 +139,13 @@ auto emit_local_dynamic_array_cleanups(
     std::ostream& output
 ) -> bool;
 
+auto emit_local_dynamic_array_cleanups_for_names(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output,
+    std::vector<std::string> const& owner_names
+) -> bool;
+
 auto emit_choice_dynamic_array_payload_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

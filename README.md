@@ -295,6 +295,8 @@ This repository currently captures the initial language design and development c
   runs.
 - Branch-local local `DynamicArray<Payload>` owners in scalar final `switch` cases now share the same scoped cleanup
   path and are covered by the same LLVM/object/link/run smoke checks.
+- Preexisting local `DynamicArray<Payload>` owners in scalar final `if` arms and `switch` cases now clean sibling live
+  descriptors when another arm/case transfers that local owner into an owned parameter.
 - Owned-result final `if` arms now preserve the returned `DynamicArray<Payload>` descriptor while cleaning separate
   branch-local scratch owners before the owned-result merge PHI.
 - Owned-result final `switch` cases now use the same returned-owner preservation and scratch-owner cleanup behavior

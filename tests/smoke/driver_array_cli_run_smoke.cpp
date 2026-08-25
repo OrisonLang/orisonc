@@ -500,6 +500,32 @@ void assert_dynamic_array_local_final_switch_case_cleanup_emit_llvm_success(
     assert_branch_local_named_dynamic_array_cleanup(output, "left_values", "right_values", "i32");
 }
 
+void assert_dynamic_array_local_final_if_consumed_owner_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define i32 @choose(i1 %flag)");
+    assert_contains(output, "br i1 %flag");
+    assert_contains(output, "call i32 @use_items({ ptr, i64, i64 } %tmp");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup");
+    assert_excludes(output, "if branch ownership mismatch");
+}
+
+void assert_dynamic_array_local_final_switch_consumed_owner_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define i32 @choose(i1 %flag)");
+    assert_contains(output, "switch i1 %flag");
+    assert_contains(output, "call i32 @use_items({ ptr, i64, i64 } %tmp");
+    assert_contains(output, "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup");
+    assert_excludes(output, "switch case ownership mismatch");
+}
+
 void assert_dynamic_array_owned_result_final_if_branch_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -1940,6 +1966,10 @@ auto main() -> int {
         fixtures / "dynamic_array_local_final_if_branch_cleanup_run.or";
     auto dynamic_array_local_final_switch_case_cleanup_path =
         fixtures / "dynamic_array_local_final_switch_case_cleanup_run.or";
+    auto dynamic_array_local_final_if_consumed_owner_cleanup_path =
+        fixtures / "dynamic_array_local_final_if_consumed_owner_cleanup_run.or";
+    auto dynamic_array_local_final_switch_consumed_owner_cleanup_path =
+        fixtures / "dynamic_array_local_final_switch_consumed_owner_cleanup_run.or";
     auto dynamic_array_owned_result_final_if_branch_cleanup_path =
         fixtures / "dynamic_array_owned_result_final_if_branch_cleanup_run.or";
     auto dynamic_array_owned_result_final_switch_case_cleanup_path =
@@ -2421,6 +2451,34 @@ auto main() -> int {
         executable,
         dynamic_array_local_final_switch_case_cleanup_path,
         smoke_temp_root / "dynamic_array_local_final_switch_case_cleanup"
+    );
+    assert_dynamic_array_local_final_if_consumed_owner_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_local_final_if_consumed_owner_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_local_final_if_consumed_owner_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_if_consumed_owner_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_local_final_if_consumed_owner_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_if_consumed_owner_cleanup"
+    );
+    assert_dynamic_array_local_final_switch_consumed_owner_cleanup_emit_llvm_success(
+        executable,
+        dynamic_array_local_final_switch_consumed_owner_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_local_final_switch_consumed_owner_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_switch_consumed_owner_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_local_final_switch_consumed_owner_cleanup_path,
+        smoke_temp_root / "dynamic_array_local_final_switch_consumed_owner_cleanup"
     );
     assert_dynamic_array_owned_result_final_if_branch_cleanup_emit_llvm_success(
         executable,

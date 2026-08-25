@@ -830,6 +830,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   continuing branch transfers the owned descriptor.
 - 2026-08-11: owned-element `DynamicArray<T>` parameter branch-cleanup reuse diagnostics now have checked-in CLI
   fixtures for final scalar `if` and `switch` consumers; both reject caller-side `items.length()` after transfer.
+- 2026-08-25: preexisting local `DynamicArray<T>` final-control-flow cleanup now has checked-in CLI fixtures for scalar
+  `if` and `switch` consumers. One arm/case transfers the local descriptor into an owned parameter while the sibling
+  emits local element Drop, descriptor deallocation, and descriptor finalization before merge.
 - 2026-08-11: owned-element `DynamicArray<T>` parameter forwarding now has checked-in CLI fixtures. Straight
   forwarding links and runs through `tests/fixtures/dynamic_array_owned_parameter_forwarding_run.or`; forwarding then
   reading the moved parameter reports `use after move: items`.

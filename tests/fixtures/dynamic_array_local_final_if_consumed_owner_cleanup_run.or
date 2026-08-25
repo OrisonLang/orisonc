@@ -1,0 +1,25 @@
+package fixtures.dynamicarraylocalfinalifconsumedownercleanuprun
+
+record Payload
+    public value: Int64
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function use_items(items: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function choose(flag: Bool) -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7))
+    if flag
+        use_items(items)
+    else
+        0 as UInt32
+
+function main() -> UInt32
+    choose(true)
