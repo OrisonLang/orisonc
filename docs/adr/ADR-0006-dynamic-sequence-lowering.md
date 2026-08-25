@@ -1061,6 +1061,9 @@ representation.
 - `tests/fixtures/dynamic_array_returned_owned_computed_for_cleanup_run.or` now pins returned owned-element
   descriptors consumed by a nested same-owner computed `for`, with returned-owner cleanup handoff, source-backed
   element drops, deallocation, descriptor finalization, and executable coverage.
+- `tests/fixtures/dynamic_array_branch_returned_owned_computed_for_cleanup_run.or` now pins branch-returned
+  owned-element descriptors joined by an `if` result and consumed by nested same-owner computed iteration, including
+  PHI return, final-use Drop walks, deallocation, descriptor finalization, and executable coverage.
 - Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after
