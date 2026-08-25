@@ -1955,6 +1955,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_if_two_switches_cleanup_run.or";
     auto dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_path =
         fixtures / "dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_run.or";
+    auto dynamic_array_owned_result_if_two_switches_consumed_scratch_reuse_path =
+        fixtures / "dynamic_array_owned_result_if_two_switches_consumed_scratch_reuse_rejected.or";
     auto dynamic_array_owned_result_if_two_switches_helper_call_cleanup_path =
         fixtures / "dynamic_array_owned_result_if_two_switches_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_switch_two_ifs_cleanup_path =
@@ -2632,6 +2634,11 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_if_two_switches_consumed_scratch_reuse_path,
+        "first_left_scratch"
     );
     assert_dynamic_array_owned_result_if_two_switches_helper_call_cleanup_emit_llvm_success(
         executable,

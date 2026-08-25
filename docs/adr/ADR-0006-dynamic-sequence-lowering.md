@@ -2230,13 +2230,15 @@ representation.
 - Outer final `if` cleanup now supports nested final `switch` joins where one nested case consumes a branch-local
   scratch `DynamicArray<T>` owner, omits cleanup for that consumed owner, and still cleans sibling scratch owners
   before the outer merge.
+- Negative outer final `if` plus nested final `switch` coverage now rejects reusing the consumed branch-local scratch
+  owner in the same nested case.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add paired negative coverage for reusing the consumed branch-local scratch owner in the outer final `if` plus nested
-  final `switch` cleanup shape.
+- Promote the typed branch-local cleanup plan into the next narrow positive case for final control-flow ownership
+  mismatch cleanup insertion.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
