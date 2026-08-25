@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_returned_owned_computed_cleanup_missing_drop.or` now pins the returned
+  descriptor variant of the owned computed missing-Drop rejection through pipeline and CLI `--emit-llvm` coverage.
 - 2026-08-25: `tests/fixtures/dynamic_array_returned_owned_computed_for_cleanup_run.or` now pins a returned
   `DynamicArray<Payload>` descriptor consumed by a nested same-owner computed `for`, including returned-owner cleanup
   handoff, element Drop walks, deallocation, descriptor finalization, and object/link/run smoke coverage.

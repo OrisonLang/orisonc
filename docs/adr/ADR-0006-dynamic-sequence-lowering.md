@@ -1123,6 +1123,8 @@ representation.
   the missing authorized element Drop boundary.
 - `tests/fixtures/dynamic_array_owned_nested_computed_cleanup_missing_drop.or` pins that same diagnostic boundary for
   nested same-owner computed iterables.
+- `tests/fixtures/dynamic_array_returned_owned_computed_cleanup_missing_drop.or` pins the same diagnostic boundary for
+  returned descriptors consumed by nested same-owner computed iterables.
 - Production-gated dynamic-array parameter descriptor lowering is now limited to scalar or non-owning element types.
   `DynamicArray<UInt32>` parameters lower to `{ ptr, i64, i64 }` and can emit descriptor cleanup under the production
   signature/cleanup gates, while owned-element parameters such as `DynamicArray<Payload>` remain rejected unless the

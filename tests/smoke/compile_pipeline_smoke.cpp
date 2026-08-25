@@ -6482,6 +6482,18 @@ auto main() -> int {
         dynamic_array_returned_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_owned_computed_for_cleanup_run"
     );
+    auto dynamic_array_returned_owned_computed_cleanup_missing_drop_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_owned_computed_cleanup_missing_drop.or";
+    auto dynamic_array_returned_owned_computed_cleanup_missing_drop_ir = pipeline.emit_llvm(
+        dynamic_array_returned_owned_computed_cleanup_missing_drop_path
+    );
+    assert(dynamic_array_returned_owned_computed_cleanup_missing_drop_ir.has_errors());
+    assert(
+        dynamic_array_returned_owned_computed_cleanup_missing_drop_ir.error_text.find(
+            "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
+        ) != std::string::npos
+    );
 
     auto dynamic_array_returned_multi_hop_forwarding_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
