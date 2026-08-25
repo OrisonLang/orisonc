@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_owned_nested_computed_cleanup_missing_drop.or` now pins the matching
+  nested computed missing-Drop rejection through CLI `--emit-llvm` diagnostic coverage.
 - 2026-08-24: `examples/local_dynamic_array_owned_nested_computed_for.or` now pins executable nested same-owner
   `DynamicArray<Payload>` computed iteration with append/grow, source-backed final-use element Drop walks,
   deallocation, descriptor finalization, and CLI run/build smoke coverage.

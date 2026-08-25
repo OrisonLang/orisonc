@@ -2220,6 +2220,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_parameter_push_after_move_rejected.or";
     auto owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_owned_computed_cleanup_missing_drop.or";
+    auto owned_nested_computed_dynamic_array_missing_drop_path =
+        fixtures / "dynamic_array_owned_nested_computed_cleanup_missing_drop.or";
     auto owned_dynamic_array_parameter_missing_drop_path =
         fixtures / "dynamic_array_owned_parameter_iteration_missing_drop.or";
     auto dynamic_array_parameter_index_assignment_path =
@@ -3420,6 +3422,10 @@ auto main() -> int {
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,
         owned_computed_dynamic_array_missing_drop_path
+    );
+    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+        executable,
+        owned_nested_computed_dynamic_array_missing_drop_path
     );
     assert_owned_dynamic_array_replacement_emit_llvm_success(executable, owned_dynamic_array_replacement_path);
     assert_emit_object_success(
