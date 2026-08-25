@@ -26,6 +26,8 @@ the default compiler path.
 iteration, and cleanup on the default compiler path.
 `local_dynamic_array_computed_for.or` demonstrates a computed same-owner `DynamicArray<UInt32>` `for` iterable with
 final-use deallocation and descriptor finalization on the default compiler path.
+`local_dynamic_array_nested_computed_for.or` demonstrates nested computed same-owner `DynamicArray<UInt32>` iteration
+with append/grow, final-use deallocation, descriptor finalization, and executable `run` coverage.
 `local_dynamic_array_owned_computed_for.or` demonstrates a computed same-owner `DynamicArray<Payload>` `for` iterable
 with source-backed initialized-element drops before final-use deallocation and descriptor finalization.
 `local_dynamic_array_owned_replacement.or` demonstrates local `DynamicArray<Payload>` indexed replacement with a
@@ -140,6 +142,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_inferred_array_let.or` | inferred immutable fixed-array `let` binding | backend |
 | `local_dynamic_array_append.or` | local `DynamicArray<UInt32>` construction, append/grow, checked index read, iteration, and cleanup | backend |
 | `local_dynamic_array_computed_for.or` | local computed same-owner `DynamicArray<UInt32>` `for` iteration with final-use cleanup | backend |
+| `local_dynamic_array_nested_computed_for.or` | local nested computed same-owner `DynamicArray<UInt32>` iteration with append/grow and final-use cleanup | backend |
 | `local_dynamic_array_owned_computed_for.or` | local computed same-owner `DynamicArray<Payload>` iteration with source-backed final-use element drops | backend |
 | `local_dynamic_array_owned_replacement.or` | local `DynamicArray<Payload>` indexed replacement with source-backed old-element drop ordering | backend |
 | `local_null_safe_generic_aggregate.or` | concrete generic null-safe aggregate-return method call plus explicit `Maybe<UInt32>` switch consumption | backend |
@@ -208,7 +211,8 @@ Use `minimal.or` for the smallest compile/link/run demonstration.
 
 Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` for aggregate-assignment pipeline
 coverage. Use `local_dynamic_array_append.or` for the local growable-sequence pipeline. Use
-`local_dynamic_array_computed_for.or` for computed same-owner growable-sequence iteration with final-use cleanup. Use
+`local_dynamic_array_computed_for.or` and `local_dynamic_array_nested_computed_for.or` for computed same-owner
+growable-sequence iteration with final-use cleanup. Use
 `local_dynamic_array_owned_computed_for.or` for owned-element computed-loop final-use cleanup drop ordering. Use
 `local_dynamic_array_owned_replacement.or` for owned-element replacement drop ordering. Use
 `dynamic_array_parameter_reads.or` for scalar growable-sequence parameter descriptor coverage. Use

@@ -1,0 +1,10 @@
+package examples.dynamicarraynestedcomputedfor
+
+function main() -> UInt32
+    var items: DynamicArray<UInt32> = DynamicArray()
+    var total = 0 as UInt32
+    items.push(7 as UInt32)
+    items.push(11 as UInt32)
+    for item in true ? items : false ? items : items
+        total = total + item
+    total - 18 as UInt32

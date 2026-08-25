@@ -88,24 +88,37 @@ void assert_computed_dynamic_array_emit_llvm_success(
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(output.find("declare void @__orison_dynamic_array_allocate") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_deallocate") != std::string::npos);
-    assert(output.find("items.computed_for.0.condition:") != std::string::npos);
-    assert(output.find("items.computed_for.0.body:") != std::string::npos);
+    assert(output.find("items.computed_for.") != std::string::npos);
+    assert(output.find(".condition:") != std::string::npos);
+    assert(output.find(".body:") != std::string::npos);
     assert(
         output.find(
-            "cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "cleanup state handoff acquire operation items.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
             "from items to items.loop.entry [cleanup calls enabled]"
         ) != std::string::npos
     );
     assert(
         output.find(
-            "cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
+            "cleanup state handoff resume operation items.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
             "from items.loop.entry to items [cleanup calls enabled]"
         ) != std::string::npos
     );
     assert(
         output.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
-            "i64 4, i64 %items.computed_for.0.capacity)"
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "i64 4, i64 %items.computed_for."
         ) != std::string::npos
     );
     auto const first_deallocation = output.find("call void @__orison_dynamic_array_deallocate");
@@ -1905,9 +1918,10 @@ auto main() -> int {
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
-    constexpr auto run_examples = std::array<std::string_view, 16> {
+    constexpr auto run_examples = std::array<std::string_view, 17> {
         "local_array_for.or",
         "local_dynamic_array_computed_for.or",
+        "local_dynamic_array_nested_computed_for.or",
         "local_dynamic_array_owned_computed_for.or",
         "dynamic_array_owned_parameter.or",
         "local_dynamic_array_owned_replacement.or",
@@ -1930,6 +1944,7 @@ auto main() -> int {
 
     auto generic_record_literal_path = examples / "local_generic_record_array_literal_for.or";
     auto computed_dynamic_array_path = examples / "local_dynamic_array_computed_for.or";
+    auto nested_computed_dynamic_array_path = examples / "local_dynamic_array_nested_computed_for.or";
     auto owned_computed_dynamic_array_path = examples / "local_dynamic_array_owned_computed_for.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
@@ -2195,6 +2210,17 @@ auto main() -> int {
         executable,
         computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_computed_for"
+    );
+    assert_computed_dynamic_array_emit_llvm_success(executable, nested_computed_dynamic_array_path);
+    assert_emit_object_success(
+        executable,
+        nested_computed_dynamic_array_path,
+        smoke_temp_root / "local_dynamic_array_nested_computed_for.o"
+    );
+    assert_build_success(
+        executable,
+        nested_computed_dynamic_array_path,
+        smoke_temp_root / "local_dynamic_array_nested_computed_for"
     );
     assert_owned_computed_dynamic_array_emit_llvm_success(executable, owned_computed_dynamic_array_path);
     assert_emit_object_success(

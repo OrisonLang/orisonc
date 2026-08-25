@@ -1054,6 +1054,8 @@ representation.
   with final-use deallocation and descriptor finalization through the normal CLI run/build path.
 - The same example is now checked through CLI LLVM/object emission, including the computed loop labels, enabled
   cleanup handoff markers, deallocation call, and descriptor finalization store.
+- `examples/local_dynamic_array_nested_computed_for.or` now extends that executable path to nested same-owner
+  computed iteration with append/grow, computed loop labels, final-use deallocation, and descriptor finalization.
 - Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after

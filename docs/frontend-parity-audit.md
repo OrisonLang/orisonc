@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-24: `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner
+  `DynamicArray<UInt32>` computed iteration with append/grow, final-use deallocation, descriptor finalization, and
+  CLI run/build smoke coverage.
 - 2026-08-18: Runtime-index cleanup IR-shape fault smoke coverage now uses explicit expectation rows and a shared
   table-driven assertion loop for the descriptor-backed and inline-storage fault cases.
 - 2026-08-18: Driver smoke coverage now shares one assertion helper for the four test-only runtime-index cleanup

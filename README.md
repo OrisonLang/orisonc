@@ -70,7 +70,7 @@ The demo exits successfully with status `0`. Use `--build examples/minimal.or -o
 executable. The same file can be inspected with `--emit-llvm` or compiled with `--emit-object`.
 
 Focused examples for the language-tour sections live under `examples/tour_*.or`. See `examples/README.md` for
-the feature and validation matrix, including the runnable C `printf` hello-world example.
+the feature and validation matrix, including the runnable C `printf` hello-world example and DynamicArray cleanup demos.
 
 ## Dynamic-Array Cleanup Audit Demo
 
@@ -258,6 +258,8 @@ This repository currently captures the initial language design and development c
 - Returned owned-element `DynamicArray<T>` values can now be forwarded into an owned parameter exactly once with
   production-ready cleanup metadata. The callee parameter owns the cleanup, and the caller's moved returned local does
   not emit stale cleanup.
+- `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner
+  `DynamicArray<UInt32>` computed iteration with append/grow, final-use deallocation, and descriptor finalization.
 - Returned owned-element `DynamicArray<T>` values can now cross a two-call forwarding chain:
   returned local -> forwarding parameter -> final consuming parameter. The final consumer owns cleanup, while the
   intermediate forwarder and caller do not emit stale cleanup.
