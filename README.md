@@ -323,6 +323,8 @@ This repository currently captures the initial language design and development c
   cleaning sibling branch-local scratch owners before their joins.
 - Negative multi-nested final `switch` coverage now rejects reusing a branch-local scratch owner after it is consumed
   inside a nested case.
+- Outer final `if` cleanup now supports nested final `switch` joins where one nested case consumes a branch-local
+  scratch owner while sibling nested cases clean their scratch owners before the outer merge.
 - Branch-local cleanup smoke assertions for three-case and multi-nested final `switch` coverage now share owner-list
   helpers for expected scratch cleanup and returned-owner cleanup suppression.
 - Branch-local owned-result cleanup now covers an outer final `if` where both arms return through separate nested final

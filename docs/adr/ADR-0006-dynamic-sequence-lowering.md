@@ -2227,12 +2227,16 @@ representation.
   return.
 - Negative wrapper-result final-consumer coverage now rejects reusing `final_selected` after the selected wrapper
   result moves into the final consumer helper.
+- Outer final `if` cleanup now supports nested final `switch` joins where one nested case consumes a branch-local
+  scratch `DynamicArray<T>` owner, omits cleanup for that consumed owner, and still cleans sibling scratch owners
+  before the outer merge.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Audit consumed branch-local scratch cleanup through an outer final `if` containing nested final `switch` joins.
+- Add paired negative coverage for reusing the consumed branch-local scratch owner in the outer final `if` plus nested
+  final `switch` cleanup shape.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
