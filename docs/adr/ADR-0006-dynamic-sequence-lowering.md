@@ -2108,6 +2108,8 @@ representation.
 - Multi-nested final `switch` cleanup now supports consuming a branch-local scratch owner in one nested case while
   cleaning sibling branch-local scratch owners before their joins. Branch-local cleanup merge state now drops consumed
   entries for cleanup-bearing source bindings introduced inside the branch/case scope.
+- Negative multi-nested final `switch` coverage now rejects reusing a branch-local scratch owner after it is consumed
+  inside a nested case.
 - Branch-local cleanup smoke assertions for three-case and multi-nested final `switch` coverage now share owner-list
   helpers for expected scratch cleanup and returned-owner cleanup suppression.
 - Branch-local owned-result cleanup now covers an outer final `if` where both arms return through separate nested final
@@ -2230,8 +2232,7 @@ representation.
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add negative coverage for reusing a branch-local scratch owner after it is consumed inside a nested final `switch`
-  case.
+- Audit consumed branch-local scratch cleanup through an outer final `if` containing nested final `switch` joins.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

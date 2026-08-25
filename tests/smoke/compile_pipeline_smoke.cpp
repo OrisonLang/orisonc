@@ -10192,6 +10192,23 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run"
     );
 
+    auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_rejected.or";
+    auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_ir.has_errors());
+    assert(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_ir.error_text.find(
+            "use after move: first_left_scratch"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {

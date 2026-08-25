@@ -2062,6 +2062,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_helper_call_returned_reuse_rejected.or";
     auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path =
         fixtures / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run.or";
+    auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_path =
+        fixtures / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_rejected.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -3113,6 +3115,11 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_path,
+        "first_left_scratch"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,
