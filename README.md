@@ -445,5 +445,7 @@ This repository currently captures the initial language design and development c
 - Final scalar `if` and `switch` cleanup now promotes the first typed branch-local cleanup-plan case: when one
   branch/case consumes an owned `DynamicArray<T>` parameter and a sibling leaves it live, the sibling emits element
   drops plus descriptor deallocation before the merge and the merged owner is treated as consumed.
-- Next highest-value step: add paired negative coverage that rejects reusing a parameter after it is consumed or
-  cleaned by final scalar control-flow.
+- Negative final scalar `if` and `switch` coverage now rejects reusing that owned `DynamicArray<T>` parameter after the
+  final-control-flow consumer has taken ownership.
+- Next highest-value step: extend typed branch-local cleanup insertion beyond owned `DynamicArray<T>` parameters to the
+  next cleanup-bearing owner class with an existing cleanup plan.

@@ -2115,8 +2115,12 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_parameter_branch_join_run.or";
     auto owned_dynamic_array_parameter_branch_cleanup_path =
         fixtures / "dynamic_array_owned_parameter_branch_cleanup_run.or";
+    auto owned_dynamic_array_parameter_branch_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_branch_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_switch_cleanup_path =
         fixtures / "dynamic_array_owned_parameter_switch_cleanup_run.or";
+    auto owned_dynamic_array_parameter_switch_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_switch_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_statement_branch_mismatch_path =
         fixtures / "dynamic_array_owned_parameter_statement_branch_mismatch_rejected.or";
     auto owned_dynamic_array_parameter_second_use_path =
@@ -3220,6 +3224,10 @@ auto main() -> int {
         owned_dynamic_array_parameter_branch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_parameter_branch_cleanup"
     );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_branch_cleanup_reuse_path
+    );
     assert_owned_dynamic_array_parameter_branch_cleanup_emit_llvm_success(
         executable,
         owned_dynamic_array_parameter_switch_cleanup_path,
@@ -3234,6 +3242,10 @@ auto main() -> int {
         executable,
         owned_dynamic_array_parameter_switch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_parameter_switch_cleanup"
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_switch_cleanup_reuse_path
     );
     assert_owned_dynamic_array_parameter_statement_branch_mismatch_emit_llvm_failure(
         executable,

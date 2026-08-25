@@ -10473,6 +10473,21 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_parameter_branch_cleanup_run"
     );
 
+    auto dynamic_array_owned_parameter_branch_cleanup_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_parameter_branch_cleanup_reuse_rejected.or";
+    auto dynamic_array_owned_parameter_branch_cleanup_reuse = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_branch_cleanup_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_parameter_branch_cleanup_reuse.has_errors());
+    assert(
+        dynamic_array_owned_parameter_branch_cleanup_reuse.error_text.find("use after move: items") !=
+        std::string::npos
+    );
+
     auto dynamic_array_owned_parameter_switch_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_parameter_switch_cleanup_run.or";
@@ -10506,6 +10521,21 @@ auto main() -> int {
         pipeline,
         dynamic_array_owned_parameter_switch_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_parameter_switch_cleanup_run"
+    );
+
+    auto dynamic_array_owned_parameter_switch_cleanup_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_parameter_switch_cleanup_reuse_rejected.or";
+    auto dynamic_array_owned_parameter_switch_cleanup_reuse = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_switch_cleanup_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_parameter_switch_cleanup_reuse.has_errors());
+    assert(
+        dynamic_array_owned_parameter_switch_cleanup_reuse.error_text.find("use after move: items") !=
+        std::string::npos
     );
 
     auto dynamic_array_owned_parameter_statement_branch_mismatch_path =

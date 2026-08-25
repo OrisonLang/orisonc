@@ -2237,13 +2237,15 @@ representation.
   proof to emitted IR: if one branch/case consumes an owned `DynamicArray<T>` parameter and a sibling leaves it live,
   the sibling cleanup path emits the bound-parameter element drop walk, descriptor deallocation, and descriptor
   finalization before the merge, then records the owner as consumed for ownership-state merging.
+- Negative final scalar `if` and `switch` coverage now rejects caller-side reuse after the final-control-flow consumer
+  function takes ownership of an owned `DynamicArray<T>` parameter.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Add paired negative coverage that rejects reusing an owned `DynamicArray<T>` parameter after final scalar
-  control-flow consumes or cleans it across all continuing arms/cases.
+- Extend typed branch-local cleanup insertion beyond owned `DynamicArray<T>` parameters to the next cleanup-bearing
+  owner class with an existing cleanup plan.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
