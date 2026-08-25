@@ -767,14 +767,19 @@ void assert_dynamic_array_ternary_alias_owner_reuse_emit_llvm_failure(
     assert(output.find("use after move: alias") != std::string::npos);
 }
 
-void assert_dynamic_array_switch_scratch_owner_reuse_emit_llvm_failure(
+void assert_dynamic_array_multi_nested_switch_consumed_scratch_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
 ) {
-    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("switch case ownership mismatch: owned transfers must match across all continuing cases") !=
-           std::string::npos);
-    assert(output.find("branch-local cleanup plan: owner first_left_scratch") != std::string::npos);
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define { ptr, i64, i64 } @choose(i32 %selector, i1 %left_selector, i1 %right_selector)");
+    assert_contains(output, "call i32 @consume_items({ ptr, i64, i64 } %tmp");
+    assert_branch_local_dynamic_array_cleanup_for_owners(
+        output,
+        {"first_right_scratch", "second_left_scratch", "second_right_scratch", "third_scratch"}
+    );
+    assert_excludes(output, "%first_left_scratch.dynamic_array_cleanup");
+    assert_excludes(output, "switch case ownership mismatch");
 }
 
 void assert_dynamic_array_helper_call_cleanup_emit_llvm_success(
@@ -2055,8 +2060,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_multi_nested_switch_returned_reuse_rejected.or";
     auto dynamic_array_owned_result_helper_call_returned_reuse_path =
         fixtures / "dynamic_array_owned_result_helper_call_returned_reuse_rejected.or";
-    auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path =
-        fixtures / "dynamic_array_owned_result_multi_nested_switch_scratch_reuse_rejected.or";
+    auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path =
+        fixtures / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run.or";
     auto owned_dynamic_array_parameter_forwarding_reuse_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
@@ -3095,9 +3100,19 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_helper_call_returned_reuse_path
     );
-    assert_dynamic_array_switch_scratch_owner_reuse_emit_llvm_failure(
+    assert_dynamic_array_multi_nested_switch_consumed_scratch_cleanup_emit_llvm_success(
         executable,
-        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup"
     );
     assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
         executable,

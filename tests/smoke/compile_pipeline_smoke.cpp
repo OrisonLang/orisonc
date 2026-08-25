@@ -10156,26 +10156,40 @@ auto main() -> int {
         ) != std::string::npos
     );
 
-    auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path =
+    auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_owned_result_multi_nested_switch_scratch_reuse_rejected.or";
-    auto dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir = pipeline.emit_llvm(
-        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_path,
+        "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run.or";
+    auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
             .source_drop_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
-    assert(dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir.has_errors());
-    assert(
-        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir.error_text.find(
-            "switch case ownership mismatch: owned transfers must match across all continuing cases"
-        ) != std::string::npos
+    assert(!dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir
     );
-    assert(
-        dynamic_array_owned_result_multi_nested_switch_scratch_reuse_ir.error_text.find(
-            "branch-local cleanup plan: owner first_left_scratch"
-        ) != std::string::npos
+    assert_ir_contains(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir.ir_text,
+        "call i32 @consume_items({ ptr, i64, i64 } %tmp"
+    );
+    assert_branch_local_dynamic_array_cleanup_for_owners_ir(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir.ir_text,
+        {"first_right_scratch", "second_left_scratch", "second_right_scratch", "third_scratch"}
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir.ir_text,
+        "%first_left_scratch.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir.ir_text,
+        "switch case ownership mismatch"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run"
     );
 
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(

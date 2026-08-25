@@ -319,8 +319,8 @@ This repository currently captures the initial language design and development c
   outer cases each merging their own nested final `switch` cleanup result before the outer switch PHI.
 - Multi-nested final `switch` cleanup now has negative coverage for returning a branch-local owner after that owner was
   already consumed in the same nested case.
-- Multi-nested final `switch` cleanup now also rejects consuming a scratch owner in only one nested case while sibling
-  cases still require branch-local cleanup insertion for that owner.
+- Multi-nested final `switch` cleanup now supports consuming a branch-local scratch owner in one nested case while
+  cleaning sibling branch-local scratch owners before their joins.
 - Branch-local cleanup smoke assertions for three-case and multi-nested final `switch` coverage now share owner-list
   helpers for expected scratch cleanup and returned-owner cleanup suppression.
 - Branch-local owned-result cleanup now covers an outer final `if` where both arms return through separate nested final
@@ -436,5 +436,5 @@ This repository currently captures the initial language design and development c
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: promote the typed branch-local cleanup plan into the next narrow positive case for
-  final control-flow ownership mismatch cleanup insertion.
+- Next highest-value step: add negative coverage for reusing a branch-local scratch owner after it is consumed inside a
+  nested final `switch` case.

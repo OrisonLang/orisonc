@@ -1,4 +1,4 @@
-package fixtures.dynamicarrayownedresultmultinestedswitchscratchreuserejected
+package fixtures.dynamicarrayownedresultmultinestedswitchconsumedscratchcleanuprun
 
 record Payload
     public value: UInt32

@@ -24,6 +24,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -158,6 +159,62 @@ auto branch_local_dynamic_array_cleanup_owner(
             return cleanup_plan.owner_name == owner_name;
         }
     );
+}
+
+auto branch_local_dynamic_array_cleanup_owner_names(
+    std::size_t cleanup_plan_depth,
+    FunctionLoweringSession const& session
+) -> std::vector<std::string> {
+    auto const& cleanup_plans = session.state.dynamic_array_local_cleanup_plans;
+    if (cleanup_plan_depth >= cleanup_plans.size()) {
+        return {};
+    }
+
+    auto names = std::vector<std::string> {};
+    names.reserve(cleanup_plans.size() - cleanup_plan_depth);
+    for (auto cleanup_plan = cleanup_plans.begin() + static_cast<std::ptrdiff_t>(cleanup_plan_depth);
+         cleanup_plan != cleanup_plans.end();
+         ++cleanup_plan) {
+        names.push_back(cleanup_plan->owner_name);
+    }
+    return names;
+}
+
+auto source_type_binding_names(
+    FunctionLoweringSession const& session
+) -> std::unordered_set<std::string> {
+    auto names = std::unordered_set<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, _] : session.state.source_type_names) {
+        names.insert(name);
+    }
+    return names;
+}
+
+auto branch_local_cleanup_bearing_source_names(
+    std::unordered_set<std::string> const& preexisting_source_names,
+    FunctionLoweringSession const& session
+) -> std::vector<std::string> {
+    auto names = std::vector<std::string> {};
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (preexisting_source_names.contains(name)) {
+            continue;
+        }
+        if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+            names.push_back(name);
+        }
+    }
+    std::ranges::sort(names);
+    return names;
+}
+
+auto erase_consumed_branch_local_cleanup_owners(
+    OwnershipTransferState& transfers,
+    std::vector<std::string> const& owner_names
+) -> void {
+    for (auto const& owner_name : owner_names) {
+        transfers.consumed_owned_bindings.erase(owner_name);
+    }
 }
 
 auto branch_local_returned_dynamic_array_call_argument(
@@ -377,6 +434,7 @@ auto lower_final_if_statement(
             .lower_then = [](void* opaque) {
                 auto& arm = *static_cast<ArmContext*>(opaque);
                 auto const cleanup_plan_depth = arm.session.state.dynamic_array_local_cleanup_plans.size();
+                auto const preexisting_source_names = source_type_binding_names(arm.session);
                 auto value = lower_value_statement_block(
                     arm.statement.nested_statements,
                     arm.expected_llvm_type,
@@ -400,6 +458,13 @@ auto lower_final_if_statement(
                         cleanup_plan_depth
                     );
                 }
+                auto const branch_local_cleanup_owner_names =
+                    branch_local_dynamic_array_cleanup_owner_names(cleanup_plan_depth, arm.session);
+                auto const branch_local_source_owner_names =
+                    branch_local_cleanup_bearing_source_names(
+                        preexisting_source_names,
+                        arm.session
+                    );
                 if (value.has_value() &&
                     !emit_scoped_local_dynamic_array_cleanups(
                         cleanup_plan_depth,
@@ -422,6 +487,14 @@ auto lower_final_if_statement(
                 }
                 if (value.has_value()) {
                     auto branch_transfers = arm.session.state.ownership_transfers;
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_cleanup_owner_names
+                    );
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_source_owner_names
+                    );
                     if (branch_local_returned_owner.has_value()) {
                         branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
                     }
@@ -435,6 +508,7 @@ auto lower_final_if_statement(
             .lower_else = [](void* opaque) {
                 auto& arm = *static_cast<ArmContext*>(opaque);
                 auto const cleanup_plan_depth = arm.session.state.dynamic_array_local_cleanup_plans.size();
+                auto const preexisting_source_names = source_type_binding_names(arm.session);
                 auto value = lower_value_statement_block(
                     arm.statement.alternate_statements,
                     arm.expected_llvm_type,
@@ -458,6 +532,13 @@ auto lower_final_if_statement(
                         cleanup_plan_depth
                     );
                 }
+                auto const branch_local_cleanup_owner_names =
+                    branch_local_dynamic_array_cleanup_owner_names(cleanup_plan_depth, arm.session);
+                auto const branch_local_source_owner_names =
+                    branch_local_cleanup_bearing_source_names(
+                        preexisting_source_names,
+                        arm.session
+                    );
                 if (value.has_value() &&
                     !emit_scoped_local_dynamic_array_cleanups(
                         cleanup_plan_depth,
@@ -480,6 +561,14 @@ auto lower_final_if_statement(
                 }
                 if (value.has_value()) {
                     auto branch_transfers = arm.session.state.ownership_transfers;
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_cleanup_owner_names
+                    );
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_source_owner_names
+                    );
                     if (branch_local_returned_owner.has_value()) {
                         branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
                     }
@@ -662,6 +751,7 @@ auto lower_final_switch_statement(
             .lower_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
                 auto& current = *static_cast<CaseContext*>(opaque);
                 auto branch_local_payload_names = switch_case_payload_binding_names(planned_case.syntax->pattern);
+                auto const preexisting_source_names = source_type_binding_names(current.session);
                 auto value = lower_value_statement_block(
                     planned_case.syntax->statements,
                     current.expected_llvm_type,
@@ -683,6 +773,16 @@ auto lower_final_switch_statement(
                         current.session,
                         current.case_dynamic_array_cleanup_plan_depth
                     );
+                    auto const branch_local_cleanup_owner_names =
+                        branch_local_dynamic_array_cleanup_owner_names(
+                            current.case_dynamic_array_cleanup_plan_depth,
+                            current.session
+                        );
+                    auto const branch_local_source_owner_names =
+                        branch_local_cleanup_bearing_source_names(
+                            preexisting_source_names,
+                            current.session
+                        );
                     if (!emit_scoped_local_dynamic_array_cleanups(
                             current.case_dynamic_array_cleanup_plan_depth,
                             current.context,
@@ -708,6 +808,14 @@ auto lower_final_switch_statement(
                         return std::optional<LoweredExpression> {};
                     }
                     auto branch_transfers = current.session.state.ownership_transfers;
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_cleanup_owner_names
+                    );
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_source_owner_names
+                    );
                     if (branch_local_returned_owner.has_value()) {
                         branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
                     }
