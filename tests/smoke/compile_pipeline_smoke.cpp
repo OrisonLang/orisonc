@@ -6441,6 +6441,48 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_returned_parameter_forwarding_status));
     assert(WEXITSTATUS(dynamic_array_returned_parameter_forwarding_status) == 0);
 
+    auto dynamic_array_returned_owned_computed_for_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_owned_computed_for_cleanup_run.or";
+    auto dynamic_array_returned_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_returned_owned_computed_for_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_returned_owned_computed_for_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_returned_lifetime_owner(
+        dynamic_array_returned_owned_computed_for_cleanup_ir,
+        "returned"
+    );
+    assert_dynamic_array_payload_cleanup_ready(dynamic_array_returned_owned_computed_for_cleanup_ir);
+    assert_ir_contains(
+        dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
+        "returned.computed_for.0.condition:\n"
+    );
+    assert_ir_contains(
+        dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
+        "call void @__orison_drop.Payload(ptr %returned.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data"
+    );
+    assert_ir_contains(
+        dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %returned.addr"
+    );
+    assert_ir_excludes(
+        dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
+        "%returned.dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_returned_owned_computed_for_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_owned_computed_for_cleanup_run"
+    );
+
     auto dynamic_array_returned_multi_hop_forwarding_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_multi_hop_forwarding_run.or";

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_returned_owned_computed_for_cleanup_run.or` now pins a returned
+  `DynamicArray<Payload>` descriptor consumed by a nested same-owner computed `for`, including returned-owner cleanup
+  handoff, element Drop walks, deallocation, descriptor finalization, and object/link/run smoke coverage.
 - 2026-08-25: `tests/fixtures/dynamic_array_owned_nested_computed_cleanup_missing_drop.or` now pins the matching
   nested computed missing-Drop rejection through CLI `--emit-llvm` diagnostic coverage.
 - 2026-08-24: `examples/local_dynamic_array_owned_nested_computed_for.or` now pins executable nested same-owner

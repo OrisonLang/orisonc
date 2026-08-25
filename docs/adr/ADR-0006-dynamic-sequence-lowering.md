@@ -1058,6 +1058,9 @@ representation.
   computed iteration with append/grow, computed loop labels, final-use deallocation, and descriptor finalization.
 - `examples/local_dynamic_array_owned_nested_computed_for.or` now extends nested computed iteration to owned element
   payloads, requiring source-backed element Drop walks before final-use deallocation and descriptor finalization.
+- `tests/fixtures/dynamic_array_returned_owned_computed_for_cleanup_run.or` now pins returned owned-element
+  descriptors consumed by a nested same-owner computed `for`, with returned-owner cleanup handoff, source-backed
+  element drops, deallocation, descriptor finalization, and executable coverage.
 - Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after

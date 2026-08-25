@@ -258,6 +258,8 @@ This repository currently captures the initial language design and development c
 - Returned owned-element `DynamicArray<T>` values can now be forwarded into an owned parameter exactly once with
   production-ready cleanup metadata. The callee parameter owns the cleanup, and the caller's moved returned local does
   not emit stale cleanup.
+- Returned owned-element `DynamicArray<T>` values can now be bound locally and consumed by a nested same-owner computed
+  `for` iterable with final-use element drops, deallocation, and descriptor finalization.
 - `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner
   `DynamicArray<UInt32>` computed iteration with append/grow, final-use deallocation, and descriptor finalization.
 - `examples/local_dynamic_array_owned_nested_computed_for.or` now pins the owned-element nested computed path with
