@@ -10438,48 +10438,74 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_owned_parameter_branch_join_run_status));
     assert(WEXITSTATUS(dynamic_array_owned_parameter_branch_join_run_status) == 0);
 
-    auto dynamic_array_owned_parameter_branch_mismatch_path =
-        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_branch_mismatch.or";
-    {
-        auto branch_mismatch_source = std::ofstream(dynamic_array_owned_parameter_branch_mismatch_path);
-        branch_mismatch_source
-            << "package demo.pipeline.dynamicarrayownedparameterbranchmismatch\n"
-            << "\n"
-            << "record Payload\n"
-            << "    public value: Int64\n"
-            << "\n"
-            << "interface Drop\n"
-            << "    function drop(this: exclusive This) -> Unit\n"
-            << "\n"
-            << "implements Drop for Payload\n"
-            << "    function drop(this: exclusive This) -> Unit\n"
-            << "        return\n"
-            << "\n"
-            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
-            << "    0 as UInt32\n"
-            << "\n"
-            << "function choose(flag: Bool, items: DynamicArray<Payload>) -> UInt32\n"
-            << "    if flag\n"
-            << "        use_items(items)\n"
-            << "    else\n"
-            << "        0 as UInt32\n"
-            << "\n"
-            << "function main() -> UInt32\n"
-            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
-            << "    items.push(Payload(7))\n"
-            << "    choose(true, items)\n";
-    }
-    auto dynamic_array_owned_parameter_branch_mismatch = pipeline.emit_llvm(
-        dynamic_array_owned_parameter_branch_mismatch_path,
+    auto dynamic_array_owned_parameter_branch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_parameter_branch_cleanup_run.or";
+    auto dynamic_array_owned_parameter_branch_cleanup = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
             .source_drop_lowering_enabled = true,
         }
     );
-    assert(dynamic_array_owned_parameter_branch_mismatch.has_errors());
-    assert(
-        dynamic_array_owned_parameter_branch_mismatch.error_text.find(
-            "if branch ownership mismatch: owned transfers must match across all continuing branches"
-        ) != std::string::npos
+    assert(!dynamic_array_owned_parameter_branch_cleanup.has_errors());
+    assert(dynamic_array_owned_parameter_branch_cleanup.dynamic_array_cleanup_emission_capability_state.proven);
+    assert_ir_contains(
+        dynamic_array_owned_parameter_branch_cleanup.ir_text,
+        "define i32 @choose(i1 %flag, { ptr, i64, i64 } %items)"
+    );
+    assert_ir_contains(dynamic_array_owned_parameter_branch_cleanup.ir_text, "br i1 %flag");
+    assert_ir_contains(
+        dynamic_array_owned_parameter_branch_cleanup.ir_text,
+        "call i32 @use_items({ ptr, i64, i64 } %items)"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_parameter_branch_cleanup.ir_text,
+        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_parameter_branch_cleanup.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(dynamic_array_owned_parameter_branch_cleanup.ir_text, "if branch ownership mismatch");
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_parameter_branch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_branch_cleanup_run"
+    );
+
+    auto dynamic_array_owned_parameter_switch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_owned_parameter_switch_cleanup_run.or";
+    auto dynamic_array_owned_parameter_switch_cleanup = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_switch_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_switch_cleanup.has_errors());
+    assert(dynamic_array_owned_parameter_switch_cleanup.dynamic_array_cleanup_emission_capability_state.proven);
+    assert_ir_contains(
+        dynamic_array_owned_parameter_switch_cleanup.ir_text,
+        "define i32 @choose(i1 %flag, { ptr, i64, i64 } %items)"
+    );
+    assert_ir_contains(dynamic_array_owned_parameter_switch_cleanup.ir_text, "switch i1 %flag");
+    assert_ir_contains(
+        dynamic_array_owned_parameter_switch_cleanup.ir_text,
+        "call i32 @use_items({ ptr, i64, i64 } %items)"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_parameter_switch_cleanup.ir_text,
+        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_owned_parameter_switch_cleanup.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(dynamic_array_owned_parameter_switch_cleanup.ir_text, "switch case ownership mismatch");
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_owned_parameter_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_switch_cleanup_run"
     );
 
     auto dynamic_array_owned_parameter_statement_branch_mismatch_path =

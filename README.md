@@ -442,5 +442,8 @@ This repository currently captures the initial language design and development c
 - Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
   each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
   can be promoted for broader unsupported shapes.
-- Next highest-value step: audit consumed branch-local scratch cleanup through an outer final `if` containing nested
-  final `switch` joins.
+- Final scalar `if` and `switch` cleanup now promotes the first typed branch-local cleanup-plan case: when one
+  branch/case consumes an owned `DynamicArray<T>` parameter and a sibling leaves it live, the sibling emits element
+  drops plus descriptor deallocation before the merge and the merged owner is treated as consumed.
+- Next highest-value step: add paired negative coverage that rejects reusing a parameter after it is consumed or
+  cleaned by final scalar control-flow.

@@ -249,7 +249,26 @@ void assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
     assert(output.find("call void @__orison_dynamic_array_deallocate", deallocation + 1) == std::string::npos);
 }
 
-void assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
+void assert_owned_dynamic_array_parameter_branch_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::string_view control_flow_ir
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("define i32 @choose(i1 %flag, { ptr, i64, i64 } %items)") != std::string::npos);
+    assert(output.find(control_flow_ir) != std::string::npos);
+    assert(output.find("call i32 @use_items({ ptr, i64, i64 } %items)") != std::string::npos);
+    assert(
+        output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
+        std::string::npos
+    );
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
+           std::string::npos);
+    assert(output.find("if branch ownership mismatch") == std::string::npos);
+    assert(output.find("switch case ownership mismatch") == std::string::npos);
+}
+
+void assert_owned_dynamic_array_parameter_statement_branch_mismatch_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
 ) {
@@ -2094,8 +2113,10 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_parameter_forwarding_reuse_rejected.or";
     auto owned_dynamic_array_parameter_branch_join_path =
         fixtures / "dynamic_array_owned_parameter_branch_join_run.or";
-    auto owned_dynamic_array_parameter_branch_mismatch_path =
-        fixtures / "dynamic_array_owned_parameter_branch_mismatch_rejected.or";
+    auto owned_dynamic_array_parameter_branch_cleanup_path =
+        fixtures / "dynamic_array_owned_parameter_branch_cleanup_run.or";
+    auto owned_dynamic_array_parameter_switch_cleanup_path =
+        fixtures / "dynamic_array_owned_parameter_switch_cleanup_run.or";
     auto owned_dynamic_array_parameter_statement_branch_mismatch_path =
         fixtures / "dynamic_array_owned_parameter_statement_branch_mismatch_rejected.or";
     auto owned_dynamic_array_parameter_second_use_path =
@@ -3184,11 +3205,37 @@ auto main() -> int {
         executable,
         owned_dynamic_array_parameter_missing_drop_path
     );
-    assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
+    assert_owned_dynamic_array_parameter_branch_cleanup_emit_llvm_success(
         executable,
-        owned_dynamic_array_parameter_branch_mismatch_path
+        owned_dynamic_array_parameter_branch_cleanup_path,
+        "br i1 %flag"
     );
-    assert_owned_dynamic_array_parameter_branch_mismatch_emit_llvm_failure(
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_branch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_branch_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_branch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_branch_cleanup"
+    );
+    assert_owned_dynamic_array_parameter_branch_cleanup_emit_llvm_success(
+        executable,
+        owned_dynamic_array_parameter_switch_cleanup_path,
+        "switch i1 %flag"
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_switch_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_switch_cleanup"
+    );
+    assert_owned_dynamic_array_parameter_statement_branch_mismatch_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_statement_branch_mismatch_path
     );

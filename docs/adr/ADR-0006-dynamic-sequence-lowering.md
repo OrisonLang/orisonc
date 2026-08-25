@@ -1188,8 +1188,9 @@ representation.
   the CLI path; `tests/fixtures/dynamic_array_owned_parameter_iteration_missing_drop.or` pins that boundary.
 - Owned-element `DynamicArray<T>` parameter branch transfer now has checked-in CLI coverage. When every continuing
   branch transfers the same owned descriptor, `tests/fixtures/dynamic_array_owned_parameter_branch_join_run.or` links
-  and runs with a single callee-side cleanup; when one branch transfers and another continues without transfer,
-  `tests/fixtures/dynamic_array_owned_parameter_branch_mismatch_rejected.or` reports the ownership mismatch.
+  and runs with a single callee-side cleanup; when final scalar control-flow transfers in one branch and another
+  branch leaves the descriptor live, `tests/fixtures/dynamic_array_owned_parameter_branch_cleanup_run.or` now links
+  and runs with sibling branch cleanup before merge.
 - Owned-element `DynamicArray<T>` parameter forwarding now has checked-in CLI coverage. Straight forwarding through
   another owned-parameter function links and runs, while reusing the forwarded parameter in the forwarding callee
   reports `use after move: items`.
@@ -2232,13 +2233,17 @@ representation.
   before the outer merge.
 - Negative outer final `if` plus nested final `switch` coverage now rejects reusing the consumed branch-local scratch
   owner in the same nested case.
+- Final scalar `if` and `switch` cleanup now promotes the first typed branch-local cleanup-plan case from diagnostic
+  proof to emitted IR: if one branch/case consumes an owned `DynamicArray<T>` parameter and a sibling leaves it live,
+  the sibling cleanup path emits the bound-parameter element drop walk, descriptor deallocation, and descriptor
+  finalization before the merge, then records the owner as consumed for ownership-state merging.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Promote the typed branch-local cleanup plan into the next narrow positive case for final control-flow ownership
-  mismatch cleanup insertion.
+- Add paired negative coverage that rejects reusing an owned `DynamicArray<T>` parameter after final scalar
+  control-flow consumes or cleans it across all continuing arms/cases.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.

@@ -1,4 +1,4 @@
-package fixtures.dynamicarrayownedparameterbranchmismatchrejected
+package fixtures.dynamicarrayownedparameterbranchcleanuprun
 
 record Payload
     public value: Int64

@@ -826,7 +826,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   length checks, and source-backed cleanup ordering.
 - 2026-08-11: owned-element `DynamicArray<T>` parameter branch-transfer behavior now has checked-in CLI fixtures.
   `tests/fixtures/dynamic_array_owned_parameter_branch_join_run.or` pins the valid all-branches-transfer case, while
-  `tests/fixtures/dynamic_array_owned_parameter_branch_mismatch_rejected.or` pins the mismatch diagnostic when only one
+  `tests/fixtures/dynamic_array_owned_parameter_branch_cleanup_run.or` pins final scalar branch cleanup when only one
   continuing branch transfers the owned descriptor.
 - 2026-08-11: owned-element `DynamicArray<T>` parameter forwarding now has checked-in CLI fixtures. Straight
   forwarding links and runs through `tests/fixtures/dynamic_array_owned_parameter_forwarding_run.or`; forwarding then

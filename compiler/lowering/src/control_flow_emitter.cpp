@@ -208,6 +208,27 @@ auto branch_local_cleanup_bearing_source_names(
     return names;
 }
 
+auto preexisting_bound_dynamic_array_parameter_names(
+    FunctionLoweringSession const& session
+) -> std::vector<std::string> {
+    auto names = std::vector<std::string> {};
+    for (auto const& name : session.state.parameter_names) {
+        if (name == "this") {
+            continue;
+        }
+        auto const source_type = session.state.source_type_names.find(name);
+        if (source_type == session.state.source_type_names.end()) {
+            continue;
+        }
+        auto const sequence = dynamic_sequence_source_type(source_type->second);
+        if (sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array) {
+            names.push_back(name);
+        }
+    }
+    std::ranges::sort(names);
+    return names;
+}
+
 auto erase_consumed_branch_local_cleanup_owners(
     OwnershipTransferState& transfers,
     std::vector<std::string> const& owner_names
@@ -485,6 +506,17 @@ auto lower_final_if_statement(
                     )) {
                     return std::optional<LoweredExpression> {};
                 }
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_bound_dynamic_array_parameter_cleanups_for_names(
+                        arm.context,
+                        arm.session,
+                        arm.output,
+                        preexisting_bound_dynamic_array_parameter_names(arm.session)
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
                 if (value.has_value()) {
                     auto branch_transfers = arm.session.state.ownership_transfers;
                     erase_consumed_branch_local_cleanup_owners(
@@ -556,6 +588,17 @@ auto lower_final_if_statement(
                         arm.session,
                         arm.output,
                         stored_choice_payload_owner_names(arm.context, arm.session)
+                    )) {
+                    return std::optional<LoweredExpression> {};
+                }
+                if (value.has_value() &&
+                    arm.expected_source_type_name.has_value() &&
+                    is_scalar_or_nonowning_source_type(*arm.expected_source_type_name) &&
+                    !emit_bound_dynamic_array_parameter_cleanups_for_names(
+                        arm.context,
+                        arm.session,
+                        arm.output,
+                        preexisting_bound_dynamic_array_parameter_names(arm.session)
                     )) {
                     return std::optional<LoweredExpression> {};
                 }
@@ -804,6 +847,16 @@ auto lower_final_switch_statement(
                                     ? std::optional<std::string_view> {current.subject_expression.text}
                                     : std::nullopt
                             )
+                        )) {
+                        return std::optional<LoweredExpression> {};
+                    }
+                    if (current.expected_source_type_name.has_value() &&
+                        is_scalar_or_nonowning_source_type(*current.expected_source_type_name) &&
+                        !emit_bound_dynamic_array_parameter_cleanups_for_names(
+                            current.context,
+                            current.session,
+                            current.output,
+                            preexisting_bound_dynamic_array_parameter_names(current.session)
                         )) {
                         return std::optional<LoweredExpression> {};
                     }

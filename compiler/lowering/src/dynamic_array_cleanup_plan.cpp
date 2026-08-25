@@ -1298,4 +1298,52 @@ auto emit_bound_dynamic_array_parameter_cleanups(
     return emit_bound_dynamic_array_parameter_cleanup_plans(capability, *plans, session, output);
 }
 
+auto emit_bound_dynamic_array_parameter_cleanups_for_names(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output,
+    std::vector<std::string> const& owner_names
+) -> bool {
+    if (owner_names.empty()) {
+        return true;
+    }
+    auto plans = plan_bound_dynamic_array_parameter_cleanups(context, session);
+    if (!plans.has_value()) {
+        return false;
+    }
+    if (plans->empty()) {
+        return true;
+    }
+
+    auto owner_filter = std::unordered_set<std::string> {owner_names.begin(), owner_names.end()};
+    auto filtered_plans = std::vector<BoundDynamicArrayParameterCleanupPlan> {};
+    for (auto& plan : *plans) {
+        if (owner_filter.contains(plan.descriptor_cleanup.owner_name)) {
+            filtered_plans.push_back(std::move(plan));
+        }
+    }
+    if (filtered_plans.empty()) {
+        return true;
+    }
+
+    auto const cleanup_ordinal_start = session.state.next_temporary_index;
+    auto const& final_cleanup_plan = filtered_plans.back().descriptor_cleanup;
+    auto final_cleanup_ordinal = cleanup_ordinal_start + filtered_plans.size() - 1;
+    auto cleanup_exit_block = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
+        std::to_string(final_cleanup_ordinal);
+    cleanup_exit_block += is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
+        ? ".cleanup.entry"
+        : ".drop.done";
+
+    auto capability = prove_bound_dynamic_array_parameter_cleanup_emission_capability(context, filtered_plans);
+    if (!emit_bound_dynamic_array_parameter_cleanup_plans(capability, filtered_plans, session, output)) {
+        return false;
+    }
+    for (auto const& plan : filtered_plans) {
+        mark_owned_binding_consumed(session.state.ownership_transfers, plan.descriptor_cleanup.owner_name);
+    }
+    session.state.current_block = std::move(cleanup_exit_block);
+    return true;
+}
+
 }  // namespace orison::lowering
