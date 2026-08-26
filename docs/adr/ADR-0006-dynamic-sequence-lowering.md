@@ -2299,6 +2299,9 @@ representation.
   with both descriptors finalized.
 - The nested final-if composition now has paired branch-local reuse coverage. Passing same-arm `scratch` to an
   owned-parameter helper twice after the `returned.inner.values` computed loop fails with `use after move: scratch`.
+- Final-if nested returned-field cleanup now also covers same-type aggregate helper forwarding. A helper returning
+  `OuterBox` can forward `make_outer_box()` into a caller-owned `returned.inner.values` cleanup path while suppressing
+  stale helper-parameter cleanup.
 
 ## Follow-up work
 

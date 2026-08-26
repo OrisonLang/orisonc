@@ -2832,3 +2832,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `returned.inner.values` emits computed cleanup before same-arm `scratch` cleanup, then links and runs.
 - 2026-08-26: Nested final-if branch-local reuse is now pinned for the returned-field composition shape. Reusing
   same-arm `scratch` after the `returned.inner.values` computed loop now fails with `use after move: scratch`.
+- 2026-08-26: Final-if nested returned-field cleanup now covers same-type aggregate helper forwarding.
+  `forward_outer(make_outer_box()).inner.values` is cleaned through the caller-owned `returned.inner.values` path,
+  while the helper parameter cleanup remains suppressed.
