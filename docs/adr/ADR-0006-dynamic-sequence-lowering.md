@@ -2275,6 +2275,9 @@ representation.
 - The same returned aggregate-field computed cleanup rule now covers nested finite member paths such as
   `returned.inner.values`. The internal owner proof remains a dotted owner path matched to an existing seeded cleanup
   plan; no new language syntax is introduced.
+- Computed `DynamicArray<T>` cleanup now commits the consumed-owner transfer state before leaving the computed-loop
+  branch scope. This prevents later same-case reuse of a finalized payload binding such as `values` after the cleanup
+  path has emitted element drops, descriptor deallocation, and descriptor zero-finalization.
 
 ## Follow-up work
 

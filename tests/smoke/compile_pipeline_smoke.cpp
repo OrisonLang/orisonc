@@ -6806,6 +6806,23 @@ auto main() -> int {
             "lowering does not yet support this final control-flow statement"
         ) == std::string::npos
     );
+    auto dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_rejected.or";
+    auto dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_ir.has_errors());
+    assert(
+        dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_ir.error_text.find(
+            "use after move: values"
+        ) != std::string::npos
+    );
     auto dynamic_array_branch_returned_owned_computed_owner_mismatch_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";

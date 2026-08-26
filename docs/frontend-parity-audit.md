@@ -2807,3 +2807,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `Primary(values)` payload bindings. Prefix `for` lowering is available inside final case bodies, cleanup block
   selection uses the actual planned cleanup tail after finalized descriptors are skipped, and missing `Drop`
   diagnostics no longer gain a generic final-control-flow failure.
+- 2026-08-26: Final-switch payload-binding computed cleanup now preserves consumed-owner state after the computed
+  loop scope exits. Reusing the cleaned `values` payload binding later in the same final case is rejected with
+  `use after move: values`, preventing stale descriptor reuse after element drops, deallocation, and zero-finalization.

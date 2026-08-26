@@ -13,6 +13,7 @@
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/semantics/drop_model.hpp"
@@ -554,6 +555,10 @@ auto lower_sequence_for_statement(
                             cleanup_sequence_plan.cleanup_owner_name,
                             cleanup_sequence_plan.source_type_name
                         );
+                        mark_owned_binding_consumed(
+                            session.state.ownership_transfers,
+                            cleanup_sequence_plan.cleanup_owner_name
+                        );
                     }
                 }
             }
@@ -564,6 +569,7 @@ auto lower_sequence_for_statement(
                 );
             }
             session.state.current_block = cleanup_continuation_block;
+            loop_scope.commit_ownership_transfers(session.state.ownership_transfers);
             return StatementFlow::falls_through;
         }
 

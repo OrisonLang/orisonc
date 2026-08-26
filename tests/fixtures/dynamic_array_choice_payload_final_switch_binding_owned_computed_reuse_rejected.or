@@ -1,0 +1,34 @@
+package fixtures.dynamicarraychoicepayloadfinalswitchbindingownedcomputedreuserejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(37 as UInt32))
+    values.push(Payload(41 as UInt32))
+    values
+
+function consume_values(values: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function consume_packet(packet: Packet) -> UInt32
+    switch packet
+        Primary(values) =>
+            var total = 0 as UInt32
+            for item in true ? values : false ? values : values
+                total = total + item.value
+            consume_values(values)
+
+function main() -> UInt32
+    consume_packet(Primary(make_values()))
