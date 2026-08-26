@@ -266,6 +266,8 @@ This repository currently captures the initial language design and development c
   flow into nested same-owner computed iteration with final-use cleanup.
 - Branch-returned owned-element `DynamicArray<T>` values with different post-join local owners still reject computed
   iterable ternaries that cannot prove a single cleanup owner.
+- Switch-returned owned-element `DynamicArray<T>` values with different post-join local owners reject through the same
+  computed iterable single-owner proof boundary.
 - Returned owned-element `DynamicArray<T>` computed cleanup now keeps the same missing-Drop safety gate as local
   computed cleanup, so descriptor deallocation is rejected without authorized element cleanup.
 - `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner

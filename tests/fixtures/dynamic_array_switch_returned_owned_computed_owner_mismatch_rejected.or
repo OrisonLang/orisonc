@@ -1,0 +1,40 @@
+package fixtures.dynamicarrayswitchreturnedownedcomputedownermismatchrejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_first() -> DynamicArray<Payload>
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(3 as UInt32))
+    items
+
+function make_second() -> DynamicArray<Payload>
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(5 as UInt32))
+    items
+
+function make_default() -> DynamicArray<Payload>
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7 as UInt32))
+    items
+
+function choose_items(selector: UInt32) -> DynamicArray<Payload>
+    switch selector
+        0 as UInt32 => make_first()
+        1 as UInt32 => make_second()
+        default => make_default()
+
+function main() -> UInt32
+    var left: DynamicArray<Payload> = choose_items(0 as UInt32)
+    var right: DynamicArray<Payload> = choose_items(1 as UInt32)
+    var total = 0 as UInt32
+    for item in true ? left : right
+        total = total + item.value
+    total

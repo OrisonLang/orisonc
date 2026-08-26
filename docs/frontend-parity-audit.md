@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or` now pins the
+  switch-returned computed iterable ownership-join rejection when two switch-returned descriptors are bound to
+  different locals before the computed ternary.
 - 2026-08-25: `tests/fixtures/dynamic_array_switch_returned_owned_computed_for_cleanup_run.or` now pins
   switch-returned `DynamicArray<Payload>` descriptors joined through a multi-case `switch` result before nested
   same-owner computed iteration, with PHI-return, final-use Drop walks, deallocation, descriptor finalization, and

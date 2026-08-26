@@ -6608,6 +6608,25 @@ auto main() -> int {
             "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
         ) != std::string::npos
     );
+    auto dynamic_array_switch_returned_owned_computed_owner_mismatch_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or";
+    auto dynamic_array_switch_returned_owned_computed_owner_mismatch_ir = pipeline.emit_llvm(
+        dynamic_array_switch_returned_owned_computed_owner_mismatch_path
+    );
+    assert(dynamic_array_switch_returned_owned_computed_owner_mismatch_ir.has_errors());
+    assert(
+        dynamic_array_switch_returned_owned_computed_owner_mismatch_ir.error_text.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
+            "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_switch_returned_owned_computed_owner_mismatch_ir.error_text.find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<Payload> "
+            "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto dynamic_array_returned_multi_hop_forwarding_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

@@ -1071,6 +1071,8 @@ representation.
 - `tests/fixtures/dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or` now pins the matching
   negative boundary where two branch-returned descriptors are bound to different locals and a computed iterable
   ternary cannot prove a single cleanup owner.
+- `tests/fixtures/dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or` now pins the same negative
+  boundary for switch-returned descriptors bound to different locals before a computed iterable ternary.
 - Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after
