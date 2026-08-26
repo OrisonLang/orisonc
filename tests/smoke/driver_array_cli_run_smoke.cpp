@@ -1816,16 +1816,18 @@ void assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_succ
 
 void assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
-    std::filesystem::path const& source_path
+    std::filesystem::path const& source_path,
+    std::string_view owner_name
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    auto const returned_loop = output.find("returned.values.computed_for.1.condition:");
+    auto const owner = std::string {owner_name};
+    auto const returned_loop = output.find(owner + ".computed_for.1.condition:");
     auto const returned_drop =
-        output.find("call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup");
+        output.find("call void @__orison_drop.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
     auto const returned_deallocate =
-        output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.values.computed_for.1.data");
+        output.find("call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.1.data");
     auto const returned_finalize =
-        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %returned.values.addr", returned_deallocate);
+        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %" + owner + ".addr", returned_deallocate);
     auto const scratch_drop =
         output.find("call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup", returned_finalize);
     auto const scratch_deallocate =
@@ -1853,7 +1855,7 @@ void assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm
     assert(scratch_finalize < merge);
     assert(merge < return_value);
     assert(output.find("switch case ownership mismatch") == std::string::npos);
-    assert(output.find("%returned.values.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("%" + owner + ".dynamic_array_cleanup") == std::string::npos);
 }
 
 void assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
@@ -2322,6 +2324,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
     auto returned_nested_aggregate_field_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or";
+    auto returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
+        fixtures / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
     auto choice_payload_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_path =
@@ -2707,7 +2711,8 @@ auto main() -> int {
     );
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
-        returned_aggregate_field_final_switch_branch_local_cleanup_path
+        returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        "returned.values"
     );
     assert_emit_object_success(
         executable,
@@ -2718,6 +2723,21 @@ auto main() -> int {
         executable,
         returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup"
+    );
+    assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
+        executable,
+        returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        "returned.inner.values"
+    );
+    assert_emit_object_success(
+        executable,
+        returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
     assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,

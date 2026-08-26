@@ -2284,6 +2284,9 @@ representation.
   switch merge.
 - The same final-switch composition shape now rejects branch-local owner reuse after transfer. A final expression that
   passes `scratch` to an owned-parameter helper twice fails with `use after move: scratch`.
+- Nested returned aggregate-field owners now have the same final-switch composition coverage. The checked
+  `returned.inner.values` fixture emits computed cleanup before same-case `scratch` cleanup and reaches the switch
+  merge with both descriptors finalized.
 
 ## Follow-up work
 

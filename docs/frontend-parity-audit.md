@@ -2819,3 +2819,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-26: Final-switch branch-local ownership reuse is now pinned for the same returned-field composition shape.
   Reusing `scratch` through a second owned-parameter call in the final expression now fails with `use after move:
   scratch`.
+- 2026-08-26: The final-switch branch-local cleanup composition now covers nested returned aggregate-field owners.
+  `returned.inner.values` emits computed cleanup before the same-case `scratch` cleanup, then links and runs.
