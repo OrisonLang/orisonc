@@ -9,6 +9,7 @@
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/for_loop_lowering.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowered_value.hpp"
@@ -39,6 +40,48 @@ struct FixedArraySourceType {
     std::string element_source_type_name;
     std::size_t length = 0;
 };
+
+auto lower_prefix_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
+auto lower_prefix_statement_block(
+    std::span<syntax::StatementSyntax const* const> statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        auto tail_scope = SiblingStatementTailScope {
+            session.state,
+            statements,
+            index,
+        };
+        if (statement == nullptr ||
+            !lower_prefix_statement(
+                *statement,
+                expected_llvm_type,
+                expected_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            )) {
+            return false;
+        }
+    }
+    return true;
+}
 
 auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
@@ -1597,6 +1640,61 @@ auto lower_prefix_statement(
     }
     if (statement.kind == syntax::StatementKind::defer_statement) {
         return record_deferred_cleanup(statement, session, diagnostics);
+    }
+    if (statement.kind == syntax::StatementKind::for_statement) {
+        auto lower_body = [&]() {
+            auto statement_pointers = statement_pointers_for(statement.nested_statements);
+            return lower_prefix_statement_block(
+                statement_pointers,
+                expected_llvm_type,
+                expected_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            ) ? StatementFlow::falls_through : StatementFlow::failed;
+        };
+        if (statement.expression.kind == syntax::ExpressionKind::array_literal) {
+            auto flow = lower_array_literal_for_statement(
+                statement,
+                context,
+                session,
+                diagnostics,
+                output,
+                infer_expression_type,
+                lower_body
+            );
+            return flow != StatementFlow::failed;
+        }
+
+        auto source_type_name =
+            source_type_name_for_expression(statement.expression, context.lowering, session.state);
+        auto dynamic_sequence = source_type_name.has_value()
+            ? dynamic_sequence_source_type(*source_type_name)
+            : std::nullopt;
+        if (dynamic_sequence.has_value() &&
+            (dynamic_sequence_for_lowering_enabled(*dynamic_sequence, context.options) ||
+             dynamic_sequence->kind == DynamicSequenceKind::dynamic_array)) {
+            auto flow = lower_sequence_for_statement(
+                statement,
+                context,
+                session,
+                diagnostics,
+                output,
+                lower_body
+            );
+            return flow != StatementFlow::failed;
+        }
+
+        auto flow = lower_fixed_array_for_statement(
+            statement,
+            context,
+            session,
+            diagnostics,
+            output,
+            lower_body
+        );
+        return flow != StatementFlow::failed;
     }
     return false;
 }

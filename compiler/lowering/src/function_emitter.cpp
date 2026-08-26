@@ -1901,6 +1901,7 @@ void emit_function_body(
         : std::optional<std::string_view> {signature.source_return_type_name};
     auto attempted_final_control_flow = false;
     auto final_statement_line = function.line;
+    auto final_control_flow_diagnostic_count = std::size_t {0};
     auto leading_statement_flow = StatementFlow::falls_through;
     auto propagate_leading_statement_flow = [&leading_statement_flow](StatementFlow flow) -> bool {
         if (flow == StatementFlow::failed) {
@@ -2135,6 +2136,7 @@ void emit_function_body(
                 statement.kind == syntax::StatementKind::switch_statement) {
                 attempted_final_control_flow = true;
                 final_statement_line = statement.line;
+                final_control_flow_diagnostic_count = diagnostics.entries().size();
                 lowered_final_statement = lower_final_control_flow_statement(
                     statement,
                     signature.return_type,
@@ -2156,13 +2158,15 @@ void emit_function_body(
     }
 
     if (attempted_final_control_flow && !lowered_final_statement.has_value()) {
-        diagnostics.error(
-            final_statement_line,
-            append_control_flow_lowering_failure(
-                "lowering does not yet support this final control-flow statement",
-                failures.control_flow
-            )
-        );
+        if (diagnostics.entries().size() == final_control_flow_diagnostic_count) {
+            diagnostics.error(
+                final_statement_line,
+                append_control_flow_lowering_failure(
+                    "lowering does not yet support this final control-flow statement",
+                    failures.control_flow
+                )
+            );
+        }
         return;
     }
 

@@ -2803,3 +2803,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-25: Approved `switch` payload bindings now have end-to-end computed `DynamicArray<T>` cleanup coverage.
   The checked `Primary(values)` fixture emits element drops, descriptor deallocation, and descriptor finalization for
   the bound `values` owner, with matching missing-`Drop` rejection.
+- 2026-08-26: Final non-void `switch` cases now lower computed `DynamicArray<T>` loops over approved
+  `Primary(values)` payload bindings. Prefix `for` lowering is available inside final case bodies, cleanup block
+  selection uses the actual planned cleanup tail after finalized descriptors are skipped, and missing `Drop`
+  diagnostics no longer gain a generic final-control-flow failure.

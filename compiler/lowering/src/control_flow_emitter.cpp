@@ -375,16 +375,23 @@ auto emit_scoped_local_dynamic_array_cleanups(
         ++cleanup_plan;
     }
 
+    auto planned_session = session;
+    planned_session.state.dynamic_array_local_cleanup_plans = scoped_cleanup_plans;
+    auto plans = plan_local_dynamic_array_cleanups(context, planned_session);
+    if (!plans.has_value()) {
+        return false;
+    }
+
     auto scoped_cleanup_exit_block = std::optional<std::string> {};
-    if (!scoped_cleanup_plans.empty()) {
-        auto const& final_cleanup_plan = scoped_cleanup_plans.back();
-        auto final_cleanup_ordinal = cleanup_ordinal_start + scoped_cleanup_plans.size() - 1;
+    if (!plans->empty()) {
+        auto const& final_cleanup_plan = plans->back().descriptor_cleanup;
+        auto final_cleanup_ordinal = cleanup_ordinal_start + plans->size() - 1;
         auto label_prefix = final_cleanup_plan.owner_name + ".dynamic_array_cleanup" +
             std::to_string(final_cleanup_ordinal);
         scoped_cleanup_exit_block =
             is_scalar_or_nonowning_source_type(final_cleanup_plan.element_source_type_name)
-            ? label_prefix + ".cleanup.entry"
-            : label_prefix + ".drop.done";
+                ? label_prefix + ".cleanup.entry"
+                : label_prefix + ".drop.done";
     }
 
     session.state.dynamic_array_local_cleanup_plans = std::move(scoped_cleanup_plans);

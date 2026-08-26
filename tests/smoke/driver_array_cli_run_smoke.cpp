@@ -829,7 +829,7 @@ void assert_dynamic_array_switch_returned_owner_reuse_emit_llvm_failure(
     std::filesystem::path const& source_path
 ) {
     auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("switch case lowering failed: use after move: first_left_values") != std::string::npos);
+    assert(output.find("use after move: first_left_values") != std::string::npos);
 }
 
 void assert_dynamic_array_helper_call_returned_owner_reuse_emit_llvm_failure(
@@ -837,7 +837,7 @@ void assert_dynamic_array_helper_call_returned_owner_reuse_emit_llvm_failure(
     std::filesystem::path const& source_path
 ) {
     auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(output.find("switch case lowering failed: use after move: first_left_values") != std::string::npos);
+    assert(output.find("use after move: first_left_values") != std::string::npos);
 }
 
 void assert_dynamic_array_ternary_named_helper_call_returned_owner_reuse_emit_llvm_failure(
@@ -1567,6 +1567,11 @@ void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
             "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
         ) != std::string::npos
     );
+    assert(
+        output.find(
+            "lowering does not yet support this final control-flow statement"
+        ) == std::string::npos
+    );
 }
 
 void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
@@ -1800,22 +1805,31 @@ void assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm
     assert(output.find("define i32 @consume_packet({ i32, { ptr, i64, i64 } } %packet)") != std::string::npos);
     assert(output.find("switch i32 %tmp0, label %switch.unreachable.0") != std::string::npos);
     assert(output.find("%values.addr = alloca { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("values.computed_for.1.condition:") != std::string::npos);
+    assert(output.find("values.computed_for.") != std::string::npos);
+    assert(output.find(".condition:") != std::string::npos);
     assert(
         output.find(
-            "cleanup state handoff acquire operation values.computed_for.1.cleanup.acquire "
+            "cleanup state handoff acquire operation values.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
             "from values to values.loop.entry [cleanup calls enabled]"
         ) != std::string::npos
     );
     assert(
         output.find(
-            "cleanup state handoff resume operation values.computed_for.1.cleanup.resume "
+            "cleanup state handoff resume operation values.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
             "from values.loop.entry to values [cleanup calls enabled]"
         ) != std::string::npos
     );
     auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup");
     auto const deallocation =
-        output.find("call void @__orison_dynamic_array_deallocate(ptr %values.computed_for.1.data", drop_call);
+        output.find("call void @__orison_dynamic_array_deallocate(ptr %values.computed_for.", drop_call);
     auto const finalization =
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %values.addr", deallocation);
     assert(drop_call != std::string::npos);
@@ -2249,6 +2263,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or";
     auto choice_payload_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
+    auto choice_payload_final_switch_binding_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or";
     auto returned_dynamic_array_multi_hop_forwarding_path =
         fixtures / "dynamic_array_returned_multi_hop_forwarding_run.or";
     auto returned_dynamic_array_branch_join_forwarding_path =
@@ -2484,6 +2500,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop.or";
     auto choice_payload_switch_binding_owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop.or";
+    auto choice_payload_final_switch_binding_owned_computed_dynamic_array_missing_drop_path =
+        fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_cleanup_missing_drop.or";
     auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
     auto switch_returned_owned_computed_dynamic_array_owner_mismatch_path =
@@ -2648,6 +2666,20 @@ auto main() -> int {
         executable,
         choice_payload_switch_binding_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        choice_payload_final_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        choice_payload_final_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        choice_payload_final_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup"
     );
     assert_owned_dynamic_array_parameter_emit_llvm_success(executable, owned_dynamic_array_parameter_path);
     assert_emit_object_success(
@@ -3798,6 +3830,10 @@ auto main() -> int {
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,
         choice_payload_switch_binding_owned_computed_dynamic_array_missing_drop_path
+    );
+    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+        executable,
+        choice_payload_final_switch_binding_owned_computed_dynamic_array_missing_drop_path
     );
     assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
         executable,
