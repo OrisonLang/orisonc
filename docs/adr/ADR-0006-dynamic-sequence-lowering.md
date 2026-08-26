@@ -2282,6 +2282,8 @@ representation.
   branch-local `DynamicArray<T>` cleanup. The computed owner `returned.values` finalizes first, then the same-case
   `scratch` owner emits its element Drop walk, descriptor deallocation, and descriptor zero-finalization before the
   switch merge.
+- The same final-switch composition shape now rejects branch-local owner reuse after transfer. A final expression that
+  passes `scratch` to an owned-parameter helper twice fails with `use after move: scratch`.
 
 ## Follow-up work
 

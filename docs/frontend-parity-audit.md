@@ -2816,3 +2816,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-26: Final `switch` case bodies now have regression coverage for composing returned aggregate-field computed
   cleanup with sibling branch-local `DynamicArray<T>` cleanup. The checked fixture cleans `returned.values` from the
   computed loop, then cleans the same-case `scratch` owner before the switch merge and executable return.
+- 2026-08-26: Final-switch branch-local ownership reuse is now pinned for the same returned-field composition shape.
+  Reusing `scratch` through a second owned-parameter call in the final expression now fails with `use after move:
+  scratch`.
