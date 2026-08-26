@@ -316,6 +316,18 @@ int main() {
             },
         },
     });
+    context.records.emplace("OuterPayloadBox", orison::lowering::LoweredRecordLayout {
+        .name = "OuterPayloadBox",
+        .llvm_type_name = "%record.OuterPayloadBox",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "inner",
+                .source_type_name = "PayloadBox",
+                .llvm_type = "%record.PayloadBox",
+                .index = 0,
+            },
+        },
+    });
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Box<UInt32>",
         .method_name = "bump",
@@ -411,6 +423,7 @@ int main() {
     state.source_type_names["computed_left"] = "DynamicArray<UInt32>";
     state.source_type_names["computed_right"] = "DynamicArray<UInt32>";
     state.source_type_names["returned"] = "PayloadBox";
+    state.source_type_names["returned_outer"] = "OuterPayloadBox";
     state.addressable_bindings["items"] = orison::lowering::AddressableBinding {
         .type = orison::lowering::LoweredType {
             .type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
@@ -431,6 +444,13 @@ int main() {
             .signedness = orison::lowering::IntegerSignedness::not_integer,
         },
         .storage = "%returned.addr",
+    };
+    state.addressable_bindings["returned_outer"] = orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.OuterPayloadBox",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%returned_outer.addr",
     };
     state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
         .owner_name = "items",
@@ -458,6 +478,16 @@ int main() {
         .element_source_type_name = "UInt32",
         .element_llvm_type = "i32",
         .descriptor_storage_name = "%returned.values.addr0",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "returned_outer.inner.values",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%returned_outer.inner.values.addr0",
         .descriptor_storage_status =
             orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
         .element_size_bytes = 4,
@@ -533,6 +563,44 @@ int main() {
     assert(aggregate_field_computed_handoff_plan.descriptor_storage_name == "%returned.values.addr0");
     assert(aggregate_field_computed_handoff_plan.descriptor_storage_available);
     assert(aggregate_field_computed_handoff_plan.cleanup_owner_proven);
+
+    auto nested_aggregate_field_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(
+            member(member(name("returned_outer"), "inner"), "values"),
+            context,
+            state
+        );
+    assert(
+        nested_aggregate_field_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner
+    );
+    assert(nested_aggregate_field_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(nested_aggregate_field_dynamic_array_plan.element_source_type_name == "UInt32");
+    assert(nested_aggregate_field_dynamic_array_plan.owner_name == "returned_outer.inner.values");
+    assert(nested_aggregate_field_dynamic_array_plan.descriptor_storage == "%returned_outer.inner.values.addr0");
+    assert(nested_aggregate_field_dynamic_array_plan.can_lower_now);
+    assert(nested_aggregate_field_dynamic_array_plan.cleanup_owner_proven);
+    auto nested_aggregate_field_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(member(name("returned_outer"), "inner"), "values"),
+                member(member(name("returned_outer"), "inner"), "values")
+            ),
+            context,
+            state
+        );
+    assert(
+        nested_aggregate_field_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(nested_aggregate_field_computed_handoff_plan.source_owner_name == "returned_outer.inner.values");
+    assert(nested_aggregate_field_computed_handoff_plan.handoff_owner_name == "returned_outer.inner.values");
+    assert(nested_aggregate_field_computed_handoff_plan.descriptor_storage_name ==
+        "%returned_outer.inner.values.addr0");
+    assert(nested_aggregate_field_computed_handoff_plan.descriptor_storage_available);
+    assert(nested_aggregate_field_computed_handoff_plan.cleanup_owner_proven);
 
     auto missing_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("computed_left"), context, state);

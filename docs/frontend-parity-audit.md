@@ -1,5 +1,12 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or` now
+  pins a nested returned record-field `DynamicArray<Payload>` descriptor consumed by a same-owner computed `for`,
+  including nested field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and
+  object/link/run smoke coverage.
+- 2026-08-25: `tests/fixtures/dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop.or`
+  now pins the nested returned aggregate-field computed cleanup missing-Drop rejection through pipeline and CLI
+  `--emit-llvm` coverage.
 - 2026-08-25: `tests/fixtures/dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run.or` now pins a
   returned record-field `DynamicArray<Payload>` descriptor consumed by a nested same-owner computed `for`, including
   field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and object/link/run smoke

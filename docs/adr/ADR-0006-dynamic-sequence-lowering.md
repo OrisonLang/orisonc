@@ -2272,6 +2272,9 @@ representation.
   an existing field cleanup plan proves a finite owner path such as `returned.values`. The computed cleanup path reuses
   the seeded field descriptor storage, emits element Drop walks when authorized, deallocates the descriptor, and
   finalizes the field storage.
+- The same returned aggregate-field computed cleanup rule now covers nested finite member paths such as
+  `returned.inner.values`. The internal owner proof remains a dotted owner path matched to an existing seeded cleanup
+  plan; no new language syntax is introduced.
 
 ## Follow-up work
 
