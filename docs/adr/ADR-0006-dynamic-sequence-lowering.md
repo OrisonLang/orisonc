@@ -2289,6 +2289,9 @@ representation.
   merge with both descriptors finalized.
 - The nested final-switch composition now has paired branch-local reuse coverage. Passing same-case `scratch` to an
   owned-parameter helper twice after the `returned.inner.values` computed loop fails with `use after move: scratch`.
+- Final `if` arm lowering now has positive coverage for composing returned aggregate-field computed cleanup with
+  branch-local `DynamicArray<T>` cleanup. The checked `returned.values` fixture emits computed cleanup before same-arm
+  `scratch` cleanup and reaches the `if` merge with both descriptors finalized.
 
 ## Follow-up work
 

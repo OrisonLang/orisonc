@@ -2823,3 +2823,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `returned.inner.values` emits computed cleanup before the same-case `scratch` cleanup, then links and runs.
 - 2026-08-26: Nested final-switch branch-local reuse is now pinned for the returned-field composition shape. Reusing
   same-case `scratch` after the `returned.inner.values` computed loop now fails with `use after move: scratch`.
+- 2026-08-26: Final `if` arms now have positive coverage for composing returned aggregate-field computed cleanup with
+  branch-local `DynamicArray<T>` cleanup. The checked fixture emits `returned.values` cleanup before same-arm `scratch`
+  cleanup and links/runs.
