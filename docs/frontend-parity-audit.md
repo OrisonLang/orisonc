@@ -2828,3 +2828,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup and links/runs.
 - 2026-08-26: Final-if branch-local reuse is now pinned for the returned-field composition shape. Reusing same-arm
   `scratch` after the `returned.values` computed loop now fails with `use after move: scratch`.
+- 2026-08-26: Final-if branch-local cleanup composition now covers nested returned aggregate-field owners.
+  `returned.inner.values` emits computed cleanup before same-arm `scratch` cleanup, then links and runs.
