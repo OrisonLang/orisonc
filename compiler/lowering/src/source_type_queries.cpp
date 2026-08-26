@@ -1,5 +1,6 @@
 #include "orison/lowering/source_type_queries.hpp"
 
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
@@ -23,6 +24,58 @@ auto computed_dynamic_array_for_base_name(
     return name;
 }
 
+auto aggregate_member_path_owner_name(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    auto path = collect_named_aggregate_path(expression);
+    if (!path.has_value() || path->base_expression == nullptr || path->base_expression->text.empty()) {
+        return std::nullopt;
+    }
+
+    auto owner_name = path->base_expression->text;
+    for (auto const& step : path->steps) {
+        if (step.kind != AggregatePathStepKind::member || step.field_name.empty()) {
+            return std::nullopt;
+        }
+        owner_name += ".";
+        owner_name += step.field_name;
+    }
+    return owner_name;
+}
+
+auto matching_dynamic_array_cleanup_plan(
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans,
+    std::string_view owner_name,
+    std::string_view source_type_name
+) -> DynamicArrayDescriptorCleanupPlan const* {
+    for (auto const& cleanup_plan : cleanup_plans) {
+        if (cleanup_plan.owner_name == owner_name &&
+            cleanup_plan.source_type_name == source_type_name) {
+            return &cleanup_plan;
+        }
+    }
+    return nullptr;
+}
+
+auto matching_dynamic_array_cleanup_plan(
+    FunctionLoweringState const& state,
+    std::string_view owner_name,
+    std::string_view source_type_name
+) -> DynamicArrayDescriptorCleanupPlan const* {
+    if (auto const* cleanup_plan = matching_dynamic_array_cleanup_plan(
+            state.dynamic_array_local_cleanup_plans,
+            owner_name,
+            source_type_name
+        )) {
+        return cleanup_plan;
+    }
+    return matching_dynamic_array_cleanup_plan(
+        state.dynamic_array_iterable_cleanup_owner_plans,
+        owner_name,
+        source_type_name
+    );
+}
+
 auto collect_computed_dynamic_array_leaf_descriptors(
     syntax::ExpressionSyntax const& expression,
     std::string_view source_type_name,
@@ -30,7 +83,8 @@ auto collect_computed_dynamic_array_leaf_descriptors(
     FunctionLoweringState const& state,
     std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
 ) -> bool {
-    if (expression.kind == syntax::ExpressionKind::name) {
+    if (expression.kind == syntax::ExpressionKind::name ||
+        expression.kind == syntax::ExpressionKind::member_access) {
         auto descriptor = plan_dynamic_array_iterable_descriptor(expression, context, state);
         if (descriptor.source_type_name != source_type_name || descriptor.owner_name.empty()) {
             return false;
@@ -350,6 +404,24 @@ auto plan_dynamic_array_iterable_descriptor(
     plan.element_source_type_name = std::move(sequence->element_source_type_name);
 
     if (expression.kind != syntax::ExpressionKind::name) {
+        if (auto owner_name = aggregate_member_path_owner_name(expression)) {
+            plan.owner_name = std::move(*owner_name);
+            if (auto const* cleanup_plan = matching_dynamic_array_cleanup_plan(
+                    state,
+                    plan.owner_name,
+                    plan.source_type_name
+                )) {
+                plan.kind = DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner;
+                plan.descriptor_storage = cleanup_plan->descriptor_storage_name;
+                plan.can_lower_now = !plan.descriptor_storage.empty();
+                attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
+                return plan;
+            }
+
+            plan.kind = DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage;
+            attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
+            return plan;
+        }
         plan.kind = DynamicArrayIterableDescriptorPlanKind::computed_owner_unproven;
         attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
         return plan;
@@ -569,13 +641,18 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
     plan.source_owner_name = plan.ownership_plan.branch_owner_names.front();
     plan.handoff_owner_name = plan.source_owner_name;
 
-    auto owner_expression = syntax::ExpressionSyntax {};
-    owner_expression.kind = syntax::ExpressionKind::name;
-    owner_expression.text = plan.source_owner_name;
-    auto descriptor_plan = plan_dynamic_array_iterable_descriptor(owner_expression, context, state);
-    plan.descriptor_storage_name = std::move(descriptor_plan.descriptor_storage);
-    plan.descriptor_storage_available = !plan.descriptor_storage_name.empty();
-    plan.cleanup_owner_proven = descriptor_plan.cleanup_owner_proven;
+    if (auto const* cleanup_plan = matching_dynamic_array_cleanup_plan(
+            state,
+            plan.source_owner_name,
+            plan.source_type_name
+        )) {
+        plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
+        plan.descriptor_storage_available = !plan.descriptor_storage_name.empty();
+        auto const proof_status = dynamic_array_iterable_cleanup_owner_proof_status(
+            cleanup_plan->descriptor_storage_status
+        );
+        plan.cleanup_owner_proven = dynamic_array_iterable_cleanup_owner_proven(proof_status);
+    }
     plan.kind = plan.descriptor_storage_available && plan.cleanup_owner_proven
         ? ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned
         : ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;

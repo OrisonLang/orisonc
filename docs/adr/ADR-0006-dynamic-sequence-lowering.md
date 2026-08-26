@@ -2268,6 +2268,10 @@ representation.
 - Negative lowering-smoke coverage now pins the matching post-merge ownership state for preexisting local
   `DynamicArray<T>` owners. After the final `if` or `switch` cleanup/transfer merge, a direct internal read of `items`
   reports `use after move: items`; source-level post-final reuse remains unavailable in ordinary function bodies.
+- Returned aggregate-field `DynamicArray<T>` descriptors can now participate in same-owner computed `for` cleanup when
+  an existing field cleanup plan proves a finite owner path such as `returned.values`. The computed cleanup path reuses
+  the seeded field descriptor storage, emits element Drop walks when authorized, deallocates the descriptor, and
+  finalizes the field storage.
 
 ## Follow-up work
 

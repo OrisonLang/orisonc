@@ -1,0 +1,23 @@
+package fixtures.dynamicarrayreturnedaggregatefieldownedcomputedcleanupmissingdrop
+
+record Payload
+    public value: UInt32
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(19 as UInt32))
+    values.push(Payload(23 as UInt32))
+    values
+
+function make_box() -> PayloadBox
+    PayloadBox(make_values())
+
+function main() -> UInt32
+    var returned: PayloadBox = make_box()
+    var total = 0 as UInt32
+    for item in true ? returned.values : false ? returned.values : returned.values
+        total = total + item.value
+    total

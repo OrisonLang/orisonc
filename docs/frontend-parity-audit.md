@@ -1,5 +1,11 @@
 # Frontend Parity Audit
 
+- 2026-08-25: `tests/fixtures/dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run.or` now pins a
+  returned record-field `DynamicArray<Payload>` descriptor consumed by a nested same-owner computed `for`, including
+  field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and object/link/run smoke
+  coverage.
+- 2026-08-25: `tests/fixtures/dynamic_array_returned_aggregate_field_owned_computed_cleanup_missing_drop.or` now pins
+  the returned aggregate-field computed cleanup missing-Drop rejection through pipeline and CLI `--emit-llvm` coverage.
 - 2026-08-25: `tests/fixtures/dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or` now pins the
   switch-returned computed iterable ownership-join rejection when two switch-returned descriptors are bound to
   different locals before the computed ternary.

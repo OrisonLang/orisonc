@@ -477,9 +477,11 @@ This repository currently captures the initial language design and development c
   descriptor finalization, object emission, host linking, and execution.
 - Covered: returned computed cleanup now rejects missing element `Drop` and mismatched computed iterable owners before
   descriptor cleanup emission, including returned, branch-returned, and switch-returned fixture paths.
-- Remaining: returned computed cleanup still needs aggregate-field, choice-payload, alias-chain, and helper-call result
-  combinations before it matches the broader forwarding fixture matrix.
+- Covered: returned aggregate-field descriptors such as `returned.values` now feed same-owner computed iteration with
+  Drop walks, deallocation, descriptor finalization, and missing-Drop rejection coverage.
+- Remaining: returned computed cleanup still needs nested aggregate-field, choice-payload, alias-chain, and helper-call
+  result combinations before it matches the broader forwarding fixture matrix.
 - Remaining: ownership diagnostics are correct but verbose; later diagnostic work should emit source-oriented primary
   errors with optional cleanup-plan detail output.
-- Next: extend returned computed cleanup from direct returned locals to returned aggregate-field or choice-payload
-  descriptors, then add matching negative owner-proof coverage.
+- Next: extend returned computed cleanup from direct returned aggregate fields to nested aggregate-field or
+  choice-payload descriptors, then add matching negative owner-proof coverage.
