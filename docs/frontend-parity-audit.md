@@ -2813,3 +2813,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-26: Returned aggregate-field computed cleanup reuse is pinned for direct and nested owners. Reusing
   `returned.values` or `returned.inner.values` after same-owner computed cleanup now rejects with the corresponding
   `use after move` diagnostic.
+- 2026-08-26: Final `switch` case bodies now have regression coverage for composing returned aggregate-field computed
+  cleanup with sibling branch-local `DynamicArray<T>` cleanup. The checked fixture cleans `returned.values` from the
+  computed loop, then cleans the same-case `scratch` owner before the switch merge and executable return.

@@ -2278,6 +2278,10 @@ representation.
 - Computed `DynamicArray<T>` cleanup now commits the consumed-owner transfer state before leaving the computed-loop
   branch scope. This prevents later same-case reuse of a finalized payload binding such as `values` after the cleanup
   path has emitted element drops, descriptor deallocation, and descriptor zero-finalization.
+- Final `switch` case lowering now has positive coverage for composing returned aggregate-field computed cleanup with
+  branch-local `DynamicArray<T>` cleanup. The computed owner `returned.values` finalizes first, then the same-case
+  `scratch` owner emits its element Drop walk, descriptor deallocation, and descriptor zero-finalization before the
+  switch merge.
 
 ## Follow-up work
 

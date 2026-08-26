@@ -1,0 +1,43 @@
+package fixtures.dynamicarrayreturnedaggregatefieldfinalswitchbranchlocalcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(19 as UInt32))
+    values.push(Payload(23 as UInt32))
+    values
+
+function make_scratch(seed: UInt32) -> DynamicArray<Payload>
+    var scratch: DynamicArray<Payload> = DynamicArray()
+    scratch.push(Payload(seed))
+    scratch
+
+function make_box() -> PayloadBox
+    PayloadBox(make_values())
+
+function consume(flag: Bool) -> UInt32
+    switch flag
+        true =>
+            var returned: PayloadBox = make_box()
+            var scratch: DynamicArray<Payload> = make_scratch(1 as UInt32)
+            var total = 0 as UInt32
+            for item in true ? returned.values : false ? returned.values : returned.values
+                total = total + item.value
+            total - 42 as UInt32
+        false =>
+            0 as UInt32
+
+function main() -> UInt32
+    consume(true)
