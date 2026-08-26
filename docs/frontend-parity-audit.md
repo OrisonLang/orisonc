@@ -2800,3 +2800,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-25: DynamicArray computed-cleanup planning now recognizes internal stored choice-payload descriptor owners
   such as `packet.Primary.values` at the source-type query seam. Source-level direct choice-payload projection remains
   rejected by semantic analysis, so this does not add language syntax.
+- 2026-08-25: Approved `switch` payload bindings now have end-to-end computed `DynamicArray<T>` cleanup coverage.
+  The checked `Primary(values)` fixture emits element drops, descriptor deallocation, and descriptor finalization for
+  the bound `values` owner, with matching missing-`Drop` rejection.

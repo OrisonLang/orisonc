@@ -6663,6 +6663,46 @@ auto main() -> int {
         dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run"
     );
+    auto dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
+    auto dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+            .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        }
+    );
+    assert(!dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.has_errors());
+    assert_ir_contains(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
+        "define i32 @consume_packet({ i32, { ptr, i64, i64 } } %packet)"
+    );
+    assert_ir_contains(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
+        "values.computed_for.1.condition:\n"
+    );
+    assert_ir_contains(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
+        "call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %values.computed_for.1.data"
+    );
+    assert_ir_contains(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %values.addr"
+    );
+    assert_ir_excludes(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
+        "packet.Primary.values.choice_dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_path,
+        smoke_temp_root / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run"
+    );
     auto dynamic_array_returned_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_owned_computed_cleanup_missing_drop.or";
@@ -6694,6 +6734,17 @@ auto main() -> int {
     assert(dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop_ir.has_errors());
     assert(
         dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop_ir.error_text.find(
+            "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
+        ) != std::string::npos
+    );
+    auto dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop.or";
+    auto dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_ir =
+        pipeline.emit_llvm(dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_path);
+    assert(dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_ir.has_errors());
+    assert(
+        dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_ir.error_text.find(
             "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
         ) != std::string::npos
     );
