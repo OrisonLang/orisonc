@@ -1582,6 +1582,15 @@ void assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
     assert(output.find("use after move: values") != std::string::npos);
 }
 
+void assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::string_view owner_name
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("use after move: " + std::string {owner_name}) != std::string::npos);
+}
+
 void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2506,6 +2515,10 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_aggregate_field_owned_computed_cleanup_missing_drop.or";
     auto returned_nested_aggregate_field_owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop.or";
+    auto returned_aggregate_field_owned_computed_dynamic_array_reuse_path =
+        fixtures / "dynamic_array_returned_aggregate_field_owned_computed_reuse_rejected.or";
+    auto returned_nested_aggregate_field_owned_computed_dynamic_array_reuse_path =
+        fixtures / "dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_rejected.or";
     auto choice_payload_switch_binding_owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_missing_drop_path =
@@ -3836,6 +3849,16 @@ auto main() -> int {
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,
         returned_nested_aggregate_field_owned_computed_dynamic_array_missing_drop_path
+    );
+    assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+        executable,
+        returned_aggregate_field_owned_computed_dynamic_array_reuse_path,
+        "returned.values"
+    );
+    assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+        executable,
+        returned_nested_aggregate_field_owned_computed_dynamic_array_reuse_path,
+        "returned.inner.values"
     );
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,

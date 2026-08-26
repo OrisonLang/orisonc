@@ -1,489 +1,63 @@
 # Orison
 
-Orison is a readable systems programming language with explicit ownership, explicit unsafe boundaries, modern tooling, and a surface syntax designed to welcome new systems engineers.
+Orison is a systems programming language project. This repository contains the current `orisonc` compiler prototype.
 
-## Project goals
+## Dependencies
 
-- Make systems programming more approachable without hiding core machine concepts.
-- Keep memory, ownership, allocation, access control, concurrency, and unsafe operations explicit.
-- Provide a strong statically typed language with practical low-level control.
-- Ship a serious toolchain with compiler, formatter, and language server support.
-- Preserve a path toward zero-cost abstractions through representation and compiler design, not surface complexity.
+- C++23 compiler
+- CMake
+- LLVM development tools and libraries
+- POSIX shell tools
+- `dos2unix`
 
-## Current design direction
-
-Orison currently aims for:
-
-- static, explicit, mostly nominal typing
-- ownership-aware access modes: owned, `shared`, `exclusive`, raw pointers
-- algebraic data types via `record` and `choice`
-- record construction with explicit field-order constructor calls
-- generics and constrained polymorphism
-- interface-based abstraction via `interface` and `implements`
-- three-level access control: `public`, `package`, `private`
-- indentation-based primary syntax
-- word-based boolean operators: `and`, `or`, `not`
-- named bitwise operators: `bit_and`, `bit_or`, `bit_xor`, `bit_not`, `shift_left`, `shift_right`
-- ternary conditional expressions with `?:`
-- null-safe member access with `?.`
-- explicit `unsafe` boundaries
-- first-class raw addresses and MMIO support
-- package imports and explicit FFI declarations
-- OS threads, runtime tasks, and async functions integrated with the safety model
-
-## Core documents
-
-- `ORISON_SPEC.md` - language feature and keyword reference
-- `ORISON_TOUR.md` - end-to-end syntax tour
-- `docs/adr/` - architecture decision records
-
-## Tooling plan
-
-The intended tool suite is:
-
-- `orisonc` - compiler driver
-- `orisonls` - language server
-- `orisonfmt` - formatter
-
-Each tool should be distributed as a monolithic statically linked executable. Internally, the implementation should remain modular and library-oriented.
-
-## Minimal compiler demo
-
-The smallest checked-in program is `examples/minimal.or`:
-
-```text
-package demo.minimal
-
-function main() -> UInt32
-    0 as UInt32
-```
-
-Configure, build, compile, link, and run it with:
+## Build
 
 ```sh
 cmake -S . -B build
 cmake --build build -j 16
-build/tools/orisonc/orisonc run examples/minimal.or
 ```
 
-The demo exits successfully with status `0`. Use `--build examples/minimal.or -o build/minimal` to retain the
-executable. The same file can be inspected with `--emit-llvm` or compiled with `--emit-object`.
-
-Focused examples for the language-tour sections live under `examples/tour_*.or`. See `examples/README.md` for
-the feature and validation matrix, including the runnable C `printf` hello-world example and DynamicArray cleanup demos.
-
-## Dynamic-Array Cleanup Audit Demo
-
-The checked-in report-only fixture for the dynamic-array cleanup audit chain is
-`tests/fixtures/dynamic_array_cleanup_audit.or`. Inspect the full metadata chain with:
+## Test
 
 ```sh
-build/tools/orisonc/orisonc --dynamic-array-cleanup-audit tests/fixtures/dynamic_array_cleanup_audit.or
+ctest --test-dir build -j 16 --output-on-failure
 ```
 
-Runtime-index partial-owner cleanup metadata for computed-index constructor moves can be inspected with:
-
-```sh
-build/tools/orisonc/orisonc --runtime-indexed-cleanup-audit tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_rejected.or
-```
-
-This prints semantic descriptor origins, descriptor cleanup plans, descriptor lifetime plans, cleanup obligations,
-sequence plans, verification, emission gate, capability proof, and production-readiness status in order. Ordinary
-`--emit-llvm` keeps computed-index constructor moves rejected; this audit command explicitly enables the runtime-index
-constructor-move, cleanup-emission, module-insertion, and module-mutation gates for inspection.
-
-To inspect the unified descriptor origin and cleanup responsibility model, run:
-
-```sh
-build/tools/orisonc/orisonc --dynamic-array-descriptor-lifetime-plan tests/fixtures/dynamic_array_owned_parameter_forwarding_run.or
-```
-
-This report classifies each tracked descriptor as `origin local`, `origin parameter`, or `origin returned`, then pairs it
-with the cleanup responsibility lowering should honor.
-
-To inspect the default production gate without enabling constructor-move acceptance, run:
-
-```sh
-build/tools/orisonc/orisonc --runtime-indexed-constructor-move-production-readiness tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_rejected.or
-```
-
-This report confirms the default runtime-index constructor-move path: cleanup proof, cleanup emission,
-constructor-move acceptance, and ordinary LLVM emission are ready for the checked fixed-array and source-backed
-DynamicArray fixtures. DynamicArray runtime-index owners use verified function-level cleanup CFG insertion with
-skip-aware element drops and descriptor deallocation.
-
-Ordinary `--emit-llvm` also accepts the checked source-backed `DynamicArray<T>` runtime-index member-transfer fixtures.
-Member-granular cleanup inserts a verified cleanup walk that skips the moved computed index, drops the remaining whole
-elements, drops live sibling members at the moved index through a finite helper, and deallocates the descriptor.
-
-The gated executable smoke path uses `tests/fixtures/choice_constructor_multi_variant_computed_index_member_path_move_run.or`
-with `--test-only-runtime-indexed-constructor-move-run`. That command is a compiler test seam, not user-facing
-language syntax; it validates constructor-move acceptance without enabling the pseudo module-mutation artifact.
-
-## Repository expectations
-
-The repository should evolve toward a layout similar to:
-
-- `compiler/`
-- `examples/`
-- `runtime/`
-- `tools/`
-- `tests/`
-- `docs/adr/`
-
-The exact layout may change during early implementation.
-
-## Development standards
-
-- Update the spec and syntax tour when language surface syntax changes.
-- Add or update tests for every meaningful change.
-- Record material design decisions in ADRs.
-
-For a quick compiler pipeline check, run the canonical demo smoke test:
+Run the canonical compiler pipeline smoke test:
 
 ```sh
 ctest --test-dir build -j 16 --output-on-failure -L canonical_pipeline
 ```
 
-This covers the canonical backend demos across LLVM IR emission, object emission, `run`, and retained `--build`
-paths. The focused `orison_minimal_demo_smoke` target owns the smallest `examples/minimal.or` workflow.
+## Run
 
-## Status
+Run the minimal example:
 
-This repository currently captures the initial language design and development conventions needed to begin implementation.
+```sh
+build/tools/orisonc/orisonc run examples/minimal.or
+```
 
-## Implementation Gap Analysis - 2026-08-05
+Emit LLVM IR:
 
-- `orisonc` has a working C++23/LLVM pipeline for the current tested subset: parse, semantic analysis, LLVM IR
-  emission, object emission, host linking, `run`, examples, and smoke/regression coverage.
-- Core syntax coverage is partial. Packages, records, choices, functions, generics, casts, calls, control flow,
-  unsafe blocks, loops, `defer`, FFI declarations, arrays, and `DynamicArray<T>` are covered through fixtures, but not
-  yet as a complete spec-conformance matrix.
-- Ownership and cleanup lowering are the strongest active area. Record/choice constructor moves, reassignment cleanup,
-  owned-element `DynamicArray<T>` cleanup, and fixed literal indexed partial moves are covered; runtime-index partial
-  ownership and generic descriptor-backed choice payload cleanup remain open.
-- Type-system enforcement is still incomplete. Full interface/`implements` checking, access-control enforcement,
-  borrow/exclusivity validation, and concurrency safety rules need dedicated semantic passes and negative tests.
-- Backend support can emit and link native programs for the supported subset, but full ABI coverage, dynamic C binding
-  IR generation, portable target validation, and complete runtime/standard-library integration remain unfinished.
-- Tooling beyond `orisonc` is mostly future work. `orisonfmt`, `orisonls`, package/workspace tooling, and richer
-  diagnostics should reuse the shared frontend and semantic model as they come online.
-- Next highest-value implementation work is to finish partial-ownership proof coverage: reject reuse of moved literal
-  indexed elements, prove sibling element access remains valid, then extend the model toward computed indexes.
+```sh
+build/tools/orisonc/orisonc --emit-llvm examples/minimal.or
+```
 
-## Implementation Gap Analysis - 2026-08-12
+Emit an object file:
 
-- Nested generic fixed-array projection over `DynamicArray<Outer<T>>` is now covered across direct arguments, helper
-  call results, inferred locals, and same-source-type ternary helper results.
-- Matching negative coverage now pins missing Drop proof and mismatched ternary source-type boundaries for the same
-  projection paths.
-- The next DynamicArray lowering gap is outside this source-type matrix: broaden owned-element cleanup coverage toward
-  computed-index and partial-ownership paths without weakening Drop-proof gates.
+```sh
+build/tools/orisonc/orisonc --emit-object examples/minimal.or -o build/minimal.o
+```
 
-## Runtime-Index Member Cleanup Gap Analysis - 2026-08-13
+Build an executable:
 
-- Report-only coverage now proves member scope, derives sibling cleanup targets, names insertion blocks, validates the
-  CFG topology, renders an audit CFG slice, gates module mutation, and reports production blockers.
-- Production emission is still blocked on real member Drop metadata binding, executable CFG insertion, module mutation
-  authorization, and an enabled production member-cleanup gate.
-- The next implementation step is to turn the report-only CFG slice into a verified function rewrite candidate that can
-  splice member cleanup blocks without changing ordinary constructor-move acceptance.
-- The promotion boundary should stay narrow: keep whole-element runtime-index moves working, keep member-path moves
-  rejected on ordinary `--emit-llvm`, and expose any new readiness through audit or test-only seams first.
+```sh
+build/tools/orisonc/orisonc --build examples/minimal.or -o build/minimal
+```
 
-## Runtime-Index Member Cleanup Update - 2026-08-18
+## Documents
 
-- Ordinary driver defaults now enable member-cleanup rewrite execution after typed proof, helper binding, mutation
-  authorization, rewrite authorization, execution planning, and module IR-shape checks all report ready.
-- Checked source-backed `DynamicArray<T>` computed-index member-transfer fixtures now compile, link, and run through
-  the default driver path.
-- Multi-owner member cleanup rewrites now select owner-specific lowered index operands, preventing one cleanup walk from
-  reusing another owner/index temporary.
-
-## DynamicArray Lowering Gap Analysis - 2026-08-18
-
-- Strongest completed area: local source-backed `DynamicArray<T>` construction, append, indexing, owned-element cleanup,
-  runtime-index whole-element cleanup, and checked runtime-index member cleanup now reach LLVM IR, object emission,
-  host linking, and `run` for covered fixtures.
-- Safety gates now reject missing direct sibling `Drop` helpers for member cleanup, malformed cleanup IR shape, reuse of
-  moved elements, owner mismatches, and missing owned-element cleanup proofs.
-- Remaining lowering gaps: owned `DynamicArray<T>` parameters and returns still need a unified ABI/lifetime model before
-  broad production lowering, especially across function calls, branch joins, and forwarding paths.
-- Remaining semantic gaps: borrow/exclusivity checks, interface constraint enforcement, access control, and concurrency
-  transfer/share rules need dedicated passes rather than fixture-local lowering checks.
-- Remaining backend gaps: dynamic C binding IR generation, portable target validation, runtime/standard-library
-  integration, and richer source-span diagnostics are still incomplete.
-- Next highest-value step: promote one owned `DynamicArray<T>` parameter/return path from fixture-specific coverage into
-  a typed ABI/lifetime model, then use that model to simplify the current cleanup lowering seams.
-
-## DynamicArray ABI Metadata Update - 2026-08-18
-
-- Semantic descriptor origins now distinguish `origin local`, `origin parameter`, and `origin returned`, giving lowering
-  a typed boundary for local descriptors, ABI-bound owned-parameter descriptors, and direct Orison function-call result
-  descriptors.
-- The `--dynamic-array-descriptor-lifetime-plan` diagnostic now consumes all three origin kinds and pairs them with
-  cleanup responsibility metadata.
-- Bound owned-parameter cleanup now uses a typed lowering-local lifetime plan helper before entering descriptor cleanup
-  emission, retiring the duplicate inline descriptor-storage mutation on that path.
-- Returned descriptor cleanup transfer now uses a typed lowering-local lifetime helper before suppressing callee-local
-  cleanup, making caller-owned returned cleanup explicit at the lowering boundary.
-- Pipeline descriptor lifetime reporting and lowering parameter/return cleanup decisions now share the same
-  semantic-origin-backed lifetime helper, so origin kind selects cleanup responsibility in one lowering API.
-- Negative coverage now proves missing or mismatched semantic descriptor origins cannot silently enable owned
-  `DynamicArray<T>` parameter cleanup, and the returned-transfer helper rejects mismatched returned origins.
-- Specialized generic function lowering now seeds parameter source types from concrete signature metadata, so checked
-  owned `DynamicArray<T>` generic fixtures keep emitting concrete element cleanup once descriptor origin and Drop
-  authorization both match. Descriptor-origin matching accepts concrete specializations of generic element patterns such
-  as `DynamicArray<Box<T>>`.
-- The descriptor lifetime report now includes `origin-blockers` and detail lines for missing cleanup plans or cleanup
-  plans that lack matching semantic descriptor origins.
-- DynamicArray cleanup production readiness now consumes descriptor-origin blocker state, so broader owned
-  `DynamicArray<T>` forwarding paths stay blocked from production-ready status until every semantic origin is paired
-  with cleanup responsibility metadata.
-- Lowering now derives descriptor lifetime plans before function emission and passes them into returned descriptor
-  cleanup transfer, so returned `DynamicArray<T>` cleanup handoff can use shared plan metadata instead of recomputing
-  from semantic origins alone.
-- Bound owned-parameter cleanup seeding and cleanup-plan emission now prefer the same lowering-owned descriptor
-  lifetime plan vector, so parameter cleanup no longer relies on semantic-origin fallback when shared lifetime metadata
-  is available.
-- Descriptor-lifetime matching now lives in one DynamicArray lowering utility shared by function emission, cleanup-plan
-  emission, and pipeline reporting.
-- Negative pipeline coverage now injects mismatched shared lifetime metadata and verifies descriptor lifetime reporting
-  blocks production-readiness instead of silently recomputing a cleanup-backed plan.
-- DynamicArray cleanup production-readiness reports now emit explicit descriptor lifetime metadata diagnostics that name
-  the blocker reason, owner, source type, element type, origin kind, and source line when available.
-- Returned owned-element `DynamicArray<T>` choice payloads now report production-ready from actual emitted function
-  cleanup capabilities when the caller-owned returned descriptor cleanup path is proven, and the checked fixture emits
-  an object, host-links, and runs.
-- Returned owned-element `DynamicArray<T>` values can now be forwarded into an owned parameter exactly once with
-  production-ready cleanup metadata. The callee parameter owns the cleanup, and the caller's moved returned local does
-  not emit stale cleanup.
-- Returned owned-element `DynamicArray<T>` values can now be bound locally and consumed by a nested same-owner computed
-  `for` iterable with final-use element drops, deallocation, and descriptor finalization.
-- Branch-returned owned-element `DynamicArray<T>` values can now join through an `if` result and then flow into nested
-  same-owner computed iteration with the same final-use cleanup sequence.
-- Switch-returned owned-element `DynamicArray<T>` values can now join through a multi-case `switch` result and then
-  flow into nested same-owner computed iteration with final-use cleanup.
-- Branch-returned owned-element `DynamicArray<T>` values with different post-join local owners still reject computed
-  iterable ternaries that cannot prove a single cleanup owner.
-- Switch-returned owned-element `DynamicArray<T>` values with different post-join local owners reject through the same
-  computed iterable single-owner proof boundary.
-- Returned owned-element `DynamicArray<T>` computed cleanup now keeps the same missing-Drop safety gate as local
-  computed cleanup, so descriptor deallocation is rejected without authorized element cleanup.
-- `examples/local_dynamic_array_nested_computed_for.or` now pins executable nested same-owner
-  `DynamicArray<UInt32>` computed iteration with append/grow, final-use deallocation, and descriptor finalization.
-- `examples/local_dynamic_array_owned_nested_computed_for.or` now pins the owned-element nested computed path with
-  source-backed element Drop walks before final-use deallocation and descriptor finalization.
-- Returned owned-element `DynamicArray<T>` values can now cross a two-call forwarding chain:
-  returned local -> forwarding parameter -> final consuming parameter. The final consumer owns cleanup, while the
-  intermediate forwarder and caller do not emit stale cleanup.
-- Returned owned-element `DynamicArray<T>` values can now enter a branch-join forwarding function where both branches
-  pass the descriptor to the same consuming shape. The consumer owns cleanup, and neither the branch wrapper nor caller
-  emits stale cleanup.
-- Returned owned-element `DynamicArray<T>` choice payloads can now flow through branch forwarding into a single
-  consuming owner without cleanup in the choice-return helper, branch wrapper, or caller.
-- Returned owned-element `DynamicArray<T>` fields inside returned records can now move into a single consuming owner.
-  The field-level returned origin is tracked as `returned.values`, and cleanup remains with the callee parameter.
-- Nested returned record fields can now carry owned-element `DynamicArray<T>` descriptors into the same final-consumer
-  cleanup path. The lifetime report tracks both `inner.values` and `returned.inner.values` returned origins.
-- Nested returned record fields can now flow through branch forwarding before final consumption. Both branches transfer
-  to the same final `items` cleanup owner, while the returned aggregate path does not emit stale cleanup.
-- Returned aggregate fields can now compose with direct choice-payload unwrap forwarding. The checked path builds the
-  choice payload at the transfer site, unwraps it to `unwrapped`, and leaves cleanup with the final consumer.
-- Stored local choice payloads can now forward returned aggregate-field `DynamicArray<T>` descriptors through unwrap
-  into a final consuming parameter. The caller marks the stored `Packet` consumed at the by-value call boundary and
-  avoids stale payload cleanup after transfer.
-- Stored local choice-payload forwarding now composes with a branch wrapper. Both branch arms forward to the same
-  final consuming parameter, and cleanup remains outside `main`.
-- Stored local choice-payload forwarding now composes with nested aggregate-field owners such as
-  `returned.inner.values`. The lifetime report tracks the intermediate and final returned owners while cleanup remains
-  with the final consuming parameter.
-- DynamicArray forwarding smoke coverage now shares helper assertions for repeated lifetime-plan counts, returned
-  owners, readiness checks, no-`main` cleanup checks, and object/link/run validation in the recent choice-payload
-  forwarding cases.
-- Stored choice-payload forwarding now composes with both nested aggregate owners and branch wrappers. The checked
-  fixture tracks `inner.values`, `returned.inner.values`, `unwrapped`, and both branch `items` cleanup owners while
-  leaving cleanup with the final consuming parameter.
-- Distinct stored choice-payload owners in scalar final `if` arms and `switch` cases now compile by emitting
-  branch-local cleanup for the owner not forwarded by the selected arm/case before the merge.
-- Branch-local local `DynamicArray<Payload>` owners in scalar final `if` arms now emit element Drop walks and descriptor
-  deallocation before the merge PHI, with CLI and pipeline smoke coverage that emits LLVM, emits objects, links, and
-  runs.
-- Branch-local local `DynamicArray<Payload>` owners in scalar final `switch` cases now share the same scoped cleanup
-  path and are covered by the same LLVM/object/link/run smoke checks.
-- Preexisting local `DynamicArray<Payload>` owners in scalar final `if` arms and `switch` cases now clean sibling live
-  descriptors when another arm/case transfers that local owner into an owned parameter.
-- Lowering smoke now pins the post-merge ownership state for those preexisting local owners: after cleanup/transfer,
-  direct reuse of `items` reports `use after move: items`.
-- Owned-result final `if` arms now preserve the returned `DynamicArray<Payload>` descriptor while cleaning separate
-  branch-local scratch owners before the owned-result merge PHI.
-- Owned-result final `switch` cases now use the same returned-owner preservation and scratch-owner cleanup behavior
-  before the owned-result switch merge PHI.
-- Branch-local DynamicArray cleanup smoke coverage now uses shared assertion helpers for local-owner and owned-result
-  scratch-owner fixtures across final `if` and final `switch`.
-- Owned-result final `if` arms and `switch` cases can now return distinct branch-local `DynamicArray<Payload>` owners
-  while cleaning the unreturned branch-local owner before the owned-result merge PHI.
-- Nested owned-result final `if` and nested final `switch` cleanup are now covered with branch-local returned owners
-  through LLVM, object emission, host linking, and execution.
-- Mixed nested owned-result cleanup is now covered for final `if` containing final `switch` and final `switch`
-  containing final `if`.
-- Asymmetric owned-result cleanup is now covered when one outer branch returns a branch-local owner directly and the
-  other outer branch uses nested final `if` or final `switch` cleanup.
-- Three-case owned-result final `switch` cleanup is now covered with distinct branch-local returned owners and one
-  cleaned scratch owner per case before the owned-result PHI.
-- Three-case owned-result final `switch` cleanup also covers a mixed direct/nested shape where one case returns
-  directly and another case uses nested final `if` cleanup before the outer switch PHI.
-- Three-case owned-result final `switch` cleanup now also covers a direct/nested-switch shape where one case uses
-  nested final `switch` cleanup before the outer switch PHI.
-- Three-case owned-result final `switch` cleanup now covers multiple nested cases in the same outer switch, with two
-  outer cases each merging their own nested final `switch` cleanup result before the outer switch PHI.
-- Multi-nested final `switch` cleanup now has negative coverage for returning a branch-local owner after that owner was
-  already consumed in the same nested case.
-- Multi-nested final `switch` cleanup now supports consuming a branch-local scratch owner in one nested case while
-  cleaning sibling branch-local scratch owners before their joins.
-- Negative multi-nested final `switch` coverage now rejects reusing a branch-local scratch owner after it is consumed
-  inside a nested case.
-- Outer final `if` cleanup now supports nested final `switch` joins where one nested case consumes a branch-local
-  scratch owner while sibling nested cases clean their scratch owners before the outer merge.
-- Negative outer final `if` plus nested final `switch` coverage now rejects reusing that consumed branch-local scratch
-  owner after the first transfer.
-- Branch-local cleanup smoke assertions for three-case and multi-nested final `switch` coverage now share owner-list
-  helpers for expected scratch cleanup and returned-owner cleanup suppression.
-- Branch-local owned-result cleanup now covers an outer final `if` where both arms return through separate nested final
-  `switch` joins, preserving returned owners while cleaning scratch owners in each nested case.
-- Branch-local owned-result cleanup now also covers the mirror outer final `switch` shape where multiple cases return
-  through nested final `if` joins and the default case returns directly.
-- Mixed direct/nested branch-local owned-result cleanup now supports returned values flowing through same-type helper
-  calls before the final merge. Helper-call returned local owners are consumed for branch ownership joins while sibling
-  scratch owners still clean before the owned-result PHI.
-- Same-type helper functions that return an owned `DynamicArray<T>` parameter now suppress callee-side parameter
-  cleanup for that returned descriptor, leaving cleanup with the caller/ultimate consumer and avoiding duplicate frees.
-- Helper-call returned-owner cleanup now covers multiple nested final `switch` cases, preserving returned descriptors
-  through helper calls while cleaning branch-local scratch owners in each nested case.
-- Helper-call returned-owner cleanup now also covers mirrored outer `if`/nested `switch` and outer `switch`/nested `if`
-  combinations, preserving returned descriptors across helper calls while branch-local scratch cleanup still runs in
-  each nested arm/case.
-- Helper-call returned-owner misuse now has negative coverage: using a branch-local `DynamicArray<T>` owner after it
-  was transferred through a same-type helper call in a nested control-flow leaf is rejected as use-after-move.
-- Final ternary expressions now have helper-call returned-owner coverage when each branch constructs a fresh
-  `DynamicArray<T>` owner and immediately returns it through a same-type helper call.
-- Final ternary expressions now also support named `DynamicArray<T>` candidate owners allocated before the ternary:
-  the selected owner is returned through the helper call, and the unselected owner is cleaned on its branch path.
-- Negative final-ternary coverage now rejects reusing a named owner after helper-call transfer, preserving the
-  single-owner handoff rule for preallocated ternary candidates.
-- Named helper-call ternary cleanup now supports a selected owner forwarded through a second same-type helper before
-  final consumption.
-- Negative chained-helper ternary coverage now rejects reusing the source owner after
-  `forward_again(forward_values(left_values))` transfers it.
-- Helper-call ternary cleanup now supports storing the selected owner in a local and returning that local as the final
-  function result without emitting stale cleanup for the local.
-- Negative local-return ternary coverage now rejects reusing `selected` after passing it to a consuming owned
-  parameter before the final return.
-- Local-return ternary cleanup now supports forwarding the stored selected owner through distinct final helper
-  consumers in another ternary before returning that final local owner.
-- Negative branch-consumer local-return ternary coverage now rejects reusing `final_selected` after it moves into a
-  consuming owned parameter before the final return.
-- Nested branch-consumer local-return ternary cleanup now supports final consumer arms that themselves chain same-type
-  helper calls before returning the final local owner.
-- Negative chained branch-consumer ternary coverage now rejects reusing `selected` after the chained final-consumer
-  ternary transfers it.
-- Branch-consumer ternary cleanup now supports final consumer arms that allocate independent scratch owners, forward
-  those scratch owners through same-type helpers, clean the forwarded scratch locally, and return the selected owner.
-- Negative final-consumer scratch coverage now rejects reusing `scratch` after forwarding it through a same-type helper
-  inside a branch-consumer helper.
-- Branch-consumer ternary cleanup now supports final consumer helpers that return the selected owner through a local
-  alias, suppressing stale cleanup for both the moved parameter and the alias.
-- Negative alias-return branch-consumer coverage now rejects reusing the final-consumer parameter after moving it into
-  a returned local alias.
-- Branch-consumer ternary cleanup now supports final consumer helpers that return the selected owner through a nested
-  local alias chain without emitting stale cleanup for any intermediate alias.
-- Negative nested-alias branch-consumer coverage now rejects reusing the first alias after it moves into a returned
-  second alias.
-- Branch-consumer ternary cleanup now supports asymmetric final-consumer alias depths, with one helper returning a
-  single alias and the other returning a nested alias chain.
-- Negative asymmetric-alias branch-consumer coverage now rejects reusing the shallow-arm alias after it moves into the
-  returned owner.
-- Branch-consumer ternary cleanup now supports final consumer helpers that return locally aliased selected owners
-  through same-type helper-call chains.
-- Negative alias-helper-call branch-consumer coverage now rejects reusing an alias after it moves into a same-type
-  helper-call return path.
-- Branch-consumer ternary cleanup now supports final consumer helpers that store same-type helper-call results in
-  another local before returning.
-- Negative stored-helper-result branch-consumer coverage now rejects reusing `returned` after it moves into the final
-  return owner.
-- Branch-consumer ternary cleanup now supports final consumer helpers that store same-type helper-call results through
-  asymmetric local chains before returning.
-- Negative asymmetric stored-helper branch-consumer coverage now rejects reusing `final_return` after it moves into the
-  final owner.
-- Branch-consumer ternary cleanup now supports final consumer helpers that return through a three-local helper-result
-  chain.
-- Negative three-local helper-result branch-consumer coverage now rejects reusing `middle_return` after it moves into
-  `final_return`.
-- Branch-consumer ternary cleanup now supports final consumer helpers whose helper-result locals are named differently
-  per branch.
-- Negative distinct-local branch-consumer coverage now rejects reusing a branch-specific helper-result local after it
-  moves.
-- Branch-consumer ternary cleanup now supports final consumer helpers that mix direct same-type helper-call returns with
-  distinct branch-local helper-result chains.
-- Negative mixed direct/local branch-consumer coverage now rejects reusing a distinct branch-local helper-result after
-  it moves.
-- Branch-consumer ternary cleanup now supports final consumer helpers receiving the selected owner through nested
-  same-type helper-call arguments.
-- Negative nested helper-argument branch-consumer coverage now rejects reusing `selected` after it transfers to a final
-  branch consumer.
-- Branch-consumer ternary cleanup now supports asymmetric nested same-type helper-call arguments across final consumer
-  branches.
-- Negative asymmetric nested helper-argument branch-consumer coverage now rejects reusing `selected` after it transfers
-  to a final branch consumer.
-- Branch-consumer ternary cleanup now supports nested helper-call arguments feeding final consumer helpers that return
-  through branch-local helper-result chains.
-- Negative nested-argument local-chain branch-consumer coverage now rejects reusing a branch-local helper-result after
-  it moves.
-- Branch-consumer ternary cleanup now supports final consumer helper results feeding another branch-consumer ternary
-  before return.
-- Negative result-nested branch-consumer ternary coverage now rejects reusing `finished` after it feeds the second
-  branch-consumer ternary.
-- Branch-consumer ternary cleanup now supports second-stage wrapper helpers returning through asymmetric local chains
-  before final return.
-- Negative asymmetric wrapper-chain coverage now rejects reusing `wrapped_right_middle` after it moves into the final
-  wrapper result.
-- Branch-consumer ternary cleanup now supports second-stage wrapper helpers that mix direct helper-call returns with
-  local-chain returns before final return.
-- Negative mixed wrapper-chain coverage now rejects reusing `wrapped_right_middle` after a mixed direct/local wrapper
-  transfer.
-- Branch-consumer ternary cleanup now supports second-stage wrapper helpers receiving the transferred owner through
-  nested helper-call arguments.
-- Negative nested wrapper-argument coverage now rejects reusing `finished` after a nested helper-call argument transfers
-  it to a second-stage wrapper helper.
-- Branch-consumer ternary cleanup now supports second-stage wrapper results feeding a final consumer helper before
-  return.
-- Negative wrapper-result final-consumer coverage now rejects reusing `final_selected` after the selected wrapper
-  result moves into the final consumer helper.
-- Final control-flow ownership mismatch diagnostics now include a typed branch-local cleanup plan. The report names
-  each owner consumed in only some arms plus the arms where cleanup must be inserted before the distinct-owner fixture
-  can be promoted for broader unsupported shapes.
-- Final scalar `if` and `switch` cleanup now promotes the first typed branch-local cleanup-plan case: when one
-  branch/case consumes an owned `DynamicArray<T>` parameter and a sibling leaves it live, the sibling emits element
-  drops plus descriptor deallocation before the merge and the merged owner is treated as consumed.
-- Negative final scalar `if` and `switch` coverage now rejects reusing that owned `DynamicArray<T>` parameter after the
-  final-control-flow consumer has taken ownership.
-- Next highest-value step: extend typed branch-local cleanup insertion beyond owned `DynamicArray<T>` parameters to the
-  next cleanup-bearing owner class with an existing cleanup plan.
-
-## Returned/Computed DynamicArray Gap Update - 2026-08-25
-
-- Covered: returned owned-element `DynamicArray<T>` descriptors now bind locally, flow through `if` and multi-case
-  `switch` result joins, and lower through nested same-owner computed iteration with Drop walks, deallocation,
-  descriptor finalization, object emission, host linking, and execution.
-- Covered: returned computed cleanup now rejects missing element `Drop` and mismatched computed iterable owners before
-  descriptor cleanup emission, including returned, branch-returned, and switch-returned fixture paths.
-- Covered: returned aggregate-field descriptors such as `returned.values` now feed same-owner computed iteration with
-  Drop walks, deallocation, descriptor finalization, and missing-Drop rejection coverage.
-- Covered: nested returned aggregate-field descriptors such as `returned.inner.values` now use the same cleanup path,
-  including object emission, host linking, execution, and missing-Drop rejection coverage.
-- Remaining: returned computed cleanup still needs choice-payload, alias-chain, and helper-call result combinations
-  before it matches the broader forwarding fixture matrix.
-- Remaining: ownership diagnostics are correct but verbose; later diagnostic work should emit source-oriented primary
-  errors with optional cleanup-plan detail output.
-- Next: extend returned computed cleanup from aggregate fields to choice-payload descriptors, then add matching negative
-  owner-proof coverage.
+- `ORISON_SPEC.md`
+- `ORISON_TOUR.md`
+- `OrisonV1.ebnf`
+- `docs/adr/`

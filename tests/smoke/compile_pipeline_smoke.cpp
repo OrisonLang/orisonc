@@ -6777,6 +6777,28 @@ auto main() -> int {
             "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
         ) != std::string::npos
     );
+    auto dynamic_array_returned_aggregate_field_owned_computed_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_aggregate_field_owned_computed_reuse_rejected.or";
+    auto dynamic_array_returned_aggregate_field_owned_computed_reuse_ir =
+        pipeline.emit_llvm(dynamic_array_returned_aggregate_field_owned_computed_reuse_path);
+    assert(dynamic_array_returned_aggregate_field_owned_computed_reuse_ir.has_errors());
+    assert(
+        dynamic_array_returned_aggregate_field_owned_computed_reuse_ir.error_text.find(
+            "use after move: returned.values"
+        ) != std::string::npos
+    );
+    auto dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_rejected.or";
+    auto dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_ir =
+        pipeline.emit_llvm(dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_path);
+    assert(dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_ir.has_errors());
+    assert(
+        dynamic_array_returned_nested_aggregate_field_owned_computed_reuse_ir.error_text.find(
+            "use after move: returned.inner.values"
+        ) != std::string::npos
+    );
     auto dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop.or";

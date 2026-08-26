@@ -2810,3 +2810,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-26: Final-switch payload-binding computed cleanup now preserves consumed-owner state after the computed
   loop scope exits. Reusing the cleaned `values` payload binding later in the same final case is rejected with
   `use after move: values`, preventing stale descriptor reuse after element drops, deallocation, and zero-finalization.
+- 2026-08-26: Returned aggregate-field computed cleanup reuse is pinned for direct and nested owners. Reusing
+  `returned.values` or `returned.inner.values` after same-owner computed cleanup now rejects with the corresponding
+  `use after move` diagnostic.
