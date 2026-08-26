@@ -7068,6 +7068,23 @@ auto main() -> int {
             "use after move: scratch"
         ) != std::string::npos
     );
+    auto dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_rejected.or";
+    auto dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_ir.has_errors());
+    assert(
+        dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_ir.error_text.find(
+            "use after move: scratch"
+        ) != std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_rejected.or";

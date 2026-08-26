@@ -2297,6 +2297,8 @@ representation.
 - Nested returned aggregate-field owners now have the same final-if composition coverage. The checked
   `returned.inner.values` fixture emits computed cleanup before same-arm `scratch` cleanup and reaches the `if` merge
   with both descriptors finalized.
+- The nested final-if composition now has paired branch-local reuse coverage. Passing same-arm `scratch` to an
+  owned-parameter helper twice after the `returned.inner.values` computed loop fails with `use after move: scratch`.
 
 ## Follow-up work
 
