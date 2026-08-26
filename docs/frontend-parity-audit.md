@@ -2797,3 +2797,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   patterns such as `DynamicArray<Box<T>>`, while still rejecting owner or origin-kind mismatches.
 - 2026-08-19: DynamicArray descriptor lifetime reporting now surfaces origin blockers explicitly, including missing
   cleanup plans and cleanup plans without matching semantic descriptor origins.
+- 2026-08-25: DynamicArray computed-cleanup planning now recognizes internal stored choice-payload descriptor owners
+  such as `packet.Primary.values` at the source-type query seam. Source-level direct choice-payload projection remains
+  rejected by semantic analysis, so this does not add language syntax.

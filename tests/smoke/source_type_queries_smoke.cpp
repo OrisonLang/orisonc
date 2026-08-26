@@ -328,6 +328,26 @@ int main() {
             },
         },
     });
+    context.choices.emplace("Packet", orison::lowering::LoweredChoiceLayout {
+        .name = "Packet",
+        .source_type_name = "Packet",
+        .llvm_type_name = "%choice.Packet",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Primary",
+                .lowered_payload_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+                .tag = 0,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "values",
+                        .source_type_name = "DynamicArray<UInt32>",
+                        .llvm_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+                        .index = 0,
+                    },
+                },
+            },
+        },
+    });
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Box<UInt32>",
         .method_name = "bump",
@@ -424,6 +444,7 @@ int main() {
     state.source_type_names["computed_right"] = "DynamicArray<UInt32>";
     state.source_type_names["returned"] = "PayloadBox";
     state.source_type_names["returned_outer"] = "OuterPayloadBox";
+    state.source_type_names["packet"] = "Packet";
     state.addressable_bindings["items"] = orison::lowering::AddressableBinding {
         .type = orison::lowering::LoweredType {
             .type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
@@ -451,6 +472,13 @@ int main() {
             .signedness = orison::lowering::IntegerSignedness::not_integer,
         },
         .storage = "%returned_outer.addr",
+    };
+    state.addressable_bindings["packet"] = orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%choice.Packet",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%packet.addr",
     };
     state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
         .owner_name = "items",
@@ -488,6 +516,16 @@ int main() {
         .element_source_type_name = "UInt32",
         .element_llvm_type = "i32",
         .descriptor_storage_name = "%returned_outer.inner.values.addr0",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "packet.Primary.values",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%packet.Primary.values.addr0",
         .descriptor_storage_status =
             orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
         .element_size_bytes = 4,
@@ -601,6 +639,44 @@ int main() {
         "%returned_outer.inner.values.addr0");
     assert(nested_aggregate_field_computed_handoff_plan.descriptor_storage_available);
     assert(nested_aggregate_field_computed_handoff_plan.cleanup_owner_proven);
+
+    auto choice_payload_expression = member(member(name("packet"), "Primary"), "values");
+    auto choice_payload_source_type =
+        orison::lowering::source_type_name_for_expression(choice_payload_expression, context, state);
+    assert(choice_payload_source_type.has_value());
+    assert(*choice_payload_source_type == "DynamicArray<UInt32>");
+    auto choice_payload_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(choice_payload_expression, context, state);
+    assert(
+        choice_payload_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner
+    );
+    assert(choice_payload_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(choice_payload_dynamic_array_plan.element_source_type_name == "UInt32");
+    assert(choice_payload_dynamic_array_plan.owner_name == "packet.Primary.values");
+    assert(choice_payload_dynamic_array_plan.descriptor_storage == "%packet.Primary.values.addr0");
+    assert(choice_payload_dynamic_array_plan.can_lower_now);
+    assert(choice_payload_dynamic_array_plan.cleanup_owner_proven);
+    auto choice_payload_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(member(name("packet"), "Primary"), "values"),
+                member(member(name("packet"), "Primary"), "values")
+            ),
+            context,
+            state
+        );
+    assert(
+        choice_payload_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(choice_payload_computed_handoff_plan.source_owner_name == "packet.Primary.values");
+    assert(choice_payload_computed_handoff_plan.handoff_owner_name == "packet.Primary.values");
+    assert(choice_payload_computed_handoff_plan.descriptor_storage_name == "%packet.Primary.values.addr0");
+    assert(choice_payload_computed_handoff_plan.descriptor_storage_available);
+    assert(choice_payload_computed_handoff_plan.cleanup_owner_proven);
 
     auto missing_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("computed_left"), context, state);

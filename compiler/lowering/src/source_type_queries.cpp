@@ -2350,6 +2350,28 @@ auto source_type_name_for_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
+        if (expression.left->kind == syntax::ExpressionKind::member_access &&
+            expression.left->left != nullptr) {
+            auto choice_base_source_type =
+                source_type_name_for_expression(*expression.left->left, context, state);
+            if (choice_base_source_type.has_value()) {
+                auto choice_source_type = pointer_pointee_source_type_name(*choice_base_source_type);
+                auto choice = context.choices.find(choice_source_type.value_or(*choice_base_source_type));
+                if (choice != context.choices.end()) {
+                    for (auto const& variant : choice->second.variants) {
+                        if (variant.name != expression.left->text) {
+                            continue;
+                        }
+                        for (auto const& payload : variant.payloads) {
+                            if (payload.name == expression.text && !payload.source_type_name.empty()) {
+                                return payload.source_type_name;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
         if (!base_source_type.has_value()) {
             return std::nullopt;
