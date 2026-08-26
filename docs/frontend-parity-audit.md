@@ -2821,3 +2821,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   scratch`.
 - 2026-08-26: The final-switch branch-local cleanup composition now covers nested returned aggregate-field owners.
   `returned.inner.values` emits computed cleanup before the same-case `scratch` cleanup, then links and runs.
+- 2026-08-26: Nested final-switch branch-local reuse is now pinned for the returned-field composition shape. Reusing
+  same-case `scratch` after the `returned.inner.values` computed loop now fails with `use after move: scratch`.

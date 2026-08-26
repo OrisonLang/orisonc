@@ -2287,6 +2287,8 @@ representation.
 - Nested returned aggregate-field owners now have the same final-switch composition coverage. The checked
   `returned.inner.values` fixture emits computed cleanup before same-case `scratch` cleanup and reaches the switch
   merge with both descriptors finalized.
+- The nested final-switch composition now has paired branch-local reuse coverage. Passing same-case `scratch` to an
+  owned-parameter helper twice after the `returned.inner.values` computed loop fails with `use after move: scratch`.
 
 ## Follow-up work
 
