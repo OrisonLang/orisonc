@@ -2826,3 +2826,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-26: Final `if` arms now have positive coverage for composing returned aggregate-field computed cleanup with
   branch-local `DynamicArray<T>` cleanup. The checked fixture emits `returned.values` cleanup before same-arm `scratch`
   cleanup and links/runs.
+- 2026-08-26: Final-if branch-local reuse is now pinned for the returned-field composition shape. Reusing same-arm
+  `scratch` after the `returned.values` computed loop now fails with `use after move: scratch`.
