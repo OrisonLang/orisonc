@@ -7231,6 +7231,17 @@ auto main() -> int {
             "use after move: returned.inner.values"
         ) != std::string::npos
     );
+    auto dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_reuse_rejected.or";
+    auto dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_reuse_ir =
+        pipeline.emit_llvm(dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_reuse_path);
+    assert(dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_reuse_ir.has_errors());
+    assert(
+        dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_reuse_ir.error_text.find(
+            "use after move: returned.inner.values"
+        ) != std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";

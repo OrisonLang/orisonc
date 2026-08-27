@@ -2312,6 +2312,8 @@ representation.
 - Branch-returned aggregate values now cover same-type helper forwarding before nested returned-field computed cleanup.
   The joined `OuterBox` result keeps caller-owned cleanup on `returned.inner.values` after `choose_outer` merges
   helper-forwarded branch results.
+- The branch-forwarded nested returned-field shape now has paired owner-reuse coverage. Reusing
+  `returned.inner.values` after the computed cleanup fails with `use after move: returned.inner.values`.
 
 ## Follow-up work
 
