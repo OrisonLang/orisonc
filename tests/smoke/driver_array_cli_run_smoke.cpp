@@ -2629,6 +2629,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_rejected.or";
     auto returned_nested_aggregate_field_final_switch_branch_local_reuse_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_reuse_rejected.or";
+    auto forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_path =
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_rejected.or";
     auto choice_payload_switch_binding_owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_missing_drop_path =
@@ -4084,6 +4086,11 @@ auto main() -> int {
         executable,
         returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
         "scratch"
+    );
+    assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+        executable,
+        forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_path,
+        "returned.inner.values"
     );
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,

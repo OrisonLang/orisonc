@@ -2840,3 +2840,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-26: Final-switch nested returned-field cleanup now covers same-type aggregate helper forwarding.
   `forward_outer(make_outer_box()).inner.values` is cleaned through the caller-owned `returned.inner.values` path,
   while same-case `scratch` cleanup still runs before the switch merge.
+- 2026-08-26: Forwarded final-switch nested returned-field cleanup now has paired owner-reuse coverage. Reusing
+  `returned.inner.values` after the computed loop fails with `use after move: returned.inner.values`.

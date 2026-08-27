@@ -2307,6 +2307,8 @@ representation.
 - Final-switch nested returned-field cleanup now also covers same-type aggregate helper forwarding. The caller-owned
   `returned.inner.values` cleanup path remains responsible after `forward_outer(make_outer_box())`, and same-case
   `scratch` cleanup still runs before the switch merge.
+- The forwarded final-switch nested returned-field shape now has paired owner-reuse coverage. Reusing
+  `returned.inner.values` after the forwarded computed cleanup fails with `use after move: returned.inner.values`.
 
 ## Follow-up work
 
