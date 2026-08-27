@@ -2869,3 +2869,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   checked paths clean `returned.inner.values`, then local `scratch`, with paired `scratch` reuse rejection.
 - 2026-08-27: Switch-returned direct aggregate fields now feed final-if and final-switch cleanup composition. The
   checked `PayloadBox` paths clean `returned.values`, then local `scratch`, with paired `scratch` reuse rejection.
+- 2026-08-27: Switch-returned direct aggregate fields now cover helper-forwarded switch cases. The checked
+  `PayloadBox` switch join calls `forward_box`, cleans caller-owned `returned.values`, suppresses stale `box.values`
+  cleanup, and rejects post-cleanup `returned.values` reuse.
