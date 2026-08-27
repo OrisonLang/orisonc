@@ -2324,6 +2324,8 @@ representation.
   `OuterBox` directly, one branch forwards it through `forward_outer`, and post-cleanup reuse is rejected.
 - Mixed direct/helper-forwarded branch joins now feed final-if returned-field cleanup composition. The checked path
   cleans `returned.inner.values`, then branch-local `scratch`, with paired `scratch` reuse rejection.
+- Mixed direct/helper-forwarded branch joins now feed final-switch returned-field cleanup composition. The checked case
+  cleans `returned.inner.values`, then case-local `scratch`, with paired `scratch` reuse rejection.
 
 ## Follow-up work
 

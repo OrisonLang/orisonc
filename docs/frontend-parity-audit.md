@@ -2856,3 +2856,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   returns `OuterBox` directly, one branch forwards it through `forward_outer`, and post-cleanup reuse is rejected.
 - 2026-08-26: Mixed direct/helper-forwarded branch joins now feed final-if returned-field cleanup composition. The
   checked path cleans `returned.inner.values`, then branch-local `scratch`, with paired `scratch` reuse rejection.
+- 2026-08-26: Mixed direct/helper-forwarded branch joins now feed final-switch returned-field cleanup composition. The
+  checked case cleans `returned.inner.values`, then case-local `scratch`, with paired `scratch` reuse rejection.

@@ -1,0 +1,75 @@
+package fixtures.dynamicarraybranchmixedforwardedreturnednestedaggregatefieldfinalswitchbranchlocalreuserejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+record OuterBox
+    public inner: PayloadBox
+
+function make_left_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(67 as UInt32))
+    values.push(Payload(71 as UInt32))
+    values
+
+function make_right_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(73 as UInt32))
+    values.push(Payload(79 as UInt32))
+    values
+
+function make_scratch(seed: UInt32) -> DynamicArray<Payload>
+    var scratch: DynamicArray<Payload> = DynamicArray()
+    scratch.push(Payload(seed))
+    scratch
+
+function make_left_payload_box() -> PayloadBox
+    PayloadBox(make_left_values())
+
+function make_right_payload_box() -> PayloadBox
+    PayloadBox(make_right_values())
+
+function make_left_outer_box() -> OuterBox
+    var inner: PayloadBox = make_left_payload_box()
+    OuterBox(inner)
+
+function make_right_outer_box() -> OuterBox
+    var inner: PayloadBox = make_right_payload_box()
+    OuterBox(inner)
+
+function forward_outer(box: OuterBox) -> OuterBox
+    box
+
+function choose_outer(flag: Bool) -> OuterBox
+    if flag
+        make_left_outer_box()
+    else
+        forward_outer(make_right_outer_box())
+
+function consume_values(values: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function consume(flag: Bool) -> UInt32
+    switch flag
+        true =>
+            var returned: OuterBox = choose_outer(false)
+            var scratch: DynamicArray<Payload> = make_scratch(1 as UInt32)
+            var total = 0 as UInt32
+            for item in true ? returned.inner.values : false ? returned.inner.values : returned.inner.values
+                total = total + item.value
+            consume_values(scratch) + consume_values(scratch)
+        false =>
+            0 as UInt32
+
+function main() -> UInt32
+    consume(true)
