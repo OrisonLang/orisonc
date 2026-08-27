@@ -2872,3 +2872,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-27: Switch-returned direct aggregate fields now cover helper-forwarded switch cases. The checked
   `PayloadBox` switch join calls `forward_box`, cleans caller-owned `returned.values`, suppresses stale `box.values`
   cleanup, and rejects post-cleanup `returned.values` reuse.
+- 2026-08-27: Switch-returned nested aggregate fields now cover helper-forwarded switch cases. The checked
+  `OuterBox` switch join calls `forward_outer`, cleans caller-owned `returned.inner.values`, suppresses stale
+  `box.inner.values` cleanup, and rejects post-cleanup `returned.inner.values` reuse.
