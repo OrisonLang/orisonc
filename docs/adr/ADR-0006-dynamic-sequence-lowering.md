@@ -2302,6 +2302,8 @@ representation.
 - Final-if nested returned-field cleanup now also covers same-type aggregate helper forwarding. A helper returning
   `OuterBox` can forward `make_outer_box()` into a caller-owned `returned.inner.values` cleanup path while suppressing
   stale helper-parameter cleanup.
+- The forwarded final-if nested returned-field shape now has paired owner-reuse coverage. Reusing
+  `returned.inner.values` after the forwarded computed cleanup fails with `use after move: returned.inner.values`.
 
 ## Follow-up work
 

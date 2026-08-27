@@ -2621,6 +2621,8 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";
     auto returned_nested_aggregate_field_final_if_branch_local_reuse_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_rejected.or";
+    auto forwarded_returned_nested_aggregate_field_final_if_owner_reuse_path =
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_if_owner_reuse_rejected.or";
     auto returned_aggregate_field_final_switch_branch_local_reuse_path =
         fixtures / "dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_rejected.or";
     auto returned_nested_aggregate_field_final_switch_branch_local_reuse_path =
@@ -4050,6 +4052,11 @@ auto main() -> int {
         executable,
         returned_nested_aggregate_field_final_if_branch_local_reuse_path,
         "scratch"
+    );
+    assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+        executable,
+        forwarded_returned_nested_aggregate_field_final_if_owner_reuse_path,
+        "returned.inner.values"
     );
     assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
         executable,
