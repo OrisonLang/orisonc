@@ -2848,3 +2848,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   `returned.inner.values` after the computed loop fails with `use after move: returned.inner.values`.
 - 2026-08-26: Branch-returned direct aggregate-field cleanup now covers `PayloadBox` joins feeding
   `returned.values` computed cleanup, with paired reuse rejection after the computed loop.
+- 2026-08-26: Branch-forwarded direct aggregate-field cleanup now covers helper-forwarded `PayloadBox` joins feeding
+  `returned.values` computed cleanup, with paired reuse rejection after the computed loop.

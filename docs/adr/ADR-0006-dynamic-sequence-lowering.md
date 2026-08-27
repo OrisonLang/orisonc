@@ -2316,6 +2316,8 @@ representation.
   `returned.inner.values` after the computed cleanup fails with `use after move: returned.inner.values`.
 - Branch-returned direct aggregate-field cleanup now covers `PayloadBox` joins feeding `returned.values` computed
   cleanup, with paired reuse rejection after the computed loop.
+- Branch-forwarded direct aggregate-field cleanup now covers helper-forwarded `PayloadBox` joins feeding
+  `returned.values` computed cleanup, with paired reuse rejection after the computed loop.
 
 ## Follow-up work
 
