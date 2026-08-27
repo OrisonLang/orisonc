@@ -2846,3 +2846,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   computed cleanup. `choose_outer` joins `forward_outer(...)` results and the caller cleans `returned.inner.values`.
 - 2026-08-26: Branch-forwarded nested returned-field cleanup now has paired owner-reuse coverage. Reusing
   `returned.inner.values` after the computed loop fails with `use after move: returned.inner.values`.
+- 2026-08-26: Branch-returned direct aggregate-field cleanup now covers `PayloadBox` joins feeding
+  `returned.values` computed cleanup, with paired reuse rejection after the computed loop.

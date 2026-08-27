@@ -1,0 +1,45 @@
+package fixtures.dynamicarraybranchreturnedaggregatefieldownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_left_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(11 as UInt32))
+    values.push(Payload(13 as UInt32))
+    values
+
+function make_right_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(17 as UInt32))
+    values.push(Payload(19 as UInt32))
+    values
+
+function make_left_box() -> PayloadBox
+    PayloadBox(make_left_values())
+
+function make_right_box() -> PayloadBox
+    PayloadBox(make_right_values())
+
+function choose_box(flag: Bool) -> PayloadBox
+    if flag
+        make_left_box()
+    else
+        make_right_box()
+
+function main() -> UInt32
+    var returned: PayloadBox = choose_box(false)
+    var total = 0 as UInt32
+    for item in true ? returned.values : false ? returned.values : returned.values
+        total = total + item.value
+    total - 36 as UInt32

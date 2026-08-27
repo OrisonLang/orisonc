@@ -2314,6 +2314,8 @@ representation.
   helper-forwarded branch results.
 - The branch-forwarded nested returned-field shape now has paired owner-reuse coverage. Reusing
   `returned.inner.values` after the computed cleanup fails with `use after move: returned.inner.values`.
+- Branch-returned direct aggregate-field cleanup now covers `PayloadBox` joins feeding `returned.values` computed
+  cleanup, with paired reuse rejection after the computed loop.
 
 ## Follow-up work
 
