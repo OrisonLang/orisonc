@@ -4,6 +4,7 @@
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
@@ -549,6 +550,41 @@ auto lower_sequence_for_statement(
                         );
                         if (cleanup_call_operands.has_value()) {
                             cleanup_call_operands->descriptor_finalized = true;
+                        }
+                        auto emitted_cleanup = plan_dynamic_array_descriptor_cleanup(
+                            cleanup_sequence_plan.cleanup_owner_name,
+                            cleanup_sequence_plan.source_type_name,
+                            context.lowering
+                        );
+                        if (emitted_cleanup.has_value()) {
+                            emitted_cleanup->descriptor_storage_name =
+                                descriptor_plan.descriptor_storage_name;
+                            emitted_cleanup->descriptor_storage_status =
+                                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+                            emitted_cleanup->source_line = statement.line;
+                            auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+                                *emitted_cleanup,
+                                session.state.emitted_dynamic_array_cleanup_obligations.size()
+                            );
+                            auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
+                            auto sequence_verification =
+                                verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
+                            session.state.emitted_dynamic_array_cleanup_obligations.push_back(obligation);
+                            session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(sequence_plan);
+                            session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(
+                                sequence_verification
+                            );
+                            session.state.emitted_dynamic_array_cleanup_emission_capabilities.push_back(
+                                prove_dynamic_array_cleanup_emission_capability(
+                                    computed_dynamic_array_cleanup_call_insertion_capability(
+                                        context.options
+                                    ).enabled,
+                                    std::vector<DynamicArrayDescriptorCleanupPlan> {*emitted_cleanup},
+                                    std::vector<DynamicArrayCleanupSequenceVerification> {sequence_verification},
+                                    std::vector<DynamicArrayCleanupObligation> {obligation},
+                                    context.options.semantic_drop_lowering_authorizations
+                                )
+                            );
                         }
                         consume_computed_dynamic_array_local_cleanup_plan(
                             session.state,

@@ -2842,3 +2842,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   while same-case `scratch` cleanup still runs before the switch merge.
 - 2026-08-26: Forwarded final-switch nested returned-field cleanup now has paired owner-reuse coverage. Reusing
   `returned.inner.values` after the computed loop fails with `use after move: returned.inner.values`.
+- 2026-08-26: Branch-returned aggregate values now cover same-type helper forwarding before nested returned-field
+  computed cleanup. `choose_outer` joins `forward_outer(...)` results and the caller cleans `returned.inner.values`.
