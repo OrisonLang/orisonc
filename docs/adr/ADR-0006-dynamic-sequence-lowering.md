@@ -2335,6 +2335,8 @@ representation.
   cleans `returned.inner.values` and rejects post-cleanup reuse.
 - Switch-returned nested aggregate fields now feed final-if and final-switch cleanup composition. The checked paths
   clean `returned.inner.values`, then local `scratch`, with paired `scratch` reuse rejection.
+- Switch-returned direct aggregate fields now feed final-if and final-switch cleanup composition. The checked
+  `PayloadBox` paths clean `returned.values`, then local `scratch`, with paired `scratch` reuse rejection.
 
 ## Follow-up work
 

@@ -6900,6 +6900,78 @@ auto main() -> int {
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_run"
     );
+    auto dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_run.or";
+    auto dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir =
+        pipeline.emit_llvm(
+            dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(!dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_returned_lifetime_owner(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir,
+        "returned.values"
+    );
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "define %record.PayloadBox @choose_box(i32 %selector)"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "switch i32 %selector"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "phi %record.PayloadBox"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "returned.values.computed_for.1.condition:\n"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.values.computed_for.1.data"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %returned.values.addr"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %scratch.addr"
+    );
+    assert_ir_excludes(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "if branch ownership mismatch"
+    );
+    assert_ir_excludes(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
+        "%returned.values.dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_run"
+    );
     auto dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_run.or";
@@ -7297,6 +7369,82 @@ auto main() -> int {
         pipeline,
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    auto dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir =
+        pipeline.emit_llvm(
+            dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(!dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.has_errors());
+    assert_dynamic_array_payload_returned_lifetime_owner(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir,
+        "returned.values"
+    );
+    assert_dynamic_array_payload_cleanup_ready(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "define %record.PayloadBox @choose_box(i32 %selector)"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "switch i32 %selector"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "phi %record.PayloadBox"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "switch i1 %flag"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "returned.values.computed_for.1.condition:\n"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.values.computed_for.1.data"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %returned.values.addr"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %scratch.addr"
+    );
+    assert_ir_excludes(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "switch case ownership mismatch"
+    );
+    assert_ir_excludes(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
+        "%returned.values.dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_run"
     );
     auto dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8101,6 +8249,23 @@ auto main() -> int {
             "use after move: scratch"
         ) != std::string::npos
     );
+    auto dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";
+    auto dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_ir.has_errors());
+    assert(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_ir.error_text.find(
+            "use after move: scratch"
+        ) != std::string::npos
+    );
     auto dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";
@@ -8200,6 +8365,23 @@ auto main() -> int {
     assert(dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_ir.has_errors());
     assert(
         dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_ir.error_text.find(
+            "use after move: scratch"
+        ) != std::string::npos
+    );
+    auto dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_rejected.or";
+    auto dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .source_drop_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_ir.has_errors());
+    assert(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_ir.error_text.find(
             "use after move: scratch"
         ) != std::string::npos
     );
