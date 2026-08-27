@@ -1,0 +1,70 @@
+package fixtures.dynamicarrayswitchforwardedreturnedaggregatefieldfinalswitchbranchlocalcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_first_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(11 as UInt32))
+    values.push(Payload(13 as UInt32))
+    values
+
+function make_second_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(17 as UInt32))
+    values.push(Payload(19 as UInt32))
+    values
+
+function make_default_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(23 as UInt32))
+    values.push(Payload(29 as UInt32))
+    values
+
+function make_scratch(seed: UInt32) -> DynamicArray<Payload>
+    var scratch: DynamicArray<Payload> = DynamicArray()
+    scratch.push(Payload(seed))
+    scratch
+
+function make_first_box() -> PayloadBox
+    PayloadBox(make_first_values())
+
+function make_second_box() -> PayloadBox
+    PayloadBox(make_second_values())
+
+function make_default_box() -> PayloadBox
+    PayloadBox(make_default_values())
+
+function forward_box(box: PayloadBox) -> PayloadBox
+    box
+
+function choose_box(selector: UInt32) -> PayloadBox
+    switch selector
+        0 as UInt32 => forward_box(make_first_box())
+        1 as UInt32 => forward_box(make_second_box())
+        default => forward_box(make_default_box())
+
+function consume(flag: Bool) -> UInt32
+    switch flag
+        true =>
+            var returned: PayloadBox = choose_box(1 as UInt32)
+            var scratch: DynamicArray<Payload> = make_scratch(1 as UInt32)
+            var total = 0 as UInt32
+            for item in true ? returned.values : false ? returned.values : returned.values
+                total = total + item.value
+            total - 36 as UInt32
+        false =>
+            0 as UInt32
+
+function main() -> UInt32
+    consume(true)
