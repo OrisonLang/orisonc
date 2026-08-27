@@ -2865,3 +2865,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   switch join cleans `returned.values` and rejects post-cleanup reuse.
 - 2026-08-27: Switch-returned nested aggregate fields now feed returned-field computed cleanup. The checked `OuterBox`
   switch join cleans `returned.inner.values` and rejects post-cleanup reuse.
+- 2026-08-27: Switch-returned nested aggregate fields now feed final-if and final-switch cleanup composition. The
+  checked paths clean `returned.inner.values`, then local `scratch`, with paired `scratch` reuse rejection.
