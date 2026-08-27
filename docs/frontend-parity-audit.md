@@ -2852,3 +2852,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   `returned.values` computed cleanup, with paired reuse rejection after the computed loop.
 - 2026-08-26: Mixed direct/helper-forwarded branch joins now cover returned direct aggregate-field cleanup. One branch
   returns `PayloadBox` directly, one branch forwards it through `forward_box`, and post-cleanup reuse is rejected.
+- 2026-08-26: Mixed direct/helper-forwarded branch joins now cover nested returned aggregate-field cleanup. One branch
+  returns `OuterBox` directly, one branch forwards it through `forward_outer`, and post-cleanup reuse is rejected.

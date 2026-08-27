@@ -2320,6 +2320,8 @@ representation.
   `returned.values` computed cleanup, with paired reuse rejection after the computed loop.
 - Mixed direct/helper-forwarded branch joins now cover returned direct aggregate-field cleanup. One branch returns
   `PayloadBox` directly, one branch forwards it through `forward_box`, and post-cleanup reuse is rejected.
+- Mixed direct/helper-forwarded branch joins now cover nested returned aggregate-field cleanup. One branch returns
+  `OuterBox` directly, one branch forwards it through `forward_outer`, and post-cleanup reuse is rejected.
 
 ## Follow-up work
 
