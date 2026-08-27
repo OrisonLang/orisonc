@@ -2376,6 +2376,8 @@ auto main() -> int {
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
     auto choice_payload_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_path =
@@ -2841,6 +2843,21 @@ auto main() -> int {
         executable,
         returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
+    );
+    assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
+        executable,
+        forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        "returned.inner.values"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
     assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,
