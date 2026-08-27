@@ -2858,3 +2858,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   checked path cleans `returned.inner.values`, then branch-local `scratch`, with paired `scratch` reuse rejection.
 - 2026-08-26: Mixed direct/helper-forwarded branch joins now feed final-switch returned-field cleanup composition. The
   checked case cleans `returned.inner.values`, then case-local `scratch`, with paired `scratch` reuse rejection.
+- 2026-08-27: Mixed direct/helper-forwarded branch joins now feed final-if and final-switch direct returned-field
+  cleanup composition. The checked `PayloadBox` paths clean `returned.values`, then local `scratch`, with paired
+  `scratch` reuse rejection.

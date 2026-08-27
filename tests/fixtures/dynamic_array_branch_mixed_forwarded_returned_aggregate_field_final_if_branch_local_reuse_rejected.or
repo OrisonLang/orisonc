@@ -1,0 +1,63 @@
+package fixtures.dynamicarraybranchmixedforwardedreturnedaggregatefieldfinalifbranchlocalreuserejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_left_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(47 as UInt32))
+    values.push(Payload(53 as UInt32))
+    values
+
+function make_right_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(59 as UInt32))
+    values.push(Payload(61 as UInt32))
+    values
+
+function make_scratch(seed: UInt32) -> DynamicArray<Payload>
+    var scratch: DynamicArray<Payload> = DynamicArray()
+    scratch.push(Payload(seed))
+    scratch
+
+function make_left_box() -> PayloadBox
+    PayloadBox(make_left_values())
+
+function make_right_box() -> PayloadBox
+    PayloadBox(make_right_values())
+
+function forward_box(box: PayloadBox) -> PayloadBox
+    box
+
+function choose_box(flag: Bool) -> PayloadBox
+    if flag
+        make_left_box()
+    else
+        forward_box(make_right_box())
+
+function consume_values(values: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function consume(flag: Bool) -> UInt32
+    if flag
+        var returned: PayloadBox = choose_box(false)
+        var scratch: DynamicArray<Payload> = make_scratch(1 as UInt32)
+        var total = 0 as UInt32
+        for item in true ? returned.values : false ? returned.values : returned.values
+            total = total + item.value
+        consume_values(scratch) + consume_values(scratch)
+    else
+        0 as UInt32
+
+function main() -> UInt32
+    consume(true)
