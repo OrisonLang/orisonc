@@ -2410,6 +2410,8 @@ auto main() -> int {
         fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         fixtures / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
+    auto switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
+        fixtures / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
@@ -2420,6 +2422,8 @@ auto main() -> int {
         fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
     auto switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         fixtures / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
+        fixtures / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
     auto branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
     auto forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
@@ -2699,6 +2703,8 @@ auto main() -> int {
         fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_reuse_rejected.or";
     auto switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path =
         fixtures / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_rejected.or";
+    auto switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path =
+        fixtures / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_rejected.or";
     auto branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path =
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_rejected.or";
     auto forwarded_returned_nested_aggregate_field_final_if_owner_reuse_path =
@@ -2719,6 +2725,8 @@ auto main() -> int {
         fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_reuse_rejected.or";
     auto switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path =
         fixtures / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_rejected.or";
+    auto switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path =
+        fixtures / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_rejected.or";
     auto branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path =
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_rejected.or";
     auto forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_path =
@@ -3070,6 +3078,21 @@ auto main() -> int {
     );
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        "returned.inner.values"
+    );
+    assert_emit_object_success(
+        executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup"
+    );
+    assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
+        executable,
         branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         "returned.inner.values"
     );
@@ -3217,6 +3240,21 @@ auto main() -> int {
         executable,
         switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
+    );
+    assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
+        executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        "returned.inner.values"
+    );
+    assert_emit_object_success(
+        executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
@@ -4604,6 +4642,11 @@ auto main() -> int {
     );
     assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
         executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
+        "scratch"
+    );
+    assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+        executable,
         branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
         "scratch"
     );
@@ -4650,6 +4693,11 @@ auto main() -> int {
     assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
         executable,
         switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
+        "scratch"
+    );
+    assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
+        executable,
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
         "scratch"
     );
     assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(

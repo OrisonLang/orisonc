@@ -2352,6 +2352,9 @@ representation.
 - Mixed direct/helper-forwarded switch cases now feed final-if and final-switch direct returned-field cleanup
   composition. The checked `PayloadBox` paths join direct and `forward_box` cases, clean `returned.values`, then local
   `scratch`, suppress stale `box.values` cleanup, and reject `scratch` reuse.
+- Mixed direct/helper-forwarded switch cases now feed final-if and final-switch nested returned-field cleanup
+  composition. The checked `OuterBox` paths join direct and `forward_outer` cases, clean `returned.inner.values`, then
+  local `scratch`, suppress stale `box.inner.values` cleanup, and reject `scratch` reuse.
 
 ## Follow-up work
 
