@@ -1,0 +1,69 @@
+package fixtures.dynamicarrayswitchreturnednestedaggregatefieldownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+record OuterBox
+    public inner: PayloadBox
+
+function make_first_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(109 as UInt32))
+    values.push(Payload(113 as UInt32))
+    values
+
+function make_second_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(127 as UInt32))
+    values.push(Payload(131 as UInt32))
+    values
+
+function make_default_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(137 as UInt32))
+    values.push(Payload(139 as UInt32))
+    values
+
+function make_first_payload_box() -> PayloadBox
+    PayloadBox(make_first_values())
+
+function make_second_payload_box() -> PayloadBox
+    PayloadBox(make_second_values())
+
+function make_default_payload_box() -> PayloadBox
+    PayloadBox(make_default_values())
+
+function make_first_outer_box() -> OuterBox
+    var inner: PayloadBox = make_first_payload_box()
+    OuterBox(inner)
+
+function make_second_outer_box() -> OuterBox
+    var inner: PayloadBox = make_second_payload_box()
+    OuterBox(inner)
+
+function make_default_outer_box() -> OuterBox
+    var inner: PayloadBox = make_default_payload_box()
+    OuterBox(inner)
+
+function choose_outer(selector: UInt32) -> OuterBox
+    switch selector
+        0 as UInt32 => make_first_outer_box()
+        1 as UInt32 => make_second_outer_box()
+        default => make_default_outer_box()
+
+function main() -> UInt32
+    var returned: OuterBox = choose_outer(1 as UInt32)
+    var total = 0 as UInt32
+    for item in true ? returned.inner.values : false ? returned.inner.values : returned.inner.values
+        total = total + item.value
+    total - 258 as UInt32
