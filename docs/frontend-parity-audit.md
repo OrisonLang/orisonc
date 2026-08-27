@@ -2861,3 +2861,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-27: Mixed direct/helper-forwarded branch joins now feed final-if and final-switch direct returned-field
   cleanup composition. The checked `PayloadBox` paths clean `returned.values`, then local `scratch`, with paired
   `scratch` reuse rejection.
+- 2026-08-27: Switch-returned aggregate fields now feed returned-field computed cleanup. The checked `PayloadBox`
+  switch join cleans `returned.values` and rejects post-cleanup reuse.

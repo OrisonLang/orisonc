@@ -2329,6 +2329,8 @@ representation.
 - Mixed direct/helper-forwarded branch joins now feed final-if and final-switch direct returned-field cleanup
   composition. The checked `PayloadBox` paths clean `returned.values`, then local `scratch`, with paired `scratch`
   reuse rejection.
+- Switch-returned aggregate fields now feed returned-field computed cleanup. The checked `PayloadBox` switch join
+  cleans `returned.values` and rejects post-cleanup reuse.
 
 ## Follow-up work
 
