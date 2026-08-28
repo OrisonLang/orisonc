@@ -13536,14 +13536,26 @@ void test_dynamic_array_binding_planned_drop_sites_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.dynamic_array_descriptor_origins.size() == 1);
+    assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
     assert(analysis.dynamic_array_descriptor_origins.front().owner_name == "items");
+    assert(analysis.semantic_module.dynamic_array_descriptors.front().owner_name == "items");
     assert(analysis.dynamic_array_descriptor_origins.front().source_type_name == "DynamicArray<Payload>");
+    assert(
+        analysis.semantic_module.dynamic_array_descriptors.front().source_type_name ==
+        "DynamicArray<Payload>"
+    );
     assert(analysis.dynamic_array_descriptor_origins.front().element_source_type_name == "Payload");
+    assert(analysis.semantic_module.dynamic_array_descriptors.front().element_source_type_name == "Payload");
     assert(
         analysis.dynamic_array_descriptor_origins.front().origin_kind ==
         orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding
     );
+    assert(
+        analysis.semantic_module.dynamic_array_descriptors.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+    );
     assert(analysis.dynamic_array_descriptor_origins.front().line == 4);
+    assert(analysis.semantic_module.dynamic_array_descriptors.front().line == 4);
     assert(
         orison::semantics::format_dynamic_array_descriptor_origin(
             analysis.dynamic_array_descriptor_origins.front()
@@ -13577,6 +13589,8 @@ void test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success()
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.dynamic_array_descriptor_origins.size() == 1);
+    assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
+    assert(analysis.semantic_module.dynamic_array_descriptors.front().element_source_type_name == "UInt32");
     assert(
         orison::semantics::format_dynamic_array_descriptor_origin_report(
             analysis.dynamic_array_descriptor_origins
@@ -13609,8 +13623,13 @@ void test_local_dynamic_array_descriptor_origin_kind_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.dynamic_array_descriptor_origins.size() == 1);
+    assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
     assert(
         analysis.dynamic_array_descriptor_origins.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::local_binding
+    );
+    assert(
+        analysis.semantic_module.dynamic_array_descriptors.front().origin_kind ==
         orison::semantics::DynamicArrayDescriptorOriginKind::local_binding
     );
     assert(
@@ -13642,8 +13661,13 @@ void test_returned_dynamic_array_descriptor_origin_kind_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.dynamic_array_descriptor_origins.size() == 1);
+    assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
     assert(
         analysis.dynamic_array_descriptor_origins.front().origin_kind ==
+        orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding
+    );
+    assert(
+        analysis.semantic_module.dynamic_array_descriptors.front().origin_kind ==
         orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding
     );
     assert(

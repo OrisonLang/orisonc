@@ -128,6 +128,14 @@ struct SemanticDropObligationSummary {
     std::string abi_symbol_name;
 };
 
+struct SemanticDynamicArrayDescriptorSummary {
+    std::size_t line = 0;
+    std::string owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    DynamicArrayDescriptorOriginKind origin_kind = DynamicArrayDescriptorOriginKind::local_binding;
+};
+
 enum class SemanticAggregatePathSegmentKind {
     member,
     index,
@@ -156,6 +164,7 @@ struct SemanticModuleSummary {
     std::vector<SemanticExpressionSummary> expressions;
     std::vector<SemanticOwnershipSummary> ownership_facts;
     std::vector<SemanticDropObligationSummary> drop_obligations;
+    std::vector<SemanticDynamicArrayDescriptorSummary> dynamic_array_descriptors;
     std::vector<SemanticAggregatePathSummary> aggregate_paths;
 };
 

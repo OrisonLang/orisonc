@@ -2900,3 +2900,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   including root owner, root type, result type, path segments, null-safe status, and computed-index status.
 - 2026-08-27: Semantic drop authorization and resolution reports now consume `semantic_module.drop_obligations`,
   keeping the compatibility planned-drop vector out of that reporting path.
+- 2026-08-27: `SemanticModuleSummary` now records DynamicArray descriptor facts with descriptor owner, descriptor
+  source type, element source type, origin kind, and source line. Descriptor cleanup planning consumes those facts.

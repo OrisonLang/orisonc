@@ -6093,6 +6093,17 @@ private:
         planned_drop_sites_.push_back(std::move(site));
     }
 
+    void add_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin origin) {
+        semantic_module_.dynamic_array_descriptors.push_back(SemanticDynamicArrayDescriptorSummary {
+            .line = origin.line,
+            .owner_name = origin.owner_name,
+            .source_type_name = origin.source_type_name,
+            .element_source_type_name = origin.element_source_type_name,
+            .origin_kind = origin.origin_kind,
+        });
+        dynamic_array_descriptor_origins_.push_back(std::move(origin));
+    }
+
     auto source_type_base_name(std::string const& type_name) const -> std::string {
         auto const generic_start = type_name.find('<');
         if (generic_start == std::string::npos) {
@@ -6257,7 +6268,7 @@ private:
 
         auto direct_element_type_name = dynamic_array_element_owned_drop_candidate_type_name(type_name);
         if (!direct_element_type_name.empty()) {
-            dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
+            add_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin {
                 .owner_name = owner_name,
                 .source_type_name = type_name,
                 .element_source_type_name = direct_element_type_name,
@@ -6313,7 +6324,7 @@ private:
             auto field_owner_name = owner_name + "." + signature.field_name;
             auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(field_type_name);
             if (!element_type_name.empty()) {
-                dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
+                add_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin {
                     .owner_name = field_owner_name,
                     .source_type_name = field_type_name,
                     .element_source_type_name = element_type_name,
@@ -6376,7 +6387,7 @@ private:
 
             auto dynamic_array_element_type = dynamic_array_element_type_name(binding.type_name);
             if (!dynamic_array_element_type.empty()) {
-                dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
+                add_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin {
                     .owner_name = binding.name,
                     .source_type_name = binding.type_name,
                     .element_source_type_name = dynamic_array_element_type,

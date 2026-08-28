@@ -23,8 +23,9 @@ This note is an implementation snapshot. It does not define language syntax or s
 - Lowering is broad but still fixture-driven; unsupported diagnostics remain the safe boundary for unproven source
   shapes.
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
-  ownership facts, drop obligations, and aggregate paths. Drop authorization reports consume summary-backed obligations;
-  DynamicArray descriptor cleanup still needs summary-backed element-source facts.
+  ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Drop authorization reports and
+  DynamicArray descriptor cleanup planning consume summary-backed facts; lifetime/reporting consumers still use
+  compatibility descriptor origins.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -35,4 +36,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add descriptor element-source facts to the semantic summary, then migrate DynamicArray cleanup planning to use them.
+- Migrate DynamicArray lifetime/reporting consumers from compatibility descriptor origins to summary-backed descriptor
+  facts.

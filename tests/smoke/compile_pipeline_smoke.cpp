@@ -1540,6 +1540,7 @@ auto main() -> int {
     auto dynamic_array_source_owner = pipeline.analyze(dynamic_array_source_owner_path);
     assert(!dynamic_array_source_owner.has_errors());
     assert(dynamic_array_source_owner.semantic_result.dynamic_array_descriptor_origins.size() == 1);
+    assert(dynamic_array_source_owner.semantic_result.semantic_module.dynamic_array_descriptors.size() == 1);
     auto dynamic_array_source_owner_descriptor_origin_report =
         semantic_dynamic_array_descriptor_origin_report(dynamic_array_source_owner);
     assert(dynamic_array_source_owner_descriptor_origin_report.size() == 1);
@@ -1572,6 +1573,10 @@ auto main() -> int {
     );
     assert(!dynamic_array_bound_descriptor.has_errors());
     assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.size() == 1);
+    assert(
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.size() ==
+        dynamic_array_bound_descriptor.semantic_result.semantic_module.dynamic_array_descriptors.size()
+    );
     assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.front().owner_name == "items");
     assert(
         dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_state.plans.front().descriptor_storage_name ==

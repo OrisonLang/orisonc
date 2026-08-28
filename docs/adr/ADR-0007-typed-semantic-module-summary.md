@@ -15,16 +15,19 @@ records checked function signatures, method owners, foreign import/export marker
 visited expression facts, ownership facts, drop obligations, and aggregate paths. Expression facts include inferred type
 names and callable targets when the analyzer can resolve them. Ownership facts classify declared owners and mark whether
 they need cleanup. Drop obligations mirror planned cleanup calls. Aggregate paths describe checked member/index
-projections rooted at named owners. This is not public Orison syntax and does not alter the grammar.
+projections rooted at named owners. DynamicArray descriptor facts include descriptor owner, descriptor source type,
+element source type, origin kind, and source line. This is not public Orison syntax and does not alter the grammar.
 
 ## Consequences
 
 Lowering can migrate from repeated syntax walking to shared checked facts incrementally. The first slices cover
 module-level declarations, visited expression facts, declared-owner facts, planned drop obligations, and checked
 aggregate paths. Semantic drop authorization and resolution reports now consume the drop-obligation summary rather than
-the compatibility planned-drop vector.
+the compatibility planned-drop vector. DynamicArray descriptor cleanup planning now consumes semantic summary descriptor
+facts rather than the compatibility descriptor-origin vector, with a compatibility fallback for direct lowering tests
+that inject descriptor origins without running semantic analysis.
 
 ## Follow-up work
 
-- Migrate DynamicArray descriptor cleanup planning onto summary-backed facts once descriptor element-source facts are
-  represented directly.
+- Migrate remaining DynamicArray lifetime/reporting consumers from compatibility descriptor origins to summary-backed
+  descriptor facts.
