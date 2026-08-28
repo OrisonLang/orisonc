@@ -49,8 +49,8 @@ void add_dynamic_array_parameter_origin(
     std::string source_type_name,
     std::string element_source_type_name
 ) {
-    semantics.dynamic_array_descriptor_origins.push_back(
-        orison::semantics::DynamicArrayDescriptorOrigin {
+    semantics.semantic_module.dynamic_array_descriptors.push_back(
+        orison::semantics::SemanticDynamicArrayDescriptorSummary {
             .owner_name = std::move(owner_name),
             .source_type_name = std::move(source_type_name),
             .element_source_type_name = std::move(element_source_type_name),

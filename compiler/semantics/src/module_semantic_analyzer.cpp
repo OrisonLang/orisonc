@@ -6612,10 +6612,6 @@ auto format_dynamic_array_descriptor_origin_report(
 auto dynamic_array_descriptor_origins_from_semantic_summary(
     SemanticAnalysisResult const& result
 ) -> std::vector<DynamicArrayDescriptorOrigin> {
-    if (result.semantic_module.dynamic_array_descriptors.empty()) {
-        return result.dynamic_array_descriptor_origins;
-    }
-
     auto origins = std::vector<DynamicArrayDescriptorOrigin> {};
     origins.reserve(result.semantic_module.dynamic_array_descriptors.size());
     for (auto const& descriptor : result.semantic_module.dynamic_array_descriptors) {

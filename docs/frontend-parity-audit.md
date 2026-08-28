@@ -2904,3 +2904,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   source type, element source type, origin kind, and source line. Descriptor cleanup planning consumes those facts.
 - 2026-08-27: DynamicArray lifetime planning, lowering cleanup matching, pipeline readiness reports, and CLI
   descriptor-origin reports now consume semantic-summary descriptor facts through a compatibility projection.
+- 2026-08-27: Direct lowering fixtures now construct semantic-summary DynamicArray descriptor facts directly; the
+  compatibility descriptor-origin vector remains only as mirrored output metadata.

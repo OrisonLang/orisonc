@@ -1322,12 +1322,12 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         "function main() -> UInt32\n"
         "    1 as UInt32\n";
     auto semantic_result = orison::semantics::SemanticAnalysisResult {};
-    semantic_result.dynamic_array_descriptor_origins.push_back(
-        orison::semantics::DynamicArrayDescriptorOrigin {
+    semantic_result.semantic_module.dynamic_array_descriptors.push_back(
+        orison::semantics::SemanticDynamicArrayDescriptorSummary {
+            .line = 8,
             .owner_name = "items",
             .source_type_name = "DynamicArray<Payload>",
             .element_source_type_name = "Payload",
-            .line = 8,
         }
     );
     semantic_result.planned_drop_sites.push_back(
@@ -1475,12 +1475,12 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         "function main() -> UInt32\n"
         "    1 as UInt32\n";
     auto semantic_result = orison::semantics::SemanticAnalysisResult {};
-    semantic_result.dynamic_array_descriptor_origins.push_back(
-        orison::semantics::DynamicArrayDescriptorOrigin {
+    semantic_result.semantic_module.dynamic_array_descriptors.push_back(
+        orison::semantics::SemanticDynamicArrayDescriptorSummary {
+            .line = 4,
             .owner_name = "items",
             .source_type_name = "DynamicArray<UInt32>",
             .element_source_type_name = "UInt32",
-            .line = 4,
         }
     );
 
@@ -1755,13 +1755,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
 
     auto mismatched_parameter_origin_semantics = orison::semantics::SemanticAnalysisResult {};
-    mismatched_parameter_origin_semantics.dynamic_array_descriptor_origins.push_back(
-        orison::semantics::DynamicArrayDescriptorOrigin {
+    mismatched_parameter_origin_semantics.semantic_module.dynamic_array_descriptors.push_back(
+        orison::semantics::SemanticDynamicArrayDescriptorSummary {
+            .line = 3,
             .owner_name = "other",
             .source_type_name = "DynamicArray<UInt32>",
             .element_source_type_name = "UInt32",
             .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
-            .line = 3,
         }
     );
     auto mismatched_parameter_origin = lower_source_with_semantics(

@@ -24,10 +24,11 @@ Lowering can migrate from repeated syntax walking to shared checked facts increm
 module-level declarations, visited expression facts, declared-owner facts, planned drop obligations, and checked
 aggregate paths. Semantic drop authorization and resolution reports now consume the drop-obligation summary rather than
 the compatibility planned-drop vector. DynamicArray descriptor cleanup planning now consumes semantic summary descriptor
-facts rather than the compatibility descriptor-origin vector, with a compatibility fallback for direct lowering tests
-that inject descriptor origins without running semantic analysis. DynamicArray lifetime planning, lowering cleanup
-matching, pipeline readiness reports, and CLI descriptor-origin reports now use the same summary-backed projection.
+facts rather than the compatibility descriptor-origin vector. DynamicArray lifetime planning, lowering cleanup matching,
+pipeline readiness reports, and CLI descriptor-origin reports now use the same summary-backed projection. Direct
+lowering fixtures now construct semantic summary descriptor facts.
 
 ## Follow-up work
 
-- Retire the compatibility descriptor-origin vector once direct lowering fixtures construct semantic summaries.
+- Retire the compatibility descriptor-origin vector from `SemanticAnalysisResult` after downstream tests stop asserting
+  it as mirrored output metadata.
