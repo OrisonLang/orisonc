@@ -114,6 +114,7 @@ public:
         collect_record_field_types();
         collect_concurrency_marker_implementations();
         collect_choice_variant_metadata();
+        collect_semantic_module_summary();
         collect_constant_bindings();
         validate_constant_initializer_cycles();
         analyze_constants();
@@ -142,6 +143,7 @@ public:
 
         return SemanticAnalysisResult {
             .diagnostics = std::move(diagnostics_),
+            .semantic_module = std::move(semantic_module_),
             .concurrency_captures = std::move(concurrency_captures),
             .planned_drop_sites = std::move(planned_drop_sites_),
             .dynamic_array_descriptor_origins = std::move(dynamic_array_descriptor_origins_),
@@ -3390,6 +3392,144 @@ private:
         }
     }
 
+    auto summarize_parameters(std::vector<syntax::ParameterSyntax> const& parameters) const
+        -> std::vector<SemanticParameterSummary> {
+        auto summaries = std::vector<SemanticParameterSummary> {};
+        summaries.reserve(parameters.size());
+        for (auto const& parameter : parameters) {
+            summaries.push_back(SemanticParameterSummary {
+                .line = parameter.line,
+                .name = parameter.name,
+                .type_name = render_type_name(parameter.type),
+            });
+        }
+        return summaries;
+    }
+
+    auto summarize_payloads(std::vector<syntax::NamedTypeSyntax> const& payloads) const
+        -> std::vector<SemanticParameterSummary> {
+        auto summaries = std::vector<SemanticParameterSummary> {};
+        summaries.reserve(payloads.size());
+        for (auto const& payload : payloads) {
+            summaries.push_back(SemanticParameterSummary {
+                .line = payload.line,
+                .name = payload.name,
+                .type_name = render_type_name(payload.type),
+            });
+        }
+        return summaries;
+    }
+
+    void add_function_summary(
+        syntax::FunctionSyntax const& function,
+        SemanticFunctionKind kind,
+        std::string owner_type_name = {},
+        bool foreign = false
+    ) {
+        semantic_module_.functions.push_back(SemanticFunctionSummary {
+            .line = function.line,
+            .name = function.name,
+            .owner_type_name = std::move(owner_type_name),
+            .generic_parameters = function.generic_parameters,
+            .parameters = summarize_parameters(function.parameters),
+            .return_type_name = render_type_name(function.return_type),
+            .kind = kind,
+            .foreign = foreign,
+            .async_function = function.is_async,
+            .unsafe_function = function.is_unsafe,
+        });
+    }
+
+    void collect_semantic_module_summary() {
+        semantic_module_ = SemanticModuleSummary {};
+
+        for (auto const& foreign_import : module_.foreign_imports) {
+            for (auto const& function : foreign_import.functions) {
+                semantic_module_.functions.push_back(SemanticFunctionSummary {
+                    .line = function.line,
+                    .name = function.name,
+                    .owner_type_name = {},
+                    .generic_parameters = {},
+                    .parameters = summarize_parameters(function.parameters),
+                    .return_type_name = render_type_name(function.return_type),
+                    .kind = SemanticFunctionKind::foreign_import_function,
+                    .foreign = true,
+                    .async_function = false,
+                    .unsafe_function = false,
+                });
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            add_function_summary(
+                foreign_export.function,
+                SemanticFunctionKind::foreign_export_function,
+                {},
+                true
+            );
+        }
+
+        for (auto const& function : module_.functions) {
+            add_function_summary(function, SemanticFunctionKind::source_function);
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                add_function_summary(
+                    method,
+                    SemanticFunctionKind::implementation_method,
+                    receiver_type_name
+                );
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                add_function_summary(
+                    method,
+                    SemanticFunctionKind::extension_method,
+                    receiver_type_name
+                );
+            }
+        }
+
+        for (auto const& record : module_.records) {
+            syntax::TypeSyntax record_type {.name = record.name};
+            for (auto const& generic_parameter : record.generic_parameters) {
+                record_type.generic_arguments.push_back(syntax::TypeSyntax {.name = generic_parameter});
+            }
+
+            auto record_type_name = render_type_name(record_type);
+            for (auto const& field : record.fields) {
+                semantic_module_.record_fields.push_back(SemanticRecordFieldSummary {
+                    .line = field.line,
+                    .record_type_name = record_type_name,
+                    .field_name = field.name,
+                    .field_type_name = render_type_name(field.type),
+                });
+            }
+        }
+
+        for (auto const& choice : module_.choices) {
+            syntax::TypeSyntax choice_type {.name = choice.name};
+            for (auto const& generic_parameter : choice.generic_parameters) {
+                choice_type.generic_arguments.push_back(syntax::TypeSyntax {.name = generic_parameter});
+            }
+
+            auto choice_type_name = render_type_name(choice_type);
+            for (auto const& variant : choice.variants) {
+                semantic_module_.choice_variants.push_back(SemanticChoiceVariantSummary {
+                    .line = variant.line,
+                    .choice_type_name = choice_type_name,
+                    .variant_name = variant.name,
+                    .payloads = summarize_payloads(variant.payloads),
+                });
+            }
+        }
+    }
+
     void validate_duplicate_import_bindings() {
         std::unordered_set<std::string> seen_import_bindings;
 
@@ -6158,6 +6298,7 @@ private:
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<PlannedDropSite> planned_drop_sites_;
     std::vector<DynamicArrayDescriptorOrigin> dynamic_array_descriptor_origins_;
+    SemanticModuleSummary semantic_module_;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
     std::vector<std::string> unsafe_callable_names_;

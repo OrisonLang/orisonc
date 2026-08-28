@@ -2889,3 +2889,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `returned.inner.values`, then local `scratch`, suppress stale `box.inner.values` cleanup, and reject `scratch` reuse.
 - 2026-08-27: `docs/implementation-gap-analysis.md` now records a brief implementation snapshot. The next preferred
   implementation step is typed internal semantic representation work before adding more DynamicArray fixtures.
+- 2026-08-27: Semantic analysis now publishes a checked module summary with function signatures, method owners, record
+  fields, choice variants, and foreign declaration markers. This is internal C++ representation only and does not change
+  Orison syntax.

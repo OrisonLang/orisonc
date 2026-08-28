@@ -7524,6 +7524,117 @@ void test_foreign_import_function_conflicts_with_source_function_failure() {
     assert_fixture_single_diagnostic(path, 5, "foreign import function 'puts' is duplicated");
 }
 
+void test_semantic_module_summary_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_module_summary_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.summary",
+        {
+            "package foreign \"c\"",
+            "    function host_log(text: Pointer<Byte>) -> Int32 as \"puts\"",
+            "public foreign \"c\" as \"device_init\"",
+            "function initialize_device() -> UInt32",
+            "    return 0",
+            "record Box<T>",
+            "    public value: T",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "implements Reader for Box<UInt32>",
+            "    function read(this: shared This) -> UInt32",
+            "        return this.value",
+            "extend Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.value",
+            "function id<T>(value: T) -> T",
+            "    return value",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    auto const& summary = analysis.semantic_module;
+    assert(summary.functions.size() == 5);
+    assert(summary.record_fields.size() == 1);
+    assert(summary.choice_variants.size() == 2);
+
+    bool found_foreign_import = false;
+    bool found_foreign_export = false;
+    bool found_source_function = false;
+    bool found_implementation_method = false;
+    bool found_extension_method = false;
+    for (auto const& function : summary.functions) {
+        if (function.name == "host_log") {
+            found_foreign_import = true;
+            assert(function.kind == orison::semantics::SemanticFunctionKind::foreign_import_function);
+            assert(function.foreign);
+            assert(function.return_type_name == "Int32");
+            assert(function.parameters.size() == 1);
+            assert(function.parameters.front().name == "text");
+            assert(function.parameters.front().type_name == "Pointer<Byte>");
+        }
+        if (function.name == "initialize_device") {
+            found_foreign_export = true;
+            assert(function.kind == orison::semantics::SemanticFunctionKind::foreign_export_function);
+            assert(function.foreign);
+            assert(function.return_type_name == "UInt32");
+        }
+        if (function.name == "id") {
+            found_source_function = true;
+            assert(function.kind == orison::semantics::SemanticFunctionKind::source_function);
+            assert(!function.foreign);
+            assert(function.generic_parameters.size() == 1);
+            assert(function.generic_parameters.front() == "T");
+            assert(function.parameters.size() == 1);
+            assert(function.parameters.front().type_name == "T");
+            assert(function.return_type_name == "T");
+        }
+        if (function.name == "read") {
+            found_implementation_method = true;
+            assert(function.kind == orison::semantics::SemanticFunctionKind::implementation_method);
+            assert(function.owner_type_name == "Box<UInt32>");
+            assert(function.return_type_name == "UInt32");
+        }
+        if (function.name == "value") {
+            found_extension_method = true;
+            assert(function.kind == orison::semantics::SemanticFunctionKind::extension_method);
+            assert(function.owner_type_name == "Box<T>");
+            assert(function.return_type_name == "T");
+        }
+    }
+    assert(found_foreign_import);
+    assert(found_foreign_export);
+    assert(found_source_function);
+    assert(found_implementation_method);
+    assert(found_extension_method);
+
+    auto const& field = summary.record_fields.front();
+    assert(field.record_type_name == "Box<T>");
+    assert(field.field_name == "value");
+    assert(field.field_type_name == "T");
+
+    bool found_some = false;
+    bool found_empty = false;
+    for (auto const& variant : summary.choice_variants) {
+        if (variant.variant_name == "Some") {
+            found_some = true;
+            assert(variant.choice_type_name == "Maybe<T>");
+            assert(variant.payloads.size() == 1);
+            assert(variant.payloads.front().name == "value");
+            assert(variant.payloads.front().type_name == "T");
+        }
+        if (variant.variant_name == "Empty") {
+            found_empty = true;
+            assert(variant.choice_type_name == "Maybe<T>");
+            assert(variant.payloads.empty());
+        }
+    }
+    assert(found_some);
+    assert(found_empty);
+}
+
 void test_duplicate_type_alias_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_type_alias_name_failure.or";
     write_concurrency_fixture(
@@ -13815,6 +13926,7 @@ int main() {
     test_reserved_foreign_export_prelude_symbol_failure();
     test_duplicate_foreign_import_function_name_failure();
     test_foreign_import_function_conflicts_with_source_function_failure();
+    test_semantic_module_summary_success();
     test_duplicate_type_alias_name_failure();
     test_duplicate_record_name_failure();
     test_duplicate_choice_name_failure();

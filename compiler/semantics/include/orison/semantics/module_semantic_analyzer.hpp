@@ -44,8 +44,56 @@ struct DynamicArrayDescriptorOrigin {
     std::size_t line = 0;
 };
 
+enum class SemanticFunctionKind {
+    source_function,
+    foreign_import_function,
+    foreign_export_function,
+    implementation_method,
+    extension_method,
+};
+
+struct SemanticParameterSummary {
+    std::size_t line = 0;
+    std::string name;
+    std::string type_name;
+};
+
+struct SemanticFunctionSummary {
+    std::size_t line = 0;
+    std::string name;
+    std::string owner_type_name;
+    std::vector<std::string> generic_parameters;
+    std::vector<SemanticParameterSummary> parameters;
+    std::string return_type_name;
+    SemanticFunctionKind kind = SemanticFunctionKind::source_function;
+    bool foreign = false;
+    bool async_function = false;
+    bool unsafe_function = false;
+};
+
+struct SemanticRecordFieldSummary {
+    std::size_t line = 0;
+    std::string record_type_name;
+    std::string field_name;
+    std::string field_type_name;
+};
+
+struct SemanticChoiceVariantSummary {
+    std::size_t line = 0;
+    std::string choice_type_name;
+    std::string variant_name;
+    std::vector<SemanticParameterSummary> payloads;
+};
+
+struct SemanticModuleSummary {
+    std::vector<SemanticFunctionSummary> functions;
+    std::vector<SemanticRecordFieldSummary> record_fields;
+    std::vector<SemanticChoiceVariantSummary> choice_variants;
+};
+
 struct SemanticAnalysisResult {
     diagnostics::DiagnosticBag diagnostics;
+    SemanticModuleSummary semantic_module;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<PlannedDropSite> planned_drop_sites;
     std::vector<DynamicArrayDescriptorOrigin> dynamic_array_descriptor_origins;

@@ -22,8 +22,9 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 - Lowering is broad but still fixture-driven; unsupported diagnostics remain the safe boundary for unproven source
   shapes.
-- The semantic representation still needs a fuller typed internal form that can carry resolved expression types,
-  ownership state, callable targets, and lowering-ready aggregate paths without repeated AST inference.
+- The semantic representation now exposes a first checked module summary for signatures, method owners, records,
+  choices, and foreign declarations. It still needs resolved expression types, ownership state, callable targets, and
+  lowering-ready aggregate paths.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -34,5 +35,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Prefer implementation work on the typed internal semantic representation before adding more DynamicArray fixtures.
-  That should reduce repeated AST walking and make later LLVM lowering decisions more direct and provable.
+- Extend the typed semantic summary with expression-level type facts and callable target resolution, then migrate one
+  lowering path to consume the checked facts instead of re-walking syntax.
