@@ -25,9 +25,9 @@ module-level declarations, visited expression facts, declared-owner facts, plann
 aggregate paths. Semantic drop authorization and resolution reports now consume the drop-obligation summary rather than
 the compatibility planned-drop vector. DynamicArray descriptor cleanup planning now consumes semantic summary descriptor
 facts rather than the compatibility descriptor-origin vector, with a compatibility fallback for direct lowering tests
-that inject descriptor origins without running semantic analysis.
+that inject descriptor origins without running semantic analysis. DynamicArray lifetime planning, lowering cleanup
+matching, pipeline readiness reports, and CLI descriptor-origin reports now use the same summary-backed projection.
 
 ## Follow-up work
 
-- Migrate remaining DynamicArray lifetime/reporting consumers from compatibility descriptor origins to summary-backed
-  descriptor facts.
+- Retire the compatibility descriptor-origin vector once direct lowering fixtures construct semantic summaries.

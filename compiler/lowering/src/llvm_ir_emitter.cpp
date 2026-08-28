@@ -3015,37 +3015,17 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
     LlvmIrEmissionOptions const& options,
     diagnostics::DiagnosticBag& diagnostics
 ) -> std::vector<DynamicArrayDescriptorCleanupPlan> {
-    auto descriptors = semantic_result.semantic_module.dynamic_array_descriptors;
-    if (descriptors.empty() && !semantic_result.dynamic_array_descriptor_origins.empty()) {
-        descriptors.reserve(semantic_result.dynamic_array_descriptor_origins.size());
-        for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
-            descriptors.push_back(semantics::SemanticDynamicArrayDescriptorSummary {
-                .line = origin.line,
-                .owner_name = origin.owner_name,
-                .source_type_name = origin.source_type_name,
-                .element_source_type_name = origin.element_source_type_name,
-                .origin_kind = origin.origin_kind,
-            });
-        }
-    }
-
+    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(semantic_result);
     auto plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
-    plans.reserve(descriptors.size());
-    for (auto const& descriptor : descriptors) {
-        auto origin = semantics::DynamicArrayDescriptorOrigin {
-            .owner_name = descriptor.owner_name,
-            .source_type_name = descriptor.source_type_name,
-            .element_source_type_name = descriptor.element_source_type_name,
-            .origin_kind = descriptor.origin_kind,
-            .line = descriptor.line,
-        };
+    plans.reserve(descriptor_origins.size());
+    for (auto const& origin : descriptor_origins) {
         auto plan = plan_dynamic_array_descriptor_cleanup(
-            descriptor.owner_name,
-            descriptor.source_type_name,
+            origin.owner_name,
+            origin.source_type_name,
             context
         );
         if (!plan.has_value()) {
-            diagnostics.error(descriptor.line, "dynamic array descriptor cleanup could not be planned");
+            diagnostics.error(origin.line, "dynamic array descriptor cleanup could not be planned");
             continue;
         }
         if (has_bound_dynamic_array_parameter_descriptor(origin, module, context)) {
@@ -3058,7 +3038,7 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
         } else if (origin.origin_kind == semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
         }
-        plan->source_line = descriptor.line;
+        plan->source_line = origin.line;
         plans.push_back(std::move(*plan));
     }
     return plans;
@@ -3084,9 +3064,10 @@ auto collect_dynamic_array_descriptor_lifetime_plans(
     semantics::SemanticAnalysisResult const& semantic_result,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
 ) -> std::vector<DynamicArrayDescriptorLifetimePlan> {
+    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(semantic_result);
     auto plans = std::vector<DynamicArrayDescriptorLifetimePlan> {};
-    plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
-    for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
+    plans.reserve(descriptor_origins.size());
+    for (auto const& origin : descriptor_origins) {
         plans.push_back(
             plan_dynamic_array_descriptor_lifetime(
                 origin,

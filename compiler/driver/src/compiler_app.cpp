@@ -109,7 +109,9 @@ auto drop_readiness_source_correlation_state_report(
 auto semantic_dynamic_array_descriptor_origin_state_report(
     semantics::SemanticAnalysisResult const& result
 ) -> std::vector<std::string> {
-    return semantics::format_dynamic_array_descriptor_origin_report(result.dynamic_array_descriptor_origins);
+    return semantics::format_dynamic_array_descriptor_origin_report(
+        semantics::dynamic_array_descriptor_origins_from_semantic_summary(result)
+    );
 }
 
 auto semantic_drop_implementations(

@@ -24,8 +24,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   shapes.
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
   ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Drop authorization reports and
-  DynamicArray descriptor cleanup planning consume summary-backed facts; lifetime/reporting consumers still use
-  compatibility descriptor origins.
+  DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI descriptor-origin reports consume
+  summary-backed facts.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -36,5 +36,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Migrate DynamicArray lifetime/reporting consumers from compatibility descriptor origins to summary-backed descriptor
-  facts.
+- Retire the compatibility descriptor-origin vector once direct lowering fixtures construct semantic summaries.

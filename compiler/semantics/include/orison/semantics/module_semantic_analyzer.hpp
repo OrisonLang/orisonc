@@ -194,6 +194,10 @@ auto format_dynamic_array_descriptor_origin_report(
     std::vector<DynamicArrayDescriptorOrigin> const& origins
 ) -> std::vector<std::string>;
 
+auto dynamic_array_descriptor_origins_from_semantic_summary(
+    SemanticAnalysisResult const& result
+) -> std::vector<DynamicArrayDescriptorOrigin>;
+
 class ModuleSemanticAnalyzer {
 public:
     auto analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult;

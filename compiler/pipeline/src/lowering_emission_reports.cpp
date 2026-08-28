@@ -348,11 +348,12 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     DynamicArrayDescriptorCleanupPlanState const& cleanup_plan_state,
     std::vector<lowering::DynamicArrayDescriptorLifetimePlan> const& lowering_lifetime_plans
 ) -> DynamicArrayDescriptorLifetimePlanState {
+    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(semantic_result);
     auto state = DynamicArrayDescriptorLifetimePlanState {};
-    state.plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
-    state.all_origins_have_cleanup_plans = !semantic_result.dynamic_array_descriptor_origins.empty();
+    state.plans.reserve(descriptor_origins.size());
+    state.all_origins_have_cleanup_plans = !descriptor_origins.empty();
     state.all_cleanup_plans_have_origins = true;
-    for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
+    for (auto const& origin : descriptor_origins) {
         auto const* cleanup_plan =
             matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
         auto const* lowering_lifetime_plan =
@@ -392,8 +393,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
         state.plans.push_back(std::move(plan));
     }
     for (auto const& cleanup_plan : cleanup_plan_state.plans) {
-        if (matching_dynamic_array_descriptor_origin(cleanup_plan, semantic_result.dynamic_array_descriptor_origins) !=
-            nullptr) {
+        if (matching_dynamic_array_descriptor_origin(cleanup_plan, descriptor_origins) != nullptr) {
             continue;
         }
         state.all_cleanup_plans_have_origins = false;
@@ -404,7 +404,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
             .origin_kind = semantics::DynamicArrayDescriptorOriginKind::local_binding,
             .reason = cleanup_plan_origin_blocker_reason(
                 cleanup_plan,
-                semantic_result.dynamic_array_descriptor_origins
+                descriptor_origins
             ),
             .source_line = cleanup_plan.source_line,
         });
@@ -3563,7 +3563,8 @@ void populate_lowering_emission_reports(
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
         .missing_element_drop_pairs =
             result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
-        .descriptor_origins_available = !result.semantic_result.dynamic_array_descriptor_origins.empty(),
+        .descriptor_origins_available =
+            !semantics::dynamic_array_descriptor_origins_from_semantic_summary(result.semantic_result).empty(),
         .descriptor_origin_blockers_absent =
             result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty(),
         .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),

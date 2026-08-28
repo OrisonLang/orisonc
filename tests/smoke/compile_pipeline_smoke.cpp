@@ -457,7 +457,7 @@ auto semantic_dynamic_array_descriptor_origin_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     return orison::semantics::format_dynamic_array_descriptor_origin_report(
-        result.semantic_result.dynamic_array_descriptor_origins
+        orison::semantics::dynamic_array_descriptor_origins_from_semantic_summary(result.semantic_result)
     );
 }
 

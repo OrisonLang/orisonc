@@ -6609,4 +6609,25 @@ auto format_dynamic_array_descriptor_origin_report(
     return report;
 }
 
+auto dynamic_array_descriptor_origins_from_semantic_summary(
+    SemanticAnalysisResult const& result
+) -> std::vector<DynamicArrayDescriptorOrigin> {
+    if (result.semantic_module.dynamic_array_descriptors.empty()) {
+        return result.dynamic_array_descriptor_origins;
+    }
+
+    auto origins = std::vector<DynamicArrayDescriptorOrigin> {};
+    origins.reserve(result.semantic_module.dynamic_array_descriptors.size());
+    for (auto const& descriptor : result.semantic_module.dynamic_array_descriptors) {
+        origins.push_back(DynamicArrayDescriptorOrigin {
+            .owner_name = descriptor.owner_name,
+            .source_type_name = descriptor.source_type_name,
+            .element_source_type_name = descriptor.element_source_type_name,
+            .origin_kind = descriptor.origin_kind,
+            .line = descriptor.line,
+        });
+    }
+    return origins;
+}
+
 }  // namespace orison::semantics
