@@ -2894,3 +2894,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   Orison syntax.
 - 2026-08-27: The semantic module summary now includes visited expression facts with inferred type names, callable
   target kinds, target names, receiver type names, and foreign markers where resolution is available.
+- 2026-08-27: The semantic module summary now includes declared ownership facts and drop obligations, giving lowering a
+  checked source for owner names, source types, cleanup need, and planned Drop ABI symbols.

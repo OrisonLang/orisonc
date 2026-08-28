@@ -7670,6 +7670,41 @@ void test_semantic_module_summary_success() {
     assert(found_record_constructor_expression);
     assert(found_generic_call_expression);
     assert(found_method_call_expression);
+
+    bool found_owned_box_fact = false;
+    bool found_scalar_copied_fact = false;
+    bool found_receiver_fact = false;
+    for (auto const& ownership : summary.ownership_facts) {
+        if (ownership.owner_name == "box" && ownership.type_name == "Box<UInt32>") {
+            found_owned_box_fact = true;
+            assert(ownership.origin_kind == orison::semantics::SemanticOwnershipOriginKind::local_binding);
+            assert(!ownership.mutable_binding);
+            assert(ownership.requires_drop);
+        }
+        if (ownership.owner_name == "copied" && ownership.type_name == "UInt32") {
+            found_scalar_copied_fact = true;
+            assert(ownership.origin_kind == orison::semantics::SemanticOwnershipOriginKind::returned_binding);
+            assert(!ownership.mutable_binding);
+            assert(!ownership.requires_drop);
+        }
+        if (ownership.owner_name == "this" && ownership.type_name == "Box<UInt32>") {
+            found_receiver_fact = true;
+            assert(ownership.origin_kind == orison::semantics::SemanticOwnershipOriginKind::receiver_binding);
+            assert(!ownership.requires_drop);
+        }
+    }
+    assert(found_owned_box_fact);
+    assert(found_scalar_copied_fact);
+    assert(found_receiver_fact);
+
+    bool found_box_drop_obligation = false;
+    for (auto const& obligation : summary.drop_obligations) {
+        if (obligation.owner_name == "box" && obligation.source_type_name == "Box<UInt32>") {
+            found_box_drop_obligation = true;
+            assert(obligation.abi_symbol_name == "__orison_drop.Box_UInt32_");
+        }
+    }
+    assert(found_box_drop_obligation);
 }
 
 void test_duplicate_type_alias_name_failure() {

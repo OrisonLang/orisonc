@@ -4268,7 +4268,18 @@ private:
                 .name = constant.name,
                 .type_name = render_type_name(constant.type),
                 .module_constant = true,
+                .declaration_line = constant.line,
             });
+            record_ownership_summary(
+                constant.name,
+                render_type_name(constant.type),
+                false,
+                false,
+                false,
+                true,
+                ValueOriginKind::none,
+                constant.line
+            );
         }
     }
 
@@ -5951,6 +5962,17 @@ private:
             push_scope();
         }
 
+        record_ownership_summary(
+            name,
+            type_name,
+            mutable_binding,
+            receiver_binding,
+            parameter_binding,
+            false,
+            value_origin,
+            declaration_line
+        );
+
         scope_stack_.back().push_back(Binding {
             .name = name,
             .type_name = std::move(type_name),
@@ -5961,6 +5983,55 @@ private:
             .scope_depth = scope_stack_.size() - 1,
             .declaration_line = declaration_line,
         });
+    }
+
+    void record_ownership_summary(
+        std::string const& name,
+        std::string const& type_name,
+        bool mutable_binding,
+        bool receiver_binding,
+        bool parameter_binding,
+        bool module_constant,
+        ValueOriginKind value_origin,
+        std::size_t declaration_line
+    ) {
+        if (name.empty()) {
+            return;
+        }
+
+        auto origin_kind = SemanticOwnershipOriginKind::local_binding;
+        if (module_constant) {
+            origin_kind = SemanticOwnershipOriginKind::module_constant;
+        } else if (receiver_binding) {
+            origin_kind = SemanticOwnershipOriginKind::receiver_binding;
+        } else if (parameter_binding) {
+            origin_kind = SemanticOwnershipOriginKind::parameter_binding;
+        } else if (value_origin == ValueOriginKind::function_call) {
+            origin_kind = SemanticOwnershipOriginKind::returned_binding;
+        }
+
+        semantic_module_.ownership_facts.push_back(SemanticOwnershipSummary {
+            .line = declaration_line,
+            .owner_name = name,
+            .type_name = type_name,
+            .origin_kind = origin_kind,
+            .mutable_binding = mutable_binding,
+            .requires_drop = !module_constant && !receiver_binding &&
+                             value_origin != ValueOriginKind::task &&
+                             value_origin != ValueOriginKind::thread &&
+                             value_origin != ValueOriginKind::async_call &&
+                             is_owned_drop_candidate_type_name(type_name),
+        });
+    }
+
+    void add_planned_drop_site(PlannedDropSite site) {
+        semantic_module_.drop_obligations.push_back(SemanticDropObligationSummary {
+            .line = site.site_line,
+            .owner_name = site.owner_name,
+            .source_type_name = site.source_type_name,
+            .abi_symbol_name = site.abi_symbol_name,
+        });
+        planned_drop_sites_.push_back(std::move(site));
     }
 
     auto source_type_base_name(std::string const& type_name) const -> std::string {
@@ -6134,7 +6205,7 @@ private:
                 .origin_kind = origin_kind,
                 .line = declaration_line,
             });
-            planned_drop_sites_.push_back(PlannedDropSite {
+            add_planned_drop_site(PlannedDropSite {
                 .source_type_name = direct_element_type_name,
                 .abi_symbol_name = drop_abi_symbol_name(direct_element_type_name),
                 .owner_name = owner_name + ".element",
@@ -6190,7 +6261,7 @@ private:
                     .origin_kind = origin_kind,
                     .line = declaration_line,
                 });
-                planned_drop_sites_.push_back(PlannedDropSite {
+                add_planned_drop_site(PlannedDropSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = drop_abi_symbol_name(element_type_name),
                     .owner_name = field_owner_name + ".element",
@@ -6254,7 +6325,7 @@ private:
                     .line = binding.declaration_line,
                 });
             }
-            planned_drop_sites_.push_back(PlannedDropSite {
+            add_planned_drop_site(PlannedDropSite {
                 .source_type_name = binding.type_name,
                 .abi_symbol_name = drop_abi_symbol_name(binding.type_name),
                 .owner_name = binding.name,
@@ -6262,7 +6333,7 @@ private:
             });
             auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(binding.type_name);
             if (!element_type_name.empty()) {
-                planned_drop_sites_.push_back(PlannedDropSite {
+                add_planned_drop_site(PlannedDropSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = drop_abi_symbol_name(element_type_name),
                     .owner_name = binding.name + ".element",

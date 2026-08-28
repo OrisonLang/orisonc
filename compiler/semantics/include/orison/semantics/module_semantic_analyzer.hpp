@@ -104,11 +104,37 @@ struct SemanticExpressionSummary {
     bool foreign = false;
 };
 
+enum class SemanticOwnershipOriginKind {
+    local_binding,
+    parameter_binding,
+    returned_binding,
+    receiver_binding,
+    module_constant,
+};
+
+struct SemanticOwnershipSummary {
+    std::size_t line = 0;
+    std::string owner_name;
+    std::string type_name;
+    SemanticOwnershipOriginKind origin_kind = SemanticOwnershipOriginKind::local_binding;
+    bool mutable_binding = false;
+    bool requires_drop = false;
+};
+
+struct SemanticDropObligationSummary {
+    std::size_t line = 0;
+    std::string owner_name;
+    std::string source_type_name;
+    std::string abi_symbol_name;
+};
+
 struct SemanticModuleSummary {
     std::vector<SemanticFunctionSummary> functions;
     std::vector<SemanticRecordFieldSummary> record_fields;
     std::vector<SemanticChoiceVariantSummary> choice_variants;
     std::vector<SemanticExpressionSummary> expressions;
+    std::vector<SemanticOwnershipSummary> ownership_facts;
+    std::vector<SemanticDropObligationSummary> drop_obligations;
 };
 
 struct SemanticAnalysisResult {
