@@ -36,6 +36,7 @@ namespace smoke = orison::tests::smoke;
 
 void test_production_compile_pipeline_options_enable_runtime_indexed_member_cleanup() {
     auto const options = orison::pipeline::production_compile_pipeline_options();
+    assert(!options.source_drop_lowering_enabled);
     assert(options.runtime_indexed_cleanup_emission_enabled);
     assert(options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled);
     assert(options.runtime_indexed_constructor_move_enabled);

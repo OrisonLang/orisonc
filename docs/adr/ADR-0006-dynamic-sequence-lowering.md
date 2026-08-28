@@ -223,6 +223,9 @@ representation.
   library emission defaults with CLI emission defaults for promoted runtime-index cleanup gates.
 - Production pipeline defaults now also enable DynamicArray construction/index/append gates. Source Drop lowering,
   DynamicArray cleanup, and computed `for` gates remain explicitly controlled while their broader safety proofs mature.
+- Source Drop lowering remains outside shared production defaults after audit. Enabling it changes selected final
+  aggregate cleanup IR from inline field cleanup to aggregate Drop calls, so promotion needs an explicit cleanup-shape
+  migration rather than a silent default flip.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

@@ -39,5 +39,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit whether source Drop lowering, DynamicArray cleanup, and computed `for` production gates can move into shared
-  defaults, or must remain opt-in until broader cleanup proofs are complete.
+- Migrate source Drop cleanup-shape expectations deliberately before considering source Drop as a shared production
+  default; then audit DynamicArray cleanup and computed `for` production gates separately.
