@@ -2898,3 +2898,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   checked source for owner names, source types, cleanup need, and planned Drop ABI symbols.
 - 2026-08-27: The semantic module summary now includes checked aggregate paths for named member/index projections,
   including root owner, root type, result type, path segments, null-safe status, and computed-index status.
+- 2026-08-27: Semantic drop authorization and resolution reports now consume `semantic_module.drop_obligations`,
+  keeping the compatibility planned-drop vector out of that reporting path.

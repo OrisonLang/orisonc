@@ -21,8 +21,10 @@ projections rooted at named owners. This is not public Orison syntax and does no
 
 Lowering can migrate from repeated syntax walking to shared checked facts incrementally. The first slices cover
 module-level declarations, visited expression facts, declared-owner facts, planned drop obligations, and checked
-aggregate paths.
+aggregate paths. Semantic drop authorization and resolution reports now consume the drop-obligation summary rather than
+the compatibility planned-drop vector.
 
 ## Follow-up work
 
-- Migrate selected lowering decisions to consume the summary.
+- Migrate DynamicArray descriptor cleanup planning onto summary-backed facts once descriptor element-source facts are
+  represented directly.

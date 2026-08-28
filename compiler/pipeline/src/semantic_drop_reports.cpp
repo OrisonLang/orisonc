@@ -46,6 +46,22 @@ auto collect_discovered_drop_implementations(
     return discovered_drop_implementations;
 }
 
+auto planned_drop_sites_from_semantic_summary(
+    semantics::SemanticModuleSummary const& summary
+) -> std::vector<semantics::PlannedDropSite> {
+    auto sites = std::vector<semantics::PlannedDropSite> {};
+    sites.reserve(summary.drop_obligations.size());
+    for (auto const& obligation : summary.drop_obligations) {
+        sites.push_back(semantics::PlannedDropSite {
+            .source_type_name = obligation.source_type_name,
+            .abi_symbol_name = obligation.abi_symbol_name,
+            .owner_name = obligation.owner_name,
+            .site_line = obligation.line,
+        });
+    }
+    return sites;
+}
+
 }  // namespace
 
 void populate_semantic_drop_reports(
@@ -62,13 +78,15 @@ void populate_semantic_drop_reports(
     auto const source_drop_lowering_gate = source_drop_lowering_enabled(options)
                                               ? semantics::SourceDropLoweringGate::enabled
                                               : semantics::SourceDropLoweringGate::disabled;
+    auto semantic_summary_drop_sites =
+        planned_drop_sites_from_semantic_summary(result.semantic_result.semantic_module);
     result.semantic_drop_lowering_authorizations = semantics::authorize_drop_lowerings(
-        result.semantic_result.planned_drop_sites,
+        semantic_summary_drop_sites,
         semantic_drop_implementations,
         source_drop_lowering_gate
     );
     result.semantic_drop_state.resolution_summaries = semantics::summarize_drop_implementation_resolutions(
-        result.semantic_result.planned_drop_sites,
+        semantic_summary_drop_sites,
         semantic_drop_implementations
     );
 }

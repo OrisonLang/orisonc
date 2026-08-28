@@ -14243,6 +14243,7 @@ auto main() -> int {
     auto semantic_drops_authorization_report = semantic_drop_lowering_authorization_report(semantic_drops);
     auto semantic_drops_summary_report = semantic_drop_resolution_summary_report(semantic_drops);
     assert(semantic_drops_planned_report.size() == 2);
+    assert(semantic_drops.semantic_result.semantic_module.drop_obligations.size() == 2);
     assert_line_contains(semantic_drops_planned_report, 0, "owner input");
     assert_line_contains(semantic_drops_planned_report, 1, "owner local");
     assert(semantic_drops_resolution_report.size() == 2);
@@ -14253,6 +14254,14 @@ auto main() -> int {
     assert_line_contains(semantic_drops_diagnostic_report, 1, "owner local");
     assert(semantic_drops_authorization_report.size() == 2);
     assert(semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
+    assert(
+        semantic_drops.semantic_drop_lowering_authorizations[0].site.owner_name ==
+        semantic_drops.semantic_result.semantic_module.drop_obligations[0].owner_name
+    );
+    assert(
+        semantic_drops.semantic_drop_lowering_authorizations[1].site.owner_name ==
+        semantic_drops.semantic_result.semantic_module.drop_obligations[1].owner_name
+    );
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
