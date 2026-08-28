@@ -683,7 +683,7 @@ auto matching_dynamic_array_descriptor_origin(
     std::string_view owner_name,
     std::string_view source_type_name,
     semantics::DynamicArrayDescriptorOriginKind origin_kind
-) -> std::optional<semantics::DynamicArrayDescriptorOrigin>;
+) -> semantics::SemanticDynamicArrayDescriptorSummary const*;
 
 void release_returned_dynamic_array_local_cleanup(
     syntax::ExpressionSyntax const& expression,
@@ -721,7 +721,7 @@ void release_returned_dynamic_array_local_cleanup(
                   *storage
               )
             : nullptr;
-        if (parameter_origin.has_value() || parameter_lifetime_plan != nullptr) {
+        if (parameter_origin != nullptr || parameter_lifetime_plan != nullptr) {
             mark_owned_binding_consumed(state.ownership_transfers, expression.text);
         }
         return;
@@ -733,7 +733,7 @@ void release_returned_dynamic_array_local_cleanup(
         *return_source_type_name,
         semantics::DynamicArrayDescriptorOriginKind::returned_binding
     );
-    if (!origin.has_value()) {
+    if (origin == nullptr) {
         return;
     }
 
@@ -752,7 +752,8 @@ void release_returned_dynamic_array_local_cleanup(
         }
 
         auto lifetime_plan = plan_dynamic_array_returned_descriptor_lifetime(
-            *origin,
+            origin->owner_name,
+            origin->source_type_name,
             *cleanup_plan
         );
         if (lifetime_plan.has_value() && lifetime_plan->caller_owns_returned_cleanup) {
@@ -897,24 +898,23 @@ auto matching_dynamic_array_descriptor_origin(
     std::string_view owner_name,
     std::string_view source_type_name,
     semantics::DynamicArrayDescriptorOriginKind origin_kind
-) -> std::optional<semantics::DynamicArrayDescriptorOrigin> {
+) -> semantics::SemanticDynamicArrayDescriptorSummary const* {
     if (semantic_result == nullptr) {
-        return std::nullopt;
+        return nullptr;
     }
 
-    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(*semantic_result);
     auto const match = std::ranges::find_if(
-        descriptor_origins,
-        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
-            return origin.owner_name == owner_name &&
-                dynamic_array_descriptor_lifetime_source_type_matches(origin.source_type_name, source_type_name) &&
-                origin.origin_kind == origin_kind;
+        semantic_result->semantic_module.dynamic_array_descriptors,
+        [&](semantics::SemanticDynamicArrayDescriptorSummary const& descriptor) {
+            return descriptor.owner_name == owner_name &&
+                dynamic_array_descriptor_lifetime_source_type_matches(descriptor.source_type_name, source_type_name) &&
+                descriptor.origin_kind == origin_kind;
         }
     );
-    if (match == descriptor_origins.end()) {
-        return std::nullopt;
+    if (match == semantic_result->semantic_module.dynamic_array_descriptors.end()) {
+        return nullptr;
     }
-    return *match;
+    return std::addressof(*match);
 }
 
 void seed_bound_dynamic_array_parameter_cleanup_owner(
@@ -961,7 +961,7 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
                    source_type_name,
                    semantics::DynamicArrayDescriptorOriginKind::parameter_binding
                );
-        origin.has_value()) {
+        origin != nullptr) {
         lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
             parameter_name,
             source_type_name,

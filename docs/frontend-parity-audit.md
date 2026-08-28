@@ -2914,3 +2914,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   resolution/diagnostic paths share the public semantic drop-obligation projection helper.
 - 2026-08-28: `SemanticAnalysisResult` no longer exposes the compatibility planned-drop vector; semantic drop
   obligation summary facts are the result-level source for semantic drop reports.
+- 2026-08-28: Lowering descriptor match gates now read `semantic_module.dynamic_array_descriptors` directly for
+  owner/type/kind checks instead of projecting descriptor-origin records for those existence tests.

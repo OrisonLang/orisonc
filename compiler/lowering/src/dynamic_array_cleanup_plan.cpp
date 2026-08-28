@@ -36,13 +36,12 @@ auto has_matching_dynamic_array_descriptor_origin(
         return false;
     }
 
-    auto projected_origins = semantics::project_dynamic_array_descriptor_summaries(*semantic_result);
     return std::ranges::any_of(
-        projected_origins,
-        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
-            return origin.owner_name == owner_name &&
-                dynamic_array_descriptor_lifetime_source_type_matches(origin.source_type_name, source_type_name) &&
-                origin.origin_kind == origin_kind;
+        semantic_result->semantic_module.dynamic_array_descriptors,
+        [&](semantics::SemanticDynamicArrayDescriptorSummary const& descriptor) {
+            return descriptor.owner_name == owner_name &&
+                dynamic_array_descriptor_lifetime_source_type_matches(descriptor.source_type_name, source_type_name) &&
+                descriptor.origin_kind == origin_kind;
         }
     );
 }
