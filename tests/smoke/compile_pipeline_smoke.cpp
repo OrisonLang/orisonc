@@ -45,6 +45,31 @@ void test_production_compile_pipeline_options_enable_runtime_indexed_member_clea
     assert(options.runtime_indexed_member_cleanup_rewrite_execution_enabled);
 }
 
+void test_no_option_pipeline_emission_uses_production_defaults(
+    orison::pipeline::CompilePipeline& pipeline
+) {
+    auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
+
+    auto no_option_ir = pipeline.emit_llvm(source_path);
+    auto production_ir = pipeline.emit_llvm(
+        source_path,
+        orison::pipeline::production_compile_pipeline_options()
+    );
+    assert(no_option_ir.has_errors() == production_ir.has_errors());
+    assert(no_option_ir.error_text == production_ir.error_text);
+    assert(no_option_ir.ir_text == production_ir.ir_text);
+
+    auto no_option_object = pipeline.emit_object(source_path);
+    auto production_object = pipeline.emit_object(
+        source_path,
+        orison::pipeline::production_compile_pipeline_options()
+    );
+    assert(no_option_object.has_errors() == production_object.has_errors());
+    assert(no_option_object.error_text == production_object.error_text);
+    assert(no_option_object.ir_text == production_object.ir_text);
+    assert(no_option_object.object_bytes == production_object.object_bytes);
+}
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -1281,6 +1306,7 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     orison::pipeline::CompilePipeline pipeline;
+    test_no_option_pipeline_emission_uses_production_defaults(pipeline);
     assert_aggregate_projection_access_plan_state(pipeline, smoke_temp_root);
 
     auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";

@@ -82,7 +82,7 @@ auto CompilePipeline::analyze(
 }
 
 auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const -> CompilePipelineResult {
-    return emit_llvm(source_path, CompilePipelineOptions {});
+    return emit_llvm(source_path, production_compile_pipeline_options());
 }
 
 auto CompilePipeline::emit_llvm(
@@ -100,7 +100,7 @@ auto CompilePipeline::collect_dynamic_array_cleanup_metadata(
 }
 
 auto CompilePipeline::emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult {
-    return emit_object(source_path, CompilePipelineOptions {});
+    return emit_object(source_path, production_compile_pipeline_options());
 }
 
 auto CompilePipeline::emit_object(

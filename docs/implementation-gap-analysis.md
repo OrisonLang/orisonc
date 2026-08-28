@@ -39,5 +39,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit whether direct pipeline default emission should adopt the shared production option builder, or remain a minimal
-  library default with driver-level production defaults.
+- Audit the remaining default-option gaps for source Drop lowering and DynamicArray construction/index/append gates on
+  no-option emission.

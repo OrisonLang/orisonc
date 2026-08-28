@@ -2924,3 +2924,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   terminology. Pinned report text remains unchanged for compatibility.
 - 2026-08-28: Runtime-index member-cleanup production default gates now have a shared pipeline option builder, with
   driver defaults delegated to that typed pipeline helper.
+- 2026-08-28: Direct no-option pipeline LLVM/object emission now uses the shared production option builder, aligning
+  library and CLI emission defaults for promoted runtime-index cleanup gates.
