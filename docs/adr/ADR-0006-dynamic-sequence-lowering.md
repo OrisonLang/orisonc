@@ -1991,6 +1991,8 @@ representation.
 - Ordinary driver defaults now enable runtime-index member-cleanup rewrite execution for checked source-backed
   `DynamicArray<T>` computed-index member transfers. The promoted path requires typed member proof, helper Drop
   binding, mutation authorization, rewrite authorization/execution readiness, and shared module IR-shape readiness.
+- Runtime-index member-cleanup production default gates now use a shared pipeline option builder consumed by the
+  driver, so CLI defaults and direct pipeline callers can share one gate set.
 - Runtime-index member-cleanup rewrite selection is keyed by owner-specific lowered DynamicArray element-path
   temporaries before deriving the moved-index operand. This keeps multi-owner rewrites from comparing one cleanup walk
   against another owner or cleanup-loop index.

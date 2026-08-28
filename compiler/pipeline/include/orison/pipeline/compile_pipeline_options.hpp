@@ -78,4 +78,16 @@ struct CompilePipelineOptions {
     bool computed_dynamic_array_local_cleanup_call_insertion_enabled = true;
 };
 
+inline auto production_compile_pipeline_options() -> CompilePipelineOptions {
+    auto options = CompilePipelineOptions {};
+    options.runtime_indexed_cleanup_emission_enabled = true;
+    options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true;
+    options.runtime_indexed_constructor_move_enabled = true;
+    options.runtime_indexed_member_cleanup_ir_mutation_enabled = true;
+    options.runtime_indexed_member_cleanup_production_gate_enabled = true;
+    options.runtime_indexed_member_cleanup_apply_authorization_enabled = true;
+    options.runtime_indexed_member_cleanup_rewrite_execution_enabled = true;
+    return options;
+}
+
 }  // namespace orison::pipeline

@@ -2922,3 +2922,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   now exercise descriptor-summary overloads.
 - 2026-08-28: Internal DynamicArray descriptor lifetime/readiness state now uses descriptor-summary binding
   terminology. Pinned report text remains unchanged for compatibility.
+- 2026-08-28: Runtime-index member-cleanup production default gates now have a shared pipeline option builder, with
+  driver defaults delegated to that typed pipeline helper.

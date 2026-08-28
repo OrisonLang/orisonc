@@ -255,15 +255,7 @@ auto computed_cleanup_call_insertion_readiness_options() -> pipeline::CompilePip
 }
 
 auto default_driver_options() -> pipeline::CompilePipelineOptions {
-    auto options = pipeline::CompilePipelineOptions {};
-    options.runtime_indexed_cleanup_emission_enabled = true;
-    options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true;
-    options.runtime_indexed_constructor_move_enabled = true;
-    options.runtime_indexed_member_cleanup_ir_mutation_enabled = true;
-    options.runtime_indexed_member_cleanup_production_gate_enabled = true;
-    options.runtime_indexed_member_cleanup_apply_authorization_enabled = true;
-    options.runtime_indexed_member_cleanup_rewrite_execution_enabled = true;
-    return options;
+    return pipeline::production_compile_pipeline_options();
 }
 
 auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions {

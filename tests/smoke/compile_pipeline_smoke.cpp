@@ -34,6 +34,17 @@ namespace {
 
 namespace smoke = orison::tests::smoke;
 
+void test_production_compile_pipeline_options_enable_runtime_indexed_member_cleanup() {
+    auto const options = orison::pipeline::production_compile_pipeline_options();
+    assert(options.runtime_indexed_cleanup_emission_enabled);
+    assert(options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled);
+    assert(options.runtime_indexed_constructor_move_enabled);
+    assert(options.runtime_indexed_member_cleanup_ir_mutation_enabled);
+    assert(options.runtime_indexed_member_cleanup_production_gate_enabled);
+    assert(options.runtime_indexed_member_cleanup_apply_authorization_enabled);
+    assert(options.runtime_indexed_member_cleanup_rewrite_execution_enabled);
+}
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -1257,6 +1268,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 }  // namespace
 
 auto main() -> int {
+    test_production_compile_pipeline_options_enable_runtime_indexed_member_cleanup();
     assert_computed_cleanup_proof_model_reusable_without_reports();
     assert_consumed_descriptor_finalization_readiness_typed();
 
