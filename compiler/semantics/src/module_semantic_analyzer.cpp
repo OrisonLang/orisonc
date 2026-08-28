@@ -1243,6 +1243,65 @@ private:
             return;
         }
         semantic_module_.expressions.push_back(expression_summary_target(expression));
+        record_aggregate_path_summary(expression);
+    }
+
+    void record_aggregate_path_summary(syntax::ExpressionSyntax const& expression) {
+        auto const* cursor = &expression;
+        auto segments = std::vector<SemanticAggregatePathSegment> {};
+        auto null_safe = false;
+        auto computed_index = false;
+
+        while (cursor != nullptr) {
+            if ((cursor->kind == syntax::ExpressionKind::member_access ||
+                 cursor->kind == syntax::ExpressionKind::null_safe_member_access) &&
+                cursor->left) {
+                segments.push_back(SemanticAggregatePathSegment {
+                    .kind = SemanticAggregatePathSegmentKind::member,
+                    .name = cursor->text,
+                });
+                null_safe = null_safe || cursor->kind == syntax::ExpressionKind::null_safe_member_access;
+                cursor = cursor->left.get();
+                continue;
+            }
+
+            if (cursor->kind == syntax::ExpressionKind::index_access && cursor->left &&
+                cursor->arguments.size() == 1) {
+                auto index_text = expression_summary_text(cursor->arguments.front());
+                segments.push_back(SemanticAggregatePathSegment {
+                    .kind = SemanticAggregatePathSegmentKind::index,
+                    .name = index_text,
+                });
+                computed_index = computed_index ||
+                                 cursor->arguments.front().kind != syntax::ExpressionKind::integer_literal;
+                cursor = cursor->left.get();
+                continue;
+            }
+
+            break;
+        }
+
+        if (segments.empty() || cursor == nullptr || cursor->kind != syntax::ExpressionKind::name) {
+            return;
+        }
+
+        auto root_type_name = infer_expression_type_name(*cursor);
+        auto result_type_name = infer_expression_type_name(expression);
+        if (root_type_name.empty() || result_type_name.empty()) {
+            return;
+        }
+
+        std::reverse(segments.begin(), segments.end());
+        semantic_module_.aggregate_paths.push_back(SemanticAggregatePathSummary {
+            .line = expression.line,
+            .expression_text = expression_summary_text(expression),
+            .root_owner_name = cursor->text,
+            .root_type_name = root_type_name,
+            .result_type_name = result_type_name,
+            .segments = std::move(segments),
+            .null_safe = null_safe,
+            .computed_index = computed_index,
+        });
     }
 
     auto find_record_field_type_name(

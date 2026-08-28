@@ -128,6 +128,27 @@ struct SemanticDropObligationSummary {
     std::string abi_symbol_name;
 };
 
+enum class SemanticAggregatePathSegmentKind {
+    member,
+    index,
+};
+
+struct SemanticAggregatePathSegment {
+    SemanticAggregatePathSegmentKind kind = SemanticAggregatePathSegmentKind::member;
+    std::string name;
+};
+
+struct SemanticAggregatePathSummary {
+    std::size_t line = 0;
+    std::string expression_text;
+    std::string root_owner_name;
+    std::string root_type_name;
+    std::string result_type_name;
+    std::vector<SemanticAggregatePathSegment> segments;
+    bool null_safe = false;
+    bool computed_index = false;
+};
+
 struct SemanticModuleSummary {
     std::vector<SemanticFunctionSummary> functions;
     std::vector<SemanticRecordFieldSummary> record_fields;
@@ -135,6 +156,7 @@ struct SemanticModuleSummary {
     std::vector<SemanticExpressionSummary> expressions;
     std::vector<SemanticOwnershipSummary> ownership_facts;
     std::vector<SemanticDropObligationSummary> drop_obligations;
+    std::vector<SemanticAggregatePathSummary> aggregate_paths;
 };
 
 struct SemanticAnalysisResult {

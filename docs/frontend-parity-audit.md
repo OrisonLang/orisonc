@@ -2896,3 +2896,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   target kinds, target names, receiver type names, and foreign markers where resolution is available.
 - 2026-08-27: The semantic module summary now includes declared ownership facts and drop obligations, giving lowering a
   checked source for owner names, source types, cleanup need, and planned Drop ABI symbols.
+- 2026-08-27: The semantic module summary now includes checked aggregate paths for named member/index projections,
+  including root owner, root type, result type, path segments, null-safe status, and computed-index status.

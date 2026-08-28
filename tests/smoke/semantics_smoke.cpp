@@ -7705,6 +7705,20 @@ void test_semantic_module_summary_success() {
         }
     }
     assert(found_box_drop_obligation);
+
+    bool found_box_value_path = false;
+    for (auto const& path_summary : summary.aggregate_paths) {
+        if (path_summary.root_owner_name == "box" && path_summary.segments.size() == 1 &&
+            path_summary.segments.front().kind == orison::semantics::SemanticAggregatePathSegmentKind::member &&
+            path_summary.segments.front().name == "value") {
+            found_box_value_path = true;
+            assert(path_summary.root_type_name == "Box<UInt32>");
+            assert(path_summary.result_type_name == "UInt32");
+            assert(!path_summary.null_safe);
+            assert(!path_summary.computed_index);
+        }
+    }
+    assert(found_box_value_path);
 }
 
 void test_duplicate_type_alias_name_failure() {
