@@ -198,6 +198,16 @@ auto project_dynamic_array_descriptor_summaries(
     SemanticAnalysisResult const& result
 ) -> std::vector<DynamicArrayDescriptorOrigin>;
 
+auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obligation) -> std::string;
+
+auto format_semantic_drop_obligation_report(
+    std::vector<SemanticDropObligationSummary> const& obligations
+) -> std::vector<std::string>;
+
+auto project_semantic_drop_obligations(
+    SemanticModuleSummary const& summary
+) -> std::vector<PlannedDropSite>;
+
 class ModuleSemanticAnalyzer {
 public:
     auto analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult;

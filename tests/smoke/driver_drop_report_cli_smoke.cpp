@@ -576,7 +576,7 @@ int main() {
     auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
     assert_success_with_stdout_contains(planned_drop_report, {"planned drop __orison_drop.Payload"});
     auto semantic_planned_drop_report = run_semantic_planned_drops(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(semantic_planned_drop_report, {"drop site __orison_drop.Payload"});
+    assert_success_with_stdout_contains(semantic_planned_drop_report, {"drop obligation __orison_drop.Payload"});
     auto semantic_drop_resolution = run_semantic_drop_resolution(app, planned_drop_report_path);
     assert_success_with_stdout_contains(semantic_drop_resolution, {"missing drop site __orison_drop.Payload"});
     auto semantic_drop_diagnostics = run_semantic_drop_diagnostics(app, planned_drop_report_path);

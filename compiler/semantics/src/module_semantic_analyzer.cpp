@@ -6625,4 +6625,49 @@ auto project_dynamic_array_descriptor_summaries(
     return origins;
 }
 
+auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obligation) -> std::string {
+    auto output = std::string {"drop obligation "};
+    output += obligation.abi_symbol_name;
+    if (!obligation.source_type_name.empty()) {
+        output += " for ";
+        output += obligation.source_type_name;
+    }
+    if (!obligation.owner_name.empty()) {
+        output += " owner ";
+        output += obligation.owner_name;
+    }
+    if (obligation.line > 0) {
+        output += " at line ";
+        output += std::to_string(obligation.line);
+    }
+    return output;
+}
+
+auto format_semantic_drop_obligation_report(
+    std::vector<SemanticDropObligationSummary> const& obligations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(obligations.size());
+    for (auto const& obligation : obligations) {
+        report.push_back(format_semantic_drop_obligation(obligation));
+    }
+    return report;
+}
+
+auto project_semantic_drop_obligations(
+    SemanticModuleSummary const& summary
+) -> std::vector<PlannedDropSite> {
+    auto sites = std::vector<PlannedDropSite> {};
+    sites.reserve(summary.drop_obligations.size());
+    for (auto const& obligation : summary.drop_obligations) {
+        sites.push_back(PlannedDropSite {
+            .source_type_name = obligation.source_type_name,
+            .abi_symbol_name = obligation.abi_symbol_name,
+            .owner_name = obligation.owner_name,
+            .site_line = obligation.line,
+        });
+    }
+    return sites;
+}
+
 }  // namespace orison::semantics

@@ -7702,9 +7702,26 @@ void test_semantic_module_summary_success() {
         if (obligation.owner_name == "box" && obligation.source_type_name == "Box<UInt32>") {
             found_box_drop_obligation = true;
             assert(obligation.abi_symbol_name == "__orison_drop.Box_UInt32_");
+            assert(
+                orison::semantics::format_semantic_drop_obligation(obligation) ==
+                "drop obligation __orison_drop.Box_UInt32_ for Box<UInt32> owner box at line 23"
+            );
         }
     }
     assert(found_box_drop_obligation);
+    auto projected_drop_sites = orison::semantics::project_semantic_drop_obligations(summary);
+    assert(projected_drop_sites.size() == summary.drop_obligations.size());
+    assert(projected_drop_sites.front().source_type_name == "Box<UInt32>");
+    assert(projected_drop_sites.front().abi_symbol_name == "__orison_drop.Box_UInt32_");
+    assert(projected_drop_sites.front().owner_name == "box");
+    assert(projected_drop_sites.front().site_line == 23);
+    auto drop_obligation_report =
+        orison::semantics::format_semantic_drop_obligation_report(summary.drop_obligations);
+    assert(drop_obligation_report.size() == summary.drop_obligations.size());
+    assert(
+        drop_obligation_report.front() ==
+        "drop obligation __orison_drop.Box_UInt32_ for Box<UInt32> owner box at line 23"
+    );
 
     bool found_box_value_path = false;
     for (auto const& path_summary : summary.aggregate_paths) {

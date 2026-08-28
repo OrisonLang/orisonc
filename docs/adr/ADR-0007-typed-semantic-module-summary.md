@@ -22,15 +22,16 @@ element source type, origin kind, and source line. This is not public Orison syn
 
 Lowering can migrate from repeated syntax walking to shared checked facts incrementally. The first slices cover
 module-level declarations, visited expression facts, declared-owner facts, planned drop obligations, and checked
-aggregate paths. Semantic drop authorization and resolution reports now consume the drop-obligation summary rather than
-the compatibility planned-drop vector. DynamicArray descriptor cleanup planning now consumes semantic summary descriptor
-facts rather than the compatibility descriptor-origin vector. DynamicArray lifetime planning, lowering cleanup matching,
-pipeline readiness reports, and CLI descriptor reports now use the same summary-backed projection. Direct lowering
-fixtures now construct semantic summary descriptor facts. `SemanticAnalysisResult` no longer exposes the mirrored
-compatibility descriptor-origin vector. Semantic descriptor report helpers now use descriptor-summary terminology while
-lowering keeps a narrow projection into cleanup-origin records.
+aggregate paths. Semantic planned-drop reports, semantic drop authorization, and semantic drop resolution reports now
+consume the drop-obligation summary rather than the compatibility planned-drop vector. DynamicArray descriptor cleanup
+planning now consumes semantic summary descriptor facts rather than the compatibility descriptor-origin vector.
+DynamicArray lifetime planning, lowering cleanup matching, pipeline readiness reports, and CLI descriptor reports now
+use the same summary-backed projection. Direct lowering fixtures now construct semantic summary descriptor facts.
+`SemanticAnalysisResult` no longer exposes the mirrored compatibility descriptor-origin vector. Semantic descriptor
+report helpers now use descriptor-summary terminology while lowering keeps a narrow projection into cleanup-origin
+records.
 
 ## Follow-up work
 
-- Migrate remaining cleanup-origin consumers to typed cleanup facts where that reduces projection code without changing
-  the Orison syntax surface.
+- Migrate lowering cleanup consumers to typed cleanup facts where that reduces projection code without changing the
+  Orison syntax surface.

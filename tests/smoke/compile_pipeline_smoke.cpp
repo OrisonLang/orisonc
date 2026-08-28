@@ -489,14 +489,18 @@ auto semantic_drop_implementation_discovery_report(
 auto semantic_planned_drop_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
+    return orison::semantics::format_semantic_drop_obligation_report(
+        result.semantic_result.semantic_module.drop_obligations
+    );
 }
 
 auto semantic_drop_resolution_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
+    auto semantic_summary_drop_sites =
+        orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_drop_implementation_resolution_report(
-        result.semantic_result.planned_drop_sites,
+        semantic_summary_drop_sites,
         semantic_drop_implementations(result.semantic_drop_state)
     );
 }
@@ -504,8 +508,10 @@ auto semantic_drop_resolution_report(
 auto semantic_drop_diagnostic_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
+    auto semantic_summary_drop_sites =
+        orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_drop_implementation_diagnostic_report(
-        result.semantic_result.planned_drop_sites,
+        semantic_summary_drop_sites,
         semantic_drop_implementations(result.semantic_drop_state)
     );
 }

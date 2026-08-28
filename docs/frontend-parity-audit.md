@@ -2910,3 +2910,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   reports are projected from `semantic_module.dynamic_array_descriptors`.
 - 2026-08-27: Semantic DynamicArray descriptor report helpers now use descriptor-summary terminology and report directly
   from `semantic_module.dynamic_array_descriptors`; lowering retains only a narrow cleanup-origin projection bridge.
+- 2026-08-28: Semantic planned-drop reports now render `semantic_module.drop_obligations` directly, and semantic drop
+  resolution/diagnostic paths share the public semantic drop-obligation projection helper.
