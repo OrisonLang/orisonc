@@ -1330,12 +1330,12 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
             .element_source_type_name = "Payload",
         }
     );
-    semantic_result.planned_drop_sites.push_back(
-        orison::semantics::PlannedDropSite {
+    semantic_result.semantic_module.drop_obligations.push_back(
+        orison::semantics::SemanticDropObligationSummary {
+            .line = 8,
+            .owner_name = "items.element",
             .source_type_name = "Payload",
             .abi_symbol_name = "__orison_drop.Payload",
-            .owner_name = "items.element",
-            .site_line = 8,
         }
     );
 
@@ -1434,7 +1434,9 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
             .test_only_render_dynamic_array_element_drop_walks = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
-                    .site = semantic_result.planned_drop_sites.front(),
+                    .site = orison::semantics::project_semantic_drop_obligations(
+                        semantic_result.semantic_module
+                    ).front(),
                     .semantic_resolved = true,
                     .source_drop_lowering_enabled = true,
                     .authorized = true,

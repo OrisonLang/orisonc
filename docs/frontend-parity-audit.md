@@ -277,7 +277,7 @@
   renders from that state.
 - 2026-08-02: pipeline results no longer expose raw semantic planned-drop, drop-implementation, drop-resolution,
   drop-diagnostic, drop-lowering-authorization, or drop-summary report strings. Semantic-drop consumers render from
-  `SemanticDropState`, `SemanticAnalysisResult::planned_drop_sites`, and typed lowering authorizations.
+  `SemanticDropState`, semantic drop-obligation summaries, and typed lowering authorizations.
 - 2026-08-02: pipeline results no longer duplicate DynamicArray missing element-drop pairs as a standalone top-level
   vector; consumers use typed cleanup availability or cleanup emission capability state.
 - 2026-08-02: pipeline results expose computed DynamicArray production sequence module comment IR through a named
@@ -2912,3 +2912,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   from `semantic_module.dynamic_array_descriptors`; lowering retains only a narrow cleanup-origin projection bridge.
 - 2026-08-28: Semantic planned-drop reports now render `semantic_module.drop_obligations` directly, and semantic drop
   resolution/diagnostic paths share the public semantic drop-obligation projection helper.
+- 2026-08-28: `SemanticAnalysisResult` no longer exposes the compatibility planned-drop vector; semantic drop
+  obligation summary facts are the result-level source for semantic drop reports.

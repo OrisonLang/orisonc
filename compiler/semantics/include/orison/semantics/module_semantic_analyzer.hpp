@@ -172,7 +172,6 @@ struct SemanticAnalysisResult {
     diagnostics::DiagnosticBag diagnostics;
     SemanticModuleSummary semantic_module;
     std::vector<ConcurrencyCapture> concurrency_captures;
-    std::vector<PlannedDropSite> planned_drop_sites;
 
     auto has_errors() const -> bool {
         return diagnostics.has_errors();

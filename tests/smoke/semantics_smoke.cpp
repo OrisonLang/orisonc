@@ -13509,7 +13509,7 @@ void test_thread_capture_receiver_this_failure() {
     assert_receiver_capture_diagnostic(path, 5);
 }
 
-void test_owned_binding_planned_drop_sites_success() {
+void test_owned_binding_drop_obligations_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_owned_binding_drop_sites_success.or";
     write_concurrency_fixture(
         path,
@@ -13526,18 +13526,20 @@ void test_owned_binding_planned_drop_sites_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.semantic_module.dynamic_array_descriptors.empty());
-    assert(analysis.planned_drop_sites.size() == 2);
+    auto drop_obligation_report =
+        orison::semantics::format_semantic_drop_obligation_report(analysis.semantic_module.drop_obligations);
+    assert(drop_obligation_report.size() == 2);
     assert(
-        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[0]) ==
-        "drop site __orison_drop.Buffer for Buffer owner input at line 4"
+        drop_obligation_report[0] ==
+        "drop obligation __orison_drop.Buffer for Buffer owner input at line 4"
     );
     assert(
-        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[1]) ==
-        "drop site __orison_drop.Buffer for Buffer owner local at line 5"
+        drop_obligation_report[1] ==
+        "drop obligation __orison_drop.Buffer for Buffer owner local at line 5"
     );
 }
 
-void test_dynamic_array_binding_planned_drop_sites_success() {
+void test_dynamic_array_binding_drop_obligations_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_dynamic_array_drop_sites_success.or";
     write_concurrency_fixture(
         path,
@@ -13571,18 +13573,20 @@ void test_dynamic_array_binding_planned_drop_sites_success() {
         "dynamic array descriptor summary DynamicArray<Payload> owner items element Payload at line 4 origin parameter "
         "(metadata only)"
     );
-    assert(analysis.planned_drop_sites.size() == 2);
+    auto drop_obligation_report =
+        orison::semantics::format_semantic_drop_obligation_report(analysis.semantic_module.drop_obligations);
+    assert(drop_obligation_report.size() == 2);
     assert(
-        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[0]) ==
-        "drop site __orison_drop.DynamicArray_Payload_ for DynamicArray<Payload> owner items at line 4"
+        drop_obligation_report[0] ==
+        "drop obligation __orison_drop.DynamicArray_Payload_ for DynamicArray<Payload> owner items at line 4"
     );
     assert(
-        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[1]) ==
-        "drop site __orison_drop.Payload for Payload owner items.element at line 4"
+        drop_obligation_report[1] ==
+        "drop obligation __orison_drop.Payload for Payload owner items.element at line 4"
     );
 }
 
-void test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success() {
+void test_scalar_dynamic_array_binding_drop_obligations_skip_element_success() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_semantics_scalar_dynamic_array_drop_sites_success.or";
     write_concurrency_fixture(
@@ -13605,10 +13609,12 @@ void test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success()
         "dynamic array descriptor summary DynamicArray<UInt32> owner words element UInt32 at line 2 origin parameter "
         "(metadata only)"
     );
-    assert(analysis.planned_drop_sites.size() == 1);
+    auto drop_obligation_report =
+        orison::semantics::format_semantic_drop_obligation_report(analysis.semantic_module.drop_obligations);
+    assert(drop_obligation_report.size() == 1);
     assert(
-        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites.front()) ==
-        "drop site __orison_drop.DynamicArray_UInt32_ for DynamicArray<UInt32> owner words at line 2"
+        drop_obligation_report.front() ==
+        "drop obligation __orison_drop.DynamicArray_UInt32_ for DynamicArray<UInt32> owner words at line 2"
     );
 }
 
@@ -13676,7 +13682,7 @@ void test_returned_dynamic_array_descriptor_origin_kind_success() {
     );
 }
 
-void test_trivial_binding_planned_drop_sites_ignored_success() {
+void test_trivial_binding_drop_obligations_ignored_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_trivial_binding_drop_sites_ignored.or";
     write_concurrency_fixture(
         path,
@@ -13693,7 +13699,7 @@ void test_trivial_binding_planned_drop_sites_ignored_success() {
 
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
-    assert(analysis.planned_drop_sites.empty());
+    assert(analysis.semantic_module.drop_obligations.empty());
 }
 
 }  // namespace
@@ -14376,12 +14382,12 @@ int main() {
     test_task_capture_mutable_outer_local_failure();
     test_thread_capture_mutable_outer_local_failure();
     test_thread_capture_receiver_this_failure();
-    test_owned_binding_planned_drop_sites_success();
-    test_dynamic_array_binding_planned_drop_sites_success();
-    test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success();
+    test_owned_binding_drop_obligations_success();
+    test_dynamic_array_binding_drop_obligations_success();
+    test_scalar_dynamic_array_binding_drop_obligations_skip_element_success();
     test_local_dynamic_array_descriptor_origin_kind_success();
     test_returned_dynamic_array_descriptor_origin_kind_success();
-    test_trivial_binding_planned_drop_sites_ignored_success();
+    test_trivial_binding_drop_obligations_ignored_success();
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

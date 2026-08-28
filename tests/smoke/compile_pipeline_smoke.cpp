@@ -13912,13 +13912,18 @@ auto main() -> int {
     assert(parameter_owned_return != std::string::npos);
     assert(parameter_owned_drop < parameter_owned_deallocate);
     assert(parameter_owned_deallocate < parameter_owned_return);
+    auto dynamic_array_source_owner_drop_sites =
+        orison::semantics::project_semantic_drop_obligations(
+            dynamic_array_source_owner.semantic_result.semantic_module
+        );
+    assert(dynamic_array_source_owner_drop_sites.size() == 2);
 
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
-                    .site = dynamic_array_source_owner.semantic_result.planned_drop_sites[1],
+                    .site = dynamic_array_source_owner_drop_sites[1],
                     .semantic_resolved = true,
                     .source_drop_lowering_enabled = true,
                     .authorized = true,

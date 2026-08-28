@@ -145,7 +145,6 @@ public:
             .diagnostics = std::move(diagnostics_),
             .semantic_module = std::move(semantic_module_),
             .concurrency_captures = std::move(concurrency_captures),
-            .planned_drop_sites = std::move(planned_drop_sites_),
         };
     }
 
@@ -6002,7 +6001,7 @@ private:
 
     void pop_scope() {
         if (!scope_stack_.empty()) {
-            collect_planned_drop_sites(scope_stack_.back());
+            collect_drop_obligations(scope_stack_.back());
             scope_stack_.pop_back();
         }
     }
@@ -6082,14 +6081,13 @@ private:
         });
     }
 
-    void add_planned_drop_site(PlannedDropSite site) {
+    void add_drop_obligation(PlannedDropSite const& site) {
         semantic_module_.drop_obligations.push_back(SemanticDropObligationSummary {
             .line = site.site_line,
             .owner_name = site.owner_name,
             .source_type_name = site.source_type_name,
             .abi_symbol_name = site.abi_symbol_name,
         });
-        planned_drop_sites_.push_back(std::move(site));
     }
 
     void add_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin origin) {
@@ -6273,7 +6271,7 @@ private:
                 .origin_kind = origin_kind,
                 .line = declaration_line,
             });
-            add_planned_drop_site(PlannedDropSite {
+            add_drop_obligation(PlannedDropSite {
                 .source_type_name = direct_element_type_name,
                 .abi_symbol_name = drop_abi_symbol_name(direct_element_type_name),
                 .owner_name = owner_name + ".element",
@@ -6329,7 +6327,7 @@ private:
                     .origin_kind = origin_kind,
                     .line = declaration_line,
                 });
-                add_planned_drop_site(PlannedDropSite {
+                add_drop_obligation(PlannedDropSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = drop_abi_symbol_name(element_type_name),
                     .owner_name = field_owner_name + ".element",
@@ -6374,7 +6372,7 @@ private:
         return DynamicArrayDescriptorOriginKind::local_binding;
     }
 
-    void collect_planned_drop_sites(std::vector<Binding> const& bindings) {
+    void collect_drop_obligations(std::vector<Binding> const& bindings) {
         for (auto const& binding : bindings) {
             if (binding.module_constant || binding.receiver_binding ||
                 binding.value_origin == ValueOriginKind::task || binding.value_origin == ValueOriginKind::thread ||
@@ -6393,7 +6391,7 @@ private:
                     .line = binding.declaration_line,
                 });
             }
-            add_planned_drop_site(PlannedDropSite {
+            add_drop_obligation(PlannedDropSite {
                 .source_type_name = binding.type_name,
                 .abi_symbol_name = drop_abi_symbol_name(binding.type_name),
                 .owner_name = binding.name,
@@ -6401,7 +6399,7 @@ private:
             });
             auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(binding.type_name);
             if (!element_type_name.empty()) {
-                add_planned_drop_site(PlannedDropSite {
+                add_drop_obligation(PlannedDropSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = drop_abi_symbol_name(element_type_name),
                     .owner_name = binding.name + ".element",
@@ -6527,7 +6525,6 @@ private:
     syntax::ModuleSyntax const& module_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
-    std::vector<PlannedDropSite> planned_drop_sites_;
     SemanticModuleSummary semantic_module_;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
