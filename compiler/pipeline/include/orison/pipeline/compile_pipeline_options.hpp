@@ -90,6 +90,7 @@ inline auto production_compile_pipeline_options() -> CompilePipelineOptions {
     options.dynamic_array_production_construction_lowering_enabled = true;
     options.dynamic_array_production_index_lowering_enabled = true;
     options.dynamic_array_production_append_lowering_enabled = true;
+    options.dynamic_array_production_cleanup_emission_enabled = true;
     return options;
 }
 

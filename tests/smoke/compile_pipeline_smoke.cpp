@@ -47,6 +47,7 @@ void test_production_compile_pipeline_options_enable_runtime_indexed_member_clea
     assert(options.dynamic_array_production_construction_lowering_enabled);
     assert(options.dynamic_array_production_index_lowering_enabled);
     assert(options.dynamic_array_production_append_lowering_enabled);
+    assert(options.dynamic_array_production_cleanup_emission_enabled);
 }
 
 void test_no_option_pipeline_emission_uses_production_defaults(

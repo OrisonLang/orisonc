@@ -2926,8 +2926,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   driver defaults delegated to that typed pipeline helper.
 - 2026-08-28: Direct no-option pipeline LLVM/object emission now uses the shared production option builder, aligning
   library and CLI emission defaults for promoted runtime-index cleanup gates.
-- 2026-08-28: Shared production pipeline defaults now enable DynamicArray construction/index/append gates. Source Drop
-  lowering, DynamicArray cleanup, and computed `for` production gates remain separately controlled.
+- 2026-08-28: Shared production pipeline defaults now enable DynamicArray construction/index/append/cleanup gates.
+  Source Drop lowering and computed `for` production gates remain separately controlled.
 - 2026-08-28: Source Drop default promotion audit found cleanup-shape drift in final aggregate cleanup fixtures.
   Source Drop lowering remains opt-in until aggregate Drop call expectations and cleanup proof boundaries are migrated
   deliberately.
