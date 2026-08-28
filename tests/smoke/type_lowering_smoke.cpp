@@ -228,7 +228,7 @@ int main() {
         .owner_name = "items",
         .source_type_name = "DynamicArray<Payload>",
         .element_source_type_name = "Payload",
-        .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+        .binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding,
     };
     auto dynamic_array_bound_parameter_descriptor_lifetime_plan =
         orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
@@ -267,7 +267,7 @@ int main() {
         ).has_value()
     );
     auto local_descriptor = bound_parameter_descriptor;
-    local_descriptor.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    local_descriptor.binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::local_binding;
     assert(
         !orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
             local_descriptor,
@@ -287,7 +287,7 @@ int main() {
         );
     assert(dynamic_array_returned_lifetime_plan.has_value());
     auto returned_descriptor = bound_parameter_descriptor;
-    returned_descriptor.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding;
+    returned_descriptor.binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding;
     auto dynamic_array_returned_descriptor_summary_lifetime_plan =
         orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
             returned_descriptor,

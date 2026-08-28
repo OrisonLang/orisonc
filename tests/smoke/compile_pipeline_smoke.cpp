@@ -87,7 +87,7 @@ auto dynamic_array_payload_parameter_lifetime_plan_count(
         result.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [&](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
             return plan.owner_name == owner_name &&
-                plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
@@ -103,7 +103,7 @@ void assert_dynamic_array_payload_returned_lifetime_owner(
             result.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [&](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == owner_name &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
@@ -113,7 +113,7 @@ void assert_dynamic_array_payload_returned_lifetime_owner(
 void assert_dynamic_array_payload_cleanup_ready(
     orison::pipeline::CompilePipelineResult const& result
 ) {
-    assert(result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty());
+    assert(result.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty());
     assert(result.dynamic_array_cleanup_capability_proven);
     assert(result.dynamic_array_cleanup_emission_capability_state.proven);
     assert(
@@ -1333,7 +1333,7 @@ auto main() -> int {
         "drop readiness source correlations actions 0 semantic sites 0"
     );
     assert(ir.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
-    assert(!ir.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(!ir.dynamic_array_cleanup_availability.descriptor_summaries_available);
     assert(!ir.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(!ir.dynamic_array_cleanup_availability.cleanup_obligations_available);
     assert(!ir.dynamic_array_cleanup_availability.sequence_verification_available);
@@ -1588,12 +1588,12 @@ auto main() -> int {
         "%items.addr"
     );
     assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.size() == 1);
-    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_origins_have_cleanup_plans);
-    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_cleanup_plans_have_origins);
-    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty());
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_summaries_have_cleanup_plans);
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.all_cleanup_plans_have_summaries);
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty());
     assert(
-        dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front().origin_kind ==
-        orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front().binding_kind ==
+        orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding
     );
     assert(
         dynamic_array_bound_descriptor.dynamic_array_descriptor_lifetime_plan_state.plans.front()
@@ -1631,7 +1631,7 @@ auto main() -> int {
         dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_verification_state.verifications.front()
             .errors.empty()
     );
-    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_summaries_available);
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.cleanup_obligations_available);
     assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.sequence_verification_available);
@@ -5358,7 +5358,7 @@ auto main() -> int {
             .missing_element_drop_pairs.front() ==
         "items:items.element:__orison_drop.Payload"
     );
-    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_summaries_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.cleanup_obligations_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_available);
@@ -5455,7 +5455,7 @@ auto main() -> int {
         dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.front() ==
         "items:items.element:__orison_drop.Payload"
     );
-    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_summaries_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.cleanup_obligations_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_available);
@@ -6282,7 +6282,7 @@ auto main() -> int {
         dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
-            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+            return plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
@@ -6290,7 +6290,7 @@ auto main() -> int {
         dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
-            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::local_binding &&
+            return plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::local_binding &&
                 plan.cleanup_responsibility == "caller-owned-local-cleanup";
         }
     );
@@ -6298,12 +6298,12 @@ auto main() -> int {
     assert(forwarding_local_lifetime_plans == 1);
     assert(
         !dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .all_origins_have_cleanup_plans
+            .all_summaries_have_cleanup_plans
     );
-    assert(!dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty());
+    assert(!dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty());
     assert(
         !dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
-            .descriptor_origin_blockers_absent
+            .descriptor_summary_blockers_absent
     );
     assert(
         !orison::pipeline::dynamic_array_cleanup_production_ready(
@@ -6346,7 +6346,7 @@ auto main() -> int {
         dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
-            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+            return plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                 plan.cleanup_plan_available &&
                 plan.cleanup_responsibility == "caller-owned-returned-cleanup" &&
                 plan.descriptor_storage_status ==
@@ -6355,7 +6355,7 @@ auto main() -> int {
     );
     assert(returned_payload_lifetime_plans == 1);
     assert(
-        dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty()
+        dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty()
     );
     assert(dynamic_array_returned_payload_ir.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_returned_payload_ir.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
@@ -6433,7 +6433,7 @@ auto main() -> int {
             dynamic_array_returned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "items" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                     plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
             }
         )
@@ -6444,14 +6444,14 @@ auto main() -> int {
             dynamic_array_returned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_parameter_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_returned_parameter_forwarding_ir.dynamic_array_cleanup_emission_capability_state.proven);
@@ -9367,7 +9367,7 @@ auto main() -> int {
         dynamic_array_returned_multi_hop_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_returned_multi_hop_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
-            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+            return plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
@@ -9378,14 +9378,14 @@ auto main() -> int {
             dynamic_array_returned_multi_hop_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_multi_hop_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_multi_hop_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_returned_multi_hop_forwarding_ir.dynamic_array_cleanup_emission_capability_state.proven);
@@ -9475,7 +9475,7 @@ auto main() -> int {
         dynamic_array_returned_branch_join_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_returned_branch_join_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
-            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+            return plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
@@ -9486,14 +9486,14 @@ auto main() -> int {
             dynamic_array_returned_branch_join_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_branch_join_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_branch_join_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_returned_branch_join_forwarding_ir.dynamic_array_cleanup_emission_capability_state.proven);
@@ -9583,7 +9583,7 @@ auto main() -> int {
         dynamic_array_returned_choice_branch_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_returned_choice_branch_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
-            return plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+            return plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
@@ -9594,14 +9594,14 @@ auto main() -> int {
             dynamic_array_returned_choice_branch_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_choice_branch_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_choice_branch_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_returned_choice_branch_forwarding_ir.dynamic_array_cleanup_emission_capability_state.proven);
@@ -9715,7 +9715,7 @@ auto main() -> int {
                 .plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned.values" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
@@ -9728,14 +9728,14 @@ auto main() -> int {
                 .plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "items" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                     plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_returned_aggregate_field_forwarding_ir.dynamic_array_cleanup_emission_capability_state.proven);
@@ -9848,7 +9848,7 @@ auto main() -> int {
                 .plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "inner.values" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
@@ -9861,7 +9861,7 @@ auto main() -> int {
                 .plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned.inner.values" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
@@ -9874,14 +9874,14 @@ auto main() -> int {
                 .plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "items" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                     plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_nested_aggregate_field_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_nested_aggregate_field_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(
@@ -9999,7 +9999,7 @@ auto main() -> int {
             .plans.end(),
         [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
             return plan.owner_name == "items" &&
-                plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+                plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 plan.cleanup_responsibility == "callee-owned-parameter-cleanup";
         }
     );
@@ -10012,7 +10012,7 @@ auto main() -> int {
                 .dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "inner.values" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
@@ -10025,14 +10025,14 @@ auto main() -> int {
                 .dynamic_array_descriptor_lifetime_plan_state.plans.end(),
             [](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == "returned.inner.values" &&
-                    plan.origin_kind == orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+                    plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )
     );
     assert(
         dynamic_array_returned_nested_aggregate_field_branch_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
-            .origin_blockers.empty()
+            .summary_blockers.empty()
     );
     assert(dynamic_array_returned_nested_aggregate_field_branch_forwarding_ir.dynamic_array_cleanup_capability_proven);
     assert(
@@ -13193,15 +13193,15 @@ auto main() -> int {
     assert(!dynamic_array_returned_payload_mismatched_lifetime_ir.has_errors());
     assert(
         !dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_descriptor_lifetime_plan_state
-            .all_origins_have_cleanup_plans
+            .all_summaries_have_cleanup_plans
     );
     assert(
         std::any_of(
             dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_descriptor_lifetime_plan_state
-                .origin_blockers.begin(),
+                .summary_blockers.begin(),
             dynamic_array_returned_payload_mismatched_lifetime_ir.dynamic_array_descriptor_lifetime_plan_state
-                .origin_blockers.end(),
-            [](orison::pipeline::DynamicArrayDescriptorOriginBlocker const& blocker) {
+                .summary_blockers.end(),
+            [](orison::pipeline::DynamicArrayDescriptorSummaryBlocker const& blocker) {
                 return blocker.reason == "shared-lifetime-plan-mismatched";
             }
         )

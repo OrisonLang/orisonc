@@ -21,26 +21,26 @@ namespace smoke = orison::tests::smoke;
 
 void test_dynamic_array_descriptor_lifetime_plan_origin_blocker_report() {
     auto state = orison::pipeline::DynamicArrayDescriptorLifetimePlanState {
-        .origin_blockers = {
-            orison::pipeline::DynamicArrayDescriptorOriginBlocker {
+        .summary_blockers = {
+            orison::pipeline::DynamicArrayDescriptorSummaryBlocker {
                 .owner_name = "items",
                 .source_type_name = "DynamicArray<Payload>",
                 .element_source_type_name = "Payload",
-                .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+                .binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding,
                 .reason = "cleanup-plan-missing",
                 .source_line = 12,
             },
-            orison::pipeline::DynamicArrayDescriptorOriginBlocker {
+            orison::pipeline::DynamicArrayDescriptorSummaryBlocker {
                 .owner_name = "other",
                 .source_type_name = "DynamicArray<Box<UInt32>>",
                 .element_source_type_name = "Box<UInt32>",
-                .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::local_binding,
+                .binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::local_binding,
                 .reason = "semantic-origin-mismatched",
                 .source_line = 18,
             },
         },
-        .all_origins_have_cleanup_plans = false,
-        .all_cleanup_plans_have_origins = false,
+        .all_summaries_have_cleanup_plans = false,
+        .all_cleanup_plans_have_summaries = false,
     };
 
     auto report = orison::driver::dynamic_array_descriptor_lifetime_plan_state_report(state);

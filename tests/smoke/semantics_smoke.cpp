@@ -13562,8 +13562,8 @@ void test_dynamic_array_binding_drop_obligations_success() {
     );
     assert(analysis.semantic_module.dynamic_array_descriptors.front().element_source_type_name == "Payload");
     assert(
-        analysis.semantic_module.dynamic_array_descriptors.front().origin_kind ==
-        orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+        analysis.semantic_module.dynamic_array_descriptors.front().binding_kind ==
+        orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding
     );
     assert(analysis.semantic_module.dynamic_array_descriptors.front().line == 4);
     assert(
@@ -13618,9 +13618,9 @@ void test_scalar_dynamic_array_binding_drop_obligations_skip_element_success() {
     );
 }
 
-void test_local_dynamic_array_descriptor_origin_kind_success() {
+void test_local_dynamic_array_descriptor_binding_kind_success() {
     auto path = std::filesystem::temp_directory_path() /
-        "orison_semantics_local_dynamic_array_descriptor_origin_kind_success.or";
+        "orison_semantics_local_dynamic_array_descriptor_binding_kind_success.or";
     write_concurrency_fixture(
         path,
         "demo.drop",
@@ -13637,8 +13637,8 @@ void test_local_dynamic_array_descriptor_origin_kind_success() {
     assert(!analysis.has_errors());
     assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
     assert(
-        analysis.semantic_module.dynamic_array_descriptors.front().origin_kind ==
-        orison::semantics::DynamicArrayDescriptorOriginKind::local_binding
+        analysis.semantic_module.dynamic_array_descriptors.front().binding_kind ==
+        orison::semantics::DynamicArrayDescriptorBindingKind::local_binding
     );
     assert(
         orison::semantics::format_dynamic_array_descriptor_summary_report(
@@ -13649,9 +13649,9 @@ void test_local_dynamic_array_descriptor_origin_kind_success() {
     );
 }
 
-void test_returned_dynamic_array_descriptor_origin_kind_success() {
+void test_returned_dynamic_array_descriptor_binding_kind_success() {
     auto path = std::filesystem::temp_directory_path() /
-        "orison_semantics_returned_dynamic_array_descriptor_origin_kind_success.or";
+        "orison_semantics_returned_dynamic_array_descriptor_binding_kind_success.or";
     write_concurrency_fixture(
         path,
         "demo.drop",
@@ -13670,8 +13670,8 @@ void test_returned_dynamic_array_descriptor_origin_kind_success() {
     assert(!analysis.has_errors());
     assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
     assert(
-        analysis.semantic_module.dynamic_array_descriptors.front().origin_kind ==
-        orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding
+        analysis.semantic_module.dynamic_array_descriptors.front().binding_kind ==
+        orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding
     );
     assert(
         orison::semantics::format_dynamic_array_descriptor_summary_report(
@@ -14385,8 +14385,8 @@ int main() {
     test_owned_binding_drop_obligations_success();
     test_dynamic_array_binding_drop_obligations_success();
     test_scalar_dynamic_array_binding_drop_obligations_skip_element_success();
-    test_local_dynamic_array_descriptor_origin_kind_success();
-    test_returned_dynamic_array_descriptor_origin_kind_success();
+    test_local_dynamic_array_descriptor_binding_kind_success();
+    test_returned_dynamic_array_descriptor_binding_kind_success();
     test_trivial_binding_drop_obligations_ignored_success();
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

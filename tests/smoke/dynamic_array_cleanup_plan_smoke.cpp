@@ -54,7 +54,7 @@ void add_dynamic_array_parameter_origin(
             .owner_name = std::move(owner_name),
             .source_type_name = std::move(source_type_name),
             .element_source_type_name = std::move(element_source_type_name),
-            .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+            .binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding,
         }
     );
 }
@@ -431,7 +431,7 @@ void test_bound_parameter_cleanup_prefers_shared_lifetime_plans() {
                     .owner_name = "planned",
                     .source_type_name = "DynamicArray<UInt32>",
                     .element_source_type_name = "UInt32",
-                    .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+                    .binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding,
                     .descriptor_storage_status =
                         orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor,
                     .descriptor_storage_name = "%planned.addr",

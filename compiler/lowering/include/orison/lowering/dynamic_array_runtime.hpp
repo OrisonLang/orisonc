@@ -84,8 +84,8 @@ struct DynamicArrayDescriptorLifetimePlan {
     std::string owner_name;
     std::string source_type_name;
     std::string element_source_type_name;
-    semantics::DynamicArrayDescriptorOriginKind origin_kind =
-        semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    semantics::DynamicArrayDescriptorBindingKind binding_kind =
+        semantics::DynamicArrayDescriptorBindingKind::local_binding;
     DynamicArrayDescriptorStorageStatus descriptor_storage_status =
         DynamicArrayDescriptorStorageStatus::predicted_owner_local;
     std::string descriptor_storage_name;

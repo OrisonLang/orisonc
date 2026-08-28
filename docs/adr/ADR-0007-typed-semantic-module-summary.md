@@ -29,9 +29,10 @@ DynamicArray lifetime planning, lowering cleanup matching, pipeline readiness re
 consume semantic summary descriptor facts directly. Direct lowering fixtures now construct semantic summary descriptor facts.
 `SemanticAnalysisResult` no longer exposes the mirrored compatibility planned-drop or descriptor-origin vectors.
 Semantic descriptor report helpers now use descriptor-summary terminology. The DynamicArray descriptor projection helper
-and runtime origin overloads have been removed.
+and runtime origin overloads have been removed. Internal DynamicArray descriptor boundary fields and blockers now use
+descriptor-summary binding terminology in typed C++ state.
 
 ## Follow-up work
 
-- Rename remaining descriptor origin-kind and blocker identifiers to descriptor-summary terminology where this does not
-  churn report output.
+- Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
+  text can change intentionally.

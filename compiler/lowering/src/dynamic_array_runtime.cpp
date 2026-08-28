@@ -67,14 +67,14 @@ auto format_dynamic_array_descriptor_storage_status(
 }
 
 auto dynamic_array_descriptor_lifetime_cleanup_responsibility(
-    semantics::DynamicArrayDescriptorOriginKind origin_kind
+    semantics::DynamicArrayDescriptorBindingKind binding_kind
 ) -> std::string {
-    switch (origin_kind) {
-    case semantics::DynamicArrayDescriptorOriginKind::local_binding:
+    switch (binding_kind) {
+    case semantics::DynamicArrayDescriptorBindingKind::local_binding:
         return "caller-owned-local-cleanup";
-    case semantics::DynamicArrayDescriptorOriginKind::parameter_binding:
+    case semantics::DynamicArrayDescriptorBindingKind::parameter_binding:
         return "callee-owned-parameter-cleanup";
-    case semantics::DynamicArrayDescriptorOriginKind::returned_binding:
+    case semantics::DynamicArrayDescriptorBindingKind::returned_binding:
         return "caller-owned-returned-cleanup";
     }
     return "unknown-cleanup";
@@ -268,7 +268,7 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     return DynamicArrayBoundParameterLifetimePlan {
         .descriptor_cleanup = std::move(*descriptor_cleanup),
         .cleanup_responsibility = dynamic_array_descriptor_lifetime_cleanup_responsibility(
-            semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+            semantics::DynamicArrayDescriptorBindingKind::parameter_binding
         ),
         .drop_proof_available = drop_proof_available,
     };
@@ -281,7 +281,7 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     LoweringContext const& context,
     TargetLayout const& layout
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan> {
-    if (descriptor.origin_kind != semantics::DynamicArrayDescriptorOriginKind::parameter_binding) {
+    if (descriptor.binding_kind != semantics::DynamicArrayDescriptorBindingKind::parameter_binding) {
         return std::nullopt;
     }
     return plan_dynamic_array_bound_parameter_lifetime(
@@ -314,7 +314,7 @@ auto plan_dynamic_array_returned_descriptor_lifetime(
     return DynamicArrayReturnedDescriptorLifetimePlan {
         .descriptor_cleanup = candidate_cleanup,
         .cleanup_responsibility = dynamic_array_descriptor_lifetime_cleanup_responsibility(
-            semantics::DynamicArrayDescriptorOriginKind::returned_binding
+            semantics::DynamicArrayDescriptorBindingKind::returned_binding
         ),
         .caller_owns_returned_cleanup = true,
     };
@@ -324,7 +324,7 @@ auto plan_dynamic_array_returned_descriptor_lifetime(
     semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
 ) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan> {
-    if (descriptor.origin_kind != semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
+    if (descriptor.binding_kind != semantics::DynamicArrayDescriptorBindingKind::returned_binding) {
         return std::nullopt;
     }
     return plan_dynamic_array_returned_descriptor_lifetime(
@@ -342,9 +342,9 @@ auto plan_dynamic_array_descriptor_lifetime(
         .owner_name = descriptor.owner_name,
         .source_type_name = descriptor.source_type_name,
         .element_source_type_name = descriptor.element_source_type_name,
-        .origin_kind = descriptor.origin_kind,
+        .binding_kind = descriptor.binding_kind,
         .cleanup_responsibility =
-            dynamic_array_descriptor_lifetime_cleanup_responsibility(descriptor.origin_kind),
+            dynamic_array_descriptor_lifetime_cleanup_responsibility(descriptor.binding_kind),
         .cleanup_plan_available = cleanup_plan != nullptr,
         .source_line = descriptor.line,
     };
@@ -392,7 +392,7 @@ auto matching_dynamic_array_descriptor_lifetime_plan(
                     lifetime_plan.element_source_type_name,
                     descriptor.element_source_type_name
                 ) &&
-                lifetime_plan.origin_kind == descriptor.origin_kind;
+                lifetime_plan.binding_kind == descriptor.binding_kind;
         }
     );
     return match == lifetime_plans.end() ? nullptr : &*match;
@@ -408,8 +408,8 @@ auto matching_bound_dynamic_array_parameter_lifetime_plan(
         lifetime_plans.begin(),
         lifetime_plans.end(),
         [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
-            return lifetime_plan.origin_kind ==
-                    semantics::DynamicArrayDescriptorOriginKind::parameter_binding &&
+            return lifetime_plan.binding_kind ==
+                    semantics::DynamicArrayDescriptorBindingKind::parameter_binding &&
                 lifetime_plan.cleanup_plan_available &&
                 lifetime_plan.owner_name == parameter_name &&
                 dynamic_array_descriptor_lifetime_source_type_matches(
@@ -433,8 +433,8 @@ auto matching_returned_dynamic_array_descriptor_lifetime_plan(
         lifetime_plans.begin(),
         lifetime_plans.end(),
         [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
-            return lifetime_plan.origin_kind ==
-                    semantics::DynamicArrayDescriptorOriginKind::returned_binding &&
+            return lifetime_plan.binding_kind ==
+                    semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                 lifetime_plan.cleanup_plan_available &&
                 lifetime_plan.owner_name == cleanup_plan.owner_name &&
                 dynamic_array_descriptor_lifetime_source_type_matches(

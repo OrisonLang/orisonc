@@ -678,11 +678,11 @@ auto emit_function_return_cleanup(
     return emit_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 
-auto matching_dynamic_array_descriptor_origin(
+auto matching_dynamic_array_descriptor_summary_binding(
     semantics::SemanticAnalysisResult const* semantic_result,
     std::string_view owner_name,
     std::string_view source_type_name,
-    semantics::DynamicArrayDescriptorOriginKind origin_kind
+    semantics::DynamicArrayDescriptorBindingKind binding_kind
 ) -> semantics::SemanticDynamicArrayDescriptorSummary const*;
 
 void release_returned_dynamic_array_local_cleanup(
@@ -707,11 +707,11 @@ void release_returned_dynamic_array_local_cleanup(
 
     if (std::ranges::find(state.parameter_names, expression.text) != state.parameter_names.end()) {
         auto const storage = aggregate_storage_for_name(expression.text, state);
-        auto const parameter_origin = matching_dynamic_array_descriptor_origin(
+        auto const parameter_descriptor = matching_dynamic_array_descriptor_summary_binding(
             semantic_result,
             expression.text,
             *return_source_type_name,
-            semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+            semantics::DynamicArrayDescriptorBindingKind::parameter_binding
         );
         auto const* parameter_lifetime_plan = storage.has_value()
             ? matching_bound_dynamic_array_parameter_lifetime_plan(
@@ -721,19 +721,19 @@ void release_returned_dynamic_array_local_cleanup(
                   *storage
               )
             : nullptr;
-        if (parameter_origin != nullptr || parameter_lifetime_plan != nullptr) {
+        if (parameter_descriptor != nullptr || parameter_lifetime_plan != nullptr) {
             mark_owned_binding_consumed(state.ownership_transfers, expression.text);
         }
         return;
     }
 
-    auto const origin = matching_dynamic_array_descriptor_origin(
+    auto const descriptor = matching_dynamic_array_descriptor_summary_binding(
         semantic_result,
         expression.text,
         *return_source_type_name,
-        semantics::DynamicArrayDescriptorOriginKind::returned_binding
+        semantics::DynamicArrayDescriptorBindingKind::returned_binding
     );
-    if (origin == nullptr) {
+    if (descriptor == nullptr) {
         return;
     }
 
@@ -752,8 +752,8 @@ void release_returned_dynamic_array_local_cleanup(
         }
 
         auto lifetime_plan = plan_dynamic_array_returned_descriptor_lifetime(
-            origin->owner_name,
-            origin->source_type_name,
+            descriptor->owner_name,
+            descriptor->source_type_name,
             *cleanup_plan
         );
         if (lifetime_plan.has_value() && lifetime_plan->caller_owns_returned_cleanup) {
@@ -893,11 +893,11 @@ auto dynamic_array_parameter_element_cleanup_proven(
     });
 }
 
-auto matching_dynamic_array_descriptor_origin(
+auto matching_dynamic_array_descriptor_summary_binding(
     semantics::SemanticAnalysisResult const* semantic_result,
     std::string_view owner_name,
     std::string_view source_type_name,
-    semantics::DynamicArrayDescriptorOriginKind origin_kind
+    semantics::DynamicArrayDescriptorBindingKind binding_kind
 ) -> semantics::SemanticDynamicArrayDescriptorSummary const* {
     if (semantic_result == nullptr) {
         return nullptr;
@@ -908,7 +908,7 @@ auto matching_dynamic_array_descriptor_origin(
         [&](semantics::SemanticDynamicArrayDescriptorSummary const& descriptor) {
             return descriptor.owner_name == owner_name &&
                 dynamic_array_descriptor_lifetime_source_type_matches(descriptor.source_type_name, source_type_name) &&
-                descriptor.origin_kind == origin_kind;
+                descriptor.binding_kind == binding_kind;
         }
     );
     if (match == semantic_result->semantic_module.dynamic_array_descriptors.end()) {
@@ -955,13 +955,13 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
             dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
             context.lowering
         );
-    } else if (auto const origin = matching_dynamic_array_descriptor_origin(
+    } else if (auto const descriptor = matching_dynamic_array_descriptor_summary_binding(
                    session.semantics,
                    parameter_name,
                    source_type_name,
-                   semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+                   semantics::DynamicArrayDescriptorBindingKind::parameter_binding
                );
-        origin != nullptr) {
+        descriptor != nullptr) {
         lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
             parameter_name,
             source_type_name,

@@ -30,7 +30,7 @@ struct ConcurrencyCapture {
     ConcurrencyCaptureKind capture_kind = ConcurrencyCaptureKind::parameter;
 };
 
-enum class DynamicArrayDescriptorOriginKind {
+enum class DynamicArrayDescriptorBindingKind {
     local_binding,
     parameter_binding,
     returned_binding,
@@ -125,7 +125,7 @@ struct SemanticDynamicArrayDescriptorSummary {
     std::string owner_name;
     std::string source_type_name;
     std::string element_source_type_name;
-    DynamicArrayDescriptorOriginKind origin_kind = DynamicArrayDescriptorOriginKind::local_binding;
+    DynamicArrayDescriptorBindingKind binding_kind = DynamicArrayDescriptorBindingKind::local_binding;
 };
 
 enum class SemanticAggregatePathSegmentKind {

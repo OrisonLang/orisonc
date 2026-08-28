@@ -26,11 +26,11 @@ auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
     return output.str();
 }
 
-auto has_matching_dynamic_array_descriptor_origin(
+auto has_matching_dynamic_array_descriptor_summary_binding(
     semantics::SemanticAnalysisResult const* semantic_result,
     std::string_view owner_name,
     std::string_view source_type_name,
-    semantics::DynamicArrayDescriptorOriginKind origin_kind
+    semantics::DynamicArrayDescriptorBindingKind binding_kind
 ) -> bool {
     if (semantic_result == nullptr) {
         return false;
@@ -41,7 +41,7 @@ auto has_matching_dynamic_array_descriptor_origin(
         [&](semantics::SemanticDynamicArrayDescriptorSummary const& descriptor) {
             return descriptor.owner_name == owner_name &&
                 dynamic_array_descriptor_lifetime_source_type_matches(descriptor.source_type_name, source_type_name) &&
-                descriptor.origin_kind == origin_kind;
+                descriptor.binding_kind == binding_kind;
         }
     );
 }
@@ -707,11 +707,11 @@ auto plan_bound_dynamic_array_parameter_cleanups(
                 ) == nullptr) {
                 continue;
             }
-        } else if (!has_matching_dynamic_array_descriptor_origin(
+        } else if (!has_matching_dynamic_array_descriptor_summary_binding(
                        session.semantics,
                        name,
                        source_type_name,
-                       semantics::DynamicArrayDescriptorOriginKind::parameter_binding
+                       semantics::DynamicArrayDescriptorBindingKind::parameter_binding
                    )) {
             continue;
         }

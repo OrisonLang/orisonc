@@ -12,8 +12,8 @@ namespace orison::pipeline {
 
 struct DynamicArrayCleanupAvailability {
     std::vector<std::string> missing_element_drop_pairs;
-    bool descriptor_origins_available = false;
-    bool descriptor_origin_blockers_absent = false;
+    bool descriptor_summaries_available = false;
+    bool descriptor_summary_blockers_absent = false;
     bool descriptor_cleanup_plans_available = false;
     bool cleanup_obligations_available = false;
     bool sequence_verification_available = false;
@@ -45,8 +45,8 @@ struct DynamicArrayDescriptorLifetimePlan {
     std::string owner_name;
     std::string source_type_name;
     std::string element_source_type_name;
-    semantics::DynamicArrayDescriptorOriginKind origin_kind =
-        semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    semantics::DynamicArrayDescriptorBindingKind binding_kind =
+        semantics::DynamicArrayDescriptorBindingKind::local_binding;
     lowering::DynamicArrayDescriptorStorageStatus descriptor_storage_status =
         lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local;
     std::string descriptor_storage_name;
@@ -55,21 +55,21 @@ struct DynamicArrayDescriptorLifetimePlan {
     std::size_t source_line = 0;
 };
 
-struct DynamicArrayDescriptorOriginBlocker {
+struct DynamicArrayDescriptorSummaryBlocker {
     std::string owner_name;
     std::string source_type_name;
     std::string element_source_type_name;
-    semantics::DynamicArrayDescriptorOriginKind origin_kind =
-        semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    semantics::DynamicArrayDescriptorBindingKind binding_kind =
+        semantics::DynamicArrayDescriptorBindingKind::local_binding;
     std::string reason;
     std::size_t source_line = 0;
 };
 
 struct DynamicArrayDescriptorLifetimePlanState {
     std::vector<DynamicArrayDescriptorLifetimePlan> plans;
-    std::vector<DynamicArrayDescriptorOriginBlocker> origin_blockers;
-    bool all_origins_have_cleanup_plans = false;
-    bool all_cleanup_plans_have_origins = false;
+    std::vector<DynamicArrayDescriptorSummaryBlocker> summary_blockers;
+    bool all_summaries_have_cleanup_plans = false;
+    bool all_cleanup_plans_have_summaries = false;
 };
 
 struct DynamicArrayConstructionPlanState {
@@ -130,9 +130,9 @@ struct DynamicArrayCleanupSequenceVerificationState {
 
 struct DynamicArrayCleanupProductionReadiness {
     std::vector<std::string> missing_element_drop_pairs;
-    std::vector<DynamicArrayDescriptorOriginBlocker> descriptor_origin_blockers;
-    bool descriptor_origins_available = false;
-    bool descriptor_origin_blockers_absent = false;
+    std::vector<DynamicArrayDescriptorSummaryBlocker> descriptor_summary_blockers;
+    bool descriptor_summaries_available = false;
+    bool descriptor_summary_blockers_absent = false;
     bool descriptor_cleanup_plans_available = false;
     bool cleanup_obligations_available = false;
     bool sequence_verification_available = false;

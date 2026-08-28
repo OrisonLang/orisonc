@@ -1763,7 +1763,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .owner_name = "other",
             .source_type_name = "DynamicArray<UInt32>",
             .element_source_type_name = "UInt32",
-            .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
+            .binding_kind = orison::semantics::DynamicArrayDescriptorBindingKind::parameter_binding,
         }
     );
     auto mismatched_parameter_origin = lower_source_with_semantics(

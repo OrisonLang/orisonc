@@ -351,8 +351,8 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     auto const& descriptors = semantic_result.semantic_module.dynamic_array_descriptors;
     auto state = DynamicArrayDescriptorLifetimePlanState {};
     state.plans.reserve(descriptors.size());
-    state.all_origins_have_cleanup_plans = !descriptors.empty();
-    state.all_cleanup_plans_have_origins = true;
+    state.all_summaries_have_cleanup_plans = !descriptors.empty();
+    state.all_cleanup_plans_have_summaries = true;
     for (auto const& descriptor : descriptors) {
         auto const* cleanup_plan =
             matching_dynamic_array_descriptor_cleanup_plan(descriptor, cleanup_plan_state.plans);
@@ -370,7 +370,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
             .owner_name = std::move(lowering_plan.owner_name),
             .source_type_name = std::move(lowering_plan.source_type_name),
             .element_source_type_name = std::move(lowering_plan.element_source_type_name),
-            .origin_kind = lowering_plan.origin_kind,
+            .binding_kind = lowering_plan.binding_kind,
             .descriptor_storage_status = lowering_plan.descriptor_storage_status,
             .descriptor_storage_name = std::move(lowering_plan.descriptor_storage_name),
             .cleanup_responsibility = std::move(lowering_plan.cleanup_responsibility),
@@ -378,12 +378,12 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
             .source_line = lowering_plan.source_line,
         };
         if (cleanup_plan == nullptr || shared_lifetime_plan_mismatched) {
-            state.all_origins_have_cleanup_plans = false;
-            state.origin_blockers.push_back(DynamicArrayDescriptorOriginBlocker {
+            state.all_summaries_have_cleanup_plans = false;
+            state.summary_blockers.push_back(DynamicArrayDescriptorSummaryBlocker {
                 .owner_name = descriptor.owner_name,
                 .source_type_name = descriptor.source_type_name,
                 .element_source_type_name = descriptor.element_source_type_name,
-                .origin_kind = descriptor.origin_kind,
+                .binding_kind = descriptor.binding_kind,
                 .reason = shared_lifetime_plan_mismatched
                     ? "shared-lifetime-plan-mismatched"
                     : "cleanup-plan-missing",
@@ -396,12 +396,12 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
         if (matching_dynamic_array_descriptor_summary(cleanup_plan, descriptors) != nullptr) {
             continue;
         }
-        state.all_cleanup_plans_have_origins = false;
-        state.origin_blockers.push_back(DynamicArrayDescriptorOriginBlocker {
+        state.all_cleanup_plans_have_summaries = false;
+        state.summary_blockers.push_back(DynamicArrayDescriptorSummaryBlocker {
             .owner_name = cleanup_plan.owner_name,
             .source_type_name = cleanup_plan.source_type_name,
             .element_source_type_name = cleanup_plan.element_source_type_name,
-            .origin_kind = semantics::DynamicArrayDescriptorOriginKind::local_binding,
+            .binding_kind = semantics::DynamicArrayDescriptorBindingKind::local_binding,
             .reason = cleanup_plan_origin_blocker_reason(
                 cleanup_plan,
                 descriptors
@@ -3563,10 +3563,10 @@ void populate_lowering_emission_reports(
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
         .missing_element_drop_pairs =
             result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
-        .descriptor_origins_available =
+        .descriptor_summaries_available =
             !result.semantic_result.semantic_module.dynamic_array_descriptors.empty(),
-        .descriptor_origin_blockers_absent =
-            result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty(),
+        .descriptor_summary_blockers_absent =
+            result.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty(),
         .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),
         .cleanup_obligations_available = !emission.dynamic_array_cleanup_obligations.empty(),
         .sequence_verification_available = !emission.dynamic_array_cleanup_sequence_verifications.empty(),

@@ -6249,7 +6249,7 @@ private:
         std::string const& owner_name,
         std::string const& type_name,
         std::size_t declaration_line,
-        DynamicArrayDescriptorOriginKind origin_kind,
+        DynamicArrayDescriptorBindingKind binding_kind,
         std::size_t depth = 0
     ) {
         if (depth > 16) {
@@ -6263,7 +6263,7 @@ private:
                 .owner_name = owner_name,
                 .source_type_name = type_name,
                 .element_source_type_name = direct_element_type_name,
-                .origin_kind = origin_kind,
+                .binding_kind = binding_kind,
             });
             add_drop_obligation(PlannedDropSite {
                 .source_type_name = direct_element_type_name,
@@ -6275,7 +6275,7 @@ private:
                 owner_name + ".element",
                 direct_element_type_name,
                 declaration_line,
-                origin_kind,
+                binding_kind,
                 depth + 1
             );
             return;
@@ -6288,7 +6288,7 @@ private:
                     owner_name + ".element" + std::to_string(index),
                     array->element_type_name,
                     declaration_line,
-                    origin_kind,
+                    binding_kind,
                     depth + 1
                 );
             }
@@ -6319,7 +6319,7 @@ private:
                     .owner_name = field_owner_name,
                     .source_type_name = field_type_name,
                     .element_source_type_name = element_type_name,
-                    .origin_kind = origin_kind,
+                    .binding_kind = binding_kind,
                 });
                 add_drop_obligation(PlannedDropSite {
                     .source_type_name = element_type_name,
@@ -6331,7 +6331,7 @@ private:
                     field_owner_name + ".element",
                     element_type_name,
                     declaration_line,
-                    origin_kind,
+                    binding_kind,
                     depth + 1
                 );
                 continue;
@@ -6341,7 +6341,7 @@ private:
                 field_owner_name,
                 field_type_name,
                 declaration_line,
-                origin_kind,
+                binding_kind,
                 depth + 1
             );
         }
@@ -6352,18 +6352,18 @@ private:
             binding.name,
             binding.type_name,
             binding.declaration_line,
-            dynamic_array_descriptor_origin_kind(binding)
+            dynamic_array_descriptor_binding_kind(binding)
         );
     }
 
-    static auto dynamic_array_descriptor_origin_kind(Binding const& binding) -> DynamicArrayDescriptorOriginKind {
+    static auto dynamic_array_descriptor_binding_kind(Binding const& binding) -> DynamicArrayDescriptorBindingKind {
         if (binding.parameter_binding) {
-            return DynamicArrayDescriptorOriginKind::parameter_binding;
+            return DynamicArrayDescriptorBindingKind::parameter_binding;
         }
         if (binding.value_origin == ValueOriginKind::function_call) {
-            return DynamicArrayDescriptorOriginKind::returned_binding;
+            return DynamicArrayDescriptorBindingKind::returned_binding;
         }
-        return DynamicArrayDescriptorOriginKind::local_binding;
+        return DynamicArrayDescriptorBindingKind::local_binding;
     }
 
     void collect_drop_obligations(std::vector<Binding> const& bindings) {
@@ -6382,7 +6382,7 @@ private:
                     .owner_name = binding.name,
                     .source_type_name = binding.type_name,
                     .element_source_type_name = dynamic_array_element_type,
-                    .origin_kind = dynamic_array_descriptor_origin_kind(binding),
+                    .binding_kind = dynamic_array_descriptor_binding_kind(binding),
                 });
             }
             add_drop_obligation(PlannedDropSite {
@@ -6403,7 +6403,7 @@ private:
                     binding.name + ".element",
                     element_type_name,
                     binding.declaration_line,
-                    dynamic_array_descriptor_origin_kind(binding)
+                    dynamic_array_descriptor_binding_kind(binding)
                 );
             }
             if (element_type_name.empty()) {
@@ -6553,13 +6553,13 @@ auto ModuleSemanticAnalyzer::analyze(syntax::ModuleSyntax const& module) const -
     return Analyzer(module).analyze();
 }
 
-auto format_dynamic_array_descriptor_origin_kind(DynamicArrayDescriptorOriginKind origin_kind) -> std::string_view {
-    switch (origin_kind) {
-        case DynamicArrayDescriptorOriginKind::local_binding:
+auto format_dynamic_array_descriptor_binding_kind(DynamicArrayDescriptorBindingKind binding_kind) -> std::string_view {
+    switch (binding_kind) {
+        case DynamicArrayDescriptorBindingKind::local_binding:
             return "local";
-        case DynamicArrayDescriptorOriginKind::parameter_binding:
+        case DynamicArrayDescriptorBindingKind::parameter_binding:
             return "parameter";
-        case DynamicArrayDescriptorOriginKind::returned_binding:
+        case DynamicArrayDescriptorBindingKind::returned_binding:
             return "returned";
     }
     return "unknown";
@@ -6583,7 +6583,7 @@ auto format_dynamic_array_descriptor_summary(
         output += std::to_string(descriptor.line);
     }
     output += " origin ";
-    output += format_dynamic_array_descriptor_origin_kind(descriptor.origin_kind);
+    output += format_dynamic_array_descriptor_binding_kind(descriptor.binding_kind);
     output += " (metadata only)";
     return output;
 }

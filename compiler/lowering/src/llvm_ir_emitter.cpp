@@ -3034,7 +3034,7 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor;
         } else if (has_dynamic_array_local_constructor_origin(descriptor, module)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        } else if (descriptor.origin_kind == semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
+        } else if (descriptor.binding_kind == semantics::DynamicArrayDescriptorBindingKind::returned_binding) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
         }
         plan->source_line = descriptor.line;

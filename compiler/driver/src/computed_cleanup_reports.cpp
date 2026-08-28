@@ -54,15 +54,15 @@ auto dynamic_array_descriptor_cleanup_plan_state_report(
     return lowering::format_dynamic_array_descriptor_cleanup_plan_report(state.plans);
 }
 
-auto format_dynamic_array_descriptor_origin_kind(
-    semantics::DynamicArrayDescriptorOriginKind origin_kind
+auto format_dynamic_array_descriptor_binding_kind(
+    semantics::DynamicArrayDescriptorBindingKind binding_kind
 ) -> std::string_view {
-    switch (origin_kind) {
-        case semantics::DynamicArrayDescriptorOriginKind::local_binding:
+    switch (binding_kind) {
+        case semantics::DynamicArrayDescriptorBindingKind::local_binding:
             return "local";
-        case semantics::DynamicArrayDescriptorOriginKind::parameter_binding:
+        case semantics::DynamicArrayDescriptorBindingKind::parameter_binding:
             return "parameter";
-        case semantics::DynamicArrayDescriptorOriginKind::returned_binding:
+        case semantics::DynamicArrayDescriptorBindingKind::returned_binding:
             return "returned";
     }
     return "unknown";
@@ -91,16 +91,16 @@ auto dynamic_array_descriptor_lifetime_plan_state_report(
     lines.reserve(state.plans.size() + 1);
     lines.push_back(
         std::string {"dynamic array descriptor lifetime plan "} +
-        (state.all_origins_have_cleanup_plans && state.all_cleanup_plans_have_origins ? "ready" : "blocked") +
+        (state.all_summaries_have_cleanup_plans && state.all_cleanup_plans_have_summaries ? "ready" : "blocked") +
         " origins " + std::to_string(state.plans.size()) +
-        " origin-blockers " + std::to_string(state.origin_blockers.size())
+        " origin-blockers " + std::to_string(state.summary_blockers.size())
     );
     for (auto const& plan : state.plans) {
         auto line = std::ostringstream {};
         line << "dynamic array descriptor lifetime " << plan.source_type_name
              << " owner " << plan.owner_name
              << " element " << plan.element_source_type_name
-             << " origin " << format_dynamic_array_descriptor_origin_kind(plan.origin_kind)
+             << " origin " << format_dynamic_array_descriptor_binding_kind(plan.binding_kind)
              << " cleanup " << plan.cleanup_responsibility
              << " storage " << format_dynamic_array_descriptor_storage_status(plan.descriptor_storage_status);
         if (!plan.descriptor_storage_name.empty()) {
@@ -113,13 +113,13 @@ auto dynamic_array_descriptor_lifetime_plan_state_report(
         line << " (metadata only)";
         lines.push_back(line.str());
     }
-    for (auto const& blocker : state.origin_blockers) {
+    for (auto const& blocker : state.summary_blockers) {
         auto line = std::ostringstream {};
         line << "dynamic array descriptor lifetime blocker " << blocker.reason
              << " " << blocker.source_type_name
              << " owner " << blocker.owner_name
              << " element " << blocker.element_source_type_name
-             << " origin " << format_dynamic_array_descriptor_origin_kind(blocker.origin_kind);
+             << " origin " << format_dynamic_array_descriptor_binding_kind(blocker.binding_kind);
         if (blocker.source_line != 0) {
             line << " line " << blocker.source_line;
         }
