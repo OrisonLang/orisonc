@@ -87,6 +87,9 @@ inline auto production_compile_pipeline_options() -> CompilePipelineOptions {
     options.runtime_indexed_member_cleanup_production_gate_enabled = true;
     options.runtime_indexed_member_cleanup_apply_authorization_enabled = true;
     options.runtime_indexed_member_cleanup_rewrite_execution_enabled = true;
+    options.dynamic_array_production_construction_lowering_enabled = true;
+    options.dynamic_array_production_index_lowering_enabled = true;
+    options.dynamic_array_production_append_lowering_enabled = true;
     return options;
 }
 

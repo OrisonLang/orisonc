@@ -221,6 +221,8 @@ representation.
   borrow or clone model for owned elements.
 - Direct no-option pipeline LLVM/object emission now delegates to the shared production option builder, aligning
   library emission defaults with CLI emission defaults for promoted runtime-index cleanup gates.
+- Production pipeline defaults now also enable DynamicArray construction/index/append gates. Source Drop lowering,
+  DynamicArray cleanup, and computed `for` gates remain explicitly controlled while their broader safety proofs mature.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

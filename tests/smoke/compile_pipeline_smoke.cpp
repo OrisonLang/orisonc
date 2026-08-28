@@ -43,6 +43,9 @@ void test_production_compile_pipeline_options_enable_runtime_indexed_member_clea
     assert(options.runtime_indexed_member_cleanup_production_gate_enabled);
     assert(options.runtime_indexed_member_cleanup_apply_authorization_enabled);
     assert(options.runtime_indexed_member_cleanup_rewrite_execution_enabled);
+    assert(options.dynamic_array_production_construction_lowering_enabled);
+    assert(options.dynamic_array_production_index_lowering_enabled);
+    assert(options.dynamic_array_production_append_lowering_enabled);
 }
 
 void test_no_option_pipeline_emission_uses_production_defaults(
