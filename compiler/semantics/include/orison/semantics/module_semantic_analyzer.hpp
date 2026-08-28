@@ -85,10 +85,30 @@ struct SemanticChoiceVariantSummary {
     std::vector<SemanticParameterSummary> payloads;
 };
 
+enum class SemanticExpressionTargetKind {
+    none,
+    direct_function,
+    method,
+    record_constructor,
+    choice_constructor,
+    unsafe_intrinsic,
+};
+
+struct SemanticExpressionSummary {
+    std::size_t line = 0;
+    std::string text;
+    std::string type_name;
+    SemanticExpressionTargetKind target_kind = SemanticExpressionTargetKind::none;
+    std::string target_name;
+    std::string receiver_type_name;
+    bool foreign = false;
+};
+
 struct SemanticModuleSummary {
     std::vector<SemanticFunctionSummary> functions;
     std::vector<SemanticRecordFieldSummary> record_fields;
     std::vector<SemanticChoiceVariantSummary> choice_variants;
+    std::vector<SemanticExpressionSummary> expressions;
 };
 
 struct SemanticAnalysisResult {

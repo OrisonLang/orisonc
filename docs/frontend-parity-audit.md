@@ -2892,3 +2892,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-27: Semantic analysis now publishes a checked module summary with function signatures, method owners, record
   fields, choice variants, and foreign declaration markers. This is internal C++ representation only and does not change
   Orison syntax.
+- 2026-08-27: The semantic module summary now includes visited expression facts with inferred type names, callable
+  target kinds, target names, receiver type names, and foreign markers where resolution is available.

@@ -1129,6 +1129,15 @@ private:
         return {};
     }
 
+    auto find_callable_signature(std::string const& name) const -> CallableSignature const* {
+        for (auto const& signature : callable_signatures_) {
+            if (signature.name == name) {
+                return &signature;
+            }
+        }
+        return nullptr;
+    }
+
     auto find_method_return_type_name(
         std::string const& receiver_type,
         std::string const& method_name,
@@ -1155,6 +1164,85 @@ private:
             }
         }
         return {};
+    }
+
+    auto expression_summary_text(syntax::ExpressionSyntax const& expression) const -> std::string {
+        if (!expression.text.empty()) {
+            return expression.text;
+        }
+        if (expression.kind == syntax::ExpressionKind::call && expression.left) {
+            return expression_summary_text(*expression.left) + "(...)";
+        }
+        if (expression.kind == syntax::ExpressionKind::index_access && expression.left) {
+            return expression_summary_text(*expression.left) + "[...]";
+        }
+        return {};
+    }
+
+    auto direct_call_target_kind(
+        syntax::ExpressionSyntax const& expression,
+        std::string const& callee_name
+    ) const -> SemanticExpressionTargetKind {
+        if (is_unsafe_intrinsic_name(callee_name)) {
+            return SemanticExpressionTargetKind::unsafe_intrinsic;
+        }
+        if (!find_record_constructor_type_name(expression).empty()) {
+            return SemanticExpressionTargetKind::record_constructor;
+        }
+        if (!find_choice_constructor_type_name(expression).empty()) {
+            return SemanticExpressionTargetKind::choice_constructor;
+        }
+        if (find_callable_signature(callee_name) != nullptr) {
+            return SemanticExpressionTargetKind::direct_function;
+        }
+        return SemanticExpressionTargetKind::none;
+    }
+
+    auto expression_summary_target(syntax::ExpressionSyntax const& expression) const -> SemanticExpressionSummary {
+        auto summary = SemanticExpressionSummary {
+            .line = expression.line,
+            .text = expression_summary_text(expression),
+            .type_name = infer_expression_type_name(expression),
+        };
+
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
+            return summary;
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::member_access ||
+            expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+            auto receiver_type_name = infer_receiver_type_name_for_member_call(*expression.left);
+            if (receiver_type_name.empty()) {
+                return summary;
+            }
+            summary.target_kind = SemanticExpressionTargetKind::method;
+            summary.target_name = receiver_type_name + "." + expression.left->text;
+            summary.receiver_type_name = receiver_type_name;
+            return summary;
+        }
+
+        if (expression.left->kind != syntax::ExpressionKind::name) {
+            return summary;
+        }
+
+        auto const& callee_name = expression.left->text;
+        summary.target_kind = direct_call_target_kind(expression, callee_name);
+        if (summary.target_kind == SemanticExpressionTargetKind::none) {
+            return summary;
+        }
+
+        summary.target_name = callee_name;
+        if (auto const* signature = find_callable_signature(callee_name)) {
+            summary.foreign = signature->foreign;
+        }
+        return summary;
+    }
+
+    void record_expression_summary(syntax::ExpressionSyntax const& expression) {
+        if (is_empty_expression(expression)) {
+            return;
+        }
+        semantic_module_.expressions.push_back(expression_summary_target(expression));
     }
 
     auto find_record_field_type_name(
@@ -5763,6 +5851,7 @@ private:
             for (auto const& argument : expression.arguments) {
                 analyze_expression(argument, in_async_function);
             }
+            record_expression_summary(expression);
             return;
         }
 
@@ -5803,6 +5892,7 @@ private:
 
             capture_scope_depth_ = saved_capture_depth;
             current_capture_expression_kind_ = saved_capture_expression_kind;
+            record_expression_summary(expression);
             return;
         }
 
@@ -5833,6 +5923,8 @@ private:
                 expression.kind == syntax::ExpressionKind::ternary;
             analyze_expression(*expression.alternate, in_async_function, alternate_allows_thread_value_name);
         }
+
+        record_expression_summary(expression);
     }
 
     void push_scope() {

@@ -22,9 +22,8 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 - Lowering is broad but still fixture-driven; unsupported diagnostics remain the safe boundary for unproven source
   shapes.
-- The semantic representation now exposes a first checked module summary for signatures, method owners, records,
-  choices, and foreign declarations. It still needs resolved expression types, ownership state, callable targets, and
-  lowering-ready aggregate paths.
+- The semantic representation now exposes checked module-level facts plus visited expression types and callable targets.
+  It still needs ownership state and lowering-ready aggregate paths.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -35,5 +34,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend the typed semantic summary with expression-level type facts and callable target resolution, then migrate one
-  lowering path to consume the checked facts instead of re-walking syntax.
+- Extend the typed semantic summary with ownership/drop facts, then migrate one lowering path to consume the checked
+  facts instead of re-walking syntax.

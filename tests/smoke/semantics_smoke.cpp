@@ -7550,19 +7550,24 @@ void test_semantic_module_summary_success() {
             "        return this.value",
             "function id<T>(value: T) -> T",
             "    return value",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(7 as UInt32)",
+            "    let copied: UInt32 = id(box.value)",
+            "    box.read() + copied",
         }
     );
 
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     auto const& summary = analysis.semantic_module;
-    assert(summary.functions.size() == 5);
+    assert(summary.functions.size() == 6);
     assert(summary.record_fields.size() == 1);
     assert(summary.choice_variants.size() == 2);
 
     bool found_foreign_import = false;
     bool found_foreign_export = false;
     bool found_source_function = false;
+    bool found_main_function = false;
     bool found_implementation_method = false;
     bool found_extension_method = false;
     for (auto const& function : summary.functions) {
@@ -7591,6 +7596,11 @@ void test_semantic_module_summary_success() {
             assert(function.parameters.front().type_name == "T");
             assert(function.return_type_name == "T");
         }
+        if (function.name == "main") {
+            found_main_function = true;
+            assert(function.kind == orison::semantics::SemanticFunctionKind::source_function);
+            assert(function.return_type_name == "UInt32");
+        }
         if (function.name == "read") {
             found_implementation_method = true;
             assert(function.kind == orison::semantics::SemanticFunctionKind::implementation_method);
@@ -7607,6 +7617,7 @@ void test_semantic_module_summary_success() {
     assert(found_foreign_import);
     assert(found_foreign_export);
     assert(found_source_function);
+    assert(found_main_function);
     assert(found_implementation_method);
     assert(found_extension_method);
 
@@ -7633,6 +7644,32 @@ void test_semantic_module_summary_success() {
     }
     assert(found_some);
     assert(found_empty);
+
+    bool found_record_constructor_expression = false;
+    bool found_generic_call_expression = false;
+    bool found_method_call_expression = false;
+    for (auto const& expression : summary.expressions) {
+        if (expression.target_kind == orison::semantics::SemanticExpressionTargetKind::record_constructor &&
+            expression.target_name == "Box") {
+            found_record_constructor_expression = true;
+            assert(expression.type_name == "Box<UInt32>");
+        }
+        if (expression.target_kind == orison::semantics::SemanticExpressionTargetKind::direct_function &&
+            expression.target_name == "id") {
+            found_generic_call_expression = true;
+            assert(expression.type_name == "UInt32");
+            assert(!expression.foreign);
+        }
+        if (expression.target_kind == orison::semantics::SemanticExpressionTargetKind::method &&
+            expression.target_name == "Box<UInt32>.read") {
+            found_method_call_expression = true;
+            assert(expression.receiver_type_name == "Box<UInt32>");
+            assert(expression.type_name == "UInt32");
+        }
+    }
+    assert(found_record_constructor_expression);
+    assert(found_generic_call_expression);
+    assert(found_method_call_expression);
 }
 
 void test_duplicate_type_alias_name_failure() {
