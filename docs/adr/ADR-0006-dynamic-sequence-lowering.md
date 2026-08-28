@@ -226,6 +226,10 @@ representation.
 - Source Drop lowering remains outside shared production defaults after audit. Enabling it changes selected final
   aggregate cleanup IR from inline field cleanup to aggregate Drop calls, so promotion needs an explicit cleanup-shape
   migration rather than a silent default flip.
+- A Source Drop production-default trial also exposed a runtime double-free in
+  `dynamic_array_owned_constructor_fixed_array_record_field_move_run.or` when aggregate Drop cleanup replaced inline
+  field cleanup. Source Drop remains opt-in until moved-field finalization and aggregate Drop delegation are proven
+  together.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

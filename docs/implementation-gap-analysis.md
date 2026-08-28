@@ -39,5 +39,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Migrate source Drop cleanup-shape expectations deliberately before considering source Drop as a shared production
-  default.
+- Fix the source Drop aggregate-cleanup double-free path by proving moved-field finalization before aggregate Drop
+  delegation; keep source Drop out of shared production defaults until run-level smoke coverage passes.

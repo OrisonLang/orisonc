@@ -34,7 +34,7 @@ namespace {
 
 namespace smoke = orison::tests::smoke;
 
-void test_production_compile_pipeline_options_enable_runtime_indexed_member_cleanup() {
+void test_production_compile_pipeline_options_gate_promotions() {
     auto const options = orison::pipeline::production_compile_pipeline_options();
     assert(!options.source_drop_lowering_enabled);
     assert(options.runtime_indexed_cleanup_emission_enabled);
@@ -49,6 +49,10 @@ void test_production_compile_pipeline_options_enable_runtime_indexed_member_clea
     assert(options.dynamic_array_production_append_lowering_enabled);
     assert(options.dynamic_array_production_cleanup_emission_enabled);
     assert(options.dynamic_array_production_for_lowering_enabled);
+
+    auto explicit_source_drop_options = options;
+    explicit_source_drop_options.source_drop_lowering_enabled = true;
+    assert(explicit_source_drop_options.source_drop_lowering_enabled);
 }
 
 void test_no_option_pipeline_emission_uses_production_defaults(
@@ -1299,7 +1303,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 }  // namespace
 
 auto main() -> int {
-    test_production_compile_pipeline_options_enable_runtime_indexed_member_cleanup();
+    test_production_compile_pipeline_options_gate_promotions();
     assert_computed_cleanup_proof_model_reusable_without_reports();
     assert_consumed_descriptor_finalization_readiness_typed();
 
