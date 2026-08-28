@@ -1459,7 +1459,7 @@ void enable_dynamic_array_parameter_descriptors(
 }
 
 auto has_bound_dynamic_array_parameter_descriptor(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> bool {
@@ -1472,10 +1472,10 @@ auto has_bound_dynamic_array_parameter_descriptor(
             if (index >= signature->second.parameter_types.size()) {
                 continue;
             }
-            if (function.parameters[index].name != origin.owner_name) {
+            if (function.parameters[index].name != descriptor.owner_name) {
                 continue;
             }
-            if (render_source_type_name(function.parameters[index].type) != origin.source_type_name) {
+            if (render_source_type_name(function.parameters[index].type) != descriptor.source_type_name) {
                 continue;
             }
             if (signature->second.parameter_types[index] == dynamic_array_descriptor_llvm_type()) {
@@ -1487,15 +1487,15 @@ auto has_bound_dynamic_array_parameter_descriptor(
 }
 
 auto has_dynamic_array_parameter_descriptor_origin(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     syntax::ModuleSyntax const& module
 ) -> bool {
     for (auto const& function : module.functions) {
         for (auto const& parameter : function.parameters) {
-            if (parameter.name != origin.owner_name) {
+            if (parameter.name != descriptor.owner_name) {
                 continue;
             }
-            if (render_source_type_name(parameter.type) == origin.source_type_name) {
+            if (render_source_type_name(parameter.type) == descriptor.source_type_name) {
                 return true;
             }
         }
@@ -1554,29 +1554,29 @@ auto is_dynamic_array_source_type(syntax::TypeSyntax const& type) -> bool {
 
 auto is_dynamic_array_local_constructor_origin(
     syntax::StatementSyntax const& statement,
-    semantics::DynamicArrayDescriptorOrigin const& origin
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor
 ) -> bool {
     if ((statement.kind == syntax::StatementKind::let_binding ||
          statement.kind == syntax::StatementKind::var_binding) &&
-        statement.name == origin.owner_name &&
-        statement.line == origin.line &&
+        statement.name == descriptor.owner_name &&
+        statement.line == descriptor.line &&
         !statement.annotated_type.name.empty() &&
-        render_source_type_name(statement.annotated_type) == origin.source_type_name &&
+        render_source_type_name(statement.annotated_type) == descriptor.source_type_name &&
         is_dynamic_array_default_constructor(statement.expression)) {
         return true;
     }
     return std::ranges::any_of(statement.nested_statements, [&](auto const& nested_statement) {
-        return is_dynamic_array_local_constructor_origin(nested_statement, origin);
+        return is_dynamic_array_local_constructor_origin(nested_statement, descriptor);
     });
 }
 
 auto has_dynamic_array_local_constructor_origin(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     syntax::ModuleSyntax const& module
 ) -> bool {
     for (auto const& function : module.functions) {
         for (auto const& statement : function.body_statements) {
-            if (is_dynamic_array_local_constructor_origin(statement, origin)) {
+            if (is_dynamic_array_local_constructor_origin(statement, descriptor)) {
                 return true;
             }
         }
@@ -1584,7 +1584,7 @@ auto has_dynamic_array_local_constructor_origin(
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
             for (auto const& statement : method.body_statements) {
-                if (is_dynamic_array_local_constructor_origin(statement, origin)) {
+                if (is_dynamic_array_local_constructor_origin(statement, descriptor)) {
                     return true;
                 }
             }
@@ -1593,7 +1593,7 @@ auto has_dynamic_array_local_constructor_origin(
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
             for (auto const& statement : method.body_statements) {
-                if (is_dynamic_array_local_constructor_origin(statement, origin)) {
+                if (is_dynamic_array_local_constructor_origin(statement, descriptor)) {
                     return true;
                 }
             }
@@ -3015,46 +3015,45 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
     LlvmIrEmissionOptions const& options,
     diagnostics::DiagnosticBag& diagnostics
 ) -> std::vector<DynamicArrayDescriptorCleanupPlan> {
-    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(semantic_result);
     auto plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
-    plans.reserve(descriptor_origins.size());
-    for (auto const& origin : descriptor_origins) {
+    plans.reserve(semantic_result.semantic_module.dynamic_array_descriptors.size());
+    for (auto const& descriptor : semantic_result.semantic_module.dynamic_array_descriptors) {
         auto plan = plan_dynamic_array_descriptor_cleanup(
-            origin.owner_name,
-            origin.source_type_name,
+            descriptor.owner_name,
+            descriptor.source_type_name,
             context
         );
         if (!plan.has_value()) {
-            diagnostics.error(origin.line, "dynamic array descriptor cleanup could not be planned");
+            diagnostics.error(descriptor.line, "dynamic array descriptor cleanup could not be planned");
             continue;
         }
-        if (has_bound_dynamic_array_parameter_descriptor(origin, module, context)) {
+        if (has_bound_dynamic_array_parameter_descriptor(descriptor, module, context)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
         } else if (dynamic_array_parameter_descriptor_audit_bindings_enabled(options) &&
-            has_dynamic_array_parameter_descriptor_origin(origin, module)) {
+            has_dynamic_array_parameter_descriptor_origin(descriptor, module)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor;
-        } else if (has_dynamic_array_local_constructor_origin(origin, module)) {
+        } else if (has_dynamic_array_local_constructor_origin(descriptor, module)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        } else if (origin.origin_kind == semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
+        } else if (descriptor.origin_kind == semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
         }
-        plan->source_line = origin.line;
+        plan->source_line = descriptor.line;
         plans.push_back(std::move(*plan));
     }
     return plans;
 }
 
 auto matching_dynamic_array_descriptor_cleanup_plan(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
 ) -> DynamicArrayDescriptorCleanupPlan const* {
     auto const match = std::find_if(
         cleanup_plans.begin(),
         cleanup_plans.end(),
         [&](DynamicArrayDescriptorCleanupPlan const& cleanup_plan) {
-            return cleanup_plan.owner_name == origin.owner_name &&
-                cleanup_plan.source_type_name == origin.source_type_name &&
-                cleanup_plan.element_source_type_name == origin.element_source_type_name;
+            return cleanup_plan.owner_name == descriptor.owner_name &&
+                cleanup_plan.source_type_name == descriptor.source_type_name &&
+                cleanup_plan.element_source_type_name == descriptor.element_source_type_name;
         }
     );
     return match == cleanup_plans.end() ? nullptr : &*match;
@@ -3064,14 +3063,13 @@ auto collect_dynamic_array_descriptor_lifetime_plans(
     semantics::SemanticAnalysisResult const& semantic_result,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
 ) -> std::vector<DynamicArrayDescriptorLifetimePlan> {
-    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(semantic_result);
     auto plans = std::vector<DynamicArrayDescriptorLifetimePlan> {};
-    plans.reserve(descriptor_origins.size());
-    for (auto const& origin : descriptor_origins) {
+    plans.reserve(semantic_result.semantic_module.dynamic_array_descriptors.size());
+    for (auto const& descriptor : semantic_result.semantic_module.dynamic_array_descriptors) {
         plans.push_back(
             plan_dynamic_array_descriptor_lifetime(
-                origin,
-                matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plans)
+                descriptor,
+                matching_dynamic_array_descriptor_cleanup_plan(descriptor, cleanup_plans)
             )
         );
     }

@@ -6605,23 +6605,6 @@ auto format_dynamic_array_descriptor_summary_report(
     return report;
 }
 
-auto project_dynamic_array_descriptor_summaries(
-    SemanticAnalysisResult const& result
-) -> std::vector<DynamicArrayDescriptorOrigin> {
-    auto origins = std::vector<DynamicArrayDescriptorOrigin> {};
-    origins.reserve(result.semantic_module.dynamic_array_descriptors.size());
-    for (auto const& descriptor : result.semantic_module.dynamic_array_descriptors) {
-        origins.push_back(DynamicArrayDescriptorOrigin {
-            .owner_name = descriptor.owner_name,
-            .source_type_name = descriptor.source_type_name,
-            .element_source_type_name = descriptor.element_source_type_name,
-            .origin_kind = descriptor.origin_kind,
-            .line = descriptor.line,
-        });
-    }
-    return origins;
-}
-
 auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obligation) -> std::string {
     auto output = std::string {"drop obligation "};
     output += obligation.abi_symbol_name;

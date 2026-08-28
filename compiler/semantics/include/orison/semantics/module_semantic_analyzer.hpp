@@ -193,10 +193,6 @@ auto format_dynamic_array_descriptor_summary_report(
     std::vector<SemanticDynamicArrayDescriptorSummary> const& descriptors
 ) -> std::vector<std::string>;
 
-auto project_dynamic_array_descriptor_summaries(
-    SemanticAnalysisResult const& result
-) -> std::vector<DynamicArrayDescriptorOrigin>;
-
 auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obligation) -> std::string;
 
 auto format_semantic_drop_obligation_report(

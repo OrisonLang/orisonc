@@ -280,25 +280,25 @@ auto generic_source_type_pattern_matches(
     return true;
 }
 
-auto dynamic_array_descriptor_origin_matches_cleanup_plan(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+auto dynamic_array_descriptor_summary_matches_cleanup_plan(
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan
 ) -> bool {
-    return origin.owner_name == cleanup_plan.owner_name &&
-        generic_source_type_pattern_matches(origin.source_type_name, cleanup_plan.source_type_name) &&
-        generic_source_type_pattern_matches(origin.element_source_type_name, cleanup_plan.element_source_type_name);
+    return descriptor.owner_name == cleanup_plan.owner_name &&
+        generic_source_type_pattern_matches(descriptor.source_type_name, cleanup_plan.source_type_name) &&
+        generic_source_type_pattern_matches(descriptor.element_source_type_name, cleanup_plan.element_source_type_name);
 }
 
 auto matching_dynamic_array_descriptor_cleanup_plan(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     std::vector<lowering::DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
 ) -> lowering::DynamicArrayDescriptorCleanupPlan const* {
     auto const exact = std::find_if(
         cleanup_plans.begin(),
         cleanup_plans.end(),
         [&](lowering::DynamicArrayDescriptorCleanupPlan const& plan) {
-            return dynamic_array_descriptor_origin_matches_cleanup_plan(origin, plan) &&
-                plan.source_line == origin.line;
+            return dynamic_array_descriptor_summary_matches_cleanup_plan(descriptor, plan) &&
+                plan.source_line == descriptor.line;
         }
     );
     if (exact != cleanup_plans.end()) {
@@ -309,35 +309,35 @@ auto matching_dynamic_array_descriptor_cleanup_plan(
         cleanup_plans.begin(),
         cleanup_plans.end(),
         [&](lowering::DynamicArrayDescriptorCleanupPlan const& plan) {
-            return dynamic_array_descriptor_origin_matches_cleanup_plan(origin, plan);
+            return dynamic_array_descriptor_summary_matches_cleanup_plan(descriptor, plan);
         }
     );
     return fallback == cleanup_plans.end() ? nullptr : &*fallback;
 }
 
-auto matching_dynamic_array_descriptor_origin(
+auto matching_dynamic_array_descriptor_summary(
     lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan,
-    std::vector<semantics::DynamicArrayDescriptorOrigin> const& origins
-) -> semantics::DynamicArrayDescriptorOrigin const* {
+    std::vector<semantics::SemanticDynamicArrayDescriptorSummary> const& descriptors
+) -> semantics::SemanticDynamicArrayDescriptorSummary const* {
     auto const match = std::find_if(
-        origins.begin(),
-        origins.end(),
-        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
-            return dynamic_array_descriptor_origin_matches_cleanup_plan(origin, cleanup_plan);
+        descriptors.begin(),
+        descriptors.end(),
+        [&](semantics::SemanticDynamicArrayDescriptorSummary const& descriptor) {
+            return dynamic_array_descriptor_summary_matches_cleanup_plan(descriptor, cleanup_plan);
         }
     );
-    return match == origins.end() ? nullptr : &*match;
+    return match == descriptors.end() ? nullptr : &*match;
 }
 
 auto cleanup_plan_origin_blocker_reason(
     lowering::DynamicArrayDescriptorCleanupPlan const& cleanup_plan,
-    std::vector<semantics::DynamicArrayDescriptorOrigin> const& origins
+    std::vector<semantics::SemanticDynamicArrayDescriptorSummary> const& descriptors
 ) -> std::string {
     auto const same_owner = std::any_of(
-        origins.begin(),
-        origins.end(),
-        [&](semantics::DynamicArrayDescriptorOrigin const& origin) {
-            return origin.owner_name == cleanup_plan.owner_name;
+        descriptors.begin(),
+        descriptors.end(),
+        [&](semantics::SemanticDynamicArrayDescriptorSummary const& descriptor) {
+            return descriptor.owner_name == cleanup_plan.owner_name;
         }
     );
     return same_owner ? "semantic-origin-mismatched" : "semantic-origin-missing";
@@ -348,19 +348,19 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     DynamicArrayDescriptorCleanupPlanState const& cleanup_plan_state,
     std::vector<lowering::DynamicArrayDescriptorLifetimePlan> const& lowering_lifetime_plans
 ) -> DynamicArrayDescriptorLifetimePlanState {
-    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(semantic_result);
+    auto const& descriptors = semantic_result.semantic_module.dynamic_array_descriptors;
     auto state = DynamicArrayDescriptorLifetimePlanState {};
-    state.plans.reserve(descriptor_origins.size());
-    state.all_origins_have_cleanup_plans = !descriptor_origins.empty();
+    state.plans.reserve(descriptors.size());
+    state.all_origins_have_cleanup_plans = !descriptors.empty();
     state.all_cleanup_plans_have_origins = true;
-    for (auto const& origin : descriptor_origins) {
+    for (auto const& descriptor : descriptors) {
         auto const* cleanup_plan =
-            matching_dynamic_array_descriptor_cleanup_plan(origin, cleanup_plan_state.plans);
+            matching_dynamic_array_descriptor_cleanup_plan(descriptor, cleanup_plan_state.plans);
         auto const* lowering_lifetime_plan =
-            lowering::matching_dynamic_array_descriptor_lifetime_plan(lowering_lifetime_plans, origin);
+            lowering::matching_dynamic_array_descriptor_lifetime_plan(lowering_lifetime_plans, descriptor);
         auto lowering_plan = lowering_lifetime_plans.empty() || lowering_lifetime_plan != nullptr
-            ? lowering::plan_dynamic_array_descriptor_lifetime(origin, cleanup_plan)
-            : lowering::plan_dynamic_array_descriptor_lifetime(origin, nullptr);
+            ? lowering::plan_dynamic_array_descriptor_lifetime(descriptor, cleanup_plan)
+            : lowering::plan_dynamic_array_descriptor_lifetime(descriptor, nullptr);
         if (lowering_lifetime_plan != nullptr) {
             lowering_plan = *lowering_lifetime_plan;
         }
@@ -380,20 +380,20 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
         if (cleanup_plan == nullptr || shared_lifetime_plan_mismatched) {
             state.all_origins_have_cleanup_plans = false;
             state.origin_blockers.push_back(DynamicArrayDescriptorOriginBlocker {
-                .owner_name = origin.owner_name,
-                .source_type_name = origin.source_type_name,
-                .element_source_type_name = origin.element_source_type_name,
-                .origin_kind = origin.origin_kind,
+                .owner_name = descriptor.owner_name,
+                .source_type_name = descriptor.source_type_name,
+                .element_source_type_name = descriptor.element_source_type_name,
+                .origin_kind = descriptor.origin_kind,
                 .reason = shared_lifetime_plan_mismatched
                     ? "shared-lifetime-plan-mismatched"
                     : "cleanup-plan-missing",
-                .source_line = origin.line,
+                .source_line = descriptor.line,
             });
         }
         state.plans.push_back(std::move(plan));
     }
     for (auto const& cleanup_plan : cleanup_plan_state.plans) {
-        if (matching_dynamic_array_descriptor_origin(cleanup_plan, descriptor_origins) != nullptr) {
+        if (matching_dynamic_array_descriptor_summary(cleanup_plan, descriptors) != nullptr) {
             continue;
         }
         state.all_cleanup_plans_have_origins = false;
@@ -404,7 +404,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
             .origin_kind = semantics::DynamicArrayDescriptorOriginKind::local_binding,
             .reason = cleanup_plan_origin_blocker_reason(
                 cleanup_plan,
-                descriptor_origins
+                descriptors
             ),
             .source_line = cleanup_plan.source_line,
         });
@@ -3564,7 +3564,7 @@ void populate_lowering_emission_reports(
         .missing_element_drop_pairs =
             result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
         .descriptor_origins_available =
-            !semantics::project_dynamic_array_descriptor_summaries(result.semantic_result).empty(),
+            !result.semantic_result.semantic_module.dynamic_array_descriptors.empty(),
         .descriptor_origin_blockers_absent =
             result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty(),
         .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),

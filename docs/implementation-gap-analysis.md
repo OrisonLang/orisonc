@@ -26,7 +26,7 @@ This note is an implementation snapshot. It does not define language syntax or s
   ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Semantic planned-drop reports,
   drop authorization reports, DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI
   descriptor reports consume summary-backed facts. `SemanticAnalysisResult` no longer exposes compatibility
-  planned-drop or descriptor-origin vectors. Lowering descriptor match gates read descriptor summaries directly.
+  planned-drop or descriptor-origin vectors. The descriptor projection helper has been removed.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -37,5 +37,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Migrate the remaining DynamicArray lifetime/readiness projection sites to typed summary facts where that simplifies
-  the backend path.
+- Migrate remaining runtime compatibility-origin APIs when their direct callers no longer need that shape.

@@ -355,6 +355,27 @@ auto plan_dynamic_array_descriptor_lifetime(
     return plan;
 }
 
+auto plan_dynamic_array_descriptor_lifetime(
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
+    DynamicArrayDescriptorCleanupPlan const* cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan {
+    auto plan = DynamicArrayDescriptorLifetimePlan {
+        .owner_name = descriptor.owner_name,
+        .source_type_name = descriptor.source_type_name,
+        .element_source_type_name = descriptor.element_source_type_name,
+        .origin_kind = descriptor.origin_kind,
+        .cleanup_responsibility =
+            dynamic_array_descriptor_lifetime_cleanup_responsibility(descriptor.origin_kind),
+        .cleanup_plan_available = cleanup_plan != nullptr,
+        .source_line = descriptor.line,
+    };
+    if (cleanup_plan != nullptr) {
+        plan.descriptor_storage_status = cleanup_plan->descriptor_storage_status;
+        plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
+    }
+    return plan;
+}
+
 auto dynamic_array_descriptor_lifetime_source_type_matches(
     std::string_view origin_source_type_name,
     std::string_view lowered_source_type_name
@@ -393,6 +414,29 @@ auto matching_dynamic_array_descriptor_lifetime_plan(
                     origin.element_source_type_name
                 ) &&
                 lifetime_plan.origin_kind == origin.origin_kind;
+        }
+    );
+    return match == lifetime_plans.end() ? nullptr : &*match;
+}
+
+auto matching_dynamic_array_descriptor_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor
+) -> DynamicArrayDescriptorLifetimePlan const* {
+    auto const match = std::find_if(
+        lifetime_plans.begin(),
+        lifetime_plans.end(),
+        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
+            return lifetime_plan.owner_name == descriptor.owner_name &&
+                dynamic_array_descriptor_lifetime_source_type_matches(
+                    lifetime_plan.source_type_name,
+                    descriptor.source_type_name
+                ) &&
+                generic_source_type_pattern_matches(
+                    lifetime_plan.element_source_type_name,
+                    descriptor.element_source_type_name
+                ) &&
+                lifetime_plan.origin_kind == descriptor.origin_kind;
         }
     );
     return match == lifetime_plans.end() ? nullptr : &*match;

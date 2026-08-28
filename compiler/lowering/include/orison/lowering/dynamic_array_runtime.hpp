@@ -145,6 +145,11 @@ auto plan_dynamic_array_descriptor_lifetime(
     DynamicArrayDescriptorCleanupPlan const* cleanup_plan
 ) -> DynamicArrayDescriptorLifetimePlan;
 
+auto plan_dynamic_array_descriptor_lifetime(
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
+    DynamicArrayDescriptorCleanupPlan const* cleanup_plan
+) -> DynamicArrayDescriptorLifetimePlan;
+
 auto dynamic_array_descriptor_lifetime_source_type_matches(
     std::string_view origin_source_type_name,
     std::string_view lowered_source_type_name
@@ -153,6 +158,11 @@ auto dynamic_array_descriptor_lifetime_source_type_matches(
 auto matching_dynamic_array_descriptor_lifetime_plan(
     std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
     semantics::DynamicArrayDescriptorOrigin const& origin
+) -> DynamicArrayDescriptorLifetimePlan const*;
+
+auto matching_dynamic_array_descriptor_lifetime_plan(
+    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor
 ) -> DynamicArrayDescriptorLifetimePlan const*;
 
 auto matching_bound_dynamic_array_parameter_lifetime_plan(
