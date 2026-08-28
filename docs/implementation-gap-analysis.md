@@ -25,7 +25,7 @@ This note is an implementation snapshot. It does not define language syntax or s
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
   ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Drop authorization reports and
   DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI descriptor-origin reports consume
-  summary-backed facts. The compatibility descriptor-origin vector remains mirrored output metadata.
+  summary-backed facts. `SemanticAnalysisResult` no longer exposes the mirrored compatibility descriptor-origin vector.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -36,5 +36,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Retire the compatibility descriptor-origin vector from `SemanticAnalysisResult` after downstream tests stop asserting
-  it as mirrored output metadata.
+- Rename descriptor-origin projection helpers to descriptor-summary terminology when the report surface is updated.

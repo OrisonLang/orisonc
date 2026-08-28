@@ -1539,7 +1539,6 @@ auto main() -> int {
     }
     auto dynamic_array_source_owner = pipeline.analyze(dynamic_array_source_owner_path);
     assert(!dynamic_array_source_owner.has_errors());
-    assert(dynamic_array_source_owner.semantic_result.dynamic_array_descriptor_origins.size() == 1);
     assert(dynamic_array_source_owner.semantic_result.semantic_module.dynamic_array_descriptors.size() == 1);
     auto dynamic_array_source_owner_descriptor_origin_report =
         semantic_dynamic_array_descriptor_origin_report(dynamic_array_source_owner);

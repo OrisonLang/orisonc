@@ -173,7 +173,6 @@ struct SemanticAnalysisResult {
     SemanticModuleSummary semantic_module;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<PlannedDropSite> planned_drop_sites;
-    std::vector<DynamicArrayDescriptorOrigin> dynamic_array_descriptor_origins;
 
     auto has_errors() const -> bool {
         return diagnostics.has_errors();

@@ -26,9 +26,9 @@ aggregate paths. Semantic drop authorization and resolution reports now consume 
 the compatibility planned-drop vector. DynamicArray descriptor cleanup planning now consumes semantic summary descriptor
 facts rather than the compatibility descriptor-origin vector. DynamicArray lifetime planning, lowering cleanup matching,
 pipeline readiness reports, and CLI descriptor-origin reports now use the same summary-backed projection. Direct
-lowering fixtures now construct semantic summary descriptor facts.
+lowering fixtures now construct semantic summary descriptor facts. `SemanticAnalysisResult` no longer exposes the
+mirrored compatibility descriptor-origin vector.
 
 ## Follow-up work
 
-- Retire the compatibility descriptor-origin vector from `SemanticAnalysisResult` after downstream tests stop asserting
-  it as mirrored output metadata.
+- Consider renaming descriptor-origin projection helpers to descriptor-summary terminology in a later cleanup.

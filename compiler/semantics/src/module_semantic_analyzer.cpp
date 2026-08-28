@@ -146,7 +146,6 @@ public:
             .semantic_module = std::move(semantic_module_),
             .concurrency_captures = std::move(concurrency_captures),
             .planned_drop_sites = std::move(planned_drop_sites_),
-            .dynamic_array_descriptor_origins = std::move(dynamic_array_descriptor_origins_),
         };
     }
 
@@ -6101,7 +6100,6 @@ private:
             .element_source_type_name = origin.element_source_type_name,
             .origin_kind = origin.origin_kind,
         });
-        dynamic_array_descriptor_origins_.push_back(std::move(origin));
     }
 
     auto source_type_base_name(std::string const& type_name) const -> std::string {
@@ -6530,7 +6528,6 @@ private:
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<PlannedDropSite> planned_drop_sites_;
-    std::vector<DynamicArrayDescriptorOrigin> dynamic_array_descriptor_origins_;
     SemanticModuleSummary semantic_module_;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
