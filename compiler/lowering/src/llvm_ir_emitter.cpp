@@ -3015,7 +3015,7 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
     LlvmIrEmissionOptions const& options,
     diagnostics::DiagnosticBag& diagnostics
 ) -> std::vector<DynamicArrayDescriptorCleanupPlan> {
-    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(semantic_result);
+    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(semantic_result);
     auto plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
     plans.reserve(descriptor_origins.size());
     for (auto const& origin : descriptor_origins) {
@@ -3064,7 +3064,7 @@ auto collect_dynamic_array_descriptor_lifetime_plans(
     semantics::SemanticAnalysisResult const& semantic_result,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans
 ) -> std::vector<DynamicArrayDescriptorLifetimePlan> {
-    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(semantic_result);
+    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(semantic_result);
     auto plans = std::vector<DynamicArrayDescriptorLifetimePlan> {};
     plans.reserve(descriptor_origins.size());
     for (auto const& origin : descriptor_origins) {

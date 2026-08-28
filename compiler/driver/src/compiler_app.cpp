@@ -106,12 +106,10 @@ auto drop_readiness_source_correlation_state_report(
     return pipeline::format_drop_readiness_source_correlation_report(snapshot);
 }
 
-auto semantic_dynamic_array_descriptor_origin_state_report(
+auto semantic_dynamic_array_descriptor_summary_state_report(
     semantics::SemanticAnalysisResult const& result
 ) -> std::vector<std::string> {
-    return semantics::format_dynamic_array_descriptor_origin_report(
-        semantics::dynamic_array_descriptor_origins_from_semantic_summary(result)
-    );
+    return semantics::format_dynamic_array_descriptor_summary_report(result.semantic_module.dynamic_array_descriptors);
 }
 
 auto semantic_drop_implementations(
@@ -589,7 +587,7 @@ void prefer_emitted_dynamic_array_cleanup_reports(
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    append_report_lines(report, semantic_dynamic_array_descriptor_origin_state_report(result.semantic_result));
+    append_report_lines(report, semantic_dynamic_array_descriptor_summary_state_report(result.semantic_result));
     append_report_lines(
         report,
         dynamic_array_descriptor_cleanup_plan_state_report(result.dynamic_array_descriptor_cleanup_plan_state)
@@ -1209,7 +1207,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-dynamic-array-descriptor-origins") {
         return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return semantic_dynamic_array_descriptor_origin_state_report(result.semantic_result);
+            return semantic_dynamic_array_descriptor_summary_state_report(result.semantic_result);
         });
     }
 

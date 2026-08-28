@@ -25,10 +25,12 @@ module-level declarations, visited expression facts, declared-owner facts, plann
 aggregate paths. Semantic drop authorization and resolution reports now consume the drop-obligation summary rather than
 the compatibility planned-drop vector. DynamicArray descriptor cleanup planning now consumes semantic summary descriptor
 facts rather than the compatibility descriptor-origin vector. DynamicArray lifetime planning, lowering cleanup matching,
-pipeline readiness reports, and CLI descriptor-origin reports now use the same summary-backed projection. Direct
-lowering fixtures now construct semantic summary descriptor facts. `SemanticAnalysisResult` no longer exposes the
-mirrored compatibility descriptor-origin vector.
+pipeline readiness reports, and CLI descriptor reports now use the same summary-backed projection. Direct lowering
+fixtures now construct semantic summary descriptor facts. `SemanticAnalysisResult` no longer exposes the mirrored
+compatibility descriptor-origin vector. Semantic descriptor report helpers now use descriptor-summary terminology while
+lowering keeps a narrow projection into cleanup-origin records.
 
 ## Follow-up work
 
-- Consider renaming descriptor-origin projection helpers to descriptor-summary terminology in a later cleanup.
+- Migrate remaining cleanup-origin consumers to typed cleanup facts where that reduces projection code without changing
+  the Orison syntax surface.

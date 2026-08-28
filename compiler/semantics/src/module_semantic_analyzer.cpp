@@ -6574,39 +6574,41 @@ auto format_dynamic_array_descriptor_origin_kind(DynamicArrayDescriptorOriginKin
     return "unknown";
 }
 
-auto format_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin const& origin) -> std::string {
-    auto output = std::string {"dynamic array descriptor origin "};
-    output += origin.source_type_name;
-    if (!origin.owner_name.empty()) {
+auto format_dynamic_array_descriptor_summary(
+    SemanticDynamicArrayDescriptorSummary const& descriptor
+) -> std::string {
+    auto output = std::string {"dynamic array descriptor summary "};
+    output += descriptor.source_type_name;
+    if (!descriptor.owner_name.empty()) {
         output += " owner ";
-        output += origin.owner_name;
+        output += descriptor.owner_name;
     }
-    if (!origin.element_source_type_name.empty()) {
+    if (!descriptor.element_source_type_name.empty()) {
         output += " element ";
-        output += origin.element_source_type_name;
+        output += descriptor.element_source_type_name;
     }
-    if (origin.line != 0) {
+    if (descriptor.line != 0) {
         output += " at line ";
-        output += std::to_string(origin.line);
+        output += std::to_string(descriptor.line);
     }
     output += " origin ";
-    output += format_dynamic_array_descriptor_origin_kind(origin.origin_kind);
+    output += format_dynamic_array_descriptor_origin_kind(descriptor.origin_kind);
     output += " (metadata only)";
     return output;
 }
 
-auto format_dynamic_array_descriptor_origin_report(
-    std::vector<DynamicArrayDescriptorOrigin> const& origins
+auto format_dynamic_array_descriptor_summary_report(
+    std::vector<SemanticDynamicArrayDescriptorSummary> const& descriptors
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    report.reserve(origins.size());
-    for (auto const& origin : origins) {
-        report.push_back(format_dynamic_array_descriptor_origin(origin));
+    report.reserve(descriptors.size());
+    for (auto const& descriptor : descriptors) {
+        report.push_back(format_dynamic_array_descriptor_summary(descriptor));
     }
     return report;
 }
 
-auto dynamic_array_descriptor_origins_from_semantic_summary(
+auto project_dynamic_array_descriptor_summaries(
     SemanticAnalysisResult const& result
 ) -> std::vector<DynamicArrayDescriptorOrigin> {
     auto origins = std::vector<DynamicArrayDescriptorOrigin> {};

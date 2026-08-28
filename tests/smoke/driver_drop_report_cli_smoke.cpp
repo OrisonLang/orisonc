@@ -869,7 +869,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_blocked_descriptor_origins,
         {
-            "dynamic array descriptor origin DynamicArray<Payload>",
+            "dynamic array descriptor summary DynamicArray<Payload>",
             "owner items",
             "element Payload",
             "(metadata only)",
@@ -982,7 +982,7 @@ int main() {
     assert_success_with_stdout_contains_in_order(
         dynamic_array_blocked_cleanup_audit,
         {
-            "dynamic array descriptor origin DynamicArray<Payload>",
+            "dynamic array descriptor summary DynamicArray<Payload>",
             "dynamic array descriptor cleanup DynamicArray<Payload>",
             "dynamic array descriptor lifetime plan ready origins 1",
             "dynamic array descriptor lifetime DynamicArray<Payload>",
@@ -1054,7 +1054,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_authorized_descriptor_origins,
         {
-            "dynamic array descriptor origin DynamicArray<Payload>",
+            "dynamic array descriptor summary DynamicArray<Payload>",
             "owner items",
             "element Payload",
             "(metadata only)",
@@ -1115,7 +1115,7 @@ int main() {
     assert_success_with_stdout_contains_in_order(
         dynamic_array_authorized_cleanup_audit,
         {
-            "dynamic array descriptor origin DynamicArray<Payload>",
+            "dynamic array descriptor summary DynamicArray<Payload>",
             "dynamic array descriptor cleanup DynamicArray<Payload>",
             "dynamic array descriptor lifetime plan ready origins 1",
             "dynamic array descriptor lifetime DynamicArray<Payload>",
@@ -1155,7 +1155,7 @@ int main() {
     assert_success_with_stdout_contains_in_order(
         dynamic_array_computed_local_same_owner_audit,
         {
-            "dynamic array descriptor origin DynamicArray<UInt32>",
+            "dynamic array descriptor summary DynamicArray<UInt32>",
             "dynamic array descriptor cleanup DynamicArray<UInt32>",
             "dynamic array descriptor lifetime plan ready origins",
             "dynamic array descriptor lifetime DynamicArray<UInt32>",
@@ -1440,7 +1440,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_local_append_audit,
         {
-            "dynamic array descriptor origin DynamicArray<UInt32>",
+            "dynamic array descriptor summary DynamicArray<UInt32>",
             "dynamic array descriptor cleanup DynamicArray<UInt32>",
             "descriptor %items.addr local",
             "function first_value dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",

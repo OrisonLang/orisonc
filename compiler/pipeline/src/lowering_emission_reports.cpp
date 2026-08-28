@@ -348,7 +348,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
     DynamicArrayDescriptorCleanupPlanState const& cleanup_plan_state,
     std::vector<lowering::DynamicArrayDescriptorLifetimePlan> const& lowering_lifetime_plans
 ) -> DynamicArrayDescriptorLifetimePlanState {
-    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(semantic_result);
+    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(semantic_result);
     auto state = DynamicArrayDescriptorLifetimePlanState {};
     state.plans.reserve(descriptor_origins.size());
     state.all_origins_have_cleanup_plans = !descriptor_origins.empty();
@@ -3564,7 +3564,7 @@ void populate_lowering_emission_reports(
         .missing_element_drop_pairs =
             result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
         .descriptor_origins_available =
-            !semantics::dynamic_array_descriptor_origins_from_semantic_summary(result.semantic_result).empty(),
+            !semantics::project_dynamic_array_descriptor_summaries(result.semantic_result).empty(),
         .descriptor_origin_blockers_absent =
             result.dynamic_array_descriptor_lifetime_plan_state.origin_blockers.empty(),
         .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),

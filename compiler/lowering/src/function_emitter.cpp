@@ -902,7 +902,7 @@ auto matching_dynamic_array_descriptor_origin(
         return std::nullopt;
     }
 
-    auto descriptor_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(*semantic_result);
+    auto descriptor_origins = semantics::project_dynamic_array_descriptor_summaries(*semantic_result);
     auto const match = std::ranges::find_if(
         descriptor_origins,
         [&](semantics::DynamicArrayDescriptorOrigin const& origin) {

@@ -24,8 +24,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   shapes.
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
   ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Drop authorization reports and
-  DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI descriptor-origin reports consume
-  summary-backed facts. `SemanticAnalysisResult` no longer exposes the mirrored compatibility descriptor-origin vector.
+  DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI descriptor reports consume
+  summary-backed facts. Semantic descriptor report helpers use descriptor-summary terminology.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; the next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -36,4 +36,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Rename descriptor-origin projection helpers to descriptor-summary terminology when the report surface is updated.
+- Migrate the next cleanup-origin bridge to typed summary facts without changing the Orison syntax surface.

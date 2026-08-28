@@ -36,7 +36,7 @@ auto has_matching_dynamic_array_descriptor_origin(
         return false;
     }
 
-    auto projected_origins = semantics::dynamic_array_descriptor_origins_from_semantic_summary(*semantic_result);
+    auto projected_origins = semantics::project_dynamic_array_descriptor_summaries(*semantic_result);
     return std::ranges::any_of(
         projected_origins,
         [&](semantics::DynamicArrayDescriptorOrigin const& origin) {

@@ -187,13 +187,14 @@ struct SemanticAnalysisResult {
     }
 };
 
-auto format_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin const& origin) -> std::string;
+auto format_dynamic_array_descriptor_summary(SemanticDynamicArrayDescriptorSummary const& descriptor)
+    -> std::string;
 
-auto format_dynamic_array_descriptor_origin_report(
-    std::vector<DynamicArrayDescriptorOrigin> const& origins
+auto format_dynamic_array_descriptor_summary_report(
+    std::vector<SemanticDynamicArrayDescriptorSummary> const& descriptors
 ) -> std::vector<std::string>;
 
-auto dynamic_array_descriptor_origins_from_semantic_summary(
+auto project_dynamic_array_descriptor_summaries(
     SemanticAnalysisResult const& result
 ) -> std::vector<DynamicArrayDescriptorOrigin>;
 

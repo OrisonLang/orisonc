@@ -13548,10 +13548,10 @@ void test_dynamic_array_binding_planned_drop_sites_success() {
     );
     assert(analysis.semantic_module.dynamic_array_descriptors.front().line == 4);
     assert(
-        orison::semantics::format_dynamic_array_descriptor_origin(
-            orison::semantics::dynamic_array_descriptor_origins_from_semantic_summary(analysis).front()
+        orison::semantics::format_dynamic_array_descriptor_summary(
+            analysis.semantic_module.dynamic_array_descriptors.front()
         ) ==
-        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 4 origin parameter "
+        "dynamic array descriptor summary DynamicArray<Payload> owner items element Payload at line 4 origin parameter "
         "(metadata only)"
     );
     assert(analysis.planned_drop_sites.size() == 2);
@@ -13582,10 +13582,10 @@ void test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success()
     assert(analysis.semantic_module.dynamic_array_descriptors.size() == 1);
     assert(analysis.semantic_module.dynamic_array_descriptors.front().element_source_type_name == "UInt32");
     assert(
-        orison::semantics::format_dynamic_array_descriptor_origin_report(
-            orison::semantics::dynamic_array_descriptor_origins_from_semantic_summary(analysis)
+        orison::semantics::format_dynamic_array_descriptor_summary_report(
+            analysis.semantic_module.dynamic_array_descriptors
         ).front() ==
-        "dynamic array descriptor origin DynamicArray<UInt32> owner words element UInt32 at line 2 origin parameter "
+        "dynamic array descriptor summary DynamicArray<UInt32> owner words element UInt32 at line 2 origin parameter "
         "(metadata only)"
     );
     assert(analysis.planned_drop_sites.size() == 1);
@@ -13618,10 +13618,10 @@ void test_local_dynamic_array_descriptor_origin_kind_success() {
         orison::semantics::DynamicArrayDescriptorOriginKind::local_binding
     );
     assert(
-        orison::semantics::format_dynamic_array_descriptor_origin_report(
-            orison::semantics::dynamic_array_descriptor_origins_from_semantic_summary(analysis)
+        orison::semantics::format_dynamic_array_descriptor_summary_report(
+            analysis.semantic_module.dynamic_array_descriptors
         ).front() ==
-        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 5 origin local "
+        "dynamic array descriptor summary DynamicArray<Payload> owner items element Payload at line 5 origin local "
         "(metadata only)"
     );
 }
@@ -13651,10 +13651,10 @@ void test_returned_dynamic_array_descriptor_origin_kind_success() {
         orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding
     );
     assert(
-        orison::semantics::format_dynamic_array_descriptor_origin_report(
-            orison::semantics::dynamic_array_descriptor_origins_from_semantic_summary(analysis)
+        orison::semantics::format_dynamic_array_descriptor_summary_report(
+            analysis.semantic_module.dynamic_array_descriptors
         ).front() ==
-        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 7 origin returned "
+        "dynamic array descriptor summary DynamicArray<Payload> owner items element Payload at line 7 origin returned "
         "(metadata only)"
     );
 }

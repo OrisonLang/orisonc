@@ -2908,3 +2908,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   direct fixture writes to the compatibility descriptor-origin vector.
 - 2026-08-27: `SemanticAnalysisResult` no longer exposes the mirrored DynamicArray descriptor-origin vector; descriptor
   reports are projected from `semantic_module.dynamic_array_descriptors`.
+- 2026-08-27: Semantic DynamicArray descriptor report helpers now use descriptor-summary terminology and report directly
+  from `semantic_module.dynamic_array_descriptors`; lowering retains only a narrow cleanup-origin projection bridge.
