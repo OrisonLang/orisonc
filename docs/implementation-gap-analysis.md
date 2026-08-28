@@ -29,8 +29,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   planned-drop or descriptor-origin vectors. The descriptor projection helper has been removed. Internal DynamicArray
   descriptor lifetime/readiness state now uses summary binding terminology.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
-  field paths; shared production defaults now cover construction, index, append, cleanup, and runtime-index member
-  cleanup. The next risk is broader computed-owner composition outside the audited shapes.
+  field paths; shared production defaults now cover construction, index, append, cleanup, computed `for`, and
+  runtime-index member cleanup. The next risk is broader computed-owner composition outside the audited shapes.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
@@ -40,4 +40,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 ## Suggested Next Step
 
 - Migrate source Drop cleanup-shape expectations deliberately before considering source Drop as a shared production
-  default; then audit computed `for` production gates separately.
+  default.
