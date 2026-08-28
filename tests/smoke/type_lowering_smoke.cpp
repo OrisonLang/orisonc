@@ -223,21 +223,21 @@ int main() {
             context
     );
     assert(dynamic_array_bound_parameter_lifetime_plan.has_value());
-    auto bound_parameter_origin = orison::semantics::DynamicArrayDescriptorOrigin {
+    auto bound_parameter_descriptor = orison::semantics::SemanticDynamicArrayDescriptorSummary {
+        .line = 12,
         .owner_name = "items",
         .source_type_name = "DynamicArray<Payload>",
         .element_source_type_name = "Payload",
         .origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::parameter_binding,
-        .line = 12,
     };
-    auto dynamic_array_bound_parameter_origin_lifetime_plan =
+    auto dynamic_array_bound_parameter_descriptor_lifetime_plan =
         orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
-            bound_parameter_origin,
+            bound_parameter_descriptor,
             "%items.bound.addr",
             true,
             context
         );
-    assert(dynamic_array_bound_parameter_origin_lifetime_plan.has_value());
+    assert(dynamic_array_bound_parameter_descriptor_lifetime_plan.has_value());
     assert(dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.owner_name == "items");
     assert(
         dynamic_array_bound_parameter_lifetime_plan->descriptor_cleanup.descriptor_storage_name ==
@@ -266,11 +266,11 @@ int main() {
             context
         ).has_value()
     );
-    auto local_origin = bound_parameter_origin;
-    local_origin.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::local_binding;
+    auto local_descriptor = bound_parameter_descriptor;
+    local_descriptor.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::local_binding;
     assert(
         !orison::lowering::plan_dynamic_array_bound_parameter_lifetime(
-            local_origin,
+            local_descriptor,
             "%items.bound.addr",
             true,
             context
@@ -286,14 +286,14 @@ int main() {
             returned_cleanup_plan
         );
     assert(dynamic_array_returned_lifetime_plan.has_value());
-    auto returned_origin = bound_parameter_origin;
-    returned_origin.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding;
-    auto dynamic_array_returned_origin_lifetime_plan =
+    auto returned_descriptor = bound_parameter_descriptor;
+    returned_descriptor.origin_kind = orison::semantics::DynamicArrayDescriptorOriginKind::returned_binding;
+    auto dynamic_array_returned_descriptor_summary_lifetime_plan =
         orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
-            returned_origin,
+            returned_descriptor,
             returned_cleanup_plan
         );
-    assert(dynamic_array_returned_origin_lifetime_plan.has_value());
+    assert(dynamic_array_returned_descriptor_summary_lifetime_plan.has_value());
     assert(dynamic_array_returned_lifetime_plan->descriptor_cleanup.owner_name == "items");
     assert(
         dynamic_array_returned_lifetime_plan->descriptor_cleanup.descriptor_storage_status ==
@@ -325,20 +325,20 @@ int main() {
     );
     assert(
         !orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
-            local_origin,
+            local_descriptor,
             returned_cleanup_plan
         ).has_value()
     );
-    auto mismatched_returned_origin = returned_origin;
-    mismatched_returned_origin.owner_name = "other";
+    auto mismatched_returned_descriptor = returned_descriptor;
+    mismatched_returned_descriptor.owner_name = "other";
     assert(
         !orison::lowering::plan_dynamic_array_returned_descriptor_lifetime(
-            mismatched_returned_origin,
+            mismatched_returned_descriptor,
             returned_cleanup_plan
         ).has_value()
     );
     auto descriptor_lifetime_plan =
-        orison::lowering::plan_dynamic_array_descriptor_lifetime(returned_origin, &returned_cleanup_plan);
+        orison::lowering::plan_dynamic_array_descriptor_lifetime(returned_descriptor, &returned_cleanup_plan);
     assert(descriptor_lifetime_plan.cleanup_plan_available);
     assert(descriptor_lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup");
     assert(

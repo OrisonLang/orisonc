@@ -37,4 +37,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Migrate remaining runtime compatibility-origin APIs when their direct callers no longer need that shape.
+- Rename remaining descriptor origin-kind and blocker identifiers to descriptor-summary terminology where this does not
+  churn report output.

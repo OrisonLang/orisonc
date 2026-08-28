@@ -29,8 +29,9 @@ DynamicArray lifetime planning, lowering cleanup matching, pipeline readiness re
 consume semantic summary descriptor facts directly. Direct lowering fixtures now construct semantic summary descriptor facts.
 `SemanticAnalysisResult` no longer exposes the mirrored compatibility planned-drop or descriptor-origin vectors.
 Semantic descriptor report helpers now use descriptor-summary terminology. The DynamicArray descriptor projection helper
-has been removed; compatibility origin records remain only where runtime-level APIs or fixtures explicitly model them.
+and runtime origin overloads have been removed.
 
 ## Follow-up work
 
-- Migrate remaining runtime compatibility-origin APIs when their direct callers no longer need that shape.
+- Rename remaining descriptor origin-kind and blocker identifiers to descriptor-summary terminology where this does not
+  churn report output.

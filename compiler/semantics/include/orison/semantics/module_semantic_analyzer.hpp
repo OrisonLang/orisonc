@@ -36,14 +36,6 @@ enum class DynamicArrayDescriptorOriginKind {
     returned_binding,
 };
 
-struct DynamicArrayDescriptorOrigin {
-    std::string owner_name;
-    std::string source_type_name;
-    std::string element_source_type_name;
-    DynamicArrayDescriptorOriginKind origin_kind = DynamicArrayDescriptorOriginKind::local_binding;
-    std::size_t line = 0;
-};
-
 enum class SemanticFunctionKind {
     source_function,
     foreign_import_function,

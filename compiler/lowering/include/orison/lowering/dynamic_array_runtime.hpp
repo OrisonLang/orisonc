@@ -122,7 +122,7 @@ auto plan_dynamic_array_bound_parameter_lifetime(
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;
 
 auto plan_dynamic_array_bound_parameter_lifetime(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     std::string_view descriptor_storage_name,
     bool drop_proof_available,
     LoweringContext const& context,
@@ -136,14 +136,9 @@ auto plan_dynamic_array_returned_descriptor_lifetime(
 ) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan>;
 
 auto plan_dynamic_array_returned_descriptor_lifetime(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
 ) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan>;
-
-auto plan_dynamic_array_descriptor_lifetime(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
-    DynamicArrayDescriptorCleanupPlan const* cleanup_plan
-) -> DynamicArrayDescriptorLifetimePlan;
 
 auto plan_dynamic_array_descriptor_lifetime(
     semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
@@ -154,11 +149,6 @@ auto dynamic_array_descriptor_lifetime_source_type_matches(
     std::string_view origin_source_type_name,
     std::string_view lowered_source_type_name
 ) -> bool;
-
-auto matching_dynamic_array_descriptor_lifetime_plan(
-    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
-    semantics::DynamicArrayDescriptorOrigin const& origin
-) -> DynamicArrayDescriptorLifetimePlan const*;
 
 auto matching_dynamic_array_descriptor_lifetime_plan(
     std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,

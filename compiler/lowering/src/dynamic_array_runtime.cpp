@@ -275,18 +275,18 @@ auto plan_dynamic_array_bound_parameter_lifetime(
 }
 
 auto plan_dynamic_array_bound_parameter_lifetime(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     std::string_view descriptor_storage_name,
     bool drop_proof_available,
     LoweringContext const& context,
     TargetLayout const& layout
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan> {
-    if (origin.origin_kind != semantics::DynamicArrayDescriptorOriginKind::parameter_binding) {
+    if (descriptor.origin_kind != semantics::DynamicArrayDescriptorOriginKind::parameter_binding) {
         return std::nullopt;
     }
     return plan_dynamic_array_bound_parameter_lifetime(
-        origin.owner_name,
-        origin.source_type_name,
+        descriptor.owner_name,
+        descriptor.source_type_name,
         descriptor_storage_name,
         drop_proof_available,
         context,
@@ -321,38 +321,17 @@ auto plan_dynamic_array_returned_descriptor_lifetime(
 }
 
 auto plan_dynamic_array_returned_descriptor_lifetime(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
+    semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     DynamicArrayDescriptorCleanupPlan const& candidate_cleanup
 ) -> std::optional<DynamicArrayReturnedDescriptorLifetimePlan> {
-    if (origin.origin_kind != semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
+    if (descriptor.origin_kind != semantics::DynamicArrayDescriptorOriginKind::returned_binding) {
         return std::nullopt;
     }
     return plan_dynamic_array_returned_descriptor_lifetime(
-        origin.owner_name,
-        origin.source_type_name,
+        descriptor.owner_name,
+        descriptor.source_type_name,
         candidate_cleanup
     );
-}
-
-auto plan_dynamic_array_descriptor_lifetime(
-    semantics::DynamicArrayDescriptorOrigin const& origin,
-    DynamicArrayDescriptorCleanupPlan const* cleanup_plan
-) -> DynamicArrayDescriptorLifetimePlan {
-    auto plan = DynamicArrayDescriptorLifetimePlan {
-        .owner_name = origin.owner_name,
-        .source_type_name = origin.source_type_name,
-        .element_source_type_name = origin.element_source_type_name,
-        .origin_kind = origin.origin_kind,
-        .cleanup_responsibility =
-            dynamic_array_descriptor_lifetime_cleanup_responsibility(origin.origin_kind),
-        .cleanup_plan_available = cleanup_plan != nullptr,
-        .source_line = origin.line,
-    };
-    if (cleanup_plan != nullptr) {
-        plan.descriptor_storage_status = cleanup_plan->descriptor_storage_status;
-        plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
-    }
-    return plan;
 }
 
 auto plan_dynamic_array_descriptor_lifetime(
@@ -394,29 +373,6 @@ auto dynamic_array_descriptor_lifetime_source_type_matches(
             origin_sequence->element_source_type_name,
             lowered_sequence->element_source_type_name
         );
-}
-
-auto matching_dynamic_array_descriptor_lifetime_plan(
-    std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
-    semantics::DynamicArrayDescriptorOrigin const& origin
-) -> DynamicArrayDescriptorLifetimePlan const* {
-    auto const match = std::find_if(
-        lifetime_plans.begin(),
-        lifetime_plans.end(),
-        [&](DynamicArrayDescriptorLifetimePlan const& lifetime_plan) {
-            return lifetime_plan.owner_name == origin.owner_name &&
-                dynamic_array_descriptor_lifetime_source_type_matches(
-                    lifetime_plan.source_type_name,
-                    origin.source_type_name
-                ) &&
-                generic_source_type_pattern_matches(
-                    lifetime_plan.element_source_type_name,
-                    origin.element_source_type_name
-                ) &&
-                lifetime_plan.origin_kind == origin.origin_kind;
-        }
-    );
-    return match == lifetime_plans.end() ? nullptr : &*match;
 }
 
 auto matching_dynamic_array_descriptor_lifetime_plan(
