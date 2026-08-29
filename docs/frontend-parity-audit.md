@@ -2959,3 +2959,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   move, and DynamicArray production gates under the same default option path.
 - 2026-08-29: Runtime-index cleanup audit driver options and fully-enabled constructor move smoke calls now derive from
   shared production pipeline defaults, adding only audit/module-rewrite overrides where the test needs them.
+- 2026-08-29: Runtime-index staged member-cleanup gate tests now use named helpers for audit-only, IR-mutation, and
+  production-gate request states while deriving their base behavior from shared production defaults.

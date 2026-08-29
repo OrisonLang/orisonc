@@ -2390,6 +2390,8 @@ representation.
   DynamicArray production gates under the same default option path.
 - Runtime-index cleanup audit driver options and fully-enabled constructor move smoke calls now derive from shared
   production pipeline defaults, adding only audit/module-rewrite overrides where the test needs them.
+- Runtime-index staged member-cleanup gate tests now use named helpers for audit-only, IR-mutation, and production-gate
+  request states while deriving their base behavior from shared production defaults.
 
 ## Follow-up work
 
