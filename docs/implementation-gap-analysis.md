@@ -39,5 +39,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Fix the source Drop aggregate-cleanup double-free path by proving moved-field finalization before aggregate Drop
-  delegation; keep source Drop out of shared production defaults until run-level smoke coverage passes.
+- Continue source Drop migration by auditing returned fixed-array aggregate cleanup under explicit source Drop opt-in;
+  keep source Drop out of shared production defaults until the broader cleanup-shape set has run-level coverage.

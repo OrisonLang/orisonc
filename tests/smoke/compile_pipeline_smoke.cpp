@@ -443,6 +443,23 @@ void assert_emit_object_link_run_success(
     assert(WEXITSTATUS(status) == 0);
 }
 
+void assert_production_source_drop_emit_object_link_run_success(
+    orison::pipeline::CompilePipeline& pipeline,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& executable_path
+) {
+    auto options = orison::pipeline::production_compile_pipeline_options();
+    options.source_drop_lowering_enabled = true;
+    auto object = pipeline.emit_object(source_path, options);
+    assert(!object.has_errors());
+    assert(!object.object_bytes.empty());
+    auto link = orison::link::HostLinker {}.link(object.object_bytes, executable_path);
+    assert(!link.has_errors());
+    auto status = std::system(executable_path.string().c_str());
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == 0);
+}
+
 void assert_line_contains(
     std::vector<std::string> const& lines,
     std::size_t index,
@@ -1318,6 +1335,12 @@ auto main() -> int {
     orison::pipeline::CompilePipeline pipeline;
     test_no_option_pipeline_emission_uses_production_defaults(pipeline);
     assert_aggregate_projection_access_plan_state(pipeline, smoke_temp_root);
+    assert_production_source_drop_emit_object_link_run_success(
+        pipeline,
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or",
+        smoke_temp_root / "dynamic_array_owned_constructor_fixed_array_record_field_move_source_drop"
+    );
 
     auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
 

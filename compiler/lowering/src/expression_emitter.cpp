@@ -3,6 +3,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/call_emitter.hpp"
+#include "orison/lowering/cleanup_plan_owner.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
@@ -400,6 +401,7 @@ void mark_constructor_owned_argument_cleanup_consumed(
             session.state,
             session.state.ownership_transfers
         );
+        release_moved_owned_cleanup_expression(argument, session.state);
         return;
     }
 

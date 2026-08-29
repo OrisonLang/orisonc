@@ -230,6 +230,8 @@ representation.
   `dynamic_array_owned_constructor_fixed_array_record_field_move_run.or` when aggregate Drop cleanup replaced inline
   field cleanup. Source Drop remains opt-in until moved-field finalization and aggregate Drop delegation are proven
   together.
+- Constructor-owned aggregate arguments now release moved cleanup ownership through the shared moved-cleanup expression
+  helper, suppressing stale fixed-array local source Drop cleanup after those values move into records.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

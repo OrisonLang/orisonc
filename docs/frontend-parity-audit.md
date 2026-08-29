@@ -2935,3 +2935,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `dynamic_array_owned_constructor_fixed_array_record_field_move_run.or` when aggregate Drop cleanup replaced inline
   field cleanup. Promotion now requires a proof fix for moved-field finalization plus aggregate Drop delegation before
   source Drop can join shared production defaults.
+- 2026-08-28: Constructor-owned aggregate arguments now release moved cleanup ownership through the shared moved-cleanup
+  expression helper. The fixed-array record-field move fixture links and runs with production defaults plus explicit
+  source Drop opt-in.
