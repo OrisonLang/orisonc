@@ -2969,3 +2969,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   that preserve the old gate boundaries while removing repeated option literals.
 - 2026-08-29: Runtime-index source-drop audit-only and rewrite-execution-only staged checks now use named option helpers
   that keep the gate shape explicit without repeating raw option literals.
+- 2026-08-29: The remaining runtime-index option-literal audit found no further helper cleanup that improves
+  staged-gate clarity. The new smoke guard pins the source-drop audit-only and rewrite-execution-only helper states.

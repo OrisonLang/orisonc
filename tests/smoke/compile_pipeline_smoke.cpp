@@ -1392,6 +1392,19 @@ auto runtime_indexed_cleanup_production_gate_request_options() ->
     return options;
 }
 
+void test_runtime_indexed_cleanup_option_helpers() {
+    auto const audit_only = runtime_indexed_cleanup_source_drop_audit_options();
+    assert(audit_only.source_drop_lowering_enabled);
+    assert(audit_only.collect_runtime_indexed_cleanup_audit);
+    assert(!audit_only.runtime_indexed_member_cleanup_rewrite_execution_enabled);
+
+    auto const rewrite_execution =
+        runtime_indexed_cleanup_rewrite_execution_only_options();
+    assert(rewrite_execution.source_drop_lowering_enabled);
+    assert(rewrite_execution.collect_runtime_indexed_cleanup_audit);
+    assert(rewrite_execution.runtime_indexed_member_cleanup_rewrite_execution_enabled);
+}
+
 void assert_runtime_indexed_constructor_move_shape_faults(
     orison::pipeline::CompilePipeline& pipeline,
     std::filesystem::path const& path,
@@ -1420,6 +1433,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 
 auto main() -> int {
     test_production_compile_pipeline_options_gate_promotions();
+    test_runtime_indexed_cleanup_option_helpers();
     assert_computed_cleanup_proof_model_reusable_without_reports();
     assert_consumed_descriptor_finalization_readiness_typed();
 

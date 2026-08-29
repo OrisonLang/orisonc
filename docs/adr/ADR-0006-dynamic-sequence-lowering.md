@@ -2400,6 +2400,8 @@ representation.
   the old gate boundaries while removing repeated option literals.
 - Runtime-index source-drop audit-only and rewrite-execution-only staged checks now use named option helpers, keeping
   those gate boundaries visible while removing repeated raw option literals.
+- The remaining runtime-index option-literal audit found no further helper cleanup that improves staged-gate clarity.
+  Smoke coverage now pins the source-drop audit-only and rewrite-execution-only helper states directly.
 
 ## Follow-up work
 
