@@ -262,6 +262,8 @@ representation.
 - Computed DynamicArray ownership planning can unwrap source-proven descriptor-forwarding helper calls. The proof is
   limited to helpers whose final value expression returns the matching DynamicArray parameter directly or through
   another proven helper call.
+- Returned DynamicArray descriptors moved through local alias chains before return are covered by the existing caller
+  cleanup handoff and computed-loop final-use cleanup path.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.
