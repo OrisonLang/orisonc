@@ -215,6 +215,7 @@ struct RuntimeIndexedMemberCleanupPlan {
     bool member_granular_cleanup_required = false;
     bool prerequisites_met = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupPlan const&) const -> bool = default;
 };
@@ -232,6 +233,7 @@ struct RuntimeIndexedMemberCleanupProof {
     bool whole_element_cleanup_blocked = false;
     bool prerequisites_met = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupProof const&) const -> bool = default;
 };
@@ -246,6 +248,7 @@ struct RuntimeIndexedMemberCleanupEmissionSketch {
     bool proof_ready = false;
     bool report_only = true;
     bool production_emission_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupEmissionSketch const&) const -> bool = default;
 };
@@ -260,6 +263,7 @@ struct RuntimeIndexedMemberCleanupTarget {
     std::string drop_metadata_symbol_name;
     bool metadata_ready = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupTarget const&) const -> bool = default;
 };
@@ -311,6 +315,7 @@ struct RuntimeIndexedMemberCleanupEmissionGate {
     bool ir_insertion_ready = false;
     bool prerequisites_met = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupEmissionGate const&) const -> bool = default;
 };
@@ -332,6 +337,7 @@ struct RuntimeIndexedMemberCleanupIrInsertionPlan {
     bool insertion_points_named = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupIrInsertionPlan const&) const -> bool = default;
 };
@@ -355,6 +361,7 @@ struct RuntimeIndexedMemberCleanupIrCompositionPlan {
     bool preview_operations_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupIrCompositionPlan const&) const -> bool = default;
 };
@@ -377,6 +384,7 @@ struct RuntimeIndexedMemberCleanupCfgSlice {
     bool slice_rendered = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupCfgSlice const&) const -> bool = default;
 };
@@ -405,6 +413,7 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteCandidate {
     bool candidate_verified = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteCandidate const&) const -> bool = default;
 };
@@ -436,6 +445,7 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan {
     bool edit_script_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const&) const -> bool = default;
 };
@@ -457,6 +467,7 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation {
     bool validation_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const&) const -> bool = default;
 };
@@ -481,6 +492,7 @@ struct RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan {
     bool phi_retarget_applied = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const&) const -> bool = default;
 };
@@ -505,6 +517,7 @@ struct RuntimeIndexedMemberCleanupModuleMutationGate {
     bool production_member_cleanup_enabled = false;
     bool prerequisites_met = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupModuleMutationGate const&) const -> bool = default;
 };
@@ -525,6 +538,7 @@ struct RuntimeIndexedMemberCleanupProductionReadiness {
     bool production_gate_ready = false;
     bool production_enabled = false;
     bool production_ready = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupProductionReadiness const&) const -> bool = default;
 };
@@ -545,6 +559,7 @@ struct RuntimeIndexedMemberCleanupPromotionChecklist {
     bool promotion_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupPromotionChecklist const&) const -> bool = default;
 };
@@ -563,6 +578,7 @@ struct RuntimeIndexedMemberCleanupPromotionSeam {
     bool promotion_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupPromotionSeam const&) const -> bool = default;
 };
@@ -582,6 +598,7 @@ struct RuntimeIndexedMemberCleanupTypedPromotionGate {
     bool gate_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupTypedPromotionGate const&) const -> bool = default;
 };
@@ -613,6 +630,7 @@ struct RuntimeIndexedMemberCleanupMutationOperationPlan {
     bool operations_applied = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationOperationPlan const&) const -> bool = default;
 };
@@ -635,6 +653,7 @@ struct RuntimeIndexedMemberCleanupMutationOperationValidation {
     bool validation_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationOperationValidation const&) const -> bool = default;
 };
@@ -657,6 +676,7 @@ struct RuntimeIndexedMemberCleanupMutationConflictDetection {
     bool apply_allowed = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationConflictDetection const&) const -> bool = default;
 };
@@ -677,6 +697,7 @@ struct RuntimeIndexedMemberCleanupMutationApplyAuthorization {
     bool apply_authorized = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationApplyAuthorization const&) const -> bool = default;
 };
@@ -705,6 +726,7 @@ struct RuntimeIndexedMemberCleanupMutationApplyPreview {
     bool actions_applied = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationApplyPreview const&) const -> bool = default;
 };
@@ -724,6 +746,7 @@ struct RuntimeIndexedMemberCleanupMutationPostApplyVerification {
     bool verification_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationPostApplyVerification const&) const -> bool = default;
 };
@@ -750,6 +773,7 @@ struct RuntimeIndexedMemberCleanupMutationPromotionSummary {
     bool promotion_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationPromotionSummary const&) const -> bool = default;
 };
@@ -769,6 +793,7 @@ struct RuntimeIndexedMemberCleanupMutationProductionReadiness {
     bool readiness_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationProductionReadiness const&) const -> bool = default;
 };
@@ -785,6 +810,7 @@ struct RuntimeIndexedMemberCleanupMutationReadinessVerdict {
     bool guarded_rewrite_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationReadinessVerdict const&) const -> bool = default;
 };
@@ -803,6 +829,7 @@ struct RuntimeIndexedMemberCleanupMutationRewriteAuthorization {
     bool rewrite_authorized = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationRewriteAuthorization const&) const -> bool = default;
 };
@@ -822,6 +849,7 @@ struct RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan {
     bool execution_enabled = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationRewriteExecutionPlan const&) const -> bool = default;
 };
@@ -838,6 +866,7 @@ struct RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict {
     bool execution_enabled = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict const&) const -> bool = default;
 };
@@ -856,6 +885,7 @@ struct RuntimeIndexedMemberCleanupMutationRewritePromotionStatus {
     bool promotion_ready = false;
     bool report_only = true;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupMutationRewritePromotionStatus const&) const -> bool = default;
 };

@@ -78,6 +78,12 @@ auto dotted_path(std::vector<std::string> const& path) -> std::string {
     return output.str();
 }
 
+auto append_source_line(std::ostringstream& report, std::size_t source_line) -> void {
+    if (source_line != 0) {
+        report << " source-line " << source_line;
+    }
+}
+
 auto member_cleanup_target_symbol_from_preview_operations(
     std::vector<std::string> const& preview_operations
 ) -> std::string {
@@ -863,6 +869,7 @@ auto runtime_indexed_member_cleanup_plan(
             moved_member_path_known &&
             cleanup_element_matches_move,
         .production_enabled = false,
+        .source_line = owner.source_line,
     };
 }
 
@@ -912,6 +919,7 @@ auto runtime_indexed_member_cleanup_proof(
         .whole_element_cleanup_blocked = whole_element_cleanup_blocked,
         .prerequisites_met = member_scope_proven && whole_element_cleanup_blocked,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -963,6 +971,7 @@ auto runtime_indexed_member_cleanup_emission_sketch(
         .proof_ready = proof.prerequisites_met,
         .report_only = true,
         .production_emission_enabled = false,
+        .source_line = proof.source_line,
     };
 }
 
@@ -1006,6 +1015,7 @@ auto runtime_indexed_member_cleanup_targets(
                 sketch.element_source_type_name + ".except." + member_path,
             .metadata_ready = true,
             .production_enabled = false,
+            .source_line = sketch.source_line,
         },
     };
 }
@@ -1064,6 +1074,7 @@ auto runtime_indexed_member_cleanup_emission_gate(
         .ir_insertion_ready = false,
         .prerequisites_met = false,
         .production_enabled = false,
+        .source_line = sketch.source_line,
     };
 }
 
@@ -1123,6 +1134,7 @@ auto runtime_indexed_member_cleanup_ir_insertion_plan(
         .insertion_points_named = insertion_points_named,
         .report_only = true,
         .production_enabled = false,
+        .source_line = gate.source_line,
     };
 }
 
@@ -1209,6 +1221,7 @@ auto runtime_indexed_member_cleanup_ir_composition_plan(
         .preview_operations_ready = preview_operations_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -1289,6 +1302,7 @@ auto runtime_indexed_member_cleanup_cfg_slice(
         .slice_rendered = composition_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -1380,6 +1394,7 @@ auto runtime_indexed_member_cleanup_function_rewrite_candidate(
         .candidate_verified = candidate_verified,
         .report_only = true,
         .production_enabled = false,
+        .source_line = slice.source_line,
     };
 }
 
@@ -1465,6 +1480,7 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan(
         .edit_script_ready = edit_script_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = candidate.source_line,
     };
 }
 
@@ -1562,6 +1578,7 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation(
         .validation_ready = validation_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -1653,6 +1670,7 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan(
         .phi_retarget_applied = false,
         .report_only = true,
         .production_enabled = false,
+        .source_line = validation.source_line,
     };
 }
 
@@ -1750,6 +1768,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate(
         .production_member_cleanup_enabled = false,
         .prerequisites_met = false,
         .production_enabled = false,
+        .source_line = slice.source_line,
     };
 }
 
@@ -1890,6 +1909,7 @@ auto runtime_indexed_member_cleanup_production_readiness(
         .production_gate_ready = production_gate_ready,
         .production_enabled = gate.production_enabled,
         .production_ready = production_ready,
+        .source_line = proof.source_line,
     };
 }
 
@@ -2033,6 +2053,7 @@ auto runtime_indexed_member_cleanup_promotion_checklist(
         .promotion_ready = promotion_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = candidate.source_line,
     };
 }
 
@@ -2116,6 +2137,7 @@ auto runtime_indexed_member_cleanup_typed_promotion_gate(
         .gate_ready = gate_ready,
         .report_only = !gate_ready,
         .production_enabled = gate_ready,
+        .source_line = checklist.source_line,
     };
 }
 
@@ -2175,6 +2197,7 @@ auto runtime_indexed_member_cleanup_promotion_seam(
         .promotion_ready = gate.gate_ready,
         .report_only = gate.report_only,
         .production_enabled = gate.production_enabled,
+        .source_line = gate.source_line,
     };
 }
 
@@ -2261,6 +2284,7 @@ auto runtime_indexed_member_cleanup_mutation_operation_plan(
         .operations_applied = operations_applied,
         .report_only = true,
         .production_enabled = false,
+        .source_line = seam.source_line,
     };
 }
 
@@ -2272,8 +2296,9 @@ auto runtime_indexed_member_cleanup_mutation_operation_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " seam " << (plan.seam_selected ? "selected" : "blocked")
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " seam " << (plan.seam_selected ? "selected" : "blocked")
            << " operations " << plan.operations.size()
            << " operations-ready " << (plan.operations_ready ? "ready" : "blocked")
            << " operations-applied " << (plan.operations_applied ? "true" : "false")
@@ -2366,6 +2391,7 @@ auto runtime_indexed_member_cleanup_mutation_operation_validation(
         .validation_ready = validation_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -2377,8 +2403,9 @@ auto runtime_indexed_member_cleanup_mutation_operation_validation_report(
            << " index " << validation.index_expression_text
            << " element " << validation.element_source_type_name
            << " moved " << validation.moved_source_type_name
-           << " member-path " << dotted_path(validation.moved_member_path)
-           << " seam " << (validation.seam_selected ? "selected" : "blocked")
+           << " member-path " << dotted_path(validation.moved_member_path);
+    append_source_line(report, validation.source_line);
+    report << " seam " << (validation.seam_selected ? "selected" : "blocked")
            << " count " << (validation.operation_count_valid ? "valid" : "blocked")
            << " order " << (validation.operation_order_valid ? "valid" : "blocked")
            << " branch-replacement-fields "
@@ -2447,6 +2474,7 @@ auto runtime_indexed_member_cleanup_mutation_conflict_detection(
         .apply_allowed = false,
         .report_only = true,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -2458,8 +2486,9 @@ auto runtime_indexed_member_cleanup_mutation_conflict_detection_report(
            << " index " << detection.index_expression_text
            << " element " << detection.element_source_type_name
            << " moved " << detection.moved_source_type_name
-           << " member-path " << dotted_path(detection.moved_member_path)
-           << " validation " << (detection.validation_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(detection.moved_member_path);
+    append_source_line(report, detection.source_line);
+    report << " validation " << (detection.validation_ready ? "ready" : "blocked")
            << " branch-anchor-matches " << detection.branch_anchor_match_count
            << " branch-anchor " << (detection.branch_anchor_unique ? "unique" : "blocked")
            << " closing-anchor-matches " << detection.closing_anchor_match_count
@@ -2535,6 +2564,7 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization(
         .apply_authorized = apply_authorized,
         .report_only = !apply_authorized,
         .production_enabled = apply_authorized,
+        .source_line = detection.source_line,
     };
 }
 
@@ -2547,8 +2577,9 @@ auto runtime_indexed_member_cleanup_mutation_apply_authorization_report(
            << " index " << authorization.index_expression_text
            << " element " << authorization.element_source_type_name
            << " moved " << authorization.moved_source_type_name
-           << " member-path " << dotted_path(authorization.moved_member_path)
-           << " validation " << (authorization.validation_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(authorization.moved_member_path);
+    append_source_line(report, authorization.source_line);
+    report << " validation " << (authorization.validation_ready ? "ready" : "blocked")
            << " conflict-free " << (authorization.conflict_free ? "true" : "false")
            << " ir-mutation " << (authorization.ir_mutation_requested ? "requested" : "blocked")
            << " production-gate " << (authorization.production_gate_enabled ? "enabled" : "disabled")
@@ -2610,6 +2641,7 @@ auto runtime_indexed_member_cleanup_mutation_apply_preview(
         .actions_applied = actions_applied,
         .report_only = !actions_applied,
         .production_enabled = actions_applied,
+        .source_line = authorization.source_line,
     };
 }
 
@@ -2621,8 +2653,9 @@ auto runtime_indexed_member_cleanup_mutation_apply_preview_report(
            << " index " << preview.index_expression_text
            << " element " << preview.element_source_type_name
            << " moved " << preview.moved_source_type_name
-           << " member-path " << dotted_path(preview.moved_member_path)
-           << " authorization " << (preview.authorization_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(preview.moved_member_path);
+    append_source_line(report, preview.source_line);
+    report << " authorization " << (preview.authorization_ready ? "ready" : "blocked")
            << " apply-authorized " << (preview.apply_authorized ? "true" : "false")
            << " preview " << (preview.preview_ready ? "ready" : "blocked")
            << " actions " << preview.actions.size()
@@ -2689,6 +2722,7 @@ auto runtime_indexed_member_cleanup_mutation_post_apply_verification(
         .verification_ready = expected_checks_ready && preview.apply_authorized && preview.actions_applied,
         .report_only = !(expected_checks_ready && preview.apply_authorized && preview.actions_applied),
         .production_enabled = expected_checks_ready && preview.apply_authorized && preview.actions_applied,
+        .source_line = preview.source_line,
     };
 }
 
@@ -2701,8 +2735,9 @@ auto runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
            << " index " << verification.index_expression_text
            << " element " << verification.element_source_type_name
            << " moved " << verification.moved_source_type_name
-           << " member-path " << dotted_path(verification.moved_member_path)
-           << " preview " << (verification.preview_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(verification.moved_member_path);
+    append_source_line(report, verification.source_line);
+    report << " preview " << (verification.preview_ready ? "ready" : "blocked")
            << " apply-authorized " << (verification.apply_authorized ? "true" : "false")
            << " actions-applied " << (verification.actions_applied ? "true" : "false")
            << " expected-checks " << verification.expected_checks.size()
@@ -2789,6 +2824,7 @@ auto runtime_indexed_member_cleanup_mutation_promotion_summary(
         .promotion_ready = promotion_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = verification.source_line,
     };
 }
 
@@ -2801,8 +2837,9 @@ auto runtime_indexed_member_cleanup_mutation_promotion_summary_report(
            << " index " << summary.index_expression_text
            << " element " << summary.element_source_type_name
            << " moved " << summary.moved_source_type_name
-           << " member-path " << dotted_path(summary.moved_member_path)
-           << " operations " << summary.operation_count
+           << " member-path " << dotted_path(summary.moved_member_path);
+    append_source_line(report, summary.source_line);
+    report << " operations " << summary.operation_count
            << " operations-ready " << (summary.operations_ready ? "ready" : "blocked")
            << " validation " << (summary.validation_ready ? "ready" : "blocked")
            << " conflict-free " << (summary.conflict_free ? "true" : "false")
@@ -2866,6 +2903,7 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness(
         .readiness_ready = readiness_ready,
         .report_only = !readiness_ready,
         .production_enabled = readiness_ready,
+        .source_line = summary.source_line,
     };
 }
 
@@ -2878,8 +2916,9 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_report(
            << " index " << readiness.index_expression_text
            << " element " << readiness.element_source_type_name
            << " moved " << readiness.moved_source_type_name
-           << " member-path " << dotted_path(readiness.moved_member_path)
-           << " promotion " << (readiness.promotion_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(readiness.moved_member_path);
+    append_source_line(report, readiness.source_line);
+    report << " promotion " << (readiness.promotion_ready ? "ready" : "blocked")
            << " post-apply-verification "
            << (readiness.post_apply_verification_ready ? "ready" : "blocked")
            << " authorization " << (readiness.authorization_ready ? "ready" : "blocked")
@@ -2906,8 +2945,9 @@ auto runtime_indexed_member_cleanup_mutation_production_readiness_diagnostics(
                    << " index " << readiness.index_expression_text
                    << " element " << readiness.element_source_type_name
                    << " moved " << readiness.moved_source_type_name
-                   << " member-path " << dotted_path(readiness.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(readiness.moved_member_path);
+        append_source_line(diagnostic, readiness.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-rewrite-candidate") {
             diagnostic << "member cleanup rewrite candidate is missing";
@@ -2970,6 +3010,7 @@ auto runtime_indexed_member_cleanup_mutation_readiness_verdict(
             readiness.production_gate_enabled,
         .report_only = true,
         .production_enabled = false,
+        .source_line = readiness.source_line,
     };
 }
 
@@ -2982,8 +3023,9 @@ auto runtime_indexed_member_cleanup_mutation_readiness_verdict_report(
            << " index " << verdict.index_expression_text
            << " element " << verdict.element_source_type_name
            << " moved " << verdict.moved_source_type_name
-           << " member-path " << dotted_path(verdict.moved_member_path)
-           << " readiness " << (verdict.readiness_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(verdict.moved_member_path);
+    append_source_line(report, verdict.source_line);
+    report << " readiness " << (verdict.readiness_ready ? "ready" : "blocked")
            << " guarded-rewrite " << (verdict.guarded_rewrite_ready ? "ready" : "blocked")
            << " blockers " << verdict.blocker_count
            << " diagnostics " << verdict.diagnostic_count
@@ -3019,6 +3061,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization(
         .rewrite_authorized = authorization_ready && rewrite_authorization_requested,
         .report_only = true,
         .production_enabled = false,
+        .source_line = verdict.source_line,
     };
 }
 
@@ -3031,8 +3074,9 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_report(
            << " index " << authorization.index_expression_text
            << " element " << authorization.element_source_type_name
            << " moved " << authorization.moved_source_type_name
-           << " member-path " << dotted_path(authorization.moved_member_path)
-           << " verdict " << (authorization.verdict_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(authorization.moved_member_path);
+    append_source_line(report, authorization.source_line);
+    report << " verdict " << (authorization.verdict_ready ? "ready" : "blocked")
            << " guarded-rewrite " << (authorization.guarded_rewrite_ready ? "ready" : "blocked")
            << " authorization " << (authorization.authorization_ready ? "ready" : "blocked")
            << " rewrite-requested "
@@ -3058,8 +3102,9 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_authorization_diagnostics(
                    << " index " << authorization.index_expression_text
                    << " element " << authorization.element_source_type_name
                    << " moved " << authorization.moved_source_type_name
-                   << " member-path " << dotted_path(authorization.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(authorization.moved_member_path);
+        append_source_line(diagnostic, authorization.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-mutation-readiness-verdict") {
             diagnostic << "member cleanup mutation readiness verdict is blocked";
@@ -3100,6 +3145,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan(
         .execution_enabled = execution_plan_ready && execution_requested,
         .report_only = true,
         .production_enabled = false,
+        .source_line = authorization.source_line,
     };
 }
 
@@ -3112,8 +3158,9 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " authorization " << (plan.authorization_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " authorization " << (plan.authorization_ready ? "ready" : "blocked")
            << " rewrite-authorized " << (plan.rewrite_authorized ? "true" : "false")
            << " execution-plan " << (plan.execution_plan_ready ? "ready" : "blocked")
            << " execution-requested " << (plan.execution_requested ? "true" : "false")
@@ -3138,8 +3185,9 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_plan_diagnostics(
                    << " index " << plan.index_expression_text
                    << " element " << plan.element_source_type_name
                    << " moved " << plan.moved_source_type_name
-                   << " member-path " << dotted_path(plan.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(plan.moved_member_path);
+        append_source_line(diagnostic, plan.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-mutation-rewrite-authorization") {
             diagnostic << "member cleanup mutation rewrite authorization is blocked";
@@ -3169,6 +3217,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict(
         .execution_enabled = plan.execution_enabled,
         .report_only = true,
         .production_enabled = false,
+        .source_line = plan.source_line,
     };
 }
 
@@ -3181,8 +3230,9 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_execution_verdict_report(
            << " index " << verdict.index_expression_text
            << " element " << verdict.element_source_type_name
            << " moved " << verdict.moved_source_type_name
-           << " member-path " << dotted_path(verdict.moved_member_path)
-           << " execution-plan " << (verdict.execution_plan_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(verdict.moved_member_path);
+    append_source_line(report, verdict.source_line);
+    report << " execution-plan " << (verdict.execution_plan_ready ? "ready" : "blocked")
            << " execution " << (verdict.execution_enabled ? "enabled" : "disabled")
            << " blockers " << verdict.blocker_count
            << " diagnostics " << verdict.diagnostic_count
@@ -3214,6 +3264,7 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_promotion_status(
         .promotion_ready = promotion_ready,
         .report_only = true,
         .production_enabled = false,
+        .source_line = verdict.source_line,
     };
 }
 
@@ -3226,8 +3277,9 @@ auto runtime_indexed_member_cleanup_mutation_rewrite_promotion_status_report(
            << " index " << status.index_expression_text
            << " element " << status.element_source_type_name
            << " moved " << status.moved_source_type_name
-           << " member-path " << dotted_path(status.moved_member_path)
-           << " authorization " << (status.authorization_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(status.moved_member_path);
+    append_source_line(report, status.source_line);
+    report << " authorization " << (status.authorization_ready ? "ready" : "blocked")
            << " execution-plan " << (status.execution_plan_ready ? "ready" : "blocked")
            << " execution-verdict " << (status.execution_verdict_ready ? "ready" : "blocked")
            << " promotion " << (status.promotion_ready ? "ready" : "blocked")

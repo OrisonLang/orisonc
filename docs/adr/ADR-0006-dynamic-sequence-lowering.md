@@ -2407,6 +2407,9 @@ representation.
   existing candidate indexes, source lines, and IR splice ranges.
 - Runtime-index module-IR production-readiness blocker reports now carry trimmed primary source-line text alongside the
   existing source-line numbers.
+- Runtime-index member-cleanup mutation-stage reports now retain source-line metadata from the computed-index
+  constructor move through mutation planning, readiness, authorization, guarded rewrite execution, and promotion
+  status.
 
 ## Follow-up work
 
@@ -2415,5 +2418,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Add richer source-span correlation to runtime-index cleanup splice-conflict diagnostics once computed-index ownership
-  moves are no longer audit-only.
+- Add source text snippets to runtime-index member-cleanup mutation-stage reports once the lowering layer has a stable
+  typed diagnostic enrichment boundary for source buffers.

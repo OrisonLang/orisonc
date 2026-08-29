@@ -699,43 +699,43 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-operation-plan owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item seam selected operations 3 operations-ready ready "
+        "element Wrap moved Inner member-path box.item source-line 72 seam selected operations 3 operations-ready ready "
         "operations-applied false report-only true production disabled blockers 0 "
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item seam selected count valid order valid "
+        "element Wrap moved Inner member-path box.item source-line 72 seam selected count valid order valid "
         "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid operations-ready ready "
         "no-operations-applied true validation ready report-only true production disabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-conflict-detection owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item validation ready branch-anchor-matches 1 "
+        "element Wrap moved Inner member-path box.item source-line 72 validation ready branch-anchor-matches 1 "
         "branch-anchor unique closing-anchor-matches 1 closing-anchor unique phi-predecessor-matches 1 "
         "phi-predecessor unique conflict-free true apply-allowed false report-only true production disabled "
         "blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item validation ready conflict-free true "
+        "element Wrap moved Inner member-path box.item source-line 72 validation ready conflict-free true "
         "ir-mutation requested production-gate enabled apply-requested true authorization ready "
         "apply-authorized true report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item preview ready apply-authorized true "
+        "element Wrap moved Inner member-path box.item source-line 72 preview ready apply-authorized true "
         "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
         "report-only false production enabled blockers 0 "
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-promotion-summary owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item operations 3 operations-ready ready validation ready "
+        "element Wrap moved Inner member-path box.item source-line 72 operations 3 operations-ready ready validation ready "
         "conflict-free true authorization ready preview ready actions 3 post-apply-verification ready "
         "expected-checks 3 promotion ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item promotion ready post-apply-verification ready "
+        "element Wrap moved Inner member-path box.item source-line 72 promotion ready post-apply-verification ready "
         "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
         "production enabled blockers 0"
     ) != std::string::npos);
@@ -743,29 +743,29 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     assert(output.find("blocker production-member-cleanup-ir-mutation ") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item readiness ready guarded-rewrite ready "
+        "element Wrap moved Inner member-path box.item source-line 72 readiness ready guarded-rewrite ready "
         "blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item verdict ready guarded-rewrite ready "
+        "element Wrap moved Inner member-path box.item source-line 72 verdict ready guarded-rewrite ready "
         "authorization ready rewrite-requested true rewrite-authorized true report-only false "
         "production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item authorization ready rewrite-authorized true "
+        "element Wrap moved Inner member-path box.item source-line 72 authorization ready rewrite-authorized true "
         "execution-plan ready execution-requested true execution enabled report-only false production enabled "
         "blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item execution-plan ready execution enabled blockers 0 "
+        "element Wrap moved Inner member-path box.item source-line 72 execution-plan ready execution enabled blockers 0 "
         "diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item authorization ready execution-plan ready "
+        "element Wrap moved Inner member-path box.item source-line 72 authorization ready execution-plan ready "
         "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
@@ -787,9 +787,14 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
     assert(output.find("member-module-ir-shape-detail") == std::string::npos);
-    auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
+    auto assert_owner_lines = [&](
+        std::string_view owner_name,
+        std::string_view index_expression,
+        std::size_t source_line
+    ) {
         auto const owner = std::string {owner_name};
         auto const index = std::string {index_expression};
+        auto const source = std::string {" source-line "} + std::to_string(source_line);
         assert(output.find(
             "runtime-index member cleanup helper-drop-bindings owner " + owner + " index " + index + " "
             "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
@@ -804,30 +809,30 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation-production-readiness owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item promotion ready post-apply-verification ready "
+            "element Box moved Inner member-path item" + source + " promotion ready post-apply-verification ready "
             "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
             "production enabled blockers 0"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation rewrite promotion-status owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item authorization ready execution-plan ready "
+            "element Box moved Inner member-path item" + source + " authorization ready execution-plan ready "
             "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation rewrite authorization owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item verdict ready guarded-rewrite ready "
+            "element Box moved Inner member-path item" + source + " verdict ready guarded-rewrite ready "
             "authorization ready rewrite-requested true rewrite-authorized true report-only false "
             "production enabled blockers 0"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation rewrite execution-plan owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item authorization ready rewrite-authorized true "
+            "element Box moved Inner member-path item" + source + " authorization ready rewrite-authorized true "
             "execution-plan ready execution-requested true execution enabled report-only false production enabled "
             "blockers 0"
         ) != std::string::npos);
     };
-    assert_owner_lines("left_items", "(left_index + left_zero)");
-    assert_owner_lines("right_items", "(right_index + right_zero)");
+    assert_owner_lines("left_items", "(left_index + left_zero)", 33);
+    assert_owner_lines("right_items", "(right_index + right_zero)", 40);
     assert(output.find("blocker blocked-rewrite-promotion") == std::string::npos);
     assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }

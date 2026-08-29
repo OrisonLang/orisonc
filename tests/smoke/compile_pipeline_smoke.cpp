@@ -15283,13 +15283,13 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[66] ==
         "runtime-index member cleanup mutation readiness verdict owner holder.items index index "
-        "element Inner moved Inner member-path none readiness blocked guarded-rewrite blocked blockers 19 "
-        "diagnostics 19 report-only true production disabled"
+        "element Inner moved Inner member-path none source-line 46 readiness blocked guarded-rewrite blocked "
+        "blockers 19 diagnostics 19 report-only true production disabled"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[67] ==
         "runtime-index member cleanup mutation rewrite authorization owner holder.items index index "
-        "element Inner moved Inner member-path none verdict blocked guarded-rewrite blocked "
+        "element Inner moved Inner member-path none source-line 46 verdict blocked guarded-rewrite blocked "
         "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
         "blocker member-cleanup-mutation-guarded-rewrite"
@@ -15297,19 +15297,19 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[68] ==
         "runtime-index member cleanup mutation rewrite authorization blocker owner holder.items index index "
-        "element Inner moved Inner member-path none blocker member-cleanup-mutation-readiness-verdict "
-        "detail member cleanup mutation readiness verdict is blocked"
+        "element Inner moved Inner member-path none source-line 46 "
+        "blocker member-cleanup-mutation-readiness-verdict detail member cleanup mutation readiness verdict is blocked"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[69] ==
         "runtime-index member cleanup mutation rewrite authorization blocker owner holder.items index index "
-        "element Inner moved Inner member-path none blocker member-cleanup-mutation-guarded-rewrite "
-        "detail member cleanup mutation guarded rewrite is blocked"
+        "element Inner moved Inner member-path none source-line 46 "
+        "blocker member-cleanup-mutation-guarded-rewrite detail member cleanup mutation guarded rewrite is blocked"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[70] ==
         "runtime-index member cleanup mutation rewrite execution-plan owner holder.items index index "
-        "element Inner moved Inner member-path none authorization blocked rewrite-authorized false "
+        "element Inner moved Inner member-path none source-line 46 authorization blocked rewrite-authorized false "
         "execution-plan blocked execution-requested false execution disabled report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
         "blocker member-cleanup-mutation-rewrite-not-authorized"
@@ -15317,25 +15317,27 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[71] ==
         "runtime-index member cleanup mutation rewrite execution-plan blocker owner holder.items index index "
-        "element Inner moved Inner member-path none blocker member-cleanup-mutation-rewrite-authorization "
+        "element Inner moved Inner member-path none source-line 46 "
+        "blocker member-cleanup-mutation-rewrite-authorization "
         "detail member cleanup mutation rewrite authorization is blocked"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[72] ==
         "runtime-index member cleanup mutation rewrite execution-plan blocker owner holder.items index index "
-        "element Inner moved Inner member-path none blocker member-cleanup-mutation-rewrite-not-authorized "
+        "element Inner moved Inner member-path none source-line 46 "
+        "blocker member-cleanup-mutation-rewrite-not-authorized "
         "detail member cleanup mutation rewrite is not authorized"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[73] ==
         "runtime-index member cleanup mutation rewrite execution verdict owner holder.items index index "
-        "element Inner moved Inner member-path none execution-plan blocked execution disabled blockers 2 "
-        "diagnostics 2 report-only true production disabled"
+        "element Inner moved Inner member-path none source-line 46 execution-plan blocked execution disabled "
+        "blockers 2 diagnostics 2 report-only true production disabled"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[74] ==
         "runtime-index member cleanup mutation rewrite promotion-status owner holder.items index index "
-        "element Inner moved Inner member-path none authorization blocked execution-plan blocked "
+        "element Inner moved Inner member-path none source-line 46 authorization blocked execution-plan blocked "
         "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true "
         "production disabled"
     );
@@ -15355,7 +15357,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[67] ==
         "runtime-index member cleanup mutation rewrite authorization owner holder.items index index "
-        "element Inner moved Inner member-path none verdict blocked guarded-rewrite blocked "
+        "element Inner moved Inner member-path none source-line 46 verdict blocked guarded-rewrite blocked "
         "authorization blocked rewrite-requested true rewrite-authorized false report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
         "blocker member-cleanup-mutation-guarded-rewrite"
@@ -15363,7 +15365,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[70] ==
         "runtime-index member cleanup mutation rewrite execution-plan owner holder.items index index "
-        "element Inner moved Inner member-path none authorization blocked rewrite-authorized false "
+        "element Inner moved Inner member-path none source-line 46 authorization blocked rewrite-authorized false "
         "execution-plan blocked execution-requested true execution disabled report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
         "blocker member-cleanup-mutation-rewrite-not-authorized"
@@ -15419,7 +15421,7 @@ auto main() -> int {
     assert(
         has_runtime_indexed_member_transfer_audit_line(
             "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
-            "element Box moved Inner member-path item seam selected count valid order valid "
+            "element Box moved Inner member-path item source-line 33 seam selected count valid order valid "
             "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid "
             "operations-ready ready no-operations-applied true validation ready report-only true "
             "production disabled blockers 4 blocker member-cleanup-module-mutation "
@@ -15430,7 +15432,7 @@ auto main() -> int {
     assert(
         has_runtime_indexed_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item verdict blocked guarded-rewrite blocked "
+            "element Box moved Inner member-path item source-line 33 verdict blocked guarded-rewrite blocked "
             "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
             "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
             "blocker member-cleanup-mutation-guarded-rewrite"
@@ -15510,7 +15512,7 @@ auto main() -> int {
     assert(
         has_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item validation ready conflict-free true "
+            "element Box moved Inner member-path item source-line 33 validation ready conflict-free true "
             "ir-mutation requested production-gate disabled apply-requested false authorization blocked "
             "apply-authorized false "
             "report-only true production disabled blockers 3 blocker member-cleanup-module-mutation "
@@ -15521,7 +15523,7 @@ auto main() -> int {
     assert(
         has_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-            "element Box moved Inner member-path item preview ready apply-authorized false "
+            "element Box moved Inner member-path item source-line 33 preview ready apply-authorized false "
             "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
             "report-only true production disabled blockers 5 blocker member-cleanup-module-mutation "
             "blocker production-member-cleanup "
@@ -15570,7 +15572,7 @@ auto main() -> int {
     assert(
         has_production_gate_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item validation ready conflict-free true "
+            "element Box moved Inner member-path item source-line 33 validation ready conflict-free true "
             "ir-mutation requested production-gate enabled apply-requested false authorization ready "
             "apply-authorized false "
             "report-only true production disabled blockers 0"
@@ -15579,7 +15581,7 @@ auto main() -> int {
     assert(
         has_production_gate_member_transfer_audit_line(
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-            "element Box moved Inner member-path item preview ready apply-authorized false "
+            "element Box moved Inner member-path item source-line 33 preview ready apply-authorized false "
             "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
             "report-only true production disabled blockers 2 blocker member-cleanup-mutation-apply-authorization "
             "blocker member-cleanup-mutation-actions-applied expected-check branch-target items.final-cleanup "
@@ -16650,7 +16652,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item validation ready conflict-free true "
+            "element Box moved Inner member-path item source-line 33 validation ready conflict-free true "
             "ir-mutation requested production-gate enabled apply-requested true authorization ready "
             "apply-authorized true report-only false production enabled blockers 0"
         )
@@ -16658,7 +16660,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-            "element Box moved Inner member-path item preview ready apply-authorized true "
+            "element Box moved Inner member-path item source-line 33 preview ready apply-authorized true "
             "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
             "report-only false production enabled blockers 0 expected-check branch-target items.final-cleanup "
             "expected-check cfg-appended items.member_cleanup.exit "
@@ -16668,7 +16670,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-promotion-summary owner items index (index + zero) "
-            "element Box moved Inner member-path item operations 3 operations-ready ready validation ready "
+            "element Box moved Inner member-path item source-line 33 operations 3 operations-ready ready validation ready "
             "conflict-free true authorization ready preview ready actions 3 post-apply-verification ready "
             "expected-checks 3 promotion ready report-only false production enabled blockers 0"
         )
@@ -16676,7 +16678,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-            "element Box moved Inner member-path item promotion ready post-apply-verification ready "
+            "element Box moved Inner member-path item source-line 33 promotion ready post-apply-verification ready "
             "authorization ready ir-mutation requested production-gate enabled readiness ready "
             "report-only false production enabled blockers 0"
         )
@@ -16684,14 +16686,14 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
-            "element Box moved Inner member-path item readiness ready guarded-rewrite ready "
+            "element Box moved Inner member-path item source-line 33 readiness ready guarded-rewrite ready "
             "blockers 0 diagnostics 0 report-only false production enabled"
         )
     );
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item verdict ready guarded-rewrite ready "
+            "element Box moved Inner member-path item source-line 33 verdict ready guarded-rewrite ready "
             "authorization ready rewrite-requested true rewrite-authorized true report-only false "
             "production enabled blockers 0"
         )
@@ -16699,7 +16701,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
-            "element Box moved Inner member-path item authorization ready rewrite-authorized true "
+            "element Box moved Inner member-path item source-line 33 authorization ready rewrite-authorized true "
             "execution-plan ready execution-requested true execution enabled report-only false "
             "production enabled blockers 0"
         )
@@ -16707,14 +16709,14 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
-            "element Box moved Inner member-path item execution-plan ready execution enabled blockers 0 "
+            "element Box moved Inner member-path item source-line 33 execution-plan ready execution enabled blockers 0 "
             "diagnostics 0 report-only false production enabled"
         )
     );
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-            "element Box moved Inner member-path item authorization ready execution-plan ready "
+            "element Box moved Inner member-path item source-line 33 authorization ready execution-plan ready "
             "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false "
             "production enabled"
         )

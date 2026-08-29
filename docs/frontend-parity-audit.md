@@ -2975,3 +2975,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   conflicting candidates through typed pipeline state, CLI audit output, and blocked emit-LLVM readiness diagnostics.
 - 2026-08-29: Runtime-index module-IR production-readiness blocker reports now carry trimmed primary source-line text
   alongside source-line numbers. Pipeline and driver smoke coverage pin the real-source blocker output.
+- 2026-08-29: Runtime-index member-cleanup mutation-stage reports now carry source-line metadata from the originating
+  computed-index constructor move through operation planning, validation, conflict checks, apply authorization,
+  post-apply verification, readiness verdicts, and guarded rewrite execution reports.
