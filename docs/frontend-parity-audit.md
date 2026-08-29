@@ -2951,3 +2951,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-28: Moved member-path constructor transfer now disarms moved DynamicArray cleanup descendants through the
   shared moved cleanup release helper. Source Drop opt-in coverage now links and runs
   `dynamic_array_owned_constructor_member_path_move_run.or` for `Outer(holder.items)`.
+- 2026-08-28: Source Drop lowering now joins shared production defaults. Default pipeline and CLI coverage now include
+  generated source Drop functions for audited DynamicArray aggregate cleanup paths after moved member-path constructor
+  transfer disarms moved source descriptors.

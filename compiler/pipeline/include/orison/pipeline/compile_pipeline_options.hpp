@@ -80,6 +80,7 @@ struct CompilePipelineOptions {
 
 inline auto production_compile_pipeline_options() -> CompilePipelineOptions {
     auto options = CompilePipelineOptions {};
+    options.source_drop_lowering_enabled = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;

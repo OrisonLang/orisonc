@@ -55,6 +55,14 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+auto find_final_outer_drop(
+    std::string const& output,
+    std::string_view owner_name,
+    std::size_t after
+) -> std::size_t {
+    return output.find("call void @__orison_drop.Outer(ptr %" + std::string {owner_name} + ".addr)", after);
+}
+
 template <typename SourceLines>
 void write_lines(std::filesystem::path const& path, SourceLines const& lines) {
     std::ofstream output(path);
@@ -1825,8 +1833,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
         "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.values.dynamic_array_reassign_cleanup",
         replacement_drop
     );
-    auto final_values_cleanup = output.find("%outer.inner.values.dynamic_array_cleanup", replacement_deallocate);
-    auto final_spare_cleanup = output.find("%outer.inner.spare.dynamic_array_cleanup", final_values_cleanup);
+    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(maker_start != std::string::npos);
     assert(maker_end != std::string::npos);
     assert(stale_values_cleanup == std::string::npos || maker_end < stale_values_cleanup);
@@ -1834,12 +1841,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
-    assert(final_values_cleanup != std::string::npos);
-    assert(final_spare_cleanup != std::string::npos);
+    assert(final_outer_drop != std::string::npos);
     assert(replacement_cleanup < replacement_drop);
     assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_values_cleanup);
-    assert(final_values_cleanup < final_spare_cleanup);
+    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_move_fixture_success(
@@ -1863,22 +1868,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_
         "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_drop
     );
-    auto final_first_values_cleanup = output.find(
-        "%outer.items.element0.values.dynamic_array_cleanup",
-        replacement_deallocate
-    );
-    auto final_first_spare_cleanup = output.find(
-        "%outer.items.element0.spare.dynamic_array_cleanup",
-        final_first_values_cleanup
-    );
-    auto final_second_values_cleanup = output.find(
-        "%outer.items.element1.values.dynamic_array_cleanup",
-        final_first_spare_cleanup
-    );
-    auto final_second_spare_cleanup = output.find(
-        "%outer.items.element1.spare.dynamic_array_cleanup",
-        final_second_values_cleanup
-    );
+    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(maker_start != std::string::npos);
     assert(maker_end != std::string::npos);
     assert(stale_first_values_cleanup == std::string::npos || maker_end < stale_first_values_cleanup);
@@ -1888,16 +1878,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
-    assert(final_first_values_cleanup != std::string::npos);
-    assert(final_first_spare_cleanup != std::string::npos);
-    assert(final_second_values_cleanup != std::string::npos);
-    assert(final_second_spare_cleanup != std::string::npos);
+    assert(final_outer_drop != std::string::npos);
     assert(replacement_cleanup < replacement_drop);
     assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_first_values_cleanup);
-    assert(final_first_values_cleanup < final_first_spare_cleanup);
-    assert(final_first_spare_cleanup < final_second_values_cleanup);
-    assert(final_second_values_cleanup < final_second_spare_cleanup);
+    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_field_move_fixture_success(
@@ -1928,22 +1912,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_fie
         "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_drop
     );
-    auto final_first_values_cleanup = output.find(
-        "%outer.items.element0.values.dynamic_array_cleanup",
-        replacement_deallocate
-    );
-    auto final_first_spare_cleanup = output.find(
-        "%outer.items.element0.spare.dynamic_array_cleanup",
-        final_first_values_cleanup
-    );
-    auto final_second_values_cleanup = output.find(
-        "%outer.items.element1.values.dynamic_array_cleanup",
-        final_first_spare_cleanup
-    );
-    auto final_second_spare_cleanup = output.find(
-        "%outer.items.element1.spare.dynamic_array_cleanup",
-        final_second_values_cleanup
-    );
+    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(main_start != std::string::npos);
     assert(stale_initial_first_values_cleanup == std::string::npos);
     assert(stale_initial_first_spare_cleanup == std::string::npos);
@@ -1956,16 +1925,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_fie
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
-    assert(final_first_values_cleanup != std::string::npos);
-    assert(final_first_spare_cleanup != std::string::npos);
-    assert(final_second_values_cleanup != std::string::npos);
-    assert(final_second_spare_cleanup != std::string::npos);
+    assert(final_outer_drop != std::string::npos);
     assert(replacement_cleanup < replacement_drop);
     assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_first_values_cleanup);
-    assert(final_first_values_cleanup < final_first_spare_cleanup);
-    assert(final_first_spare_cleanup < final_second_values_cleanup);
-    assert(final_second_values_cleanup < final_second_spare_cleanup);
+    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixture_success(
@@ -1988,22 +1951,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
         "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_drop
     );
-    auto final_first_values_cleanup = output.find(
-        "%outer.items.element0.values.dynamic_array_cleanup",
-        replacement_deallocate
-    );
-    auto final_first_spare_cleanup = output.find(
-        "%outer.items.element0.spare.dynamic_array_cleanup",
-        final_first_values_cleanup
-    );
-    auto final_second_values_cleanup = output.find(
-        "%outer.items.element1.values.dynamic_array_cleanup",
-        final_first_spare_cleanup
-    );
-    auto final_second_spare_cleanup = output.find(
-        "%outer.items.element1.spare.dynamic_array_cleanup",
-        final_second_values_cleanup
-    );
+    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(main_start != std::string::npos);
     assert(stale_first_values_cleanup == std::string::npos);
     assert(stale_first_spare_cleanup == std::string::npos);
@@ -2012,16 +1960,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
-    assert(final_first_values_cleanup != std::string::npos);
-    assert(final_first_spare_cleanup != std::string::npos);
-    assert(final_second_values_cleanup != std::string::npos);
-    assert(final_second_spare_cleanup != std::string::npos);
+    assert(final_outer_drop != std::string::npos);
     assert(replacement_cleanup < replacement_drop);
     assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_first_values_cleanup);
-    assert(final_first_values_cleanup < final_first_spare_cleanup);
-    assert(final_first_spare_cleanup < final_second_values_cleanup);
-    assert(final_second_values_cleanup < final_second_spare_cleanup);
+    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_move_fixture_success(
@@ -2039,26 +1981,15 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_mo
         output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
     auto sibling_spare_cleanup =
         output.find("%holder.items.element1.spare.dynamic_array_cleanup", sibling_values_cleanup);
-    auto outer_values_cleanup =
-        output.find("%outer.item.values.dynamic_array_cleanup", sibling_spare_cleanup);
-    auto outer_spare_cleanup =
-        output.find("%outer.item.spare.dynamic_array_cleanup", outer_values_cleanup);
-    auto final_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.item.spare.dynamic_array_cleanup",
-        outer_spare_cleanup
-    );
+    auto final_outer_drop = find_final_outer_drop(output, "outer", main_start);
     assert(main_start != std::string::npos);
     assert(moved_source_values_cleanup == std::string::npos);
     assert(moved_source_spare_cleanup == std::string::npos);
     assert(sibling_values_cleanup != std::string::npos);
     assert(sibling_spare_cleanup != std::string::npos);
-    assert(outer_values_cleanup != std::string::npos);
-    assert(outer_spare_cleanup != std::string::npos);
-    assert(final_deallocate != std::string::npos);
+    assert(final_outer_drop != std::string::npos);
+    assert(final_outer_drop < sibling_values_cleanup);
     assert(sibling_values_cleanup < sibling_spare_cleanup);
-    assert(sibling_spare_cleanup < outer_values_cleanup);
-    assert(outer_values_cleanup < outer_spare_cleanup);
-    assert(outer_spare_cleanup < final_deallocate);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_sibling_move_fixture_success(
@@ -2076,26 +2007,16 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_si
         output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
     auto stale_second_spare_cleanup =
         output.find("%holder.items.element1.spare.dynamic_array_cleanup", main_start);
-    auto outer_values_cleanup =
-        output.find("%outer.item.values.dynamic_array_cleanup", main_start);
-    auto outer_spare_cleanup =
-        output.find("%outer.item.spare.dynamic_array_cleanup", outer_values_cleanup);
-    auto sibling_values_cleanup =
-        output.find("%sibling.item.values.dynamic_array_cleanup", outer_spare_cleanup);
-    auto sibling_spare_cleanup =
-        output.find("%sibling.item.spare.dynamic_array_cleanup", sibling_values_cleanup);
+    auto outer_drop = find_final_outer_drop(output, "outer", main_start);
+    auto sibling_drop = find_final_outer_drop(output, "sibling", outer_drop);
     assert(main_start != std::string::npos);
     assert(stale_first_values_cleanup == std::string::npos);
     assert(stale_first_spare_cleanup == std::string::npos);
     assert(stale_second_values_cleanup == std::string::npos);
     assert(stale_second_spare_cleanup == std::string::npos);
-    assert(outer_values_cleanup != std::string::npos);
-    assert(outer_spare_cleanup != std::string::npos);
-    assert(sibling_values_cleanup != std::string::npos);
-    assert(sibling_spare_cleanup != std::string::npos);
-    assert(outer_values_cleanup < outer_spare_cleanup);
-    assert(outer_spare_cleanup < sibling_values_cleanup);
-    assert(sibling_values_cleanup < sibling_spare_cleanup);
+    assert(outer_drop != std::string::npos);
+    assert(sibling_drop != std::string::npos);
+    assert(outer_drop < sibling_drop);
 }
 
 void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
@@ -2671,22 +2592,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_mov
         "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_drop
     );
-    auto final_first_values_cleanup = output.find(
-        "%outer.items.element0.values.dynamic_array_cleanup",
-        replacement_deallocate
-    );
-    auto final_first_spare_cleanup = output.find(
-        "%outer.items.element0.spare.dynamic_array_cleanup",
-        final_first_values_cleanup
-    );
-    auto final_second_values_cleanup = output.find(
-        "%outer.items.element1.values.dynamic_array_cleanup",
-        final_first_spare_cleanup
-    );
-    auto final_second_spare_cleanup = output.find(
-        "%outer.items.element1.spare.dynamic_array_cleanup",
-        final_second_values_cleanup
-    );
+    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(main_start != std::string::npos);
     assert(stale_first_values_cleanup == std::string::npos);
     assert(stale_first_spare_cleanup == std::string::npos);
@@ -2695,16 +2601,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_mov
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
-    assert(final_first_values_cleanup != std::string::npos);
-    assert(final_first_spare_cleanup != std::string::npos);
-    assert(final_second_values_cleanup != std::string::npos);
-    assert(final_second_spare_cleanup != std::string::npos);
+    assert(final_outer_drop != std::string::npos);
     assert(replacement_cleanup < replacement_drop);
     assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_first_values_cleanup);
-    assert(final_first_values_cleanup < final_first_spare_cleanup);
-    assert(final_first_spare_cleanup < final_second_values_cleanup);
-    assert(final_second_values_cleanup < final_second_spare_cleanup);
+    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassignment_fixture_success(

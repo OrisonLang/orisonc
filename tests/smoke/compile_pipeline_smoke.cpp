@@ -36,7 +36,7 @@ namespace smoke = orison::tests::smoke;
 
 void test_production_compile_pipeline_options_gate_promotions() {
     auto const options = orison::pipeline::production_compile_pipeline_options();
-    assert(!options.source_drop_lowering_enabled);
+    assert(options.source_drop_lowering_enabled);
     assert(options.runtime_indexed_cleanup_emission_enabled);
     assert(options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled);
     assert(options.runtime_indexed_constructor_move_enabled);
@@ -14421,9 +14421,9 @@ auto main() -> int {
     assert(!parsed_drop_ir.has_errors());
     assert(parsed_drop_ir.semantic_drop_lowering_authorizations.size() == 1);
     assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().authorized);
-    assert(parsed_drop_ir.ir_text.find("__orison_drop.Payload") == std::string::npos);
+    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_ir.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
     auto parsed_drop_source_lowering_ir = pipeline.emit_llvm(
         parsed_drop_path,
         orison::pipeline::CompilePipelineOptions {
@@ -20006,36 +20006,28 @@ auto main() -> int {
     assert(!parsed_drop_readiness.has_errors());
     assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.size() == 1);
     assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(!parsed_drop_readiness.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(!parsed_drop_readiness.semantic_drop_lowering_authorizations.front().authorized);
-    assert(parsed_drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 1);
-    assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.size() == 1);
+    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 0);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.empty());
     assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.empty());
-    assert(parsed_drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.size() == 1);
-    assert(parsed_drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 1);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.missing_declarations.empty());
     auto parsed_drop_readiness_blocker_report = drop_readiness_blocker_report(parsed_drop_readiness);
-    assert(parsed_drop_readiness_blocker_report.size() == 4);
+    assert(parsed_drop_readiness_blocker_report.size() == 1);
     assert(
         parsed_drop_readiness_blocker_report[0] ==
-        "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0 "
-        "source lowering blocked 1 missing declarations 1"
-    );
-    assert(
-        parsed_drop_readiness_blocker_report[2].find("source lowering not accepted") !=
-        std::string::npos
+        "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
+        "source lowering blocked 0 missing declarations 0"
     );
     auto parsed_drop_readiness_source_correlation_report =
         drop_readiness_source_correlation_report(parsed_drop_readiness);
-    assert(parsed_drop_readiness_source_correlation_report.size() == 2);
+    assert(parsed_drop_readiness_source_correlation_report.size() == 1);
     assert(
         parsed_drop_readiness_source_correlation_report[0] ==
-        "drop readiness source correlations actions 1 semantic sites 1"
+        "drop readiness source correlations actions 0 semantic sites 1"
     );
-    assert(
-        parsed_drop_readiness_source_correlation_report[1].find("semantic resolved") !=
-        std::string::npos
-    );
-    assert(parsed_drop_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(parsed_drop_readiness.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,

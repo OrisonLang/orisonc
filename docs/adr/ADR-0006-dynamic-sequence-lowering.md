@@ -244,6 +244,9 @@ representation.
   cleanup release helper. The source Drop opt-in regression for
   `dynamic_array_owned_constructor_member_path_move_run.or` links and runs `Outer(holder.items)` without double
   dropping the moved DynamicArray descriptors.
+- Source Drop lowering now joins shared production defaults after the moved member-path constructor transfer fix and
+  the follow-up production-default trial. Default pipeline and CLI coverage now exercise generated source Drop
+  functions for audited DynamicArray aggregate cleanup paths.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.
