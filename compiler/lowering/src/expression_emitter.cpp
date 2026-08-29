@@ -401,7 +401,7 @@ void mark_constructor_owned_argument_cleanup_consumed(
             session.state,
             session.state.ownership_transfers
         );
-        release_moved_owned_cleanup_expression(argument, session.state);
+        release_moved_owned_cleanup_expression(argument, context.lowering, session.state);
         return;
     }
 

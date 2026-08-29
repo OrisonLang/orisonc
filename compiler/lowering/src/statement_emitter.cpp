@@ -2333,7 +2333,7 @@ auto lower_let_statement(
         );
         return false;
     }
-    release_moved_owned_cleanup_expression(statement.expression, session.state);
+    release_moved_owned_cleanup_expression(statement.expression, context.lowering, session.state);
     auto const direct_binding = lowered->type == "ptr" || is_aggregate_llvm_type(lowered->type);
     auto local_name = direct_binding
         ? lowered->value
@@ -2454,7 +2454,7 @@ auto lower_var_statement(
         );
         return false;
     }
-    release_moved_owned_cleanup_expression(statement.expression, session.state);
+    release_moved_owned_cleanup_expression(statement.expression, context.lowering, session.state);
 
     auto storage = next_llvm_local_value_name(
         statement.name + ".addr",

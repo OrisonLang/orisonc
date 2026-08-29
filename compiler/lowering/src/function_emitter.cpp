@@ -521,7 +521,7 @@ auto emit_source_drop_record_local_cleanups(
         if (std::ranges::find(session.state.parameter_names, name) != session.state.parameter_names.end()) {
             continue;
         }
-        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+        if (consumed_owned_binding_or_descendant_name(session.state.ownership_transfers, name).has_value()) {
             continue;
         }
         if (owner_contains_runtime_indexed_cleanup_plan(name, session.state)) {
@@ -578,7 +578,7 @@ auto emit_source_drop_fixed_array_local_cleanups(
         if (std::ranges::find(session.state.parameter_names, name) != session.state.parameter_names.end()) {
             continue;
         }
-        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+        if (consumed_owned_binding_or_descendant_name(session.state.ownership_transfers, name).has_value()) {
             continue;
         }
         if (owner_has_runtime_indexed_cleanup_plan(name, session.state)) {
@@ -689,10 +689,11 @@ void release_returned_dynamic_array_local_cleanup(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> return_source_type_name,
     semantics::SemanticAnalysisResult const* semantic_result,
+    LoweringContext const& context,
     LlvmIrEmissionOptions const& options,
     FunctionLoweringState& state
 ) {
-    release_moved_owned_cleanup_expression(expression, state);
+    release_moved_owned_cleanup_expression(expression, context, state);
 
     if (!return_source_type_name.has_value() ||
         dynamic_array_element_source_type_name(*return_source_type_name) == std::nullopt ||
@@ -1304,6 +1305,7 @@ auto lower_guard_return_statement(
         statement.expression,
         return_source_type_name,
         session.semantics,
+        context.lowering,
         context.options,
         session.state
     );
@@ -2244,6 +2246,7 @@ void emit_function_body(
             *expression,
             return_source_type_name,
             session.semantics,
+            context.lowering,
             context.options,
             session.state
         );
