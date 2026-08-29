@@ -58,6 +58,8 @@ struct RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerification {
 
 struct RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict {
     std::string function_symbol_name;
+    std::string left_source_text;
+    std::string right_source_text;
     std::size_t left_candidate_index = 0;
     std::size_t right_candidate_index = 0;
     std::size_t left_source_line = 0;

@@ -41,9 +41,10 @@ This note is an implementation snapshot. It does not define language syntax or s
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
   selection remain open.
-- Diagnostics are useful but still need richer source-span correlation for some lowering and cleanup failures.
+- Diagnostics are useful. Runtime-index splice-conflict blockers now include the conflicting source lines; other
+  lowering and cleanup failures still need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Resume implementation work on richer runtime-index cleanup diagnostics, starting with source-span correlation for
-  splice-conflict blockers.
+- Extend source-span correlation to the next runtime-index cleanup blocker that still reports only generated IR or
+  internal gate state.

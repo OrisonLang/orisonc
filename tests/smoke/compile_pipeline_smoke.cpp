@@ -19168,6 +19168,14 @@ auto main() -> int {
     assert(same_function_splice_conflict.left_source_line == 46);
     assert(same_function_splice_conflict.right_source_line == 51);
     assert(
+        same_function_splice_conflict.left_source_text ==
+        "var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
+    );
+    assert(
+        same_function_splice_conflict.right_source_text ==
+        "var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
+    );
+    assert(
         same_function_splice_conflict.left_splice_range.start_offset ==
         same_function_first_candidate.splice_range.start_offset
     );
@@ -19310,8 +19318,22 @@ auto main() -> int {
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_left_source_text ==
+        "var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
+            .diagnostic_right_source_text ==
+        "var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_text ==
-        "runtime-index cleanup blocked: overlapping same-function splice ranges left-line 46 right-line 51"
+        "runtime-index cleanup blocked: overlapping same-function splice ranges left-line 46 right-line 51 "
+        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
     );
     assert(
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
@@ -19328,7 +19350,9 @@ auto main() -> int {
             "function select_both "
             "source-line 46 "
             "diagnostic runtime-index cleanup blocked: "
-            "overlapping same-function splice ranges left-line 46 right-line 51"
+            "overlapping same-function splice ranges left-line 46 right-line 51 "
+            "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+            "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
         ) != std::string::npos
     );
     auto runtime_indexed_same_function_cleanup_readiness_blocker_report =

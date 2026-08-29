@@ -2971,3 +2971,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   that keep the gate shape explicit without repeating raw option literals.
 - 2026-08-29: The remaining runtime-index option-literal audit found no further helper cleanup that improves
   staged-gate clarity. The new smoke guard pins the source-drop audit-only and rewrite-execution-only helper states.
+- 2026-08-29: Runtime-index same-function splice-conflict diagnostics now carry trimmed source-line snippets for both
+  conflicting candidates through typed pipeline state, CLI audit output, and blocked emit-LLVM readiness diagnostics.

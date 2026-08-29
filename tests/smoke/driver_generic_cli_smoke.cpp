@@ -371,7 +371,14 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module splice-conflict function select_both "
-        "left-candidate 0 left-line 46"
+        "left-candidate 0 left-line 46 "
+        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+        "left-range"
+    ) != std::string::npos);
+    assert(output.find(
+        "right-candidate 1 right-line 51 "
+        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index]) "
+        "right-range"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup function-module mutation requested true candidate-verified false "
@@ -386,7 +393,9 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
         "splice-conflict-check blocked ir-shape ready production blocked "
         "blocker-count 2 blocker-kind function-splice-conflict "
         "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
-        "overlapping same-function splice ranges left-line 46 right-line 51"
+        "overlapping same-function splice ranges left-line 46 right-line 51 "
+        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness blocker index 0 "
@@ -557,7 +566,9 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
         "splice-conflict-check blocked ir-shape ready production blocked "
         "blocker-count 2 blocker-kind function-splice-conflict "
         "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
-        "overlapping same-function splice ranges left-line 46 right-line 51"
+        "overlapping same-function splice ranges left-line 46 right-line 51 "
+        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
     ) != std::string::npos);
     assert(output.find("define i32 @select_both") == std::string::npos);
 }

@@ -2402,6 +2402,9 @@ representation.
   those gate boundaries visible while removing repeated raw option literals.
 - The remaining runtime-index option-literal audit found no further helper cleanup that improves staged-gate clarity.
   Smoke coverage now pins the source-drop audit-only and rewrite-execution-only helper states directly.
+- Runtime-index same-function splice-conflict records now carry trimmed source-line snippets for both conflicting
+  candidates. Driver audit output and blocked emit-LLVM readiness diagnostics render those snippets alongside the
+  existing candidate indexes, source lines, and IR splice ranges.
 
 ## Follow-up work
 

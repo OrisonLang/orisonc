@@ -74,6 +74,8 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     std::size_t diagnostic_right_candidate_index = 0;
     std::size_t diagnostic_left_source_line = 0;
     std::size_t diagnostic_right_source_line = 0;
+    std::string diagnostic_left_source_text;
+    std::string diagnostic_right_source_text;
     std::string diagnostic_text;
 };
 

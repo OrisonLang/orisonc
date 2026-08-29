@@ -29,6 +29,50 @@ auto runtime_indexed_cleanup_function_ir_rewrite_requested(
         options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled;
 }
 
+auto trim_source_line_text(std::string line) -> std::string {
+    auto const first_non_space = std::find_if(
+        line.begin(),
+        line.end(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    );
+    if (first_non_space == line.end()) {
+        return {};
+    }
+    auto const last_non_space = std::find_if(
+        line.rbegin(),
+        line.rend(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    ).base();
+    return std::string(first_non_space, last_non_space);
+}
+
+auto source_line_text(std::string const& source_text, std::size_t line_number) -> std::string {
+    if (line_number == 0) {
+        return {};
+    }
+    auto current_line = std::size_t {1};
+    auto line_start = std::size_t {0};
+    while (line_start <= source_text.size()) {
+        auto line_end = source_text.find('\n', line_start);
+        if (line_end == std::string::npos) {
+            line_end = source_text.size();
+        }
+        if (current_line == line_number) {
+            return trim_source_line_text(source_text.substr(line_start, line_end - line_start));
+        }
+        if (line_end == source_text.size()) {
+            break;
+        }
+        line_start = line_end + 1;
+        ++current_line;
+    }
+    return {};
+}
+
 auto erase_first_runtime_indexed_cleanup_ir_line_containing(
     lowering::RuntimeIndexedCleanupEmissionPlan& plan,
     std::string const& token
@@ -1367,7 +1411,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state(
 auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state(
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateState const& module_candidate_state,
     RuntimeIndexedCleanupFunctionIrRewriteCandidateState const& function_candidate_state,
-    RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState const& function_verification_state
+    RuntimeIndexedCleanupFunctionIrRewriteCandidateVerificationState const& function_verification_state,
+    std::string const& source_text
 ) -> RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
     auto state = RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState {
         .verification_metadata_available = module_candidate_state.metadata_available,
@@ -1402,6 +1447,8 @@ auto build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verifica
             state.splice_conflicts.push_back(
                 RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict {
                     .function_symbol_name = left.function_symbol_name,
+                    .left_source_text = source_line_text(source_text, left.source_line),
+                    .right_source_text = source_line_text(source_text, right.source_line),
                     .left_candidate_index = left_index,
                     .right_candidate_index = right_index,
                     .left_source_line = left.source_line,
@@ -2155,6 +2202,12 @@ auto format_runtime_indexed_cleanup_production_readiness_diagnostic(
             diagnostic << " left-line " << state.diagnostic_left_source_line
                        << " right-line " << state.diagnostic_right_source_line;
         }
+        if (!state.diagnostic_left_source_text.empty()) {
+            diagnostic << " left-source " << state.diagnostic_left_source_text;
+        }
+        if (!state.diagnostic_right_source_text.empty()) {
+            diagnostic << " right-source " << state.diagnostic_right_source_text;
+        }
         break;
     case RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape:
         diagnostic << "cleanup ir shape blocked";
@@ -2715,6 +2768,8 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_state(
             readiness_state.diagnostic_right_candidate_index = conflict.right_candidate_index;
             readiness_state.diagnostic_left_source_line = conflict.left_source_line;
             readiness_state.diagnostic_right_source_line = conflict.right_source_line;
+            readiness_state.diagnostic_left_source_text = conflict.left_source_text;
+            readiness_state.diagnostic_right_source_text = conflict.right_source_text;
         }
         append_runtime_indexed_cleanup_readiness_blocker(
             readiness_state,
@@ -3721,7 +3776,8 @@ void populate_lowering_emission_reports(
         build_runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state(
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state,
             result.runtime_indexed_cleanup_function_ir_rewrite_candidate_state,
-            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+            result.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state,
+            result.source_file ? result.source_file->content() : std::string {}
         );
     result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state =
         apply_runtime_indexed_cleanup_function_ir_module_rewrite_mutation(
