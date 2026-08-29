@@ -259,17 +259,11 @@ auto default_driver_options() -> pipeline::CompilePipelineOptions {
 }
 
 auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions {
-    auto options = pipeline::CompilePipelineOptions {};
-    options.source_drop_lowering_enabled = true;
+    auto options = pipeline::production_compile_pipeline_options();
     options.collect_runtime_indexed_cleanup_audit = true;
-    options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_module_ir_insertion_enabled = true;
     options.runtime_indexed_cleanup_module_ir_mutation_enabled = true;
     options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true;
-    options.runtime_indexed_constructor_move_enabled = true;
-    options.dynamic_array_production_construction_lowering_enabled = true;
-    options.dynamic_array_production_append_lowering_enabled = true;
-    options.dynamic_array_production_index_lowering_enabled = true;
     return options;
 }
 
@@ -285,20 +279,12 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
 
 auto runtime_indexed_member_cleanup_run_options() -> pipeline::CompilePipelineOptions {
     auto options = runtime_indexed_cleanup_audit_options();
-    options.runtime_indexed_member_cleanup_ir_mutation_enabled = true;
-    options.runtime_indexed_member_cleanup_production_gate_enabled = true;
-    options.runtime_indexed_member_cleanup_apply_authorization_enabled = true;
-    options.runtime_indexed_member_cleanup_rewrite_execution_enabled = true;
     return options;
 }
 
 auto runtime_indexed_constructor_move_production_readiness_options() -> pipeline::CompilePipelineOptions {
     auto options = default_driver_options();
-    options.source_drop_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
-    options.dynamic_array_production_construction_lowering_enabled = true;
-    options.dynamic_array_production_append_lowering_enabled = true;
-    options.dynamic_array_production_index_lowering_enabled = true;
     return options;
 }
 

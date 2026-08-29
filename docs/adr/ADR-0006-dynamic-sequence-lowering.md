@@ -2388,6 +2388,8 @@ representation.
 - Runtime-index constructor move shape-fault coverage now derives from shared production pipeline defaults and only
   overrides audit collection plus targeted fault injection. This keeps source Drop, runtime-index constructor move, and
   DynamicArray production gates under the same default option path.
+- Runtime-index cleanup audit driver options and fully-enabled constructor move smoke calls now derive from shared
+  production pipeline defaults, adding only audit/module-rewrite overrides where the test needs them.
 
 ## Follow-up work
 
