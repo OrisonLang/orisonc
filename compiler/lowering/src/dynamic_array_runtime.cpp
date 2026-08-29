@@ -351,6 +351,7 @@ auto plan_dynamic_array_descriptor_lifetime(
     if (cleanup_plan != nullptr) {
         plan.descriptor_storage_status = cleanup_plan->descriptor_storage_status;
         plan.descriptor_storage_name = cleanup_plan->descriptor_storage_name;
+        plan.cleanup_owner_name = cleanup_plan->owner_name;
     }
     return plan;
 }
@@ -427,6 +428,7 @@ auto matching_bound_dynamic_array_parameter_lifetime_plan(
 
 auto matching_returned_dynamic_array_descriptor_lifetime_plan(
     std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    std::string_view returned_owner_name,
     DynamicArrayDescriptorCleanupPlan const& cleanup_plan
 ) -> DynamicArrayDescriptorLifetimePlan const* {
     auto const match = std::find_if(
@@ -436,6 +438,7 @@ auto matching_returned_dynamic_array_descriptor_lifetime_plan(
             return lifetime_plan.binding_kind ==
                     semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
                 lifetime_plan.cleanup_plan_available &&
+                lifetime_plan.owner_name == returned_owner_name &&
                 lifetime_plan.owner_name == cleanup_plan.owner_name &&
                 dynamic_array_descriptor_lifetime_source_type_matches(
                     lifetime_plan.source_type_name,
@@ -447,6 +450,7 @@ auto matching_returned_dynamic_array_descriptor_lifetime_plan(
                 ) &&
                 lifetime_plan.descriptor_storage_status == cleanup_plan.descriptor_storage_status &&
                 lifetime_plan.descriptor_storage_name == cleanup_plan.descriptor_storage_name &&
+                lifetime_plan.cleanup_owner_name == cleanup_plan.owner_name &&
                 lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup";
         }
     );

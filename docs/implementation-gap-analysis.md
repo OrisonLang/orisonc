@@ -36,7 +36,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   remain readiness metadata until concrete instantiation proves element layout and cleanup. Concrete generic
   owned-parameter cleanup can seed bound cleanup from generated and direct source Drop definitions after function
   emission resolves abstract descriptor parameter types from specialization suffixes; cleanup planning accepts the same
-  concrete Drop-symbol proof when no concrete parameter summary exists. Multi-candidate
+  concrete Drop-symbol proof when no concrete parameter summary exists. Returned descriptor lifetime plans now carry
+  exact cleanup-owner proof, so return cleanup release consumes typed provenance directly. Multi-candidate
   runtime-index cleanup fixtures now share the same production-default audit/module-rewrite helper. Single-candidate
   module-mutation and module-rewrite checks now use named option helpers. Runtime-index emission, insertion, mutation,
   Drop-surface, source-drop audit-only, and rewrite-execution-only staged checks now use named option helpers. The

@@ -163,6 +163,7 @@ void assert_dynamic_array_payload_returned_lifetime_owner(
             [&](orison::pipeline::DynamicArrayDescriptorLifetimePlan const& plan) {
                 return plan.owner_name == owner_name &&
                     plan.binding_kind == orison::semantics::DynamicArrayDescriptorBindingKind::returned_binding &&
+                    plan.cleanup_owner_name == owner_name &&
                     plan.cleanup_responsibility == "caller-owned-returned-cleanup";
             }
         )

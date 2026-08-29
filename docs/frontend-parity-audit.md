@@ -8,6 +8,9 @@
   from generated and direct source Drop definition symbols. Function emission resolves abstract descriptor parameter
   types from specialization suffixes, and bound-parameter cleanup planning accepts the concrete Drop-symbol proof when
   no concrete parameter summary exists. This restores callee cleanup for monomorphized owned-parameter bodies.
+- 2026-08-29: Returned DynamicArray descriptor lifetime plans now carry exact cleanup-owner proof. Return cleanup
+  release consumes the typed proof directly, and mismatch fault coverage mutates the cleanup owner together with the
+  returned descriptor owner.
 - 2026-08-25: `tests/fixtures/dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or` now
   pins a nested returned record-field `DynamicArray<Payload>` descriptor consumed by a same-owner computed `for`,
   including nested field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and

@@ -340,10 +340,34 @@ int main() {
     auto descriptor_lifetime_plan =
         orison::lowering::plan_dynamic_array_descriptor_lifetime(returned_descriptor, &returned_cleanup_plan);
     assert(descriptor_lifetime_plan.cleanup_plan_available);
+    assert(descriptor_lifetime_plan.cleanup_owner_name == "items");
     assert(descriptor_lifetime_plan.cleanup_responsibility == "caller-owned-returned-cleanup");
     assert(
         descriptor_lifetime_plan.descriptor_storage_status ==
         orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor
+    );
+    assert(
+        orison::lowering::matching_returned_dynamic_array_descriptor_lifetime_plan(
+            std::vector<orison::lowering::DynamicArrayDescriptorLifetimePlan> {descriptor_lifetime_plan},
+            "items",
+            returned_cleanup_plan
+        ) != nullptr
+    );
+    assert(
+        orison::lowering::matching_returned_dynamic_array_descriptor_lifetime_plan(
+            std::vector<orison::lowering::DynamicArrayDescriptorLifetimePlan> {descriptor_lifetime_plan},
+            "other",
+            returned_cleanup_plan
+        ) == nullptr
+    );
+    auto mismatched_cleanup_owner_plan = descriptor_lifetime_plan;
+    mismatched_cleanup_owner_plan.cleanup_owner_name = "other";
+    assert(
+        orison::lowering::matching_returned_dynamic_array_descriptor_lifetime_plan(
+            std::vector<orison::lowering::DynamicArrayDescriptorLifetimePlan> {mismatched_cleanup_owner_plan},
+            "items",
+            returned_cleanup_plan
+        ) == nullptr
     );
     assert(
         orison::lowering::emit_dynamic_array_descriptor_load("%items.descriptor", "%items.addr") ==

@@ -89,6 +89,7 @@ struct DynamicArrayDescriptorLifetimePlan {
     DynamicArrayDescriptorStorageStatus descriptor_storage_status =
         DynamicArrayDescriptorStorageStatus::predicted_owner_local;
     std::string descriptor_storage_name;
+    std::string cleanup_owner_name;
     std::string cleanup_responsibility;
     bool cleanup_plan_available = false;
     std::size_t source_line = 0;
@@ -164,6 +165,7 @@ auto matching_bound_dynamic_array_parameter_lifetime_plan(
 
 auto matching_returned_dynamic_array_descriptor_lifetime_plan(
     std::vector<DynamicArrayDescriptorLifetimePlan> const& lifetime_plans,
+    std::string_view returned_owner_name,
     DynamicArrayDescriptorCleanupPlan const& cleanup_plan
 ) -> DynamicArrayDescriptorLifetimePlan const*;
 

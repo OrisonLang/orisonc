@@ -218,6 +218,7 @@ auto apply_test_only_dynamic_array_descriptor_lifetime_plan_fault(
             for (auto& plan : plans) {
                 if (plan.cleanup_plan_available) {
                     plan.owner_name += ".mismatch";
+                    plan.cleanup_owner_name += ".mismatch";
                 }
             }
             return;
@@ -478,6 +479,7 @@ auto build_dynamic_array_descriptor_lifetime_plan_state(
             .binding_kind = lowering_plan.binding_kind,
             .descriptor_storage_status = lowering_plan.descriptor_storage_status,
             .descriptor_storage_name = std::move(lowering_plan.descriptor_storage_name),
+            .cleanup_owner_name = std::move(lowering_plan.cleanup_owner_name),
             .cleanup_responsibility = std::move(lowering_plan.cleanup_responsibility),
             .cleanup_plan_available = lowering_plan.cleanup_plan_available,
             .source_line = lowering_plan.source_line,

@@ -257,6 +257,8 @@ representation.
   metadata. Function emission resolves abstract descriptor parameter types from the specialization suffix before
   seeding cleanup proof, and bound-parameter cleanup planning accepts the same concrete Drop-symbol proof when no
   concrete parameter summary exists.
+- Returned DynamicArray lifetime metadata records the exact cleanup owner that proved caller-owned cleanup. Function
+  return cleanup release now relies on that typed cleanup-owner proof instead of a release-site owner filter.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

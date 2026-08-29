@@ -742,12 +742,10 @@ void release_returned_dynamic_array_local_cleanup(
     for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
          cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
         ++cleanup_plan) {
-        if (cleanup_plan->owner_name != descriptor->owner_name) {
-            continue;
-        }
         if (!options.dynamic_array_descriptor_lifetime_plans.empty()) {
             if (matching_returned_dynamic_array_descriptor_lifetime_plan(
                     options.dynamic_array_descriptor_lifetime_plans,
+                    descriptor->owner_name,
                     *cleanup_plan
                 ) != nullptr) {
                 state.dynamic_array_local_cleanup_plans.erase(cleanup_plan);

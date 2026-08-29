@@ -50,6 +50,7 @@ struct DynamicArrayDescriptorLifetimePlan {
     lowering::DynamicArrayDescriptorStorageStatus descriptor_storage_status =
         lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local;
     std::string descriptor_storage_name;
+    std::string cleanup_owner_name;
     std::string cleanup_responsibility;
     bool cleanup_plan_available = false;
     std::size_t source_line = 0;
