@@ -2938,3 +2938,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-28: Constructor-owned aggregate arguments now release moved cleanup ownership through the shared moved-cleanup
   expression helper. The fixed-array record-field move fixture links and runs with production defaults plus explicit
   source Drop opt-in.
+- 2026-08-28: Returned fixed-array aggregate cleanup now has production-default run coverage with explicit source Drop
+  opt-in. The checked `make_outer` path returns `Outer(items)` after moving the local fixed array into the returned
+  record.

@@ -1341,6 +1341,12 @@ auto main() -> int {
             "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or",
         smoke_temp_root / "dynamic_array_owned_constructor_fixed_array_record_field_move_source_drop"
     );
+    assert_production_source_drop_emit_object_link_run_success(
+        pipeline,
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_returned_fixed_array_record_field_move_run.or",
+        smoke_temp_root / "dynamic_array_owned_returned_fixed_array_record_field_move_source_drop"
+    );
 
     auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
 

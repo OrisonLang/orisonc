@@ -232,6 +232,8 @@ representation.
   together.
 - Constructor-owned aggregate arguments now release moved cleanup ownership through the shared moved-cleanup expression
   helper, suppressing stale fixed-array local source Drop cleanup after those values move into records.
+- Returned fixed-array aggregate cleanup now has explicit source Drop opt-in run coverage for `make_outer` returning
+  `Outer(items)` after moving a local fixed array into the returned record.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.
