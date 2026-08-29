@@ -2954,3 +2954,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-28: Source Drop lowering now joins shared production defaults. Default pipeline and CLI coverage now include
   generated source Drop functions for audited DynamicArray aggregate cleanup paths after moved member-path constructor
   transfer disarms moved source descriptors.
+- 2026-08-29: Runtime-index constructor move shape-fault coverage now derives from shared production pipeline defaults
+  and only overrides audit collection plus targeted fault injection. This keeps source Drop, runtime-index constructor
+  move, and DynamicArray production gates under the same default option path.

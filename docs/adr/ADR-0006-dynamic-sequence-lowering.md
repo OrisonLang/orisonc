@@ -2385,6 +2385,9 @@ representation.
 - Mixed direct/helper-forwarded switch cases now feed final-if and final-switch nested returned-field cleanup
   composition. The checked `OuterBox` paths join direct and `forward_outer` cases, clean `returned.inner.values`, then
   local `scratch`, suppress stale `box.inner.values` cleanup, and reject `scratch` reuse.
+- Runtime-index constructor move shape-fault coverage now derives from shared production pipeline defaults and only
+  overrides audit collection plus targeted fault injection. This keeps source Drop, runtime-index constructor move, and
+  DynamicArray production gates under the same default option path.
 
 ## Follow-up work
 

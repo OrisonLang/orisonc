@@ -1280,17 +1280,10 @@ struct RuntimeIndexedConstructorMoveIrShapeFaultExpectation {
 auto runtime_indexed_constructor_move_shape_fault_options(
     orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection fault
 ) -> orison::pipeline::CompilePipelineOptions {
-    return orison::pipeline::CompilePipelineOptions {
-        .source_drop_lowering_enabled = true,
-        .collect_runtime_indexed_cleanup_audit = true,
-        .runtime_indexed_cleanup_emission_enabled = true,
-        .runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true,
-        .runtime_indexed_constructor_move_enabled = true,
-        .test_only_runtime_indexed_cleanup_ir_shape_fault = fault,
-        .dynamic_array_production_construction_lowering_enabled = true,
-        .dynamic_array_production_index_lowering_enabled = true,
-        .dynamic_array_production_append_lowering_enabled = true,
-    };
+    auto options = orison::pipeline::production_compile_pipeline_options();
+    options.collect_runtime_indexed_cleanup_audit = true;
+    options.test_only_runtime_indexed_cleanup_ir_shape_fault = fault;
+    return options;
 }
 
 void assert_runtime_indexed_constructor_move_shape_faults(
