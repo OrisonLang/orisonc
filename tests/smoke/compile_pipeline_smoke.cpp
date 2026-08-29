@@ -1306,6 +1306,46 @@ auto runtime_indexed_cleanup_audit_only_options() ->
     return options;
 }
 
+auto runtime_indexed_cleanup_emission_only_options(bool source_drop_lowering_enabled) ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = orison::pipeline::CompilePipelineOptions {};
+    options.source_drop_lowering_enabled = source_drop_lowering_enabled;
+    options.collect_runtime_indexed_cleanup_audit = true;
+    options.runtime_indexed_cleanup_emission_enabled = true;
+    return options;
+}
+
+auto runtime_indexed_cleanup_constructor_move_emission_options(
+    bool source_drop_lowering_enabled
+) -> orison::pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_emission_only_options(
+        source_drop_lowering_enabled
+    );
+    options.runtime_indexed_constructor_move_enabled = true;
+    return options;
+}
+
+auto runtime_indexed_cleanup_module_drop_surface_options() ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_constructor_move_emission_options(false);
+    options.runtime_indexed_cleanup_module_ir_insertion_enabled = true;
+    return options;
+}
+
+auto runtime_indexed_cleanup_insertion_gate_options() ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_emission_only_options(true);
+    options.runtime_indexed_cleanup_module_ir_insertion_enabled = true;
+    return options;
+}
+
+auto runtime_indexed_cleanup_mutation_gate_options() ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_insertion_gate_options();
+    options.runtime_indexed_cleanup_module_ir_mutation_enabled = true;
+    return options;
+}
+
 auto runtime_indexed_cleanup_module_mutation_options() ->
     orison::pipeline::CompilePipelineOptions {
     auto options = runtime_indexed_cleanup_audit_module_rewrite_options();
@@ -17102,11 +17142,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_narrow_drop_surface = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-        }
+        runtime_indexed_cleanup_constructor_move_emission_options(false)
     );
     assert(!runtime_indexed_cleanup_narrow_drop_surface.has_errors());
     assert(
@@ -17118,12 +17154,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_module_drop_surface = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-        }
+        runtime_indexed_cleanup_module_drop_surface_options()
     );
     assert(!runtime_indexed_cleanup_module_drop_surface.has_errors());
     assert(
@@ -17135,11 +17166,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_gate_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-        }
+        runtime_indexed_cleanup_emission_only_options(true)
     );
     assert(runtime_indexed_cleanup_gate_on.has_errors());
     assert(
@@ -17627,12 +17654,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_insertion_gate_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-        }
+        runtime_indexed_cleanup_insertion_gate_options()
     );
     assert(runtime_indexed_cleanup_insertion_gate_on.has_errors());
     assert(
@@ -17817,13 +17839,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_mutation_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-        }
+        runtime_indexed_cleanup_mutation_gate_options()
     );
     assert(runtime_indexed_cleanup_mutation_on.has_errors());
     assert(
@@ -18589,11 +18605,7 @@ auto main() -> int {
         "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or";
     auto runtime_indexed_fixed_array_same_shape_cleanup = pipeline.emit_llvm(
         runtime_indexed_fixed_array_same_shape_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-        }
+        runtime_indexed_cleanup_emission_only_options(true)
     );
     assert(runtime_indexed_fixed_array_same_shape_cleanup.has_errors());
     assert(

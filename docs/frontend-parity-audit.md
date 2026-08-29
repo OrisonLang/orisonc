@@ -2965,3 +2965,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   helper for separate-function, overlapping same-function, and non-overlapping same-function coverage.
 - 2026-08-29: Single-candidate runtime-index module-mutation and module-rewrite checks now use named option helpers,
   including the adjacent DynamicArray computed-index rejection fixture.
+- 2026-08-29: Runtime-index emission, insertion, mutation, and Drop-surface staged checks now use named option helpers
+  that preserve the old gate boundaries while removing repeated option literals.

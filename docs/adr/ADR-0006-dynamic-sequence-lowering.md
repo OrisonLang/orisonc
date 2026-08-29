@@ -2396,6 +2396,8 @@ representation.
   separate-function, overlapping same-function, and non-overlapping same-function coverage.
 - Single-candidate runtime-index module-mutation and module-rewrite checks now use named option helpers, including the
   adjacent DynamicArray computed-index rejection fixture.
+- Runtime-index emission, insertion, mutation, and Drop-surface staged checks now use named option helpers that preserve
+  the old gate boundaries while removing repeated option literals.
 
 ## Follow-up work
 
