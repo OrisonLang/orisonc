@@ -1296,6 +1296,21 @@ auto runtime_indexed_cleanup_audit_module_rewrite_options() ->
     return options;
 }
 
+auto runtime_indexed_cleanup_source_drop_audit_options() ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = orison::pipeline::CompilePipelineOptions {};
+    options.source_drop_lowering_enabled = true;
+    options.collect_runtime_indexed_cleanup_audit = true;
+    return options;
+}
+
+auto runtime_indexed_cleanup_rewrite_execution_only_options() ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_source_drop_audit_options();
+    options.runtime_indexed_member_cleanup_rewrite_execution_enabled = true;
+    return options;
+}
+
 auto runtime_indexed_cleanup_audit_only_options() ->
     orison::pipeline::CompilePipelineOptions {
     auto options = runtime_indexed_cleanup_audit_module_rewrite_options();
@@ -14529,10 +14544,7 @@ auto main() -> int {
         "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or";
     auto runtime_indexed_cleanup = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-        }
+        runtime_indexed_cleanup_source_drop_audit_options()
     );
     assert(runtime_indexed_cleanup.has_errors());
     assert(
@@ -15322,11 +15334,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_rewrite_request = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_member_cleanup_rewrite_execution_enabled = true,
-        }
+        runtime_indexed_cleanup_rewrite_execution_only_options()
     );
     assert(runtime_indexed_cleanup_rewrite_request.has_errors());
     assert(runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines.size() == 76);

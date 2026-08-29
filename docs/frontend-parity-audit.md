@@ -2967,3 +2967,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   including the adjacent DynamicArray computed-index rejection fixture.
 - 2026-08-29: Runtime-index emission, insertion, mutation, and Drop-surface staged checks now use named option helpers
   that preserve the old gate boundaries while removing repeated option literals.
+- 2026-08-29: Runtime-index source-drop audit-only and rewrite-execution-only staged checks now use named option helpers
+  that keep the gate shape explicit without repeating raw option literals.

@@ -2398,6 +2398,8 @@ representation.
   adjacent DynamicArray computed-index rejection fixture.
 - Runtime-index emission, insertion, mutation, and Drop-surface staged checks now use named option helpers that preserve
   the old gate boundaries while removing repeated option literals.
+- Runtime-index source-drop audit-only and rewrite-execution-only staged checks now use named option helpers, keeping
+  those gate boundaries visible while removing repeated raw option literals.
 
 ## Follow-up work
 

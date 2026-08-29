@@ -34,7 +34,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   including runtime-index constructor move shape-fault coverage, module-rewrite audit paths, and staged member-cleanup
   gate checks. Multi-candidate runtime-index cleanup fixtures now share the same production-default audit/module-rewrite
   helper. Single-candidate module-mutation and module-rewrite checks now use named option helpers. Runtime-index
-  emission, insertion, mutation, and Drop-surface staged checks now use named option helpers.
+  emission, insertion, mutation, Drop-surface, source-drop audit-only, and rewrite-execution-only staged checks now use
+  named option helpers.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
@@ -43,5 +44,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Continue replacing remaining runtime-index option bundles one cluster at a time, next targeting smaller computed-index
-  rejection and readiness fixtures where helper names preserve the staged gate intent.
+- Audit remaining runtime-index option literals and stop the helper-cleanup pass once the remaining literals are
+  intent-specific enough to read better inline.
