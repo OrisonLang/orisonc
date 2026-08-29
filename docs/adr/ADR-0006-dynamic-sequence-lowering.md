@@ -236,6 +236,10 @@ representation.
   `Outer(items)` after moving a local fixed array into the returned record.
 - Nested returned aggregate cleanup now has explicit source Drop opt-in run coverage for `make_outer` returning
   `Outer(inner)` after moving a local nested record into the returned record.
+- A source Drop production-default trial remains blocked. Enabling it by default exposed a double free in
+  `dynamic_array_owned_constructor_member_path_move_run.or`: `Outer(holder.items)` currently leaves `holder.items`
+  live while final scope cleanup also drops `outer.items`. Source Drop stays opt-in until moved member-path
+  constructor ownership transfer zeroes or otherwise disarms the moved source.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

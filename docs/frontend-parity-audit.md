@@ -2944,3 +2944,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-28: Nested returned aggregate cleanup now has production-default run coverage with explicit source Drop
   opt-in. The checked `make_outer` path returns `Outer(inner)` after moving the local nested record into the returned
   record.
+- 2026-08-28: Source Drop production-default trial remains blocked. Full-suite testing exposed a double free in
+  `dynamic_array_owned_constructor_member_path_move_run.or` when `Outer(holder.items)` aliases moved DynamicArray
+  descriptors that are later dropped through both `Holder` and `Outer`; source Drop remains opt-in while moved
+  member-path constructor transfer is fixed.

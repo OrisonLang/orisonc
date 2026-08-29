@@ -30,7 +30,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   descriptor lifetime/readiness state now uses summary binding terminology.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; shared production defaults now cover construction, index, append, cleanup, computed `for`, and
-  runtime-index member cleanup. The next risk is broader computed-owner composition outside the audited shapes.
+  runtime-index member cleanup. Source Drop remains opt-in after the production-default trial exposed a moved
+  member-path constructor double free.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
@@ -39,5 +40,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Re-run a source Drop production-default trial now that constructor, returned fixed-array, and nested returned
-  aggregate cleanup have explicit opt-in run coverage.
+- Fix moved member-path constructor ownership transfer so `Outer(holder.items)` disarms `holder.items` before final
+  source Drop cleanup.
