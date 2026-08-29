@@ -39,5 +39,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Continue source Drop migration by auditing nested returned aggregate cleanup under explicit source Drop opt-in; keep
-  source Drop out of shared production defaults until the broader cleanup-shape set has run-level coverage.
+- Re-run a source Drop production-default trial now that constructor, returned fixed-array, and nested returned
+  aggregate cleanup have explicit opt-in run coverage.

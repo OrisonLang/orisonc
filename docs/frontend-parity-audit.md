@@ -2941,3 +2941,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-28: Returned fixed-array aggregate cleanup now has production-default run coverage with explicit source Drop
   opt-in. The checked `make_outer` path returns `Outer(items)` after moving the local fixed array into the returned
   record.
+- 2026-08-28: Nested returned aggregate cleanup now has production-default run coverage with explicit source Drop
+  opt-in. The checked `make_outer` path returns `Outer(inner)` after moving the local nested record into the returned
+  record.
