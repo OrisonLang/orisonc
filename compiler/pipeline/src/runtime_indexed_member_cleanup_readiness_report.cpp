@@ -3,10 +3,119 @@
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 
+#include <algorithm>
+#include <cctype>
+#include <optional>
 #include <sstream>
+#include <string>
 
 namespace orison::pipeline {
 namespace {
+
+auto trim_source_line_text(std::string line) -> std::string {
+    auto const first_non_space = std::find_if(
+        line.begin(),
+        line.end(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    );
+    if (first_non_space == line.end()) {
+        return {};
+    }
+    auto const last_non_space = std::find_if(
+        line.rbegin(),
+        line.rend(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    ).base();
+    return std::string(first_non_space, last_non_space);
+}
+
+auto source_line_text(std::string const& source_text, std::size_t line_number) -> std::string {
+    if (line_number == 0) {
+        return {};
+    }
+    auto current_line = std::size_t {1};
+    auto line_start = std::size_t {0};
+    while (line_start <= source_text.size()) {
+        auto line_end = source_text.find('\n', line_start);
+        if (line_end == std::string::npos) {
+            line_end = source_text.size();
+        }
+        if (current_line == line_number) {
+            return trim_source_line_text(source_text.substr(line_start, line_end - line_start));
+        }
+        if (line_end == source_text.size()) {
+            break;
+        }
+        line_start = line_end + 1;
+        ++current_line;
+    }
+    return {};
+}
+
+auto runtime_indexed_member_cleanup_mutation_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup mutation"};
+    return line.starts_with(prefix);
+}
+
+auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
+    auto constexpr token = std::string_view {" source-line "};
+    auto const token_start = line.find(token);
+    if (token_start == std::string::npos) {
+        return std::nullopt;
+    }
+
+    auto const digits_start = token_start + token.size();
+    auto digits_end = digits_start;
+    auto line_number = std::size_t {0};
+    while (digits_end < line.size() && std::isdigit(static_cast<unsigned char>(line[digits_end]))) {
+        line_number = (line_number * 10) + static_cast<std::size_t>(line[digits_end] - '0');
+        ++digits_end;
+    }
+    if (digits_end == digits_start || line_number == 0) {
+        return std::nullopt;
+    }
+    return std::pair {line_number, digits_end};
+}
+
+auto enrich_runtime_indexed_member_cleanup_mutation_line(
+    std::string line,
+    std::string const& source_text
+) -> std::string {
+    if (!runtime_indexed_member_cleanup_mutation_line(line) || line.find(" source-text ") != std::string::npos) {
+        return line;
+    }
+
+    auto const source_line = source_line_token_value(line);
+    if (!source_line.has_value()) {
+        return line;
+    }
+
+    auto const source_snippet = source_line_text(source_text, source_line->first);
+    if (source_snippet.empty()) {
+        return line;
+    }
+
+    line.insert(source_line->second, " source-text " + source_snippet);
+    return line;
+}
+
+auto enrich_runtime_indexed_member_cleanup_mutation_lines(
+    std::vector<std::string> lines,
+    CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto const source_text = result.source_file ? result.source_file->content() : std::string {};
+    if (source_text.empty()) {
+        return lines;
+    }
+    for (auto& line : lines) {
+        line = enrich_runtime_indexed_member_cleanup_mutation_line(std::move(line), source_text);
+    }
+    return lines;
+}
 
 void append_keyed_member_cleanup_chain(
     std::vector<std::string>& lines,
@@ -440,7 +549,7 @@ auto runtime_indexed_member_cleanup_readiness_report_lines(
     auto lines = std::vector<std::string> {};
     if (result.runtime_indexed_member_cleanup_typed_promotion_gates.empty()) {
         append_ungated_member_cleanup_lines(lines, result);
-        return lines;
+        return enrich_runtime_indexed_member_cleanup_mutation_lines(std::move(lines), result);
     }
 
     for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
@@ -450,7 +559,7 @@ auto runtime_indexed_member_cleanup_readiness_report_lines(
             runtime_indexed_member_cleanup_match_key(gate)
         );
     }
-    return lines;
+    return enrich_runtime_indexed_member_cleanup_mutation_lines(std::move(lines), result);
 }
 
 }  // namespace orison::pipeline

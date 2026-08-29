@@ -43,10 +43,10 @@ This note is an implementation snapshot. It does not define language syntax or s
   selection remain open.
 - Diagnostics are useful. Runtime-index splice-conflict blockers now include the conflicting source lines,
   production-readiness blocker reports now include the primary source line text, and member-cleanup mutation-stage
-  reports now retain source-line metadata. Other lowering and cleanup failures still need richer source-span
-  correlation.
+  audit/readiness reports now include source-line plus source-text metadata. Other lowering and cleanup failures still
+  need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Add source-text snippets to runtime-index member-cleanup mutation-stage reports without weakening the typed lowering
-  boundary.
+- Continue production `DynamicArray<T>` lowering by replacing fixture-only gates with semantic ownership/drop proofs for
+  the next unsupported owned-element shape.

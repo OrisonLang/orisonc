@@ -16,6 +16,7 @@
 #include <cctype>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <unordered_set>
 
 namespace orison::pipeline {
@@ -71,6 +72,66 @@ auto source_line_text(std::string const& source_text, std::size_t line_number) -
         ++current_line;
     }
     return {};
+}
+
+auto runtime_indexed_member_cleanup_mutation_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup mutation"};
+    return line.starts_with(prefix);
+}
+
+auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
+    auto constexpr token = std::string_view {" source-line "};
+    auto const token_start = line.find(token);
+    if (token_start == std::string::npos) {
+        return std::nullopt;
+    }
+
+    auto const digits_start = token_start + token.size();
+    auto digits_end = digits_start;
+    auto line_number = std::size_t {0};
+    while (digits_end < line.size() && std::isdigit(static_cast<unsigned char>(line[digits_end]))) {
+        line_number = (line_number * 10) + static_cast<std::size_t>(line[digits_end] - '0');
+        ++digits_end;
+    }
+    if (digits_end == digits_start || line_number == 0) {
+        return std::nullopt;
+    }
+    return std::pair {line_number, digits_end};
+}
+
+auto enrich_runtime_indexed_member_cleanup_mutation_audit_line(
+    std::string line,
+    std::string const& source_text
+) -> std::string {
+    if (!runtime_indexed_member_cleanup_mutation_line(line) || line.find(" source-text ") != std::string::npos) {
+        return line;
+    }
+
+    auto const source_line = source_line_token_value(line);
+    if (!source_line.has_value()) {
+        return line;
+    }
+
+    auto const source_snippet = source_line_text(source_text, source_line->first);
+    if (source_snippet.empty()) {
+        return line;
+    }
+
+    line.insert(source_line->second, " source-text " + source_snippet);
+    return line;
+}
+
+auto enrich_runtime_indexed_member_cleanup_mutation_audit_lines(
+    std::vector<std::string> lines,
+    std::string const& source_text
+) -> std::vector<std::string> {
+    if (source_text.empty()) {
+        return lines;
+    }
+    for (auto& line : lines) {
+        line = enrich_runtime_indexed_member_cleanup_mutation_audit_line(std::move(line), source_text);
+    }
+    return lines;
 }
 
 auto erase_first_runtime_indexed_cleanup_ir_line_containing(
@@ -3823,7 +3884,10 @@ void populate_lowering_emission_reports(
             result.source_file ? result.source_file->content() : std::string {}
         );
     result.runtime_indexed_cleanup_audit_lines =
-        std::move(emission.runtime_indexed_cleanup_audit_lines);
+        enrich_runtime_indexed_member_cleanup_mutation_audit_lines(
+            std::move(emission.runtime_indexed_cleanup_audit_lines),
+            result.source_file ? result.source_file->content() : std::string {}
+        );
     result.runtime_indexed_member_cleanup_sibling_fields =
         std::move(emission.runtime_indexed_member_cleanup_sibling_fields);
     result.runtime_indexed_member_cleanup_helper_drop_bindings =

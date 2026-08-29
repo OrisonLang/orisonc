@@ -2978,3 +2978,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-29: Runtime-index member-cleanup mutation-stage reports now carry source-line metadata from the originating
   computed-index constructor move through operation planning, validation, conflict checks, apply authorization,
   post-apply verification, readiness verdicts, and guarded rewrite execution reports.
+- 2026-08-29: Runtime-index member-cleanup mutation-stage audit and readiness report paths now enrich those source-line
+  records with trimmed source-text snippets in the pipeline layer, keeping source buffers out of lowering.

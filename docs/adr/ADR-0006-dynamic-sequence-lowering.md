@@ -2410,6 +2410,8 @@ representation.
 - Runtime-index member-cleanup mutation-stage reports now retain source-line metadata from the computed-index
   constructor move through mutation planning, readiness, authorization, guarded rewrite execution, and promotion
   status.
+- Runtime-index member-cleanup mutation-stage audit and readiness reports now add trimmed source-text snippets in the
+  pipeline layer, keeping source buffers out of lowering.
 
 ## Follow-up work
 
@@ -2418,5 +2420,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Add source text snippets to runtime-index member-cleanup mutation-stage reports once the lowering layer has a stable
-  typed diagnostic enrichment boundary for source buffers.
+- Continue production `DynamicArray<T>` lowering work by replacing fixture-only gates with semantic ownership/drop
+  proofs for the next unsupported owned-element shape.
