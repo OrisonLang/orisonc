@@ -2394,6 +2394,8 @@ representation.
   request states while deriving their base behavior from shared production defaults.
 - Multi-candidate runtime-index cleanup fixtures now use the shared production-default audit/module-rewrite helper for
   separate-function, overlapping same-function, and non-overlapping same-function coverage.
+- Single-candidate runtime-index module-mutation and module-rewrite checks now use named option helpers, including the
+  adjacent DynamicArray computed-index rejection fixture.
 
 ## Follow-up work
 

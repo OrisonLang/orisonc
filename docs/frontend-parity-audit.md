@@ -2963,3 +2963,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   production-gate request states while deriving their base behavior from shared production defaults.
 - 2026-08-29: Multi-candidate runtime-index cleanup fixtures now use the shared production-default audit/module-rewrite
   helper for separate-function, overlapping same-function, and non-overlapping same-function coverage.
+- 2026-08-29: Single-candidate runtime-index module-mutation and module-rewrite checks now use named option helpers,
+  including the adjacent DynamicArray computed-index rejection fixture.

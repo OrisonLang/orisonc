@@ -1306,6 +1306,20 @@ auto runtime_indexed_cleanup_audit_only_options() ->
     return options;
 }
 
+auto runtime_indexed_cleanup_module_mutation_options() ->
+    orison::pipeline::CompilePipelineOptions {
+    auto options = runtime_indexed_cleanup_audit_module_rewrite_options();
+    options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled = false;
+    options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = false;
+    options.runtime_indexed_member_cleanup_ir_mutation_enabled = false;
+    options.runtime_indexed_member_cleanup_production_gate_enabled = false;
+    options.runtime_indexed_member_cleanup_apply_authorization_enabled = false;
+    options.runtime_indexed_member_cleanup_rewrite_execution_enabled = false;
+    options.dynamic_array_production_cleanup_emission_enabled = false;
+    options.dynamic_array_production_for_lowering_enabled = false;
+    return options;
+}
+
 auto runtime_indexed_cleanup_ir_mutation_request_options() ->
     orison::pipeline::CompilePipelineOptions {
     auto options = runtime_indexed_cleanup_audit_module_rewrite_options();
@@ -17877,14 +17891,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_constructor_move_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-        }
+        runtime_indexed_cleanup_module_mutation_options()
     );
     assert(!runtime_indexed_cleanup_constructor_move_on.has_errors());
     assert(runtime_indexed_cleanup_constructor_move_on.error_text.empty());
@@ -18159,15 +18166,7 @@ auto main() -> int {
     );
     auto runtime_indexed_cleanup_function_module_rewrite_on = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-        }
+        runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_cleanup_function_module_rewrite_on.has_errors());
     assert(runtime_indexed_cleanup_function_module_rewrite_on.error_text.empty());
@@ -18579,18 +18578,7 @@ auto main() -> int {
         "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or";
     auto runtime_indexed_dynamic_array_cleanup = pipeline.emit_llvm(
         runtime_indexed_dynamic_array_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_index_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-        }
+        runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_dynamic_array_cleanup.has_errors());
     assert(
