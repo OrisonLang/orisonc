@@ -259,6 +259,9 @@ representation.
   concrete parameter summary exists.
 - Returned DynamicArray lifetime metadata records the exact cleanup owner that proved caller-owned cleanup. Function
   return cleanup release now relies on that typed cleanup-owner proof instead of a release-site owner filter.
+- Computed DynamicArray ownership planning can unwrap source-proven descriptor-forwarding helper calls. The proof is
+  limited to helpers whose final value expression returns the matching DynamicArray parameter directly or through
+  another proven helper call.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

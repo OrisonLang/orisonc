@@ -1870,6 +1870,7 @@ auto build_lowering_context(
         signature.generic_parameters = function.generic_parameters;
         symbol_registry.register_symbol(signature.symbol_name, "source function symbol", function.line, diagnostics);
         context.functions.emplace(function.name, std::move(signature));
+        context.source_functions.emplace(function.name, &function);
     }
 
     context.generic_function_specializations = collect_generic_function_specializations(module, context.functions);

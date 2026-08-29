@@ -1667,6 +1667,39 @@ void assert_returned_owned_computed_dynamic_array_emit_llvm_success(
     assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
 }
 
+void assert_returned_helper_call_owned_computed_dynamic_array_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("define { ptr, i64, i64 } @make_values()") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @forward_values({ ptr, i64, i64 } %values)") !=
+        std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @forward_again({ ptr, i64, i64 } %values)") !=
+        std::string::npos);
+    assert(output.find("%returned.addr = alloca { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("returned.computed_for.0.condition:") != std::string::npos);
+    assert(output.find("returned.computed_for.0.body:") != std::string::npos);
+    assert(output.find("returned.computed_for.0.exit:") != std::string::npos);
+    auto const drop_walk = output.find("returned.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %returned.computed_dynamic_array_cleanup");
+    auto const deallocation =
+        output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
+    auto const finalization =
+        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %returned.addr", deallocation);
+    auto const return_value = output.find("ret i32 %tmp", finalization);
+    assert(drop_walk != std::string::npos);
+    assert(drop_call != std::string::npos);
+    assert(deallocation != std::string::npos);
+    assert(finalization != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(drop_walk < drop_call);
+    assert(drop_call < deallocation);
+    assert(deallocation < finalization);
+    assert(finalization < return_value);
+    assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
+}
+
 void assert_branch_returned_owned_computed_dynamic_array_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2518,6 +2551,8 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_path =
         fixtures / "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_run.or";
+    auto dynamic_array_returned_helper_call_owned_computed_for_cleanup_path =
+        fixtures / "dynamic_array_returned_helper_call_owned_computed_for_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_branch_consumer_local_return_cleanup_path =
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_cleanup_run.or";
     auto dynamic_array_owned_result_ternary_chained_branch_consumer_local_return_cleanup_path =
@@ -4026,6 +4061,24 @@ auto main() -> int {
         executable,
         dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup"
+    );
+    assert_returned_helper_call_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        dynamic_array_returned_helper_call_owned_computed_for_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        dynamic_array_returned_helper_call_owned_computed_for_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_helper_call_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_returned_helper_call_owned_computed_for_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_helper_call_owned_computed_for_cleanup"
+    );
+    assert_run_success(
+        executable,
+        dynamic_array_returned_helper_call_owned_computed_for_cleanup_path
     );
     assert_dynamic_array_ternary_branch_consumer_local_return_cleanup_emit_llvm_success(
         executable,

@@ -76,6 +76,99 @@ auto matching_dynamic_array_cleanup_plan(
     );
 }
 
+auto final_value_expression_for(
+    syntax::FunctionSyntax const& function
+) -> syntax::ExpressionSyntax const* {
+    if (function.body_statements.empty()) {
+        return nullptr;
+    }
+    auto const& statement = function.body_statements.back();
+    if (statement.kind == syntax::StatementKind::return_statement ||
+        statement.kind == syntax::StatementKind::expression_statement) {
+        return &statement.expression;
+    }
+    return nullptr;
+}
+
+auto parameter_index_named(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view name,
+    std::string_view source_type_name
+) -> std::optional<std::size_t> {
+    if (function.parameters.size() != signature.parameter_source_type_names.size()) {
+        return std::nullopt;
+    }
+    for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        if (function.parameters[index].name == name &&
+            signature.parameter_source_type_names[index] == source_type_name) {
+            return index;
+        }
+    }
+    return std::nullopt;
+}
+
+auto forwarded_dynamic_array_parameter_index(
+    std::string_view function_name,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth = 8
+) -> std::optional<std::size_t> {
+    if (remaining_depth == 0) {
+        return std::nullopt;
+    }
+
+    auto signature = context.functions.find(std::string {function_name});
+    auto source_function = context.source_functions.find(std::string {function_name});
+    if (signature == context.functions.end() ||
+        source_function == context.source_functions.end() ||
+        signature->second.source_return_type_name != source_type_name) {
+        return std::nullopt;
+    }
+
+    auto const* expression = final_value_expression_for(*source_function->second);
+    if (expression == nullptr) {
+        return std::nullopt;
+    }
+
+    if (expression->kind == syntax::ExpressionKind::name) {
+        return parameter_index_named(
+            *source_function->second,
+            signature->second,
+            expression->text,
+            source_type_name
+        );
+    }
+
+    if (expression->kind != syntax::ExpressionKind::call ||
+        expression->left == nullptr ||
+        expression->left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto forwarded_argument_index = forwarded_dynamic_array_parameter_index(
+        expression->left->text,
+        source_type_name,
+        context,
+        remaining_depth - 1
+    );
+    if (!forwarded_argument_index.has_value() || *forwarded_argument_index >= expression->arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto const& argument = expression->arguments[*forwarded_argument_index];
+    if (argument.kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    return parameter_index_named(
+        *source_function->second,
+        signature->second,
+        argument.text,
+        source_type_name
+    );
+}
+
 auto collect_computed_dynamic_array_leaf_descriptors(
     syntax::ExpressionSyntax const& expression,
     std::string_view source_type_name,
@@ -91,6 +184,26 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         }
         descriptors.push_back(std::move(descriptor));
         return true;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto forwarded_index = forwarded_dynamic_array_parameter_index(
+            expression.left->text,
+            source_type_name,
+            context
+        );
+        if (!forwarded_index.has_value() || *forwarded_index >= expression.arguments.size()) {
+            return false;
+        }
+        return collect_computed_dynamic_array_leaf_descriptors(
+            expression.arguments[*forwarded_index],
+            source_type_name,
+            context,
+            state,
+            descriptors
+        );
     }
 
     if (expression.kind != syntax::ExpressionKind::ternary ||

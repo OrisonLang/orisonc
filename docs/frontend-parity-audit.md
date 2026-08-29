@@ -11,6 +11,10 @@
 - 2026-08-29: Returned DynamicArray descriptor lifetime plans now carry exact cleanup-owner proof. Return cleanup
   release consumes the typed proof directly, and mismatch fault coverage mutates the cleanup owner together with the
   returned descriptor owner.
+- 2026-08-29: Computed DynamicArray ownership planning now unwraps source-proven descriptor-forwarding helper calls.
+  `tests/fixtures/dynamic_array_returned_helper_call_owned_computed_for_cleanup_run.or` pins a returned descriptor
+  forwarded through a two-hop helper chain before same-owner computed iteration, cleanup, object emission, build, and
+  host execution.
 - 2026-08-25: `tests/fixtures/dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or` now
   pins a nested returned record-field `DynamicArray<Payload>` descriptor consumed by a same-owner computed `for`,
   including nested field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and

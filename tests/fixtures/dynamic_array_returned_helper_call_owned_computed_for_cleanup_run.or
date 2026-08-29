@@ -1,0 +1,30 @@
+package fixtures.dynamicarrayreturnedhelpercallownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(7 as UInt32))
+    values.push(Payload(11 as UInt32))
+    values
+
+function forward_values(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    values
+
+function forward_again(values: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_values(values)
+
+function main() -> UInt32
+    var returned: DynamicArray<Payload> = make_values()
+    var total: UInt32 = 0 as UInt32
+    for item in true ? forward_again(returned) : forward_again(returned)
+        total = total + item.value
+    total == 18 as UInt32 ? 0 as UInt32 : 1 as UInt32

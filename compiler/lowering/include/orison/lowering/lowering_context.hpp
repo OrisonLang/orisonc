@@ -65,6 +65,7 @@ struct LoweredChoiceLayout {
 
 struct LoweringContext {
     std::unordered_map<std::string, LoweredFunctionSignature> functions;
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> source_functions;
     std::unordered_map<std::string, LoweredRecordLayout> records;
     std::unordered_map<std::string, std::vector<std::string>> generic_record_parameters;
     std::unordered_map<std::string, LoweredChoiceLayout> choices;
