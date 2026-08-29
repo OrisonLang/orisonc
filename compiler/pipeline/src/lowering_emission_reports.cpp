@@ -2552,6 +2552,9 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
     if (state.diagnostic_source_available) {
         report << " source-line " << state.diagnostic_source_line;
     }
+    if (!state.diagnostic_source_text.empty()) {
+        report << " source-text " << state.diagnostic_source_text;
+    }
     auto diagnostic = format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
     if (!diagnostic.empty()) {
         report << " diagnostic " << diagnostic;
@@ -2576,6 +2579,9 @@ auto format_runtime_indexed_cleanup_production_readiness_blocker_report(
         }
         if (blocker.source_available) {
             line << " source-line " << blocker.source_line;
+        }
+        if (!blocker.source_text.empty()) {
+            line << " source-text " << blocker.source_text;
         }
         if (blocker.composition_failure != RuntimeIndexedCleanupIrCompositionFailure::none) {
             line << " composition-failure "
@@ -2690,6 +2696,7 @@ auto apply_runtime_indexed_cleanup_first_readiness_blocker(
     readiness_state.diagnostic_phi_predecessors_retargeted = blocker.phi_predecessors_retargeted;
     readiness_state.diagnostic_source_available = blocker.source_available;
     readiness_state.diagnostic_source_line = blocker.source_line;
+    readiness_state.diagnostic_source_text = blocker.source_text;
 }
 
 } // namespace
@@ -2702,7 +2709,8 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state,
     RuntimeIndexedCleanupModuleIrMutationState const& mutation_state,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
-    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state
+    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state,
+    std::string const& source_text
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState {
     auto const function_splice_conflict_free =
         function_verification_state.splice_conflict_count == 0;
@@ -2842,6 +2850,11 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_state(
             RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::IrShape,
             function_verification_state
         );
+    }
+    for (auto& blocker : readiness_state.blockers) {
+        if (blocker.source_text.empty()) {
+            blocker.source_text = source_line_text(source_text, blocker.source_line);
+        }
     }
     apply_runtime_indexed_cleanup_first_readiness_blocker(readiness_state);
     readiness_state.diagnostic_text =
@@ -3806,7 +3819,8 @@ void populate_lowering_emission_reports(
             result.runtime_indexed_cleanup_module_ir_candidate_verification_state,
             result.runtime_indexed_cleanup_module_ir_mutation_state,
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state,
-            result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state,
+            result.source_file ? result.source_file->content() : std::string {}
         );
     result.runtime_indexed_cleanup_audit_lines =
         std::move(emission.runtime_indexed_cleanup_audit_lines);

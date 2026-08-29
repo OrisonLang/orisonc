@@ -41,6 +41,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
     bool phi_predecessors_retargeted = false;
     bool source_available = false;
     std::size_t source_line = 0;
+    std::string source_text;
 };
 
 struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
@@ -70,6 +71,7 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool diagnostic_phi_predecessors_retargeted = false;
     bool diagnostic_source_available = false;
     std::size_t diagnostic_source_line = 0;
+    std::string diagnostic_source_text;
     std::size_t diagnostic_left_candidate_index = 0;
     std::size_t diagnostic_right_candidate_index = 0;
     std::size_t diagnostic_left_source_line = 0;
@@ -103,7 +105,8 @@ auto runtime_indexed_cleanup_module_ir_production_readiness_state(
     RuntimeIndexedCleanupModuleIrCandidateVerificationState const& verification_state,
     RuntimeIndexedCleanupModuleIrMutationState const& mutation_state,
     RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& function_verification_state,
-    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state
+    RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& function_mutation_state,
+    std::string const& source_text = {}
 ) -> RuntimeIndexedCleanupModuleIrProductionReadinessState;
 
 } // namespace orison::pipeline

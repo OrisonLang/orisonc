@@ -18442,6 +18442,10 @@ auto main() -> int {
             .diagnostic_source_line == runtime_indexed_cleanup_function_candidate.source_line
     );
     assert(
+        !runtime_indexed_cleanup_constructor_move_on.runtime_indexed_cleanup_module_ir_production_readiness_state
+             .diagnostic_source_text.empty()
+    );
+    assert(
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
             runtime_indexed_cleanup_constructor_move_on
                 .runtime_indexed_cleanup_module_ir_production_readiness_state
@@ -18456,6 +18460,10 @@ auto main() -> int {
             runtime_indexed_cleanup_function_candidate.function_symbol_name +
             " source-line " +
             std::to_string(runtime_indexed_cleanup_function_candidate.source_line) +
+            " source-text " +
+            runtime_indexed_cleanup_constructor_move_on
+                .runtime_indexed_cleanup_module_ir_production_readiness_state
+                .diagnostic_source_text +
             " diagnostic runtime-index cleanup blocked: function integration blocked"
         ) != std::string::npos
     );
@@ -19349,6 +19357,7 @@ auto main() -> int {
             "ir-shape ready production blocked blocker-count 2 blocker-kind function-splice-conflict "
             "function select_both "
             "source-line 46 "
+            "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
             "diagnostic runtime-index cleanup blocked: "
             "overlapping same-function splice ranges left-line 46 right-line 51 "
             "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
@@ -19362,12 +19371,16 @@ auto main() -> int {
     assert(runtime_indexed_same_function_cleanup_readiness_blocker_report.size() == 2);
     assert(
         runtime_indexed_same_function_cleanup_readiness_blocker_report.front().find(
-            "index 0 kind function-splice-conflict stage function splice conflict function select_both source-line 46"
+            "index 0 kind function-splice-conflict stage function splice conflict function select_both "
+            "source-line 46 "
+            "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
         ) != std::string::npos
     );
     assert(
         runtime_indexed_same_function_cleanup_readiness_blocker_report.back().find(
-            "index 1 kind function-integration stage function integration function select_both source-line 46"
+            "index 1 kind function-integration stage function integration function select_both "
+            "source-line 46 "
+            "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
         ) != std::string::npos
     );
     assert(

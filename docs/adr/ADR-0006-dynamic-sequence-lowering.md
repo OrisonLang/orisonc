@@ -2405,6 +2405,8 @@ representation.
 - Runtime-index same-function splice-conflict records now carry trimmed source-line snippets for both conflicting
   candidates. Driver audit output and blocked emit-LLVM readiness diagnostics render those snippets alongside the
   existing candidate indexes, source lines, and IR splice ranges.
+- Runtime-index module-IR production-readiness blocker reports now carry trimmed primary source-line text alongside the
+  existing source-line numbers.
 
 ## Follow-up work
 

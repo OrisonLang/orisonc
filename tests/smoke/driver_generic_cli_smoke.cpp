@@ -392,18 +392,22 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
         "splice-conflict-check blocked ir-shape ready production blocked "
         "blocker-count 2 blocker-kind function-splice-conflict "
-        "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
+        "function select_both source-line 46 "
+        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+        "diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51 "
         "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
         "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness blocker index 0 "
-        "kind function-splice-conflict stage function splice conflict function select_both source-line 46"
+        "kind function-splice-conflict stage function splice conflict function select_both source-line 46 "
+        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness blocker index 1 "
-        "kind function-integration stage function integration function select_both source-line 46"
+        "kind function-integration stage function integration function select_both source-line 46 "
+        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -565,7 +569,9 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
         "module-mutation enabled function-integration blocked splice-conflicts 1 "
         "splice-conflict-check blocked ir-shape ready production blocked "
         "blocker-count 2 blocker-kind function-splice-conflict "
-        "function select_both source-line 46 diagnostic runtime-index cleanup blocked: "
+        "function select_both source-line 46 "
+        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
+        "diagnostic runtime-index cleanup blocked: "
         "overlapping same-function splice ranges left-line 46 right-line 51 "
         "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
         "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"

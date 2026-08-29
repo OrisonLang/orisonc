@@ -2973,3 +2973,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   staged-gate clarity. The new smoke guard pins the source-drop audit-only and rewrite-execution-only helper states.
 - 2026-08-29: Runtime-index same-function splice-conflict diagnostics now carry trimmed source-line snippets for both
   conflicting candidates through typed pipeline state, CLI audit output, and blocked emit-LLVM readiness diagnostics.
+- 2026-08-29: Runtime-index module-IR production-readiness blocker reports now carry trimmed primary source-line text
+  alongside source-line numbers. Pipeline and driver smoke coverage pin the real-source blocker output.
