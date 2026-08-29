@@ -46,6 +46,22 @@ auto has_matching_dynamic_array_descriptor_summary_binding(
     );
 }
 
+auto dynamic_array_parameter_element_cleanup_proven(
+    std::string_view source_type_name,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        sequence->kind != DynamicSequenceKind::dynamic_array ||
+        is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        return false;
+    }
+
+    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
+    return std::ranges::find(options.source_drop_definition_symbols, expected_symbol_name) !=
+        options.source_drop_definition_symbols.end();
+}
+
 auto dynamic_array_descriptor_element_drop_action(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::size_t ordinal
@@ -699,12 +715,14 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         }
 
         if (!context.options.dynamic_array_descriptor_lifetime_plans.empty()) {
-            if (matching_bound_dynamic_array_parameter_lifetime_plan(
+            auto const has_lifetime_plan = matching_bound_dynamic_array_parameter_lifetime_plan(
                     context.options.dynamic_array_descriptor_lifetime_plans,
                     name,
                     source_type_name,
                     *storage
-                ) == nullptr) {
+                ) != nullptr;
+            if (!has_lifetime_plan &&
+                !dynamic_array_parameter_element_cleanup_proven(source_type_name, context.options)) {
                 continue;
             }
         } else if (!has_matching_dynamic_array_descriptor_summary_binding(
@@ -712,7 +730,8 @@ auto plan_bound_dynamic_array_parameter_cleanups(
                        name,
                        source_type_name,
                        semantics::DynamicArrayDescriptorBindingKind::parameter_binding
-                   )) {
+                   ) &&
+                   !dynamic_array_parameter_element_cleanup_proven(source_type_name, context.options)) {
             continue;
         }
 
@@ -932,7 +951,10 @@ auto prove_local_dynamic_array_cleanup_emission_capability(
 auto dynamic_array_cleanup_emission_capability_proven(
     DynamicArrayCleanupEmissionCapability const& capability
 ) -> bool {
-    return capability.emission_enabled &&
+    return !capability.cleanup_pairs.empty() &&
+        !capability.cleanup_operation_names.empty() &&
+        !capability.cleanup_owner_names.empty() &&
+        capability.emission_enabled &&
         capability.descriptor_storage_bound &&
         capability.sequence_verified &&
         capability.element_cleanup_authorized_or_not_required &&

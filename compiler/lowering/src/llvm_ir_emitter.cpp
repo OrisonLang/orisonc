@@ -3024,7 +3024,6 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
             context
         );
         if (!plan.has_value()) {
-            diagnostics.error(descriptor.line, "dynamic array descriptor cleanup could not be planned");
             continue;
         }
         if (has_bound_dynamic_array_parameter_descriptor(descriptor, module, context)) {
@@ -4164,6 +4163,11 @@ auto emit_module(
     auto direct_source_defined_drop_symbols = collect_direct_source_drop_definition_symbols(module);
     auto function_options = options;
     function_options.source_drop_definition_symbols = source_defined_drop_symbols;
+    function_options.source_drop_definition_symbols.insert(
+        function_options.source_drop_definition_symbols.end(),
+        direct_source_defined_drop_symbols.begin(),
+        direct_source_defined_drop_symbols.end()
+    );
     function_options.dynamic_array_descriptor_lifetime_plans =
         result.dynamic_array_descriptor_lifetime_plans;
     auto refresh_runtime_indexed_member_cleanup_binding_metadata = [&]() {

@@ -1,5 +1,13 @@
 # Frontend Parity Audit
 
+- 2026-08-29: Production pipeline defaults now explicitly enable DynamicArray descriptor cleanup planning, so the
+  production option builder no longer depends on fixture-named cleanup derivation for descriptor cleanup proof.
+- 2026-08-29: Abstract generic `DynamicArray<T>` descriptor summaries now stay as readiness metadata when cleanup
+  cannot be planned before concrete instantiation. Generic DynamicArray calls can still lower through concrete uses.
+- 2026-08-29: Concrete generic `DynamicArray<Payload>` owned-parameter cleanup can now seed bound parameter cleanup
+  from generated and direct source Drop definition symbols. Function emission resolves abstract descriptor parameter
+  types from specialization suffixes, and bound-parameter cleanup planning accepts the concrete Drop-symbol proof when
+  no concrete parameter summary exists. This restores callee cleanup for monomorphized owned-parameter bodies.
 - 2026-08-25: `tests/fixtures/dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or` now
   pins a nested returned record-field `DynamicArray<Payload>` descriptor consumed by a same-owner computed `for`,
   including nested field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and

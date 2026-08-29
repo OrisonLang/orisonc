@@ -34,6 +34,7 @@
 #include "orison/lowering/while_emitter.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <optional>
 #include <memory>
 #include <span>
@@ -741,6 +742,9 @@ void release_returned_dynamic_array_local_cleanup(
     for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
          cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
         ++cleanup_plan) {
+        if (cleanup_plan->owner_name != descriptor->owner_name) {
+            continue;
+        }
         if (!options.dynamic_array_descriptor_lifetime_plans.empty()) {
             if (matching_returned_dynamic_array_descriptor_lifetime_plan(
                     options.dynamic_array_descriptor_lifetime_plans,
@@ -886,12 +890,87 @@ auto dynamic_array_parameter_element_cleanup_proven(
 
     auto const expected_owner_name = std::string {parameter_name} + ".element";
     auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
+    if (std::ranges::find(options.source_drop_definition_symbols, expected_symbol_name) !=
+        options.source_drop_definition_symbols.end()) {
+        return true;
+    }
     return std::ranges::any_of(options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
         return authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&
             authorization.site.source_type_name == sequence->element_source_type_name &&
             authorization.site.abi_symbol_name == expected_symbol_name;
     });
+}
+
+auto specialization_part_for_source_type(std::string source_type_name) -> std::string {
+    for (auto& character : source_type_name) {
+        if (!std::isalnum(static_cast<unsigned char>(character))) {
+            character = '_';
+        }
+    }
+    return source_type_name;
+}
+
+auto concrete_source_type_for_specialization_suffix(
+    std::string_view symbol_name,
+    LoweringContext const& context
+) -> std::optional<std::string> {
+    auto const delimiter = symbol_name.rfind("__");
+    if (delimiter == std::string_view::npos) {
+        return std::nullopt;
+    }
+
+    auto const suffix = symbol_name.substr(delimiter + 2);
+    for (auto const source_type_name : {
+             std::string_view {"Bool"},
+             std::string_view {"UInt8"},
+             std::string_view {"UInt16"},
+             std::string_view {"UInt32"},
+             std::string_view {"UInt64"},
+             std::string_view {"Int8"},
+             std::string_view {"Int16"},
+             std::string_view {"Int32"},
+             std::string_view {"Int64"},
+             std::string_view {"IntSize"},
+         }) {
+        if (specialization_part_for_source_type(std::string {source_type_name}) == suffix) {
+            return std::string {source_type_name};
+        }
+    }
+
+    for (auto const& [source_type_name, layout] : context.records) {
+        (void)layout;
+        if (specialization_part_for_source_type(source_type_name) == suffix) {
+            return source_type_name;
+        }
+    }
+    for (auto const& [source_type_name, layout] : context.choices) {
+        (void)layout;
+        if (specialization_part_for_source_type(source_type_name) == suffix) {
+            return source_type_name;
+        }
+    }
+    return std::nullopt;
+}
+
+auto concrete_dynamic_array_parameter_source_type(
+    std::string source_type_name,
+    LoweredFunctionSignature const& signature,
+    LoweringContext const& context
+) -> std::string {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        sequence->kind != DynamicSequenceKind::dynamic_array ||
+        llvm_type_for_source_type_name(sequence->element_source_type_name, context).has_value()) {
+        return source_type_name;
+    }
+
+    auto concrete_element_source_type =
+        concrete_source_type_for_specialization_suffix(signature.symbol_name, context);
+    if (!concrete_element_source_type.has_value()) {
+        return source_type_name;
+    }
+    return "DynamicArray<" + *concrete_element_source_type + ">";
 }
 
 auto matching_dynamic_array_descriptor_summary_binding(
@@ -968,6 +1047,14 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
             source_type_name,
             *storage,
             dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
+            context.lowering
+        );
+    } else if (dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options)) {
+        lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
+            parameter_name,
+            source_type_name,
+            *storage,
+            true,
             context.lowering
         );
     }
@@ -1846,6 +1933,11 @@ void emit_function_body(
                 source_type_name = std::move(*concrete_source_type);
             }
         }
+        source_type_name = concrete_dynamic_array_parameter_source_type(
+            std::move(source_type_name),
+            signature,
+            context.lowering
+        );
         state.source_type_names.emplace(function.parameters[index].name, std::move(source_type_name));
         if (is_exclusive_receiver_parameter(function, function.parameters[index])) {
             state.exclusive_receiver_bindings.insert(function.parameters[index].name);

@@ -500,6 +500,9 @@ void record_dynamic_array_descriptor_parameter_types(
             !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
             continue;
         }
+        if (index < signature.parameter_source_type_names.size()) {
+            signature.parameter_source_type_names[index] = std::move(source_type_name);
+        }
         signature.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
         signature.parameter_signedness[index] = IntegerSignedness::not_integer;
     }

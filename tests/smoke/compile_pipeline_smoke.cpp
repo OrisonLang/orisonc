@@ -47,6 +47,7 @@ void test_production_compile_pipeline_options_gate_promotions() {
     assert(options.dynamic_array_production_construction_lowering_enabled);
     assert(options.dynamic_array_production_index_lowering_enabled);
     assert(options.dynamic_array_production_append_lowering_enabled);
+    assert(options.dynamic_array_descriptor_cleanup_planning_enabled);
     assert(options.dynamic_array_production_cleanup_emission_enabled);
     assert(options.dynamic_array_production_for_lowering_enabled);
 
@@ -6511,23 +6512,23 @@ auto main() -> int {
     assert(forwarding_parameter_lifetime_plans == 2);
     assert(forwarding_local_lifetime_plans == 1);
     assert(
-        !dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
+        dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state
             .all_summaries_have_cleanup_plans
     );
-    assert(!dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty());
+    assert(dynamic_array_owned_parameter_forwarding_ir.dynamic_array_descriptor_lifetime_plan_state.summary_blockers.empty());
     assert(
-        !dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
+        dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
             .descriptor_summary_blockers_absent
     );
     assert(
-        !orison::pipeline::dynamic_array_cleanup_production_ready(
+        orison::pipeline::dynamic_array_cleanup_production_ready(
             dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
         )
     );
     assert(
         orison::pipeline::format_dynamic_array_cleanup_production_readiness(
             dynamic_array_owned_parameter_forwarding_ir.dynamic_array_cleanup_production_readiness
-        ).find("[descriptor origin blockers present]") != std::string::npos
+        ).find("[descriptor origin blockers absent]") != std::string::npos
     );
     auto dynamic_array_owned_parameter_forwarding_run =
         pipeline.emit_object(dynamic_array_owned_parameter_forwarding_run_path);

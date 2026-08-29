@@ -411,7 +411,7 @@ int main() {
         run_dynamic_array_cleanup_capability(app, emit_failure_path);
     assert_success_with_stdout_contains(
         dynamic_array_cleanup_capability_failure,
-        {"dynamic array cleanup emission capability proven"}
+        {"dynamic array cleanup emission capability blocked"}
     );
     auto dynamic_array_cleanup_audit_failure =
         run_dynamic_array_cleanup_audit(app, emit_failure_path);
@@ -816,7 +816,7 @@ int main() {
     assert_success_with_stdout_contains(
         empty_dynamic_array_cleanup_capability,
         {
-            "dynamic array cleanup emission capability proven",
+            "dynamic array cleanup emission capability blocked",
             "[element cleanup ok]",
         }
     );
@@ -824,7 +824,7 @@ int main() {
     assert_success_with_stdout_contains(
         empty_dynamic_array_cleanup_audit,
         {
-            "dynamic array cleanup emission capability proven",
+            "dynamic array cleanup emission capability blocked",
             "[element cleanup ok]",
         }
     );

@@ -247,6 +247,16 @@ representation.
 - Source Drop lowering now joins shared production defaults after the moved member-path constructor transfer fix and
   the follow-up production-default trial. Default pipeline and CLI coverage now exercise generated source Drop
   functions for audited DynamicArray aggregate cleanup paths.
+- Production pipeline defaults now explicitly enable DynamicArray descriptor cleanup planning. Cleanup emission no
+  longer relies on fixture-named semantic cleanup derivation when building the default production option set.
+- Abstract generic descriptors such as `DynamicArray<T>` remain readiness metadata until a concrete instantiation can
+  prove element layout and cleanup. Descriptor cleanup collection records no cleanup plan for the abstract descriptor
+  instead of failing emission before concrete generic calls are lowered.
+- Concrete generic `DynamicArray<Payload>` parameter specializations can seed bound parameter cleanup from generated
+  and direct source Drop definition symbols, even when the original generic parameter descriptor remains abstract
+  metadata. Function emission resolves abstract descriptor parameter types from the specialization suffix before
+  seeding cleanup proof, and bound-parameter cleanup planning accepts the same concrete Drop-symbol proof when no
+  concrete parameter summary exists.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.
