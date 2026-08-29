@@ -18934,18 +18934,7 @@ auto main() -> int {
         "runtime_indexed_cleanup_two_function_candidates.or";
     auto runtime_indexed_multi_candidate_cleanup = pipeline.emit_llvm(
         runtime_indexed_multi_candidate_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_index_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-        }
+        runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_multi_candidate_cleanup.has_errors());
     assert(
@@ -19072,18 +19061,7 @@ auto main() -> int {
         "runtime_indexed_cleanup_same_function_two_candidates.or";
     auto runtime_indexed_same_function_cleanup = pipeline.emit_llvm(
         runtime_indexed_same_function_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_index_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-        }
+        runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_same_function_cleanup.has_errors());
     assert(
@@ -19357,18 +19335,7 @@ auto main() -> int {
         "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or";
     auto runtime_indexed_same_function_non_overlap_cleanup = pipeline.emit_llvm(
         runtime_indexed_same_function_non_overlap_cleanup_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-            .collect_runtime_indexed_cleanup_audit = true,
-            .runtime_indexed_cleanup_emission_enabled = true,
-            .runtime_indexed_cleanup_module_ir_insertion_enabled = true,
-            .runtime_indexed_cleanup_module_ir_mutation_enabled = true,
-            .runtime_indexed_cleanup_function_ir_module_rewrite_enabled = true,
-            .runtime_indexed_constructor_move_enabled = true,
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_index_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-        }
+        runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_same_function_non_overlap_cleanup.has_errors());
     assert(

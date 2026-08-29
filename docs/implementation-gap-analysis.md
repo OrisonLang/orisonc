@@ -32,7 +32,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   field paths; shared production defaults now cover construction, index, append, cleanup, computed `for`, and
   runtime-index member cleanup. Source Drop now joins shared production defaults for audited aggregate cleanup paths,
   including runtime-index constructor move shape-fault coverage, module-rewrite audit paths, and staged member-cleanup
-  gate checks.
+  gate checks. Multi-candidate runtime-index cleanup fixtures now share the same production-default audit/module-rewrite
+  helper.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
@@ -41,5 +42,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Continue replacing older runtime-index option bundles outside the member-cleanup gate ladder where a named helper
-  keeps the coverage intent clear.
+- Continue replacing remaining runtime-index option bundles one cluster at a time, stopping where staged gate intent
+  would become less clear.

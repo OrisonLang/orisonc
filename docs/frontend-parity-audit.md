@@ -2961,3 +2961,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   shared production pipeline defaults, adding only audit/module-rewrite overrides where the test needs them.
 - 2026-08-29: Runtime-index staged member-cleanup gate tests now use named helpers for audit-only, IR-mutation, and
   production-gate request states while deriving their base behavior from shared production defaults.
+- 2026-08-29: Multi-candidate runtime-index cleanup fixtures now use the shared production-default audit/module-rewrite
+  helper for separate-function, overlapping same-function, and non-overlapping same-function coverage.
