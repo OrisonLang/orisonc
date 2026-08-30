@@ -73,10 +73,11 @@ This note is an implementation snapshot. It does not define language syntax or s
   production-readiness blocker reports now include the primary source line text, and member-cleanup mutation-stage
   audit/readiness reports now include source-line plus source-text metadata. Final switch/if ownership reuse failures
   now report direct `use after move` diagnostics while retaining precise runtime-index owner paths. DynamicArray
-  owned-element push Drop-authorization diagnostics now include source owner and element type. Other lowering and
-  cleanup failures still need richer source-span correlation.
+  owned-element push Drop-authorization diagnostics now include source owner and element type. Runtime-index
+  member-cleanup production blocker diagnostics now include source-line metadata when the originating constructor move
+  is known. Other lowering and cleanup failures still need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Add the next source-oriented diagnostic improvement for runtime-index member cleanup failures, focusing on cleanup
-  proof blockers that still lack compact owner/index/member context.
+- Add the next runtime-index member-cleanup diagnostic improvement by attaching trimmed source text to production
+  blocker diagnostics where source-line metadata is already available.

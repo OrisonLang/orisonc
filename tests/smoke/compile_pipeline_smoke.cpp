@@ -15184,31 +15184,31 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[32] ==
         "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none blocker member-cleanup-proof "
+        "moved Inner member-path none source-line 46 blocker member-cleanup-proof "
         "detail member cleanup proof is missing"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[33] ==
         "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none blocker member-drop-metadata "
+        "moved Inner member-path none source-line 46 blocker member-drop-metadata "
         "detail member Drop metadata is missing"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[34] ==
         "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none blocker member-cleanup-cfg-slice "
+        "moved Inner member-path none source-line 46 blocker member-cleanup-cfg-slice "
         "detail member cleanup CFG slice is missing"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[35] ==
         "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none blocker member-cleanup-module-mutation "
+        "moved Inner member-path none source-line 46 blocker member-cleanup-module-mutation "
         "detail member cleanup module mutation is disabled"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[36] ==
         "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none blocker production-member-cleanup "
+        "moved Inner member-path none source-line 46 blocker production-member-cleanup "
         "detail production member cleanup is disabled"
     );
     assert(

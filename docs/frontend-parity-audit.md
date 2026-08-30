@@ -3048,3 +3048,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: DynamicArray owned-element push Drop-authorization diagnostics now include the source owner and element
   type, so runtime-index cleanup fixtures can distinguish `items`/`holder.items` setup paths and `Box`/`Wrap`
   obligations from the CLI error text.
+- 2026-08-30: Runtime-index member-cleanup production blocker diagnostics now include source-line metadata when the
+  originating constructor move is known, aligning cleanup-proof blocker output with later mutation-stage diagnostics.

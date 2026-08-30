@@ -1950,8 +1950,9 @@ auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
                    << " index " << readiness.index_expression_text
                    << " element " << readiness.element_source_type_name
                    << " moved " << readiness.moved_source_type_name
-                   << " member-path " << dotted_path(readiness.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(readiness.moved_member_path);
+        append_source_line(diagnostic, readiness.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-proof") {
             diagnostic << "member cleanup proof is missing";
