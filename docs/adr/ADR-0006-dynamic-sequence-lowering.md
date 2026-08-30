@@ -2439,6 +2439,8 @@ representation.
 - Ordinary production object/link/run smoke coverage now covers the source-backed nested-member, two-owner, and two
   nested-owner runtime-index member-cleanup fixtures after normal `--emit-llvm`. The diagnostic member-cleanup run
   command remains only for typed promotion and execution-summary audit coverage.
+- Ordinary production `--emit-object` and `--build` smoke coverage now covers those same member-cleanup fixtures through
+  the user-facing artifact commands.
 
 ## Follow-up work
 
@@ -2447,5 +2449,6 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Keep production behavior checks on ordinary `run`, `--emit-llvm`, object, and host-link paths. Use the diagnostic
-  runtime-index member-cleanup run seam only for typed promotion and execution-summary audit coverage.
+- Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
+  paths. Use the diagnostic runtime-index member-cleanup run seam only for typed promotion and execution-summary audit
+  coverage.

@@ -7,6 +7,8 @@
 - 2026-08-29: Ordinary production object/link/run smoke coverage now covers the source-backed nested-member, two-owner,
   and two nested-owner runtime-index member-cleanup fixtures after normal `--emit-llvm`. The diagnostic member-cleanup
   run command remains only for typed promotion and execution-summary audit coverage.
+- 2026-08-29: Ordinary production `--emit-object` and `--build` smoke coverage now covers the same source-backed
+  runtime-index member-cleanup fixtures, including nested-member, two-owner, and two nested-owner cleanup paths.
 - 2026-08-29: Production pipeline defaults now explicitly enable DynamicArray descriptor cleanup planning, so the
   production option builder no longer depends on fixture-named cleanup derivation for descriptor cleanup proof.
 - 2026-08-29: Abstract generic `DynamicArray<T>` descriptor summaries now stay as readiness metadata when cleanup

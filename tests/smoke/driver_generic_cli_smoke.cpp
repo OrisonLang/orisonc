@@ -576,6 +576,32 @@ void assert_cli_emit_llvm_fixture_links_and_runs(
     assert(WEXITSTATUS(status) == 0);
 }
 
+void assert_cli_emit_object_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_path
+) {
+    auto command = executable.string() + " --emit-object " + path.string() + " -o " + output_path.string();
+    auto output = read_command_output(command);
+    assert(output.empty());
+    assert(std::filesystem::file_size(output_path) > 0);
+}
+
+void assert_cli_build_fixture_runs(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_path
+) {
+    auto command = executable.string() + " --build " + path.string() + " -o " + output_path.string();
+    auto output = read_command_output(command);
+    assert(output.empty());
+    assert(std::filesystem::file_size(output_path) > 0);
+
+    auto status = std::system(output_path.string().c_str());
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == 0);
+}
+
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3875,6 +3901,36 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner"
+    );
+    assert_cli_emit_object_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_nested_member.o"
+    );
+    assert_cli_emit_object_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_two_owner.o"
+    );
+    assert_cli_emit_object_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner.o"
+    );
+    assert_cli_build_fixture_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_nested_member_build"
+    );
+    assert_cli_build_fixture_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_two_owner_build"
+    );
+    assert_cli_build_fixture_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner_build"
     );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,
