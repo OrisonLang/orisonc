@@ -11,6 +11,8 @@
   runtime-index member-cleanup fixtures, including nested-member, two-owner, and two nested-owner cleanup paths.
 - 2026-08-29: Diagnostic member-cleanup run assertions now check only typed promotion summary identity, execution
   summary identity, helper target, and sibling-binding counts. Production behavior stays pinned on ordinary CLI paths.
+- 2026-08-29: Runtime-index member-cleanup diagnostic helper names now use summary wording in driver and smoke code.
+  Historical test-only command text remains only as the explicit diagnostic CLI flag.
 - 2026-08-29: Production pipeline defaults now explicitly enable DynamicArray descriptor cleanup planning, so the
   production option builder no longer depends on fixture-named cleanup derivation for descriptor cleanup proof.
 - 2026-08-29: Abstract generic `DynamicArray<T>` descriptor summaries now stay as readiness metadata when cleanup

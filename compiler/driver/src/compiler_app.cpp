@@ -277,7 +277,7 @@ auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipeline
     return options;
 }
 
-auto runtime_indexed_member_cleanup_run_options() -> pipeline::CompilePipelineOptions {
+auto runtime_indexed_member_cleanup_summary_options() -> pipeline::CompilePipelineOptions {
     auto options = runtime_indexed_cleanup_audit_options();
     return options;
 }
@@ -892,9 +892,9 @@ auto test_only_runtime_indexed_constructor_move_run(std::filesystem::path const&
     return CompileResult {.exit_code = run_result.exit_code};
 }
 
-auto test_only_runtime_indexed_member_cleanup_run(std::filesystem::path const& source_path) -> CompileResult {
+auto runtime_indexed_member_cleanup_summary_run(std::filesystem::path const& source_path) -> CompileResult {
     pipeline::CompilePipeline pipeline;
-    auto result = pipeline.emit_object(source_path, runtime_indexed_member_cleanup_run_options());
+    auto result = pipeline.emit_object(source_path, runtime_indexed_member_cleanup_summary_options());
     if (result.has_errors()) {
         return CompileResult {
             .exit_code = 1,
@@ -1439,7 +1439,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--test-only-runtime-indexed-member-cleanup-run") {
-        return test_only_runtime_indexed_member_cleanup_run(std::filesystem::path(args[2]));
+        return runtime_indexed_member_cleanup_summary_run(std::filesystem::path(args[2]));
     }
 
     if (args.size() == command_index + 4 && std::string_view(args[command_index]) == "--emit-object" &&

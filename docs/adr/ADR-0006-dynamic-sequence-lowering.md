@@ -2443,6 +2443,8 @@ representation.
   the user-facing artifact commands.
 - Diagnostic member-cleanup run assertions now check only typed promotion summary identity, execution summary identity,
   helper target, and sibling-binding counts. Production behavior remains covered by ordinary CLI paths.
+- Runtime-index member-cleanup diagnostic helper names now use summary wording in driver and smoke code. The retained
+  test-only command spelling marks the explicit diagnostic CLI seam, not production behavior ownership.
 
 ## Follow-up work
 

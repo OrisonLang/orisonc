@@ -975,7 +975,7 @@ void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
     assert(output.empty());
 }
 
-void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
+void assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -994,7 +994,7 @@ void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
     ) != std::string::npos);
 }
 
-void assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success(
+void assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -1019,7 +1019,7 @@ void assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success
     assert_owner_lines("right_items", "(right_index + right_zero)");
 }
 
-void assert_cli_test_only_runtime_indexed_two_nested_member_cleanup_run_fixture_success(
+void assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -3923,15 +3923,15 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner_build"
     );
-    assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
+    assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
     );
-    assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success(
+    assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
     );
-    assert_cli_test_only_runtime_indexed_two_nested_member_cleanup_run_fixture_success(
+    assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or"
     );
