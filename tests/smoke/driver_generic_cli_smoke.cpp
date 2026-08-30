@@ -4124,6 +4124,61 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_scratch_cleanup_run.or",
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_scratch_cleanup"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_alias_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_nested_alias_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_nested_alias_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_alias_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_asymmetric_alias_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_alias_helper_call_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_alias_helper_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_alias_helper_call_local_return_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_alias_helper_local_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_three_local_helper_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_three_local_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_distinct_local_names_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_distinct_locals_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_mixed_direct_distinct_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_nested_argument_local_chain_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_nested_local_chain_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_chained_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_chained_cleanup"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or"

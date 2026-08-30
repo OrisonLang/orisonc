@@ -3076,3 +3076,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Owned-result `DynamicArray<Payload>` ternary helper-call, named helper-call, named chained helper-call,
   and branch-consumer scratch cleanup fixtures now have generic CLI production coverage across ordinary `run`,
   `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
+- 2026-08-30: Owned-result branch-consumer direct, chained, alias, nested-alias, asymmetric-alias, helper-alias,
+  local-chain, three-local-helper, distinct-local-name, and mixed-direct cleanup fixtures now have the same generic CLI
+  production coverage matrix.
