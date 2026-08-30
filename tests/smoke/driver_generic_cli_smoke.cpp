@@ -4245,7 +4245,17 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
+        "use after move: holder.items[(index + zero)]"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
+        "lowering DynamicArray push to owned element requires authorized element drop"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
         "lowering DynamicArray push to owned element requires authorized element drop"
     );
     assert_cli_emit_llvm_fixture_links_and_runs(

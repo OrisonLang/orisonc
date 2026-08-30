@@ -2464,6 +2464,8 @@ representation.
 - Runtime-index member cleanup now covers a nested choice-payload aggregate owner path,
   `holder.items[index + zero].box.item`. Member-owned DynamicArray reads preserve the projected descriptor pointer for
   the rewrite stage, and stored choice-payload cleanup suppresses matching promoted runtime-index owner paths.
+- The nested choice-payload aggregate-owner runtime-index member-cleanup shape now has negative coverage for
+  post-transfer member reuse and missing owned-element Drop authorization.
 
 ## Follow-up work
 
@@ -2475,4 +2477,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Add paired negative coverage for the nested choice-payload aggregate-owner runtime-index cleanup shape.
+- Improve runtime-index member-cleanup diagnostics so rejected reuse reports stay short while retaining precise
+  owner/index path identity.

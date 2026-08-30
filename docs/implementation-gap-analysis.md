@@ -61,7 +61,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   choice-payload shape also has negative coverage for post-transfer reuse and missing Drop authorization. Scoped
   cleanup now keeps promoted runtime-index member cleanup as the single owner cleanup path for direct payload bindings,
   and nested choice-payload aggregate owners such as `holder.items[index + zero].box.item` now preserve the projected
-  descriptor pointer while suppressing duplicate stored choice-payload cleanup.
+  descriptor pointer while suppressing duplicate stored choice-payload cleanup. The nested shape also has negative
+  coverage for post-transfer member reuse and missing owned-element Drop authorization.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -75,4 +76,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add paired negative coverage for the nested choice-payload aggregate-owner runtime-index cleanup shape.
+- Add the next source-oriented diagnostic improvement for runtime-index member cleanup failures, starting with shorter
+  post-transfer reuse messages that retain the precise owner/index path.

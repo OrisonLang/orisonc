@@ -3040,3 +3040,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   `holder.items[index + zero].box.item`. Member-owned DynamicArray reads preserve the projected descriptor pointer,
   stored choice-payload cleanup suppresses the matching promoted runtime-index owner, and ordinary `run`,
   `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths cover the fixture.
+- 2026-08-30: The nested choice-payload aggregate-owner runtime-index member-cleanup shape now has negative smoke
+  coverage for post-transfer member reuse and missing owned-element Drop authorization.
