@@ -2864,6 +2864,8 @@ auto main() -> int {
         fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_cleanup_missing_drop.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_reuse_path =
         fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_rejected.or";
+    auto returned_choice_payload_owned_computed_dynamic_array_reuse_path =
+        fixtures / "dynamic_array_returned_choice_payload_owned_computed_reuse_rejected.or";
     auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
     auto switch_returned_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4902,6 +4904,10 @@ auto main() -> int {
     assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
         executable,
         choice_payload_final_switch_binding_owned_computed_dynamic_array_reuse_path
+    );
+    assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
+        executable,
+        returned_choice_payload_owned_computed_dynamic_array_reuse_path
     );
     assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
         executable,
