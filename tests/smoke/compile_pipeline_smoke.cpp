@@ -15428,6 +15428,24 @@ auto main() -> int {
             runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front()
         )
     );
+    auto const runtime_indexed_cleanup_promotion_lines =
+        orison::pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(
+            runtime_indexed_cleanup
+        );
+    assert_any_line_contains(
+        runtime_indexed_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 46 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker blocked-production-readiness"
+    );
+    assert_any_line_contains(
+        runtime_indexed_cleanup_promotion_lines,
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 46 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker typed-promotion-disabled"
+    );
 
     auto runtime_indexed_cleanup_rewrite_request = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,

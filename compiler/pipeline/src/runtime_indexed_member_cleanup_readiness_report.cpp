@@ -66,9 +66,15 @@ auto runtime_indexed_member_cleanup_production_blocker_line(std::string const& l
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_promotion_blocker_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup promotion blocker"};
+    return line.starts_with(prefix);
+}
+
 auto runtime_indexed_member_cleanup_should_include_source_text(std::string const& line) -> bool {
     return runtime_indexed_member_cleanup_mutation_line(line) ||
-        runtime_indexed_member_cleanup_production_blocker_line(line);
+        runtime_indexed_member_cleanup_production_blocker_line(line) ||
+        runtime_indexed_member_cleanup_promotion_blocker_line(line);
 }
 
 auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
@@ -112,6 +118,12 @@ auto enrich_runtime_indexed_member_cleanup_source_text_line(
 
     line.insert(source_line->second, " source-text " + source_snippet);
     return line;
+}
+
+void append_source_line(std::ostringstream& line, std::size_t source_line) {
+    if (source_line != 0) {
+        line << " source-line " << source_line;
+    }
 }
 
 auto enrich_runtime_indexed_member_cleanup_source_text_lines(
@@ -345,7 +357,8 @@ void append_promotion_blocker_line(
     std::vector<std::string>& lines,
     lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
     std::string const& blocker,
-    std::string const& detail
+    std::string const& detail,
+    std::size_t source_line
 ) {
     auto line = std::ostringstream {};
     line << "runtime-index member cleanup promotion blocker"
@@ -353,10 +366,18 @@ void append_promotion_blocker_line(
          << " index " << gate.index_expression_text
          << " element " << gate.element_source_type_name
          << " moved " << gate.moved_source_type_name
-         << " member-path " << runtime_indexed_member_cleanup_dotted_path(gate.moved_member_path)
-         << " blocker " << blocker
+         << " member-path " << runtime_indexed_member_cleanup_dotted_path(gate.moved_member_path);
+    append_source_line(line, source_line);
+    line << " blocker " << blocker
          << " detail " << detail;
     lines.push_back(line.str());
+}
+
+auto source_line_from_matched_record(
+    std::size_t gate_source_line,
+    std::size_t record_source_line
+) -> std::size_t {
+    return record_source_line == 0 ? gate_source_line : record_source_line;
 }
 
 auto has_only_stale_production_readiness_blockers(
@@ -541,14 +562,16 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 lines,
                 gate,
                 "missing-production-readiness",
-                "matching member cleanup production-readiness record is missing"
+                "matching member cleanup production-readiness record is missing",
+                gate.source_line
             );
         } else if (!production_readiness_satisfied_for_promotion(gate, *production_readiness)) {
             append_promotion_blocker_line(
                 lines,
                 gate,
                 "blocked-production-readiness",
-                "matching member cleanup production-readiness record is blocked"
+                "matching member cleanup production-readiness record is blocked",
+                source_line_from_matched_record(gate.source_line, production_readiness->source_line)
             );
         }
         if (!result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready) {
@@ -556,7 +579,8 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 lines,
                 gate,
                 "blocked-module-ir-shape",
-                module_ir_shape_blocker_detail
+                module_ir_shape_blocker_detail,
+                gate.source_line
             );
         }
         if (!gate.production_enabled) {
@@ -564,7 +588,8 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 lines,
                 gate,
                 "typed-promotion-disabled",
-                "typed promotion gate production is disabled"
+                "typed promotion gate production is disabled",
+                gate.source_line
             );
         }
         if (mutation_readiness == nullptr) {
@@ -572,14 +597,16 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 lines,
                 gate,
                 "missing-mutation-readiness",
-                "matching member cleanup mutation-readiness record is missing"
+                "matching member cleanup mutation-readiness record is missing",
+                gate.source_line
             );
         } else if (!mutation_readiness->production_enabled) {
             append_promotion_blocker_line(
                 lines,
                 gate,
                 "blocked-mutation-readiness",
-                "matching member cleanup mutation-readiness record production is disabled"
+                "matching member cleanup mutation-readiness record production is disabled",
+                source_line_from_matched_record(gate.source_line, mutation_readiness->source_line)
             );
         }
         if (rewrite_promotion == nullptr) {
@@ -587,18 +614,20 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
                 lines,
                 gate,
                 "missing-rewrite-promotion",
-                "matching member cleanup rewrite-promotion record is missing"
+                "matching member cleanup rewrite-promotion record is missing",
+                gate.source_line
             );
         } else if (!rewrite_promotion->production_enabled) {
             append_promotion_blocker_line(
                 lines,
                 gate,
                 "blocked-rewrite-promotion",
-                "matching member cleanup rewrite-promotion record production is disabled"
+                "matching member cleanup rewrite-promotion record production is disabled",
+                source_line_from_matched_record(gate.source_line, rewrite_promotion->source_line)
             );
         }
     }
-    return lines;
+    return enrich_runtime_indexed_member_cleanup_source_text_lines(std::move(lines), result);
 }
 
 auto runtime_indexed_member_cleanup_readiness_report_lines(

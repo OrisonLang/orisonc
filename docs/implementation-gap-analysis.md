@@ -75,9 +75,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   now report direct `use after move` diagnostics while retaining precise runtime-index owner paths. DynamicArray
   owned-element push Drop-authorization diagnostics now include source owner and element type. Runtime-index
   member-cleanup production blocker diagnostics now include source-line and source-text metadata when the originating
-  constructor move is known. Other lowering and cleanup failures still need richer source-span correlation.
+  constructor move is known, and promotion blocker diagnostics now carry source-line/source-text metadata from the gate
+  or matched readiness record. Other lowering and cleanup failures still need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Add source-text correlation to runtime-index member-cleanup promotion blocker diagnostics where source-line metadata
-  is available or can be carried from the matched readiness record.
+- Add source correlation to runtime-index member-cleanup promotion checklist and promotion seam reports.
