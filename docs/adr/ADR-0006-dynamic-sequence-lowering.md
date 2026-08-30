@@ -2445,6 +2445,9 @@ representation.
   helper target, and sibling-binding counts. Production behavior remains covered by ordinary CLI paths.
 - Runtime-index member-cleanup diagnostic helper names now use summary wording in driver and smoke code. The retained
   test-only command spelling marks the explicit diagnostic CLI seam, not production behavior ownership.
+- Runtime-index member-cleanup production-readiness output now promotes ready mutation/rewrite member cleanup into the
+  top-level cleanup proof and production fields, and suppresses superseded old keyed production blocker and
+  whole-element detail lines.
 
 ## Follow-up work
 
@@ -2456,3 +2459,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
+- Broaden promoted runtime-index member-cleanup coverage to the next source-backed shape, preferably choice payloads or
+  branch/switch computed member-transfer paths already allowed by the current grammar.

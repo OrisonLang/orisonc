@@ -304,15 +304,24 @@ auto runtime_indexed_constructor_move_production_readiness_report(
         std::string::npos;
     auto const member_cleanup_typed_promotion =
         pipeline::runtime_indexed_member_cleanup_promotion_state(result);
+    auto const promoted_member_cleanup_ready = member_cleanup_typed_promotion.state == "ready";
+    auto const cleanup_proof_ready =
+        result.runtime_indexed_cleanup_capability_state.all_prerequisites_ready || promoted_member_cleanup_ready;
+    auto const cleanup_production_enabled =
+        result.runtime_indexed_cleanup_capability_state.any_production_enabled || promoted_member_cleanup_ready;
+    auto const include_whole_element_cleanup_details =
+        !promoted_member_cleanup_ready ||
+        result.runtime_indexed_cleanup_capability_state.all_prerequisites_ready ||
+        result.runtime_indexed_cleanup_capability_state.any_production_enabled;
 
     auto report = std::ostringstream {};
     report << "runtime-index cleanup constructor-move production-readiness "
            << "constructor-move " << (has_constructor_move_gate_diagnostic ? "blocked" : "enabled")
            << " partial-ownership " << (has_partial_ownership_diagnostic ? "required" : "accepted")
            << " cleanup-proof "
-           << (result.runtime_indexed_cleanup_capability_state.all_prerequisites_ready ? "ready" : "blocked")
+           << (cleanup_proof_ready ? "ready" : "blocked")
            << " cleanup-production "
-           << (result.runtime_indexed_cleanup_capability_state.any_production_enabled ? "enabled" : "disabled")
+           << (cleanup_production_enabled ? "enabled" : "disabled")
            << " capability-count " << result.runtime_indexed_cleanup_capability_state.capability_count
            << " ordinary-emit " << (result.has_errors() ? "rejected" : "accepted")
            << " member-cleanup-promotion " << member_cleanup_typed_promotion.state
@@ -328,15 +337,17 @@ auto runtime_indexed_constructor_move_production_readiness_report(
         report << " member-module-ir-shape-detail "
                << member_cleanup_typed_promotion.module_ir_shape_blocker_detail;
     }
-    for (auto const& line : pipeline::runtime_indexed_constructor_move_plan_report_lines(
-             result.runtime_indexed_cleanup_emission_plan_state
-         )) {
-        report << '\n' << line;
-    }
-    for (auto const& line : pipeline::runtime_indexed_constructor_move_ir_shape_report_lines(
-             result.runtime_indexed_cleanup_emission_plan_state
-         )) {
-        report << '\n' << line;
+    if (include_whole_element_cleanup_details) {
+        for (auto const& line : pipeline::runtime_indexed_constructor_move_plan_report_lines(
+                 result.runtime_indexed_cleanup_emission_plan_state
+             )) {
+            report << '\n' << line;
+        }
+        for (auto const& line : pipeline::runtime_indexed_constructor_move_ir_shape_report_lines(
+                 result.runtime_indexed_cleanup_emission_plan_state
+             )) {
+            report << '\n' << line;
+        }
     }
     for (auto const& line : pipeline::runtime_indexed_member_cleanup_promotion_state_report_lines(result)) {
         report << '\n' << line;

@@ -3020,3 +3020,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   post-apply verification, readiness verdicts, and guarded rewrite execution reports.
 - 2026-08-29: Runtime-index member-cleanup mutation-stage audit and readiness report paths now enrich those source-line
   records with trimmed source-text snippets in the pipeline layer, keeping source buffers out of lowering.
+- 2026-08-29: Runtime-index member-cleanup production-readiness output now promotes ready mutation/rewrite member
+  cleanup into the top-level cleanup proof and production fields, and hides superseded old production blocker lines for
+  promoted keyed records plus superseded whole-element cleanup detail lines.

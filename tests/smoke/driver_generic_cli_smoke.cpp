@@ -701,13 +701,15 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     auto output = read_command_output(command);
     assert(output.find(
         "runtime-index cleanup constructor-move production-readiness "
-        "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
+        "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
         "capability-count 1 ordinary-emit accepted member-cleanup-promotion ready "
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
         "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
     assert(output.find("member-module-ir-shape-detail") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move plan owner items") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     auto const helper_bindings = output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
@@ -717,31 +719,14 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
         "element Wrap moved Inner member-path box.item"
     );
     assert(helper_bindings != std::string::npos);
-    assert(production_readiness != std::string::npos);
-    assert(helper_bindings < production_readiness);
+    assert(production_readiness == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
     ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup production-readiness owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item proof ready target-metadata ready helper-drop-bindings ready "
-        "cfg-slice ready "
-        "module-mutation blocked production-member-cleanup blocked production-gate blocked "
-        "production-enabled false production blocked blockers 2 "
-        "blocker member-cleanup-module-mutation blocker production-member-cleanup"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup production blocker owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item blocker member-cleanup-module-mutation "
-        "detail member cleanup module mutation is disabled"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup production blocker owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item blocker production-member-cleanup "
-        "detail production member cleanup is disabled"
-    ) != std::string::npos);
+    assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
+    assert(output.find("blocker production-member-cleanup") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-operation-plan owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item source-line 72 source-text "
@@ -837,13 +822,17 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
     auto output = read_command_output(command);
     assert(output.find(
         "runtime-index cleanup constructor-move production-readiness "
-        "constructor-move enabled partial-ownership accepted cleanup-proof blocked cleanup-production disabled "
+        "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
         "capability-count 2 ordinary-emit accepted member-cleanup-promotion ready "
         "member-production-records 2 member-gate-records 2 member-mutation-records 2 "
         "member-rewrite-records 2 diagnostic none"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
     assert(output.find("member-module-ir-shape-detail") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move plan owner left_items") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move plan owner right_items") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move ir-shape owner left_items") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move ir-shape owner right_items") == std::string::npos);
     auto assert_owner_lines = [&](
         std::string_view owner_name,
         std::string_view index_expression,
@@ -861,11 +850,8 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup production-readiness owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings ready "
-            "cfg-slice ready module-mutation blocked production-member-cleanup blocked production-gate blocked "
-            "production-enabled false production blocked blockers 2 blocker member-cleanup-module-mutation "
-            "blocker production-member-cleanup"
-        ) != std::string::npos);
+            "element Box moved Inner member-path item"
+        ) == std::string::npos);
         assert(output.find(
             "runtime-index member cleanup mutation-production-readiness owner " + owner + " index " + index + " "
             "element Box moved Inner member-path item" + source + " promotion ready post-apply-verification ready "

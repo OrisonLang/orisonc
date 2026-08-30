@@ -117,6 +117,20 @@ auto enrich_runtime_indexed_member_cleanup_mutation_lines(
     return lines;
 }
 
+auto has_only_stale_production_readiness_blockers(
+    lowering::RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> bool;
+
+auto production_readiness_satisfied_for_promotion(
+    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    lowering::RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> bool;
+
+auto runtime_indexed_member_cleanup_promoted(
+    CompilePipelineResult const& result,
+    RuntimeIndexedMemberCleanupMatchKey const& key
+) -> bool;
+
 void append_keyed_member_cleanup_chain(
     std::vector<std::string>& lines,
     CompilePipelineResult const& result,
@@ -128,13 +142,15 @@ void append_keyed_member_cleanup_chain(
         result.runtime_indexed_member_cleanup_helper_drop_bindings,
         lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report
     );
-    append_runtime_indexed_member_cleanup_record_line_with_diagnostics(
-        lines,
-        key,
-        result.runtime_indexed_member_cleanup_production_readiness,
-        lowering::runtime_indexed_member_cleanup_production_readiness_report,
-        lowering::runtime_indexed_member_cleanup_production_blocker_diagnostics
-    );
+    if (!runtime_indexed_member_cleanup_promoted(result, key)) {
+        append_runtime_indexed_member_cleanup_record_line_with_diagnostics(
+            lines,
+            key,
+            result.runtime_indexed_member_cleanup_production_readiness,
+            lowering::runtime_indexed_member_cleanup_production_readiness_report,
+            lowering::runtime_indexed_member_cleanup_production_blocker_diagnostics
+        );
+    }
     append_runtime_indexed_member_cleanup_record_line(
         lines,
         key,
@@ -357,6 +373,37 @@ auto production_readiness_satisfied_for_promotion(
         readiness.helper_drop_bindings_ready &&
         readiness.cfg_slice_ready &&
         has_only_stale_production_readiness_blockers(readiness);
+}
+
+auto runtime_indexed_member_cleanup_promoted(
+    CompilePipelineResult const& result,
+    RuntimeIndexedMemberCleanupMatchKey const& key
+) -> bool {
+    auto const* gate = find_runtime_indexed_member_cleanup_record(
+        key,
+        result.runtime_indexed_member_cleanup_typed_promotion_gates
+    );
+    auto const* production_readiness = find_runtime_indexed_member_cleanup_record(
+        key,
+        result.runtime_indexed_member_cleanup_production_readiness
+    );
+    auto const* mutation_readiness = find_runtime_indexed_member_cleanup_record(
+        key,
+        result.runtime_indexed_member_cleanup_mutation_production_readiness
+    );
+    auto const* rewrite_promotion = find_runtime_indexed_member_cleanup_record(
+        key,
+        result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
+    );
+    return gate != nullptr &&
+        production_readiness != nullptr &&
+        mutation_readiness != nullptr &&
+        rewrite_promotion != nullptr &&
+        production_readiness_satisfied_for_promotion(*gate, *production_readiness) &&
+        result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready &&
+        gate->production_enabled &&
+        mutation_readiness->production_enabled &&
+        rewrite_promotion->production_enabled;
 }
 
 auto runtime_indexed_cleanup_module_ir_shape_blocker_detail(

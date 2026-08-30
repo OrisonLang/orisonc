@@ -54,8 +54,10 @@ This note is an implementation snapshot. It does not define language syntax or s
   source-backed nested-member and two-owner fixtures, and production object/link/run, `--emit-object`, and `--build`
   coverage now covers the source-backed nested-member, two-owner, and two nested-owner fixtures. The remaining
   diagnostic member-cleanup run assertions now check only typed summary identity and helper metadata, and internal
-  helper names use summary wording. The remaining runtime-index option-literal audit found no additional helper cleanup
-  that would improve staged-gate clarity.
+  helper names use summary wording. Production-readiness output now reports promoted member cleanup as ready in the
+  top-level proof/production fields and hides superseded old keyed production blocker and whole-element detail lines.
+  The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
+  clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
@@ -67,6 +69,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Reduce dependence on `--test-only-runtime-indexed-member-cleanup-run` by keeping execution-summary checks there and
-  keeping production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and
-  host-link paths. Continue shrinking that diagnostic seam to compact typed summary coverage.
+- Broaden promoted runtime-index member-cleanup coverage to the next source-backed shape, preferably choice payloads or
+  branch/switch computed member-transfer paths already allowed by the current grammar.
