@@ -734,7 +734,9 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     assert(production_readiness == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item helper __orison_member_cleanup.Wrap.except.box.item "
+        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item) "
+        "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
     ) != std::string::npos);
     assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
@@ -857,7 +859,7 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
             " source-text " + std::string {source_text};
         assert(output.find(
             "runtime-index member cleanup helper-drop-bindings owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
+            "element Box moved Inner member-path item" + source + " helper __orison_member_cleanup.Box.except.item "
             "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
         ) != std::string::npos);
         assert(output.find(
@@ -923,7 +925,9 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_readiness_fixture
     assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index choose_index(true) "
-        "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
+        "element Box moved Inner member-path item source-line 31 source-text "
+        "var outer: Outer = Outer(items[choose_index(true)].item) "
+        "helper __orison_member_cleanup.Box.except.item "
         "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
     ) != std::string::npos);
     assert(output.find(
@@ -967,7 +971,9 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_readiness_fixture
     assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index choose_index(1 as UInt32) "
-        "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
+        "element Box moved Inner member-path item source-line 31 source-text "
+        "var outer: Outer = Outer(items[choose_index(1 as UInt32)].item) "
+        "helper __orison_member_cleanup.Box.except.item "
         "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
     ) != std::string::npos);
     assert(output.find(
@@ -1012,7 +1018,9 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness
     assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
+        "element Box moved Inner member-path item source-line 41 source-text "
+        "var outer: Outer = Outer(items[index + zero].item) "
+        "helper __orison_member_cleanup.Box.except.item "
         "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
     ) != std::string::npos);
     assert(output.find(
@@ -1053,7 +1061,9 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_re
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item helper __orison_member_cleanup.Wrap.except.box.item "
+        "element Wrap moved Inner member-path box.item source-line 90 source-text "
+        "var outer: Outer = Outer(holder.items[index + zero].box.item) "
+        "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
     ) != std::string::npos);
     assert(output.find(

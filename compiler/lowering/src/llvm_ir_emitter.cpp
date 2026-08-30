@@ -770,6 +770,7 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
             .nested_member_path = plan.moved_member_path.size() > 1,
             .helper_definition_ready = helper_definition_ready,
             .production_enabled = false,
+            .source_line = plan.source_line,
         });
     }
     return bindings;

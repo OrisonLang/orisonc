@@ -79,6 +79,16 @@ auto runtime_indexed_member_cleanup_mutation_line(std::string const& line) -> bo
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_helper_drop_bindings_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup helper-drop-bindings"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_production_readiness_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup production-readiness"};
+    return line.starts_with(prefix);
+}
+
 auto runtime_indexed_member_cleanup_production_blocker_line(std::string const& line) -> bool {
     auto constexpr prefix = std::string_view {"runtime-index member cleanup production blocker"};
     return line.starts_with(prefix);
@@ -101,6 +111,8 @@ auto runtime_indexed_member_cleanup_typed_promotion_gate_line(std::string const&
 
 auto runtime_indexed_member_cleanup_should_include_source_text(std::string const& line) -> bool {
     return runtime_indexed_member_cleanup_mutation_line(line) ||
+        runtime_indexed_member_cleanup_helper_drop_bindings_line(line) ||
+        runtime_indexed_member_cleanup_production_readiness_line(line) ||
         runtime_indexed_member_cleanup_production_blocker_line(line) ||
         runtime_indexed_member_cleanup_promotion_checklist_line(line) ||
         runtime_indexed_member_cleanup_promotion_seam_line(line) ||

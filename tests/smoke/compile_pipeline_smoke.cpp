@@ -15174,12 +15174,16 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[31] ==
-        "runtime-index member cleanup production-readiness owner holder.items index index element Inner "
-        "moved Inner member-path none proof missing target-metadata missing helper-drop-bindings ready cfg-slice missing "
-        "module-mutation blocked production-member-cleanup blocked production-gate blocked "
-        "production-enabled false production blocked blockers 5 "
-        "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
-        "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+        with_source_text(
+            "runtime-index member cleanup production-readiness owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 proof missing target-metadata missing "
+            "helper-drop-bindings ready cfg-slice missing module-mutation blocked production-member-cleanup blocked "
+            "production-gate blocked production-enabled false production blocked blockers 5 "
+            "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
+            "blocker member-cleanup-module-mutation blocker production-member-cleanup",
+            46,
+            "var selected: TaggedInner = Secondary(holder.items[index])"
+        )
     );
     auto const runtime_indexed_cleanup_source_text =
         "var selected: TaggedInner = Secondary(holder.items[index])";
@@ -15524,11 +15528,16 @@ auto main() -> int {
     );
     assert(
         has_runtime_indexed_member_transfer_audit_line(
-            "runtime-index member cleanup production-readiness owner items index (index + zero) "
-            "element Box moved Inner member-path item proof ready target-metadata ready helper-drop-bindings ready "
-            "cfg-slice ready module-mutation blocked production-member-cleanup blocked production-gate blocked "
-            "production-enabled false production blocked blockers 2 "
-            "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+            with_source_text(
+                "runtime-index member cleanup production-readiness owner items index (index + zero) "
+                "element Box moved Inner member-path item source-line 33 proof ready target-metadata ready "
+                "helper-drop-bindings ready cfg-slice ready module-mutation blocked "
+                "production-member-cleanup blocked production-gate blocked production-enabled false "
+                "production blocked blockers 2 blocker member-cleanup-module-mutation "
+                "blocker production-member-cleanup",
+                33,
+                "var outer: Outer = Outer(items[index + zero].item)"
+            )
         )
     );
     assert(
@@ -17094,12 +17103,14 @@ auto main() -> int {
     assert(nested_helper_drop_bindings.nested_member_path);
     assert(nested_helper_drop_bindings.helper_definition_ready);
     assert(!nested_helper_drop_bindings.production_enabled);
+    assert(nested_helper_drop_bindings.source_line == 72);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report(
             nested_helper_drop_bindings
         ) ==
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item helper __orison_member_cleanup.Wrap.except.box.item "
+        "element Wrap moved Inner member-path box.item source-line 72 "
+        "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
     );
     auto assert_nested_member_cleanup_field =

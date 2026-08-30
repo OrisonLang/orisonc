@@ -299,6 +299,7 @@ struct RuntimeIndexedMemberCleanupHelperDropBindings {
     bool nested_member_path = false;
     bool helper_definition_ready = false;
     bool production_enabled = false;
+    std::size_t source_line = 0;
 
     auto operator==(RuntimeIndexedMemberCleanupHelperDropBindings const&) const -> bool = default;
 };

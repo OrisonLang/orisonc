@@ -1921,8 +1921,9 @@ auto runtime_indexed_member_cleanup_production_readiness_report(
            << " index " << readiness.index_expression_text
            << " element " << readiness.element_source_type_name
            << " moved " << readiness.moved_source_type_name
-           << " member-path " << dotted_path(readiness.moved_member_path)
-           << " proof " << (readiness.proof_ready ? "ready" : "missing")
+           << " member-path " << dotted_path(readiness.moved_member_path);
+    append_source_line(report, readiness.source_line);
+    report << " proof " << (readiness.proof_ready ? "ready" : "missing")
            << " target-metadata " << (readiness.target_metadata_ready ? "ready" : "missing")
            << " helper-drop-bindings "
            << (readiness.helper_drop_bindings_ready ? "ready" : "missing")
@@ -1982,8 +1983,9 @@ auto runtime_indexed_member_cleanup_helper_drop_bindings_report(
            << " index " << bindings.index_expression_text
            << " element " << bindings.element_source_type_name
            << " moved " << bindings.moved_source_type_name
-           << " member-path " << dotted_path(bindings.moved_member_path)
-           << " helper " << (bindings.helper_symbol_name.empty() ? "missing" : bindings.helper_symbol_name)
+           << " member-path " << dotted_path(bindings.moved_member_path);
+    append_source_line(report, bindings.source_line);
+    report << " helper " << (bindings.helper_symbol_name.empty() ? "missing" : bindings.helper_symbol_name)
            << " sibling-bindings " << bindings.sibling_binding_count
            << " drop-definitions " << (bindings.all_drop_definitions_available ? "ready" : "missing")
            << " nested-path " << (bindings.nested_member_path ? "true" : "false")
