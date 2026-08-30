@@ -15732,6 +15732,7 @@ auto main() -> int {
     assert(runtime_indexed_member_transfer_execution_summary.element_source_type_name == "Box");
     assert(runtime_indexed_member_transfer_execution_summary.moved_source_type_name == "Inner");
     assert(runtime_indexed_member_transfer_execution_summary.moved_member_path == std::vector<std::string> {"item"});
+    assert(runtime_indexed_member_transfer_execution_summary.source_line == 33);
     assert(runtime_indexed_member_transfer_execution_summary.helper_symbol_name == "__orison_member_cleanup.Box.except.item");
     assert(runtime_indexed_member_transfer_execution_summary.helper_binding_count == 1);
     assert(runtime_indexed_member_transfer_execution_summary.helper_sibling_binding_count == 0);
@@ -15748,7 +15749,7 @@ auto main() -> int {
             runtime_indexed_member_transfer_execution_summary
         ) ==
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
-        "element Box moved Inner member-path item typed-gate ready apply authorized "
+        "element Box moved Inner member-path item source-line 33 typed-gate ready apply authorized "
         "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
         "rewrite-promotion ready helper-bindings 1 helper-target "
         "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "

@@ -32,6 +32,7 @@ struct RuntimeIndexedMemberCleanupExecutionSummary {
     std::string element_source_type_name;
     std::string moved_source_type_name;
     std::vector<std::string> moved_member_path;
+    std::size_t source_line = 0;
     std::string helper_symbol_name;
     std::size_t helper_binding_count = 0;
     std::size_t helper_sibling_binding_count = 0;

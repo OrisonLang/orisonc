@@ -2,16 +2,112 @@
 
 #include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 
+#include <algorithm>
+#include <cctype>
+#include <optional>
 #include <sstream>
 
 namespace orison::pipeline {
+namespace {
+
+auto trim_source_line_text(std::string line) -> std::string {
+    auto const first_non_space = std::find_if(
+        line.begin(),
+        line.end(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    );
+    if (first_non_space == line.end()) {
+        return {};
+    }
+    auto const last_non_space = std::find_if(
+        line.rbegin(),
+        line.rend(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    ).base();
+    return std::string(first_non_space, last_non_space);
+}
+
+auto source_line_text(std::string const& source_text, std::size_t line_number) -> std::string {
+    if (line_number == 0) {
+        return {};
+    }
+    auto current_line = std::size_t {1};
+    auto line_start = std::size_t {0};
+    while (line_start <= source_text.size()) {
+        auto line_end = source_text.find('\n', line_start);
+        if (line_end == std::string::npos) {
+            line_end = source_text.size();
+        }
+        if (current_line == line_number) {
+            return trim_source_line_text(source_text.substr(line_start, line_end - line_start));
+        }
+        if (line_end == source_text.size()) {
+            break;
+        }
+        line_start = line_end + 1;
+        ++current_line;
+    }
+    return {};
+}
+
+auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
+    auto constexpr token = std::string_view {" source-line "};
+    auto const token_start = line.find(token);
+    if (token_start == std::string::npos) {
+        return std::nullopt;
+    }
+
+    auto const digits_start = token_start + token.size();
+    auto digits_end = digits_start;
+    auto line_number = std::size_t {0};
+    while (digits_end < line.size() && std::isdigit(static_cast<unsigned char>(line[digits_end]))) {
+        line_number = (line_number * 10) + static_cast<std::size_t>(line[digits_end] - '0');
+        ++digits_end;
+    }
+    if (digits_end == digits_start || line_number == 0) {
+        return std::nullopt;
+    }
+    return std::pair {line_number, digits_end};
+}
+
+auto enrich_source_text(std::string line, std::string const& source_text) -> std::string {
+    if (source_text.empty() || line.find(" source-text ") != std::string::npos) {
+        return line;
+    }
+    auto const source_line = source_line_token_value(line);
+    if (!source_line.has_value()) {
+        return line;
+    }
+    auto const source_snippet = source_line_text(source_text, source_line->first);
+    if (source_snippet.empty()) {
+        return line;
+    }
+    line.insert(source_line->second, " source-text " + source_snippet);
+    return line;
+}
+
+void append_source_line(std::ostringstream& report, std::size_t source_line) {
+    if (source_line != 0) {
+        report << " source-line " << source_line;
+    }
+}
+
+}  // namespace
 
 auto runtime_indexed_member_cleanup_execution_summary_report_lines(
     CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
+    auto const source_text = result.source_file ? result.source_file->content() : std::string {};
     for (auto const& summary : result.runtime_indexed_member_cleanup_execution_summaries) {
-        lines.push_back(runtime_indexed_member_cleanup_execution_summary_report(summary));
+        lines.push_back(enrich_source_text(
+            runtime_indexed_member_cleanup_execution_summary_report(summary),
+            source_text
+        ));
     }
     return lines;
 }
@@ -52,6 +148,7 @@ auto runtime_indexed_member_cleanup_execution_summaries(
             .element_source_type_name = gate.element_source_type_name,
             .moved_source_type_name = gate.moved_source_type_name,
             .moved_member_path = gate.moved_member_path,
+            .source_line = gate.source_line,
             .helper_symbol_name = helper_bindings != nullptr ? helper_bindings->helper_symbol_name : std::string {},
             .helper_binding_count = count_runtime_indexed_member_cleanup_records(
                 gate,
@@ -81,8 +178,9 @@ auto runtime_indexed_member_cleanup_execution_summary_report(
            << " index " << summary.index_expression_text
            << " element " << summary.element_source_type_name
            << " moved " << summary.moved_source_type_name
-           << " member-path " << runtime_indexed_member_cleanup_dotted_path(summary.moved_member_path)
-           << " typed-gate " << (summary.typed_gate_ready ? "ready" : "blocked")
+           << " member-path " << runtime_indexed_member_cleanup_dotted_path(summary.moved_member_path);
+    append_source_line(report, summary.source_line);
+    report << " typed-gate " << (summary.typed_gate_ready ? "ready" : "blocked")
            << " apply " << (summary.apply_authorized ? "authorized" : "blocked")
            << " rewrite-authorization " << (summary.rewrite_authorized ? "authorized" : "blocked")
            << " rewrite-execution " << (summary.rewrite_execution_enabled ? "enabled" : "blocked")

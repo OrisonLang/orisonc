@@ -1311,7 +1311,8 @@ void assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item typed-gate ready"
+        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item) typed-gate ready"
     ) != std::string::npos);
     assert(output.find(
         "helper-target __orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4"
@@ -1324,23 +1325,40 @@ void assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
 ) {
     auto command = executable.string() + " --test-only-runtime-indexed-member-cleanup-run " + path.string();
     auto output = read_command_output(command);
-    auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
+    auto assert_owner_lines = [&](
+                                  std::string_view owner_name,
+                                  std::string_view index_expression,
+                                  std::size_t source_line,
+                                  std::string_view source_text
+                              ) {
         auto const owner = std::string {owner_name};
         auto const index = std::string {index_expression};
+        auto const source = std::string {" source-line "} + std::to_string(source_line) +
+            " source-text " + std::string {source_text};
         assert(output.find(
             "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
             "element Box moved Inner member-path item source-line "
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item typed-gate ready"
+            "element Box moved Inner member-path item" + source + " typed-gate ready"
         ) != std::string::npos);
         assert(output.find(
             "helper-target __orison_member_cleanup.Box.except.item helper-sibling-bindings 0"
         ) != std::string::npos);
     };
-    assert_owner_lines("left_items", "(left_index + left_zero)");
-    assert_owner_lines("right_items", "(right_index + right_zero)");
+    assert_owner_lines(
+        "left_items",
+        "(left_index + left_zero)",
+        33,
+        "var left_outer: Outer = Outer(left_items[left_index + left_zero].item)"
+    );
+    assert_owner_lines(
+        "right_items",
+        "(right_index + right_zero)",
+        40,
+        "var right_outer: Outer = Outer(right_items[right_index + right_zero].item)"
+    );
 }
 
 void assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_success(
@@ -1349,23 +1367,40 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_succes
 ) {
     auto command = executable.string() + " --test-only-runtime-indexed-member-cleanup-run " + path.string();
     auto output = read_command_output(command);
-    auto assert_owner_lines = [&](std::string_view owner_name, std::string_view index_expression) {
+    auto assert_owner_lines = [&](
+                                  std::string_view owner_name,
+                                  std::string_view index_expression,
+                                  std::size_t source_line,
+                                  std::string_view source_text
+                              ) {
         auto const owner = std::string {owner_name};
         auto const index = std::string {index_expression};
+        auto const source = std::string {" source-line "} + std::to_string(source_line) +
+            " source-text " + std::string {source_text};
         assert(output.find(
             "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
             "element Wrap moved Inner member-path box.item source-line "
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "
-            "element Wrap moved Inner member-path box.item typed-gate ready"
+            "element Wrap moved Inner member-path box.item" + source + " typed-gate ready"
         ) != std::string::npos);
         assert(output.find(
             "helper-target __orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4"
         ) != std::string::npos);
     };
-    assert_owner_lines("left_items", "(left_index + left_zero)");
-    assert_owner_lines("right_items", "(right_index + right_zero)");
+    assert_owner_lines(
+        "left_items",
+        "(left_index + left_zero)",
+        72,
+        "var left_outer: Outer = Outer(left_items[left_index + left_zero].box.item)"
+    );
+    assert_owner_lines(
+        "right_items",
+        "(right_index + right_zero)",
+        79,
+        "var right_outer: Outer = Outer(right_items[right_index + right_zero].box.item)"
+    );
 }
 
 void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(

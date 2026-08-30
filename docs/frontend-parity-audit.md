@@ -3058,3 +3058,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   metadata and trimmed source text when the originating constructor move is known.
 - 2026-08-30: Runtime-index member-cleanup typed promotion gate reports now carry source-line metadata and trimmed
   source text when the originating constructor move is known.
+- 2026-08-30: Runtime-index member-cleanup execution summary reports now carry source-line metadata and trimmed source
+  text when the originating constructor move is known.

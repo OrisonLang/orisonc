@@ -2480,6 +2480,8 @@ representation.
   trimmed source text when the originating constructor move is known.
 - Runtime-index member-cleanup typed promotion gate reports now carry source-line metadata and trimmed source text when
   the originating constructor move is known.
+- Runtime-index member-cleanup execution summary reports now carry source-line metadata from the typed promotion gate
+  and trimmed source text in pipeline report output when source text is available.
 
 ## Follow-up work
 
@@ -2491,4 +2493,4 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Add source correlation to runtime-index member-cleanup execution summary reports.
+- Audit the remaining runtime-index member-cleanup report families for any missing source correlation.
