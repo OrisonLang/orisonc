@@ -368,7 +368,14 @@ auto emit_scoped_local_dynamic_array_cleanups(
         saved_cleanup_plans.end(),
     };
     for (auto cleanup_plan = scoped_cleanup_plans.begin(); cleanup_plan != scoped_cleanup_plans.end();) {
-        if (is_owned_binding_consumed(session.state.ownership_transfers, cleanup_plan->owner_name)) {
+        auto runtime_indexed_cleanup_owner = std::ranges::any_of(
+            session.state.ownership_transfers.runtime_indexed_cleanup_emission_plans,
+            [&](RuntimeIndexedCleanupEmissionPlan const& plan) {
+                return plan.owner_name == cleanup_plan->owner_name;
+            }
+        );
+        if (is_owned_binding_consumed(session.state.ownership_transfers, cleanup_plan->owner_name) ||
+            runtime_indexed_cleanup_owner) {
             cleanup_plan = scoped_cleanup_plans.erase(cleanup_plan);
             continue;
         }

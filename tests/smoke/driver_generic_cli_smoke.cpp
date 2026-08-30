@@ -1146,6 +1146,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm
     assert(output.find("define i32 @consume({ i32, { ptr, i64, i64 } } %packet)") != std::string::npos);
     assert(output.find("define void @__orison_member_cleanup.Box.except.item(ptr %value)") !=
         std::string::npos);
+    assert(output.find("items.dynamic_array_cleanup") == std::string::npos);
     assert(payload_switch != std::string::npos);
     assert(index_expression != std::string::npos);
     assert(bounds_trap != std::string::npos);

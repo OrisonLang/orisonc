@@ -3033,3 +3033,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `--emit-object`, and `--build`.
 - 2026-08-29: The approved choice-payload runtime-index member-cleanup shape now has negative smoke coverage for
   post-transfer payload reuse and missing owned-element Drop authorization.
+- 2026-08-29: Scoped local DynamicArray cleanup now suppresses runtime-index cleanup owners before switch/branch-arm
+  cleanup emission. The approved choice-payload member-cleanup fixture now pins a single `items.member_cleanup` path
+  with no duplicate `items.dynamic_array_cleanup` loop.
