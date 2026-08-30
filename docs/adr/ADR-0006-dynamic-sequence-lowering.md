@@ -2448,6 +2448,9 @@ representation.
 - Runtime-index member-cleanup production-readiness output now promotes ready mutation/rewrite member cleanup into the
   top-level cleanup proof and production fields, and suppresses superseded old keyed production blocker and
   whole-element detail lines.
+- Runtime-index member-cleanup production coverage now includes a source-backed `DynamicArray<Box>` transfer whose
+  computed index comes from a final `if` helper, pinned across ordinary `run`, `--emit-llvm`, object/link/run,
+  `--emit-object`, and `--build`.
 
 ## Follow-up work
 
@@ -2459,5 +2462,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Broaden promoted runtime-index member-cleanup coverage to the next source-backed shape, preferably choice payloads or
-  branch/switch computed member-transfer paths already allowed by the current grammar.
+- Broaden promoted runtime-index member-cleanup coverage to a switch-derived computed index or an approved choice
+  payload binding shape, staying within the current grammar.
