@@ -2491,6 +2491,9 @@ representation.
 - Runtime-index member-cleanup source-correlation audit closed the remaining raw audit enrichment mismatch: promotion
   blocker lines now receive trimmed source text in the lowering-emission report path as well as the readiness report
   path.
+- Three-case owned-result `DynamicArray<Payload>` switch, nested-switch, and mixed switch/if cleanup fixtures now have
+  generic CLI production coverage across ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and
+  `--build`.
 
 ## Follow-up work
 
@@ -2502,5 +2505,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Return to production lowering coverage for the next DynamicArray-owned fixture now that the runtime-index
-  member-cleanup source-correlation audit is clean.
+- Extend generic CLI production coverage to the next owned-result helper-call or branch-consumer `DynamicArray`
+  cleanup fixture.

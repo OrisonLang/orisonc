@@ -62,7 +62,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   cleanup now keeps promoted runtime-index member cleanup as the single owner cleanup path for direct payload bindings,
   and nested choice-payload aggregate owners such as `holder.items[index + zero].box.item` now preserve the projected
   descriptor pointer while suppressing duplicate stored choice-payload cleanup. The nested shape also has negative
-  coverage for post-transfer member reuse and missing owned-element Drop authorization.
+  coverage for post-transfer member reuse and missing owned-element Drop authorization. Three-case owned-result
+  switch, nested-switch, and mixed switch/if cleanup fixtures now run through the generic CLI production matrix across
+  ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -84,5 +86,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Return to production lowering coverage for the next DynamicArray-owned fixture now that the runtime-index
-  member-cleanup source-correlation audit is clean.
+- Extend generic CLI production coverage to the next owned-result helper-call or branch-consumer `DynamicArray`
+  cleanup fixture.

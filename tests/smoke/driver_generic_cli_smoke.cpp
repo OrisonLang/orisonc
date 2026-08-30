@@ -17,6 +17,11 @@
 
 namespace {
 
+void assert_cli_run_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+);
+
 auto read_command_output(std::string const& command) -> std::string {
     std::array<char, 256> buffer {};
     std::string output;
@@ -612,6 +617,17 @@ void assert_cli_build_fixture_runs(
     auto status = std::system(output_path.string().c_str());
     assert(WIFEXITED(status));
     assert(WEXITSTATUS(status) == 0);
+}
+
+void assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_base
+) {
+    assert_cli_run_fixture_success(executable, path);
+    assert_cli_emit_llvm_fixture_links_and_runs(executable, path, output_base);
+    assert_cli_emit_object_fixture_success(executable, path, output_base.string() + ".o");
+    assert_cli_build_fixture_runs(executable, path, output_base.string() + "_build");
 }
 
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
@@ -4072,6 +4088,21 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_move_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_returned_fixed_array_record_field_move_run.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_three_case_switch_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_three_case_switch_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_three_case_nested_switch_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_three_case_nested_switch_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_three_case_mixed_switch_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_three_case_mixed_switch_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,

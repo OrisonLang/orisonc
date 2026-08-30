@@ -3070,3 +3070,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Runtime-index member-cleanup source-correlation audit closed the remaining raw audit enrichment mismatch:
   promotion blocker lines now receive trimmed source text in the lowering-emission report path as well as the readiness
   report path.
+- 2026-08-30: Three-case owned-result `DynamicArray<Payload>` switch, nested-switch, and mixed switch/if cleanup
+  fixtures now have generic CLI production coverage across ordinary `run`, `--emit-llvm`, object/link/run,
+  `--emit-object`, and `--build`.
