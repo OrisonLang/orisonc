@@ -3067,3 +3067,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Runtime-index member-cleanup plan, proof, sketch, target, emission gate, insertion, composition, and
   CFG-slice reports now carry source-line metadata and trimmed source text when the originating constructor move is
   known.
+- 2026-08-30: Runtime-index member-cleanup source-correlation audit closed the remaining raw audit enrichment mismatch:
+  promotion blocker lines now receive trimmed source text in the lowering-emission report path as well as the readiness
+  report path.

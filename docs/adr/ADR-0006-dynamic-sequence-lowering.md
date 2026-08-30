@@ -2488,6 +2488,9 @@ representation.
   carry source-line metadata and trimmed source text when source text is available.
 - Runtime-index member-cleanup plan, proof, sketch, target, emission gate, insertion, composition, and CFG-slice reports
   now carry source-line metadata and trimmed source text when source text is available.
+- Runtime-index member-cleanup source-correlation audit closed the remaining raw audit enrichment mismatch: promotion
+  blocker lines now receive trimmed source text in the lowering-emission report path as well as the readiness report
+  path.
 
 ## Follow-up work
 
@@ -2499,5 +2502,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Audit the runtime-index member-cleanup reporting path for remaining source-correlation gaps, then return to production
-  lowering coverage if the audit is clean.
+- Return to production lowering coverage for the next DynamicArray-owned fixture now that the runtime-index
+  member-cleanup source-correlation audit is clean.

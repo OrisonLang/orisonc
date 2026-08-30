@@ -15,6 +15,8 @@
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_readiness_report.hpp"
 
+#include "lowering_emission_reports.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -79,6 +81,38 @@ void test_no_option_pipeline_emission_uses_production_defaults(
     assert(no_option_object.error_text == production_object.error_text);
     assert(no_option_object.ir_text == production_object.ir_text);
     assert(no_option_object.object_bytes == production_object.object_bytes);
+}
+
+void test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text() {
+    auto result = orison::pipeline::CompilePipelineResult {};
+    result.source_file.emplace(
+        "promotion_blocker_source_text.or",
+        "public function demo() -> Unit\n"
+        "    var selected: TaggedInner = Secondary(holder.items[index])\n"
+        "    selected\n"
+    );
+
+    auto emission = orison::lowering::LlvmIrEmissionResult {};
+    emission.runtime_indexed_cleanup_audit_lines.push_back(
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 2 "
+        "blocker typed-promotion-disabled detail typed promotion gate production is disabled"
+    );
+
+    orison::pipeline::populate_lowering_emission_reports(
+        result,
+        std::move(emission),
+        orison::pipeline::CompilePipelineOptions {}
+    );
+
+    assert(result.runtime_indexed_cleanup_audit_lines.size() == 1);
+    assert(
+        result.runtime_indexed_cleanup_audit_lines.front() ==
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 2 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker typed-promotion-disabled detail typed promotion gate production is disabled"
+    );
 }
 
 auto logical_line_count(std::string const& text) -> std::size_t {
@@ -1447,6 +1481,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 
 auto main() -> int {
     test_production_compile_pipeline_options_gate_promotions();
+    test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text();
     test_runtime_indexed_cleanup_option_helpers();
     assert_computed_cleanup_proof_model_reusable_without_reports();
     assert_consumed_descriptor_finalization_readiness_typed();

@@ -77,12 +77,12 @@ This note is an implementation snapshot. It does not define language syntax or s
   member-cleanup plan, proof, sketch, target, emission gate, insertion, composition, CFG-slice, helper binding,
   production-readiness, function-rewrite, and production blocker diagnostics now include source-line and source-text
   metadata when the originating constructor move is known. Promotion blocker diagnostics now carry source-line/source-
-  text metadata from the gate or matched readiness record. Promotion checklist and seam reports now carry source-line/
-  source-text metadata when the originating constructor move is known. Typed promotion gate and execution summary
-  reports now carry the same source correlation. Other lowering and cleanup failures still need richer source-span
-  correlation.
+  text metadata from the gate or matched readiness record across both readiness and raw audit report paths. Promotion
+  checklist and seam reports now carry source-line/source-text metadata when the originating constructor move is known.
+  Typed promotion gate and execution summary reports now carry the same source correlation. Other lowering and cleanup
+  failures still need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Audit the runtime-index member-cleanup reporting path for remaining source-correlation gaps, then return to production
-  lowering coverage if the audit is clean.
+- Return to production lowering coverage for the next DynamicArray-owned fixture now that the runtime-index
+  member-cleanup source-correlation audit is clean.

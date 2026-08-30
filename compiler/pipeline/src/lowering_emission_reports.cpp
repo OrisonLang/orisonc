@@ -156,6 +156,11 @@ auto runtime_indexed_member_cleanup_production_blocker_line(std::string const& l
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_promotion_blocker_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup promotion blocker"};
+    return line.starts_with(prefix);
+}
+
 auto runtime_indexed_member_cleanup_promotion_checklist_line(std::string const& line) -> bool {
     auto constexpr prefix = std::string_view {"runtime-index member cleanup promotion-checklist"};
     return line.starts_with(prefix);
@@ -188,6 +193,7 @@ auto runtime_indexed_member_cleanup_should_include_source_text(std::string const
         runtime_indexed_member_cleanup_staged_apply_diagnostic_line(line) ||
         runtime_indexed_member_cleanup_module_mutation_line(line) ||
         runtime_indexed_member_cleanup_production_blocker_line(line) ||
+        runtime_indexed_member_cleanup_promotion_blocker_line(line) ||
         runtime_indexed_member_cleanup_promotion_checklist_line(line) ||
         runtime_indexed_member_cleanup_promotion_seam_line(line) ||
         runtime_indexed_member_cleanup_typed_promotion_gate_line(line);
