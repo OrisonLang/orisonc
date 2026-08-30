@@ -1,0 +1,45 @@
+package tests.fixtures.runtime_indexed_dynamic_array_choice_payload_computed_member_transfer
+
+record Inner
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Box
+    item: Inner
+
+implements Drop for Box
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice Packet
+    Primary(items: DynamicArray<Box>)
+
+function make_items() -> DynamicArray<Box>
+    var items: DynamicArray<Box> = DynamicArray()
+    items.push(Box(Inner(7 as UInt32)))
+    items.push(Box(Inner(11 as UInt32)))
+    items
+
+function consume(packet: Packet) -> UInt32
+    switch packet
+        Primary(items) =>
+            let index: UInt64 = 0 as UInt64
+            let zero: UInt64 = 0 as UInt64
+            var outer: Outer = Outer(items[index + zero].item)
+            0 as UInt32
+
+function main() -> UInt32
+    consume(Primary(make_items()))

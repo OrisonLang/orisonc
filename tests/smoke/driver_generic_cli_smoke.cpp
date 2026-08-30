@@ -981,6 +981,50 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_readiness_fixture
     assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness_fixture_ready(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command =
+        executable.string() + " --runtime-indexed-constructor-move-production-readiness " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup constructor-move production-readiness "
+        "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
+        "capability-count 1 ordinary-emit accepted member-cleanup-promotion ready "
+        "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
+        "member-rewrite-records 1 diagnostic none"
+    ) != std::string::npos);
+    assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move plan owner items") == std::string::npos);
+    assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
+        "element Box moved Inner member-path item helper __orison_member_cleanup.Box.except.item "
+        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup production-readiness owner items index (index + zero) "
+        "element Box moved Inner member-path item"
+    ) == std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
+        "element Box moved Inner member-path item source-line 41 source-text "
+        "var outer: Outer = Outer(items[index + zero].item) promotion ready post-apply-verification ready "
+        "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
+        "production enabled blockers 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
+        "element Box moved Inner member-path item source-line 41 source-text "
+        "var outer: Outer = Outer(items[index + zero].item) authorization ready execution-plan ready "
+        "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
+    ) != std::string::npos);
+    assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
+    assert(output.find("blocker production-member-cleanup") == std::string::npos);
+    assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_member_cleanup_emit_llvm_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1073,6 +1117,50 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_emit_llvm_fixture
     assert(moved_member_load < cleanup_branch);
     assert(cleanup_branch < skip_moved);
     assert(skip_moved < deallocate);
+    assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
+void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto payload_switch = output.find("switch i32 %tmp0, label %switch.unreachable.0");
+    auto index_expression = output.find("%tmp2 = add i64 %index, %zero");
+    auto bounds_trap = output.find("call void @__orison_dynamic_array_bounds_failed()");
+    auto moved_member_load = output.find("%tmp5 = load %record.Inner, ptr %tmp4");
+    auto cleanup_branch = output.find("br label %items.member_cleanup.entry");
+    auto skip_moved = output.find(
+        "%items.member_cleanup.is_moved = icmp eq i64 %items.member_cleanup.index, %tmp2"
+    );
+    auto member_helper = output.find(
+        "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
+    );
+    auto deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
+        "i64 %items.member_cleanup.cleanup.capacity)"
+    );
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("define i32 @consume({ i32, { ptr, i64, i64 } } %packet)") != std::string::npos);
+    assert(output.find("define void @__orison_member_cleanup.Box.except.item(ptr %value)") !=
+        std::string::npos);
+    assert(payload_switch != std::string::npos);
+    assert(index_expression != std::string::npos);
+    assert(bounds_trap != std::string::npos);
+    assert(moved_member_load != std::string::npos);
+    assert(cleanup_branch != std::string::npos);
+    assert(skip_moved != std::string::npos);
+    assert(member_helper != std::string::npos);
+    assert(deallocate != std::string::npos);
+    assert(payload_switch < index_expression);
+    assert(index_expression < bounds_trap);
+    assert(bounds_trap < moved_member_load);
+    assert(moved_member_load < cleanup_branch);
+    assert(cleanup_branch < skip_moved);
+    assert(skip_moved < member_helper);
+    assert(member_helper < deallocate);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -4016,6 +4104,10 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or"
     );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or"
+    );
     assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
@@ -4032,6 +4124,10 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or"
     );
+    assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness_fixture_ready(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or"
+    );
     assert_cli_runtime_indexed_member_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
@@ -4047,6 +4143,10 @@ auto main() -> int {
     assert_cli_runtime_indexed_switch_computed_member_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or"
+    );
+    assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or"
     );
     assert_cli_emit_llvm_fixture_links_and_runs(
         executable,
@@ -4073,6 +4173,11 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_switch_computed"
     );
+    assert_cli_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload"
+    );
     assert_cli_emit_object_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
@@ -4098,6 +4203,11 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_switch_computed.o"
     );
+    assert_cli_emit_object_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload.o"
+    );
     assert_cli_build_fixture_runs(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
@@ -4122,6 +4232,11 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_switch_computed_build"
+    );
+    assert_cli_build_fixture_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_build"
     );
     assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
         executable,

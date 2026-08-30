@@ -1610,8 +1610,24 @@ auto is_view_source_type(syntax::TypeSyntax const& type) -> bool {
          sequence->kind == DynamicSequenceKind::exclusive_view);
 }
 
+auto choice_variant_payload(
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    std::string_view variant_name,
+    std::size_t payload_index
+) -> syntax::NamedTypeSyntax const* {
+    for (auto const& choice : choices) {
+        for (auto const& variant : choice.variants) {
+            if (variant.name == variant_name && payload_index < variant.payloads.size()) {
+                return &variant.payloads[payload_index];
+            }
+        }
+    }
+    return nullptr;
+}
+
 void collect_dynamic_array_owner_names(
     syntax::StatementSyntax const& statement,
+    std::vector<syntax::ChoiceSyntax> const& choices,
     std::unordered_set<std::string>& owner_names
 ) {
     if ((statement.kind == syntax::StatementKind::let_binding ||
@@ -1622,18 +1638,44 @@ void collect_dynamic_array_owner_names(
         owner_names.insert(statement.name);
     }
     for (auto const& nested_statement : statement.nested_statements) {
-        collect_dynamic_array_owner_names(nested_statement, owner_names);
+        collect_dynamic_array_owner_names(nested_statement, choices, owner_names);
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_dynamic_array_owner_names(alternate_statement, owner_names);
+        collect_dynamic_array_owner_names(alternate_statement, choices, owner_names);
     }
     for (auto const& switch_case : statement.switch_cases) {
+        if (switch_case.pattern.kind == syntax::ExpressionKind::call &&
+            switch_case.pattern.left != nullptr &&
+            switch_case.pattern.left->kind == syntax::ExpressionKind::name) {
+            for (auto payload_index = std::size_t {0};
+                 payload_index < switch_case.pattern.arguments.size();
+                 ++payload_index) {
+                auto const& argument = switch_case.pattern.arguments[payload_index];
+                auto const* payload = choice_variant_payload(
+                    choices,
+                    switch_case.pattern.left->text,
+                    payload_index
+                );
+                if (argument.kind == syntax::ExpressionKind::name &&
+                    payload != nullptr &&
+                    is_dynamic_array_source_type(payload->type)) {
+                    owner_names.insert(argument.text);
+                }
+            }
+        }
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
-                collect_dynamic_array_owner_names(*case_statement, owner_names);
+                collect_dynamic_array_owner_names(*case_statement, choices, owner_names);
             }
         }
     }
+}
+
+void collect_dynamic_array_owner_names(
+    syntax::StatementSyntax const& statement,
+    std::unordered_set<std::string>& owner_names
+) {
+    collect_dynamic_array_owner_names(statement, std::vector<syntax::ChoiceSyntax> {}, owner_names);
 }
 
 void collect_view_owner_names(
@@ -1663,7 +1705,8 @@ void collect_view_owner_names(
 }
 
 auto has_dynamic_array_index_read(
-    syntax::FunctionSyntax const& function
+    syntax::FunctionSyntax const& function,
+    std::vector<syntax::ChoiceSyntax> const& choices
 ) -> bool {
     auto owner_names = std::unordered_set<std::string> {};
     for (auto const& parameter : function.parameters) {
@@ -1678,7 +1721,7 @@ auto has_dynamic_array_index_read(
         }
     }
     for (auto const& statement : function.body_statements) {
-        collect_dynamic_array_owner_names(statement, owner_names);
+        collect_dynamic_array_owner_names(statement, choices, owner_names);
     }
     if (owner_names.empty()) {
         return false;
@@ -1768,20 +1811,20 @@ auto has_dynamic_array_index_read(
     syntax::ModuleSyntax const& module
 ) -> bool {
     for (auto const& function : module.functions) {
-        if (has_dynamic_array_index_read(function)) {
+        if (has_dynamic_array_index_read(function, module.choices)) {
             return true;
         }
     }
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            if (has_dynamic_array_index_read(method)) {
+            if (has_dynamic_array_index_read(method, module.choices)) {
                 return true;
             }
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            if (has_dynamic_array_index_read(method)) {
+            if (has_dynamic_array_index_read(method, module.choices)) {
                 return true;
             }
         }
