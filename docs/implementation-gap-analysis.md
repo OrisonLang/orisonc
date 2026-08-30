@@ -64,7 +64,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   descriptor pointer while suppressing duplicate stored choice-payload cleanup. The nested shape also has negative
   coverage for post-transfer member reuse and missing owned-element Drop authorization. Three-case owned-result
   switch, nested-switch, and mixed switch/if cleanup fixtures now run through the generic CLI production matrix across
-  ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
+  ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`. Ternary helper-call, named
+  helper-call, named chained helper-call, and branch-consumer scratch cleanup owned-result fixtures now run through the
+  same generic CLI production matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -86,5 +88,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to the next owned-result helper-call or branch-consumer `DynamicArray`
-  cleanup fixture.
+- Extend generic CLI production coverage to the remaining owned-result branch-consumer alias/local-chain
+  `DynamicArray` cleanup fixtures.

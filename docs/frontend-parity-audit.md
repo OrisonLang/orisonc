@@ -3073,3 +3073,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Three-case owned-result `DynamicArray<Payload>` switch, nested-switch, and mixed switch/if cleanup
   fixtures now have generic CLI production coverage across ordinary `run`, `--emit-llvm`, object/link/run,
   `--emit-object`, and `--build`.
+- 2026-08-30: Owned-result `DynamicArray<Payload>` ternary helper-call, named helper-call, named chained helper-call,
+  and branch-consumer scratch cleanup fixtures now have generic CLI production coverage across ordinary `run`,
+  `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
