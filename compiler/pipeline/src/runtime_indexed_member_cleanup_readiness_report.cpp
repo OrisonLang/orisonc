@@ -61,6 +61,46 @@ auto runtime_indexed_member_cleanup_mutation_line(std::string const& line) -> bo
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_owner_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup owner"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_proof_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup proof"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_emission_sketch_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup emission-sketch"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_target_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup target"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_emission_gate_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup emission-gate"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_ir_insertion_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup ir-insertion-plan"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_ir_composition_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup ir-composition-plan"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_cfg_slice_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup cfg-slice"};
+    return line.starts_with(prefix);
+}
+
 auto runtime_indexed_member_cleanup_helper_drop_bindings_line(std::string const& line) -> bool {
     auto constexpr prefix = std::string_view {"runtime-index member cleanup helper-drop-bindings"};
     return line.starts_with(prefix);
@@ -120,6 +160,14 @@ auto runtime_indexed_member_cleanup_typed_promotion_gate_line(std::string const&
 
 auto runtime_indexed_member_cleanup_should_include_source_text(std::string const& line) -> bool {
     return runtime_indexed_member_cleanup_mutation_line(line) ||
+        runtime_indexed_member_cleanup_owner_line(line) ||
+        runtime_indexed_member_cleanup_proof_line(line) ||
+        runtime_indexed_member_cleanup_emission_sketch_line(line) ||
+        runtime_indexed_member_cleanup_target_line(line) ||
+        runtime_indexed_member_cleanup_emission_gate_line(line) ||
+        runtime_indexed_member_cleanup_ir_insertion_line(line) ||
+        runtime_indexed_member_cleanup_ir_composition_line(line) ||
+        runtime_indexed_member_cleanup_cfg_slice_line(line) ||
         runtime_indexed_member_cleanup_helper_drop_bindings_line(line) ||
         runtime_indexed_member_cleanup_production_readiness_line(line) ||
         runtime_indexed_member_cleanup_function_rewrite_line(line) ||

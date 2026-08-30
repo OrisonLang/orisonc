@@ -881,8 +881,9 @@ auto runtime_indexed_member_cleanup_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " owner-known " << (plan.owner_known ? "true" : "false")
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " owner-known " << (plan.owner_known ? "true" : "false")
            << " index-known " << (plan.index_known ? "true" : "false")
            << " element-type-known " << (plan.element_type_known ? "true" : "false")
            << " moved-type-known " << (plan.moved_type_known ? "true" : "false")
@@ -931,8 +932,9 @@ auto runtime_indexed_member_cleanup_proof_report(
            << " index " << proof.index_expression_text
            << " element " << proof.element_source_type_name
            << " moved " << proof.moved_source_type_name
-           << " member-path " << dotted_path(proof.moved_member_path)
-           << " plan-ready " << (proof.plan_ready ? "true" : "false")
+           << " member-path " << dotted_path(proof.moved_member_path);
+    append_source_line(report, proof.source_line);
+    report << " plan-ready " << (proof.plan_ready ? "true" : "false")
            << " whole-element-cleanup-matches-move "
            << (proof.whole_element_cleanup_matches_move ? "true" : "false")
            << " member-cleanup-required " << (proof.member_cleanup_required ? "true" : "false")
@@ -983,8 +985,9 @@ auto runtime_indexed_member_cleanup_emission_sketch_report(
            << " index " << sketch.index_expression_text
            << " element " << sketch.element_source_type_name
            << " moved " << sketch.moved_source_type_name
-           << " member-path " << dotted_path(sketch.moved_member_path)
-           << " snippets " << sketch.snippets.size()
+           << " member-path " << dotted_path(sketch.moved_member_path);
+    append_source_line(report, sketch.source_line);
+    report << " snippets " << sketch.snippets.size()
            << " proof-ready " << (sketch.proof_ready ? "true" : "false")
            << " report-only " << (sketch.report_only ? "true" : "false")
            << " production-emission "
@@ -1028,8 +1031,9 @@ auto runtime_indexed_member_cleanup_target_report(
            << " index " << target.index_expression_text
            << " element " << target.element_source_type_name
            << " moved " << target.moved_source_type_name
-           << " member-path " << dotted_path(target.moved_member_path)
-           << " operation " << target.cleanup_operation
+           << " member-path " << dotted_path(target.moved_member_path);
+    append_source_line(report, target.source_line);
+    report << " operation " << target.cleanup_operation
            << " drop-metadata " << target.drop_metadata_symbol_name
            << " metadata " << (target.metadata_ready ? "ready" : "missing")
            << " production " << (target.production_enabled ? "enabled" : "disabled");
@@ -1086,8 +1090,9 @@ auto runtime_indexed_member_cleanup_emission_gate_report(
            << " index " << gate.index_expression_text
            << " element " << gate.element_source_type_name
            << " moved " << gate.moved_source_type_name
-           << " member-path " << dotted_path(gate.moved_member_path)
-           << " sketch-ready " << (gate.sketch_ready ? "true" : "false")
+           << " member-path " << dotted_path(gate.moved_member_path);
+    append_source_line(report, gate.source_line);
+    report << " sketch-ready " << (gate.sketch_ready ? "true" : "false")
            << " member-drop-metadata "
            << (gate.member_drop_metadata_ready ? "ready" : "missing")
            << " ir-insertion " << (gate.ir_insertion_ready ? "ready" : "missing")
@@ -1146,8 +1151,9 @@ auto runtime_indexed_member_cleanup_ir_insertion_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
            << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
            << " skip " << (plan.skip_block_name.empty() ? "missing" : plan.skip_block_name)
            << " sibling-drop "
@@ -1233,8 +1239,9 @@ auto runtime_indexed_member_cleanup_ir_composition_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
            << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
            << " skip " << (plan.skip_block_name.empty() ? "missing" : plan.skip_block_name)
            << " sibling-drop "
@@ -1314,8 +1321,9 @@ auto runtime_indexed_member_cleanup_cfg_slice_report(
            << " index " << slice.index_expression_text
            << " element " << slice.element_source_type_name
            << " moved " << slice.moved_source_type_name
-           << " member-path " << dotted_path(slice.moved_member_path)
-           << " anchor " << (slice.insertion_anchor.empty() ? "missing" : slice.insertion_anchor)
+           << " member-path " << dotted_path(slice.moved_member_path);
+    append_source_line(report, slice.source_line);
+    report << " anchor " << (slice.insertion_anchor.empty() ? "missing" : slice.insertion_anchor)
            << " entry " << (slice.entry_block_name.empty() ? "missing" : slice.entry_block_name)
            << " skip " << (slice.skip_block_name.empty() ? "missing" : slice.skip_block_name)
            << " sibling-drop "

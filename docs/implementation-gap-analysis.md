@@ -74,14 +74,15 @@ This note is an implementation snapshot. It does not define language syntax or s
   audit/readiness reports now include source-line plus source-text metadata. Final switch/if ownership reuse failures
   now report direct `use after move` diagnostics while retaining precise runtime-index owner paths. DynamicArray
   owned-element push Drop-authorization diagnostics now include source owner and element type. Runtime-index
-  member-cleanup helper binding, production-readiness, function-rewrite, and production blocker diagnostics now include
-  source-line and source-text metadata when the originating constructor move is known, and promotion blocker diagnostics
-  now carry source-line/source-text metadata from the gate or matched readiness record. Promotion checklist and seam
-  reports now carry source-line/source-text metadata when the originating constructor move is known. Typed promotion
-  gate and execution summary reports now carry the same source correlation. Other lowering and cleanup failures still
-  need richer source-span correlation.
+  member-cleanup plan, proof, sketch, target, emission gate, insertion, composition, CFG-slice, helper binding,
+  production-readiness, function-rewrite, and production blocker diagnostics now include source-line and source-text
+  metadata when the originating constructor move is known. Promotion blocker diagnostics now carry source-line/source-
+  text metadata from the gate or matched readiness record. Promotion checklist and seam reports now carry source-line/
+  source-text metadata when the originating constructor move is known. Typed promotion gate and execution summary
+  reports now carry the same source correlation. Other lowering and cleanup failures still need richer source-span
+  correlation.
 
 ## Suggested Next Step
 
-- Add source correlation to the earlier runtime-index member-cleanup proof, target, insertion, composition, and CFG-slice
-  report families.
+- Audit the runtime-index member-cleanup reporting path for remaining source-correlation gaps, then return to production
+  lowering coverage if the audit is clean.

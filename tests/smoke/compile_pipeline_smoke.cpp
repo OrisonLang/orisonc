@@ -15003,56 +15003,84 @@ auto main() -> int {
     assert(runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines.size() == 76);
     assert(runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.size() == 1);
     assert(!runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front().gate_ready);
+    auto const runtime_indexed_cleanup_source_text =
+        "var selected: TaggedInner = Secondary(holder.items[index])";
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
-        "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
-        "member-path none owner-known true index-known true element-type-known true "
-        "moved-type-known true member-path-known false cleanup-element-matches-move true "
-        "member-granular-required false prerequisites missing production disabled"
+        with_source_text(
+            "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
+            "member-path none source-line 46 owner-known true index-known true element-type-known true "
+            "moved-type-known true member-path-known false cleanup-element-matches-move true "
+            "member-granular-required false prerequisites missing production disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[8] ==
-        "runtime-index member cleanup proof owner holder.items index index element Inner moved Inner "
-        "member-path none plan-ready false whole-element-cleanup-matches-move true "
-        "member-cleanup-required false member-scope-proven false whole-element-cleanup-blocked false "
-        "prerequisites missing production disabled"
+        with_source_text(
+            "runtime-index member cleanup proof owner holder.items index index element Inner moved Inner "
+            "member-path none source-line 46 plan-ready false whole-element-cleanup-matches-move true "
+            "member-cleanup-required false member-scope-proven false whole-element-cleanup-blocked false "
+            "prerequisites missing production disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[9] ==
-        "runtime-index member cleanup emission-sketch owner holder.items index index element Inner "
-        "moved Inner member-path none snippets 0 proof-ready false report-only true "
-        "production-emission disabled"
+        with_source_text(
+            "runtime-index member cleanup emission-sketch owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 snippets 0 proof-ready false report-only true "
+            "production-emission disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[10] ==
-        "runtime-index member cleanup emission-gate owner holder.items index index element Inner "
-        "moved Inner member-path none sketch-ready false member-drop-metadata missing "
-        "ir-insertion missing prerequisites missing production disabled blockers 3 "
-        "blocker member-cleanup-sketch blocker member-drop-metadata blocker member-cleanup-ir-insertion"
+        with_source_text(
+            "runtime-index member cleanup emission-gate owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 sketch-ready false member-drop-metadata missing "
+            "ir-insertion missing prerequisites missing production disabled blockers 3 "
+            "blocker member-cleanup-sketch blocker member-drop-metadata blocker member-cleanup-ir-insertion",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[11] ==
-        "runtime-index member cleanup ir-insertion-plan owner holder.items index index element Inner "
-        "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing target-metadata missing insertion-points missing report-only true "
-        "production disabled preview-operations 0"
+        with_source_text(
+            "runtime-index member cleanup ir-insertion-plan owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "sibling-drop missing preserve missing exit missing target-metadata missing insertion-points missing "
+            "report-only true production disabled preview-operations 0",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[12] ==
-        "runtime-index member cleanup ir-composition-plan owner holder.items index index element Inner "
-        "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing cleanup-target missing insertion-plan missing block-topology missing "
-        "preview-operations missing report-only true production disabled topology-edges 0"
+        with_source_text(
+            "runtime-index member cleanup ir-composition-plan owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "sibling-drop missing preserve missing exit missing cleanup-target missing insertion-plan missing "
+            "block-topology missing preview-operations missing report-only true production disabled topology-edges 0",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[13] ==
-        "runtime-index member cleanup cfg-slice owner holder.items index index element Inner "
-        "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing cleanup-target missing composition missing slice missing report-only true "
-        "production disabled cfg-lines 0"
+        with_source_text(
+            "runtime-index member cleanup cfg-slice owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "sibling-drop missing preserve missing exit missing cleanup-target missing composition missing "
+            "slice missing report-only true production disabled cfg-lines 0",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
-    auto const runtime_indexed_cleanup_source_text =
-        "var selected: TaggedInner = Secondary(holder.items[index])";
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[14] ==
         with_source_text(
@@ -15595,9 +15623,13 @@ auto main() -> int {
         };
     assert(
         has_runtime_indexed_member_transfer_audit_line(
-            "runtime-index member cleanup target owner items index (index + zero) element Box moved Inner "
-            "member-path item operation drop-live-member-siblings "
-            "drop-metadata __orison_member_cleanup.Box.except.item metadata ready production disabled"
+            with_source_text(
+                "runtime-index member cleanup target owner items index (index + zero) element Box moved Inner "
+                "member-path item source-line 33 operation drop-live-member-siblings "
+                "drop-metadata __orison_member_cleanup.Box.except.item metadata ready production disabled",
+                33,
+                "var outer: Outer = Outer(items[index + zero].item)"
+            )
         )
     );
     assert(
