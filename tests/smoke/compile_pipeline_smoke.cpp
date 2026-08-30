@@ -15432,8 +15432,12 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[75] ==
-        orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
-            runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front()
+        with_source_text(
+            orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
+                runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front()
+            ),
+            46,
+            runtime_indexed_cleanup_source_text
         )
     );
     auto const runtime_indexed_cleanup_promotion_lines =
@@ -15716,7 +15720,7 @@ auto main() -> int {
             runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front()
         ) ==
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
-        "element Box moved Inner member-path item checklist ready ir-mutation-requested true "
+        "element Box moved Inner member-path item source-line 33 checklist ready ir-mutation-requested true "
         "production-gate-requested true ir-mutation enabled production-gate enabled "
         "gate ready report-only false production enabled blockers 0"
     );

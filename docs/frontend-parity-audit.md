@@ -3056,3 +3056,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   or matched readiness record and include trimmed source text when the source buffer is available.
 - 2026-08-30: Runtime-index member-cleanup promotion checklist and promotion seam reports now carry source-line
   metadata and trimmed source text when the originating constructor move is known.
+- 2026-08-30: Runtime-index member-cleanup typed promotion gate reports now carry source-line metadata and trimmed
+  source text when the originating constructor move is known.

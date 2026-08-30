@@ -2151,8 +2151,9 @@ auto runtime_indexed_member_cleanup_typed_promotion_gate_report(
            << " index " << gate.index_expression_text
            << " element " << gate.element_source_type_name
            << " moved " << gate.moved_source_type_name
-           << " member-path " << dotted_path(gate.moved_member_path)
-           << " checklist " << (gate.checklist_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(gate.moved_member_path);
+    append_source_line(report, gate.source_line);
+    report << " checklist " << (gate.checklist_ready ? "ready" : "blocked")
            << " ir-mutation-requested " << (gate.ir_mutation_requested ? "true" : "false")
            << " production-gate-requested " << (gate.production_gate_requested ? "true" : "false")
            << " ir-mutation " << (gate.ir_mutation_enabled ? "enabled" : "disabled")

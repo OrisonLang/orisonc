@@ -1307,7 +1307,7 @@ void assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
     auto output = read_command_output(command);
     assert(output.find(
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item checklist ready"
+        "element Wrap moved Inner member-path box.item source-line "
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
@@ -1329,7 +1329,7 @@ void assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
         auto const index = std::string {index_expression};
         assert(output.find(
             "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item checklist ready"
+            "element Box moved Inner member-path item source-line "
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "
@@ -1354,7 +1354,7 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_succes
         auto const index = std::string {index_expression};
         assert(output.find(
             "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
-            "element Wrap moved Inner member-path box.item checklist ready"
+            "element Wrap moved Inner member-path box.item source-line "
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "

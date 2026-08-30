@@ -77,9 +77,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   member-cleanup production blocker diagnostics now include source-line and source-text metadata when the originating
   constructor move is known, and promotion blocker diagnostics now carry source-line/source-text metadata from the gate
   or matched readiness record. Promotion checklist and seam reports now carry source-line/source-text metadata when
-  the originating constructor move is known. Other lowering and cleanup failures still need richer source-span
-  correlation.
+  the originating constructor move is known. Typed promotion gate reports now carry the same source correlation. Other
+  lowering and cleanup failures still need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Add source correlation to runtime-index member-cleanup typed promotion gate reports.
+- Add source correlation to runtime-index member-cleanup execution summary reports.
