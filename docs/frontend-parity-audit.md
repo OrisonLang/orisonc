@@ -3031,3 +3031,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-29: Runtime-index member-cleanup production coverage now includes an approved choice payload binding over a
   source-backed `DynamicArray<Box>` payload, pinned across ordinary `run`, `--emit-llvm`, object/link/run,
   `--emit-object`, and `--build`.
+- 2026-08-29: The approved choice-payload runtime-index member-cleanup shape now has negative smoke coverage for
+  post-transfer payload reuse and missing owned-element Drop authorization.

@@ -57,7 +57,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   helper names use summary wording. Production-readiness output now reports promoted member cleanup as ready in the
   top-level proof/production fields and hides superseded old keyed production blocker and whole-element detail lines.
   Source-backed branch-derived indexes, switch-derived indexes, and approved choice payload bindings are now covered
-  by ordinary production `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths.
+  by ordinary production `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths. The approved
+  choice-payload shape also has negative coverage for post-transfer reuse and missing Drop authorization.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -71,4 +72,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add negative coverage for missing Drop or post-transfer reuse on the approved choice-payload member-cleanup shape.
+- Review the choice-payload cleanup order in emitted IR so payload-owned cleanup and promoted member cleanup do not
+  duplicate responsibility.

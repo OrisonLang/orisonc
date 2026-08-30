@@ -2456,6 +2456,8 @@ representation.
 - Runtime-index member-cleanup production coverage now includes an approved choice payload binding over a source-backed
   `DynamicArray<Box>` payload, pinned across ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and
   `--build`. DynamicArray index-read prelude detection now includes approved switch payload bindings.
+- The approved choice-payload runtime-index member-cleanup shape now has negative smoke coverage for post-transfer
+  payload reuse and missing owned-element Drop authorization.
 
 ## Follow-up work
 
@@ -2467,4 +2469,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Add negative coverage for missing Drop or post-transfer reuse on the approved choice-payload member-cleanup shape.
+- Review the choice-payload cleanup order in emitted IR so payload-owned cleanup and promoted member cleanup do not
+  duplicate responsibility.
