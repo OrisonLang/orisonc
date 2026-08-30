@@ -39,7 +39,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   concrete Drop-symbol proof when no concrete parameter summary exists. Returned descriptor lifetime plans now carry
   exact cleanup-owner proof, so return cleanup release consumes typed provenance directly. Computed ownership planning
   now unwraps source-proven descriptor-forwarding helper calls for returned descriptor iteration, and returned
-  descriptors moved through local alias chains are covered by the same computed final-use cleanup path.
+  descriptors moved through local alias chains are covered by the same computed final-use cleanup path. Returned
+  choices carrying DynamicArray payloads now bind caller-side switch payloads into that same cleanup path.
   Multi-candidate runtime-index cleanup fixtures now share the same production-default audit/module-rewrite helper.
   Single-candidate module-mutation and module-rewrite checks now use named option helpers. Runtime-index emission,
   insertion, mutation, Drop-surface, source-drop audit-only, and rewrite-execution-only staged checks now use named

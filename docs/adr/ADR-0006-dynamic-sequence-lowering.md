@@ -264,6 +264,8 @@ representation.
   another proven helper call.
 - Returned DynamicArray descriptors moved through local alias chains before return are covered by the existing caller
   cleanup handoff and computed-loop final-use cleanup path.
+- Returned choice values that carry a DynamicArray payload can be switched by the caller, bind the payload, and reuse
+  the same computed-loop final-use cleanup path for the payload descriptor.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.

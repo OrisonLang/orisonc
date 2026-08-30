@@ -18,6 +18,9 @@
 - 2026-08-29: `tests/fixtures/dynamic_array_returned_alias_chain_owned_computed_for_cleanup_run.or` now pins a
   returned `DynamicArray<Payload>` moved through two local aliases before return, then consumed by same-owner computed
   iteration with cleanup, object emission, build, and host execution.
+- 2026-08-29: `tests/fixtures/dynamic_array_returned_choice_payload_owned_computed_for_cleanup_run.or` now pins a
+  returned choice carrying a `DynamicArray<Payload>` payload, caller-side switch payload binding, computed iteration,
+  cleanup, object emission, build, and host execution.
 - 2026-08-25: `tests/fixtures/dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or` now
   pins a nested returned record-field `DynamicArray<Payload>` descriptor consumed by a same-owner computed `for`,
   including nested field-owner cleanup handoff, element Drop walks, deallocation, descriptor finalization, and

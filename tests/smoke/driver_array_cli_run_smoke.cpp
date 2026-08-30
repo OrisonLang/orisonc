@@ -2013,6 +2013,59 @@ void assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm
     assert(output.find("packet.Primary.values.choice_dynamic_array_cleanup") == std::string::npos);
 }
 
+void assert_returned_choice_payload_owned_computed_dynamic_array_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("define { i32, { ptr, i64, i64 } } @make_packet()") != std::string::npos);
+    assert(output.find("call { i32, { ptr, i64, i64 } } @make_packet()") != std::string::npos);
+    assert(output.find("%packet.addr = alloca { i32, { ptr, i64, i64 } }") != std::string::npos);
+    assert(output.find("switch i32 %tmp") != std::string::npos);
+    assert(output.find("%values.addr = alloca { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("values.computed_for.") != std::string::npos);
+    assert(output.find(".condition:") != std::string::npos);
+    assert(
+        output.find(
+            "cleanup state handoff acquire operation values.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "from values to values.loop.entry [cleanup calls enabled]"
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "cleanup state handoff resume operation values.computed_for."
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "from values.loop.entry to values [cleanup calls enabled]"
+        ) != std::string::npos
+    );
+    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup");
+    auto const deallocation =
+        output.find("call void @__orison_dynamic_array_deallocate(ptr %values.computed_for.", drop_call);
+    auto const finalization =
+        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %values.addr", deallocation);
+    auto const packet_cleanup = output.find("%packet.choice_dynamic_array_cleanup", finalization);
+    auto const return_value = output.find("ret i32 %tmp", packet_cleanup);
+    assert(drop_call != std::string::npos);
+    assert(deallocation != std::string::npos);
+    assert(finalization != std::string::npos);
+    assert(packet_cleanup != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(drop_call < deallocation);
+    assert(deallocation < finalization);
+    assert(finalization < packet_cleanup);
+    assert(packet_cleanup < return_value);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %packet.choice_dynamic_array_cleanup") ==
+        std::string::npos);
+    assert(output.find("packet.Primary.values.choice_dynamic_array_cleanup") == std::string::npos);
+}
+
 void assert_returned_dynamic_array_multi_hop_forwarding_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2502,6 +2555,8 @@ auto main() -> int {
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or";
+    auto returned_choice_payload_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup_run.or";
     auto returned_dynamic_array_multi_hop_forwarding_path =
         fixtures / "dynamic_array_returned_multi_hop_forwarding_run.or";
     auto returned_dynamic_array_branch_join_forwarding_path =
@@ -3488,6 +3543,24 @@ auto main() -> int {
         executable,
         choice_payload_final_switch_binding_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_returned_choice_payload_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        returned_choice_payload_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_choice_payload_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        returned_choice_payload_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup"
+    );
+    assert_run_success(
+        executable,
+        returned_choice_payload_owned_computed_dynamic_array_path
     );
     assert_owned_dynamic_array_parameter_emit_llvm_success(executable, owned_dynamic_array_parameter_path);
     assert_emit_object_success(
