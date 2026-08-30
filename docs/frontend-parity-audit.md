@@ -3062,3 +3062,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   text when the originating constructor move is known.
 - 2026-08-30: Runtime-index member-cleanup helper binding and primary production-readiness reports now carry source-line
   metadata and trimmed source text when the originating constructor move is known.
+- 2026-08-30: Runtime-index member-cleanup function-rewrite candidate, edit-script, staged-apply, and module-mutation
+  reports now carry source-line metadata and trimmed source text when the originating constructor move is known.

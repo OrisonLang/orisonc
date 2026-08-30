@@ -2484,6 +2484,8 @@ representation.
   and trimmed source text in pipeline report output when source text is available.
 - Runtime-index member-cleanup helper binding and primary production-readiness reports now carry source-line metadata
   and trimmed source text when source text is available.
+- Runtime-index member-cleanup function-rewrite candidate, edit-script, staged-apply, and module-mutation reports now
+  carry source-line metadata and trimmed source text when source text is available.
 
 ## Follow-up work
 
@@ -2495,4 +2497,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Add source correlation to runtime-index member-cleanup function-rewrite report families.
+- Add source correlation to the earlier runtime-index member-cleanup proof, target, insertion, composition, and CFG-slice
+  report families.

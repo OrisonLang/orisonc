@@ -1406,8 +1406,9 @@ auto runtime_indexed_member_cleanup_function_rewrite_candidate_report(
            << " index " << candidate.index_expression_text
            << " element " << candidate.element_source_type_name
            << " moved " << candidate.moved_source_type_name
-           << " member-path " << dotted_path(candidate.moved_member_path)
-           << " anchor " << (candidate.insertion_anchor.empty() ? "missing" : candidate.insertion_anchor)
+           << " member-path " << dotted_path(candidate.moved_member_path);
+    append_source_line(report, candidate.source_line);
+    report << " anchor " << (candidate.insertion_anchor.empty() ? "missing" : candidate.insertion_anchor)
            << " entry " << (candidate.entry_block_name.empty() ? "missing" : candidate.entry_block_name)
            << " sibling-drop "
            << (candidate.sibling_drop_block_name.empty() ? "missing" : candidate.sibling_drop_block_name)
@@ -1492,8 +1493,9 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
            << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
            << " sibling-drop "
            << (plan.sibling_drop_block_name.empty() ? "missing" : plan.sibling_drop_block_name)
@@ -1591,8 +1593,9 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_repo
            << " index " << validation.index_expression_text
            << " element " << validation.element_source_type_name
            << " moved " << validation.moved_source_type_name
-           << " member-path " << dotted_path(validation.moved_member_path)
-           << " anchor " << (validation.insertion_anchor.empty() ? "missing" : validation.insertion_anchor)
+           << " member-path " << dotted_path(validation.moved_member_path);
+    append_source_line(report, validation.source_line);
+    report << " anchor " << (validation.insertion_anchor.empty() ? "missing" : validation.insertion_anchor)
            << " entry " << (validation.entry_block_name.empty() ? "missing" : validation.entry_block_name)
            << " exit " << (validation.exit_block_name.empty() ? "missing" : validation.exit_block_name)
            << " edit-script " << (validation.edit_script_ready ? "ready" : "blocked")
@@ -1620,8 +1623,9 @@ auto runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_diag
                    << " index " << validation.index_expression_text
                    << " element " << validation.element_source_type_name
                    << " moved " << validation.moved_source_type_name
-                   << " member-path " << dotted_path(validation.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(validation.moved_member_path);
+        append_source_line(diagnostic, validation.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-edit-script") {
             diagnostic << "member cleanup edit script is not ready";
@@ -1683,8 +1687,9 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(
            << " index " << plan.index_expression_text
            << " element " << plan.element_source_type_name
            << " moved " << plan.moved_source_type_name
-           << " member-path " << dotted_path(plan.moved_member_path)
-           << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
+           << " member-path " << dotted_path(plan.moved_member_path);
+    append_source_line(report, plan.source_line);
+    report << " anchor " << (plan.insertion_anchor.empty() ? "missing" : plan.insertion_anchor)
            << " entry " << (plan.entry_block_name.empty() ? "missing" : plan.entry_block_name)
            << " exit " << (plan.exit_block_name.empty() ? "missing" : plan.exit_block_name)
            << " validation " << (plan.validation_ready ? "ready" : "blocked")
@@ -1715,8 +1720,9 @@ auto runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_diagnosti
                    << " index " << plan.index_expression_text
                    << " element " << plan.element_source_type_name
                    << " moved " << plan.moved_source_type_name
-                   << " member-path " << dotted_path(plan.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(plan.moved_member_path);
+        append_source_line(diagnostic, plan.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-edit-script-validation") {
             diagnostic << "member cleanup staged apply is blocked by edit script validation";
@@ -1780,8 +1786,9 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_report(
            << " index " << gate.index_expression_text
            << " element " << gate.element_source_type_name
            << " moved " << gate.moved_source_type_name
-           << " member-path " << dotted_path(gate.moved_member_path)
-           << " anchor " << (gate.insertion_anchor.empty() ? "missing" : gate.insertion_anchor)
+           << " member-path " << dotted_path(gate.moved_member_path);
+    append_source_line(report, gate.source_line);
+    report << " anchor " << (gate.insertion_anchor.empty() ? "missing" : gate.insertion_anchor)
            << " entry " << (gate.entry_block_name.empty() ? "missing" : gate.entry_block_name)
            << " skip " << (gate.skip_block_name.empty() ? "missing" : gate.skip_block_name)
            << " sibling-drop "
@@ -1815,8 +1822,9 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
                    << " index " << gate.index_expression_text
                    << " element " << gate.element_source_type_name
                    << " moved " << gate.moved_source_type_name
-                   << " member-path " << dotted_path(gate.moved_member_path)
-                   << " blocker " << blocker
+                   << " member-path " << dotted_path(gate.moved_member_path);
+        append_source_line(diagnostic, gate.source_line);
+        diagnostic << " blocker " << blocker
                    << " detail ";
         if (blocker == "member-cleanup-cfg-slice") {
             diagnostic << "member cleanup module mutation is blocked by missing CFG slice";

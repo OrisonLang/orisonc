@@ -15051,126 +15051,202 @@ auto main() -> int {
         "preserve missing exit missing cleanup-target missing composition missing slice missing report-only true "
         "production disabled cfg-lines 0"
     );
+    auto const runtime_indexed_cleanup_source_text =
+        "var selected: TaggedInner = Secondary(holder.items[index])";
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[14] ==
-        "runtime-index member cleanup function-rewrite-candidate owner holder.items index index "
-        "element Inner moved Inner member-path none anchor missing entry missing sibling-drop missing "
-        "preserve missing exit missing cleanup-target missing cfg-slice missing anchor-state missing "
-        "branch-rewrite blocked cfg-append blocked "
-        "candidate missing verification blocked report-only true production disabled "
-        "replaced-terminator missing replacement-branch missing appended-cfg-lines 0"
+        with_source_text(
+            "runtime-index member cleanup function-rewrite-candidate owner holder.items index index "
+            "element Inner moved Inner member-path none source-line 46 anchor missing entry missing "
+            "sibling-drop missing preserve missing exit missing cleanup-target missing cfg-slice missing "
+            "anchor-state missing branch-rewrite blocked cfg-append blocked candidate missing "
+            "verification blocked report-only true production disabled replaced-terminator missing "
+            "replacement-branch missing appended-cfg-lines 0",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[15] ==
-        "runtime-index member cleanup function-rewrite-edit-script-plan owner holder.items "
-        "index index element Inner moved Inner member-path none anchor missing entry missing "
-        "sibling-drop missing preserve missing exit missing cleanup-target missing candidate blocked "
-        "branch-replacement missing cleanup-cfg-append missing phi-retarget missing edit-script blocked "
-        "report-only true production disabled "
-        "expected-branch missing replacement-branch missing append-placement missing "
-        "expected-closing missing phi-old missing phi-new missing appended-cfg-lines 0"
+        with_source_text(
+            "runtime-index member cleanup function-rewrite-edit-script-plan owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 anchor missing "
+            "entry missing sibling-drop missing preserve missing exit missing cleanup-target missing "
+            "candidate blocked branch-replacement missing cleanup-cfg-append missing phi-retarget missing "
+            "edit-script blocked report-only true production disabled expected-branch missing "
+            "replacement-branch missing append-placement missing expected-closing missing phi-old missing "
+            "phi-new missing appended-cfg-lines 0",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[16] ==
-        "runtime-index member cleanup function-rewrite-edit-script-validation owner holder.items "
-        "index index element Inner moved Inner member-path none anchor missing entry missing "
-        "exit missing edit-script blocked branch-replacement invalid cleanup-cfg-append invalid "
-        "phi-retarget invalid validation blocked report-only true production disabled blockers 5 "
-        "blocker member-cleanup-edit-script blocker member-cleanup-branch-replacement "
-        "blocker member-cleanup-cfg-append blocker member-cleanup-phi-retarget "
-        "blocker production-member-cleanup-module-mutation"
+        with_source_text(
+            "runtime-index member cleanup function-rewrite-edit-script-validation owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 anchor missing "
+            "entry missing exit missing edit-script blocked branch-replacement invalid "
+            "cleanup-cfg-append invalid phi-retarget invalid validation blocked report-only true "
+            "production disabled blockers 5 blocker member-cleanup-edit-script "
+            "blocker member-cleanup-branch-replacement blocker member-cleanup-cfg-append "
+            "blocker member-cleanup-phi-retarget blocker production-member-cleanup-module-mutation",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[17] ==
-        "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-edit-script "
-        "detail member cleanup edit script is not ready"
+        with_source_text(
+            "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-edit-script detail member cleanup edit script is not ready",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[18] ==
-        "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-branch-replacement "
-        "detail member cleanup branch replacement is invalid"
+        with_source_text(
+            "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-branch-replacement detail member cleanup branch replacement is invalid",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[19] ==
-        "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-cfg-append "
-        "detail member cleanup CFG append is invalid"
+        with_source_text(
+            "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-cfg-append detail member cleanup CFG append is invalid",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[20] ==
-        "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-phi-retarget "
-        "detail member cleanup PHI retarget is invalid"
+        with_source_text(
+            "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-phi-retarget detail member cleanup PHI retarget is invalid",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[21] ==
-        "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker production-member-cleanup-module-mutation "
-        "detail member cleanup edit script is validated but production module mutation is disabled"
+        with_source_text(
+            "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker production-member-cleanup-module-mutation "
+            "detail member cleanup edit script is validated but production module mutation is disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[22] ==
-        "runtime-index member cleanup function-rewrite-staged-apply-plan owner holder.items "
-        "index index element Inner moved Inner member-path none anchor missing entry missing "
-        "exit missing validation blocked branch-replacement blocked cleanup-cfg-append blocked "
-        "phi-retarget blocked staged-apply blocked branch-applied false cfg-appended false "
-        "phi-applied false report-only true production disabled blockers 2 "
-        "blocker member-cleanup-edit-script-validation "
-        "blocker production-member-cleanup-module-mutation"
+        with_source_text(
+            "runtime-index member cleanup function-rewrite-staged-apply-plan owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 anchor missing "
+            "entry missing exit missing validation blocked branch-replacement blocked cleanup-cfg-append blocked "
+            "phi-retarget blocked staged-apply blocked branch-applied false cfg-appended false "
+            "phi-applied false report-only true production disabled blockers 2 "
+            "blocker member-cleanup-edit-script-validation "
+            "blocker production-member-cleanup-module-mutation",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[23] ==
-        "runtime-index member cleanup staged-apply diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-edit-script-validation "
-        "detail member cleanup staged apply is blocked by edit script validation"
+        with_source_text(
+            "runtime-index member cleanup staged-apply diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-edit-script-validation "
+            "detail member cleanup staged apply is blocked by edit script validation",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[24] ==
-        "runtime-index member cleanup staged-apply diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker production-member-cleanup-module-mutation "
-        "detail member cleanup staged plan is ready but production module mutation is disabled"
+        with_source_text(
+            "runtime-index member cleanup staged-apply diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker production-member-cleanup-module-mutation "
+            "detail member cleanup staged plan is ready but production module mutation is disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[25] ==
-        "runtime-index member cleanup module-mutation-gate owner holder.items index index element Inner "
-        "moved Inner member-path none anchor missing entry missing skip missing sibling-drop missing "
-        "preserve missing exit missing cfg-slice missing edit-script-validation missing staged-apply missing "
-        "module-mutation disabled production-member-cleanup disabled prerequisites missing "
-        "production disabled blockers 5 blocker member-cleanup-cfg-slice "
-        "blocker member-cleanup-edit-script-validation blocker member-cleanup-staged-apply "
-        "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+        with_source_text(
+            "runtime-index member cleanup module-mutation-gate owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "sibling-drop missing preserve missing exit missing cfg-slice missing edit-script-validation missing "
+            "staged-apply missing module-mutation disabled production-member-cleanup disabled "
+            "prerequisites missing production disabled blockers 5 blocker member-cleanup-cfg-slice "
+            "blocker member-cleanup-edit-script-validation blocker member-cleanup-staged-apply "
+            "blocker member-cleanup-module-mutation blocker production-member-cleanup",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[26] ==
-        "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-cfg-slice "
-        "detail member cleanup module mutation is blocked by missing CFG slice"
+        with_source_text(
+            "runtime-index member cleanup module-mutation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-cfg-slice "
+            "detail member cleanup module mutation is blocked by missing CFG slice",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[27] ==
-        "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-edit-script-validation "
-        "detail member cleanup module mutation is blocked by edit script validation"
+        with_source_text(
+            "runtime-index member cleanup module-mutation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-edit-script-validation "
+            "detail member cleanup module mutation is blocked by edit script validation",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[28] ==
-        "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-staged-apply "
-        "detail member cleanup module mutation is blocked by staged apply readiness"
+        with_source_text(
+            "runtime-index member cleanup module-mutation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-staged-apply "
+            "detail member cleanup module mutation is blocked by staged apply readiness",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[29] ==
-        "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker member-cleanup-module-mutation "
-        "detail member cleanup module mutation is disabled"
+        with_source_text(
+            "runtime-index member cleanup module-mutation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker member-cleanup-module-mutation detail member cleanup module mutation is disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[30] ==
-        "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-        "index index element Inner moved Inner member-path none blocker production-member-cleanup "
-        "detail production member cleanup is disabled"
+        with_source_text(
+            "runtime-index member cleanup module-mutation diagnostic owner holder.items "
+            "index index element Inner moved Inner member-path none source-line 46 "
+            "blocker production-member-cleanup detail production member cleanup is disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[31] ==
@@ -15185,8 +15261,6 @@ auto main() -> int {
             "var selected: TaggedInner = Secondary(holder.items[index])"
         )
     );
-    auto const runtime_indexed_cleanup_source_text =
-        "var selected: TaggedInner = Secondary(holder.items[index])";
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[32] ==
         with_source_text(
