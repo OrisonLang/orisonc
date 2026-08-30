@@ -2451,6 +2451,8 @@ representation.
 - Runtime-index member-cleanup production coverage now includes a source-backed `DynamicArray<Box>` transfer whose
   computed index comes from a final `if` helper, pinned across ordinary `run`, `--emit-llvm`, object/link/run,
   `--emit-object`, and `--build`.
+- Runtime-index member-cleanup production coverage now also includes a source-backed `DynamicArray<Box>` transfer whose
+  computed index comes from a final `switch` helper, pinned across the same ordinary user-facing paths.
 
 ## Follow-up work
 
@@ -2462,5 +2464,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Broaden promoted runtime-index member-cleanup coverage to a switch-derived computed index or an approved choice
-  payload binding shape, staying within the current grammar.
+- Broaden promoted runtime-index member-cleanup coverage to an approved choice payload binding shape, staying within
+  the current grammar.

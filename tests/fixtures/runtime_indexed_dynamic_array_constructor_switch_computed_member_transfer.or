@@ -1,0 +1,38 @@
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer
+
+record Inner
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Inner
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Box
+    item: Inner
+
+implements Drop for Box
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Outer
+    item: Inner
+
+implements Drop for Outer
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var items: DynamicArray<Box> = DynamicArray()
+    items.push(Box(Inner(7 as UInt32)))
+    items.push(Box(Inner(11 as UInt32)))
+    var outer: Outer = Outer(items[choose_index(1 as UInt32)].item)
+    0 as UInt32
+
+function choose_index(selector: UInt32) -> UInt64
+    switch selector
+        0 as UInt32 => 0 as UInt64
+        1 as UInt32 => 1 as UInt64
+        default => 0 as UInt64

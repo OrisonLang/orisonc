@@ -3026,3 +3026,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-29: Runtime-index member-cleanup production coverage now includes a source-backed `DynamicArray<Box>`
   transfer whose computed index comes from a final `if` helper. Ordinary `run`, `--emit-llvm`, object/link/run,
   `--emit-object`, and `--build` paths all cover the branch-derived index.
+- 2026-08-29: Runtime-index member-cleanup production coverage now also includes a source-backed `DynamicArray<Box>`
+  transfer whose computed index comes from a final `switch` helper, pinned across the same ordinary user-facing paths.

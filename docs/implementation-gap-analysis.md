@@ -56,8 +56,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   diagnostic member-cleanup run assertions now check only typed summary identity and helper metadata, and internal
   helper names use summary wording. Production-readiness output now reports promoted member cleanup as ready in the
   top-level proof/production fields and hides superseded old keyed production blocker and whole-element detail lines.
-  Source-backed branch-derived computed indexes are now covered by ordinary production `run`, `--emit-llvm`,
-  object/link/run, `--emit-object`, and `--build` paths.
+  Source-backed branch-derived and switch-derived computed indexes are now covered by ordinary production `run`,
+  `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -71,5 +71,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Broaden promoted runtime-index member-cleanup coverage to a switch-derived computed index or an approved choice
-  payload binding shape, staying within the current grammar.
+- Broaden promoted runtime-index member-cleanup coverage to an approved choice payload binding shape, staying within
+  the current grammar.
