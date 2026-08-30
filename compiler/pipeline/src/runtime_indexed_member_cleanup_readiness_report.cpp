@@ -61,6 +61,16 @@ auto runtime_indexed_member_cleanup_mutation_line(std::string const& line) -> bo
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_production_blocker_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup production blocker"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_should_include_source_text(std::string const& line) -> bool {
+    return runtime_indexed_member_cleanup_mutation_line(line) ||
+        runtime_indexed_member_cleanup_production_blocker_line(line);
+}
+
 auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
     auto constexpr token = std::string_view {" source-line "};
     auto const token_start = line.find(token);
@@ -81,11 +91,12 @@ auto source_line_token_value(std::string const& line) -> std::optional<std::pair
     return std::pair {line_number, digits_end};
 }
 
-auto enrich_runtime_indexed_member_cleanup_mutation_line(
+auto enrich_runtime_indexed_member_cleanup_source_text_line(
     std::string line,
     std::string const& source_text
 ) -> std::string {
-    if (!runtime_indexed_member_cleanup_mutation_line(line) || line.find(" source-text ") != std::string::npos) {
+    if (!runtime_indexed_member_cleanup_should_include_source_text(line) ||
+        line.find(" source-text ") != std::string::npos) {
         return line;
     }
 
@@ -103,7 +114,7 @@ auto enrich_runtime_indexed_member_cleanup_mutation_line(
     return line;
 }
 
-auto enrich_runtime_indexed_member_cleanup_mutation_lines(
+auto enrich_runtime_indexed_member_cleanup_source_text_lines(
     std::vector<std::string> lines,
     CompilePipelineResult const& result
 ) -> std::vector<std::string> {
@@ -112,7 +123,7 @@ auto enrich_runtime_indexed_member_cleanup_mutation_lines(
         return lines;
     }
     for (auto& line : lines) {
-        line = enrich_runtime_indexed_member_cleanup_mutation_line(std::move(line), source_text);
+        line = enrich_runtime_indexed_member_cleanup_source_text_line(std::move(line), source_text);
     }
     return lines;
 }
@@ -596,7 +607,7 @@ auto runtime_indexed_member_cleanup_readiness_report_lines(
     auto lines = std::vector<std::string> {};
     if (result.runtime_indexed_member_cleanup_typed_promotion_gates.empty()) {
         append_ungated_member_cleanup_lines(lines, result);
-        return enrich_runtime_indexed_member_cleanup_mutation_lines(std::move(lines), result);
+        return enrich_runtime_indexed_member_cleanup_source_text_lines(std::move(lines), result);
     }
 
     for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
@@ -606,7 +617,7 @@ auto runtime_indexed_member_cleanup_readiness_report_lines(
             runtime_indexed_member_cleanup_match_key(gate)
         );
     }
-    return enrich_runtime_indexed_member_cleanup_mutation_lines(std::move(lines), result);
+    return enrich_runtime_indexed_member_cleanup_source_text_lines(std::move(lines), result);
 }
 
 }  // namespace orison::pipeline

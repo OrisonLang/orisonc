@@ -3050,3 +3050,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   obligations from the CLI error text.
 - 2026-08-30: Runtime-index member-cleanup production blocker diagnostics now include source-line metadata when the
   originating constructor move is known, aligning cleanup-proof blocker output with later mutation-stage diagnostics.
+- 2026-08-30: Runtime-index member-cleanup production blocker diagnostics now include trimmed source text when
+  source-line metadata is available, matching the mutation-stage diagnostic correlation path.

@@ -15181,35 +15181,57 @@ auto main() -> int {
         "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
         "blocker member-cleanup-module-mutation blocker production-member-cleanup"
     );
+    auto const runtime_indexed_cleanup_source_text =
+        "var selected: TaggedInner = Secondary(holder.items[index])";
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[32] ==
-        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none source-line 46 blocker member-cleanup-proof "
-        "detail member cleanup proof is missing"
+        with_source_text(
+            "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 blocker member-cleanup-proof "
+            "detail member cleanup proof is missing",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[33] ==
-        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none source-line 46 blocker member-drop-metadata "
-        "detail member Drop metadata is missing"
+        with_source_text(
+            "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 blocker member-drop-metadata "
+            "detail member Drop metadata is missing",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[34] ==
-        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none source-line 46 blocker member-cleanup-cfg-slice "
-        "detail member cleanup CFG slice is missing"
+        with_source_text(
+            "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 blocker member-cleanup-cfg-slice "
+            "detail member cleanup CFG slice is missing",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[35] ==
-        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none source-line 46 blocker member-cleanup-module-mutation "
-        "detail member cleanup module mutation is disabled"
+        with_source_text(
+            "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 blocker member-cleanup-module-mutation "
+            "detail member cleanup module mutation is disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[36] ==
-        "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-        "moved Inner member-path none source-line 46 blocker production-member-cleanup "
-        "detail production member cleanup is disabled"
+        with_source_text(
+            "runtime-index member cleanup production blocker owner holder.items index index element Inner "
+            "moved Inner member-path none source-line 46 blocker production-member-cleanup "
+            "detail production member cleanup is disabled",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[37] ==
@@ -15235,8 +15257,6 @@ auto main() -> int {
         "blocker member-cleanup-promotion-checklist blocker member-cleanup-ir-mutation "
         "blocker production-member-cleanup-ir-mutation"
     );
-    auto const runtime_indexed_cleanup_source_text =
-        "var selected: TaggedInner = Secondary(holder.items[index])";
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[39] ==
         with_source_text(

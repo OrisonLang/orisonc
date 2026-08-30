@@ -79,6 +79,16 @@ auto runtime_indexed_member_cleanup_mutation_line(std::string const& line) -> bo
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_production_blocker_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup production blocker"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_should_include_source_text(std::string const& line) -> bool {
+    return runtime_indexed_member_cleanup_mutation_line(line) ||
+        runtime_indexed_member_cleanup_production_blocker_line(line);
+}
+
 auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
     auto constexpr token = std::string_view {" source-line "};
     auto const token_start = line.find(token);
@@ -99,11 +109,12 @@ auto source_line_token_value(std::string const& line) -> std::optional<std::pair
     return std::pair {line_number, digits_end};
 }
 
-auto enrich_runtime_indexed_member_cleanup_mutation_audit_line(
+auto enrich_runtime_indexed_member_cleanup_source_text_audit_line(
     std::string line,
     std::string const& source_text
 ) -> std::string {
-    if (!runtime_indexed_member_cleanup_mutation_line(line) || line.find(" source-text ") != std::string::npos) {
+    if (!runtime_indexed_member_cleanup_should_include_source_text(line) ||
+        line.find(" source-text ") != std::string::npos) {
         return line;
     }
 
@@ -121,7 +132,7 @@ auto enrich_runtime_indexed_member_cleanup_mutation_audit_line(
     return line;
 }
 
-auto enrich_runtime_indexed_member_cleanup_mutation_audit_lines(
+auto enrich_runtime_indexed_member_cleanup_source_text_audit_lines(
     std::vector<std::string> lines,
     std::string const& source_text
 ) -> std::vector<std::string> {
@@ -129,7 +140,7 @@ auto enrich_runtime_indexed_member_cleanup_mutation_audit_lines(
         return lines;
     }
     for (auto& line : lines) {
-        line = enrich_runtime_indexed_member_cleanup_mutation_audit_line(std::move(line), source_text);
+        line = enrich_runtime_indexed_member_cleanup_source_text_audit_line(std::move(line), source_text);
     }
     return lines;
 }
@@ -3934,7 +3945,7 @@ void populate_lowering_emission_reports(
             result.source_file ? result.source_file->content() : std::string {}
         );
     result.runtime_indexed_cleanup_audit_lines =
-        enrich_runtime_indexed_member_cleanup_mutation_audit_lines(
+        enrich_runtime_indexed_member_cleanup_source_text_audit_lines(
             std::move(emission.runtime_indexed_cleanup_audit_lines),
             result.source_file ? result.source_file->content() : std::string {}
         );

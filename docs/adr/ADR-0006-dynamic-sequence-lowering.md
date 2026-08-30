@@ -2472,6 +2472,8 @@ representation.
   runtime-index cleanup setup failures identify the missing obligation without relying on fixture names.
 - Runtime-index member-cleanup production blocker diagnostics now include source-line metadata when the originating
   constructor move is known.
+- Runtime-index member-cleanup production blocker diagnostics now include trimmed source text when source-line metadata
+  is available.
 
 ## Follow-up work
 
@@ -2483,5 +2485,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Attach trimmed source text to runtime-index member-cleanup production blocker diagnostics where source-line metadata
-  is already available.
+- Add source-text correlation to runtime-index member-cleanup promotion blocker diagnostics where source-line metadata
+  is available or can be carried from matched readiness records.
