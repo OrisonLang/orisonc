@@ -1,6 +1,6 @@
 # Implementation Gap Analysis
 
-Date: 2026-08-27
+Date: 2026-08-29
 
 This note is an implementation snapshot. It does not define language syntax or semantics.
 
@@ -41,7 +41,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   now unwraps source-proven descriptor-forwarding helper calls for returned descriptor iteration, and returned
   descriptors moved through local alias chains are covered by the same computed final-use cleanup path. Returned
   choices carrying DynamicArray payloads now bind caller-side switch payloads into that same cleanup path and reject
-  later payload reuse after final-use cleanup.
+  later payload reuse after final-use cleanup. The returned/computed cleanup matrix is now pinned for direct returns,
+  branch and switch joins, aggregate and nested aggregate fields, source-proven helper forwarding, local alias chains,
+  returned choice payloads, missing-Drop boundaries, owner mismatch boundaries, and post-cleanup reuse diagnostics.
   Multi-candidate runtime-index cleanup fixtures now share the same production-default audit/module-rewrite helper.
   Single-candidate module-mutation and module-rewrite checks now use named option helpers. Runtime-index emission,
   insertion, mutation, Drop-surface, source-drop audit-only, and rewrite-execution-only staged checks now use named
@@ -58,5 +60,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Continue production `DynamicArray<T>` lowering by replacing fixture-only gates with semantic ownership/drop proofs for
-  the next unsupported owned-element shape.
+- Promote one runtime-index member-granular cleanup path from report-only readiness to guarded production emission,
+  starting with a single moved owned record member and explicit sibling cleanup proof.
