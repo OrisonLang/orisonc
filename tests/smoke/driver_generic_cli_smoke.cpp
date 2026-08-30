@@ -557,6 +557,25 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
     assert(WEXITSTATUS(status) == 0);
 }
 
+void assert_cli_emit_llvm_fixture_links_and_runs(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto object = orison::lowering::LlvmObjectEmitter {}.emit(output);
+    assert(!object.has_errors());
+
+    auto link = orison::link::HostLinker {}.link(object.object_bytes, output_path, std::vector<std::string> {});
+    assert(!link.has_errors());
+    assert(std::filesystem::file_size(output_path) > 0);
+
+    auto status = std::system(output_path.string().c_str());
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == 0);
+}
+
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3841,6 +3860,21 @@ auto main() -> int {
     assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
+    );
+    assert_cli_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_nested_member"
+    );
+    assert_cli_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_two_owner"
+    );
+    assert_cli_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner"
     );
     assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
         executable,

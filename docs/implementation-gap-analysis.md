@@ -16,7 +16,8 @@ This note is an implementation snapshot. It does not define language syntax or s
 - Runtime-index member cleanup has extensive proof, reporting, mutation-gate, and smoke coverage, including selected
   production-path promotion. Ordinary production `--emit-llvm` smoke coverage now pins generated member-cleanup helpers,
   sibling cleanup calls, descriptor deallocation, and clean diagnostics for source-backed nested-member and two-owner
-  fixtures.
+  fixtures. Ordinary production object/link/run coverage now also covers source-backed nested-member, two-owner, and
+  two nested-owner member-cleanup fixtures.
 - Name hygiene has a reusable lowering symbol registry for source functions, foreign declarations, generated helpers,
   runtime prelude declarations, Drop symbols, and record type identifiers.
 
@@ -50,8 +51,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   Single-candidate module-mutation and module-rewrite checks now use named option helpers. Runtime-index emission,
   insertion, mutation, Drop-surface, source-drop audit-only, and rewrite-execution-only staged checks now use named
   option helpers. Production `--emit-llvm` coverage now directly asserts the promoted member-cleanup IR shape for
-  source-backed nested-member and two-owner fixtures. The remaining runtime-index option-literal audit found no
-  additional helper cleanup that would improve staged-gate clarity.
+  source-backed nested-member and two-owner fixtures, and production object/link/run coverage now covers the
+  source-backed nested-member, two-owner, and two nested-owner fixtures. The remaining runtime-index option-literal
+  audit found no additional helper cleanup that would improve staged-gate clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
 - Host linking is functional for the current POSIX path; cross-target, cross-platform, and configurable toolchain
@@ -64,4 +66,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 ## Suggested Next Step
 
 - Reduce dependence on `--test-only-runtime-indexed-member-cleanup-run` by keeping execution-summary checks there and
-  moving production behavior checks to ordinary `run`, `--emit-llvm`, object, and host-link paths.
+  keeping production behavior checks on ordinary `run`, `--emit-llvm`, object, and host-link paths.
