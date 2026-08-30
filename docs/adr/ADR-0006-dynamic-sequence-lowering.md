@@ -2433,6 +2433,9 @@ representation.
   status.
 - Runtime-index member-cleanup mutation-stage audit and readiness reports now add trimmed source-text snippets in the
   pipeline layer, keeping source buffers out of lowering.
+- Ordinary production `--emit-llvm` smoke coverage now pins runtime-index member cleanup for the source-backed
+  nested-member and two-owner fixtures. The production path emits member-cleanup helpers, sibling cleanup calls, and
+  descriptor deallocation without blocked member-cleanup diagnostics.
 
 ## Follow-up work
 
@@ -2441,5 +2444,5 @@ representation.
 - Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
-- Continue production `DynamicArray<T>` lowering work by replacing fixture-only gates with semantic ownership/drop
-  proofs for the next unsupported owned-element shape.
+- Reduce dependence on the diagnostic runtime-index member-cleanup run seam by keeping execution-summary checks there
+  and moving production behavior checks to ordinary `run`, `--emit-llvm`, object, and host-link paths.

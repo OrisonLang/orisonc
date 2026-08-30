@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-29: Ordinary production `--emit-llvm` smoke coverage now pins runtime-index member cleanup for the
+  source-backed nested-member and two-owner fixtures. The checks assert generated member-cleanup helpers, sibling
+  cleanup calls, descriptor deallocation, and absence of blocked member-cleanup diagnostics outside the diagnostic run
+  seam.
 - 2026-08-29: Production pipeline defaults now explicitly enable DynamicArray descriptor cleanup planning, so the
   production option builder no longer depends on fixture-named cleanup derivation for descriptor cleanup proof.
 - 2026-08-29: Abstract generic `DynamicArray<T>` descriptor summaries now stay as readiness metadata when cleanup

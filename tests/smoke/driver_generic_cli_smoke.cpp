@@ -861,6 +861,57 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
     assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_member_cleanup_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_drop.Head(ptr %Wrap.member_cleanup.head.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_drop.Tail(ptr %Wrap.member_cleanup.tail.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %items.member_cleanup.moved.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 20, "
+        "i64 %items.member_cleanup.cleanup.capacity)"
+    ) != std::string::npos);
+    assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
+}
+
+void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "define void @__orison_member_cleanup.Box.except.item(ptr %value)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_member_cleanup.Box.except.item(ptr %left_items.member_cleanup.moved.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_member_cleanup.Box.except.item(ptr %right_items.member_cleanup.moved.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %left_items.member_cleanup.cleanup.data, i64 4, "
+        "i64 %left_items.member_cleanup.cleanup.capacity)"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %right_items.member_cleanup.cleanup.data, i64 4, "
+        "i64 %right_items.member_cleanup.cleanup.capacity)"
+    ) != std::string::npos);
+    assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -3780,6 +3831,14 @@ auto main() -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
     );
     assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
+    );
+    assert_cli_runtime_indexed_member_cleanup_emit_llvm_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
+    );
+    assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or"
     );
