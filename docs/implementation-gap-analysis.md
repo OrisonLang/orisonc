@@ -71,10 +71,11 @@ This note is an implementation snapshot. It does not define language syntax or s
   selection remain open.
 - Diagnostics are useful. Runtime-index splice-conflict blockers now include the conflicting source lines,
   production-readiness blocker reports now include the primary source line text, and member-cleanup mutation-stage
-  audit/readiness reports now include source-line plus source-text metadata. Other lowering and cleanup failures still
-  need richer source-span correlation.
+  audit/readiness reports now include source-line plus source-text metadata. Final switch/if ownership reuse failures
+  now report direct `use after move` diagnostics while retaining precise runtime-index owner paths. Other lowering and
+  cleanup failures still need richer source-span correlation.
 
 ## Suggested Next Step
 
-- Add the next source-oriented diagnostic improvement for runtime-index member cleanup failures, starting with shorter
-  post-transfer reuse messages that retain the precise owner/index path.
+- Add the next source-oriented diagnostic improvement for runtime-index member cleanup failures, focusing on richer
+  source-span correlation for cleanup proof and Drop authorization failures.

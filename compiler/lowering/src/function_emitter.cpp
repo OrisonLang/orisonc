@@ -2252,6 +2252,10 @@ void emit_function_body(
 
     if (attempted_final_control_flow && !lowered_final_statement.has_value()) {
         if (diagnostics.entries().size() == final_control_flow_diagnostic_count) {
+            if (failures.expression.reason == ExpressionLoweringFailureReason::use_after_move) {
+                diagnostics.error(final_statement_line, expression_lowering_failure_detail(failures.expression));
+                return;
+            }
             diagnostics.error(
                 final_statement_line,
                 append_control_flow_lowering_failure(

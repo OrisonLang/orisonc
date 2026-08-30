@@ -2466,6 +2466,8 @@ representation.
   the rewrite stage, and stored choice-payload cleanup suppresses matching promoted runtime-index owner paths.
 - The nested choice-payload aggregate-owner runtime-index member-cleanup shape now has negative coverage for
   post-transfer member reuse and missing owned-element Drop authorization.
+- Final switch/if ownership reuse failures now render the direct `use after move` diagnostic instead of wrapping it in
+  final-control-flow lowering context. Runtime-index member-cleanup reuse diagnostics retain precise owner/index paths.
 
 ## Follow-up work
 
@@ -2477,5 +2479,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Improve runtime-index member-cleanup diagnostics so rejected reuse reports stay short while retaining precise
-  owner/index path identity.
+- Improve runtime-index member-cleanup diagnostics with richer source-span correlation for cleanup proof and Drop
+  authorization failures.

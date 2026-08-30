@@ -3042,3 +3042,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths cover the fixture.
 - 2026-08-30: The nested choice-payload aggregate-owner runtime-index member-cleanup shape now has negative smoke
   coverage for post-transfer member reuse and missing owned-element Drop authorization.
+- 2026-08-30: Final switch/if ownership reuse failures now surface the direct `use after move` diagnostic instead of
+  wrapping the message in final-control-flow lowering context. The diagnostic still preserves the precise owner/index
+  path for runtime-index member cleanup.

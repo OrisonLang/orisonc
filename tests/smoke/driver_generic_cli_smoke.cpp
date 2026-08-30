@@ -122,6 +122,18 @@ void assert_cli_emit_llvm_existing_fixture_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+void assert_cli_emit_llvm_existing_fixture_short_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+    assert(output.find("lowering does not yet support this final control-flow statement") == std::string::npos);
+    assert(output.find("switch case lowering failed") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4238,12 +4250,12 @@ auto main() -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_short_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
         "use after move: items[(index + zero)]"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_short_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
         "use after move: holder.items[(index + zero)]"
