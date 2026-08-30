@@ -68,7 +68,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   helper-call, named chained helper-call, and branch-consumer scratch cleanup owned-result fixtures now run through the
   same generic CLI production matrix. Branch-consumer direct, chained, alias, nested-alias, asymmetric-alias,
   helper-alias, local-chain, three-local-helper, distinct-local-name, and mixed-direct cleanup fixtures now run through
-  that same production matrix.
+  that same production matrix. Returned aggregate-field stored choice-payload forwarding, branch-forwarding,
+  nested-field, distinct nested-field, and multi-hop returned forwarding fixtures now run through that same production
+  matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -90,5 +92,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to returned aggregate-field stored choice-payload and multi-hop forwarding
-  `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to owned-result nested-ternary wrapper and final-consumer `DynamicArray`
+  cleanup fixtures.

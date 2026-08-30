@@ -2500,6 +2500,9 @@ representation.
 - Owned-result branch-consumer direct, chained, alias, nested-alias, asymmetric-alias, helper-alias, local-chain,
   three-local-helper, distinct-local-name, and mixed-direct cleanup fixtures now have the same generic CLI production
   coverage matrix.
+- Returned aggregate-field stored choice-payload forwarding, branch-forwarding, nested-field, distinct nested-field,
+  and multi-hop returned forwarding `DynamicArray` fixtures now have generic CLI production coverage across ordinary
+  `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
 
 ## Follow-up work
 
@@ -2511,5 +2514,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Extend generic CLI production coverage to returned aggregate-field stored choice-payload and multi-hop forwarding
-  `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to owned-result nested-ternary wrapper and final-consumer `DynamicArray`
+  cleanup fixtures.

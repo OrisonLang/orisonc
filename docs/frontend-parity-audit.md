@@ -3079,3 +3079,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Owned-result branch-consumer direct, chained, alias, nested-alias, asymmetric-alias, helper-alias,
   local-chain, three-local-helper, distinct-local-name, and mixed-direct cleanup fixtures now have the same generic CLI
   production coverage matrix.
+- 2026-08-30: Returned aggregate-field stored choice-payload forwarding, branch-forwarding, nested-field,
+  distinct nested-field, and multi-hop returned forwarding `DynamicArray` fixtures now have generic CLI production
+  coverage across ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.

@@ -4179,6 +4179,41 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_chained_cleanup_run.or",
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_chained_cleanup"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_multi_hop_forwarding_run.or",
+        smoke_temp_root / "dynamic_array_returned_multi_hop_forwarding"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or"
