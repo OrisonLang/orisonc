@@ -9,6 +9,8 @@
   run command remains only for typed promotion and execution-summary audit coverage.
 - 2026-08-29: Ordinary production `--emit-object` and `--build` smoke coverage now covers the same source-backed
   runtime-index member-cleanup fixtures, including nested-member, two-owner, and two nested-owner cleanup paths.
+- 2026-08-29: Diagnostic member-cleanup run assertions now check only typed promotion summary identity, execution
+  summary identity, helper target, and sibling-binding counts. Production behavior stays pinned on ordinary CLI paths.
 - 2026-08-29: Production pipeline defaults now explicitly enable DynamicArray descriptor cleanup planning, so the
   production option builder no longer depends on fixture-named cleanup derivation for descriptor cleanup proof.
 - 2026-08-29: Abstract generic `DynamicArray<T>` descriptor summaries now stay as readiness metadata when cleanup

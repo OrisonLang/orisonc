@@ -53,6 +53,7 @@ This note is an implementation snapshot. It does not define language syntax or s
   option helpers. Production `--emit-llvm` coverage now directly asserts the promoted member-cleanup IR shape for
   source-backed nested-member and two-owner fixtures, and production object/link/run, `--emit-object`, and `--build`
   coverage now covers the source-backed nested-member, two-owner, and two nested-owner fixtures. The remaining
+  diagnostic member-cleanup run assertions now check only typed summary identity and helper metadata. The remaining
   runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
   ABI generation are still future work.
@@ -67,4 +68,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 - Reduce dependence on `--test-only-runtime-indexed-member-cleanup-run` by keeping execution-summary checks there and
   keeping production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and
-  host-link paths.
+  host-link paths. Continue shrinking that diagnostic seam to compact typed summary coverage.

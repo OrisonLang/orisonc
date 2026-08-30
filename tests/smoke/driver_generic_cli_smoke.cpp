@@ -983,17 +983,14 @@ void assert_cli_test_only_runtime_indexed_member_cleanup_run_fixture_success(
     auto output = read_command_output(command);
     assert(output.find(
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item checklist ready ir-mutation-requested true "
-        "production-gate-requested true ir-mutation enabled production-gate enabled "
-        "gate ready report-only false production enabled blockers 0"
+        "element Wrap moved Inner member-path box.item checklist ready"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item typed-gate ready apply authorized "
-        "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
-        "rewrite-promotion ready helper-bindings 1 helper-target "
-        "__orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4 "
-        "helper-definition ready production enabled"
+        "element Wrap moved Inner member-path box.item typed-gate ready"
+    ) != std::string::npos);
+    assert(output.find(
+        "helper-target __orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4"
     ) != std::string::npos);
 }
 
@@ -1008,17 +1005,14 @@ void assert_cli_test_only_runtime_indexed_two_member_cleanup_run_fixture_success
         auto const index = std::string {index_expression};
         assert(output.find(
             "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item checklist ready ir-mutation-requested true "
-            "production-gate-requested true ir-mutation enabled production-gate enabled "
-            "gate ready report-only false production enabled blockers 0"
+            "element Box moved Inner member-path item checklist ready"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "
-            "element Box moved Inner member-path item typed-gate ready apply authorized "
-            "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
-            "rewrite-promotion ready helper-bindings 1 helper-target "
-            "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
-            "helper-definition ready production enabled"
+            "element Box moved Inner member-path item typed-gate ready"
+        ) != std::string::npos);
+        assert(output.find(
+            "helper-target __orison_member_cleanup.Box.except.item helper-sibling-bindings 0"
         ) != std::string::npos);
     };
     assert_owner_lines("left_items", "(left_index + left_zero)");
@@ -1036,17 +1030,14 @@ void assert_cli_test_only_runtime_indexed_two_nested_member_cleanup_run_fixture_
         auto const index = std::string {index_expression};
         assert(output.find(
             "runtime-index member cleanup typed-promotion-gate owner " + owner + " index " + index + " "
-            "element Wrap moved Inner member-path box.item checklist ready ir-mutation-requested true "
-            "production-gate-requested true ir-mutation enabled production-gate enabled "
-            "gate ready report-only false production enabled blockers 0"
+            "element Wrap moved Inner member-path box.item checklist ready"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup execution-summary owner " + owner + " index " + index + " "
-            "element Wrap moved Inner member-path box.item typed-gate ready apply authorized "
-            "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
-            "rewrite-promotion ready helper-bindings 1 helper-target "
-            "__orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4 "
-            "helper-definition ready production enabled"
+            "element Wrap moved Inner member-path box.item typed-gate ready"
+        ) != std::string::npos);
+        assert(output.find(
+            "helper-target __orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4"
         ) != std::string::npos);
     };
     assert_owner_lines("left_items", "(left_index + left_zero)");

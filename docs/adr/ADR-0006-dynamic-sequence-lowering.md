@@ -2441,6 +2441,8 @@ representation.
   command remains only for typed promotion and execution-summary audit coverage.
 - Ordinary production `--emit-object` and `--build` smoke coverage now covers those same member-cleanup fixtures through
   the user-facing artifact commands.
+- Diagnostic member-cleanup run assertions now check only typed promotion summary identity, execution summary identity,
+  helper target, and sibling-binding counts. Production behavior remains covered by ordinary CLI paths.
 
 ## Follow-up work
 
@@ -2450,5 +2452,5 @@ representation.
   nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
   owned iterables are proven.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
-  paths. Use the diagnostic runtime-index member-cleanup run seam only for typed promotion and execution-summary audit
-  coverage.
+  paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
+  audit coverage.
