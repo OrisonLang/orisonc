@@ -4263,12 +4263,12 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Box"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Wrap"
     );
     assert_cli_emit_llvm_fixture_links_and_runs(
         executable,

@@ -2468,6 +2468,8 @@ representation.
   post-transfer member reuse and missing owned-element Drop authorization.
 - Final switch/if ownership reuse failures now render the direct `use after move` diagnostic instead of wrapping it in
   final-control-flow lowering context. Runtime-index member-cleanup reuse diagnostics retain precise owner/index paths.
+- DynamicArray owned-element push Drop-authorization diagnostics now include the source owner and element type, so
+  runtime-index cleanup setup failures identify the missing obligation without relying on fixture names.
 
 ## Follow-up work
 
@@ -2479,5 +2481,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Improve runtime-index member-cleanup diagnostics with richer source-span correlation for cleanup proof and Drop
-  authorization failures.
+- Improve runtime-index member-cleanup diagnostics for cleanup proof blockers that still lack compact
+  owner/index/member context.

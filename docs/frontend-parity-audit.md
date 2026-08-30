@@ -3045,3 +3045,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Final switch/if ownership reuse failures now surface the direct `use after move` diagnostic instead of
   wrapping the message in final-control-flow lowering context. The diagnostic still preserves the precise owner/index
   path for runtime-index member cleanup.
+- 2026-08-30: DynamicArray owned-element push Drop-authorization diagnostics now include the source owner and element
+  type, so runtime-index cleanup fixtures can distinguish `items`/`holder.items` setup paths and `Box`/`Wrap`
+  obligations from the CLI error text.

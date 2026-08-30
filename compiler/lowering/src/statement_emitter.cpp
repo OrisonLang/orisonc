@@ -2084,7 +2084,8 @@ auto lower_dynamic_array_push_statement(
         !has_authorized_dynamic_array_element_drop_type(*element_source_type, context)) {
         diagnostics.error(
             statement.line,
-            "lowering DynamicArray push to owned element requires authorized element drop"
+            "lowering DynamicArray push to owned element requires authorized element drop: owner " +
+                owner_name + " element " + *element_source_type
         );
         return true;
     }
