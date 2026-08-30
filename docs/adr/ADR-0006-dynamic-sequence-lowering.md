@@ -2461,6 +2461,9 @@ representation.
 - Scoped local DynamicArray cleanup now suppresses runtime-index cleanup owners before switch/branch-arm cleanup
   emission. The approved choice-payload member-cleanup fixture now pins a single `items.member_cleanup` path with no
   duplicate `items.dynamic_array_cleanup` loop.
+- Runtime-index member cleanup now covers a nested choice-payload aggregate owner path,
+  `holder.items[index + zero].box.item`. Member-owned DynamicArray reads preserve the projected descriptor pointer for
+  the rewrite stage, and stored choice-payload cleanup suppresses matching promoted runtime-index owner paths.
 
 ## Follow-up work
 
@@ -2472,5 +2475,4 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Broaden this cleanup-responsibility suppression from the single-payload binding fixture to additional choice payload
-  aggregate shapes only after each shape has direct smoke coverage.
+- Add paired negative coverage for the nested choice-payload aggregate-owner runtime-index cleanup shape.

@@ -2959,28 +2959,48 @@ auto lower_dynamic_array_element_path_read(
     auto path = collect_named_aggregate_path(expression);
     if (!path.has_value() ||
         path->base_expression == nullptr ||
-        path->steps.size() < 2 ||
-        path->steps.front().kind != AggregatePathStepKind::index ||
-        path->steps.front().index_expression == nullptr) {
+        path->steps.size() < 2) {
         return std::nullopt;
     }
 
-    auto const& owner_name = path->base_expression->text;
-    if (auto moved_name = moved_owned_dynamic_array_binding_name(owner_name, session.state)) {
-        record_use_after_move_failure(session.failures, *moved_name);
+    auto owner_name = path->base_expression->text;
+    auto base_source_type = session.state.source_type_names.find(path->base_expression->text);
+    if (base_source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+    auto owner_source_type_name = base_source_type->second;
+    auto index_step_index = std::optional<std::size_t> {};
+    for (auto step_index = std::size_t {0}; step_index < path->steps.size(); ++step_index) {
+        auto const& step = path->steps[step_index];
+        if (step.kind == AggregatePathStepKind::index) {
+            index_step_index = step_index;
+            break;
+        }
+
+        auto record = context.lowering.records.find(owner_source_type_name);
+        if (record == context.lowering.records.end()) {
+            return std::nullopt;
+        }
+        auto const* field = find_record_field(record->second, step.field_name);
+        if (field == nullptr) {
+            return std::nullopt;
+        }
+        owner_name += ".";
+        owner_name += step.field_name;
+        owner_source_type_name = field->source_type_name;
+    }
+    if (!index_step_index.has_value() ||
+        path->steps[*index_step_index].index_expression == nullptr) {
         return std::nullopt;
     }
 
-    auto source_type = session.state.source_type_names.find(owner_name);
-    if (source_type == session.state.source_type_names.end()) {
-        return std::nullopt;
-    }
-    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+    auto element_source_type = dynamic_array_element_source_type_name(owner_source_type_name);
     if (!element_source_type.has_value() ||
         !is_owned_transfer_source_type(*element_source_type, context.lowering)) {
         return std::nullopt;
     }
-    auto const index_expression_text = runtime_index_expression_key(*path->steps.front().index_expression);
+    auto const index_expression_text =
+        runtime_index_expression_key(*path->steps[*index_step_index].index_expression);
     auto const runtime_index_constructor_move_recorded =
         std::ranges::any_of(
             session.state.ownership_transfers.runtime_indexed_partial_owners,
@@ -2993,6 +3013,14 @@ auto lower_dynamic_array_element_path_read(
         );
     auto const runtime_index_constructor_argument_key =
         owner_name + "[" + index_expression_text + "]";
+    if (is_owned_binding_consumed(session.state.ownership_transfers, owner_name) &&
+        !runtime_indexed_constructor_argument_active(
+            session.state,
+            runtime_index_constructor_argument_key
+        )) {
+        record_use_after_move_failure(session.failures, owner_name);
+        return std::nullopt;
+    }
     if (runtime_index_constructor_move_recorded &&
         !runtime_indexed_constructor_argument_active(
             session.state,
@@ -3004,7 +3032,31 @@ auto lower_dynamic_array_element_path_read(
         );
         return std::nullopt;
     }
-    auto projected_source_type = source_type_name_for_expression(expression, context.lowering, session.state);
+    auto projected_source_type = std::optional<std::string> {*element_source_type};
+    for (auto step_index = *index_step_index + 1; step_index < path->steps.size(); ++step_index) {
+        auto const& step = path->steps[step_index];
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.lowering.records.find(*projected_source_type);
+            if (record == context.lowering.records.end()) {
+                projected_source_type = std::nullopt;
+                break;
+            }
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr) {
+                projected_source_type = std::nullopt;
+                break;
+            }
+            projected_source_type = field->source_type_name;
+            continue;
+        }
+
+        auto element = array_element_source_type_name(*projected_source_type);
+        if (!element.has_value()) {
+            projected_source_type = std::nullopt;
+            break;
+        }
+        projected_source_type = std::move(*element);
+    }
     auto const runtime_index_member_cleanup_rewrite_enabled =
         runtime_index_constructor_move_recorded &&
         context.options.enable_runtime_indexed_member_cleanup_ir_mutation_request &&
@@ -3022,14 +3074,39 @@ auto lower_dynamic_array_element_path_read(
         return std::nullopt;
     }
 
-    auto storage = aggregate_storage_for_name(owner_name, session.state);
-    if (!storage.has_value()) {
+    auto base_storage = aggregate_storage_for_name(path->base_expression->text, session.state);
+    if (!base_storage.has_value()) {
         return std::nullopt;
+    }
+    auto cursor = initialize_aggregate_path_cursor(
+        std::move(*base_storage),
+        base_source_type->second,
+        context.lowering
+    );
+    if (!cursor.has_value()) {
+        return std::nullopt;
+    }
+    for (auto step_index = std::size_t {0}; step_index < *index_step_index; ++step_index) {
+        auto result = advance_aggregate_path_member_with_temporary(
+            *cursor,
+            path->steps[step_index].field_name,
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            record_unsupported_aggregate_path_failure(
+                session.failures,
+                "dynamic array owner path '" + owner_name + "'",
+                result.error
+            );
+            return std::nullopt;
+        }
     }
 
     auto plan = plan_dynamic_array_descriptor_cleanup(
         owner_name,
-        source_type->second,
+        owner_source_type_name,
         context.lowering
     );
     if (!plan.has_value()) {
@@ -3037,7 +3114,7 @@ auto lower_dynamic_array_element_path_read(
     }
 
     auto lowered_index = lowered_expression(
-        *path->steps.front().index_expression,
+        *path->steps[*index_step_index].index_expression,
         "i64",
         IntegerSignedness::unsigned_integer,
         context,
@@ -3052,7 +3129,7 @@ auto lower_dynamic_array_element_path_read(
         std::to_string(session.state.next_temporary_index++);
     output << emit_dynamic_array_descriptor_load(
         prefix + ".descriptor",
-        *storage
+        cursor->pointer
     );
     output << emit_dynamic_array_descriptor_field_projection(
         prefix + ".length",
@@ -3092,7 +3169,10 @@ auto lower_dynamic_array_element_path_read(
     );
 
     auto element_path = *path;
-    element_path.steps.erase(element_path.steps.begin());
+    element_path.steps.erase(
+        element_path.steps.begin(),
+        element_path.steps.begin() + static_cast<std::ptrdiff_t>(*index_step_index + 1)
+    );
     return lower_aggregate_path_read_from_storage(
         expression,
         element_path,

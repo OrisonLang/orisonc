@@ -20,6 +20,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -1625,6 +1626,95 @@ auto choice_variant_payload(
     return nullptr;
 }
 
+auto record_field_source_type(
+    LoweringContext const& context,
+    std::string_view record_source_type,
+    std::string_view field_name
+) -> std::optional<std::string> {
+    auto record = context.records.find(std::string {record_source_type});
+    if (record == context.records.end()) {
+        return std::nullopt;
+    }
+    for (auto const& field : record->second.fields) {
+        if (field.name == field_name && !field.source_type_name.empty()) {
+            return field.source_type_name;
+        }
+    }
+    return std::nullopt;
+}
+
+auto source_type_for_member_path(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    std::unordered_map<std::string, std::string> const& source_type_names
+) -> std::optional<std::string> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto found = source_type_names.find(expression.text);
+        return found == source_type_names.end()
+            ? std::nullopt
+            : std::optional<std::string> {found->second};
+    }
+    if (expression.kind != syntax::ExpressionKind::member_access || expression.left == nullptr) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_for_member_path(*expression.left, context, source_type_names);
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+    auto record_source_type = pointer_pointee_source_type_name(*base_source_type);
+    return record_field_source_type(
+        context,
+        record_source_type.value_or(*base_source_type),
+        expression.text
+    );
+}
+
+void collect_source_type_names(
+    syntax::StatementSyntax const& statement,
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    std::unordered_map<std::string, std::string>& source_type_names
+) {
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.name.empty() &&
+        !statement.annotated_type.name.empty()) {
+        source_type_names[statement.name] = render_source_type_name(statement.annotated_type);
+    }
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_source_type_names(nested_statement, choices, source_type_names);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_source_type_names(alternate_statement, choices, source_type_names);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        if (switch_case.pattern.kind == syntax::ExpressionKind::call &&
+            switch_case.pattern.left != nullptr &&
+            switch_case.pattern.left->kind == syntax::ExpressionKind::name) {
+            for (auto payload_index = std::size_t {0};
+                 payload_index < switch_case.pattern.arguments.size();
+                 ++payload_index) {
+                auto const& argument = switch_case.pattern.arguments[payload_index];
+                auto const* payload = choice_variant_payload(
+                    choices,
+                    switch_case.pattern.left->text,
+                    payload_index
+                );
+                if (argument.kind == syntax::ExpressionKind::name &&
+                    payload != nullptr &&
+                    !payload->type.name.empty()) {
+                    source_type_names[argument.text] = render_source_type_name(payload->type);
+                }
+            }
+        }
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_source_type_names(*case_statement, choices, source_type_names);
+            }
+        }
+    }
+}
+
 void collect_dynamic_array_owner_names(
     syntax::StatementSyntax const& statement,
     std::vector<syntax::ChoiceSyntax> const& choices,
@@ -1706,12 +1796,17 @@ void collect_view_owner_names(
 
 auto has_dynamic_array_index_read(
     syntax::FunctionSyntax const& function,
-    std::vector<syntax::ChoiceSyntax> const& choices
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    LoweringContext const& context
 ) -> bool {
     auto owner_names = std::unordered_set<std::string> {};
+    auto source_type_names = std::unordered_map<std::string, std::string> {};
     for (auto const& parameter : function.parameters) {
         if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
             owner_names.insert(parameter.name);
+        }
+        if (!parameter.name.empty() && !parameter.type.name.empty()) {
+            source_type_names[parameter.name] = render_source_type_name(parameter.type);
         }
         if (parameter.name == "this" &&
             (parameter.type.name == "This" ||
@@ -1722,20 +1817,22 @@ auto has_dynamic_array_index_read(
     }
     for (auto const& statement : function.body_statements) {
         collect_dynamic_array_owner_names(statement, choices, owner_names);
+        collect_source_type_names(statement, choices, source_type_names);
     }
-    if (owner_names.empty()) {
-        return false;
-    }
-
     auto found = false;
-    walk_function_expressions(function, [&owner_names, &found](syntax::ExpressionSyntax const& expression) {
+    walk_function_expressions(function, [&owner_names, &source_type_names, &found, &context](syntax::ExpressionSyntax const& expression) {
         if (found ||
             expression.kind != syntax::ExpressionKind::index_access ||
-            expression.left == nullptr ||
-            expression.left->kind != syntax::ExpressionKind::name) {
+            expression.left == nullptr) {
             return;
         }
-        found = owner_names.contains(expression.left->text);
+        if (expression.left->kind == syntax::ExpressionKind::name) {
+            found = owner_names.contains(expression.left->text);
+            return;
+        }
+        auto source_type = source_type_for_member_path(*expression.left, context, source_type_names);
+        found = source_type.has_value() &&
+            dynamic_array_element_source_type_name(*source_type).has_value();
     });
     return found;
 }
@@ -1808,23 +1905,24 @@ auto has_view_index_read(
 }
 
 auto has_dynamic_array_index_read(
-    syntax::ModuleSyntax const& module
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
 ) -> bool {
     for (auto const& function : module.functions) {
-        if (has_dynamic_array_index_read(function, module.choices)) {
+        if (has_dynamic_array_index_read(function, module.choices, context)) {
             return true;
         }
     }
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            if (has_dynamic_array_index_read(method, module.choices)) {
+            if (has_dynamic_array_index_read(method, module.choices, context)) {
                 return true;
             }
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            if (has_dynamic_array_index_read(method, module.choices)) {
+            if (has_dynamic_array_index_read(method, module.choices, context)) {
                 return true;
             }
         }
@@ -2742,7 +2840,7 @@ auto collect_dynamic_array_runtime_operations(
         }
         if (options.enable_dynamic_array_index_lowering &&
             source_plan_offset < plans.size() &&
-            has_dynamic_array_index_read(module)) {
+            has_dynamic_array_index_read(module, context)) {
             push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
         }
         if (options.enable_dynamic_array_append_lowering &&
@@ -2758,7 +2856,7 @@ auto collect_dynamic_array_runtime_operations(
             push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
         }
     }
-    if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module)) {
+    if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module, context)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
     }
     if (dynamic_array_parameter_descriptors_enabled(options) &&

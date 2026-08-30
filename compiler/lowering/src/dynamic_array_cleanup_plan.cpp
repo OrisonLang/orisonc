@@ -1123,9 +1123,21 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
                 }
 
                 for (auto& descriptor_cleanup : *descriptor_cleanups) {
+                    auto const descriptor_owner_name = descriptor_cleanup.descriptor_cleanup.owner_name;
+                    auto const runtime_indexed_cleanup_owner = std::ranges::any_of(
+                        session.state.ownership_transfers.runtime_indexed_cleanup_emission_plans,
+                        [&](RuntimeIndexedCleanupEmissionPlan const& plan) {
+                            auto const scoped_owner_suffix = "." + plan.owner_name;
+                            return descriptor_owner_name == plan.owner_name ||
+                                descriptor_owner_name.ends_with(scoped_owner_suffix);
+                        }
+                    );
+                    if (runtime_indexed_cleanup_owner) {
+                        continue;
+                    }
                     if (is_owned_binding_consumed(
                             session.state.ownership_transfers,
-                            descriptor_cleanup.descriptor_cleanup.owner_name
+                            descriptor_owner_name
                         )) {
                         continue;
                     }
@@ -1155,7 +1167,6 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
                     session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(sequence_plan);
                     session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(sequence_verification);
 
-                    auto const descriptor_owner_name = descriptor_cleanup.descriptor_cleanup.owner_name;
                     auto tag_check = "%" + descriptor_owner_name + ".choice_dynamic_array_cleanup" +
                         std::to_string(session.state.next_temporary_index++) + ".is_active";
                     auto block_prefix = descriptor_owner_name + ".choice_dynamic_array_cleanup" +

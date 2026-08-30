@@ -3036,3 +3036,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-29: Scoped local DynamicArray cleanup now suppresses runtime-index cleanup owners before switch/branch-arm
   cleanup emission. The approved choice-payload member-cleanup fixture now pins a single `items.member_cleanup` path
   with no duplicate `items.dynamic_array_cleanup` loop.
+- 2026-08-30: Runtime-index member cleanup now covers a nested choice-payload aggregate owner path
+  `holder.items[index + zero].box.item`. Member-owned DynamicArray reads preserve the projected descriptor pointer,
+  stored choice-payload cleanup suppresses the matching promoted runtime-index owner, and ordinary `run`,
+  `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths cover the fixture.

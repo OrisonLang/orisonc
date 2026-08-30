@@ -1811,15 +1811,58 @@ auto selected_runtime_indexed_member_cleanup_index_operand(
     return line.substr(index_position + index_marker.size());
 }
 
+auto selected_runtime_indexed_member_cleanup_descriptor_storage(
+    std::string const& selected_element_address,
+    std::string const& function_ir
+) -> std::string {
+    auto constexpr element_address_suffix = std::string_view {".element.addr"};
+    if (!selected_element_address.ends_with(element_address_suffix)) {
+        return {};
+    }
+    auto const descriptor_name =
+        selected_element_address.substr(0, selected_element_address.size() - element_address_suffix.size()) +
+        ".descriptor";
+    auto const line_prefix = "  " + descriptor_name + " = load ";
+    auto const line_start = function_ir.find(line_prefix);
+    if (line_start == std::string::npos) {
+        return {};
+    }
+    auto const line_end = function_ir.find('\n', line_start);
+    auto const line = function_ir.substr(
+        line_start,
+        line_end == std::string::npos ? std::string::npos : line_end - line_start
+    );
+    auto constexpr storage_marker = std::string_view {", ptr "};
+    auto const storage_start = line.rfind(storage_marker);
+    if (storage_start == std::string::npos) {
+        return {};
+    }
+    return line.substr(storage_start + storage_marker.size());
+}
+
 auto member_cleanup_descriptor_cleanup_plan(
     lowering::LlvmIrEmissionResult const& emission,
-    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan,
+    std::string const& selected_descriptor_storage
 ) -> std::optional<lowering::DynamicArrayDescriptorCleanupPlan> {
+    auto runtime_owner_address_name = std::string {};
+    for (auto const& runtime_plan : emission.runtime_indexed_cleanup_emission_plans) {
+        if (runtime_plan.owner_name == plan.owner_name &&
+            runtime_plan.element_source_type_name == plan.element_source_type_name &&
+            !runtime_plan.owner_address_name.empty()) {
+            runtime_owner_address_name = runtime_plan.owner_address_name;
+            break;
+        }
+    }
     for (auto const& cleanup_plan : emission.dynamic_array_descriptor_cleanup_plans) {
         if (cleanup_plan.owner_name == plan.owner_name &&
             cleanup_plan.element_source_type_name == plan.element_source_type_name &&
             !cleanup_plan.descriptor_storage_name.empty()) {
-            return cleanup_plan;
+            auto selected_cleanup_plan = cleanup_plan;
+            if (!selected_descriptor_storage.empty()) {
+                selected_cleanup_plan.descriptor_storage_name = selected_descriptor_storage;
+            }
+            return selected_cleanup_plan;
         }
     }
     for (auto const& construction_plan : emission.dynamic_array_construction_plans) {
@@ -1830,8 +1873,11 @@ auto member_cleanup_descriptor_cleanup_plan(
                 .source_type_name = construction_plan.source_type_name,
                 .element_source_type_name = construction_plan.element_source_type_name,
                 .element_llvm_type = construction_plan.element_llvm_type,
-                .descriptor_storage_name =
-                    lowering::llvm_local_value_name(construction_plan.owner_name + ".addr"),
+                .descriptor_storage_name = !selected_descriptor_storage.empty()
+                    ? selected_descriptor_storage
+                    : (runtime_owner_address_name.empty()
+                        ? lowering::llvm_local_value_name(construction_plan.owner_name + ".addr")
+                        : runtime_owner_address_name),
                 .descriptor_storage_status =
                     lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
                 .element_size_bytes = construction_plan.element_size_bytes,
@@ -2140,8 +2186,10 @@ auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
             selected_runtime_indexed_member_cleanup_element_address(edit_plan, original_function_ir);
         auto const selected_index_operand =
             selected_runtime_indexed_member_cleanup_index_operand(selected_element_address, original_function_ir);
+        auto const selected_descriptor_storage =
+            selected_runtime_indexed_member_cleanup_descriptor_storage(selected_element_address, original_function_ir);
         auto const descriptor_cleanup_plan =
-            member_cleanup_descriptor_cleanup_plan(emission, edit_plan);
+            member_cleanup_descriptor_cleanup_plan(emission, edit_plan, selected_descriptor_storage);
         auto const append_text = member_cleanup_executable_cfg_append(
             edit_plan,
             expected_branch_text,
