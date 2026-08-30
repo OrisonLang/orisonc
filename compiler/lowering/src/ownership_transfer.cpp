@@ -2066,8 +2066,9 @@ auto runtime_indexed_member_cleanup_promotion_checklist_report(
            << " index " << checklist.index_expression_text
            << " element " << checklist.element_source_type_name
            << " moved " << checklist.moved_source_type_name
-           << " member-path " << dotted_path(checklist.moved_member_path)
-           << " candidate " << (checklist.rewrite_candidate_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(checklist.moved_member_path);
+    append_source_line(report, checklist.source_line);
+    report << " candidate " << (checklist.rewrite_candidate_ready ? "ready" : "blocked")
            << " edit-script " << (checklist.edit_script_ready ? "ready" : "blocked")
            << " validation " << (checklist.validation_ready ? "ready" : "blocked")
            << " staged-apply " << (checklist.staged_apply_ready ? "ready" : "blocked")
@@ -2218,8 +2219,9 @@ auto runtime_indexed_member_cleanup_promotion_seam_report(
            << " index " << seam.index_expression_text
            << " element " << seam.element_source_type_name
            << " moved " << seam.moved_source_type_name
-           << " member-path " << dotted_path(seam.moved_member_path)
-           << " checklist " << (seam.checklist_ready ? "ready" : "blocked")
+           << " member-path " << dotted_path(seam.moved_member_path);
+    append_source_line(report, seam.source_line);
+    report << " checklist " << (seam.checklist_ready ? "ready" : "blocked")
            << " mutation-seam " << (seam.mutation_seam_selected ? "selected" : "blocked")
            << " ir-mutation " << (seam.ir_mutation_enabled ? "enabled" : "disabled")
            << " production-gate " << (seam.production_gate_enabled ? "enabled" : "disabled")

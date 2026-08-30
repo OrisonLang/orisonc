@@ -71,10 +71,22 @@ auto runtime_indexed_member_cleanup_promotion_blocker_line(std::string const& li
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_promotion_checklist_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup promotion-checklist"};
+    return line.starts_with(prefix);
+}
+
+auto runtime_indexed_member_cleanup_promotion_seam_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup promotion-seam"};
+    return line.starts_with(prefix);
+}
+
 auto runtime_indexed_member_cleanup_should_include_source_text(std::string const& line) -> bool {
     return runtime_indexed_member_cleanup_mutation_line(line) ||
         runtime_indexed_member_cleanup_production_blocker_line(line) ||
-        runtime_indexed_member_cleanup_promotion_blocker_line(line);
+        runtime_indexed_member_cleanup_promotion_blocker_line(line) ||
+        runtime_indexed_member_cleanup_promotion_checklist_line(line) ||
+        runtime_indexed_member_cleanup_promotion_seam_line(line);
 }
 
 auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {

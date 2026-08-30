@@ -15235,27 +15235,35 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[37] ==
-        "runtime-index member cleanup promotion-checklist owner holder.items index index "
-        "element Inner moved Inner member-path none candidate blocked edit-script blocked "
-        "validation blocked staged-apply blocked module-mutation blocked production-readiness blocked "
-        "promotion blocked report-only true production disabled blockers 9 "
-        "blocker member-cleanup-rewrite-candidate blocker member-cleanup-edit-script "
-        "blocker member-cleanup-edit-script-validation blocker member-cleanup-staged-apply "
-        "blocker member-cleanup-cfg-slice blocker member-cleanup-module-mutation "
-        "blocker production-member-cleanup blocker member-cleanup-proof blocker member-drop-metadata"
+        with_source_text(
+            "runtime-index member cleanup promotion-checklist owner holder.items index index "
+            "element Inner moved Inner member-path none source-line 46 candidate blocked edit-script blocked "
+            "validation blocked staged-apply blocked module-mutation blocked production-readiness blocked "
+            "promotion blocked report-only true production disabled blockers 9 "
+            "blocker member-cleanup-rewrite-candidate blocker member-cleanup-edit-script "
+            "blocker member-cleanup-edit-script-validation blocker member-cleanup-staged-apply "
+            "blocker member-cleanup-cfg-slice blocker member-cleanup-module-mutation "
+            "blocker production-member-cleanup blocker member-cleanup-proof blocker member-drop-metadata",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[38] ==
-        "runtime-index member cleanup promotion-seam owner holder.items index index "
-        "element Inner moved Inner member-path none checklist blocked mutation-seam blocked "
-        "ir-mutation disabled production-gate disabled promotion blocked report-only true "
-        "production disabled blockers 12 blocker member-cleanup-rewrite-candidate "
-        "blocker member-cleanup-edit-script blocker member-cleanup-edit-script-validation "
-        "blocker member-cleanup-staged-apply blocker member-cleanup-cfg-slice "
-        "blocker member-cleanup-module-mutation blocker production-member-cleanup "
-        "blocker member-cleanup-proof blocker member-drop-metadata "
-        "blocker member-cleanup-promotion-checklist blocker member-cleanup-ir-mutation "
-        "blocker production-member-cleanup-ir-mutation"
+        with_source_text(
+            "runtime-index member cleanup promotion-seam owner holder.items index index "
+            "element Inner moved Inner member-path none source-line 46 checklist blocked mutation-seam blocked "
+            "ir-mutation disabled production-gate disabled promotion blocked report-only true "
+            "production disabled blockers 12 blocker member-cleanup-rewrite-candidate "
+            "blocker member-cleanup-edit-script blocker member-cleanup-edit-script-validation "
+            "blocker member-cleanup-staged-apply blocker member-cleanup-cfg-slice "
+            "blocker member-cleanup-module-mutation blocker production-member-cleanup "
+            "blocker member-cleanup-proof blocker member-drop-metadata "
+            "blocker member-cleanup-promotion-checklist blocker member-cleanup-ir-mutation "
+            "blocker production-member-cleanup-ir-mutation",
+            46,
+            runtime_indexed_cleanup_source_text
+        )
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[39] ==
