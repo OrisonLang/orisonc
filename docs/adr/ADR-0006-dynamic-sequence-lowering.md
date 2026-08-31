@@ -12,6 +12,8 @@ representation.
 
 ## Decision
 
+- Array CLI DynamicArray coverage is grouped by targeted CTest modes for examples, core computed arrays, returned
+  cleanup, forwarding, and final-control cleanup. Direct execution still runs the full coverage matrix.
 - Lowering classifies `DynamicArray<T>` and `View<T>`-shaped source types as dynamic sequences before emitters decide
   whether a use site is currently supported.
 - `DynamicArray<T>` is the owned contiguous dynamic sequence form. Its target ABI model is a descriptor containing a

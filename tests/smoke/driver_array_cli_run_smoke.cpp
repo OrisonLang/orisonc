@@ -2429,7 +2429,7 @@ void assert_build_success(
 
 }  // namespace
 
-auto main() -> int {
+auto main(int argc, char** argv) -> int {
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root = original_temp_root /
         ("orison_driver_array_cli_run_smoke_" + std::to_string(static_cast<long long>(::getpid())));
@@ -2437,6 +2437,35 @@ auto main() -> int {
     std::filesystem::create_directories(smoke_temp_root);
     auto smoke_temp_root_text = smoke_temp_root.string();
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
+    if (argc > 2) {
+        std::fprintf(stderr, "usage: orison_driver_array_cli_run_smoke [mode]\n");
+        return 2;
+    }
+
+    auto selected_mode = std::string_view {"all"};
+    if (argc == 2) {
+        selected_mode = argv[1];
+    }
+    constexpr auto valid_modes = std::array<std::string_view, 6> {
+        "all",
+        "examples",
+        "core",
+        "returned_cleanup",
+        "forwarding",
+        "final_control",
+    };
+    auto valid_mode = false;
+    for (auto mode : valid_modes) {
+        valid_mode = valid_mode || selected_mode == mode;
+    }
+    if (!valid_mode) {
+        std::fprintf(stderr, "unknown mode: %s\n", std::string(selected_mode).c_str());
+        return 2;
+    }
+    auto runs_mode = [selected_mode](std::string_view mode) {
+        return selected_mode == "all" || selected_mode == mode;
+    };
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
@@ -2462,8 +2491,10 @@ auto main() -> int {
         "local_record_method_array_for.or",
     };
 
-    for (auto name : run_examples) {
-        assert_run_success(executable, examples / name);
+    if (runs_mode("examples")) {
+        for (auto name : run_examples) {
+            assert_run_success(executable, examples / name);
+        }
     }
 
     auto generic_record_literal_path = examples / "local_generic_record_array_literal_for.or";
@@ -2883,6 +2914,7 @@ auto main() -> int {
         fixtures / "dynamic_array_push_owned_field_reuse_rejected.or";
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         fixtures / "dynamic_array_owned_element_assignment_rhs_reuse_rejected.or";
+    if (runs_mode("core")) {
     assert_emit_llvm_success(executable, generic_record_literal_path);
     assert_emit_object_success(
         executable,
@@ -2941,6 +2973,8 @@ auto main() -> int {
         owned_nested_computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_owned_nested_computed_for"
     );
+    }
+    if (runs_mode("returned_cleanup")) {
     assert_returned_owned_computed_dynamic_array_emit_llvm_success(
         executable,
         returned_owned_computed_dynamic_array_path
@@ -3564,6 +3598,8 @@ auto main() -> int {
         executable,
         returned_choice_payload_owned_computed_dynamic_array_path
     );
+    }
+    if (runs_mode("forwarding")) {
     assert_owned_dynamic_array_parameter_emit_llvm_success(executable, owned_dynamic_array_parameter_path);
     assert_emit_object_success(
         executable,
@@ -3781,6 +3817,8 @@ auto main() -> int {
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding"
     );
+    }
+    if (runs_mode("final_control")) {
     assert_dynamic_array_local_final_if_branch_cleanup_emit_llvm_success(
         executable,
         dynamic_array_local_final_if_branch_cleanup_path
@@ -4943,6 +4981,7 @@ auto main() -> int {
         dynamic_array_owned_element_assignment_rhs_reuse_path,
         "payload"
     );
+    }
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

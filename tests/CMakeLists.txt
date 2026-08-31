@@ -117,7 +117,27 @@ target_compile_features(orison_driver_array_cli_run_smoke PRIVATE cxx_std_23)
 
 add_test(
     NAME orison_driver_array_cli_run_smoke
-    COMMAND orison_driver_array_cli_run_smoke
+    COMMAND orison_driver_array_cli_run_smoke examples
+)
+
+add_test(
+    NAME orison_driver_array_cli_run_core_smoke
+    COMMAND orison_driver_array_cli_run_smoke core
+)
+
+add_test(
+    NAME orison_driver_array_cli_run_returned_cleanup_smoke
+    COMMAND orison_driver_array_cli_run_smoke returned_cleanup
+)
+
+add_test(
+    NAME orison_driver_array_cli_run_forwarding_smoke
+    COMMAND orison_driver_array_cli_run_smoke forwarding
+)
+
+add_test(
+    NAME orison_driver_array_cli_run_final_control_smoke
+    COMMAND orison_driver_array_cli_run_smoke final_control
 )
 
 add_executable(orison_driver_pointer_record_cli_run_smoke

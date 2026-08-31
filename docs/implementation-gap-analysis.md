@@ -18,6 +18,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   sibling cleanup calls, descriptor deallocation, and clean diagnostics for source-backed nested-member and two-owner
   fixtures. Ordinary production object/link/run, `--emit-object`, and `--build` coverage now also covers source-backed
   nested-member, two-owner, and two nested-owner member-cleanup fixtures.
+- Array CLI production coverage now runs through targeted CTest modes for examples, core computed arrays, returned
+  cleanup, forwarding, and final-control cleanup while preserving direct full-matrix execution.
 - Name hygiene has a reusable lowering symbol registry for source functions, foreign declarations, generated helpers,
   runtime prelude declarations, Drop symbols, and record type identifiers.
 

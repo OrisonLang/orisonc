@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
+  cleanup, forwarding, and final-control cleanup. Direct execution without a mode still runs the full matrix.
 - 2026-08-29: Ordinary production `--emit-llvm` smoke coverage now pins runtime-index member cleanup for the
   source-backed nested-member and two-owner fixtures. The checks assert generated member-cleanup helpers, sibling
   cleanup calls, descriptor deallocation, and absence of blocked member-cleanup diagnostics outside the diagnostic run
