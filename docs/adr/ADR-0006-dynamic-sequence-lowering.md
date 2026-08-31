@@ -2510,6 +2510,8 @@ representation.
 - A generic CLI coverage-gap audit found remaining positive `DynamicArray` cleanup fixtures outside the production CLI
   matrix. Direct returned, alias-chain, helper-call, choice-payload, aggregate-field, nested-field, and branch-returned
   computed cleanup fixtures now have generic CLI production coverage.
+- Branch-forwarded, branch-mixed-forwarded, and switch-forwarded returned aggregate-field and nested aggregate-field
+  owned-computed cleanup fixtures now have generic CLI production coverage.
 
 ## Follow-up work
 
@@ -2521,5 +2523,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field `DynamicArray` cleanup
-  fixtures.
+- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field final-if/final-switch
+  `DynamicArray` cleanup fixtures.

@@ -75,7 +75,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   helper-argument and asymmetric nested helper-argument branch-consumer cleanup fixtures now run through the same
   production matrix. A generic CLI coverage-gap audit found remaining positive `DynamicArray` cleanup fixtures outside
   the production CLI matrix; direct returned, alias-chain, helper-call, choice-payload, aggregate-field, nested-field,
-  and branch-returned computed cleanup fixtures now run through the same production matrix.
+  and branch-returned computed cleanup fixtures now run through the same production matrix. Branch-forwarded,
+  branch-mixed-forwarded, and switch-forwarded returned aggregate-field and nested aggregate-field owned-computed
+  cleanup fixtures now run through the same production matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -97,5 +99,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field `DynamicArray` cleanup
-  fixtures.
+- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field final-if/final-switch
+  `DynamicArray` cleanup fixtures.
