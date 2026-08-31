@@ -77,7 +77,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   the production CLI matrix; direct returned, alias-chain, helper-call, choice-payload, aggregate-field, nested-field,
   and branch-returned computed cleanup fixtures now run through the same production matrix. Branch-forwarded,
   branch-mixed-forwarded, and switch-forwarded returned aggregate-field and nested aggregate-field owned-computed
-  cleanup fixtures now run through the same production matrix.
+  cleanup fixtures now run through the same production matrix. Branch-mixed-forwarded, switch-forwarded, and
+  switch-mixed-forwarded returned aggregate-field and nested aggregate-field final-if/final-switch cleanup fixtures now
+  run through the same production matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -99,5 +101,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field final-if/final-switch
-  `DynamicArray` cleanup fixtures.
+- Audit the remaining positive `DynamicArray` cleanup fixtures outside generic CLI production coverage and select the
+  next smallest fixture family.
