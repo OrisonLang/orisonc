@@ -1345,6 +1345,26 @@ void assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
     ) != std::string::npos);
 }
 
+void assert_cli_runtime_indexed_single_member_cleanup_summary_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --test-only-runtime-indexed-member-cleanup-run " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
+        "element Box moved Inner member-path item source-line 33"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup execution-summary owner items index (index + zero) "
+        "element Box moved Inner member-path item source-line 33 source-text "
+        "var outer: Outer = Outer(items[index + zero].item) typed-gate ready"
+    ) != std::string::npos);
+    assert(output.find(
+        "helper-target __orison_member_cleanup.Box.except.item helper-sibling-bindings 0"
+    ) != std::string::npos);
+}
+
 void assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5033,6 +5053,10 @@ auto main(int argc, char** argv) -> int {
     assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
+    );
+    assert_cli_runtime_indexed_single_member_cleanup_summary_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or"
     );
     assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
         executable,

@@ -6,6 +6,8 @@
   owned-read, owned-projection, aggregate-projection, and missing-Drop rejects separate from `core`.
 - 2026-08-31: Runtime-index DynamicArray single-member transfer production coverage now runs in the runtime-indexed
   generic CLI mode across `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
+- 2026-08-31: Runtime-index DynamicArray single-member transfer summary coverage now pins typed-gate readiness,
+  production enablement, helper target, and zero sibling bindings in the generic CLI runtime-indexed mode.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
