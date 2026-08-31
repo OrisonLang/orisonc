@@ -2519,6 +2519,7 @@ representation.
 - Choice-payload switch/final-switch binding owned-computed cleanup fixtures now have generic CLI production coverage.
 - Local final-if/final-switch `DynamicArray` cleanup fixtures, including consumed-owner variants, now have generic CLI
   production coverage.
+- Owned-parameter branch/switch `DynamicArray` cleanup fixtures now have generic CLI production coverage.
 
 ## Follow-up work
 
@@ -2530,4 +2531,4 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Extend generic CLI production coverage to owned-parameter branch/switch `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to owned-result final-if/final-switch `DynamicArray` cleanup fixtures.

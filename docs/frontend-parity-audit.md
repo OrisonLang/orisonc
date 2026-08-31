@@ -3099,3 +3099,4 @@ This file tracks which source-language frontend slices are reflected in the curr
   production coverage.
 - 2026-08-30: Local final-if/final-switch `DynamicArray` cleanup fixtures, including consumed-owner variants, now have
   generic CLI production coverage.
+- 2026-08-30: Owned-parameter branch/switch `DynamicArray` cleanup fixtures now have generic CLI production coverage.
