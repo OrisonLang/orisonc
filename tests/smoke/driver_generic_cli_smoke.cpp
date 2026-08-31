@@ -4121,6 +4121,16 @@ auto main() -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_owned_result_helper_call_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_helper_call_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_scratch_cleanup_run.or",
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_scratch_cleanup"
     );
@@ -4189,6 +4199,11 @@ auto main() -> int {
         fixtures /
             "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_nested_helper_argument_cleanup_run.or",
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_asymmetric_nested_helper_argument_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_stored_helper_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

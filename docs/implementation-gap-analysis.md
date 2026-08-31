@@ -90,7 +90,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   fixtures now run through the same production matrix. Returned aggregate-field and nested aggregate-field
   final-if/final-switch cleanup fixtures now run through the same production matrix. Switch-returned base,
   aggregate-field, and nested aggregate-field computed/final-control cleanup fixtures now run through the same
-  production matrix.
+  production matrix. Remaining owned-result helper cleanup fixtures now run through the same production matrix, and
+  the positive `dynamic_array*cleanup_run.or` fixture audit now reports no remaining generic CLI production gaps.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -112,4 +113,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to remaining owned-result helper `DynamicArray` cleanup fixtures.
+- Split the enlarged generic CLI smoke matrix into smaller targeted tests while preserving the same production path
+  coverage.
