@@ -3102,3 +3102,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Owned-parameter branch/switch `DynamicArray` cleanup fixtures now have generic CLI production coverage.
 - 2026-08-30: Owned-result direct, returned-local, and nested final-if/final-switch `DynamicArray` cleanup fixtures now
   have generic CLI production coverage.
+- 2026-08-30: Owned-result direct nested-if/switch and mixed if-switch/switch-if branch cleanup fixtures now have
+  generic CLI production coverage.
