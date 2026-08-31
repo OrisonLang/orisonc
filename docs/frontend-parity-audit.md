@@ -3084,3 +3084,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   coverage across ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
 - 2026-08-30: Owned-result branch-consumer nested-ternary, asymmetric-wrapper, mixed-wrapper, nested-wrapper-argument,
   and wrapper-result final-consumer cleanup fixtures now have the same generic CLI production coverage matrix.
+- 2026-08-30: Owned-result branch-consumer nested helper-argument and asymmetric nested helper-argument cleanup
+  fixtures now have the same generic CLI production coverage matrix.

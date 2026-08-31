@@ -4181,6 +4181,17 @@ auto main() -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_nested_helper_argument_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_nested_helper_argument_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures /
+            "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_nested_helper_argument_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_asymmetric_nested_helper_argument_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_run.or",
         smoke_temp_root / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding"
     );

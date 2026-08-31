@@ -2505,6 +2505,8 @@ representation.
   `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
 - Owned-result branch-consumer nested-ternary, asymmetric-wrapper, mixed-wrapper, nested-wrapper-argument, and
   wrapper-result final-consumer cleanup fixtures now have the same generic CLI production coverage matrix.
+- Owned-result branch-consumer nested helper-argument and asymmetric nested helper-argument cleanup fixtures now have
+  the same generic CLI production coverage matrix.
 
 ## Follow-up work
 
@@ -2516,5 +2518,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Extend generic CLI production coverage to the remaining branch-consumer nested helper-argument `DynamicArray` cleanup
-  fixtures.
+- Audit remaining `DynamicArray` cleanup fixtures for generic CLI production coverage gaps before selecting the next
+  implementation slice.
