@@ -3106,3 +3106,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   generic CLI production coverage.
 - 2026-08-30: Owned-result multi-nested-switch, if-two-switches, and switch-two-ifs cleanup fixtures now have generic
   CLI production coverage.
+- 2026-08-30: Returned aggregate-field and nested aggregate-field final-if/final-switch cleanup fixtures now have
+  generic CLI production coverage.
