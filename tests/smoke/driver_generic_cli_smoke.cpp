@@ -4407,6 +4407,41 @@ auto main() -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_switch_returned_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_branch_returned_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_branch_returned_owned_computed_for_cleanup"
     );

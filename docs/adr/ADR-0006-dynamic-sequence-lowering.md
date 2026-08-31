@@ -2528,6 +2528,8 @@ representation.
   production coverage.
 - Returned aggregate-field and nested aggregate-field final-if/final-switch cleanup fixtures now have generic CLI
   production coverage.
+- Switch-returned base, aggregate-field, and nested aggregate-field computed/final-control cleanup fixtures now have
+  generic CLI production coverage.
 
 ## Follow-up work
 
@@ -2539,4 +2541,4 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Extend generic CLI production coverage to switch-returned aggregate-field `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to remaining owned-result helper `DynamicArray` cleanup fixtures.

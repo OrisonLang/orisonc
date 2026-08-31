@@ -3108,3 +3108,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   CLI production coverage.
 - 2026-08-30: Returned aggregate-field and nested aggregate-field final-if/final-switch cleanup fixtures now have
   generic CLI production coverage.
+- 2026-08-30: Switch-returned base, aggregate-field, and nested aggregate-field computed/final-control cleanup fixtures
+  now have generic CLI production coverage.
