@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
+  preserving the accepted discard-result lowering path while keeping void null-safe calls gated on a future `Maybe<Unit>` ABI.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
   cleanup, forwarding, and final-control cleanup. Direct execution without a mode still runs the full matrix.
 - 2026-08-29: Ordinary production `--emit-llvm` smoke coverage now pins runtime-index member cleanup for the

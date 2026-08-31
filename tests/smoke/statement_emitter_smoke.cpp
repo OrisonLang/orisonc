@@ -60,6 +60,10 @@ int main() {
         auto output = std::ofstream(path);
         output << "package demo.statement_emitter\n"
                   "\n"
+                  "choice Maybe<T>\n"
+                  "    Some(value: T)\n"
+                  "    Empty\n"
+                  "\n"
                   "function increment(input: UInt32) -> UInt32\n"
                   "    let value = input + 1 as UInt32\n"
                   "    value\n"
@@ -797,6 +801,23 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(output.str() == "  call void @method.UInt32.reset(i32 %device)\n");
 
+    call_state.immutable_bindings.emplace("maybe_device", orison::lowering::LoweredExpression {
+        .type = "{ i1, i32 }",
+        .value = "%maybe_device",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    call_state.source_type_names["maybe_device"] = "Maybe<UInt32>";
+    lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "UInt32",
+        .method_name = "measure",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .parameter_types = {"i32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "UInt32.measure",
+        },
+    });
     auto null_safe_known_member_call_statement = orison::syntax::StatementSyntax {};
     null_safe_known_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
     null_safe_known_member_call_statement.line = 10;
@@ -805,26 +826,26 @@ int main() {
         std::make_unique<orison::syntax::ExpressionSyntax>();
     null_safe_known_member_call_statement.expression.left->kind =
         orison::syntax::ExpressionKind::null_safe_member_access;
-    null_safe_known_member_call_statement.expression.left->text = "reset";
+    null_safe_known_member_call_statement.expression.left->text = "measure";
     null_safe_known_member_call_statement.expression.left->left =
         std::make_unique<orison::syntax::ExpressionSyntax>();
     null_safe_known_member_call_statement.expression.left->left->kind =
         orison::syntax::ExpressionKind::name;
-    null_safe_known_member_call_statement.expression.left->left->text = "device";
+    null_safe_known_member_call_statement.expression.left->left->text = "maybe_device";
     diagnostics = {};
     output = {};
-    assert(!orison::lowering::lower_call_statement(
+    assert(orison::lowering::lower_call_statement(
         null_safe_known_member_call_statement,
         context,
         call_session,
         diagnostics,
         output
     ));
-    assert(
-        diagnostics.entries().front().message ==
-        "lowering does not yet support this null-safe call statement result type"
-    );
-    assert(output.str().empty());
+    assert(!diagnostics.has_errors());
+    assert(output.str().find("nullsafe.call.empty.") != std::string::npos);
+    assert(output.str().find("nullsafe.call.some.") != std::string::npos);
+    assert(output.str().find("nullsafe.call.merge.") != std::string::npos);
+    assert(output.str().find("call i32 @UInt32.measure(i32") != std::string::npos);
 
     auto null_safe_member_call_statement = orison::syntax::StatementSyntax {};
     null_safe_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;

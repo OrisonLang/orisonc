@@ -20,6 +20,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   nested-member, two-owner, and two nested-owner member-cleanup fixtures.
 - Array CLI production coverage now runs through targeted CTest modes for examples, core computed arrays, returned
   cleanup, forwarding, and final-control cleanup while preserving direct full-matrix execution.
+- Non-void null-safe member calls used as statements are covered directly at the statement-emitter seam; void null-safe
+  calls remain gated on an accepted `Maybe<Unit>` ABI.
 - Name hygiene has a reusable lowering symbol registry for source functions, foreign declarations, generated helpers,
   runtime prelude declarations, Drop symbols, and record type identifiers.
 
