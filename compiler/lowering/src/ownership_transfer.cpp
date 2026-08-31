@@ -3392,6 +3392,12 @@ auto render_runtime_indexed_cleanup_ir_plan(
             ", i64 " + plan.descriptor_capacity_value_name + ")\n"
         );
     }
+    if (plan.descriptor_owner_ready) {
+        lines.push_back(
+            "  store " + plan.owner_llvm_type_name + " zeroinitializer, ptr " +
+            plan.owner_address_name + "\n"
+        );
+    }
     return lines;
 }
 

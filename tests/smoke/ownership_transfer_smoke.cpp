@@ -617,7 +617,7 @@ int main() {
     assert(descriptor_emission_plan.ir_plan.descriptor_data_value_name == "%items.runtime_cleanup.data");
     assert(descriptor_emission_plan.ir_plan.length_value_name == "%items.runtime_cleanup.length");
     assert(descriptor_emission_plan.ir_plan.descriptor_capacity_value_name == "%items.runtime_cleanup.capacity");
-    assert(descriptor_emission_plan.gated_ir_slice_line_count == 23);
+    assert(descriptor_emission_plan.gated_ir_slice_line_count == 24);
     assert(
         descriptor_emission_plan.gated_ir_slice_lines[0] ==
         "  %items.runtime_cleanup.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
@@ -651,6 +651,10 @@ int main() {
         descriptor_emission_plan.gated_ir_slice_lines[22] ==
         "  call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)\n"
+    );
+    assert(
+        descriptor_emission_plan.gated_ir_slice_lines[23] ==
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
     );
     auto member_transfer_owner = orison::lowering::RuntimeIndexedPartialOwner {
         .owner_name = "items",

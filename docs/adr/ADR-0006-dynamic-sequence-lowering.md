@@ -2543,6 +2543,8 @@ representation.
 - Void-returning null-safe member calls used as statements lower through receiver-tag control flow: the present branch
   extracts the `Maybe<T>` payload and emits the void member call, the empty branch skips the call, and both branches
   merge without materializing `Maybe<Unit>`. Value-level `Maybe<Unit>` remains future-gated.
+- Descriptor-backed runtime-index DynamicArray cleanup now zero-finalizes the descriptor owner after deallocation,
+  matching the newer member-cleanup rewrite tail.
 
 ## Follow-up work
 

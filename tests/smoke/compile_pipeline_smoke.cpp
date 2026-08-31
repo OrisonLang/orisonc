@@ -1247,6 +1247,7 @@ auto descriptor_runtime_indexed_cleanup_ir_shape_plan()
             "items.runtime_cleanup.exit:\n",
             "  call void @__orison_dynamic_array_deallocate("
                 "ptr %items.runtime_cleanup.data, i64 4, i64 %items.runtime_cleanup.capacity)\n",
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n",
             "  ret void\n",
         },
         .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
@@ -18938,7 +18939,7 @@ auto main() -> int {
     assert(runtime_indexed_dynamic_array_plan.owner_llvm_type_name == "{ ptr, i64, i64 }");
     assert(runtime_indexed_dynamic_array_plan.owner_address_name == "%items.addr");
     assert(runtime_indexed_dynamic_array_plan.element_size_value == "4");
-    assert(runtime_indexed_dynamic_array_plan.gated_ir_slice_line_count == 23);
+    assert(runtime_indexed_dynamic_array_plan.gated_ir_slice_line_count == 24);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.complete);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.descriptor_owner_ready);
     assert(runtime_indexed_dynamic_array_plan.ir_plan.owner_deallocation_required);
@@ -19040,7 +19041,7 @@ auto main() -> int {
                     "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
                     "deallocate absent",
                 .expected_ir_shape =
-                    "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 23 "
                     "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
                     "descriptor-storage blocked inline-storage blocked descriptor-load present descriptor-gep present "
@@ -19054,7 +19055,7 @@ auto main() -> int {
                     "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
                     "deallocate present",
                 .expected_ir_shape =
-                    "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 23 "
                     "common-loop blocked condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call blocked "
                     "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
@@ -19068,7 +19069,7 @@ auto main() -> int {
                     "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
                     "deallocate present",
                 .expected_ir_shape =
-                    "runtime-index cleanup constructor-move ir-shape owner items lines 22 "
+                    "runtime-index cleanup constructor-move ir-shape owner items lines 23 "
                     "common-loop blocked condition-blocks 0 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
                     "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
