@@ -4,6 +4,8 @@
   `Maybe<T>` tag, calling the member only for the present payload, and merging without materializing `Maybe<Unit>`.
 - 2026-08-31: Generic CLI DynamicArray safety-boundary coverage is isolated into its own CTest mode, keeping intended
   owned-read, owned-projection, aggregate-projection, and missing-Drop rejects separate from `core`.
+- 2026-08-31: Runtime-index DynamicArray single-member transfer production coverage now runs in the runtime-indexed
+  generic CLI mode across `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

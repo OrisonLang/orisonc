@@ -103,8 +103,10 @@ This note is an implementation snapshot. It does not define language syntax or s
   enlarged generic CLI cleanup matrix is split into targeted CTest modes while preserving direct all-mode execution.
   Timing showed `core` and forwarded cleanup as the longest generic CLI modes, so forwarded cleanup is further split
   into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes. Runtime-indexed
-  constructor/member cleanup coverage is also isolated from `core` into its own generic CLI CTest mode. Intentional
-  DynamicArray safety-boundary rejects now run in a dedicated generic CLI mode instead of `core`.
+  constructor/member cleanup coverage is also isolated from `core` into its own generic CLI CTest mode. Single-member
+  runtime-index DynamicArray transfer now has the same production artifact coverage as the broader runtime-indexed
+  member-cleanup family. Intentional DynamicArray safety-boundary rejects now run in a dedicated generic CLI mode
+  instead of `core`.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic

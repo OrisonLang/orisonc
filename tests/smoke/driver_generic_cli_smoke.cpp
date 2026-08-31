@@ -4945,6 +4945,11 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_nested"
     );
+    assert_cli_emit_llvm_fixture_links_and_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_single_member"
+    );
     assert_cli_emit_object_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
@@ -4980,6 +4985,11 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_nested.o"
     );
+    assert_cli_emit_object_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_single_member.o"
+    );
     assert_cli_build_fixture_runs(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
@@ -5014,6 +5024,11 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_nested_build"
+    );
+    assert_cli_build_fixture_runs(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_single_member_build"
     );
     assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
         executable,
@@ -5268,10 +5283,6 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
         "use after move: items[(index + zero)]"
-    );
-    assert_cli_run_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
