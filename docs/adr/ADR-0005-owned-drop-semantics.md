@@ -16,6 +16,9 @@ inventing semantics outside the spec/tour.
 ## Decision
 
 - Drop emission remains disabled in normal lowering until source-level ownership/drop semantics are explicitly accepted.
+- `Drop` is not accepted as ordinary user-facing syntax in the current language tour. Lowering work should prefer
+  automatic cleanup derived from checked ownership/type facts for ordinary writers, with any explicit destructor
+  protocol treated as a future language decision.
 - A drop ABI declaration is necessary but not sufficient: cleanup calls require both an accepted source-level drop model
   and a proven emitted declaration for every action in the cleanup thunk.
 - The compiler will treat drop cleanup authorization as all-or-nothing per cleanup thunk. If any captured field lacks an

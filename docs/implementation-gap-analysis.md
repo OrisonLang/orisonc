@@ -27,6 +27,8 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 - Lowering is broad but still fixture-driven; unsupported diagnostics remain the safe boundary for unproven source
   shapes.
+- Cleanup should move toward automatic lowering from checked ownership/type facts for ordinary writers. `Drop` remains
+  internal or future-gated unless the language surface explicitly accepts a destructor protocol.
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
   ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Semantic planned-drop reports,
   drop authorization reports, DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI
