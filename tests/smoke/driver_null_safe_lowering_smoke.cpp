@@ -856,11 +856,11 @@ auto main() -> int {
         run_emit_llvm(app, reject_negative_uint32_ternary_null_safe_member_call_path)
     );
 
-    auto reject_void_null_safe_member_call_path = std::filesystem::temp_directory_path() /
-        "reject_void_null_safe_member_call.or";
+    auto emit_void_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "emit_void_null_safe_member_call.or";
     write_fixture(
-        reject_void_null_safe_member_call_path,
-        "demo.reject_void_member_call",
+        emit_void_null_safe_member_call_path,
+        "demo.emit_void_member_call",
         {
             "choice Maybe<T>",
             "    Some(value: T)",
@@ -876,9 +876,16 @@ auto main() -> int {
             "    return 0 as UInt32",
         }
     );
-    assert_failure_with_stderr_contains(
-        run_emit_llvm(app, reject_void_null_safe_member_call_path),
-        "lowering void null-safe member call statements requires an accepted Maybe<Unit> ABI: Profile.reset"
+    assert_success_with_stdout_contains(
+        run_emit_llvm(app, emit_void_null_safe_member_call_path),
+        {
+            "define void @method.Profile.reset(%record.Profile %this, i32 %value)",
+            "nullsafe.call.empty.",
+            "nullsafe.call.some.",
+            "nullsafe.call.merge.",
+            "call void @method.Profile.reset(%record.Profile",
+            "ret i32 0",
+        }
     );
 
     auto run_null_safe_paths = std::filesystem::temp_directory_path() /

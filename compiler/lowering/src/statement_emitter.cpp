@@ -16,6 +16,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/maybe_value_emitter.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
@@ -2032,6 +2033,164 @@ auto lower_void_member_call_statement(
     return true;
 }
 
+auto lower_void_null_safe_member_call_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto resolved = infer_member_call_receiver(statement.expression, context.lowering, session.state);
+    if (resolved.result != MemberCallReceiverInferenceResult::found) {
+        diagnostics.error(statement.line, "lowering null-safe member call receiver type is unknown");
+        return false;
+    }
+
+    auto payload_type = maybe_payload_source_type_name(resolved.receiver_type_name);
+    if (!payload_type.has_value()) {
+        diagnostics.error(statement.line, "lowering null-safe member call receiver is not Maybe");
+        return false;
+    }
+
+    auto method_lookup = find_lowered_method_signature(
+        context.lowering,
+        *payload_type,
+        resolved.method_name
+    );
+    auto const target_name = *payload_type + "." + resolved.method_name;
+    if (method_lookup.result == LoweredMethodLookupResult::not_found) {
+        diagnostics.error(statement.line, "lowering member call target is unknown: " + target_name);
+        return false;
+    }
+    if (method_lookup.result == LoweredMethodLookupResult::ambiguous) {
+        diagnostics.error(statement.line, "lowering member call target is ambiguous: " + target_name);
+        return false;
+    }
+    if (method_lookup.method == nullptr ||
+        !has_supported_function_signature_types(method_lookup.method->signature) ||
+        method_lookup.method->signature.return_type != "void") {
+        diagnostics.error(statement.line, "lowering member call target is not lowerable: " + target_name);
+        return false;
+    }
+
+    auto const& function = method_lookup.method->signature;
+    auto const expected_argument_count = function.parameter_types.empty()
+        ? std::size_t {0}
+        : function.parameter_types.size() - 1;
+    if (expected_argument_count != statement.expression.arguments.size()) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::call_arity_mismatch,
+            target_name + " expects " + std::to_string(expected_argument_count) +
+                " arguments, got " + std::to_string(statement.expression.arguments.size())
+        );
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering member call statement failed",
+                session.failures.expression
+            )
+        );
+        return false;
+    }
+
+    auto receiver_abi = maybe_value_abi_for_source_type(resolved.receiver_type_name, context.lowering);
+    if (!receiver_abi.has_value()) {
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support null-safe member call receiver ABI: " + target_name
+        );
+        return false;
+    }
+
+    if (statement.expression.left == nullptr || statement.expression.left->left == nullptr) {
+        diagnostics.error(statement.line, "lowering null-safe member call has unsupported receiver shape");
+        return false;
+    }
+
+    auto lowered_receiver = lower_expression(
+        *statement.expression.left->left,
+        receiver_abi->llvm_type,
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output,
+        resolved.receiver_type_name
+    );
+    if (!lowered_receiver.has_value()) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering member call statement failed",
+                session.failures.expression
+            )
+        );
+        return false;
+    }
+
+    auto const merge_block = llvm_block_name(
+        "nullsafe.call.merge",
+        next_llvm_block_index(session.state.next_block_index)
+    );
+    auto const block_index = next_llvm_block_index(session.state.next_block_index);
+    auto const some_block = llvm_block_name("nullsafe.call.some", block_index);
+    auto const empty_block = llvm_block_name("nullsafe.call.empty", block_index);
+
+    auto tag_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << tag_name << " = extractvalue " << receiver_abi->llvm_type << " "
+           << lowered_receiver->value << ", 0\n";
+    output << "  br i1 " << tag_name << ", label %" << some_block
+           << ", label %" << empty_block << "\n";
+
+    session.state.current_block = empty_block;
+    output << empty_block << ":\n";
+    output << "  br label %" << merge_block << "\n";
+
+    session.state.current_block = some_block;
+    output << some_block << ":\n";
+    auto payload_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << payload_name << " = extractvalue " << receiver_abi->llvm_type << " "
+           << lowered_receiver->value << ", 1\n";
+    auto receiver_payload = LoweredExpression {
+        .type = receiver_abi->payload_llvm_type,
+        .value = std::move(payload_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+
+    auto arguments = lower_member_call_arguments(
+        std::move(receiver_payload),
+        std::span<syntax::ExpressionSyntax const>(
+            statement.expression.arguments.data(),
+            statement.expression.arguments.size()
+        ),
+        function,
+        context,
+        session,
+        output
+    );
+    if (!arguments.has_value()) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::call_argument_failure,
+            target_name
+        );
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering member call statement failed",
+                session.failures.expression
+            )
+        );
+        return false;
+    }
+
+    emit_void_call(function, *arguments, output);
+    output << "  br label %" << merge_block << "\n";
+    output << merge_block << ":\n";
+    session.state.current_block = merge_block;
+    return true;
+}
+
 auto lower_dynamic_array_push_statement(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -2620,12 +2779,14 @@ auto lower_call_statement(
                 context,
                 session.state
             )) {
-            diagnostics.error(
-                statement.line,
-                "lowering void null-safe member call statements requires an accepted Maybe<Unit> ABI: " +
-                    *void_target
+            static_cast<void>(*void_target);
+            return lower_void_null_safe_member_call_statement(
+                statement,
+                context,
+                session,
+                diagnostics,
+                output
             );
-            return false;
         }
 
         auto source_type = source_type_name_for_expression(

@@ -20,8 +20,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   nested-member, two-owner, and two nested-owner member-cleanup fixtures.
 - Array CLI production coverage now runs through targeted CTest modes for examples, core computed arrays, returned
   cleanup, forwarding, and final-control cleanup while preserving direct full-matrix execution.
-- Non-void null-safe member calls used as statements are covered directly at the statement-emitter seam; void null-safe
-  calls remain gated on an accepted `Maybe<Unit>` ABI.
+- Null-safe member calls used as statements are covered directly at the statement-emitter seam. Non-void calls reuse
+  expression lowering and discard `Maybe<T>` results; void calls branch on the receiver tag and merge without
+  materializing `Maybe<Unit>`.
 - Name hygiene has a reusable lowering symbol registry for source functions, foreign declarations, generated helpers,
   runtime prelude declarations, Drop symbols, and record type identifiers.
 
@@ -31,6 +32,7 @@ This note is an implementation snapshot. It does not define language syntax or s
   shapes.
 - Cleanup should move toward automatic lowering from checked ownership/type facts for ordinary writers. `Drop` remains
   internal or future-gated unless the language surface explicitly accepts a destructor protocol.
+- Value-level `Maybe<Unit>` remains gated; current void null-safe member-call support is statement-only.
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
   ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Semantic planned-drop reports,
   drop authorization reports, DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI

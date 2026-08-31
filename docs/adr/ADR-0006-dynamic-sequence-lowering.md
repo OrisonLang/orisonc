@@ -2540,6 +2540,9 @@ representation.
   narrower returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
 - Generic CLI runtime-indexed constructor/member cleanup coverage is isolated into its own CTest mode, keeping `core`
   focused on non-runtime-index fixture families while preserving direct all-mode execution.
+- Void-returning null-safe member calls used as statements lower through receiver-tag control flow: the present branch
+  extracts the `Maybe<T>` payload and emits the void member call, the empty branch skips the call, and both branches
+  merge without materializing `Maybe<Unit>`. Value-level `Maybe<Unit>` remains future-gated.
 
 ## Follow-up work
 

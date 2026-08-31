@@ -1,7 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-08-31: Void-returning null-safe member calls used as statements now lower by branching on the receiver
+  `Maybe<T>` tag, calling the member only for the present payload, and merging without materializing `Maybe<Unit>`.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
-  preserving the accepted discard-result lowering path while keeping void null-safe calls gated on a future `Maybe<Unit>` ABI.
+  preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
   cleanup, forwarding, and final-control cleanup. Direct execution without a mode still runs the full matrix.
 - 2026-08-29: Ordinary production `--emit-llvm` smoke coverage now pins runtime-index member cleanup for the
@@ -1447,8 +1449,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-14: non-void null-safe member-call statements now lower by reusing the null-safe expression path and
   discarding the produced `Maybe<T>` value; void-returning null-safe member-call statements remain unsupported until a
   `Maybe<Unit>` ABI policy is accepted.
-- 2026-07-14: void-returning null-safe member-call statements now fail with a dedicated `Maybe<Unit>` ABI diagnostic
-  instead of falling through generic result-type inference failure.
+- 2026-07-14: void-returning null-safe member-call statements gained a dedicated `Maybe<Unit>` ABI diagnostic before
+  statement-only tag-control lowering replaced that diagnostic on 2026-08-31.
 - 2026-07-05: source-type recovery now propagates through ternary expressions when both branches have the same source
   type, allowing fixed-array `for` iterables selected by `?:`; `local_ternary_array_for.or` pins backend validation.
 - 2026-07-05: source-type recovery now recognizes lowerable explicit casts and homogeneous explicitly typed array

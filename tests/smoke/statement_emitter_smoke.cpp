@@ -881,12 +881,17 @@ int main() {
         .method_name = "observe",
         .signature = orison::lowering::LoweredFunctionSignature {
             .return_type = "void",
-            .parameter_types = {"i32"},
-            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .parameter_types = {"%record.Device"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
             .symbol_name = "Device.observe",
         },
     });
 
+    call_state.immutable_bindings.emplace("maybe_receiver", orison::lowering::LoweredExpression {
+        .type = "{ i1, %record.Device }",
+        .value = "%maybe_receiver",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
     call_state.source_type_names["maybe_receiver"] = "Maybe<Device>";
     auto null_safe_void_member_call_statement = orison::syntax::StatementSyntax {};
     null_safe_void_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
@@ -904,26 +909,26 @@ int main() {
     null_safe_void_member_call_statement.expression.left->left->text = "maybe_receiver";
     diagnostics = {};
     output = {};
-    assert(!orison::lowering::lower_call_statement(
+    assert(orison::lowering::lower_call_statement(
         null_safe_void_member_call_statement,
         context,
         call_session,
         diagnostics,
         output
     ));
-    assert(
-        diagnostics.entries().front().message ==
-        "lowering void null-safe member call statements requires an accepted Maybe<Unit> ABI: Device.observe"
-    );
-    assert(output.str().empty());
+    assert(!diagnostics.has_errors());
+    assert(output.str().find("nullsafe.call.empty.") != std::string::npos);
+    assert(output.str().find("nullsafe.call.some.") != std::string::npos);
+    assert(output.str().find("nullsafe.call.merge.") != std::string::npos);
+    assert(output.str().find("call void @Device.observe(%record.Device") != std::string::npos);
 
     lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Device",
         .method_name = "observe",
         .signature = orison::lowering::LoweredFunctionSignature {
             .return_type = "void",
-            .parameter_types = {"i32"},
-            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .parameter_types = {"%record.Device"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
             .symbol_name = "Device.observe.duplicate",
         },
     });
