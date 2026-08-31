@@ -2507,6 +2507,9 @@ representation.
   wrapper-result final-consumer cleanup fixtures now have the same generic CLI production coverage matrix.
 - Owned-result branch-consumer nested helper-argument and asymmetric nested helper-argument cleanup fixtures now have
   the same generic CLI production coverage matrix.
+- A generic CLI coverage-gap audit found remaining positive `DynamicArray` cleanup fixtures outside the production CLI
+  matrix. Direct returned, alias-chain, helper-call, choice-payload, aggregate-field, nested-field, and branch-returned
+  computed cleanup fixtures now have generic CLI production coverage.
 
 ## Follow-up work
 
@@ -2518,5 +2521,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Audit remaining `DynamicArray` cleanup fixtures for generic CLI production coverage gaps before selecting the next
-  implementation slice.
+- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field `DynamicArray` cleanup
+  fixtures.

@@ -3086,3 +3086,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   and wrapper-result final-consumer cleanup fixtures now have the same generic CLI production coverage matrix.
 - 2026-08-30: Owned-result branch-consumer nested helper-argument and asymmetric nested helper-argument cleanup
   fixtures now have the same generic CLI production coverage matrix.
+- 2026-08-30: A generic CLI coverage-gap audit found remaining positive `DynamicArray` cleanup fixtures outside the
+  production CLI matrix. Direct returned, alias-chain, helper-call, choice-payload, aggregate-field, nested-field, and
+  branch-returned computed cleanup fixtures now have generic CLI production coverage.

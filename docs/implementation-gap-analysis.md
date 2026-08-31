@@ -73,7 +73,9 @@ This note is an implementation snapshot. It does not define language syntax or s
   matrix. Owned-result branch-consumer nested-ternary, asymmetric-wrapper, mixed-wrapper, nested-wrapper-argument, and
   wrapper-result final-consumer cleanup fixtures now run through that same production matrix. The remaining nested
   helper-argument and asymmetric nested helper-argument branch-consumer cleanup fixtures now run through the same
-  production matrix.
+  production matrix. A generic CLI coverage-gap audit found remaining positive `DynamicArray` cleanup fixtures outside
+  the production CLI matrix; direct returned, alias-chain, helper-call, choice-payload, aggregate-field, nested-field,
+  and branch-returned computed cleanup fixtures now run through the same production matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -95,5 +97,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit remaining `DynamicArray` cleanup fixtures for generic CLI production coverage gaps before selecting the next
-  implementation slice.
+- Extend generic CLI production coverage to branch/switch forwarded returned aggregate-field `DynamicArray` cleanup
+  fixtures.
