@@ -3104,3 +3104,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   have generic CLI production coverage.
 - 2026-08-30: Owned-result direct nested-if/switch and mixed if-switch/switch-if branch cleanup fixtures now have
   generic CLI production coverage.
+- 2026-08-30: Owned-result multi-nested-switch, if-two-switches, and switch-two-ifs cleanup fixtures now have generic
+  CLI production coverage.

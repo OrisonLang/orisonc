@@ -4337,6 +4337,46 @@ auto main() -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_owned_result_multi_nested_switch_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_if_two_switches_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_if_two_switches_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_if_two_switches_helper_call_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_if_two_switches_helper_call_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_switch_two_ifs_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup"
     );

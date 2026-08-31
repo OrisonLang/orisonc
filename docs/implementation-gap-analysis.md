@@ -86,7 +86,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   production matrix. Owned-parameter branch/switch cleanup fixtures now run through the same production matrix.
   Owned-result direct, returned-local, and nested final-if/final-switch cleanup fixtures now run through the same
   production matrix. Owned-result direct nested-if/switch and mixed if-switch/switch-if branch cleanup fixtures now run
-  through the same production matrix.
+  through the same production matrix. Owned-result multi-nested-switch, if-two-switches, and switch-two-ifs cleanup
+  fixtures now run through the same production matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -108,4 +109,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to owned-result multi-nested-switch `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to returned aggregate-field final-if/final-switch `DynamicArray` cleanup
+  fixtures.

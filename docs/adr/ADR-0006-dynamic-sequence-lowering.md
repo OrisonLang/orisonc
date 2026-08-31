@@ -2524,6 +2524,8 @@ representation.
   CLI production coverage.
 - Owned-result direct nested-if/switch and mixed if-switch/switch-if branch cleanup fixtures now have generic CLI
   production coverage.
+- Owned-result multi-nested-switch, if-two-switches, and switch-two-ifs cleanup fixtures now have generic CLI
+  production coverage.
 
 ## Follow-up work
 
@@ -2535,4 +2537,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Extend generic CLI production coverage to owned-result multi-nested-switch `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to returned aggregate-field final-if/final-switch `DynamicArray` cleanup
+  fixtures.
