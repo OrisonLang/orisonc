@@ -319,6 +319,11 @@ add_test(
 )
 
 add_test(
+    NAME orison_driver_generic_cli_dynamic_array_safety_boundaries_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_safety_boundaries
+)
+
+add_test(
     NAME orison_driver_generic_cli_runtime_indexed_cleanup_smoke
     COMMAND orison_driver_generic_cli_smoke runtime_indexed_cleanup
 )

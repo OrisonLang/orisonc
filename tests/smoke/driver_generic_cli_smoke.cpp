@@ -3734,6 +3734,7 @@ auto main(int argc, char** argv) -> int {
         selected_mode == "dynamic_array_cleanup_forwarded_computed" ||
         selected_mode == "dynamic_array_cleanup_forwarded_final" ||
         selected_mode == "dynamic_array_cleanup_wrapper" ||
+        selected_mode == "dynamic_array_safety_boundaries" ||
         selected_mode == "runtime_indexed_cleanup";
     if (!valid_mode) {
         std::fprintf(stderr, "unknown driver generic CLI smoke mode: %s\n", std::string(selected_mode).c_str());
@@ -5400,6 +5401,9 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_owned_direct_indexed_scope_cleanup_run.or"
     );
+    }
+
+    if (run_mode("dynamic_array_safety_boundaries")) {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_owned_read_rejected.or",
@@ -5430,6 +5434,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_receiver_append_missing_drop.or",
         "lowering DynamicArray push to owned element requires authorized element drop"
     );
+    }
+
+    if (run_mode("core")) {
     assert_cli_parse_success(
         executable,
         smoke_temp_root / "orison_cli_generic_function_dependent_same_width_integer.or",
