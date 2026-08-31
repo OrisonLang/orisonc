@@ -3116,3 +3116,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   owned-result, returned, control-flow, and forwarded cleanup groups while preserving the direct all-mode smoke path.
 - 2026-08-30: Generic CLI timing showed `core` and forwarded cleanup as the longest split modes. Forwarded cleanup is
   further split into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
+- 2026-08-30: Generic CLI runtime-indexed constructor/member cleanup coverage is isolated into its own CTest mode so
+  `core` no longer carries that lowering-heavy fixture family.

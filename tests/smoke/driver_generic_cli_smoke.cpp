@@ -3733,7 +3733,8 @@ auto main(int argc, char** argv) -> int {
         selected_mode == "dynamic_array_cleanup_returned_final" ||
         selected_mode == "dynamic_array_cleanup_forwarded_computed" ||
         selected_mode == "dynamic_array_cleanup_forwarded_final" ||
-        selected_mode == "dynamic_array_cleanup_wrapper";
+        selected_mode == "dynamic_array_cleanup_wrapper" ||
+        selected_mode == "runtime_indexed_cleanup";
     if (!valid_mode) {
         std::fprintf(stderr, "unknown driver generic CLI smoke mode: %s\n", std::string(selected_mode).c_str());
         return 2;
@@ -4745,6 +4746,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "choice_constructor_multi_variant_indexed_member_path_reuse_rejected.or",
         "use after move: holder.items.element0"
     );
+    }
+
+    if (run_mode("runtime_indexed_cleanup")) {
     assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
@@ -5278,6 +5282,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
         "use after move: items[index]"
     );
+    }
+
+    if (run_mode("core")) {
     assert_cli_run_fixture_success(
         executable,
         fixtures / "choice_constructor_indexed_member_path_move_run.or"

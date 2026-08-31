@@ -298,6 +298,11 @@ add_test(
     COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_wrapper
 )
 
+add_test(
+    NAME orison_driver_generic_cli_runtime_indexed_cleanup_smoke
+    COMMAND orison_driver_generic_cli_smoke runtime_indexed_cleanup
+)
+
 add_executable(orison_driver_aggregate_field_cli_smoke
     smoke/driver_aggregate_field_cli_smoke.cpp
 )

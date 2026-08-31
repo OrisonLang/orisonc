@@ -94,7 +94,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   the positive `dynamic_array*cleanup_run.or` fixture audit now reports no remaining generic CLI production gaps. The
   enlarged generic CLI cleanup matrix is split into targeted CTest modes while preserving direct all-mode execution.
   Timing showed `core` and forwarded cleanup as the longest generic CLI modes, so forwarded cleanup is further split
-  into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
+  into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes. Runtime-indexed
+  constructor/member cleanup coverage is also isolated from `core` into its own generic CLI CTest mode.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic

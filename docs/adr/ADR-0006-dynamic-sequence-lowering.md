@@ -2536,6 +2536,8 @@ representation.
   returned, control-flow, and forwarded cleanup groups while preserving direct all-mode smoke execution.
 - Generic CLI timing showed `core` and forwarded cleanup as the longest split modes. Forwarded cleanup now has
   narrower returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
+- Generic CLI runtime-indexed constructor/member cleanup coverage is isolated into its own CTest mode, keeping `core`
+  focused on non-runtime-index fixture families while preserving direct all-mode execution.
 
 ## Follow-up work
 
