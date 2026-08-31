@@ -3097,3 +3097,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   generic CLI production coverage.
 - 2026-08-30: Choice-payload switch/final-switch binding owned-computed cleanup fixtures now have generic CLI
   production coverage.
+- 2026-08-30: Local final-if/final-switch `DynamicArray` cleanup fixtures, including consumed-owner variants, now have
+  generic CLI production coverage.

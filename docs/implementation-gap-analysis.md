@@ -82,7 +82,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   run through the same production matrix. Straight helper-forwarded returned nested aggregate-field final-if/final-
   switch cleanup fixtures now run through the same production matrix.
   Choice-payload switch/final-switch binding owned-computed cleanup fixtures now run through the same production
-  matrix.
+  matrix. Local final-if/final-switch cleanup fixtures, including consumed-owner variants, now run through the same
+  production matrix.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -104,4 +105,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend generic CLI production coverage to local final-if/final-switch `DynamicArray` cleanup fixtures.
+- Extend generic CLI production coverage to owned-parameter branch/switch `DynamicArray` cleanup fixtures.
