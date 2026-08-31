@@ -4247,6 +4247,16 @@ auto main() -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup"
     );
