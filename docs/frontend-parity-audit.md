@@ -8,6 +8,9 @@
   generic CLI mode across `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
 - 2026-08-31: Runtime-index DynamicArray single-member transfer summary coverage now pins typed-gate readiness,
   production enablement, helper target, and zero sibling bindings in the generic CLI runtime-indexed mode.
+- 2026-08-31: Runtime-index DynamicArray single-member transfer `--emit-llvm` coverage now pins the ordered IR shape:
+  computed index, moved-member load, cleanup entry, moved-slot helper call, full sibling-element Drop, deallocation,
+  and descriptor zeroing.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
