@@ -3082,3 +3082,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-30: Returned aggregate-field stored choice-payload forwarding, branch-forwarding, nested-field,
   distinct nested-field, and multi-hop returned forwarding `DynamicArray` fixtures now have generic CLI production
   coverage across ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
+- 2026-08-30: Owned-result branch-consumer nested-ternary, asymmetric-wrapper, mixed-wrapper, nested-wrapper-argument,
+  and wrapper-result final-consumer cleanup fixtures now have the same generic CLI production coverage matrix.

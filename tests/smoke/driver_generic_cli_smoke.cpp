@@ -4214,6 +4214,38 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_multi_hop_forwarding_run.or",
         smoke_temp_root / "dynamic_array_returned_multi_hop_forwarding"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures /
+            "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_asymmetric_wrapper_cleanup_run.or",
+        smoke_temp_root /
+            "dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_asymmetric_wrapper_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures /
+            "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_mixed_wrapper_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_mixed_wrapper_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures /
+            "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_nested_wrapper_argument_cleanup_run.or",
+        smoke_temp_root /
+            "dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_nested_wrapper_argument_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures /
+            "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_wrapper_result_final_consumer_cleanup_run.or",
+        smoke_temp_root /
+            "dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_wrapper_result_final_consumer_cleanup"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or"
