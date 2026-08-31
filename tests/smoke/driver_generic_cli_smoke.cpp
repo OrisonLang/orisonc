@@ -3700,7 +3700,7 @@ auto underconstrained_generic_record_for_lines() -> std::vector<std::string> {
 
 }  // namespace
 
-auto main() -> int {
+auto main(int argc, char** argv) -> int {
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
         original_temp_root / ("orison_driver_generic_cli_smoke_" + std::to_string(static_cast<long long>(::getpid())));
@@ -3711,7 +3711,20 @@ auto main() -> int {
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto fixtures = std::filesystem::current_path().parent_path().parent_path() / "tests" / "fixtures";
+    auto selected_mode = argc > 1 ? std::string_view {argv[1]} : std::string_view {"all"};
+    auto run_mode = [selected_mode](std::string_view mode) {
+        return selected_mode == "all" || selected_mode == mode;
+    };
+    auto valid_mode =
+        selected_mode == "all" || selected_mode == "core" || selected_mode == "dynamic_array_cleanup_owned_result" ||
+        selected_mode == "dynamic_array_cleanup_returned" || selected_mode == "dynamic_array_cleanup_control" ||
+        selected_mode == "dynamic_array_cleanup_forwarded";
+    if (!valid_mode) {
+        std::fprintf(stderr, "unknown driver generic CLI smoke mode: %s\n", std::string(selected_mode).c_str());
+        return 2;
+    }
 
+    if (run_mode("core")) {
     assert_cli_parse_failure(
         executable,
         smoke_temp_root / "orison_cli_generic_function_dependent_argument_type.or",
@@ -4089,6 +4102,9 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_owned_returned_fixed_array_record_field_move_run.or"
     );
+    }
+
+    if (run_mode("dynamic_array_cleanup_owned_result")) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_owned_result_three_case_switch_cleanup_run.or",
@@ -4205,6 +4221,9 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_stored_helper_cleanup_run.or",
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup"
     );
+    }
+
+    if (run_mode("dynamic_array_cleanup_returned")) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_run.or",
@@ -4260,6 +4279,9 @@ auto main() -> int {
         fixtures / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup"
     );
+    }
+
+    if (run_mode("dynamic_array_cleanup_control")) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
@@ -4390,6 +4412,9 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run.or",
         smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup"
     );
+    }
+
+    if (run_mode("dynamic_array_cleanup_forwarded")) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_run.or",
@@ -4611,6 +4636,9 @@ auto main() -> int {
         smoke_temp_root /
             "dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_wrapper_result_final_consumer_cleanup"
     );
+    }
+
+    if (run_mode("core")) {
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or"
@@ -5378,6 +5406,7 @@ auto main() -> int {
             {"    return consume_pair(Header([1, 2], 1), Pair(Header([1, 2], 1), 1 as Int16))"}
         )
     );
+    }
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

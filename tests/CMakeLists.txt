@@ -260,7 +260,27 @@ target_compile_features(orison_driver_generic_cli_smoke PRIVATE cxx_std_23)
 
 add_test(
     NAME orison_driver_generic_cli_smoke
-    COMMAND orison_driver_generic_cli_smoke
+    COMMAND orison_driver_generic_cli_smoke core
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_owned_result_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_owned_result
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_returned_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_returned
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_control_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_control
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_forwarded_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_forwarded
 )
 
 add_executable(orison_driver_aggregate_field_cli_smoke

@@ -3112,3 +3112,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   now have generic CLI production coverage.
 - 2026-08-30: Remaining owned-result helper cleanup fixtures now have generic CLI production coverage. The positive
   `dynamic_array*cleanup_run.or` fixture audit now reports no remaining generic CLI production gaps.
+- 2026-08-30: Generic CLI `DynamicArray` cleanup production coverage is split into targeted CTest modes for
+  owned-result, returned, control-flow, and forwarded cleanup groups while preserving the direct all-mode smoke path.
