@@ -3093,3 +3093,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   aggregate-field owned-computed cleanup fixtures now have generic CLI production coverage.
 - 2026-08-30: Branch-mixed-forwarded, switch-forwarded, and switch-mixed-forwarded returned aggregate-field and nested
   aggregate-field final-if/final-switch cleanup fixtures now have generic CLI production coverage.
+- 2026-08-30: Straight helper-forwarded returned nested aggregate-field final-if/final-switch cleanup fixtures now have
+  generic CLI production coverage.

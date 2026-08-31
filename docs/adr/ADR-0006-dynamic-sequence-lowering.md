@@ -2514,6 +2514,8 @@ representation.
   owned-computed cleanup fixtures now have generic CLI production coverage.
 - Branch-mixed-forwarded, switch-forwarded, and switch-mixed-forwarded returned aggregate-field and nested
   aggregate-field final-if/final-switch cleanup fixtures now have generic CLI production coverage.
+- Straight helper-forwarded returned nested aggregate-field final-if/final-switch cleanup fixtures now have generic CLI
+  production coverage.
 
 ## Follow-up work
 
@@ -2525,5 +2527,4 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Audit the remaining positive `DynamicArray` cleanup fixtures outside generic CLI production coverage and select the
-  next smallest fixture family.
+- Extend generic CLI production coverage to choice-payload switch/final-switch binding owned-computed cleanup fixtures.
