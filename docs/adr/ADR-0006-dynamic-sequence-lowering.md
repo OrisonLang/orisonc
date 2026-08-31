@@ -2534,6 +2534,8 @@ representation.
   `dynamic_array*cleanup_run.or` fixture audit now reports no remaining generic CLI production gaps.
 - The generic CLI `DynamicArray` cleanup production matrix is split into targeted CTest modes for owned-result,
   returned, control-flow, and forwarded cleanup groups while preserving direct all-mode smoke execution.
+- Generic CLI timing showed `core` and forwarded cleanup as the longest split modes. Forwarded cleanup now has
+  narrower returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
 
 ## Follow-up work
 
@@ -2545,5 +2547,5 @@ representation.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.
-- Measure split generic CLI smoke timings under `ctest -j 16` and keep future production fixture families isolated by
-  mode.
+- Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
+  while keeping future production fixture families isolated by mode.

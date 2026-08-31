@@ -3114,3 +3114,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   `dynamic_array*cleanup_run.or` fixture audit now reports no remaining generic CLI production gaps.
 - 2026-08-30: Generic CLI `DynamicArray` cleanup production coverage is split into targeted CTest modes for
   owned-result, returned, control-flow, and forwarded cleanup groups while preserving the direct all-mode smoke path.
+- 2026-08-30: Generic CLI timing showed `core` and forwarded cleanup as the longest split modes. Forwarded cleanup is
+  further split into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.

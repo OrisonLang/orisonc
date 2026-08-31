@@ -279,8 +279,23 @@ add_test(
 )
 
 add_test(
-    NAME orison_driver_generic_cli_dynamic_array_cleanup_forwarded_smoke
-    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_forwarded
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_returned_final_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_returned_final
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_forwarded_computed_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_forwarded_computed
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_forwarded_final_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_forwarded_final
+)
+
+add_test(
+    NAME orison_driver_generic_cli_dynamic_array_cleanup_wrapper_smoke
+    COMMAND orison_driver_generic_cli_smoke dynamic_array_cleanup_wrapper
 )
 
 add_executable(orison_driver_aggregate_field_cli_smoke

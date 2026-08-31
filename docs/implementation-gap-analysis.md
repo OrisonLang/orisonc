@@ -93,6 +93,8 @@ This note is an implementation snapshot. It does not define language syntax or s
   production matrix. Remaining owned-result helper cleanup fixtures now run through the same production matrix, and
   the positive `dynamic_array*cleanup_run.or` fixture audit now reports no remaining generic CLI production gaps. The
   enlarged generic CLI cleanup matrix is split into targeted CTest modes while preserving direct all-mode execution.
+  Timing showed `core` and forwarded cleanup as the longest generic CLI modes, so forwarded cleanup is further split
+  into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
   The remaining runtime-index option-literal audit found no additional helper cleanup that would improve staged-gate
   clarity.
 - FFI lowering supports fixed explicit parameters and selected library links; general C binding discovery and dynamic
@@ -114,5 +116,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Measure the split generic CLI smoke timings under `ctest -j 16`, then return to the remaining lowering gaps with the
-  slowest production fixture family isolated.
+- Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that is still blocked or diagnostic-only,
+  now that the broad production cleanup matrix is isolated for faster feedback.

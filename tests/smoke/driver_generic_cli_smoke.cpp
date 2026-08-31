@@ -3715,10 +3715,25 @@ auto main(int argc, char** argv) -> int {
     auto run_mode = [selected_mode](std::string_view mode) {
         return selected_mode == "all" || selected_mode == mode;
     };
+    auto run_any_mode = [selected_mode](std::initializer_list<std::string_view> modes) {
+        if (selected_mode == "all") {
+            return true;
+        }
+        for (auto mode : modes) {
+            if (selected_mode == mode) {
+                return true;
+            }
+        }
+        return false;
+    };
     auto valid_mode =
         selected_mode == "all" || selected_mode == "core" || selected_mode == "dynamic_array_cleanup_owned_result" ||
         selected_mode == "dynamic_array_cleanup_returned" || selected_mode == "dynamic_array_cleanup_control" ||
-        selected_mode == "dynamic_array_cleanup_forwarded";
+        selected_mode == "dynamic_array_cleanup_forwarded" ||
+        selected_mode == "dynamic_array_cleanup_returned_final" ||
+        selected_mode == "dynamic_array_cleanup_forwarded_computed" ||
+        selected_mode == "dynamic_array_cleanup_forwarded_final" ||
+        selected_mode == "dynamic_array_cleanup_wrapper";
     if (!valid_mode) {
         std::fprintf(stderr, "unknown driver generic CLI smoke mode: %s\n", std::string(selected_mode).c_str());
         return 2;
@@ -4414,7 +4429,7 @@ auto main(int argc, char** argv) -> int {
     );
     }
 
-    if (run_mode("dynamic_array_cleanup_forwarded")) {
+    if (run_any_mode({"dynamic_array_cleanup_forwarded", "dynamic_array_cleanup_returned_final"})) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_run.or",
@@ -4480,6 +4495,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or",
         smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    }
+
+    if (run_any_mode({"dynamic_array_cleanup_forwarded", "dynamic_array_cleanup_forwarded_computed"})) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_branch_returned_owned_computed_for_cleanup_run.or",
@@ -4520,6 +4538,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup"
     );
+    }
+
+    if (run_any_mode({"dynamic_array_cleanup_forwarded", "dynamic_array_cleanup_forwarded_final"})) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_run.or",
@@ -4604,6 +4625,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or",
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    }
+
+    if (run_any_mode({"dynamic_array_cleanup_forwarded", "dynamic_array_cleanup_wrapper"})) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_cleanup_run.or",
