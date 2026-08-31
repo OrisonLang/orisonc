@@ -568,6 +568,7 @@ auto runtime_indexed_cleanup_module_ir_shape_blocker_detail(
                << " descriptor-gep " << (shape.descriptor_element_gep_found ? "present" : "absent")
                << " inline-gep " << (shape.inline_element_gep_found ? "present" : "absent")
                << " zero-store " << (shape.zero_store_found ? "present" : "absent")
+               << " descriptor-zero-store " << (shape.descriptor_zero_store_found ? "present" : "absent")
                << " deallocate " << (shape.deallocate_call_found ? "present" : "absent");
         return detail.str();
     }

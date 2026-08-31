@@ -84,6 +84,7 @@ struct RuntimeIndexedCleanupIrShapeSummary {
     bool descriptor_element_gep_found = false;
     bool inline_element_gep_found = false;
     bool zero_store_found = false;
+    bool descriptor_zero_store_found = false;
     bool deallocate_call_found = false;
     bool common_loop_shape_ready = false;
     bool descriptor_storage_shape_ready = false;

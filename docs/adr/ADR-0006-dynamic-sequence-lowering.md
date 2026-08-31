@@ -2545,6 +2545,8 @@ representation.
   merge without materializing `Maybe<Unit>`. Value-level `Maybe<Unit>` remains future-gated.
 - Descriptor-backed runtime-index DynamicArray cleanup now zero-finalizes the descriptor owner after deallocation,
   matching the newer member-cleanup rewrite tail.
+- Runtime-index constructor-move IR-shape diagnostics now report descriptor-owner zeroing separately from inline
+  element zeroing, so descriptor-backed cleanup readiness is explicit and unambiguous.
 
 ## Follow-up work
 

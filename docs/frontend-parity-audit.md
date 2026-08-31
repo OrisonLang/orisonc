@@ -21,6 +21,8 @@
   and descriptor zeroing for both direct payload and nested aggregate-owner cleanup.
 - 2026-08-31: Older runtime-index DynamicArray sibling-preserving cleanup now finalizes descriptor-backed owners after
   deallocation; direct and computed sibling CLI IR checks pin the zeroing.
+- 2026-08-31: Runtime-index constructor-move IR-shape reports now distinguish inline element zeroing from
+  descriptor-owner zeroing with an explicit `descriptor-zero-store` field.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

@@ -16768,7 +16768,8 @@ auto main() -> int {
     );
     assert(
         ir_shape_blocked_member_cleanup_promotion_state.module_ir_shape_blocker_detail.find(
-            "descriptor-load present descriptor-gep present inline-gep absent zero-store absent deallocate absent"
+            "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
+            "descriptor-zero-store present deallocate absent"
         ) != std::string::npos
     );
     auto const ir_shape_blocked_member_cleanup_promotion_lines =
@@ -16788,7 +16789,8 @@ auto main() -> int {
     );
     assert_any_line_contains(
         ir_shape_blocked_member_cleanup_promotion_lines,
-        "descriptor-load present descriptor-gep present inline-gep absent zero-store absent deallocate absent"
+        "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
+        "descriptor-zero-store present deallocate absent"
     );
     synthetic_ready_member_cleanup_promotion_result
         .runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready = true;
@@ -18993,9 +18995,11 @@ auto main() -> int {
     assert(same_layout_fixed_shape.common_loop_shape_ready);
     assert(same_layout_fixed_shape.inline_storage_shape_ready);
     assert(!same_layout_fixed_shape.descriptor_storage_shape_ready);
+    assert(!same_layout_fixed_shape.descriptor_zero_store_found);
     assert(same_layout_dynamic_shape.common_loop_shape_ready);
     assert(same_layout_dynamic_shape.descriptor_storage_shape_ready);
     assert(!same_layout_dynamic_shape.inline_storage_shape_ready);
+    assert(same_layout_dynamic_shape.descriptor_zero_store_found);
     auto same_layout_ir_shape_parity =
         orison::pipeline::runtime_indexed_cleanup_ir_shape_parity_summary(
             runtime_indexed_fixed_array_same_shape_plan,
@@ -19026,7 +19030,8 @@ auto main() -> int {
         "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
         "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
         "descriptor-storage blocked inline-storage ready descriptor-load absent "
-        "descriptor-gep absent inline-gep present zero-store present deallocate absent"
+        "descriptor-gep absent inline-gep present zero-store present "
+        "descriptor-zero-store absent deallocate absent"
     );
     assert_runtime_indexed_constructor_move_shape_faults(
         pipeline,
@@ -19039,13 +19044,13 @@ auto main() -> int {
                     "runtime-index cleanup module-ir shape is blocked owner items "
                     "common-loop ready drop-call ready descriptor-storage blocked inline-storage blocked "
                     "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
-                    "deallocate absent",
+                    "descriptor-zero-store present deallocate absent",
                 .expected_ir_shape =
                     "runtime-index cleanup constructor-move ir-shape owner items lines 23 "
                     "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
                     "descriptor-storage blocked inline-storage blocked descriptor-load present descriptor-gep present "
-                    "inline-gep absent zero-store absent deallocate absent",
+                    "inline-gep absent zero-store absent descriptor-zero-store present deallocate absent",
             },
             {
                 .fault = orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitDropCall,
@@ -19053,13 +19058,13 @@ auto main() -> int {
                     "runtime-index cleanup module-ir shape is blocked owner items "
                     "common-loop blocked drop-call blocked descriptor-storage ready inline-storage blocked "
                     "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
-                    "deallocate present",
+                    "descriptor-zero-store present deallocate present",
                 .expected_ir_shape =
                     "runtime-index cleanup constructor-move ir-shape owner items lines 23 "
                     "common-loop blocked condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call blocked "
                     "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
-                    "inline-gep absent zero-store absent deallocate present",
+                    "inline-gep absent zero-store absent descriptor-zero-store present deallocate present",
             },
             {
                 .fault = orison::pipeline::RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock,
@@ -19067,13 +19072,13 @@ auto main() -> int {
                     "runtime-index cleanup module-ir shape is blocked owner items "
                     "common-loop blocked drop-call ready descriptor-storage ready inline-storage blocked "
                     "descriptor-load present descriptor-gep present inline-gep absent zero-store absent "
-                    "deallocate present",
+                    "descriptor-zero-store present deallocate present",
                 .expected_ir_shape =
                     "runtime-index cleanup constructor-move ir-shape owner items lines 23 "
                     "common-loop blocked condition-blocks 0 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
                     "descriptor-storage ready inline-storage blocked descriptor-load present descriptor-gep present "
-                    "inline-gep absent zero-store absent deallocate present",
+                    "inline-gep absent zero-store absent descriptor-zero-store present deallocate present",
             },
         }
     );
@@ -19087,13 +19092,13 @@ auto main() -> int {
                     "runtime-index cleanup module-ir shape is blocked owner items "
                     "common-loop ready drop-call ready descriptor-storage blocked inline-storage blocked "
                     "descriptor-load absent descriptor-gep absent inline-gep present zero-store absent "
-                    "deallocate absent",
+                    "descriptor-zero-store absent deallocate absent",
                 .expected_ir_shape =
                     "runtime-index cleanup constructor-move ir-shape owner items lines 18 "
                     "common-loop ready condition-blocks 1 live-check-blocks 1 skip-blocks 1 "
                     "drop-blocks 1 continue-blocks 1 exit-blocks 1 drop-call ready "
                     "descriptor-storage blocked inline-storage blocked descriptor-load absent descriptor-gep absent "
-                    "inline-gep present zero-store absent deallocate absent",
+                    "inline-gep present zero-store absent descriptor-zero-store absent deallocate absent",
             },
         }
     );

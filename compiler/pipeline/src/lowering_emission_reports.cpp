@@ -2597,6 +2597,10 @@ auto runtime_indexed_cleanup_ir_shape_summary(
             "  store " + plan.ir_plan.element_llvm_type_name + " zeroinitializer, ptr " +
             plan.ir_plan.element_address_name + "\n"
         ),
+        .descriptor_zero_store_found = has(
+            "  store " + plan.ir_plan.owner_llvm_type_name + " zeroinitializer, ptr " +
+            plan.ir_plan.owner_address_name + "\n"
+        ),
         .deallocate_call_found = has(
             "  call void @" + plan.ir_plan.deallocate_callee_name + "(ptr " +
             plan.ir_plan.descriptor_data_value_name + ", i64 "
@@ -2619,7 +2623,8 @@ auto runtime_indexed_cleanup_ir_shape_summary(
         summary.descriptor_element_gep_found &&
         summary.deallocate_call_found &&
         !summary.inline_element_gep_found &&
-        !summary.zero_store_found;
+        !summary.zero_store_found &&
+        summary.descriptor_zero_store_found;
     summary.inline_storage_shape_ready =
         summary.inline_element_gep_found &&
         summary.zero_store_found &&
@@ -2693,6 +2698,7 @@ auto runtime_indexed_constructor_move_ir_shape_report(
            << " descriptor-gep " << (summary.descriptor_element_gep_found ? "present" : "absent")
            << " inline-gep " << (summary.inline_element_gep_found ? "present" : "absent")
            << " zero-store " << (summary.zero_store_found ? "present" : "absent")
+           << " descriptor-zero-store " << (summary.descriptor_zero_store_found ? "present" : "absent")
            << " deallocate " << (summary.deallocate_call_found ? "present" : "absent");
     return report.str();
 }

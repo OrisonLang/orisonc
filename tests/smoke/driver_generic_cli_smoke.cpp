@@ -705,6 +705,7 @@ void assert_cli_runtime_indexed_constructor_move_ir_shape(
     std::string_view descriptor_gep,
     std::string_view inline_gep,
     std::string_view zero_store,
+    std::string_view descriptor_zero_store,
     std::string_view deallocate
 ) {
     auto command =
@@ -721,6 +722,7 @@ void assert_cli_runtime_indexed_constructor_move_ir_shape(
         " descriptor-gep " + std::string(descriptor_gep) +
         " inline-gep " + std::string(inline_gep) +
         " zero-store " + std::string(zero_store) +
+        " descriptor-zero-store " + std::string(descriptor_zero_store) +
         " deallocate " + std::string(deallocate)
     ) != std::string::npos);
 }
@@ -5331,6 +5333,7 @@ auto main(int argc, char** argv) -> int {
         "present",
         "absent",
         "absent",
+        "present",
         "present"
     );
     assert_cli_runtime_indexed_constructor_move_plan_metadata(
@@ -5351,6 +5354,7 @@ auto main(int argc, char** argv) -> int {
         "absent",
         "present",
         "present",
+        "absent",
         "absent"
     );
     assert_cli_run_fixture_success(
