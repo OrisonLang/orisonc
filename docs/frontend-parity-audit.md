@@ -37,6 +37,8 @@
   `--emit-llvm`, `--emit-object`, and `--build` for reuse and missing-Drop boundaries.
 - 2026-08-31: Runtime-index direct computed-index member reuse rejection now uses the same production diagnostic
   matrix as sibling and nested reuse rejects.
+- 2026-08-31: Runtime-index nested missing sibling-Drop rejection now pins the detailed helper blocker with owner,
+  computed index, element, moved member, member path, and helper symbol.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

@@ -2555,6 +2555,8 @@ representation.
   `--emit-object`, and `--build` for post-move reuse and missing-Drop boundaries.
 - Runtime-index direct computed-index member reuse rejection now uses the same production diagnostic matrix as sibling
   and nested reuse rejects.
+- Runtime-index nested missing sibling-Drop rejection now pins the detailed helper blocker with owner, computed index,
+  element, moved member, member path, and helper symbol.
 - Runtime-index member cleanup multi-owner IR checks now pin helper reuse: same-shape cleanup emits one helper
   definition and owner-specific helper calls for each cleanup site.
 - Runtime-index choice-payload member cleanup IR checks now pin packet choice cleanup handoff before the promoted
