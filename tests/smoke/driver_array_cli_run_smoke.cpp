@@ -1666,11 +1666,14 @@ void assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
     std::filesystem::path const& object_path,
-    std::filesystem::path const& output_path
+    std::filesystem::path const& output_path,
+    std::string_view left_owner,
+    std::string_view right_owner
 ) {
     auto const expected_owner_fragment =
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
-        "element Payload owners holder.buckets.element0.values holder.buckets.element1.values "
+        "element Payload owners " +
+        std::string {left_owner} + " " + std::string {right_owner} + " "
         "[ownership join blocked] [cleanup owner blocked] (metadata only)";
 
     assert_contains(
@@ -2594,6 +2597,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
+    auto nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
@@ -3102,7 +3107,17 @@ auto main(int argc, char** argv) -> int {
         executable,
         static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
         smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch.o",
-        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch"
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch",
+        "holder.buckets.element0.values",
+        "holder.buckets.element1.values"
+    );
+    assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
+        executable,
+        nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch",
+        "holder.grid.element1.element0.values",
+        "holder.grid.element0.element1.values"
     );
     }
     if (runs_mode("returned_cleanup")) {

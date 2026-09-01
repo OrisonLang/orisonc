@@ -2583,6 +2583,9 @@ representation.
 - Static indexed aggregate DynamicArray owner-mismatch coverage now pins rejection for distinct fixed-array element
   owners like `holder.buckets[0].values` and `holder.buckets[1].values` across ordinary `run`, `--emit-llvm`,
   `--emit-object`, and `--build`.
+- Nested static indexed aggregate DynamicArray owner-mismatch coverage now pins rejection for distinct nested
+  fixed-array element owners like `holder.grid[1][0].values` and `holder.grid[0][1].values` across the same production
+  CLI paths.
 
 ## Follow-up work
 
