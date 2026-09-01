@@ -2547,6 +2547,8 @@ representation.
   matching the newer member-cleanup rewrite tail.
 - Runtime-index constructor-move IR-shape diagnostics now report descriptor-owner zeroing separately from inline
   element zeroing, so descriptor-backed cleanup readiness is explicit and unambiguous.
+- Descriptor-backed runtime-index cleanup production readiness now requires descriptor-owner zeroing; synthetic fault
+  coverage verifies that omitting the descriptor finalization tail blocks IR-shape readiness.
 
 ## Follow-up work
 

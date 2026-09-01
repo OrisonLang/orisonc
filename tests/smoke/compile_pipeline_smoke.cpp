@@ -1293,6 +1293,23 @@ auto descriptor_runtime_indexed_cleanup_ir_shape_plan_without_deallocate_tail()
     return plan;
 }
 
+auto descriptor_runtime_indexed_cleanup_ir_shape_plan_without_descriptor_zero_store()
+    -> orison::lowering::RuntimeIndexedCleanupEmissionPlan {
+    auto plan = descriptor_runtime_indexed_cleanup_ir_shape_plan();
+    plan.gated_ir_slice_lines.erase(
+        std::remove_if(
+            plan.gated_ir_slice_lines.begin(),
+            plan.gated_ir_slice_lines.end(),
+            [](std::string const& line) {
+                return line.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr") !=
+                    std::string::npos;
+            }
+        ),
+        plan.gated_ir_slice_lines.end()
+    );
+    return plan;
+}
+
 void assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
     orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState const& readiness
 ) {
@@ -20197,6 +20214,14 @@ auto main() -> int {
         );
     assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
         descriptor_missing_deallocate_tail_readiness
+    );
+
+    auto descriptor_missing_zero_store_readiness =
+        ready_runtime_indexed_cleanup_module_ir_production_readiness(
+            descriptor_runtime_indexed_cleanup_ir_shape_plan_without_descriptor_zero_store()
+        );
+    assert_runtime_indexed_cleanup_ir_shape_blocked_with_ready_upstream(
+        descriptor_missing_zero_store_readiness
     );
 
     auto parsed_drop_readiness_path =

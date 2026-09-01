@@ -298,6 +298,13 @@ auto apply_test_only_runtime_indexed_cleanup_ir_shape_fault(
                     "  call void @" + plan.ir_plan.deallocate_callee_name + "(ptr "
                 );
                 break;
+            case RuntimeIndexedCleanupIrShapeFaultInjection::OmitDescriptorZeroStore:
+                removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
+                    plan,
+                    "  store " + plan.ir_plan.owner_llvm_type_name + " zeroinitializer, ptr " +
+                        plan.ir_plan.owner_address_name
+                );
+                break;
             case RuntimeIndexedCleanupIrShapeFaultInjection::OmitInlineZeroStore:
                 removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
                     plan,

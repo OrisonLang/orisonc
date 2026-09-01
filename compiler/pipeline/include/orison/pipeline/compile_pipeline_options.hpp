@@ -10,6 +10,7 @@ namespace orison::pipeline {
 enum class RuntimeIndexedCleanupIrShapeFaultInjection {
     None,
     OmitDescriptorDeallocateTail,
+    OmitDescriptorZeroStore,
     OmitInlineZeroStore,
     OmitDropCall,
     OmitConditionBlock,
