@@ -1,0 +1,30 @@
+package tests.fixtures.dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    grid: Array<Array<Bucket, 2>, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function main() -> UInt32
+    var holder: Holder = Holder([[Bucket(make_values(10 as UInt32)), Bucket(make_values(20 as UInt32))], [Bucket(make_values(100 as UInt32)), Bucket(make_values(200 as UInt32))]])
+    var total = 0 as UInt32
+    for item in true ? holder.grid[1][0].values : holder.grid[1 as UInt64][0 as UInt64].values
+        total = total + item.value
+    total - 201 as UInt32

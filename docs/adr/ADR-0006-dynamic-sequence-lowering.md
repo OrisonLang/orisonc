@@ -2577,6 +2577,9 @@ representation.
 - Static indexed aggregate DynamicArray computed-loop production coverage now exercises a `for ... in` over
   `holder.buckets[0].values` / `holder.buckets[0 as UInt64].values`, including runtime execution, LLVM emission,
   object emission, host linking, computed cleanup, sibling cleanup, and descriptor zeroing.
+- Nested static indexed aggregate DynamicArray computed-loop production coverage now exercises a `for ... in` over
+  `holder.grid[1][0].values` / `holder.grid[1 as UInt64][0 as UInt64].values`, including the same production artifact
+  and cleanup checks for the normalized `holder.grid.element1.element0.values` owner path.
 
 ## Follow-up work
 
