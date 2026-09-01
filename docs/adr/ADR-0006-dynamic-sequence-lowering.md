@@ -2557,6 +2557,8 @@ representation.
   definition and owner-specific helper calls for each cleanup site.
 - Runtime-index choice-payload member cleanup IR checks now pin packet choice cleanup handoff before the promoted
   member cleanup loop while keeping old payload descriptor cleanup suppressed.
+- Runtime-index branch/switch computed-member cleanup IR checks now pin one helper definition and one owner-specific
+  helper call for each single-owner shape.
 
 ## Follow-up work
 

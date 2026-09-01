@@ -19,6 +19,8 @@
   helper calls, preserving helper reuse across same-shape cleanup sites.
 - 2026-08-31: Runtime-index branch and switch computed-member transfer `--emit-llvm` coverage now pins moved-slot
   helper calls, full element Drop, deallocation, and descriptor zeroing after the cleanup branch.
+- 2026-08-31: Runtime-index branch/switch computed-member cleanup IR checks now pin one helper definition and one
+  owner-specific helper call for each single-owner shape.
 - 2026-08-31: Runtime-index choice-payload computed-member transfer `--emit-llvm` coverage now pins full element Drop
   and descriptor zeroing for both direct payload and nested aggregate-owner cleanup.
 - 2026-08-31: Runtime-index choice-payload member cleanup IR checks now pin packet choice cleanup handoff before the

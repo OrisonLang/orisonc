@@ -1241,6 +1241,8 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_emit_llvm_fixture
     assert(output.find("define i64 @choose_index(i1 %left)") != std::string::npos);
     assert(output.find("define void @__orison_member_cleanup.Box.except.item(ptr %value)") !=
         std::string::npos);
+    assert(occurrence_count(output, "define void @__orison_member_cleanup.Box.except.item(ptr %value)") == 1);
+    assert(occurrence_count(output, "call void @__orison_member_cleanup.Box.except.item(ptr %") == 1);
     assert(output.find("; no sibling cleanup targets for %record.Box except item") != std::string::npos);
     assert(choose_call != std::string::npos);
     assert(moved_member_load != std::string::npos);
@@ -1288,6 +1290,8 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_emit_llvm_fixture
     assert(output.find("switch i32 %selector, label %switch.default.0") != std::string::npos);
     assert(output.find("define void @__orison_member_cleanup.Box.except.item(ptr %value)") !=
         std::string::npos);
+    assert(occurrence_count(output, "define void @__orison_member_cleanup.Box.except.item(ptr %value)") == 1);
+    assert(occurrence_count(output, "call void @__orison_member_cleanup.Box.except.item(ptr %") == 1);
     assert(output.find("; no sibling cleanup targets for %record.Box except item") != std::string::npos);
     assert(choose_call != std::string::npos);
     assert(moved_member_load != std::string::npos);
