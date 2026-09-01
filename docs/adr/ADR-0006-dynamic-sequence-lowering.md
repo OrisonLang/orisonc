@@ -2586,14 +2586,17 @@ representation.
 - Nested static indexed aggregate DynamicArray owner-mismatch coverage now pins rejection for distinct nested
   fixed-array element owners like `holder.grid[1][0].values` and `holder.grid[0][1].values` across the same production
   CLI paths.
+- Static indexed aggregate DynamicArray nested same-owner ternary coverage now proves and emits
+  `true ? holder.buckets[0].values : false ? holder.buckets[0 as UInt64].values : holder.buckets[0].values` through
+  the same production CLI paths.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
-  nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
-  owned iterables are proven.
+- Extend `for ... in` lowering beyond proven local, bound-parameter, and static-indexed aggregate same-owner
+  `DynamicArray<T>` sequences only after ownership, cleanup, and descriptor-storage rules for broader computed owned
+  iterables are proven.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
   audit coverage.

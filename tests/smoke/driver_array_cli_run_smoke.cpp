@@ -2593,6 +2593,8 @@ auto main(int argc, char** argv) -> int {
         examples / "local_dynamic_array_owned_nested_computed_for.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
+    auto static_indexed_aggregate_owned_nested_computed_dynamic_array_path =
+        fixtures / "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or";
     auto nested_static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
@@ -3085,6 +3087,23 @@ auto main(int argc, char** argv) -> int {
         executable,
         static_indexed_aggregate_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, static_indexed_aggregate_owned_nested_computed_dynamic_array_path);
+    assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        static_indexed_aggregate_owned_nested_computed_dynamic_array_path,
+        "holder.buckets.element0.values",
+        "%record.Holder = type { [2 x %record.Bucket] }"
+    );
+    assert_emit_object_success(
+        executable,
+        static_indexed_aggregate_owned_nested_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        static_indexed_aggregate_owned_nested_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup"
     );
     assert_run_success(executable, nested_static_indexed_aggregate_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(

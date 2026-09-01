@@ -232,6 +232,14 @@ auto ternary(
     return expression;
 }
 
+auto holders_element_zero_items() -> orison::syntax::ExpressionSyntax {
+    return member(index(name("holders")), "items");
+}
+
+auto holders_cast_element_zero_items() -> orison::syntax::ExpressionSyntax {
+    return member(index(name("holders"), cast(integer_literal("0"), "UInt64")), "items");
+}
+
 }  // namespace
 
 int main() {
@@ -597,7 +605,7 @@ int main() {
             .find("cleanup owner predicted from semantic descriptor origin") != std::string::npos
     );
 
-    auto indexed_dynamic_array_expression = member(index(name("holders")), "items");
+    auto indexed_dynamic_array_expression = holders_element_zero_items();
     auto indexed_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(indexed_dynamic_array_expression, context, state);
     assert(
@@ -612,7 +620,7 @@ int main() {
     assert(indexed_dynamic_array_plan.cleanup_owner_proven);
 
     auto cast_indexed_dynamic_array_plan = orison::lowering::plan_dynamic_array_iterable_descriptor(
-        member(index(name("holders"), cast(integer_literal("0"), "UInt64")), "items"),
+        holders_cast_element_zero_items(),
         context,
         state
     );
@@ -624,8 +632,8 @@ int main() {
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(
                 name("flag"),
-                member(index(name("holders")), "items"),
-                member(index(name("holders")), "items")
+                holders_element_zero_items(),
+                holders_element_zero_items()
             ),
             context,
             state
@@ -640,6 +648,31 @@ int main() {
     assert(indexed_computed_handoff_plan.descriptor_storage_name == "%holders.element0.items.addr0");
     assert(indexed_computed_handoff_plan.descriptor_storage_available);
     assert(indexed_computed_handoff_plan.cleanup_owner_proven);
+
+    auto indexed_nested_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                holders_element_zero_items(),
+                ternary(
+                    name("fallback"),
+                    holders_cast_element_zero_items(),
+                    holders_element_zero_items()
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        indexed_nested_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(indexed_nested_computed_handoff_plan.source_owner_name == "holders.element0.items");
+    assert(indexed_nested_computed_handoff_plan.handoff_owner_name == "holders.element0.items");
+    assert(indexed_nested_computed_handoff_plan.descriptor_storage_name == "%holders.element0.items.addr0");
+    assert(indexed_nested_computed_handoff_plan.descriptor_storage_available);
+    assert(indexed_nested_computed_handoff_plan.cleanup_owner_proven);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);
