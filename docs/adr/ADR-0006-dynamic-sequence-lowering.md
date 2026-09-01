@@ -2549,6 +2549,8 @@ representation.
   element zeroing, so descriptor-backed cleanup readiness is explicit and unambiguous.
 - Descriptor-backed runtime-index cleanup production readiness now requires descriptor-owner zeroing; synthetic fault
   coverage verifies that omitting the descriptor finalization tail blocks IR-shape readiness.
+- Runtime-index DynamicArray sibling-path fixtures now run through the ordinary production CLI matrix, covering direct,
+  computed, and nested sibling paths across IR emission, object emission, host linking, and build execution.
 
 ## Follow-up work
 

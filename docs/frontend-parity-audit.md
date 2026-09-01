@@ -25,6 +25,8 @@
   descriptor-owner zeroing with an explicit `descriptor-zero-store` field.
 - 2026-08-31: Runtime-index descriptor cleanup production readiness now treats missing descriptor-owner zeroing as an
   IR-shape blocker, with synthetic fault coverage for the finalization tail.
+- 2026-08-31: Runtime-index DynamicArray sibling-path fixtures now have ordinary production coverage across `run`,
+  `--emit-llvm`, object/link/run, `--emit-object`, and `--build`.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

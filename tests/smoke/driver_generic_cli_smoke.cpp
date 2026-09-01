@@ -5519,6 +5519,11 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_direct_sibling"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
@@ -5532,6 +5537,11 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_computed_sibling"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
@@ -5544,6 +5554,11 @@ auto main(int argc, char** argv) -> int {
     assert_cli_runtime_indexed_dynamic_array_default_computed_sibling_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_run.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_run.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_nested_sibling_path"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
