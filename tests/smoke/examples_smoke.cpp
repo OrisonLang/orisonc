@@ -535,6 +535,96 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_local_same_owner_dynamic_array_example =
+        pipeline.emit_llvm(examples / "local_dynamic_array_computed_for.or");
+    assert(!computed_local_same_owner_dynamic_array_example.has_errors());
+    assert(
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "define i32 @main()"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.0.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.0.exit:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    auto const scalar_example_deallocation =
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
+        );
+    auto const scalar_example_finalization =
+        computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr",
+            scalar_example_deallocation
+        );
+    assert(scalar_example_deallocation != std::string::npos);
+    assert(scalar_example_finalization != std::string::npos);
+    assert(scalar_example_deallocation < scalar_example_finalization);
+
+    auto owned_computed_local_same_owner_dynamic_array_example =
+        pipeline.emit_llvm(examples / "local_dynamic_array_owned_computed_for.or");
+    assert(!owned_computed_local_same_owner_dynamic_array_example.has_errors());
+    assert(
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "define i32 @main()"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "%record.Payload = type { i64 }"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.2.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.2.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "items.computed_for.2.exit:\n"
+        ) != std::string::npos
+    );
+    auto const owned_example_drop =
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+        );
+    auto const owned_example_deallocation =
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.2.data",
+            owned_example_drop
+        );
+    auto const owned_example_finalization =
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr",
+            owned_example_deallocation
+        );
+    assert(owned_example_drop != std::string::npos);
+    assert(owned_example_deallocation != std::string::npos);
+    assert(owned_example_finalization != std::string::npos);
+    assert(owned_example_drop < owned_example_deallocation);
+    assert(owned_example_deallocation < owned_example_finalization);
+
     auto computed_local_nested_same_owner_dynamic_array_example =
         pipeline.emit_llvm(examples / "local_dynamic_array_nested_computed_for.or");
     assert(!computed_local_nested_same_owner_dynamic_array_example.has_errors());

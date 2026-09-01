@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-31: Simple scalar and owned-element computed `DynamicArray<T>` examples now have explicit example-smoke IR
+  shape assertions for loop emission, cleanup handoff, Drop walks, deallocation, and descriptor zeroing.
 - 2026-08-31: Simple scalar and owned-element computed `DynamicArray<T>` examples now participate in backend object
   emission coverage alongside the nested computed examples.
 - 2026-08-31: Void-returning null-safe member calls used as statements now lower by branching on the receiver

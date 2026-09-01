@@ -2565,6 +2565,8 @@ representation.
   helper call for each single-owner shape.
 - Simple scalar and owned-element computed `DynamicArray<T>` examples now participate in backend object emission
   coverage alongside the nested computed examples.
+- Simple scalar and owned-element computed `DynamicArray<T>` examples now have explicit example-smoke IR shape
+  assertions for loop emission, cleanup handoff, Drop walks, deallocation, and descriptor zeroing.
 
 ## Follow-up work
 
