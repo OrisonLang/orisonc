@@ -2551,6 +2551,8 @@ representation.
   coverage verifies that omitting the descriptor finalization tail blocks IR-shape readiness.
 - Runtime-index DynamicArray sibling-path fixtures now run through the ordinary production CLI matrix, covering direct,
   computed, and nested sibling paths across IR emission, object emission, host linking, and build execution.
+- Runtime-index member cleanup negative fixtures now pin the same diagnostics across ordinary `run`, `--emit-llvm`,
+  `--emit-object`, and `--build` for post-move reuse and missing-Drop boundaries.
 
 ## Follow-up work
 

@@ -139,6 +139,23 @@ void assert_cli_emit_llvm_existing_fixture_short_failure(
     assert(output.find("switch case lowering failed") == std::string::npos);
 }
 
+void assert_cli_existing_fixture_production_failures(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_base,
+    std::string_view expected_message
+) {
+    for (auto const& command : {
+             executable.string() + " run " + path.string(),
+             executable.string() + " --emit-llvm " + path.string(),
+             executable.string() + " --emit-object " + path.string() + " -o " + output_base.string() + ".o",
+             executable.string() + " --build " + path.string() + " -o " + output_base.string() + "_build",
+         }) {
+        auto output = read_failing_command_output(command);
+        assert(output.find(expected_message) != std::string::npos);
+    }
+}
+
 void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5155,9 +5172,21 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
         "use after move: items[(index + zero)]"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_choice_payload_member_reuse_rejected",
+        "use after move: items[(index + zero)]"
+    );
     assert_cli_emit_llvm_existing_fixture_short_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
+        "use after move: holder.items[(index + zero)]"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_choice_payload_nested_member_reuse_rejected",
         "use after move: holder.items[(index + zero)]"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
@@ -5165,9 +5194,21 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
         "lowering DynamicArray push to owned element requires authorized element drop: owner items element Box"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
+        smoke_temp_root / "runtime_indexed_choice_payload_member_missing_drop_rejected",
+        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Box"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
+        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Wrap"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
+        smoke_temp_root / "runtime_indexed_choice_payload_nested_member_missing_drop_rejected",
         "lowering DynamicArray push to owned element requires authorized element drop: owner items element Wrap"
     );
     assert_cli_emit_llvm_fixture_links_and_runs(
@@ -5529,6 +5570,12 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
         "use after move: items[index]"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_direct_sibling_reuse_rejected",
+        "use after move: items[index]"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or"
@@ -5545,6 +5592,12 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
+        "use after move: items[(index + zero)]"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_computed_sibling_reuse_rejected",
         "use after move: items[(index + zero)]"
     );
     assert_cli_run_fixture_success(
@@ -5565,9 +5618,21 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
         "use after move: items[(index + zero)]"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_nested_sibling_reuse_rejected",
+        "use after move: items[(index + zero)]"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_missing_sibling_drop_rejected.or",
+        "member cleanup helper Drop bindings are missing"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_missing_sibling_drop_rejected.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_nested_member_missing_sibling_drop_rejected",
         "member cleanup helper Drop bindings are missing"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
