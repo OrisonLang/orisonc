@@ -25,7 +25,7 @@ auto main() -> int {
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     orison::pipeline::CompilePipeline pipeline;
-    constexpr auto backend_examples = std::array<std::string_view, 87> {
+    constexpr auto backend_examples = std::array<std::string_view, 89> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
         "dynamic_array_owned_parameter.or",
@@ -43,7 +43,9 @@ auto main() -> int {
         "local_inferred_record_array_let.or",
         "local_inferred_array_let.or",
         "local_dynamic_array_append.or",
+        "local_dynamic_array_computed_for.or",
         "local_dynamic_array_nested_computed_for.or",
+        "local_dynamic_array_owned_computed_for.or",
         "local_dynamic_array_owned_nested_computed_for.or",
         "local_null_safe_generic_aggregate.or",
         "local_result_choice_switch.or",

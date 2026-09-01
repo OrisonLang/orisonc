@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-31: Simple scalar and owned-element computed `DynamicArray<T>` examples now participate in backend object
+  emission coverage alongside the nested computed examples.
 - 2026-08-31: Void-returning null-safe member calls used as statements now lower by branching on the receiver
   `Maybe<T>` tag, calling the member only for the present payload, and merging without materializing `Maybe<Unit>`.
 - 2026-08-31: Generic CLI DynamicArray safety-boundary coverage is isolated into its own CTest mode, keeping intended

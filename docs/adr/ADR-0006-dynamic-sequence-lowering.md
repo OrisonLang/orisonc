@@ -2563,6 +2563,8 @@ representation.
   member cleanup loop while keeping old payload descriptor cleanup suppressed.
 - Runtime-index branch/switch computed-member cleanup IR checks now pin one helper definition and one owner-specific
   helper call for each single-owner shape.
+- Simple scalar and owned-element computed `DynamicArray<T>` examples now participate in backend object emission
+  coverage alongside the nested computed examples.
 
 ## Follow-up work
 
