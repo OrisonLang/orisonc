@@ -1662,6 +1662,39 @@ void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failu
     );
 }
 
+void assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& object_path,
+    std::filesystem::path const& output_path
+) {
+    auto const expected_owner_fragment =
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
+        "element Payload owners holder.buckets.element0.values holder.buckets.element1.values "
+        "[ownership join blocked] [cleanup owner blocked] (metadata only)";
+
+    assert_contains(
+        read_failing_command_output(executable.string() + " run " + source_path.string()),
+        expected_owner_fragment
+    );
+    assert_contains(
+        read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string()),
+        expected_owner_fragment
+    );
+    assert_contains(
+        read_failing_command_output(
+            executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string()
+        ),
+        expected_owner_fragment
+    );
+    assert_contains(
+        read_failing_command_output(
+            executable.string() + " --build " + source_path.string() + " -o " + output_path.string()
+        ),
+        expected_owner_fragment
+    );
+}
+
 void assert_returned_dynamic_array_parameter_forwarding_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2559,6 +2592,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto nested_static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
+    auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
@@ -3062,6 +3097,12 @@ auto main(int argc, char** argv) -> int {
         executable,
         nested_static_indexed_aggregate_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup"
+    );
+    assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
+        executable,
+        static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch"
     );
     }
     if (runs_mode("returned_cleanup")) {

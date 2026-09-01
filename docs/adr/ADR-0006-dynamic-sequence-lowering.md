@@ -2580,6 +2580,9 @@ representation.
 - Nested static indexed aggregate DynamicArray computed-loop production coverage now exercises a `for ... in` over
   `holder.grid[1][0].values` / `holder.grid[1 as UInt64][0 as UInt64].values`, including the same production artifact
   and cleanup checks for the normalized `holder.grid.element1.element0.values` owner path.
+- Static indexed aggregate DynamicArray owner-mismatch coverage now pins rejection for distinct fixed-array element
+  owners like `holder.buckets[0].values` and `holder.buckets[1].values` across ordinary `run`, `--emit-llvm`,
+  `--emit-object`, and `--build`.
 
 ## Follow-up work
 
