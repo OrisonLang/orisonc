@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-31: Scalar computed `DynamicArray<UInt32>` owner-mismatch fixtures now pin the same ownership-join
+  diagnostic across ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - 2026-08-31: Branch-returned and switch-returned computed `DynamicArray<Payload>` owner-mismatch fixtures now pin the
   same ownership-join diagnostic across ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - 2026-08-31: Simple scalar and owned-element computed `DynamicArray<T>` examples now have explicit example-smoke IR

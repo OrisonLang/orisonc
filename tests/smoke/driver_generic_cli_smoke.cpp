@@ -5685,6 +5685,27 @@ auto main(int argc, char** argv) -> int {
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
         "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "dynamic_array_computed_iterable_rejected.or",
+        smoke_temp_root / "dynamic_array_computed_iterable_rejected",
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+        "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "dynamic_array_computed_nested_owner_mismatch_iterable_rejected.or",
+        smoke_temp_root / "dynamic_array_computed_nested_owner_mismatch_iterable_rejected",
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+        "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "dynamic_array_computed_local_nested_owner_mismatch_iterable_rejected.or",
+        smoke_temp_root / "dynamic_array_computed_local_nested_owner_mismatch_iterable_rejected",
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+        "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+    );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
