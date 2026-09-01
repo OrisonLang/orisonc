@@ -2574,6 +2574,9 @@ representation.
 - Static indexed aggregate DynamicArray owner paths now normalize into the existing fixed-array cleanup-owner naming
   convention, so expressions like `holders[0].items` and `holders[0 as UInt64].items` can prove descriptor ownership
   when a matching lowered cleanup plan exists. Dynamic indexes remain outside this computed-iterable proof path.
+- Static indexed aggregate DynamicArray computed-loop production coverage now exercises a `for ... in` over
+  `holder.buckets[0].values` / `holder.buckets[0 as UInt64].values`, including runtime execution, LLVM emission,
+  object emission, host linking, computed cleanup, sibling cleanup, and descriptor zeroing.
 
 ## Follow-up work
 

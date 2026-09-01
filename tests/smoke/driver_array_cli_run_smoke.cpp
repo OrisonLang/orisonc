@@ -231,6 +231,55 @@ void assert_owned_nested_computed_dynamic_array_emit_llvm_success(
     assert(output.find("items.dynamic_array_cleanup") == std::string::npos);
 }
 
+void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "%record.Bucket = type { { ptr, i64, i64 } }");
+    assert_contains(output, "%record.Holder = type { [2 x %record.Bucket] }");
+    assert_contains(output, "define void @__orison_drop.Payload(ptr %value)");
+    assert_contains(output, "holder.buckets.element0.values.computed_for.0.condition:");
+    assert_contains(output, "holder.buckets.element0.values.computed_for.0.body:");
+    assert_contains(output, "holder.buckets.element0.values.computed_for.0.exit:");
+    assert_contains(
+        output,
+        "cleanup state handoff acquire operation holder.buckets.element0.values.computed_for.0.cleanup.acquire "
+        "from holder.buckets.element0.values to holder.buckets.element0.values.loop.entry [cleanup calls enabled]"
+    );
+    assert_contains(
+        output,
+        "cleanup state handoff resume operation holder.buckets.element0.values.computed_for.0.cleanup.resume "
+        "from holder.buckets.element0.values.loop.entry to holder.buckets.element0.values [cleanup calls enabled]"
+    );
+
+    auto const computed_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %holder.buckets.element0.values.computed_dynamic_array_cleanup"
+    );
+    auto const computed_deallocation = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.buckets.element0.values.computed_for.0.data",
+        computed_drop
+    );
+    auto const computed_finalization = output.find(
+        "store { ptr, i64, i64 } zeroinitializer, ptr %holder.buckets.element0.values.addr",
+        computed_deallocation
+    );
+    auto const sibling_cleanup = output.find(
+        "holder.buckets.element1.values.dynamic_array_cleanup",
+        computed_finalization
+    );
+    auto const return_value = output.find("ret i32 %tmp", sibling_cleanup);
+    assert(computed_drop != std::string::npos);
+    assert(computed_deallocation != std::string::npos);
+    assert(computed_finalization != std::string::npos);
+    assert(sibling_cleanup != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(computed_drop < computed_deallocation);
+    assert(computed_deallocation < computed_finalization);
+    assert(computed_finalization < sibling_cleanup);
+    assert(sibling_cleanup < return_value);
+}
+
 void assert_owned_dynamic_array_parameter_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2503,6 +2552,8 @@ auto main(int argc, char** argv) -> int {
     auto owned_computed_dynamic_array_path = examples / "local_dynamic_array_owned_computed_for.or";
     auto owned_nested_computed_dynamic_array_path =
         examples / "local_dynamic_array_owned_nested_computed_for.or";
+    auto static_indexed_aggregate_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
@@ -2972,6 +3023,21 @@ auto main(int argc, char** argv) -> int {
         executable,
         owned_nested_computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_owned_nested_computed_for"
+    );
+    assert_run_success(executable, static_indexed_aggregate_owned_computed_dynamic_array_path);
+    assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        static_indexed_aggregate_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        static_indexed_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        static_indexed_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup"
     );
     }
     if (runs_mode("returned_cleanup")) {
