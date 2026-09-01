@@ -21,6 +21,8 @@
   helper calls, full element Drop, deallocation, and descriptor zeroing after the cleanup branch.
 - 2026-08-31: Runtime-index choice-payload computed-member transfer `--emit-llvm` coverage now pins full element Drop
   and descriptor zeroing for both direct payload and nested aggregate-owner cleanup.
+- 2026-08-31: Runtime-index choice-payload member cleanup IR checks now pin packet choice cleanup handoff before the
+  promoted member cleanup loop while keeping old payload descriptor cleanup suppressed.
 - 2026-08-31: Older runtime-index DynamicArray sibling-preserving cleanup now finalizes descriptor-backed owners after
   deallocation; direct and computed sibling CLI IR checks pin the zeroing.
 - 2026-08-31: Runtime-index constructor-move IR-shape reports now distinguish inline element zeroing from

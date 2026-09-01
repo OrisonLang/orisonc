@@ -1318,6 +1318,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm
     auto index_expression = output.find("%tmp2 = add i64 %index, %zero");
     auto bounds_trap = output.find("call void @__orison_dynamic_array_bounds_failed()");
     auto moved_member_load = output.find("%tmp5 = load %record.Inner, ptr %tmp4");
+    auto packet_choice_cleanup = output.find("%packet.choice_dynamic_array_cleanup");
     auto cleanup_branch = output.find("br label %items.member_cleanup.entry");
     auto skip_moved = output.find(
         "%items.member_cleanup.is_moved = icmp eq i64 %items.member_cleanup.index, %tmp2"
@@ -1342,6 +1343,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm
     assert(index_expression != std::string::npos);
     assert(bounds_trap != std::string::npos);
     assert(moved_member_load != std::string::npos);
+    assert(packet_choice_cleanup != std::string::npos);
     assert(cleanup_branch != std::string::npos);
     assert(skip_moved != std::string::npos);
     assert(member_helper != std::string::npos);
@@ -1352,6 +1354,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm
     assert(index_expression < bounds_trap);
     assert(bounds_trap < moved_member_load);
     assert(moved_member_load < cleanup_branch);
+    assert(packet_choice_cleanup < cleanup_branch);
     assert(cleanup_branch < skip_moved);
     assert(skip_moved < member_helper);
     assert(member_helper < full_drop);
@@ -1367,6 +1370,7 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_em
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
+    auto packet_choice_cleanup = output.find("%packet.choice_dynamic_array_cleanup");
     auto cleanup_branch = output.find("br label %holder.items.member_cleanup.entry");
     auto descriptor_load = output.find(
         "%holder.items.member_cleanup.descriptor = load { ptr, i64, i64 }, ptr %tmp2"
@@ -1391,6 +1395,7 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_em
         std::string::npos);
     assert(output.find("holder.items.choice_dynamic_array_cleanup") == std::string::npos);
     assert(output.find("holder.items.dynamic_array_cleanup") == std::string::npos);
+    assert(packet_choice_cleanup != std::string::npos);
     assert(cleanup_branch != std::string::npos);
     assert(descriptor_load != std::string::npos);
     assert(skip_moved != std::string::npos);
@@ -1398,6 +1403,7 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_em
     assert(full_drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(zero_descriptor != std::string::npos);
+    assert(packet_choice_cleanup < cleanup_branch);
     assert(cleanup_branch < descriptor_load);
     assert(descriptor_load < skip_moved);
     assert(skip_moved < member_helper);
