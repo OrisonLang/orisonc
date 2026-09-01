@@ -5674,6 +5674,12 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
         "use after move: items[index]"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_direct_member_reuse_rejected",
+        "use after move: items[index]"
+    );
     }
 
     if (run_mode("core")) {

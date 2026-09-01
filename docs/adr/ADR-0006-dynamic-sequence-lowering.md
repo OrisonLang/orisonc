@@ -2553,6 +2553,8 @@ representation.
   computed, and nested sibling paths across IR emission, object emission, host linking, and build execution.
 - Runtime-index member cleanup negative fixtures now pin the same diagnostics across ordinary `run`, `--emit-llvm`,
   `--emit-object`, and `--build` for post-move reuse and missing-Drop boundaries.
+- Runtime-index direct computed-index member reuse rejection now uses the same production diagnostic matrix as sibling
+  and nested reuse rejects.
 - Runtime-index member cleanup multi-owner IR checks now pin helper reuse: same-shape cleanup emits one helper
   definition and owner-specific helper calls for each cleanup site.
 - Runtime-index choice-payload member cleanup IR checks now pin packet choice cleanup handoff before the promoted
