@@ -5671,6 +5671,20 @@ auto main(int argc, char** argv) -> int {
         "member cleanup helper Drop bindings are missing owner items index (index + zero) element Wrap moved Inner "
         "member-path box.item helper __orison_member_cleanup.Wrap.except.box.item"
     );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or",
+        smoke_temp_root / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected",
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
+        "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+    );
+    assert_cli_existing_fixture_production_failures(
+        executable,
+        fixtures / "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or",
+        smoke_temp_root / "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected",
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
+        "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+    );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",

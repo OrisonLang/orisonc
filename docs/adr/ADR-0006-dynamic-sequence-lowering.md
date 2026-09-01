@@ -2567,6 +2567,8 @@ representation.
   coverage alongside the nested computed examples.
 - Simple scalar and owned-element computed `DynamicArray<T>` examples now have explicit example-smoke IR shape
   assertions for loop emission, cleanup handoff, Drop walks, deallocation, and descriptor zeroing.
+- Branch-returned and switch-returned computed `DynamicArray<Payload>` owner-mismatch fixtures now pin the same
+  ownership-join diagnostic across ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 
 ## Follow-up work
 
