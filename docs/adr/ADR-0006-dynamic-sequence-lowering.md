@@ -2592,6 +2592,9 @@ representation.
 - Static indexed aggregate owner-name normalization is factored into explicit decimal-index and aggregate-step helpers,
   with source-query smoke coverage for nested `Array<Array<...>>` owner names like
   `grid.element1.element0.items`.
+- Simple forwarded-parameter same-owner computed `DynamicArray<T>` leaves now have source-query and production CLI
+  coverage. A ternary over `items` and `forward_items(items)` proves the same descriptor owner and emits through
+  `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 
 ## Follow-up work
 
