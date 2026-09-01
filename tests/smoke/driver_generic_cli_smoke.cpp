@@ -60,6 +60,26 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+auto occurrence_count(std::string_view text, std::string_view needle) -> std::size_t {
+    if (needle.empty()) {
+        return 0;
+    }
+
+    auto count = std::size_t {0};
+    auto offset = std::size_t {0};
+    while (offset <= text.size()) {
+        auto const found = text.find(needle, offset);
+        if (found == std::string_view::npos) {
+            break;
+        }
+
+        ++count;
+        offset = found + needle.size();
+    }
+
+    return count;
+}
+
 auto find_final_outer_drop(
     std::string const& output,
     std::string_view owner_name,
@@ -1433,6 +1453,8 @@ void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
     assert(output.find(
         "define void @__orison_member_cleanup.Box.except.item(ptr %value)"
     ) != std::string::npos);
+    assert(occurrence_count(output, "define void @__orison_member_cleanup.Box.except.item(ptr %value)") == 1);
+    assert(occurrence_count(output, "call void @__orison_member_cleanup.Box.except.item(ptr %") == 2);
     assert(output.find("; no sibling cleanup targets for %record.Box except item") != std::string::npos);
     assert(left_index_expression != std::string::npos);
     assert(left_moved_member_load != std::string::npos);
@@ -1513,6 +1535,8 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %right_items.addr");
     assert(output.find("define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)") !=
         std::string::npos);
+    assert(occurrence_count(output, "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)") == 1);
+    assert(occurrence_count(output, "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %") == 2);
     assert(output.find("call void @__orison_drop.Head(ptr %Wrap.member_cleanup.head.addr)") !=
         std::string::npos);
     assert(output.find("call void @__orison_drop.Tail(ptr %Wrap.member_cleanup.tail.addr)") !=

@@ -15,6 +15,8 @@
   owners and the left-cleanup-to-right-cleanup handoff.
 - 2026-08-31: Runtime-index DynamicArray two nested-owner transfer `--emit-llvm` coverage now pins ordered cleanup for
   both `Wrap.except.box.item` owners, including sibling Drop calls and chained descriptor finalization.
+- 2026-08-31: Runtime-index member cleanup multi-owner IR checks now pin one helper definition with two owner-specific
+  helper calls, preserving helper reuse across same-shape cleanup sites.
 - 2026-08-31: Runtime-index branch and switch computed-member transfer `--emit-llvm` coverage now pins moved-slot
   helper calls, full element Drop, deallocation, and descriptor zeroing after the cleanup branch.
 - 2026-08-31: Runtime-index choice-payload computed-member transfer `--emit-llvm` coverage now pins full element Drop
