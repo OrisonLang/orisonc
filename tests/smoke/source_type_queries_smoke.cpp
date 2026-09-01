@@ -240,6 +240,20 @@ auto holders_cast_element_zero_items() -> orison::syntax::ExpressionSyntax {
     return member(index(name("holders"), cast(integer_literal("0"), "UInt64")), "items");
 }
 
+auto grid_element_one_zero_items() -> orison::syntax::ExpressionSyntax {
+    return member(index(index(name("grid"), integer_literal("1")), integer_literal("0")), "items");
+}
+
+auto grid_cast_element_one_zero_items() -> orison::syntax::ExpressionSyntax {
+    return member(
+        index(
+            index(name("grid"), cast(integer_literal("1"), "UInt64")),
+            cast(integer_literal("0"), "UInt64")
+        ),
+        "items"
+    );
+}
+
 }  // namespace
 
 int main() {
@@ -415,6 +429,7 @@ int main() {
     state.source_type_names["right_values"] = "Array<UInt32, 3>";
     state.source_type_names["box"] = "Maybe<Box<UInt32>>";
     state.source_type_names["holders"] = "Array<IndexedBucket, 2>";
+    state.source_type_names["grid"] = "Array<Array<IndexedBucket, 2>, 2>";
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
@@ -566,6 +581,16 @@ int main() {
             orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
         .element_size_bytes = 4,
     });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "grid.element1.element0.items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%grid.element1.element0.items.addr0",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
 
     auto named_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
@@ -673,6 +698,32 @@ int main() {
     assert(indexed_nested_computed_handoff_plan.descriptor_storage_name == "%holders.element0.items.addr0");
     assert(indexed_nested_computed_handoff_plan.descriptor_storage_available);
     assert(indexed_nested_computed_handoff_plan.cleanup_owner_proven);
+
+    auto nested_indexed_dynamic_array_plan = orison::lowering::plan_dynamic_array_iterable_descriptor(
+        grid_element_one_zero_items(),
+        context,
+        state
+    );
+    assert(
+        nested_indexed_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner
+    );
+    assert(nested_indexed_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(nested_indexed_dynamic_array_plan.element_source_type_name == "UInt32");
+    assert(nested_indexed_dynamic_array_plan.owner_name == "grid.element1.element0.items");
+    assert(nested_indexed_dynamic_array_plan.descriptor_storage == "%grid.element1.element0.items.addr0");
+    assert(nested_indexed_dynamic_array_plan.can_lower_now);
+    assert(nested_indexed_dynamic_array_plan.cleanup_owner_proven);
+
+    auto nested_cast_indexed_dynamic_array_plan = orison::lowering::plan_dynamic_array_iterable_descriptor(
+        grid_cast_element_one_zero_items(),
+        context,
+        state
+    );
+    assert(nested_cast_indexed_dynamic_array_plan.owner_name == "grid.element1.element0.items");
+    assert(nested_cast_indexed_dynamic_array_plan.descriptor_storage == "%grid.element1.element0.items.addr0");
+    assert(nested_cast_indexed_dynamic_array_plan.can_lower_now);
+    assert(nested_cast_indexed_dynamic_array_plan.cleanup_owner_proven);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);

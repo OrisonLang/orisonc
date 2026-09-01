@@ -24,45 +24,74 @@ auto computed_dynamic_array_for_base_name(
     return name;
 }
 
+auto decimal_integer_literal_text(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    auto const* index_expression = &expression;
+    if (index_expression->kind == syntax::ExpressionKind::cast &&
+        index_expression->left != nullptr) {
+        index_expression = index_expression->left.get();
+    }
+    if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
+        index_expression->text.empty()) {
+        return std::nullopt;
+    }
+
+    auto all_decimal_digits = true;
+    for (auto const digit : index_expression->text) {
+        all_decimal_digits = all_decimal_digits && digit >= '0' && digit <= '9';
+    }
+    if (!all_decimal_digits) {
+        return std::nullopt;
+    }
+    return index_expression->text;
+}
+
+auto append_aggregate_owner_step(
+    std::string& owner_name,
+    AggregatePathStep const& step
+) -> bool {
+    if (step.kind == AggregatePathStepKind::member && !step.field_name.empty()) {
+        owner_name += ".";
+        owner_name += step.field_name;
+        return true;
+    }
+    if (step.kind == AggregatePathStepKind::index && step.index_expression != nullptr) {
+        auto literal = decimal_integer_literal_text(*step.index_expression);
+        if (!literal.has_value()) {
+            return false;
+        }
+        owner_name += ".element";
+        owner_name += *literal;
+        return true;
+    }
+    return false;
+}
+
+auto aggregate_path_owner_name(
+    AggregatePath const& path
+) -> std::optional<std::string> {
+    if (path.base_expression == nullptr || path.base_expression->text.empty()) {
+        return std::nullopt;
+    }
+
+    auto owner_name = path.base_expression->text;
+    for (auto const& step : path.steps) {
+        if (!append_aggregate_owner_step(owner_name, step)) {
+            return std::nullopt;
+        }
+    }
+    return owner_name;
+}
+
 auto aggregate_member_path_owner_name(
     syntax::ExpressionSyntax const& expression
 ) -> std::optional<std::string> {
     auto path = collect_named_aggregate_path(expression);
-    if (!path.has_value() || path->base_expression == nullptr || path->base_expression->text.empty()) {
+    if (!path.has_value()) {
         return std::nullopt;
     }
-
-    auto owner_name = path->base_expression->text;
-    for (auto const& step : path->steps) {
-        if (step.kind == AggregatePathStepKind::member && !step.field_name.empty()) {
-            owner_name += ".";
-            owner_name += step.field_name;
-            continue;
-        }
-        if (step.kind == AggregatePathStepKind::index && step.index_expression != nullptr) {
-            auto const* index_expression = step.index_expression;
-            if (index_expression->kind == syntax::ExpressionKind::cast &&
-                index_expression->left != nullptr) {
-                index_expression = index_expression->left.get();
-            }
-            if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
-                index_expression->text.empty()) {
-                return std::nullopt;
-            }
-            auto all_decimal_digits = true;
-            for (auto const digit : index_expression->text) {
-                all_decimal_digits = all_decimal_digits && digit >= '0' && digit <= '9';
-            }
-            if (!all_decimal_digits) {
-                return std::nullopt;
-            }
-            owner_name += ".element";
-            owner_name += index_expression->text;
-            continue;
-        }
-        return std::nullopt;
-    }
-    return owner_name;
+    return aggregate_path_owner_name(*path);
 }
 
 auto static_indexed_aggregate_owner_name(

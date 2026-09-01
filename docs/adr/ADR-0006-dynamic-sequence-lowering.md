@@ -2589,6 +2589,9 @@ representation.
 - Static indexed aggregate DynamicArray nested same-owner ternary coverage now proves and emits
   `true ? holder.buckets[0].values : false ? holder.buckets[0 as UInt64].values : holder.buckets[0].values` through
   the same production CLI paths.
+- Static indexed aggregate owner-name normalization is factored into explicit decimal-index and aggregate-step helpers,
+  with source-query smoke coverage for nested `Array<Array<...>>` owner names like
+  `grid.element1.element0.items`.
 
 ## Follow-up work
 
