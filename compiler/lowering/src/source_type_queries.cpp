@@ -34,13 +34,69 @@ auto aggregate_member_path_owner_name(
 
     auto owner_name = path->base_expression->text;
     for (auto const& step : path->steps) {
-        if (step.kind != AggregatePathStepKind::member || step.field_name.empty()) {
-            return std::nullopt;
+        if (step.kind == AggregatePathStepKind::member && !step.field_name.empty()) {
+            owner_name += ".";
+            owner_name += step.field_name;
+            continue;
         }
-        owner_name += ".";
-        owner_name += step.field_name;
+        if (step.kind == AggregatePathStepKind::index && step.index_expression != nullptr) {
+            auto const* index_expression = step.index_expression;
+            if (index_expression->kind == syntax::ExpressionKind::cast &&
+                index_expression->left != nullptr) {
+                index_expression = index_expression->left.get();
+            }
+            if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
+                index_expression->text.empty()) {
+                return std::nullopt;
+            }
+            auto all_decimal_digits = true;
+            for (auto const digit : index_expression->text) {
+                all_decimal_digits = all_decimal_digits && digit >= '0' && digit <= '9';
+            }
+            if (!all_decimal_digits) {
+                return std::nullopt;
+            }
+            owner_name += ".element";
+            owner_name += index_expression->text;
+            continue;
+        }
+        return std::nullopt;
     }
     return owner_name;
+}
+
+auto static_indexed_aggregate_owner_name(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::index_access) {
+        return std::nullopt;
+    }
+    return aggregate_member_path_owner_name(expression);
+}
+
+auto named_or_static_indexed_dynamic_array_leaf(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::name ||
+        expression.kind == syntax::ExpressionKind::member_access) {
+        return true;
+    }
+    return static_indexed_aggregate_owner_name(expression).has_value();
+}
+
+auto push_computed_dynamic_array_leaf_descriptor(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
+) -> bool {
+    auto descriptor = plan_dynamic_array_iterable_descriptor(expression, context, state);
+    if (descriptor.source_type_name != source_type_name || descriptor.owner_name.empty()) {
+        return false;
+    }
+    descriptors.push_back(std::move(descriptor));
+    return true;
 }
 
 auto matching_dynamic_array_cleanup_plan(
@@ -176,14 +232,14 @@ auto collect_computed_dynamic_array_leaf_descriptors(
     FunctionLoweringState const& state,
     std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
 ) -> bool {
-    if (expression.kind == syntax::ExpressionKind::name ||
-        expression.kind == syntax::ExpressionKind::member_access) {
-        auto descriptor = plan_dynamic_array_iterable_descriptor(expression, context, state);
-        if (descriptor.source_type_name != source_type_name || descriptor.owner_name.empty()) {
-            return false;
-        }
-        descriptors.push_back(std::move(descriptor));
-        return true;
+    if (named_or_static_indexed_dynamic_array_leaf(expression)) {
+        return push_computed_dynamic_array_leaf_descriptor(
+            expression,
+            source_type_name,
+            context,
+            state,
+            descriptors
+        );
     }
 
     if (expression.kind == syntax::ExpressionKind::call &&

@@ -2571,6 +2571,9 @@ representation.
   ownership-join diagnostic across ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - Scalar computed `DynamicArray<UInt32>` owner-mismatch fixtures now pin the same ownership-join diagnostic across
   ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
+- Static indexed aggregate DynamicArray owner paths now normalize into the existing fixed-array cleanup-owner naming
+  convention, so expressions like `holders[0].items` and `holders[0 as UInt64].items` can prove descriptor ownership
+  when a matching lowered cleanup plan exists. Dynamic indexes remain outside this computed-iterable proof path.
 
 ## Follow-up work
 

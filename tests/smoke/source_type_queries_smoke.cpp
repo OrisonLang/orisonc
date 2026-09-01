@@ -32,15 +32,20 @@ auto null_safe_member(orison::syntax::ExpressionSyntax left, std::string text) -
     return expression;
 }
 
-auto index(orison::syntax::ExpressionSyntax left) -> orison::syntax::ExpressionSyntax {
+auto index(orison::syntax::ExpressionSyntax left, orison::syntax::ExpressionSyntax index_expression)
+    -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::index_access;
     expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(left));
+    expression.arguments.push_back(std::move(index_expression));
+    return expression;
+}
+
+auto index(orison::syntax::ExpressionSyntax left) -> orison::syntax::ExpressionSyntax {
     auto zero = orison::syntax::ExpressionSyntax {};
     zero.kind = orison::syntax::ExpressionKind::integer_literal;
     zero.text = "0";
-    expression.arguments.push_back(std::move(zero));
-    return expression;
+    return index(std::move(left), std::move(zero));
 }
 
 auto call(std::string function_name) -> orison::syntax::ExpressionSyntax {
@@ -276,6 +281,18 @@ int main() {
             },
         },
     });
+    context.records.emplace("IndexedBucket", orison::lowering::LoweredRecordLayout {
+        .name = "IndexedBucket",
+        .llvm_type_name = "%record.IndexedBucket",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "items",
+                .source_type_name = "DynamicArray<UInt32>",
+                .llvm_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+                .index = 0,
+            },
+        },
+    });
     context.functions.emplace("make_bucket", orison::lowering::LoweredFunctionSignature {
         .return_type = "%record.Bucket",
         .return_signedness = orison::lowering::IntegerSignedness::not_integer,
@@ -389,6 +406,7 @@ int main() {
     state.source_type_names["left_values"] = "Array<UInt32, 3>";
     state.source_type_names["right_values"] = "Array<UInt32, 3>";
     state.source_type_names["box"] = "Maybe<Box<UInt32>>";
+    state.source_type_names["holders"] = "Array<IndexedBucket, 2>";
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
@@ -530,6 +548,16 @@ int main() {
             orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
         .element_size_bytes = 4,
     });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "holders.element0.items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%holders.element0.items.addr0",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
 
     auto named_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
@@ -568,6 +596,50 @@ int main() {
         orison::lowering::dynamic_array_iterable_descriptor_plan_report(predicted_dynamic_array_plan)
             .find("cleanup owner predicted from semantic descriptor origin") != std::string::npos
     );
+
+    auto indexed_dynamic_array_expression = member(index(name("holders")), "items");
+    auto indexed_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(indexed_dynamic_array_expression, context, state);
+    assert(
+        indexed_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner
+    );
+    assert(indexed_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(indexed_dynamic_array_plan.element_source_type_name == "UInt32");
+    assert(indexed_dynamic_array_plan.owner_name == "holders.element0.items");
+    assert(indexed_dynamic_array_plan.descriptor_storage == "%holders.element0.items.addr0");
+    assert(indexed_dynamic_array_plan.can_lower_now);
+    assert(indexed_dynamic_array_plan.cleanup_owner_proven);
+
+    auto cast_indexed_dynamic_array_plan = orison::lowering::plan_dynamic_array_iterable_descriptor(
+        member(index(name("holders"), cast(integer_literal("0"), "UInt64")), "items"),
+        context,
+        state
+    );
+    assert(cast_indexed_dynamic_array_plan.owner_name == "holders.element0.items");
+    assert(cast_indexed_dynamic_array_plan.can_lower_now);
+    assert(cast_indexed_dynamic_array_plan.cleanup_owner_proven);
+
+    auto indexed_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(index(name("holders")), "items"),
+                member(index(name("holders")), "items")
+            ),
+            context,
+            state
+        );
+    assert(
+        indexed_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(indexed_computed_handoff_plan.source_owner_name == "holders.element0.items");
+    assert(indexed_computed_handoff_plan.handoff_owner_name == "holders.element0.items");
+    assert(indexed_computed_handoff_plan.descriptor_storage_name == "%holders.element0.items.addr0");
+    assert(indexed_computed_handoff_plan.descriptor_storage_available);
+    assert(indexed_computed_handoff_plan.cleanup_owner_proven);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);
