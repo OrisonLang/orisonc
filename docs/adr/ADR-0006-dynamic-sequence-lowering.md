@@ -2611,6 +2611,8 @@ representation.
   signatures and source functions, reducing fixture scaffolding duplication without changing the resolver model.
 - Forwarded-parameter computed `DynamicArray<T>` helper bodies that move the parameter into one typed local alias and
   return that alias now resolve back to the original argument owner across source-query and production CLI paths.
+- The same forwarded-parameter local-alias proof is pinned for immutable `let` bindings, covering both accepted typed
+  local binding forms without expanding helper-body shape.
 - Forwarded-parameter local-alias proof remains intentionally narrow: helper bodies with extra statements reject as
   unsupported computed shapes, and alias reassignment rejects at the ownership boundary before computed cleanup
   planning.

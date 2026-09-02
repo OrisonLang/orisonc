@@ -395,6 +395,7 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_items");
     register_dynamic_array_forwarding_signature(context, "forward_again");
     register_dynamic_array_forwarding_signature(context, "forward_alias");
+    register_dynamic_array_forwarding_signature(context, "forward_alias_let");
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_extra");
     register_dynamic_array_forwarding_signature(context, "forward_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_cycle_left");
@@ -711,6 +712,13 @@ int main() {
     forward_alias_function.body_statements.push_back(dynamic_array_var_statement("alias", name("items")));
     forward_alias_function.body_statements.push_back(expression_statement(name("alias")));
     context.source_functions["forward_alias"] = &forward_alias_function;
+
+    auto forward_alias_let_function = orison::syntax::FunctionSyntax {};
+    forward_alias_let_function.name = "forward_alias_let";
+    forward_alias_let_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_alias_let_function.body_statements.push_back(dynamic_array_let_statement("alias", name("items")));
+    forward_alias_let_function.body_statements.push_back(expression_statement(name("alias")));
+    context.source_functions["forward_alias_let"] = &forward_alias_let_function;
 
     auto forward_alias_with_extra_function = orison::syntax::FunctionSyntax {};
     forward_alias_with_extra_function.name = "forward_alias_with_extra";
@@ -1057,6 +1065,27 @@ int main() {
     assert(local_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
     assert(local_alias_forwarded_parameter_plan.descriptor_storage_available);
     assert(local_alias_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto local_let_alias_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_alias_let", name("items")),
+                call("forward_alias_let", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        local_let_alias_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(local_let_alias_forwarded_parameter_plan.source_owner_name == "items");
+    assert(local_let_alias_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(local_let_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(local_let_alias_forwarded_parameter_plan.descriptor_storage_available);
+    assert(local_let_alias_forwarded_parameter_plan.cleanup_owner_proven);
 
     auto local_alias_extra_statement_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

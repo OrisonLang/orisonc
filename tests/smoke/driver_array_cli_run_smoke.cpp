@@ -2668,6 +2668,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_depth9_owned_computed_rejected.or";
     auto forwarded_parameter_local_alias_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_let_alias_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_local_alias_extra_statement_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_extra_statement_owned_computed_rejected.or";
     auto forwarded_parameter_local_alias_reassigned_owned_computed_dynamic_array_path =
@@ -3211,6 +3213,21 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_parameter_local_alias_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, forwarded_parameter_let_alias_owned_computed_dynamic_array_path);
+    assert_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_parameter_let_alias_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_parameter_let_alias_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_parameter_let_alias_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup"
     );
     assert_run_success(executable, static_indexed_aggregate_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
