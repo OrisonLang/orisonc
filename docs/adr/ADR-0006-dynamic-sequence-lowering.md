@@ -2607,6 +2607,8 @@ representation.
 - Acyclic forwarded-parameter computed `DynamicArray<T>` chains now pin the resolver depth boundary: eight forwarding
   helpers prove the original owner, while nine helpers reject as an unsupported computed shape across source-query and
   production CLI paths.
+- Source-query forwarding coverage now uses shared C++ helpers for one-parameter `DynamicArray<UInt32>` forwarding
+  signatures and source functions, reducing fixture scaffolding duplication without changing the resolver model.
 
 ## Follow-up work
 

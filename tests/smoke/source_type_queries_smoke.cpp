@@ -119,6 +119,48 @@ auto expression_statement(orison::syntax::ExpressionSyntax expression) -> orison
     return statement;
 }
 
+auto dynamic_array_uint32_parameter() -> orison::syntax::ParameterSyntax {
+    return orison::syntax::ParameterSyntax {
+        .name = "items",
+        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
+    };
+}
+
+auto register_dynamic_array_forwarding_signature(
+    orison::lowering::LoweringContext& context,
+    std::string function_name
+) -> void {
+    auto symbol_name = function_name;
+    context.functions.emplace(std::move(function_name), orison::lowering::LoweredFunctionSignature {
+        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+        .source_return_type_name = "DynamicArray<UInt32>",
+        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
+        .parameter_source_type_names = {"DynamicArray<UInt32>"},
+        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+        .symbol_name = std::move(symbol_name),
+    });
+}
+
+auto direct_dynamic_array_forwarding_function(std::string function_name) -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(dynamic_array_uint32_parameter());
+    function.body_statements.push_back(expression_statement(name("items")));
+    return function;
+}
+
+auto call_dynamic_array_forwarding_function(
+    std::string function_name,
+    std::string target_function_name
+) -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(dynamic_array_uint32_parameter());
+    function.body_statements.push_back(expression_statement(call(std::move(target_function_name), name("items"))));
+    return function;
+}
+
 auto let_statement(std::string name, orison::syntax::ExpressionSyntax expression)
     -> orison::syntax::StatementSyntax {
     auto statement = orison::syntax::StatementSyntax {};
@@ -320,55 +362,14 @@ int main() {
         .return_signedness = orison::lowering::IntegerSignedness::not_integer,
         .symbol_name = "make_bucket",
     });
-    context.functions.emplace("forward_items", orison::lowering::LoweredFunctionSignature {
-        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
-        .source_return_type_name = "DynamicArray<UInt32>",
-        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
-        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
-        .parameter_source_type_names = {"DynamicArray<UInt32>"},
-        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
-        .symbol_name = "forward_items",
-    });
-    context.functions.emplace("forward_again", orison::lowering::LoweredFunctionSignature {
-        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
-        .source_return_type_name = "DynamicArray<UInt32>",
-        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
-        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
-        .parameter_source_type_names = {"DynamicArray<UInt32>"},
-        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
-        .symbol_name = "forward_again",
-    });
-    context.functions.emplace("forward_cycle_left", orison::lowering::LoweredFunctionSignature {
-        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
-        .source_return_type_name = "DynamicArray<UInt32>",
-        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
-        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
-        .parameter_source_type_names = {"DynamicArray<UInt32>"},
-        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
-        .symbol_name = "forward_cycle_left",
-    });
-    context.functions.emplace("forward_cycle_right", orison::lowering::LoweredFunctionSignature {
-        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
-        .source_return_type_name = "DynamicArray<UInt32>",
-        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
-        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
-        .parameter_source_type_names = {"DynamicArray<UInt32>"},
-        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
-        .symbol_name = "forward_cycle_right",
-    });
+    register_dynamic_array_forwarding_signature(context, "forward_items");
+    register_dynamic_array_forwarding_signature(context, "forward_again");
+    register_dynamic_array_forwarding_signature(context, "forward_cycle_left");
+    register_dynamic_array_forwarding_signature(context, "forward_cycle_right");
     for (auto prefix : {"forward_limit", "forward_over"}) {
         auto const chain_length = std::string_view {prefix} == "forward_limit" ? 8 : 9;
         for (auto index = 1; index <= chain_length; ++index) {
-            auto function_name = std::string {prefix} + std::to_string(index);
-            context.functions.emplace(function_name, orison::lowering::LoweredFunctionSignature {
-                .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
-                .source_return_type_name = "DynamicArray<UInt32>",
-                .return_signedness = orison::lowering::IntegerSignedness::not_integer,
-                .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
-                .parameter_source_type_names = {"DynamicArray<UInt32>"},
-                .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
-                .symbol_name = function_name,
-            });
+            register_dynamic_array_forwarding_signature(context, std::string {prefix} + std::to_string(index));
         }
     }
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
@@ -665,44 +666,18 @@ int main() {
         .element_size_bytes = 4,
     });
 
-    auto forward_items_function = orison::syntax::FunctionSyntax {};
-    forward_items_function.name = "forward_items";
-    forward_items_function.parameters.push_back(orison::syntax::ParameterSyntax {
-        .name = "items",
-        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
-    });
-    forward_items_function.body_statements.push_back(expression_statement(name("items")));
+    auto forward_items_function = direct_dynamic_array_forwarding_function("forward_items");
     context.source_functions["forward_items"] = &forward_items_function;
 
-    auto forward_again_function = orison::syntax::FunctionSyntax {};
-    forward_again_function.name = "forward_again";
-    forward_again_function.parameters.push_back(orison::syntax::ParameterSyntax {
-        .name = "items",
-        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
-    });
-    forward_again_function.body_statements.push_back(expression_statement(call("forward_items", name("items"))));
+    auto forward_again_function = call_dynamic_array_forwarding_function("forward_again", "forward_items");
     context.source_functions["forward_again"] = &forward_again_function;
 
-    auto forward_cycle_left_function = orison::syntax::FunctionSyntax {};
-    forward_cycle_left_function.name = "forward_cycle_left";
-    forward_cycle_left_function.parameters.push_back(orison::syntax::ParameterSyntax {
-        .name = "items",
-        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
-    });
-    forward_cycle_left_function.body_statements.push_back(
-        expression_statement(call("forward_cycle_right", name("items")))
-    );
+    auto forward_cycle_left_function =
+        call_dynamic_array_forwarding_function("forward_cycle_left", "forward_cycle_right");
     context.source_functions["forward_cycle_left"] = &forward_cycle_left_function;
 
-    auto forward_cycle_right_function = orison::syntax::FunctionSyntax {};
-    forward_cycle_right_function.name = "forward_cycle_right";
-    forward_cycle_right_function.parameters.push_back(orison::syntax::ParameterSyntax {
-        .name = "items",
-        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
-    });
-    forward_cycle_right_function.body_statements.push_back(
-        expression_statement(call("forward_cycle_left", name("items")))
-    );
+    auto forward_cycle_right_function =
+        call_dynamic_array_forwarding_function("forward_cycle_right", "forward_cycle_left");
     context.source_functions["forward_cycle_right"] = &forward_cycle_right_function;
 
     auto depth_functions = std::vector<orison::syntax::FunctionSyntax> {};
@@ -710,19 +685,13 @@ int main() {
     for (auto prefix : {"forward_limit", "forward_over"}) {
         auto const chain_length = std::string_view {prefix} == "forward_limit" ? 8 : 9;
         for (auto index = 1; index <= chain_length; ++index) {
-            auto function = orison::syntax::FunctionSyntax {};
-            function.name = std::string {prefix} + std::to_string(index);
-            function.parameters.push_back(orison::syntax::ParameterSyntax {
-                .name = "items",
-                .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
-            });
-            if (index == chain_length) {
-                function.body_statements.push_back(expression_statement(name("items")));
-            } else {
-                function.body_statements.push_back(
-                    expression_statement(call(std::string {prefix} + std::to_string(index + 1), name("items")))
+            auto function_name = std::string {prefix} + std::to_string(index);
+            auto function = index == chain_length
+                ? direct_dynamic_array_forwarding_function(function_name)
+                : call_dynamic_array_forwarding_function(
+                    function_name,
+                    std::string {prefix} + std::to_string(index + 1)
                 );
-            }
             depth_functions.push_back(std::move(function));
             context.source_functions[depth_functions.back().name] = &depth_functions.back();
         }
