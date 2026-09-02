@@ -193,6 +193,33 @@ auto parameter_index_named(
     return std::nullopt;
 }
 
+auto local_alias_parameter_index(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view alias_name,
+    std::string_view source_type_name
+) -> std::optional<std::size_t> {
+    if (function.body_statements.size() != 2) {
+        return std::nullopt;
+    }
+
+    auto const& binding = function.body_statements.front();
+    if ((binding.kind != syntax::StatementKind::let_binding &&
+        binding.kind != syntax::StatementKind::var_binding) ||
+        binding.name != alias_name ||
+        render_source_type_name(binding.annotated_type) != source_type_name ||
+        binding.expression.kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    return parameter_index_named(
+        function,
+        signature,
+        binding.expression.text,
+        source_type_name
+    );
+}
+
 auto forwarded_dynamic_array_parameter_index(
     std::string_view function_name,
     std::string_view source_type_name,
@@ -217,7 +244,15 @@ auto forwarded_dynamic_array_parameter_index(
     }
 
     if (expression->kind == syntax::ExpressionKind::name) {
-        return parameter_index_named(
+        if (auto parameter_index = parameter_index_named(
+            *source_function->second,
+            signature->second,
+            expression->text,
+            source_type_name
+        )) {
+            return parameter_index;
+        }
+        return local_alias_parameter_index(
             *source_function->second,
             signature->second,
             expression->text,

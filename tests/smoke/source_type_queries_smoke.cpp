@@ -1011,16 +1011,14 @@ int main() {
         );
     assert(
         local_alias_forwarded_parameter_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
     );
-    assert(
-        local_alias_forwarded_parameter_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(local_alias_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
-    assert(!local_alias_forwarded_parameter_plan.descriptor_storage_available);
-    assert(!local_alias_forwarded_parameter_plan.cleanup_owner_proven);
-    assert(!local_alias_forwarded_parameter_plan.lowering_enabled);
+    assert(local_alias_forwarded_parameter_plan.source_owner_name == "items");
+    assert(local_alias_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(local_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(local_alias_forwarded_parameter_plan.descriptor_storage_available);
+    assert(local_alias_forwarded_parameter_plan.cleanup_owner_proven);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);

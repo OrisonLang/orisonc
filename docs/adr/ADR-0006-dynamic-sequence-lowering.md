@@ -2609,8 +2609,8 @@ representation.
   production CLI paths.
 - Source-query forwarding coverage now uses shared C++ helpers for one-parameter `DynamicArray<UInt32>` forwarding
   signatures and source functions, reducing fixture scaffolding duplication without changing the resolver model.
-- Forwarded-parameter computed `DynamicArray<T>` helper bodies that return a local alias remain rejected as unsupported
-  computed shapes until alias ownership proof is explicitly modeled.
+- Forwarded-parameter computed `DynamicArray<T>` helper bodies that move the parameter into one typed local alias and
+  return that alias now resolve back to the original argument owner across source-query and production CLI paths.
 
 ## Follow-up work
 

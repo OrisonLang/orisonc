@@ -1,4 +1,4 @@
-package fixtures.dynamicarrayforwardedparameterlocalaliasownedcomputedrejected
+package fixtures.dynamicarrayforwardedparameterlocalaliasownedcomputedforcleanuprun
 
 record Payload
     value: Int64

@@ -2638,7 +2638,7 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_parameter_depth9_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_depth9_owned_computed_rejected.or";
     auto forwarded_parameter_local_alias_owned_computed_dynamic_array_path =
-        fixtures / "dynamic_array_forwarded_parameter_local_alias_owned_computed_rejected.or";
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_nested_computed_dynamic_array_path =
@@ -3164,6 +3164,21 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_depth8_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup"
     );
+    assert_run_success(executable, forwarded_parameter_local_alias_owned_computed_dynamic_array_path);
+    assert_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_parameter_local_alias_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_parameter_local_alias_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_parameter_local_alias_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup"
+    );
     assert_run_success(executable, static_indexed_aggregate_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
         executable,
@@ -3242,12 +3257,6 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_depth9_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth9_owned_computed.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth9_owned_computed"
-    );
-    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
-        executable,
-        forwarded_parameter_local_alias_owned_computed_dynamic_array_path,
-        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed.o",
-        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
