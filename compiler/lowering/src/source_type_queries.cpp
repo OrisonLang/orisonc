@@ -161,18 +161,13 @@ auto matching_dynamic_array_cleanup_plan(
     );
 }
 
-auto final_value_expression_for(
+auto final_value_statement_for(
     syntax::FunctionSyntax const& function
-) -> syntax::ExpressionSyntax const* {
+) -> syntax::StatementSyntax const* {
     if (function.body_statements.empty()) {
         return nullptr;
     }
-    auto const& statement = function.body_statements.back();
-    if (statement.kind == syntax::StatementKind::return_statement ||
-        statement.kind == syntax::StatementKind::expression_statement) {
-        return &statement.expression;
-    }
-    return nullptr;
+    return &function.body_statements.back();
 }
 
 auto parameter_index_named(
@@ -225,6 +220,144 @@ auto forwarded_dynamic_array_parameter_index(
     std::string_view source_type_name,
     LoweringContext const& context,
     std::size_t remaining_depth = 8
+) -> std::optional<std::size_t>;
+
+auto forwarded_dynamic_array_parameter_index_for_expression(
+    syntax::ExpressionSyntax const& expression,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth
+) -> std::optional<std::size_t> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        if (auto parameter_index = parameter_index_named(
+            function,
+            signature,
+            expression.text,
+            source_type_name
+        )) {
+            return parameter_index;
+        }
+        return local_alias_parameter_index(
+            function,
+            signature,
+            expression.text,
+            source_type_name
+        );
+    }
+
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto forwarded_argument_index = forwarded_dynamic_array_parameter_index(
+        expression.left->text,
+        source_type_name,
+        context,
+        remaining_depth - 1
+    );
+    if (!forwarded_argument_index.has_value() || *forwarded_argument_index >= expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto const& argument = expression.arguments[*forwarded_argument_index];
+    if (argument.kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    return parameter_index_named(
+        function,
+        signature,
+        argument.text,
+        source_type_name
+    );
+}
+
+auto forwarded_dynamic_array_parameter_index_for_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth
+) -> std::optional<std::size_t> {
+    if (statement.kind == syntax::StatementKind::expression_statement ||
+        statement.kind == syntax::StatementKind::return_statement) {
+        return forwarded_dynamic_array_parameter_index_for_expression(
+            statement.expression,
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth
+        );
+    }
+
+    if (statement.kind == syntax::StatementKind::if_statement) {
+        if (statement.nested_statements.empty() || statement.alternate_statements.empty()) {
+            return std::nullopt;
+        }
+        auto then_index = forwarded_dynamic_array_parameter_index_for_statement(
+            statement.nested_statements.back(),
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth
+        );
+        auto else_index = forwarded_dynamic_array_parameter_index_for_statement(
+            statement.alternate_statements.back(),
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth
+        );
+        if (!then_index.has_value() || !else_index.has_value() || *then_index != *else_index) {
+            return std::nullopt;
+        }
+        return then_index;
+    }
+
+    if (statement.kind == syntax::StatementKind::switch_statement) {
+        auto result = std::optional<std::size_t> {};
+        for (auto const& switch_case : statement.switch_cases) {
+            if (switch_case.statements.empty() || switch_case.statements.back() == nullptr) {
+                return std::nullopt;
+            }
+            auto case_index = forwarded_dynamic_array_parameter_index_for_statement(
+                *switch_case.statements.back(),
+                function,
+                signature,
+                source_type_name,
+                context,
+                remaining_depth
+            );
+            if (!case_index.has_value()) {
+                return std::nullopt;
+            }
+            if (!result.has_value()) {
+                result = *case_index;
+                continue;
+            }
+            if (*result != *case_index) {
+                return std::nullopt;
+            }
+        }
+        return result;
+    }
+
+    return std::nullopt;
+}
+
+auto forwarded_dynamic_array_parameter_index(
+    std::string_view function_name,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth
 ) -> std::optional<std::size_t> {
     if (remaining_depth == 0) {
         return std::nullopt;
@@ -238,54 +371,18 @@ auto forwarded_dynamic_array_parameter_index(
         return std::nullopt;
     }
 
-    auto const* expression = final_value_expression_for(*source_function->second);
-    if (expression == nullptr) {
+    auto const* statement = final_value_statement_for(*source_function->second);
+    if (statement == nullptr) {
         return std::nullopt;
     }
 
-    if (expression->kind == syntax::ExpressionKind::name) {
-        if (auto parameter_index = parameter_index_named(
-            *source_function->second,
-            signature->second,
-            expression->text,
-            source_type_name
-        )) {
-            return parameter_index;
-        }
-        return local_alias_parameter_index(
-            *source_function->second,
-            signature->second,
-            expression->text,
-            source_type_name
-        );
-    }
-
-    if (expression->kind != syntax::ExpressionKind::call ||
-        expression->left == nullptr ||
-        expression->left->kind != syntax::ExpressionKind::name) {
-        return std::nullopt;
-    }
-
-    auto forwarded_argument_index = forwarded_dynamic_array_parameter_index(
-        expression->left->text,
-        source_type_name,
-        context,
-        remaining_depth - 1
-    );
-    if (!forwarded_argument_index.has_value() || *forwarded_argument_index >= expression->arguments.size()) {
-        return std::nullopt;
-    }
-
-    auto const& argument = expression->arguments[*forwarded_argument_index];
-    if (argument.kind != syntax::ExpressionKind::name) {
-        return std::nullopt;
-    }
-
-    return parameter_index_named(
+    return forwarded_dynamic_array_parameter_index_for_statement(
+        *statement,
         *source_function->second,
         signature->second,
-        argument.text,
-        source_type_name
+        source_type_name,
+        context,
+        remaining_depth
     );
 }
 

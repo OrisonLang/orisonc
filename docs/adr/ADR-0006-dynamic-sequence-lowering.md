@@ -2616,6 +2616,8 @@ representation.
 - Forwarded-parameter local-alias proof remains intentionally narrow: helper bodies with extra statements reject as
   unsupported computed shapes, and alias reassignment rejects at the ownership boundary before computed cleanup
   planning.
+- Forwarded-parameter helper calls now resolve through final `if` and final `switch` value statements when every
+  continuing branch forwards the same `DynamicArray<T>` parameter owner, with source-query and production CLI coverage.
 
 ## Follow-up work
 
