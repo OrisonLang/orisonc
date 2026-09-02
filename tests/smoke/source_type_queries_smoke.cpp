@@ -119,25 +119,37 @@ auto expression_statement(orison::syntax::ExpressionSyntax expression) -> orison
     return statement;
 }
 
-auto dynamic_array_uint32_parameter() -> orison::syntax::ParameterSyntax {
+auto dynamic_array_uint32_parameter(std::string parameter_name = "items") -> orison::syntax::ParameterSyntax {
     return orison::syntax::ParameterSyntax {
-        .name = "items",
+        .name = std::move(parameter_name),
         .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
     };
 }
 
 auto register_dynamic_array_forwarding_signature(
     orison::lowering::LoweringContext& context,
-    std::string function_name
+    std::string function_name,
+    std::size_t parameter_count = 1
 ) -> void {
     auto symbol_name = function_name;
+    auto parameter_types = std::vector<std::string> {};
+    auto parameter_source_type_names = std::vector<std::string> {};
+    auto parameter_signedness = std::vector<orison::lowering::IntegerSignedness> {};
+    parameter_types.reserve(parameter_count);
+    parameter_source_type_names.reserve(parameter_count);
+    parameter_signedness.reserve(parameter_count);
+    for (auto index = std::size_t {0}; index < parameter_count; ++index) {
+        parameter_types.push_back(std::string {orison::lowering::dynamic_array_descriptor_llvm_type()});
+        parameter_source_type_names.push_back("DynamicArray<UInt32>");
+        parameter_signedness.push_back(orison::lowering::IntegerSignedness::not_integer);
+    }
     context.functions.emplace(std::move(function_name), orison::lowering::LoweredFunctionSignature {
         .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
         .source_return_type_name = "DynamicArray<UInt32>",
         .return_signedness = orison::lowering::IntegerSignedness::not_integer,
-        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
-        .parameter_source_type_names = {"DynamicArray<UInt32>"},
-        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+        .parameter_types = std::move(parameter_types),
+        .parameter_source_type_names = std::move(parameter_source_type_names),
+        .parameter_signedness = std::move(parameter_signedness),
         .symbol_name = std::move(symbol_name),
     });
 }
@@ -398,6 +410,8 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_alias_let");
     register_dynamic_array_forwarding_signature(context, "forward_final_if");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch");
+    register_dynamic_array_forwarding_signature(context, "forward_final_if_mismatch", 2);
+    register_dynamic_array_forwarding_signature(context, "forward_final_switch_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_extra");
     register_dynamic_array_forwarding_signature(context, "forward_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_cycle_left");
@@ -739,6 +753,26 @@ int main() {
         one_statement_block(expression_statement(call("forward_items", name("items"))))
     ));
     context.source_functions["forward_final_switch"] = &forward_final_switch_function;
+
+    auto forward_final_if_mismatch_function = orison::syntax::FunctionSyntax {};
+    forward_final_if_mismatch_function.name = "forward_final_if_mismatch";
+    forward_final_if_mismatch_function.parameters.push_back(dynamic_array_uint32_parameter("left"));
+    forward_final_if_mismatch_function.parameters.push_back(dynamic_array_uint32_parameter("right"));
+    forward_final_if_mismatch_function.body_statements.push_back(if_statement(
+        one_statement_block(expression_statement(name("left"))),
+        one_statement_block(expression_statement(call("forward_items", name("right"))))
+    ));
+    context.source_functions["forward_final_if_mismatch"] = &forward_final_if_mismatch_function;
+
+    auto forward_final_switch_mismatch_function = orison::syntax::FunctionSyntax {};
+    forward_final_switch_mismatch_function.name = "forward_final_switch_mismatch";
+    forward_final_switch_mismatch_function.parameters.push_back(dynamic_array_uint32_parameter("left"));
+    forward_final_switch_mismatch_function.parameters.push_back(dynamic_array_uint32_parameter("right"));
+    forward_final_switch_mismatch_function.body_statements.push_back(switch_statement(
+        one_statement_block(expression_statement(name("left"))),
+        one_statement_block(expression_statement(call("forward_items", name("right"))))
+    ));
+    context.source_functions["forward_final_switch_mismatch"] = &forward_final_switch_mismatch_function;
 
     auto forward_alias_with_extra_function = orison::syntax::FunctionSyntax {};
     forward_alias_with_extra_function.name = "forward_alias_with_extra";
@@ -1148,6 +1182,52 @@ int main() {
     assert(final_switch_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
     assert(final_switch_forwarded_parameter_plan.descriptor_storage_available);
     assert(final_switch_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto final_if_forwarded_parameter_mismatch_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_if_mismatch", name("left"), name("right")),
+                call("forward_final_if_mismatch", name("left"), name("right"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_if_forwarded_parameter_mismatch_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(final_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names.size() == 4);
+    assert(final_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[0] == "left");
+    assert(final_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[1] == "right");
+    assert(final_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[2] == "left");
+    assert(final_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[3] == "right");
+    assert(!final_if_forwarded_parameter_mismatch_plan.descriptor_storage_available);
+    assert(!final_if_forwarded_parameter_mismatch_plan.cleanup_owner_proven);
+    assert(!final_if_forwarded_parameter_mismatch_plan.lowering_enabled);
+
+    auto final_switch_forwarded_parameter_mismatch_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_switch_mismatch", name("left"), name("right")),
+                call("forward_final_switch_mismatch", name("left"), name("right"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_switch_forwarded_parameter_mismatch_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(final_switch_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names.size() == 4);
+    assert(final_switch_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[0] == "left");
+    assert(final_switch_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[1] == "right");
+    assert(final_switch_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[2] == "left");
+    assert(final_switch_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[3] == "right");
+    assert(!final_switch_forwarded_parameter_mismatch_plan.descriptor_storage_available);
+    assert(!final_switch_forwarded_parameter_mismatch_plan.cleanup_owner_proven);
+    assert(!final_switch_forwarded_parameter_mismatch_plan.lowering_enabled);
 
     auto local_alias_extra_statement_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

@@ -2618,6 +2618,9 @@ representation.
   planning.
 - Forwarded-parameter helper calls now resolve through final `if` and final `switch` value statements when every
   continuing branch forwards the same `DynamicArray<T>` parameter owner, with source-query and production CLI coverage.
+- Final-control forwarded-parameter helpers now have negative coverage for distinct owner parameters: source-query
+  planning reports owner mismatch, while production lowering rejects the helper's branch or case ownership mismatch
+  before computed-loop cleanup planning.
 
 ## Follow-up work
 
