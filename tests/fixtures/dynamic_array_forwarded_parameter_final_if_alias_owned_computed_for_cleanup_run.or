@@ -1,0 +1,28 @@
+package fixtures.dynamicarrayforwardedparameterfinalifaliasownedcomputedforcleanuprun
+
+record Payload
+    value: Int64
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function forward_final_if_alias(flag: Bool, items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    if flag
+        let alias: DynamicArray<Payload> = items
+        alias
+    else
+        var alias: DynamicArray<Payload> = items
+        alias
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    var total = 0 as Int64
+    items.push(Payload(13))
+    items.push(Payload(17))
+    for item in true ? forward_final_if_alias(true, items) : forward_final_if_alias(false, items)
+        total = total + item.value
+    0 as UInt32

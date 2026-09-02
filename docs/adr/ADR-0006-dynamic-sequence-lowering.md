@@ -2626,6 +2626,8 @@ representation.
 - Nested final-control forwarded-parameter helpers now have distinct-owner negative coverage for a final `if`
   containing a final `switch`; source-query planning reports owner mismatch, while production lowering rejects the
   inner case ownership mismatch before computed-loop cleanup planning.
+- Final-control forwarded-parameter helpers now cover branch-local alias leaves in final `if` and final `switch`
+  blocks; each accepted branch stays limited to one typed alias binding followed by the final alias value.
 
 ## Follow-up work
 

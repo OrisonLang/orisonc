@@ -188,21 +188,23 @@ auto parameter_index_named(
     return std::nullopt;
 }
 
-auto local_alias_parameter_index(
+auto local_alias_parameter_index_for_pair(
+    syntax::StatementSyntax const& binding,
+    syntax::StatementSyntax const& final_statement,
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,
-    std::string_view alias_name,
     std::string_view source_type_name
 ) -> std::optional<std::size_t> {
-    if (function.body_statements.size() != 2) {
+    if (final_statement.kind != syntax::StatementKind::expression_statement &&
+        final_statement.kind != syntax::StatementKind::return_statement) {
         return std::nullopt;
     }
 
-    auto const& binding = function.body_statements.front();
     if ((binding.kind != syntax::StatementKind::let_binding &&
         binding.kind != syntax::StatementKind::var_binding) ||
-        binding.name != alias_name ||
+        binding.name != final_statement.expression.text ||
         render_source_type_name(binding.annotated_type) != source_type_name ||
+        final_statement.expression.kind != syntax::ExpressionKind::name ||
         binding.expression.kind != syntax::ExpressionKind::name) {
         return std::nullopt;
     }
@@ -228,6 +230,92 @@ auto single_forwarded_dynamic_array_parameter_index(std::size_t index) -> std::v
     return indexes;
 }
 
+auto forwarded_dynamic_array_parameter_indexes_for_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth
+) -> std::optional<std::vector<std::size_t>>;
+
+auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth
+) -> std::optional<std::vector<std::size_t>> {
+    if (statements.empty()) {
+        return std::nullopt;
+    }
+    if (statements.size() == 2) {
+        auto alias_index = local_alias_parameter_index_for_pair(
+            statements.front(),
+            statements.back(),
+            function,
+            signature,
+            source_type_name
+        );
+        if (!alias_index.has_value()) {
+            return std::nullopt;
+        }
+        return single_forwarded_dynamic_array_parameter_index(*alias_index);
+    }
+    if (statements.size() != 1) {
+        return std::nullopt;
+    }
+    return forwarded_dynamic_array_parameter_indexes_for_statement(
+        statements.back(),
+        function,
+        signature,
+        source_type_name,
+        context,
+        remaining_depth
+    );
+}
+
+auto forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth
+) -> std::optional<std::vector<std::size_t>> {
+    if (statements.empty()) {
+        return std::nullopt;
+    }
+    if (statements.size() == 2) {
+        if (statements.front() == nullptr || statements.back() == nullptr) {
+            return std::nullopt;
+        }
+        auto alias_index = local_alias_parameter_index_for_pair(
+            *statements.front(),
+            *statements.back(),
+            function,
+            signature,
+            source_type_name
+        );
+        if (!alias_index.has_value()) {
+            return std::nullopt;
+        }
+        return single_forwarded_dynamic_array_parameter_index(*alias_index);
+    }
+    if (statements.size() != 1 || statements.back() == nullptr) {
+        return std::nullopt;
+    }
+    return forwarded_dynamic_array_parameter_indexes_for_statement(
+        *statements.back(),
+        function,
+        signature,
+        source_type_name,
+        context,
+        remaining_depth
+    );
+}
+
 auto forwarded_dynamic_array_parameter_indexes_for_expression(
     syntax::ExpressionSyntax const& expression,
     syntax::FunctionSyntax const& function,
@@ -245,16 +333,7 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
         )) {
             return single_forwarded_dynamic_array_parameter_index(*parameter_index);
         }
-        auto alias_index = local_alias_parameter_index(
-            function,
-            signature,
-            expression.text,
-            source_type_name
-        );
-        if (!alias_index.has_value()) {
-            return std::nullopt;
-        }
-        return single_forwarded_dynamic_array_parameter_index(*alias_index);
+        return std::nullopt;
     }
 
     if (expression.kind != syntax::ExpressionKind::call ||
@@ -328,19 +407,16 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
     }
 
     if (statement.kind == syntax::StatementKind::if_statement) {
-        if (statement.nested_statements.empty() || statement.alternate_statements.empty()) {
-            return std::nullopt;
-        }
-        auto then_indexes = forwarded_dynamic_array_parameter_indexes_for_statement(
-            statement.nested_statements.back(),
+        auto then_indexes = forwarded_dynamic_array_parameter_indexes_for_statement_block(
+            statement.nested_statements,
             function,
             signature,
             source_type_name,
             context,
             remaining_depth
         );
-        auto else_indexes = forwarded_dynamic_array_parameter_indexes_for_statement(
-            statement.alternate_statements.back(),
+        auto else_indexes = forwarded_dynamic_array_parameter_indexes_for_statement_block(
+            statement.alternate_statements,
             function,
             signature,
             source_type_name,
@@ -360,11 +436,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
     if (statement.kind == syntax::StatementKind::switch_statement) {
         auto result = std::vector<std::size_t> {};
         for (auto const& switch_case : statement.switch_cases) {
-            if (switch_case.statements.empty() || switch_case.statements.back() == nullptr) {
-                return std::nullopt;
-            }
-            auto case_indexes = forwarded_dynamic_array_parameter_indexes_for_statement(
-                *switch_case.statements.back(),
+            auto case_indexes = forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
+                switch_case.statements,
                 function,
                 signature,
                 source_type_name,
@@ -405,8 +478,8 @@ auto forwarded_dynamic_array_parameter_indexes(
         return std::nullopt;
     }
 
-    return forwarded_dynamic_array_parameter_indexes_for_statement(
-        *statement,
+    return forwarded_dynamic_array_parameter_indexes_for_statement_block(
+        source_function->second->body_statements,
         *source_function->second,
         signature->second,
         source_type_name,

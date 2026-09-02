@@ -410,6 +410,8 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_alias_let");
     register_dynamic_array_forwarding_signature(context, "forward_final_if");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch");
+    register_dynamic_array_forwarding_signature(context, "forward_final_if_alias");
+    register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_mismatch", 2);
@@ -755,6 +757,36 @@ int main() {
         one_statement_block(expression_statement(call("forward_items", name("items"))))
     ));
     context.source_functions["forward_final_switch"] = &forward_final_switch_function;
+
+    auto forward_final_if_alias_function = orison::syntax::FunctionSyntax {};
+    forward_final_if_alias_function.name = "forward_final_if_alias";
+    forward_final_if_alias_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_if_alias_function.body_statements.push_back(if_statement(
+        two_statement_block(
+            dynamic_array_let_statement("alias", name("items")),
+            expression_statement(name("alias"))
+        ),
+        two_statement_block(
+            dynamic_array_var_statement("alias", name("items")),
+            expression_statement(name("alias"))
+        )
+    ));
+    context.source_functions["forward_final_if_alias"] = &forward_final_if_alias_function;
+
+    auto forward_final_switch_alias_function = orison::syntax::FunctionSyntax {};
+    forward_final_switch_alias_function.name = "forward_final_switch_alias";
+    forward_final_switch_alias_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_switch_alias_function.body_statements.push_back(switch_statement(
+        two_statement_block(
+            dynamic_array_let_statement("alias", name("items")),
+            expression_statement(name("alias"))
+        ),
+        two_statement_block(
+            dynamic_array_var_statement("alias", name("items")),
+            expression_statement(name("alias"))
+        )
+    ));
+    context.source_functions["forward_final_switch_alias"] = &forward_final_switch_alias_function;
 
     auto forward_final_if_switch_function = orison::syntax::FunctionSyntax {};
     forward_final_if_switch_function.name = "forward_final_if_switch";
@@ -1167,6 +1199,48 @@ int main() {
     assert(local_let_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
     assert(local_let_alias_forwarded_parameter_plan.descriptor_storage_available);
     assert(local_let_alias_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto final_if_alias_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_if_alias", name("items")),
+                call("forward_final_if_alias", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_if_alias_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(final_if_alias_forwarded_parameter_plan.source_owner_name == "items");
+    assert(final_if_alias_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(final_if_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(final_if_alias_forwarded_parameter_plan.descriptor_storage_available);
+    assert(final_if_alias_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto final_switch_alias_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_switch_alias", name("items")),
+                call("forward_final_switch_alias", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_switch_alias_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(final_switch_alias_forwarded_parameter_plan.source_owner_name == "items");
+    assert(final_switch_alias_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(final_switch_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(final_switch_alias_forwarded_parameter_plan.descriptor_storage_available);
+    assert(final_switch_alias_forwarded_parameter_plan.cleanup_owner_proven);
 
     auto final_if_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
