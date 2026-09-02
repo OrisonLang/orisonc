@@ -329,6 +329,15 @@ int main() {
         .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
         .symbol_name = "forward_items",
     });
+    context.functions.emplace("forward_again", orison::lowering::LoweredFunctionSignature {
+        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+        .source_return_type_name = "DynamicArray<UInt32>",
+        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
+        .parameter_source_type_names = {"DynamicArray<UInt32>"},
+        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+        .symbol_name = "forward_again",
+    });
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Bucket",
         .method_name = "view",
@@ -632,6 +641,15 @@ int main() {
     forward_items_function.body_statements.push_back(expression_statement(name("items")));
     context.source_functions["forward_items"] = &forward_items_function;
 
+    auto forward_again_function = orison::syntax::FunctionSyntax {};
+    forward_again_function.name = "forward_again";
+    forward_again_function.parameters.push_back(orison::syntax::ParameterSyntax {
+        .name = "items",
+        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
+    });
+    forward_again_function.body_statements.push_back(expression_statement(call("forward_items", name("items"))));
+    context.source_functions["forward_again"] = &forward_again_function;
+
     auto named_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
     assert(
@@ -786,6 +804,27 @@ int main() {
     assert(forwarded_parameter_computed_handoff_plan.descriptor_storage_available);
     assert(forwarded_parameter_computed_handoff_plan.cleanup_owner_proven);
 
+    auto multi_hop_forwarded_parameter_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_again", name("items")),
+                call("forward_again", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        multi_hop_forwarded_parameter_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(multi_hop_forwarded_parameter_computed_handoff_plan.source_owner_name == "items");
+    assert(multi_hop_forwarded_parameter_computed_handoff_plan.handoff_owner_name == "items");
+    assert(multi_hop_forwarded_parameter_computed_handoff_plan.descriptor_storage_name == "%items.addr");
+    assert(multi_hop_forwarded_parameter_computed_handoff_plan.descriptor_storage_available);
+    assert(multi_hop_forwarded_parameter_computed_handoff_plan.cleanup_owner_proven);
+
     auto forwarded_parameter_owner_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(
@@ -806,6 +845,27 @@ int main() {
     assert(!forwarded_parameter_owner_mismatch_plan.descriptor_storage_available);
     assert(!forwarded_parameter_owner_mismatch_plan.cleanup_owner_proven);
     assert(!forwarded_parameter_owner_mismatch_plan.lowering_enabled);
+
+    auto multi_hop_forwarded_parameter_owner_mismatch_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_again", name("left")),
+                call("forward_again", name("right"))
+            ),
+            context,
+            state
+        );
+    assert(
+        multi_hop_forwarded_parameter_owner_mismatch_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(multi_hop_forwarded_parameter_owner_mismatch_plan.ownership_plan.branch_owner_names.size() == 2);
+    assert(multi_hop_forwarded_parameter_owner_mismatch_plan.ownership_plan.branch_owner_names[0] == "left");
+    assert(multi_hop_forwarded_parameter_owner_mismatch_plan.ownership_plan.branch_owner_names[1] == "right");
+    assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.descriptor_storage_available);
+    assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.cleanup_owner_proven);
+    assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.lowering_enabled);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);

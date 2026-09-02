@@ -1,0 +1,26 @@
+package fixtures.dynamicarrayforwardedparametermultihopownedcomputedforcleanuprun
+
+record Payload
+    value: Int64
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function forward_items(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    items
+
+function forward_again(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_items(items)
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    var total = 0 as Int64
+    items.push(Payload(13))
+    items.push(Payload(17))
+    for item in true ? forward_again(items) : forward_again(items)
+        total = total + item.value
+    0 as UInt32

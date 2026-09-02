@@ -2598,6 +2598,9 @@ representation.
 - Forwarded-parameter computed `DynamicArray<T>` owner-mismatch coverage now proves helper-call leaves map back to
   their argument owner before ownership joining; `left` versus `forward_items(right)` is rejected across the same
   production CLI paths.
+- Multi-hop forwarded-parameter computed `DynamicArray<T>` leaves now cover `forward_again(items)` through
+  `forward_items(items)`, proving same-owner cleanup and rejecting distinct-owner joins across source-query and
+  production CLI paths.
 
 ## Follow-up work
 
