@@ -338,6 +338,24 @@ int main() {
         .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
         .symbol_name = "forward_again",
     });
+    context.functions.emplace("forward_cycle_left", orison::lowering::LoweredFunctionSignature {
+        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+        .source_return_type_name = "DynamicArray<UInt32>",
+        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
+        .parameter_source_type_names = {"DynamicArray<UInt32>"},
+        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+        .symbol_name = "forward_cycle_left",
+    });
+    context.functions.emplace("forward_cycle_right", orison::lowering::LoweredFunctionSignature {
+        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+        .source_return_type_name = "DynamicArray<UInt32>",
+        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+        .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
+        .parameter_source_type_names = {"DynamicArray<UInt32>"},
+        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+        .symbol_name = "forward_cycle_right",
+    });
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Bucket",
         .method_name = "view",
@@ -650,6 +668,28 @@ int main() {
     forward_again_function.body_statements.push_back(expression_statement(call("forward_items", name("items"))));
     context.source_functions["forward_again"] = &forward_again_function;
 
+    auto forward_cycle_left_function = orison::syntax::FunctionSyntax {};
+    forward_cycle_left_function.name = "forward_cycle_left";
+    forward_cycle_left_function.parameters.push_back(orison::syntax::ParameterSyntax {
+        .name = "items",
+        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
+    });
+    forward_cycle_left_function.body_statements.push_back(
+        expression_statement(call("forward_cycle_right", name("items")))
+    );
+    context.source_functions["forward_cycle_left"] = &forward_cycle_left_function;
+
+    auto forward_cycle_right_function = orison::syntax::FunctionSyntax {};
+    forward_cycle_right_function.name = "forward_cycle_right";
+    forward_cycle_right_function.parameters.push_back(orison::syntax::ParameterSyntax {
+        .name = "items",
+        .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
+    });
+    forward_cycle_right_function.body_statements.push_back(
+        expression_statement(call("forward_cycle_left", name("items")))
+    );
+    context.source_functions["forward_cycle_right"] = &forward_cycle_right_function;
+
     auto named_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
     assert(
@@ -866,6 +906,29 @@ int main() {
     assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.descriptor_storage_available);
     assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.cleanup_owner_proven);
     assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.lowering_enabled);
+
+    auto cyclic_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_cycle_left", name("items")),
+                call("forward_cycle_left", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        cyclic_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        cyclic_forwarded_parameter_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(cyclic_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
+    assert(!cyclic_forwarded_parameter_plan.descriptor_storage_available);
+    assert(!cyclic_forwarded_parameter_plan.cleanup_owner_proven);
+    assert(!cyclic_forwarded_parameter_plan.lowering_enabled);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);

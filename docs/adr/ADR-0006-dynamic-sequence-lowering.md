@@ -2601,6 +2601,9 @@ representation.
 - Multi-hop forwarded-parameter computed `DynamicArray<T>` leaves now cover `forward_again(items)` through
   `forward_items(items)`, proving same-owner cleanup and rejecting distinct-owner joins across source-query and
   production CLI paths.
+- Cyclic forwarded-parameter computed `DynamicArray<T>` helper chains now have bounded-recursion rejection coverage.
+  The resolver exhausts its finite forwarding depth and reports an unsupported computed shape across source-query and
+  production CLI paths.
 
 ## Follow-up work
 
