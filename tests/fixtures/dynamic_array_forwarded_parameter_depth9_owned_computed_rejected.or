@@ -1,0 +1,47 @@
+package fixtures.dynamicarrayforwardedparameterdepth9ownedcomputedrejected
+
+record Payload
+    value: Int64
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function forward_depth1(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth2(items)
+
+function forward_depth2(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth3(items)
+
+function forward_depth3(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth4(items)
+
+function forward_depth4(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth5(items)
+
+function forward_depth5(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth6(items)
+
+function forward_depth6(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth7(items)
+
+function forward_depth7(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth8(items)
+
+function forward_depth8(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    forward_depth9(items)
+
+function forward_depth9(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    items
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    var total = 0 as Int64
+    items.push(Payload(13))
+    items.push(Payload(17))
+    for item in true ? forward_depth1(items) : forward_depth1(items)
+        total = total + item.value
+    0 as UInt32

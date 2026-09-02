@@ -2604,6 +2604,9 @@ representation.
 - Cyclic forwarded-parameter computed `DynamicArray<T>` helper chains now have bounded-recursion rejection coverage.
   The resolver exhausts its finite forwarding depth and reports an unsupported computed shape across source-query and
   production CLI paths.
+- Acyclic forwarded-parameter computed `DynamicArray<T>` chains now pin the resolver depth boundary: eight forwarding
+  helpers prove the original owner, while nine helpers reject as an unsupported computed shape across source-query and
+  production CLI paths.
 
 ## Follow-up work
 

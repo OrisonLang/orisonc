@@ -356,6 +356,21 @@ int main() {
         .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
         .symbol_name = "forward_cycle_right",
     });
+    for (auto prefix : {"forward_limit", "forward_over"}) {
+        auto const chain_length = std::string_view {prefix} == "forward_limit" ? 8 : 9;
+        for (auto index = 1; index <= chain_length; ++index) {
+            auto function_name = std::string {prefix} + std::to_string(index);
+            context.functions.emplace(function_name, orison::lowering::LoweredFunctionSignature {
+                .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+                .source_return_type_name = "DynamicArray<UInt32>",
+                .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+                .parameter_types = {std::string {orison::lowering::dynamic_array_descriptor_llvm_type()}},
+                .parameter_source_type_names = {"DynamicArray<UInt32>"},
+                .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+                .symbol_name = function_name,
+            });
+        }
+    }
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Bucket",
         .method_name = "view",
@@ -690,6 +705,29 @@ int main() {
     );
     context.source_functions["forward_cycle_right"] = &forward_cycle_right_function;
 
+    auto depth_functions = std::vector<orison::syntax::FunctionSyntax> {};
+    depth_functions.reserve(17);
+    for (auto prefix : {"forward_limit", "forward_over"}) {
+        auto const chain_length = std::string_view {prefix} == "forward_limit" ? 8 : 9;
+        for (auto index = 1; index <= chain_length; ++index) {
+            auto function = orison::syntax::FunctionSyntax {};
+            function.name = std::string {prefix} + std::to_string(index);
+            function.parameters.push_back(orison::syntax::ParameterSyntax {
+                .name = "items",
+                .type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"},
+            });
+            if (index == chain_length) {
+                function.body_statements.push_back(expression_statement(name("items")));
+            } else {
+                function.body_statements.push_back(
+                    expression_statement(call(std::string {prefix} + std::to_string(index + 1), name("items")))
+                );
+            }
+            depth_functions.push_back(std::move(function));
+            context.source_functions[depth_functions.back().name] = &depth_functions.back();
+        }
+    }
+
     auto named_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
     assert(
@@ -865,6 +903,27 @@ int main() {
     assert(multi_hop_forwarded_parameter_computed_handoff_plan.descriptor_storage_available);
     assert(multi_hop_forwarded_parameter_computed_handoff_plan.cleanup_owner_proven);
 
+    auto depth_limit_forwarded_parameter_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_limit1", name("items")),
+                call("forward_limit1", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        depth_limit_forwarded_parameter_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(depth_limit_forwarded_parameter_computed_handoff_plan.source_owner_name == "items");
+    assert(depth_limit_forwarded_parameter_computed_handoff_plan.handoff_owner_name == "items");
+    assert(depth_limit_forwarded_parameter_computed_handoff_plan.descriptor_storage_name == "%items.addr");
+    assert(depth_limit_forwarded_parameter_computed_handoff_plan.descriptor_storage_available);
+    assert(depth_limit_forwarded_parameter_computed_handoff_plan.cleanup_owner_proven);
+
     auto forwarded_parameter_owner_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(
@@ -929,6 +988,29 @@ int main() {
     assert(!cyclic_forwarded_parameter_plan.descriptor_storage_available);
     assert(!cyclic_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!cyclic_forwarded_parameter_plan.lowering_enabled);
+
+    auto depth_overflow_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_over1", name("items")),
+                call("forward_over1", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        depth_overflow_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        depth_overflow_forwarded_parameter_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(depth_overflow_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
+    assert(!depth_overflow_forwarded_parameter_plan.descriptor_storage_available);
+    assert(!depth_overflow_forwarded_parameter_plan.cleanup_owner_proven);
+    assert(!depth_overflow_forwarded_parameter_plan.lowering_enabled);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);
