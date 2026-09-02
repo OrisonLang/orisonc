@@ -2595,6 +2595,9 @@ representation.
 - Simple forwarded-parameter same-owner computed `DynamicArray<T>` leaves now have source-query and production CLI
   coverage. A ternary over `items` and `forward_items(items)` proves the same descriptor owner and emits through
   `run`, `--emit-llvm`, `--emit-object`, and `--build`.
+- Forwarded-parameter computed `DynamicArray<T>` owner-mismatch coverage now proves helper-call leaves map back to
+  their argument owner before ownership joining; `left` versus `forward_items(right)` is rejected across the same
+  production CLI paths.
 
 ## Follow-up work
 

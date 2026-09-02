@@ -1662,7 +1662,7 @@ void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failu
     );
 }
 
-void assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
+void assert_computed_dynamic_array_owner_mismatch_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
     std::filesystem::path const& object_path,
@@ -2593,6 +2593,8 @@ auto main(int argc, char** argv) -> int {
         examples / "local_dynamic_array_owned_nested_computed_for.or";
     auto forwarded_parameter_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_parameter_owned_computed_owner_mismatch_rejected.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_nested_computed_dynamic_array_path =
@@ -3139,7 +3141,15 @@ auto main(int argc, char** argv) -> int {
         nested_static_indexed_aggregate_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup"
     );
-    assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
+    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
+        executable,
+        forwarded_parameter_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_owned_computed_owner_mismatch",
+        "left",
+        "right"
+    );
+    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
         static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
         smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch.o",
@@ -3147,7 +3157,7 @@ auto main(int argc, char** argv) -> int {
         "holder.buckets.element0.values",
         "holder.buckets.element1.values"
     );
-    assert_static_indexed_computed_dynamic_array_owner_mismatch_failure_matrix(
+    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
         nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch.o",
