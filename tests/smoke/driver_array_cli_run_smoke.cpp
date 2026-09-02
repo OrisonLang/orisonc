@@ -2637,6 +2637,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_depth9_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_depth9_owned_computed_rejected.or";
+    auto forwarded_parameter_local_alias_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_owned_computed_rejected.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_nested_computed_dynamic_array_path =
@@ -3240,6 +3242,12 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_depth9_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth9_owned_computed.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth9_owned_computed"
+    );
+    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+        executable,
+        forwarded_parameter_local_alias_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
