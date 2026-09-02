@@ -2628,6 +2628,8 @@ representation.
   inner case ownership mismatch before computed-loop cleanup planning.
 - Final-control forwarded-parameter helpers now cover branch-local alias leaves in final `if` and final `switch`
   blocks; each accepted branch stays limited to one typed alias binding followed by the final alias value.
+- Final-control alias-leaf forwarding now has negative coverage for branch blocks with extra statements and alias
+  reassignment, preserving the intentionally narrow proof boundary across final `if` and final `switch`.
 
 ## Follow-up work
 
