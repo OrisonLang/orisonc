@@ -1,0 +1,33 @@
+package fixtures.dynamicarrayforwardedparameterfinalifswitchownedcomputedforcleanuprun
+
+record Payload
+    value: Int64
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function forward_items(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    items
+
+function forward_final_if_switch(flag: Bool, selector: Bool, items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    if flag
+        items
+    else
+        switch selector
+            true =>
+                forward_items(items)
+            false =>
+                items
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    var total = 0 as Int64
+    items.push(Payload(13))
+    items.push(Payload(17))
+    for item in true ? forward_final_if_switch(true, true, items) : forward_final_if_switch(false, false, items)
+        total = total + item.value
+    0 as UInt32

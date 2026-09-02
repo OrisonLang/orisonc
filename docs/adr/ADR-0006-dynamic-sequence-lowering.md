@@ -2621,6 +2621,8 @@ representation.
 - Final-control forwarded-parameter helpers now have negative coverage for distinct owner parameters: source-query
   planning reports owner mismatch, while production lowering rejects the helper's branch or case ownership mismatch
   before computed-loop cleanup planning.
+- Nested final-control forwarded-parameter helpers now have same-owner coverage for a final `if` containing a final
+  `switch`, with all continuing leaves proving the same `DynamicArray<T>` parameter owner.
 
 ## Follow-up work
 

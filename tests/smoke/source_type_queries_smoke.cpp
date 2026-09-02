@@ -410,6 +410,7 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_alias_let");
     register_dynamic_array_forwarding_signature(context, "forward_final_if");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch");
+    register_dynamic_array_forwarding_signature(context, "forward_final_if_switch");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_extra");
@@ -753,6 +754,18 @@ int main() {
         one_statement_block(expression_statement(call("forward_items", name("items"))))
     ));
     context.source_functions["forward_final_switch"] = &forward_final_switch_function;
+
+    auto forward_final_if_switch_function = orison::syntax::FunctionSyntax {};
+    forward_final_if_switch_function.name = "forward_final_if_switch";
+    forward_final_if_switch_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_if_switch_function.body_statements.push_back(if_statement(
+        one_statement_block(expression_statement(name("items"))),
+        one_statement_block(switch_statement(
+            one_statement_block(expression_statement(call("forward_items", name("items")))),
+            one_statement_block(expression_statement(name("items")))
+        ))
+    ));
+    context.source_functions["forward_final_if_switch"] = &forward_final_if_switch_function;
 
     auto forward_final_if_mismatch_function = orison::syntax::FunctionSyntax {};
     forward_final_if_mismatch_function.name = "forward_final_if_mismatch";
@@ -1182,6 +1195,27 @@ int main() {
     assert(final_switch_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
     assert(final_switch_forwarded_parameter_plan.descriptor_storage_available);
     assert(final_switch_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto final_if_switch_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_if_switch", name("items")),
+                call("forward_final_if_switch", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_if_switch_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(final_if_switch_forwarded_parameter_plan.source_owner_name == "items");
+    assert(final_if_switch_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(final_if_switch_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(final_if_switch_forwarded_parameter_plan.descriptor_storage_available);
+    assert(final_if_switch_forwarded_parameter_plan.cleanup_owner_proven);
 
     auto final_if_forwarded_parameter_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

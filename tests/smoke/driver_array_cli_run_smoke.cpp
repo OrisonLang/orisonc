@@ -2674,6 +2674,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_final_if_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_final_switch_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_final_if_switch_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_final_if_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_parameter_final_if_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_parameter_final_switch_owned_computed_dynamic_array_owner_mismatch_path =
@@ -3266,6 +3268,21 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_parameter_final_switch_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, forwarded_parameter_final_if_switch_owned_computed_dynamic_array_path);
+    assert_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_parameter_final_if_switch_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_parameter_final_if_switch_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_parameter_final_if_switch_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_for_cleanup"
     );
     assert_run_success(executable, static_indexed_aggregate_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
