@@ -180,6 +180,26 @@ auto dynamic_array_var_statement(std::string name, orison::syntax::ExpressionSyn
     return statement;
 }
 
+auto dynamic_array_let_statement(std::string name, orison::syntax::ExpressionSyntax expression)
+    -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::let_binding;
+    statement.name = std::move(name);
+    statement.annotated_type = orison::syntax::TypeSyntax {.name = "DynamicArray<UInt32>"};
+    statement.expression = std::move(expression);
+    return statement;
+}
+
+auto assignment_statement(orison::syntax::ExpressionSyntax target, orison::syntax::ExpressionSyntax expression)
+    -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::assignment_statement;
+    statement.assignment_target = std::move(target);
+    statement.expression = std::move(expression);
+    statement.assignment_operator = "=";
+    return statement;
+}
+
 auto two_statement_block(
     orison::syntax::StatementSyntax first,
     orison::syntax::StatementSyntax second
@@ -375,6 +395,8 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_items");
     register_dynamic_array_forwarding_signature(context, "forward_again");
     register_dynamic_array_forwarding_signature(context, "forward_alias");
+    register_dynamic_array_forwarding_signature(context, "forward_alias_with_extra");
+    register_dynamic_array_forwarding_signature(context, "forward_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_cycle_left");
     register_dynamic_array_forwarding_signature(context, "forward_cycle_right");
     for (auto prefix : {"forward_limit", "forward_over"}) {
@@ -689,6 +711,22 @@ int main() {
     forward_alias_function.body_statements.push_back(dynamic_array_var_statement("alias", name("items")));
     forward_alias_function.body_statements.push_back(expression_statement(name("alias")));
     context.source_functions["forward_alias"] = &forward_alias_function;
+
+    auto forward_alias_with_extra_function = orison::syntax::FunctionSyntax {};
+    forward_alias_with_extra_function.name = "forward_alias_with_extra";
+    forward_alias_with_extra_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_alias_with_extra_function.body_statements.push_back(dynamic_array_let_statement("alias", name("items")));
+    forward_alias_with_extra_function.body_statements.push_back(expression_statement(name("items")));
+    forward_alias_with_extra_function.body_statements.push_back(expression_statement(name("alias")));
+    context.source_functions["forward_alias_with_extra"] = &forward_alias_with_extra_function;
+
+    auto forward_alias_reassigned_function = orison::syntax::FunctionSyntax {};
+    forward_alias_reassigned_function.name = "forward_alias_reassigned";
+    forward_alias_reassigned_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_alias_reassigned_function.body_statements.push_back(dynamic_array_var_statement("alias", name("items")));
+    forward_alias_reassigned_function.body_statements.push_back(assignment_statement(name("alias"), name("items")));
+    forward_alias_reassigned_function.body_statements.push_back(expression_statement(name("alias")));
+    context.source_functions["forward_alias_reassigned"] = &forward_alias_reassigned_function;
 
     auto forward_cycle_left_function =
         call_dynamic_array_forwarding_function("forward_cycle_left", "forward_cycle_right");
@@ -1019,6 +1057,52 @@ int main() {
     assert(local_alias_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
     assert(local_alias_forwarded_parameter_plan.descriptor_storage_available);
     assert(local_alias_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto local_alias_extra_statement_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_alias_with_extra", name("items")),
+                call("forward_alias_with_extra", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        local_alias_extra_statement_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        local_alias_extra_statement_forwarded_parameter_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(local_alias_extra_statement_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
+    assert(!local_alias_extra_statement_forwarded_parameter_plan.descriptor_storage_available);
+    assert(!local_alias_extra_statement_forwarded_parameter_plan.cleanup_owner_proven);
+    assert(!local_alias_extra_statement_forwarded_parameter_plan.lowering_enabled);
+
+    auto local_alias_reassigned_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_alias_reassigned", name("items")),
+                call("forward_alias_reassigned", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        local_alias_reassigned_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        local_alias_reassigned_forwarded_parameter_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(local_alias_reassigned_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
+    assert(!local_alias_reassigned_forwarded_parameter_plan.descriptor_storage_available);
+    assert(!local_alias_reassigned_forwarded_parameter_plan.cleanup_owner_proven);
+    assert(!local_alias_reassigned_forwarded_parameter_plan.lowering_enabled);
 
     auto aggregate_field_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(member(name("returned"), "values"), context, state);

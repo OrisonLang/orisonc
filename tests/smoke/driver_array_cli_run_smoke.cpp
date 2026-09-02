@@ -1730,6 +1730,35 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     );
 }
 
+void assert_diagnostic_failure_matrix(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& object_path,
+    std::filesystem::path const& output_path,
+    std::string_view expected_fragment
+) {
+    assert_contains(
+        read_failing_command_output(executable.string() + " run " + source_path.string()),
+        expected_fragment
+    );
+    assert_contains(
+        read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string()),
+        expected_fragment
+    );
+    assert_contains(
+        read_failing_command_output(
+            executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string()
+        ),
+        expected_fragment
+    );
+    assert_contains(
+        read_failing_command_output(
+            executable.string() + " --build " + source_path.string() + " -o " + output_path.string()
+        ),
+        expected_fragment
+    );
+}
+
 void assert_returned_dynamic_array_parameter_forwarding_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -2639,6 +2668,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_depth9_owned_computed_rejected.or";
     auto forwarded_parameter_local_alias_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_local_alias_extra_statement_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_extra_statement_owned_computed_rejected.or";
+    auto forwarded_parameter_local_alias_reassigned_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_reassigned_owned_computed_rejected.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_nested_computed_dynamic_array_path =
@@ -3257,6 +3290,19 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_depth9_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth9_owned_computed.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_depth9_owned_computed"
+    );
+    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+        executable,
+        forwarded_parameter_local_alias_extra_statement_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_extra_statement_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_extra_statement_owned_computed"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_local_alias_reassigned_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_reassigned_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_reassigned_owned_computed",
+        "use after move: items"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
