@@ -1,0 +1,34 @@
+package fixtures.dynamicarrayforwardedparameterfinalifswitchownedcomputedownermismatchrejected
+
+record Payload
+    value: Int64
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function forward_items(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    items
+
+function forward_final_if_switch(flag: Bool, selector: Bool, left: DynamicArray<Payload>, right: DynamicArray<Payload>) -> DynamicArray<Payload>
+    if flag
+        left
+    else
+        switch selector
+            true =>
+                forward_items(right)
+            false =>
+                left
+
+function main() -> UInt32
+    var left: DynamicArray<Payload> = DynamicArray()
+    var right: DynamicArray<Payload> = DynamicArray()
+    var total = 0 as Int64
+    left.push(Payload(13))
+    right.push(Payload(17))
+    for item in true ? forward_final_if_switch(true, true, left, right) : forward_final_if_switch(false, false, left, right)
+        total = total + item.value
+    0 as UInt32
