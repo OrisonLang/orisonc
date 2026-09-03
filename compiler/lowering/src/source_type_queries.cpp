@@ -149,6 +149,33 @@ auto member_expression(
     return expression;
 }
 
+auto projected_helper_call_base(
+    syntax::ExpressionSyntax const& expression
+) -> syntax::ExpressionSyntax const* {
+    auto const* current = &expression;
+    while (current->kind == syntax::ExpressionKind::member_access && current->left != nullptr) {
+        current = current->left.get();
+    }
+    if (current->kind == syntax::ExpressionKind::call &&
+        current->left != nullptr &&
+        current->left->kind == syntax::ExpressionKind::name) {
+        return current;
+    }
+    return nullptr;
+}
+
+auto projected_argument_for_member_chain(
+    syntax::ExpressionSyntax const& expression,
+    syntax::ExpressionSyntax argument
+) -> syntax::ExpressionSyntax {
+    if (expression.kind == syntax::ExpressionKind::member_access &&
+        expression.left != nullptr) {
+        auto projected_base = projected_argument_for_member_chain(*expression.left, std::move(argument));
+        return member_expression(std::move(projected_base), expression.text);
+    }
+    return argument;
+}
+
 auto push_computed_dynamic_array_leaf_descriptor(
     syntax::ExpressionSyntax const& expression,
     std::string_view source_type_name,
@@ -567,26 +594,26 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         return true;
     }
 
-    if (expression.kind == syntax::ExpressionKind::member_access &&
-        expression.left != nullptr &&
-        expression.left->kind == syntax::ExpressionKind::call &&
-        expression.left->left != nullptr &&
-        expression.left->left->kind == syntax::ExpressionKind::name) {
+    if (expression.kind == syntax::ExpressionKind::member_access) {
+        auto const* helper_call = projected_helper_call_base(expression);
+        if (helper_call == nullptr) {
+            return false;
+        }
         auto forwarded_indexes = forwarded_dynamic_array_parameter_indexes(
-            expression.left->left->text,
-            source_type_name_for_expression(*expression.left, context, state).value_or(std::string {}),
+            helper_call->left->text,
+            source_type_name_for_expression(*helper_call, context, state).value_or(std::string {}),
             context
         );
         if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
             return false;
         }
         for (auto forwarded_index : *forwarded_indexes) {
-            if (forwarded_index >= expression.left->arguments.size()) {
+            if (forwarded_index >= helper_call->arguments.size()) {
                 return false;
             }
-            auto projected_argument = member_expression(
-                clone_expression(expression.left->arguments[forwarded_index]),
-                expression.text
+            auto projected_argument = projected_argument_for_member_chain(
+                expression,
+                clone_expression(helper_call->arguments[forwarded_index])
             );
             if (!collect_computed_dynamic_array_leaf_descriptors(
                     projected_argument,

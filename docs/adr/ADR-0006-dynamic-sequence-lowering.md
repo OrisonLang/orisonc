@@ -2633,6 +2633,9 @@ representation.
 - Returned aggregate-field computed leaves now resolve through proven forwarding helpers, so
   `forward_box(returned).values` maps back to the original `returned.values` cleanup owner; owner-mismatch and
   unsupported helper-body boundaries are covered in source-query and production CLI paths.
+- Nested returned aggregate-field computed leaves now resolve through the same projected-helper forwarding path, so
+  `forward_outer(returned).inner.values` maps back to `returned.inner.values` with matching positive and negative
+  coverage.
 
 ## Follow-up work
 
