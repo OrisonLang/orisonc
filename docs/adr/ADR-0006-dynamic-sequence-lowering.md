@@ -2654,6 +2654,8 @@ representation.
   named choice returns with helper-forwarded choice returns.
 - Final-control `Packet` helpers now have negative production coverage for distinct owners, pinning branch and case
   ownership diagnostics when direct and forwarded arms return different choice values.
+- Final-control `Packet` helpers now have positive production coverage for branch-local alias leaves in final `if` and
+  final `switch` blocks when every arm returns the same choice owner through one typed local alias.
 
 ## Follow-up work
 

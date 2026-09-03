@@ -1,0 +1,43 @@
+package fixtures.dynamicarrayforwardedchoicepayloadfinalswitchbranchlocalaliasswitchbindingownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(71 as UInt32))
+    values.push(Payload(73 as UInt32))
+    values
+
+function forward_packet(packet: Packet) -> Packet
+    packet
+
+function forward_packet_final_switch_alias(flag: Bool, packet: Packet) -> Packet
+    switch flag
+        true =>
+            let selected: Packet = packet
+            selected
+        false =>
+            var selected: Packet = forward_packet(packet)
+            selected
+
+function consume_packet(packet: Packet) -> UInt32
+    var total = 0 as UInt32
+    switch forward_packet_final_switch_alias(false, packet)
+        Primary(values) =>
+            for item in true ? values : false ? values : values
+                total = total + item.value
+    total - 144 as UInt32
+
+function main() -> UInt32
+    consume_packet(Primary(make_values()))

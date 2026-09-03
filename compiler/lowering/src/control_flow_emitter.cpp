@@ -7,6 +7,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/maybe_switch_lowering.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
@@ -208,6 +209,23 @@ auto branch_local_cleanup_bearing_source_names(
     return names;
 }
 
+auto branch_local_choice_source_names(
+    std::unordered_set<std::string> const& preexisting_source_names,
+    LoweringContext const& context,
+    FunctionLoweringSession const& session
+) -> std::vector<std::string> {
+    auto names = std::vector<std::string> {};
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (preexisting_source_names.contains(name) ||
+            !context.choices.contains(source_type_name)) {
+            continue;
+        }
+        names.push_back(name);
+    }
+    std::ranges::sort(names);
+    return names;
+}
+
 auto preexisting_local_dynamic_array_cleanup_owner_names(
     std::size_t cleanup_plan_depth,
     FunctionLoweringSession const& session
@@ -293,6 +311,130 @@ auto branch_local_returned_dynamic_array_call_argument(
         }
     }
     return std::nullopt;
+}
+
+auto returned_choice_call_argument(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto function = context.lowering.functions.find(expression.left->text);
+    if (function == context.lowering.functions.end() ||
+        function->second.source_return_type_name != expected_source_type_name ||
+        function->second.parameter_source_type_names.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& argument = expression.arguments[index];
+        if (argument.kind != syntax::ExpressionKind::name ||
+            function->second.parameter_source_type_names[index] != expected_source_type_name) {
+            continue;
+        }
+        auto source_type = session.state.source_type_names.find(argument.text);
+        if (source_type != session.state.source_type_names.end() &&
+            source_type->second == expected_source_type_name) {
+            return argument.text;
+        }
+    }
+    return std::nullopt;
+}
+
+auto returned_choice_name_owner(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = session.state.source_type_names.find(expression.text);
+        if (source_type != session.state.source_type_names.end() &&
+            source_type->second == expected_source_type_name) {
+            return expression.text;
+        }
+    }
+    return returned_choice_call_argument(expression, expected_source_type_name, context, session);
+}
+
+auto typed_choice_alias_return_owner(
+    syntax::StatementSyntax const& binding,
+    syntax::ExpressionSyntax const& final_expression,
+    std::string_view expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if ((binding.kind != syntax::StatementKind::let_binding &&
+         binding.kind != syntax::StatementKind::var_binding) ||
+        binding.name.empty() ||
+        binding.annotated_type.name.empty() ||
+        render_source_type_name(binding.annotated_type) != expected_source_type_name ||
+        final_expression.kind != syntax::ExpressionKind::name ||
+        final_expression.text != binding.name) {
+        return std::nullopt;
+    }
+    return returned_choice_name_owner(
+        binding.expression,
+        expected_source_type_name,
+        context,
+        session
+    );
+}
+
+auto branch_local_returned_choice_alias_owner(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    std::optional<std::string_view> expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (statements.size() != 2 ||
+        !expected_source_type_name.has_value() ||
+        !context.lowering.choices.contains(std::string {*expected_source_type_name}) ||
+        statements[0] == nullptr ||
+        statements[1] == nullptr) {
+        return std::nullopt;
+    }
+    auto const* final_expression = value_expression_for(*statements[1]);
+    if (final_expression == nullptr) {
+        return std::nullopt;
+    }
+    return typed_choice_alias_return_owner(
+        *statements[0],
+        *final_expression,
+        *expected_source_type_name,
+        context,
+        session
+    );
+}
+
+auto branch_local_returned_choice_alias_owner(
+    std::vector<syntax::StatementSyntax> const& statements,
+    std::optional<std::string_view> expected_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (statements.size() != 2 ||
+        !expected_source_type_name.has_value() ||
+        !context.lowering.choices.contains(std::string {*expected_source_type_name})) {
+        return std::nullopt;
+    }
+    auto const* final_expression = value_expression_for(statements[1]);
+    if (final_expression == nullptr) {
+        return std::nullopt;
+    }
+    return typed_choice_alias_return_owner(
+        statements[0],
+        *final_expression,
+        *expected_source_type_name,
+        context,
+        session
+    );
 }
 
 auto mark_returned_dynamic_array_owner_consumed(
@@ -527,12 +669,26 @@ auto lower_final_if_statement(
                         arm.session,
                         cleanup_plan_depth
                     );
+                    if (auto choice_alias_owner = branch_local_returned_choice_alias_owner(
+                            arm.statement.nested_statements,
+                            arm.expected_source_type_name,
+                            arm.context,
+                            arm.session
+                        )) {
+                        mark_owned_binding_consumed(arm.session.state.ownership_transfers, *choice_alias_owner);
+                    }
                 }
                 auto const branch_local_cleanup_owner_names =
                     branch_local_dynamic_array_cleanup_owner_names(cleanup_plan_depth, arm.session);
                 auto const branch_local_source_owner_names =
                     branch_local_cleanup_bearing_source_names(
                         preexisting_source_names,
+                        arm.session
+                    );
+                auto const branch_local_choice_owner_names =
+                    branch_local_choice_source_names(
+                        preexisting_source_names,
+                        arm.context.lowering,
                         arm.session
                     );
                 if (value.has_value() &&
@@ -589,6 +745,10 @@ auto lower_final_if_statement(
                     erase_consumed_branch_local_cleanup_owners(
                         branch_transfers,
                         branch_local_source_owner_names
+                    );
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_choice_owner_names
                     );
                     if (branch_local_returned_owner.has_value()) {
                         branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
@@ -626,12 +786,26 @@ auto lower_final_if_statement(
                         arm.session,
                         cleanup_plan_depth
                     );
+                    if (auto choice_alias_owner = branch_local_returned_choice_alias_owner(
+                            arm.statement.alternate_statements,
+                            arm.expected_source_type_name,
+                            arm.context,
+                            arm.session
+                        )) {
+                        mark_owned_binding_consumed(arm.session.state.ownership_transfers, *choice_alias_owner);
+                    }
                 }
                 auto const branch_local_cleanup_owner_names =
                     branch_local_dynamic_array_cleanup_owner_names(cleanup_plan_depth, arm.session);
                 auto const branch_local_source_owner_names =
                     branch_local_cleanup_bearing_source_names(
                         preexisting_source_names,
+                        arm.session
+                    );
+                auto const branch_local_choice_owner_names =
+                    branch_local_choice_source_names(
+                        preexisting_source_names,
+                        arm.context.lowering,
                         arm.session
                     );
                 if (value.has_value() &&
@@ -688,6 +862,10 @@ auto lower_final_if_statement(
                     erase_consumed_branch_local_cleanup_owners(
                         branch_transfers,
                         branch_local_source_owner_names
+                    );
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_choice_owner_names
                     );
                     if (branch_local_returned_owner.has_value()) {
                         branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
@@ -893,6 +1071,14 @@ auto lower_final_switch_statement(
                         current.session,
                         current.case_dynamic_array_cleanup_plan_depth
                     );
+                    if (auto choice_alias_owner = branch_local_returned_choice_alias_owner(
+                            planned_case.syntax->statements,
+                            current.expected_source_type_name,
+                            current.context,
+                            current.session
+                        )) {
+                        mark_owned_binding_consumed(current.session.state.ownership_transfers, *choice_alias_owner);
+                    }
                     auto const branch_local_cleanup_owner_names =
                         branch_local_dynamic_array_cleanup_owner_names(
                             current.case_dynamic_array_cleanup_plan_depth,
@@ -901,6 +1087,12 @@ auto lower_final_switch_statement(
                     auto const branch_local_source_owner_names =
                         branch_local_cleanup_bearing_source_names(
                             preexisting_source_names,
+                            current.session
+                        );
+                    auto const branch_local_choice_owner_names =
+                        branch_local_choice_source_names(
+                            preexisting_source_names,
+                            current.context.lowering,
                             current.session
                         );
                     if (!emit_scoped_local_dynamic_array_cleanups(
@@ -958,6 +1150,10 @@ auto lower_final_switch_statement(
                     erase_consumed_branch_local_cleanup_owners(
                         branch_transfers,
                         branch_local_source_owner_names
+                    );
+                    erase_consumed_branch_local_cleanup_owners(
+                        branch_transfers,
+                        branch_local_choice_owner_names
                     );
                     if (branch_local_returned_owner.has_value()) {
                         branch_transfers.consumed_owned_bindings.erase(*branch_local_returned_owner);
