@@ -2652,6 +2652,8 @@ representation.
   return cleanup transfer.
 - Final-control lowering now marks named choice returns consumed before branch/case ownership merge, aligning direct
   named choice returns with helper-forwarded choice returns.
+- Final-control `Packet` helpers now have negative production coverage for distinct owners, pinning branch and case
+  ownership diagnostics when direct and forwarded arms return different choice values.
 
 ## Follow-up work
 

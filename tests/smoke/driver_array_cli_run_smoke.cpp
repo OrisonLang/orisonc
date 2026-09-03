@@ -3132,6 +3132,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_returned_choice_payload_owned_computed_reuse_rejected.or";
     auto forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_reuse_path =
         fixtures / "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_reuse_rejected.or";
+    auto forwarded_choice_payload_final_if_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_choice_payload_final_if_owner_mismatch_rejected.or";
+    auto forwarded_choice_payload_final_switch_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_choice_payload_final_switch_owner_mismatch_rejected.or";
     auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
     auto switch_returned_owned_computed_dynamic_array_owner_mismatch_path =
@@ -5643,6 +5647,20 @@ auto main(int argc, char** argv) -> int {
     assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
         executable,
         forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_reuse_path
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_choice_payload_final_if_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_if_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_if_owner_mismatch",
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_choice_payload_final_switch_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_switch_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_switch_owner_mismatch",
+        "switch case ownership mismatch: owned transfers must match across all continuing cases"
     );
     assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
         executable,
