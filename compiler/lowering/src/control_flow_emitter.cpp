@@ -303,9 +303,23 @@ auto mark_returned_dynamic_array_owner_consumed(
     FunctionLoweringSession& session,
     std::size_t cleanup_plan_depth
 ) -> std::optional<std::string> {
-    if (final_expression == nullptr ||
-        !expected_source_type_name.has_value() ||
-        !dynamic_array_element_source_type_name(*expected_source_type_name).has_value() ||
+    if (final_expression == nullptr || !expected_source_type_name.has_value()) {
+        return std::nullopt;
+    }
+
+    auto choice = context.lowering.choices.find(std::string {*expected_source_type_name});
+    if (choice != context.lowering.choices.end() &&
+        final_expression->kind == syntax::ExpressionKind::name &&
+        value.type == choice->second.llvm_type_name) {
+        auto source_type = session.state.source_type_names.find(final_expression->text);
+        if (source_type != session.state.source_type_names.end() &&
+            source_type->second == *expected_source_type_name) {
+            mark_owned_binding_consumed(session.state.ownership_transfers, final_expression->text);
+        }
+        return std::nullopt;
+    }
+
+    if (!dynamic_array_element_source_type_name(*expected_source_type_name).has_value() ||
         value.type != std::string {dynamic_array_descriptor_llvm_type()}) {
         return std::nullopt;
     }

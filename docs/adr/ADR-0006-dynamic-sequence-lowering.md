@@ -2647,6 +2647,11 @@ representation.
   link, and execute, while post-loop payload reuse remains rejected.
 - Returning a named choice value now marks the choice owner consumed for payload cleanup planning, preventing callee
   cleanup after ownership has transferred to the caller.
+- Forwarded choice-payload switch-binding coverage now includes final `if` and final `switch` helpers that return the
+  same `Packet` owner through direct and forwarded branches, preserving computed payload cleanup and caller-owned
+  return cleanup transfer.
+- Final-control lowering now marks named choice returns consumed before branch/case ownership merge, aligning direct
+  named choice returns with helper-forwarded choice returns.
 
 ## Follow-up work
 

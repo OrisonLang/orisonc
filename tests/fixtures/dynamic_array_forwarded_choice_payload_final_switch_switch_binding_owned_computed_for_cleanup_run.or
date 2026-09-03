@@ -1,0 +1,41 @@
+package fixtures.dynamicarrayforwardedchoicepayloadfinalswitchswitchbindingownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(53 as UInt32))
+    values.push(Payload(59 as UInt32))
+    values
+
+function forward_packet(packet: Packet) -> Packet
+    packet
+
+function forward_packet_final_switch(flag: Bool, packet: Packet) -> Packet
+    switch flag
+        true =>
+            packet
+        false =>
+            forward_packet(packet)
+
+function consume_packet(packet: Packet) -> UInt32
+    var total = 0 as UInt32
+    switch forward_packet_final_switch(false, packet)
+        Primary(values) =>
+            for item in true ? values : false ? values : values
+                total = total + item.value
+    total - 112 as UInt32
+
+function main() -> UInt32
+    consume_packet(Primary(make_values()))
