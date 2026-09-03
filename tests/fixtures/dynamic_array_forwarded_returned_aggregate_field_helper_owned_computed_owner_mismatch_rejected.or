@@ -1,0 +1,43 @@
+package fixtures.dynamicarrayforwardedreturnedaggregatefieldhelperownedcomputedownermismatchrejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_left_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(31 as UInt32))
+    values.push(Payload(37 as UInt32))
+    values
+
+function make_right_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(41 as UInt32))
+    values.push(Payload(43 as UInt32))
+    values
+
+function make_left_box() -> PayloadBox
+    PayloadBox(make_left_values())
+
+function make_right_box() -> PayloadBox
+    PayloadBox(make_right_values())
+
+function forward_box(box: PayloadBox) -> PayloadBox
+    box
+
+function main() -> UInt32
+    var left: PayloadBox = make_left_box()
+    var right: PayloadBox = make_right_box()
+    var total = 0 as UInt32
+    for item in true ? forward_box(left).values : forward_box(right).values
+        total = total + item.value
+    total

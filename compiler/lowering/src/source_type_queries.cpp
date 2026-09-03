@@ -9,6 +9,7 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <array>
+#include <memory>
 #include <utility>
 
 namespace orison::lowering {
@@ -106,11 +107,46 @@ auto static_indexed_aggregate_owner_name(
 auto named_or_static_indexed_dynamic_array_leaf(
     syntax::ExpressionSyntax const& expression
 ) -> bool {
-    if (expression.kind == syntax::ExpressionKind::name ||
-        expression.kind == syntax::ExpressionKind::member_access) {
+    if (expression.kind == syntax::ExpressionKind::name) {
         return true;
     }
+    if (expression.kind == syntax::ExpressionKind::member_access) {
+        return aggregate_member_path_owner_name(expression).has_value();
+    }
     return static_indexed_aggregate_owner_name(expression).has_value();
+}
+
+auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
+    auto cloned = syntax::ExpressionSyntax {
+        .kind = expression.kind,
+        .line = expression.line,
+        .text = expression.text,
+    };
+    cloned.arguments.reserve(expression.arguments.size());
+    for (auto const& argument : expression.arguments) {
+        cloned.arguments.push_back(clone_expression(argument));
+    }
+    if (expression.left != nullptr) {
+        cloned.left = std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.left));
+    }
+    if (expression.right != nullptr) {
+        cloned.right = std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.right));
+    }
+    if (expression.alternate != nullptr) {
+        cloned.alternate = std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.alternate));
+    }
+    return cloned;
+}
+
+auto member_expression(
+    syntax::ExpressionSyntax base,
+    std::string field_name
+) -> syntax::ExpressionSyntax {
+    auto expression = syntax::ExpressionSyntax {};
+    expression.kind = syntax::ExpressionKind::member_access;
+    expression.text = std::move(field_name);
+    expression.left = std::make_unique<syntax::ExpressionSyntax>(std::move(base));
+    return expression;
 }
 
 auto push_computed_dynamic_array_leaf_descriptor(
@@ -520,6 +556,40 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             if (forwarded_index >= expression.arguments.size() ||
                 !collect_computed_dynamic_array_leaf_descriptors(
                     expression.arguments[forwarded_index],
+                    source_type_name,
+                    context,
+                    state,
+                    descriptors
+                )) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::member_access &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::call &&
+        expression.left->left != nullptr &&
+        expression.left->left->kind == syntax::ExpressionKind::name) {
+        auto forwarded_indexes = forwarded_dynamic_array_parameter_indexes(
+            expression.left->left->text,
+            source_type_name_for_expression(*expression.left, context, state).value_or(std::string {}),
+            context
+        );
+        if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
+            return false;
+        }
+        for (auto forwarded_index : *forwarded_indexes) {
+            if (forwarded_index >= expression.left->arguments.size()) {
+                return false;
+            }
+            auto projected_argument = member_expression(
+                clone_expression(expression.left->arguments[forwarded_index]),
+                expression.text
+            );
+            if (!collect_computed_dynamic_array_leaf_descriptors(
+                    projected_argument,
                     source_type_name,
                     context,
                     state,

@@ -2630,6 +2630,9 @@ representation.
   blocks; each accepted branch stays limited to one typed alias binding followed by the final alias value.
 - Final-control alias-leaf forwarding now has negative coverage for branch blocks with extra statements and alias
   reassignment, preserving the intentionally narrow proof boundary across final `if` and final `switch`.
+- Returned aggregate-field computed leaves now resolve through proven forwarding helpers, so
+  `forward_box(returned).values` maps back to the original `returned.values` cleanup owner; owner-mismatch and
+  unsupported helper-body boundaries are covered in source-query and production CLI paths.
 
 ## Follow-up work
 

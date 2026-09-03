@@ -2733,6 +2733,12 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_run.or";
     auto branch_mixed_forwarded_returned_aggregate_field_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_run.or";
+    auto forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup_run.or";
+    auto forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_owner_mismatch_rejected.or";
+    auto forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_rejected.or";
     auto returned_aggregate_field_final_if_branch_local_cleanup_path =
         fixtures / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto switch_returned_aggregate_field_final_if_branch_local_cleanup_path =
@@ -3646,6 +3652,37 @@ auto main(int argc, char** argv) -> int {
         executable,
         branch_mixed_forwarded_returned_aggregate_field_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup"
+    );
+    assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_path,
+        "returned.values",
+        "%record.PayloadBox = type { { ptr, i64, i64 } }",
+        "define %record.PayloadBox @forward_box(%record.PayloadBox %box)"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup"
+    );
+    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
+        executable,
+        forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_owner_mismatch",
+        "left.values",
+        "right.values"
+    );
+    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+        executable,
+        forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed"
     );
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
