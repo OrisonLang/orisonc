@@ -1,0 +1,37 @@
+package fixtures.dynamicarrayforwardedstaticindexedaggregatehelperownedcomputedownermismatchrejected
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_holder(seed: UInt32) -> Holder
+    Holder([Bucket(make_values(seed)), Bucket(make_values(seed + 40 as UInt32))])
+
+function forward_holder(holder: Holder) -> Holder
+    holder
+
+function main() -> UInt32
+    var left: Holder = make_holder(40 as UInt32)
+    var right: Holder = make_holder(80 as UInt32)
+    var total = 0 as UInt32
+    for item in true ? forward_holder(left).buckets[0].values : forward_holder(right).buckets[0].values
+        total = total + item.value
+    total

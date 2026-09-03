@@ -2704,10 +2704,18 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or";
     auto nested_static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
+    auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
+    auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch_rejected.or";
+    auto forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_rejected.or";
+    auto forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_rejected.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
@@ -3391,6 +3399,23 @@ auto main(int argc, char** argv) -> int {
         nested_static_indexed_aggregate_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup"
     );
+    assert_run_success(executable, forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path);
+    assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path,
+        "holder.buckets.element0.values",
+        "%record.Holder = type { [2 x %record.Bucket] }"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup"
+    );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
         forwarded_parameter_owned_computed_dynamic_array_owner_mismatch_path,
@@ -3494,6 +3519,26 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch",
         "holder.grid.element1.element0.values",
         "holder.grid.element0.element1.values"
+    );
+    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
+        executable,
+        forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch",
+        "left.buckets.element0.values",
+        "right.buckets.element0.values"
+    );
+    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+        executable,
+        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
+    );
+    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+        executable,
+        forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed"
     );
     }
     if (runs_mode("returned_cleanup")) {

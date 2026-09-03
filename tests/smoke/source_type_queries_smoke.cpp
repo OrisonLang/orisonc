@@ -140,6 +140,13 @@ auto outer_payload_box_parameter(std::string parameter_name = "box") -> orison::
     };
 }
 
+auto holder_parameter(std::string parameter_name = "holder") -> orison::syntax::ParameterSyntax {
+    return orison::syntax::ParameterSyntax {
+        .name = std::move(parameter_name),
+        .type = orison::syntax::TypeSyntax {.name = "Holder"},
+    };
+}
+
 auto register_payload_box_forwarding_signature(
     orison::lowering::LoweringContext& context,
     std::string function_name,
@@ -188,6 +195,34 @@ auto register_outer_payload_box_forwarding_signature(
     context.functions.emplace(std::move(function_name), orison::lowering::LoweredFunctionSignature {
         .return_type = "%record.OuterPayloadBox",
         .source_return_type_name = "OuterPayloadBox",
+        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+        .parameter_types = std::move(parameter_types),
+        .parameter_source_type_names = std::move(parameter_source_type_names),
+        .parameter_signedness = std::move(parameter_signedness),
+        .symbol_name = std::move(symbol_name),
+    });
+}
+
+auto register_holder_forwarding_signature(
+    orison::lowering::LoweringContext& context,
+    std::string function_name,
+    std::size_t parameter_count = 1
+) -> void {
+    auto symbol_name = function_name;
+    auto parameter_types = std::vector<std::string> {};
+    auto parameter_source_type_names = std::vector<std::string> {};
+    auto parameter_signedness = std::vector<orison::lowering::IntegerSignedness> {};
+    parameter_types.reserve(parameter_count);
+    parameter_source_type_names.reserve(parameter_count);
+    parameter_signedness.reserve(parameter_count);
+    for (auto index = std::size_t {0}; index < parameter_count; ++index) {
+        parameter_types.push_back("%record.Holder");
+        parameter_source_type_names.push_back("Holder");
+        parameter_signedness.push_back(orison::lowering::IntegerSignedness::not_integer);
+    }
+    context.functions.emplace(std::move(function_name), orison::lowering::LoweredFunctionSignature {
+        .return_type = "%record.Holder",
+        .source_return_type_name = "Holder",
         .return_signedness = orison::lowering::IntegerSignedness::not_integer,
         .parameter_types = std::move(parameter_types),
         .parameter_source_type_names = std::move(parameter_source_type_names),
@@ -256,6 +291,14 @@ auto direct_outer_payload_box_forwarding_function(std::string function_name) -> 
     function.name = std::move(function_name);
     function.parameters.push_back(outer_payload_box_parameter());
     function.body_statements.push_back(expression_statement(name("box")));
+    return function;
+}
+
+auto direct_holder_forwarding_function(std::string function_name) -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(holder_parameter());
+    function.body_statements.push_back(expression_statement(name("holder")));
     return function;
 }
 
@@ -497,6 +540,18 @@ int main() {
             },
         },
     });
+    context.records.emplace("Holder", orison::lowering::LoweredRecordLayout {
+        .name = "Holder",
+        .llvm_type_name = "%record.Holder",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "buckets",
+                .source_type_name = "Array<IndexedBucket, 2>",
+                .llvm_type = "[2 x %record.IndexedBucket]",
+                .index = 0,
+            },
+        },
+    });
     context.functions.emplace("make_bucket", orison::lowering::LoweredFunctionSignature {
         .return_type = "%record.Bucket",
         .return_signedness = orison::lowering::IntegerSignedness::not_integer,
@@ -508,6 +563,9 @@ int main() {
     register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box");
     register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box_extra");
     register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box_mismatch", 2);
+    register_holder_forwarding_signature(context, "forward_holder");
+    register_holder_forwarding_signature(context, "forward_holder_extra");
+    register_holder_forwarding_signature(context, "forward_holder_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_items");
     register_dynamic_array_forwarding_signature(context, "forward_again");
     register_dynamic_array_forwarding_signature(context, "forward_alias");
@@ -644,6 +702,9 @@ int main() {
     state.source_type_names["box"] = "Maybe<Box<UInt32>>";
     state.source_type_names["holders"] = "Array<IndexedBucket, 2>";
     state.source_type_names["grid"] = "Array<Array<IndexedBucket, 2>, 2>";
+    state.source_type_names["holder"] = "Holder";
+    state.source_type_names["other_holder"] = "Holder";
+    state.source_type_names["dynamic_index"] = "UInt64";
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
@@ -849,6 +910,26 @@ int main() {
             orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
         .element_size_bytes = 4,
     });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "holder.buckets.element0.items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%holder.buckets.element0.items.addr0",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "other_holder.buckets.element0.items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%other_holder.buckets.element0.items.addr0",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
 
     auto forward_items_function = direct_dynamic_array_forwarding_function("forward_items");
     context.source_functions["forward_items"] = &forward_items_function;
@@ -859,6 +940,9 @@ int main() {
     auto forward_outer_payload_box_function =
         direct_outer_payload_box_forwarding_function("forward_outer_payload_box");
     context.source_functions["forward_outer_payload_box"] = &forward_outer_payload_box_function;
+
+    auto forward_holder_function = direct_holder_forwarding_function("forward_holder");
+    context.source_functions["forward_holder"] = &forward_holder_function;
 
     auto forward_payload_box_extra_function = orison::syntax::FunctionSyntax {};
     forward_payload_box_extra_function.name = "forward_payload_box_extra";
@@ -894,6 +978,23 @@ int main() {
     ));
     context.source_functions["forward_outer_payload_box_mismatch"] =
         &forward_outer_payload_box_mismatch_function;
+
+    auto forward_holder_extra_function = orison::syntax::FunctionSyntax {};
+    forward_holder_extra_function.name = "forward_holder_extra";
+    forward_holder_extra_function.parameters.push_back(holder_parameter());
+    forward_holder_extra_function.body_statements.push_back(expression_statement(name("holder")));
+    forward_holder_extra_function.body_statements.push_back(expression_statement(name("holder")));
+    context.source_functions["forward_holder_extra"] = &forward_holder_extra_function;
+
+    auto forward_holder_mismatch_function = orison::syntax::FunctionSyntax {};
+    forward_holder_mismatch_function.name = "forward_holder_mismatch";
+    forward_holder_mismatch_function.parameters.push_back(holder_parameter("left_holder"));
+    forward_holder_mismatch_function.parameters.push_back(holder_parameter("right_holder"));
+    forward_holder_mismatch_function.body_statements.push_back(if_statement(
+        one_statement_block(expression_statement(name("left_holder"))),
+        one_statement_block(expression_statement(name("right_holder")))
+    ));
+    context.source_functions["forward_holder_mismatch"] = &forward_holder_mismatch_function;
 
     auto forward_again_function = call_dynamic_array_forwarding_function("forward_again", "forward_items");
     context.source_functions["forward_again"] = &forward_again_function;
@@ -2025,6 +2126,148 @@ int main() {
     assert(!forwarded_nested_aggregate_field_helper_mismatch_plan.descriptor_storage_available);
     assert(!forwarded_nested_aggregate_field_helper_mismatch_plan.cleanup_owner_proven);
     assert(!forwarded_nested_aggregate_field_helper_mismatch_plan.lowering_enabled);
+
+    auto forwarded_static_indexed_aggregate_field_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(index(member(call("forward_holder", name("holder")), "buckets")), "items"),
+                member(
+                    index(
+                        member(call("forward_holder", name("holder")), "buckets"),
+                        cast(integer_literal("0"), "UInt64")
+                    ),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.source_owner_name ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.handoff_owner_name ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.descriptor_storage_name ==
+        "%holder.buckets.element0.items.addr0");
+    assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.descriptor_storage_available);
+    assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.cleanup_owner_proven);
+
+    auto forwarded_static_indexed_aggregate_field_mismatch_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(index(member(call("forward_holder", name("holder")), "buckets")), "items"),
+                member(index(member(call("forward_holder", name("other_holder")), "buckets")), "items")
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_mismatch_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(forwarded_static_indexed_aggregate_field_mismatch_plan.ownership_plan.branch_owner_names.size() == 2);
+    assert(forwarded_static_indexed_aggregate_field_mismatch_plan.ownership_plan.branch_owner_names[0] ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_mismatch_plan.ownership_plan.branch_owner_names[1] ==
+        "other_holder.buckets.element0.items");
+    assert(!forwarded_static_indexed_aggregate_field_mismatch_plan.descriptor_storage_available);
+    assert(!forwarded_static_indexed_aggregate_field_mismatch_plan.cleanup_owner_proven);
+    assert(!forwarded_static_indexed_aggregate_field_mismatch_plan.lowering_enabled);
+
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names.empty());
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.cleanup_owner_proven);
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.lowering_enabled);
+
+    auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(index(member(call("forward_holder_extra", name("holder")), "buckets")), "items"),
+                member(index(member(call("forward_holder_extra", name("holder")), "buckets")), "items")
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_extra_statement_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
+    assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.descriptor_storage_available);
+    assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.cleanup_owner_proven);
+    assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.lowering_enabled);
+
+    auto forwarded_static_indexed_aggregate_field_helper_mismatch_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(
+                    index(
+                        member(call("forward_holder_mismatch", name("holder"), name("other_holder")), "buckets")
+                    ),
+                    "items"
+                ),
+                member(
+                    index(
+                        member(call("forward_holder_mismatch", name("holder"), name("other_holder")), "buckets")
+                    ),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_helper_mismatch_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(forwarded_static_indexed_aggregate_field_helper_mismatch_plan.ownership_plan.branch_owner_names.size() == 4);
+    assert(forwarded_static_indexed_aggregate_field_helper_mismatch_plan.ownership_plan.branch_owner_names[0] ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_helper_mismatch_plan.ownership_plan.branch_owner_names[1] ==
+        "other_holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_helper_mismatch_plan.ownership_plan.branch_owner_names[2] ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_helper_mismatch_plan.ownership_plan.branch_owner_names[3] ==
+        "other_holder.buckets.element0.items");
+    assert(!forwarded_static_indexed_aggregate_field_helper_mismatch_plan.descriptor_storage_available);
+    assert(!forwarded_static_indexed_aggregate_field_helper_mismatch_plan.cleanup_owner_proven);
+    assert(!forwarded_static_indexed_aggregate_field_helper_mismatch_plan.lowering_enabled);
 
     auto choice_payload_expression = member(member(name("packet"), "Primary"), "values");
     auto choice_payload_source_type =

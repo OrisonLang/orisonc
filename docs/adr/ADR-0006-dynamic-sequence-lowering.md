@@ -2636,6 +2636,9 @@ representation.
 - Nested returned aggregate-field computed leaves now resolve through the same projected-helper forwarding path, so
   `forward_outer(returned).inner.values` maps back to `returned.inner.values` with matching positive and negative
   coverage.
+- Static-indexed returned aggregate-field computed leaves now resolve through projected-helper forwarding for literal
+  and cast-literal indexes, so `forward_holder(holder).buckets[0].values` maps back to
+  `holder.buckets.element0.values`; dynamic indexes and unsupported helper bodies remain rejected.
 
 ## Follow-up work
 

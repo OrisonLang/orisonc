@@ -149,11 +149,24 @@ auto member_expression(
     return expression;
 }
 
+auto index_expression(
+    syntax::ExpressionSyntax base,
+    syntax::ExpressionSyntax index_argument
+) -> syntax::ExpressionSyntax {
+    auto expression = syntax::ExpressionSyntax {};
+    expression.kind = syntax::ExpressionKind::index_access;
+    expression.left = std::make_unique<syntax::ExpressionSyntax>(std::move(base));
+    expression.arguments.push_back(std::move(index_argument));
+    return expression;
+}
+
 auto projected_helper_call_base(
     syntax::ExpressionSyntax const& expression
 ) -> syntax::ExpressionSyntax const* {
     auto const* current = &expression;
-    while (current->kind == syntax::ExpressionKind::member_access && current->left != nullptr) {
+    while ((current->kind == syntax::ExpressionKind::member_access ||
+            current->kind == syntax::ExpressionKind::index_access) &&
+           current->left != nullptr) {
         current = current->left.get();
     }
     if (current->kind == syntax::ExpressionKind::call &&
@@ -164,14 +177,20 @@ auto projected_helper_call_base(
     return nullptr;
 }
 
-auto projected_argument_for_member_chain(
+auto projected_argument_for_aggregate_chain(
     syntax::ExpressionSyntax const& expression,
     syntax::ExpressionSyntax argument
 ) -> syntax::ExpressionSyntax {
     if (expression.kind == syntax::ExpressionKind::member_access &&
         expression.left != nullptr) {
-        auto projected_base = projected_argument_for_member_chain(*expression.left, std::move(argument));
+        auto projected_base = projected_argument_for_aggregate_chain(*expression.left, std::move(argument));
         return member_expression(std::move(projected_base), expression.text);
+    }
+    if (expression.kind == syntax::ExpressionKind::index_access &&
+        expression.left != nullptr &&
+        !expression.arguments.empty()) {
+        auto projected_base = projected_argument_for_aggregate_chain(*expression.left, std::move(argument));
+        return index_expression(std::move(projected_base), clone_expression(expression.arguments.front()));
     }
     return argument;
 }
@@ -594,7 +613,8 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         return true;
     }
 
-    if (expression.kind == syntax::ExpressionKind::member_access) {
+    if (expression.kind == syntax::ExpressionKind::member_access ||
+        expression.kind == syntax::ExpressionKind::index_access) {
         auto const* helper_call = projected_helper_call_base(expression);
         if (helper_call == nullptr) {
             return false;
@@ -611,7 +631,7 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             if (forwarded_index >= helper_call->arguments.size()) {
                 return false;
             }
-            auto projected_argument = projected_argument_for_member_chain(
+            auto projected_argument = projected_argument_for_aggregate_chain(
                 expression,
                 clone_expression(helper_call->arguments[forwarded_index])
             );
