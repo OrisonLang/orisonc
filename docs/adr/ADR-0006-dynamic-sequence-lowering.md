@@ -2639,6 +2639,9 @@ representation.
 - Static-indexed returned aggregate-field computed leaves now resolve through projected-helper forwarding for literal
   and cast-literal indexes, so `forward_holder(holder).buckets[0].values` maps back to
   `holder.buckets.element0.values`; dynamic indexes and unsupported helper bodies remain rejected.
+- Internal choice-payload computed leaves now resolve through projected-helper forwarding when the variant payload
+  owner is statically proven, so the source-query path `forward_packet(packet).Primary.values` maps back to
+  `packet.Primary.values`; this does not add direct variant-payload projection to Orison source syntax.
 
 ## Follow-up work
 
