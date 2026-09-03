@@ -2125,7 +2125,8 @@ void assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(output.find("define i32 @consume_packet({ i32, { ptr, i64, i64 } } %packet)") != std::string::npos);
-    assert(output.find("switch i32 %tmp0, label %switch.unreachable.0") != std::string::npos);
+    assert(output.find("switch i32 %tmp") != std::string::npos);
+    assert(output.find("label %switch.unreachable.0") != std::string::npos);
     assert(output.find("%values.addr = alloca { ptr, i64, i64 }") != std::string::npos);
     assert(output.find("values.computed_for.") != std::string::npos);
     assert(output.find(".condition:") != std::string::npos);
@@ -2811,6 +2812,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
     auto choice_payload_final_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or";
+    auto forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
     auto returned_choice_payload_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup_run.or";
     auto returned_dynamic_array_multi_hop_forwarding_path =
@@ -3122,6 +3125,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_rejected.or";
     auto returned_choice_payload_owned_computed_dynamic_array_reuse_path =
         fixtures / "dynamic_array_returned_choice_payload_owned_computed_reuse_rejected.or";
+    auto forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_reuse_path =
+        fixtures / "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_reuse_rejected.or";
     auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
     auto switch_returned_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4208,6 +4213,24 @@ auto main(int argc, char** argv) -> int {
         executable,
         choice_payload_final_switch_binding_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_run_success(
+        executable,
+        forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path
     );
     assert_returned_choice_payload_owned_computed_dynamic_array_emit_llvm_success(
         executable,
@@ -5575,6 +5598,10 @@ auto main(int argc, char** argv) -> int {
     assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
         executable,
         returned_choice_payload_owned_computed_dynamic_array_reuse_path
+    );
+    assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
+        executable,
+        forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_reuse_path
     );
     assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
         executable,

@@ -2642,6 +2642,11 @@ representation.
 - Internal choice-payload computed leaves now resolve through projected-helper forwarding when the variant payload
   owner is statically proven, so the source-query path `forward_packet(packet).Primary.values` maps back to
   `packet.Primary.values`; this does not add direct variant-payload projection to Orison source syntax.
+- Source-level choice-payload switch bindings now have forwarded-packet production coverage: `switch
+  forward_packet(packet)` can bind the payload, run a same-owner computed `DynamicArray<T>` loop, emit object code,
+  link, and execute, while post-loop payload reuse remains rejected.
+- Returning a named choice value now marks the choice owner consumed for payload cleanup planning, preventing callee
+  cleanup after ownership has transferred to the caller.
 
 ## Follow-up work
 

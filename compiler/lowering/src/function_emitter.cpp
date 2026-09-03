@@ -772,15 +772,27 @@ void release_returned_choice_dynamic_array_payload_cleanup(
     LoweringContext const& context,
     FunctionLoweringState& state
 ) {
-    if (!return_source_type_name.has_value() ||
-        expression.kind != syntax::ExpressionKind::call ||
-        expression.left == nullptr ||
-        expression.left->kind != syntax::ExpressionKind::name) {
+    if (!return_source_type_name.has_value()) {
         return;
     }
 
     auto choice = context.choices.find(std::string {*return_source_type_name});
     if (choice == context.choices.end()) {
+        return;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        if (source_type != state.source_type_names.end() &&
+            source_type->second == *return_source_type_name) {
+            mark_owned_binding_consumed(state.ownership_transfers, expression.text);
+        }
+        return;
+    }
+
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
         return;
     }
 
