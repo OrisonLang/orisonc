@@ -1427,6 +1427,10 @@ representation.
   `values.count()` to the concrete receiver specialization, and emit caller-side descriptor cleanup. Mismatched
   `DynamicArray<UInt32>` and `DynamicArray<UInt64>` arms remain rejected at local source-type inference before
   receiver dispatch.
+- Branch-selected owned-element receiver composition now has production coverage under source Drop proof. Matching
+  `DynamicArray<Payload>` helper-result ternary arms can feed receiver-specialized `append_value(...)` and
+  `replace_first(...)`, including replacement Drop and final descriptor Drop-walk cleanup. The missing-Drop fixture
+  rejects both helper-owned push and receiver-owned append before unproven owned-element cleanup can lower.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.

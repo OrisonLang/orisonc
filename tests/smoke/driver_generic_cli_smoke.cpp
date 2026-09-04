@@ -2080,6 +2080,29 @@ void assert_cli_emit_llvm_dynamic_array_receiver_ternary_call_result_count_fixtu
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("%record.Payload = type { %record.Nested }") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find(
+        "call void @method.DynamicArray_Payload_.append_value__Payload(ptr %values.addr, %record.Payload %tmp"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @method.DynamicArray_Payload_.replace_first__Payload(ptr %values.addr, %record.Payload %tmp"
+    ) != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %this.dynamic_array_assign") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup") !=
+        std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_append_scalar_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4336,6 +4359,19 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_ternary_call_result_count_mismatch.or",
         "let initializer has incompatible ternary arm source types: DynamicArray<UInt32> and DynamicArray<UInt64>"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_ternary_owned_methods.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_ternary_owned_methods.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_ternary_owned_methods_missing_drop.or",
+        "lowering DynamicArray push to owned element requires authorized element drop"
     );
     assert_cli_run_fixture_success(
         executable,
