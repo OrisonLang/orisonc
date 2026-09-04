@@ -738,6 +738,94 @@ private:
         return ExpressionSyntax {.kind = ExpressionKind::boolean_literal, .line = current().line, .text = std::move(text)};
     }
 
+    auto is_empty_expression(ExpressionSyntax const& expression) const -> bool {
+        return expression.text.empty() && !expression.left && !expression.right && !expression.alternate &&
+               expression.arguments.empty();
+    }
+
+    auto parse_postfix_expression(ParseResult& result, ExpressionSyntax expression) -> ExpressionSyntax {
+        while (true) {
+            if (is(TokenKind::left_paren)) {
+                advance();
+                ExpressionSyntax call_expression {
+                    .kind = ExpressionKind::call,
+                    .line = expression.line,
+                    .text = "",
+                    .arguments = parse_argument_list(result),
+                    .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                    .right = nullptr,
+                    .alternate = nullptr,
+                };
+                expression = std::move(call_expression);
+                continue;
+            }
+
+            if (is(TokenKind::dot)) {
+                advance();
+                auto member_name = expect_identifier(result, "expected member name after '.'");
+                ExpressionSyntax member_expression {
+                    .kind = ExpressionKind::member_access,
+                    .line = current().line,
+                    .text = std::move(member_name),
+                    .arguments = {},
+                    .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                    .right = nullptr,
+                    .alternate = nullptr,
+                };
+                expression = std::move(member_expression);
+                continue;
+            }
+
+            if (is(TokenKind::question_dot)) {
+                advance();
+                auto member_name = expect_identifier(result, "expected member name after '?.'");
+                ExpressionSyntax member_expression {
+                    .kind = ExpressionKind::null_safe_member_access,
+                    .line = current().line,
+                    .text = std::move(member_name),
+                    .arguments = {},
+                    .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                    .right = nullptr,
+                    .alternate = nullptr,
+                };
+                expression = std::move(member_expression);
+                continue;
+            }
+
+            if (is(TokenKind::left_bracket)) {
+                advance();
+                auto index_expression = parse_expression(result);
+                if (is_empty_expression(index_expression)) {
+                    return {};
+                }
+
+                if (!is(TokenKind::right_bracket)) {
+                    result.diagnostics.error(current().line, "expected ']' after index expression");
+                    return {};
+                }
+
+                advance();
+                std::vector<ExpressionSyntax> index_arguments;
+                index_arguments.push_back(std::move(index_expression));
+                ExpressionSyntax index_access_expression {
+                    .kind = ExpressionKind::index_access,
+                    .line = expression.line,
+                    .text = "",
+                    .arguments = std::move(index_arguments),
+                    .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                    .right = nullptr,
+                    .alternate = nullptr,
+                };
+                expression = std::move(index_access_expression);
+                continue;
+            }
+
+            break;
+        }
+
+        return expression;
+    }
+
     auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
         if (is(TokenKind::minus) || is(TokenKind::keyword_not) || is(TokenKind::keyword_bit_not) ||
             is(TokenKind::keyword_await)) {
@@ -760,7 +848,12 @@ private:
             };
         }
 
-        return parse_primary_expression(result);
+        auto expression = parse_primary_expression(result);
+        if (is_empty_expression(expression)) {
+            return expression;
+        }
+
+        return parse_postfix_expression(result, std::move(expression));
     }
 
     auto parse_cast_expression(ParseResult& result) -> ExpressionSyntax {
@@ -899,87 +992,25 @@ private:
         if (is(TokenKind::identifier)) {
             auto expression = make_name_expression(current().lexeme);
             advance();
+            return expression;
+        }
 
-            while (true) {
-                if (is(TokenKind::left_paren)) {
-                    advance();
-                    ExpressionSyntax call_expression {
-                        .kind = ExpressionKind::call,
-                        .line = expression.line,
-                        .text = "",
-                        .arguments = parse_argument_list(result),
-                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
-                        .right = nullptr,
-                        .alternate = nullptr,
-                    };
-                    expression = std::move(call_expression);
-                    continue;
-                }
-
-                if (is(TokenKind::dot)) {
-                    advance();
-                    auto member_name = expect_identifier(result, "expected member name after '.'");
-                    ExpressionSyntax member_expression {
-                        .kind = ExpressionKind::member_access,
-                        .line = current().line,
-                        .text = std::move(member_name),
-                        .arguments = {},
-                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
-                        .right = nullptr,
-                        .alternate = nullptr,
-                    };
-                    expression = std::move(member_expression);
-                    continue;
-                }
-
-                if (is(TokenKind::question_dot)) {
-                    advance();
-                    auto member_name = expect_identifier(result, "expected member name after '?.'");
-                    ExpressionSyntax member_expression {
-                        .kind = ExpressionKind::null_safe_member_access,
-                        .line = current().line,
-                        .text = std::move(member_name),
-                        .arguments = {},
-                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
-                        .right = nullptr,
-                        .alternate = nullptr,
-                    };
-                    expression = std::move(member_expression);
-                    continue;
-                }
-
-                if (is(TokenKind::left_bracket)) {
-                    advance();
-                    auto index_expression = parse_expression(result);
-                    if (index_expression.text.empty() && !index_expression.left && !index_expression.right &&
-                        index_expression.arguments.empty()) {
-                        return {};
-                    }
-
-                    if (!is(TokenKind::right_bracket)) {
-                        result.diagnostics.error(current().line, "expected ']' after index expression");
-                        return {};
-                    }
-
-                    advance();
-                    std::vector<ExpressionSyntax> index_arguments;
-                    index_arguments.push_back(std::move(index_expression));
-                    ExpressionSyntax index_access_expression {
-                        .kind = ExpressionKind::index_access,
-                        .line = expression.line,
-                        .text = "",
-                        .arguments = std::move(index_arguments),
-                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
-                        .right = nullptr,
-                        .alternate = nullptr,
-                    };
-                    expression = std::move(index_access_expression);
-                    continue;
-                }
-
-                break;
+        if (is(TokenKind::left_paren)) {
+            auto const line = current().line;
+            advance();
+            auto expression = parse_expression(result);
+            if (is_empty_expression(expression)) {
+                result.diagnostics.error(current().line, "parenthesized expression requires an expression");
+                return {};
             }
 
+            if (!is(TokenKind::right_paren)) {
+                result.diagnostics.error(current().line, "expected ')' after parenthesized expression");
+                return {};
+            }
+
+            advance();
+            expression.line = line;
             return expression;
         }
 

@@ -1434,6 +1434,9 @@ representation.
 - Direct `DynamicArray<T>` receiver expressions such as `make_values().count()` are now rejected until temporary
   descriptor cleanup is explicitly modeled. Programmers should bind helper-returned descriptors to a named local first,
   preserving the existing cleanup-plan owner model and preventing silent descriptor leaks.
+- Parenthesized direct ternary receivers such as `(condition ? make_left() : make_right()).count()` now parse through
+  the shared postfix path and reject with the same named-local cleanup diagnostic. This pins the boundary without adding
+  any new source syntax.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.

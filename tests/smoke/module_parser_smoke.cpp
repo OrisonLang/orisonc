@@ -1571,6 +1571,34 @@ void test_ternary_expression_success() {
     assert(return_statement.expression.alternate->text == "x");
 }
 
+void test_parenthesized_ternary_postfix_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_parenthesized_ternary_postfix_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.parenthesizedternarypostfix\n";
+        output << "function selected(enabled: Bool) -> UInt64\n";
+        output << "    return (enabled ? left : right).count()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 1);
+    auto const& return_statement = result.module.functions.front().body_statements[0];
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::call);
+    assert(return_statement.expression.left->kind == orison::syntax::ExpressionKind::member_access);
+    assert(return_statement.expression.left->text == "count");
+    assert(return_statement.expression.left->left->kind == orison::syntax::ExpressionKind::ternary);
+    assert(return_statement.expression.left->left->left->text == "enabled");
+    assert(return_statement.expression.left->left->right->text == "left");
+    assert(return_statement.expression.left->left->alternate->text == "right");
+}
+
 void test_ternary_expression_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_ternary_failure.or";
     {
@@ -2290,6 +2318,7 @@ int main() {
     test_word_boolean_operator_success();
     test_named_bitwise_operator_success();
     test_ternary_expression_success();
+    test_parenthesized_ternary_postfix_success();
     test_ternary_expression_failure();
     test_null_safe_member_access_success();
     test_null_safe_member_access_failure();

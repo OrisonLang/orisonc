@@ -1,0 +1,18 @@
+package fixtures.dynamicarray.receiverdirectternarycountrejected
+
+extend DynamicArray<T>
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function make_left() -> DynamicArray<UInt32>
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(7 as UInt32)
+    values
+
+function make_right() -> DynamicArray<UInt32>
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(11 as UInt32)
+    values
+
+function main() -> UInt32
+    (true ? make_left() : make_right()).count() == 1 as IntSize ? 0 as UInt32 : 1 as UInt32
