@@ -1,0 +1,47 @@
+package fixtures.dynamicarrayforwardedchoicepayloadfinalswitchbranchlocalaliasreassignedrejected
+
+record Payload
+    public value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_packet(seed: UInt32) -> Packet
+    Primary(make_values(seed))
+
+function forward_packet(packet: Packet) -> Packet
+    packet
+
+function forward_packet_final_switch_alias_reassigned(flag: Bool, packet: Packet) -> Packet
+    switch flag
+        true =>
+            var selected: Packet = packet
+            selected = packet
+            selected
+        false =>
+            var selected: Packet = forward_packet(packet)
+            selected
+
+function consume_packet(packet: Packet) -> UInt32
+    var total = 0 as UInt32
+    switch forward_packet_final_switch_alias_reassigned(false, packet)
+        Primary(values) =>
+            for item in true ? values : false ? values : values
+                total = total + item.value
+    total
+
+function main() -> UInt32
+    consume_packet(make_packet(101 as UInt32))

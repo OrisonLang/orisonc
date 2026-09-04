@@ -2656,6 +2656,8 @@ representation.
   ownership diagnostics when direct and forwarded arms return different choice values.
 - Final-control `Packet` helpers now have positive production coverage for branch-local alias leaves in final `if` and
   final `switch` blocks when every arm returns the same choice owner through one typed local alias.
+- Final-control `Packet` branch-local alias returns now have negative production coverage for extra statements and
+  alias reassignment, preserving the narrow accepted proof shape.
 
 ## Follow-up work
 
