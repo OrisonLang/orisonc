@@ -2660,6 +2660,8 @@ representation.
   alias reassignment, preserving the narrow accepted proof shape.
 - Nested final-control `Packet` alias returns now have production coverage for a final `if` containing a final
   `switch`, including same-owner cleanup success and distinct-owner rejection.
+- The 2026-09-03 implementation gap snapshot records `DynamicArray<T>` as production-usable for proven fixture
+  families, with arbitrary user composition still incomplete.
 
 ## Follow-up work
 

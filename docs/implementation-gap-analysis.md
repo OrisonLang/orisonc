@@ -1,5 +1,26 @@
 # Implementation Gap Analysis
 
+## Brief Snapshot
+
+Date: 2026-09-03
+
+- `orisonc` has an end-to-end C++ compiler path: parse, semantic checks, LLVM IR emission, object emission, host
+  linking, and direct `run`.
+- `DynamicArray<T>` production lowering is strong for local values, owned parameters, returned values, aggregate
+  fields, nested fields, branch/switch joins, forwarded helpers, choice payload bindings, final control flow, computed
+  same-owner iteration, element Drop walks, deallocation, and post-move diagnostics.
+- Remaining `DynamicArray<T>` work is less about the base descriptor and more about broadening proof coverage:
+  generalized computed owners, runtime-index cleanup edge cases, generic descriptor instantiation, moved-field
+  finalization, and automatic cleanup from semantic facts.
+- Overall lowering is solid for the curated examples and smoke matrix, but still shape-driven. Unsupported diagnostics
+  remain the safety boundary for unproven syntax combinations.
+- Major language areas still needing broader lowering are generic functions beyond selected instantiations, complete
+  interface dispatch, fuller `Maybe<Unit>` value behavior, cross-target host linking, richer FFI binding generation,
+  and source-span-quality diagnostics across all failure paths.
+- Estimated status: `DynamicArray<T>` lowering is roughly production-usable for proven fixture families and still
+  incomplete for arbitrary user composition. Whole-language lowering is an early compiler prototype with a strong
+  backend spine, not a complete implementation.
+
 Date: 2026-08-29
 
 This note is an implementation snapshot. It does not define language syntax or semantics.
