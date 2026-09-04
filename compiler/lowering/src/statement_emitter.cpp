@@ -1943,6 +1943,16 @@ auto diagnose_member_call_statement(
         diagnostics.error(statement.line, "lowering member call receiver type is unknown");
         return nullptr;
     }
+    if (statement.expression.left != nullptr &&
+        statement.expression.left->left != nullptr &&
+        statement.expression.left->left->kind != syntax::ExpressionKind::name &&
+        dynamic_array_element_source_type_name(resolved.receiver.receiver_type_name).has_value()) {
+        diagnostics.error(
+            statement.line,
+            "lowering DynamicArray member call receiver must be bound to a named local before cleanup can be proven"
+        );
+        return nullptr;
+    }
 
     auto const target_name = member_call_target_name(resolved);
     if (resolved.method.result == LoweredMethodLookupResult::not_found) {

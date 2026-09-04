@@ -1431,6 +1431,9 @@ representation.
   `DynamicArray<Payload>` helper-result ternary arms can feed receiver-specialized `append_value(...)` and
   `replace_first(...)`, including replacement Drop and final descriptor Drop-walk cleanup. The missing-Drop fixture
   rejects both helper-owned push and receiver-owned append before unproven owned-element cleanup can lower.
+- Direct `DynamicArray<T>` receiver expressions such as `make_values().count()` are now rejected until temporary
+  descriptor cleanup is explicitly modeled. Programmers should bind helper-returned descriptors to a named local first,
+  preserving the existing cleanup-plan owner model and preventing silent descriptor leaks.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.

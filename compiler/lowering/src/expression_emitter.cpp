@@ -78,6 +78,14 @@ auto record_use_after_move_failure(
     );
 }
 
+auto dynamic_array_receiver_expression_requires_named_binding(
+    syntax::ExpressionSyntax const& receiver_expression,
+    std::string_view receiver_type_name
+) -> bool {
+    return receiver_expression.kind != syntax::ExpressionKind::name &&
+        dynamic_array_element_source_type_name(receiver_type_name).has_value();
+}
+
 auto returned_dynamic_array_owner_name(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> expected_source_type_name,
@@ -4852,6 +4860,17 @@ auto lowered_expression(
                 failures,
                 ExpressionLoweringFailureReason::unknown_member_call_receiver,
                 receiver_name
+            );
+            return std::nullopt;
+        }
+        if (dynamic_array_receiver_expression_requires_named_binding(
+                *expression.left->left,
+                resolved.receiver.receiver_type_name
+            )) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "DynamicArray receiver expression must be bound to a named local before member call cleanup can be proven"
             );
             return std::nullopt;
         }

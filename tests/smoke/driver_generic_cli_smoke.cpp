@@ -4347,6 +4347,11 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_local_call_result_count.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_call_result_count_rejected.or",
+        "DynamicArray receiver expression must be bound to a named local before member call cleanup can be proven"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_ternary_call_result_count.or"
