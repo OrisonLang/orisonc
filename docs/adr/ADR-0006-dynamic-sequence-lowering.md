@@ -1422,6 +1422,11 @@ representation.
   local initialized from a helper-returned descriptor. The checked fixture preserves `DynamicArray<UInt32>` source
   type through `let values = make_values()`, routes `values.count()` to `method.DynamicArray_UInt32_.count__UInt32`,
   and emits caller-side descriptor cleanup.
+- Receiver-specialized `DynamicArray<T>` method dispatch now also has branch-selected helper-result coverage. Matching
+  `DynamicArray<UInt32>` ternary arms produce a descriptor PHI, preserve the inferred local source type, route
+  `values.count()` to the concrete receiver specialization, and emit caller-side descriptor cleanup. Mismatched
+  `DynamicArray<UInt32>` and `DynamicArray<UInt64>` arms remain rejected at local source-type inference before
+  receiver dispatch.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.
