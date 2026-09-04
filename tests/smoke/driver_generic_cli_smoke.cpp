@@ -2079,6 +2079,11 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_UInt32_.count_each__UInt32({ ptr, i64, i64 } %tmp") !=
         std::string::npos);
+    assert(output.find("define i32 @method.DynamicArray_UInt32_.first__UInt32({ ptr, i64, i64 } %this)") !=
+        std::string::npos);
+    assert(output.find("call i32 @method.DynamicArray_UInt32_.first__UInt32({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("%this.dynamic_array_index") != std::string::npos);
     assert(output.find("%this.sequence_for") != std::string::npos);
     assert(output.find("define void @method.DynamicArray_Payload_.replace_first__Payload(ptr %this, %record.Payload %value)") !=
         std::string::npos);

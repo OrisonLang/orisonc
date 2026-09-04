@@ -1413,9 +1413,11 @@ representation.
   `Pair<UInt32, UInt64>.first()` and `Box<Pair<UInt32, UInt64>>.value()`.
 - Built-in `DynamicArray<T>` receiver-pattern specialization now supports a minimal `count()` fixture that lowers
   `DynamicArray<UInt32>.count()` to `method.DynamicArray_UInt32_.count__UInt32`, preserves receiver `this` as a
-  non-cleaned-up method receiver, and runs successfully. A fuller checked contract fixture currently records the next
-  gap: owned-element `DynamicArray<Payload>.append_value(...)` is not yet collected/lowered as a receiver
-  specialization.
+  non-cleaned-up method receiver, and runs successfully.
+- The fuller checked contract fixture now runs and pins receiver-specialized `DynamicArray<T>` methods for scalar
+  append, replacement, iteration, scalar `first()`, owned-element append/replacement, owned-element iteration, nested
+  scalar projection, and fixed-array scalar projection. The remaining generic descriptor work is broader user
+  composition, not this receiver-contract shape.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.
