@@ -2658,6 +2658,8 @@ representation.
   final `switch` blocks when every arm returns the same choice owner through one typed local alias.
 - Final-control `Packet` branch-local alias returns now have negative production coverage for extra statements and
   alias reassignment, preserving the narrow accepted proof shape.
+- Nested final-control `Packet` alias returns now have production coverage for a final `if` containing a final
+  `switch`, including same-owner cleanup success and distinct-owner rejection.
 
 ## Follow-up work
 

@@ -2825,6 +2825,9 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or";
+    auto forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path =
+        fixtures /
+        "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or";
     auto returned_choice_payload_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_returned_choice_payload_owned_computed_for_cleanup_run.or";
     auto returned_dynamic_array_multi_hop_forwarding_path =
@@ -3150,6 +3153,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_reassigned_rejected.or";
     auto forwarded_choice_payload_final_switch_branch_local_alias_reassigned_path =
         fixtures / "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_reassigned_rejected.or";
+    auto forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch_rejected.or";
     auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
     auto switch_returned_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4330,6 +4335,26 @@ auto main(int argc, char** argv) -> int {
     assert_run_success(
         executable,
         forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed"
+    );
+    assert_run_success(
+        executable,
+        forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path
     );
     assert_returned_choice_payload_owned_computed_dynamic_array_emit_llvm_success(
         executable,
@@ -5742,6 +5767,13 @@ auto main(int argc, char** argv) -> int {
         forwarded_choice_payload_final_switch_branch_local_alias_reassigned_path,
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_reassigned.o",
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_reassigned",
+        "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch",
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
     );
     assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
