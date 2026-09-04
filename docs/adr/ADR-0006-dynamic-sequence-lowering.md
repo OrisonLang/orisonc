@@ -1418,6 +1418,10 @@ representation.
   append, replacement, iteration, scalar `first()`, owned-element append/replacement, owned-element iteration, nested
   scalar projection, and fixed-array scalar projection. The remaining generic descriptor work is broader user
   composition, not this receiver-contract shape.
+- Receiver-specialized `DynamicArray<T>` method dispatch now has production coverage when the receiver is an inferred
+  local initialized from a helper-returned descriptor. The checked fixture preserves `DynamicArray<UInt32>` source
+  type through `let values = make_values()`, routes `values.count()` to `method.DynamicArray_UInt32_.count__UInt32`,
+  and emits caller-side descriptor cleanup.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.
