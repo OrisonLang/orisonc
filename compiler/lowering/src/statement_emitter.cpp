@@ -7,6 +7,7 @@
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/for_loop_lowering.hpp"
@@ -1930,6 +1931,117 @@ auto null_safe_member_call_void_target_name(
     return *payload_type + "." + resolved.method_name;
 }
 
+auto direct_dynamic_array_receiver_element_drop_authorized(
+    std::string_view element_source_type_name,
+    LoweringEmissionContext const& context
+) -> bool {
+    auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
+    return std::ranges::any_of(context.options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+        return authorization.authorized &&
+            authorization.site.source_type_name == element_source_type_name &&
+            authorization.site.abi_symbol_name == symbol_name;
+    });
+}
+
+struct DirectDynamicArrayReceiver {
+    LoweredExpression argument;
+    std::string cleanup_owner_name;
+};
+
+auto lower_direct_dynamic_array_receiver(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweredFunctionSignature const& method_signature,
+    std::string_view receiver_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<DirectDynamicArrayReceiver> {
+    auto element_source_type = dynamic_array_element_source_type_name(receiver_type_name);
+    if (!element_source_type.has_value()) {
+        return std::nullopt;
+    }
+    if (!is_scalar_or_nonowning_source_type(*element_source_type) &&
+        !direct_dynamic_array_receiver_element_drop_authorized(*element_source_type, context)) {
+        diagnostics.error(
+            receiver_expression.line,
+            "lowering DynamicArray receiver expression with owned elements requires authorized element drop"
+        );
+        return std::nullopt;
+    }
+
+    auto receiver_type = lowered_type_for_source_type_name(receiver_type_name, context.lowering);
+    if (!receiver_type.has_value() || receiver_type->type == "void") {
+        diagnostics.error(
+            receiver_expression.line,
+            "lowering DynamicArray receiver expression type is not lowerable: " + std::string {receiver_type_name}
+        );
+        return std::nullopt;
+    }
+
+    auto lowered_receiver = lower_expression(
+        receiver_expression,
+        receiver_type->type,
+        receiver_type->signedness,
+        context,
+        session,
+        output,
+        receiver_type_name
+    );
+    if (!lowered_receiver.has_value()) {
+        diagnostics.error(
+            receiver_expression.line,
+            append_expression_lowering_failure(
+                "lowering DynamicArray receiver expression failed",
+                session.failures.expression
+            )
+        );
+        return std::nullopt;
+    }
+
+    auto cleanup_owner_name = std::string {"dynamic_array_receiver_tmp"};
+    cleanup_owner_name += std::to_string(session.state.next_temporary_index++);
+    auto descriptor_storage = "%" + cleanup_owner_name + ".addr";
+    output << "  " << descriptor_storage << " = alloca " << receiver_type->type << "\n";
+    output << "  store " << receiver_type->type << " " << lowered_receiver->value;
+    output << ", ptr " << descriptor_storage << "\n";
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        cleanup_owner_name,
+        receiver_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        diagnostics.error(
+            receiver_expression.line,
+            "lowering DynamicArray receiver cleanup could not be planned: " + std::string {receiver_type_name}
+        );
+        return std::nullopt;
+    }
+    cleanup_plan->descriptor_storage_name = descriptor_storage;
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = receiver_expression.line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+
+    auto receiver_argument = LoweredExpression {
+        .type = receiver_type->type,
+        .value = lowered_receiver->value,
+        .signedness = receiver_type->signedness,
+    };
+    if (!method_signature.parameter_types.empty() && method_signature.parameter_types.front() == "ptr") {
+        receiver_argument = LoweredExpression {
+            .type = "ptr",
+            .value = descriptor_storage,
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    return DirectDynamicArrayReceiver {
+        .argument = std::move(receiver_argument),
+        .cleanup_owner_name = std::move(cleanup_owner_name),
+    };
+}
+
 auto diagnose_member_call_statement(
     syntax::StatementSyntax const& statement,
     ResolvedMemberCall const& resolved,
@@ -1941,16 +2053,6 @@ auto diagnose_member_call_statement(
     }
     if (resolved.receiver.result == MemberCallReceiverInferenceResult::not_found) {
         diagnostics.error(statement.line, "lowering member call receiver type is unknown");
-        return nullptr;
-    }
-    if (statement.expression.left != nullptr &&
-        statement.expression.left->left != nullptr &&
-        statement.expression.left->left->kind != syntax::ExpressionKind::name &&
-        dynamic_array_element_source_type_name(resolved.receiver.receiver_type_name).has_value()) {
-        diagnostics.error(
-            statement.line,
-            "lowering DynamicArray member call receiver must be bound to a named local before cleanup can be proven"
-        );
         return nullptr;
     }
 
@@ -1985,6 +2087,7 @@ auto diagnose_member_call_statement(
 auto lower_void_member_call_statement(
     syntax::StatementSyntax const& statement,
     syntax::ExpressionSyntax const& receiver_expression,
+    std::string_view receiver_type_name,
     std::string const& target_name,
     LoweredFunctionSignature const& function,
     LoweringEmissionContext const& context,
@@ -2012,17 +2115,46 @@ auto lower_void_member_call_statement(
         return false;
     }
 
-    auto arguments = lower_member_call_arguments(
-        receiver_expression,
-        std::span<syntax::ExpressionSyntax const>(
-            statement.expression.arguments.data(),
-            statement.expression.arguments.size()
-        ),
-        function,
-        context,
-        session,
-        output
-    );
+    auto direct_receiver = std::optional<DirectDynamicArrayReceiver> {};
+    if (receiver_expression.kind != syntax::ExpressionKind::name &&
+        dynamic_array_element_source_type_name(receiver_type_name).has_value()) {
+        direct_receiver = lower_direct_dynamic_array_receiver(
+            receiver_expression,
+            function,
+            receiver_type_name,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (!direct_receiver.has_value()) {
+            return false;
+        }
+    }
+
+    auto arguments = direct_receiver.has_value()
+        ? lower_member_call_arguments(
+              direct_receiver->argument,
+              std::span<syntax::ExpressionSyntax const>(
+                  statement.expression.arguments.data(),
+                  statement.expression.arguments.size()
+              ),
+              function,
+              context,
+              session,
+              output
+          )
+        : lower_member_call_arguments(
+              receiver_expression,
+              std::span<syntax::ExpressionSyntax const>(
+                  statement.expression.arguments.data(),
+                  statement.expression.arguments.size()
+              ),
+              function,
+              context,
+              session,
+              output
+          );
     if (!arguments.has_value()) {
         record_expression_lowering_failure(
             session.failures,
@@ -2040,6 +2172,19 @@ auto lower_void_member_call_statement(
     }
 
     emit_void_call(function, *arguments, output);
+    if (direct_receiver.has_value() &&
+        !emit_local_dynamic_array_cleanups_for_names(
+            context,
+            session,
+            output,
+            {direct_receiver->cleanup_owner_name}
+        )) {
+        diagnostics.error(
+            statement.line,
+            "lowering DynamicArray receiver cleanup could not be emitted: " + target_name
+        );
+        return false;
+    }
     return true;
 }
 
@@ -2856,6 +3001,7 @@ auto lower_call_statement(
             return lower_void_member_call_statement(
                 statement,
                 *statement.expression.left->left,
+                resolved.receiver.receiver_type_name,
                 target_name,
                 *function,
                 context,

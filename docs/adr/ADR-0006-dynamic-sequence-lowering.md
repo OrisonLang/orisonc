@@ -1441,6 +1441,9 @@ representation.
 - Direct owned-element `DynamicArray<T>` receiver expressions now use the synthesized cleanup owner path when semantic
   Drop lowering has authorized the element type. The cleanup emits the element Drop walk before descriptor deallocation;
   missing Drop proof remains rejected at the direct receiver boundary.
+- Direct owned-element ternary receivers now share the same synthesized cleanup owner path after branch merge, and direct
+  `Unit` receiver call statements can mutate a synthesized descriptor before immediate Drop-walk cleanup. Missing Drop
+  proof remains rejected for direct receiver statements.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.

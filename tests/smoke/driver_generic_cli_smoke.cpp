@@ -2125,6 +2125,39 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_count_fixture_succ
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_count_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @make_left()") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @make_right()") != std::string::npos);
+    assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+}
+
+void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_append_statement_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4424,10 +4457,31 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_count.or"
     );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_owned_ternary_count.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_count_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_owned_ternary_count.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_owned_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_append_statement_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_owned_append_statement.or"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or",
         "DynamicArray receiver expression with owned elements requires authorized element drop"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_owned_touch_statement_missing_drop.or",
+        "lowering DynamicArray receiver expression with owned elements requires authorized element drop"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

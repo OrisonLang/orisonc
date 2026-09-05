@@ -1,0 +1,19 @@
+package fixtures.dynamicarray.receiverdirectownedtouchstatementmissingdrop
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+extend DynamicArray<T>
+    function touch(this: exclusive This) -> Unit
+        return
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values
+
+function main() -> UInt32
+    make_values().touch()
+    0 as UInt32
