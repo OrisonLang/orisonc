@@ -2063,6 +2063,20 @@ void assert_cli_emit_llvm_dynamic_array_receiver_local_call_result_count_fixture
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_direct_call_result_count_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define { ptr, i64, i64 } @make_values()") != std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @make_values()") != std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_ternary_call_result_count_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2077,6 +2091,21 @@ void assert_cli_emit_llvm_dynamic_array_receiver_ternary_call_result_count_fixtu
     assert(output.find("define i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %this)") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup") !=
+        std::string::npos);
+}
+
+void assert_cli_emit_llvm_dynamic_array_receiver_direct_ternary_count_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define { ptr, i64, i64 } @make_left()") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @make_right()") != std::string::npos);
+    assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
 }
 
@@ -4347,15 +4376,13 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_local_call_result_count.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_call_result_count_rejected.or",
-        "DynamicArray receiver expression must be bound to a named local before member call cleanup can be proven"
+        fixtures / "dynamic_array_receiver_direct_call_result_count.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_dynamic_array_receiver_direct_call_result_count_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_ternary_count_rejected.or",
-        "DynamicArray receiver expression must be bound to a named local before member call cleanup can be proven"
+        fixtures / "dynamic_array_receiver_direct_call_result_count.or"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -4364,6 +4391,14 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_ternary_call_result_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_ternary_call_result_count.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_ternary_count.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_direct_ternary_count_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_direct_ternary_count.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

@@ -86,6 +86,100 @@ auto dynamic_array_receiver_expression_requires_named_binding(
         dynamic_array_element_source_type_name(receiver_type_name).has_value();
 }
 
+struct DirectDynamicArrayReceiver {
+    LoweredExpression argument;
+    std::string cleanup_owner_name;
+};
+
+auto lower_direct_dynamic_array_receiver(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweredFunctionSignature const& method_signature,
+    std::string_view receiver_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<DirectDynamicArrayReceiver> {
+    auto element_source_type = dynamic_array_element_source_type_name(receiver_type_name);
+    if (!element_source_type.has_value()) {
+        return std::nullopt;
+    }
+    if (!is_scalar_or_nonowning_source_type(*element_source_type)) {
+        record_expression_lowering_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "DynamicArray receiver expression with owned elements must be bound to a named local before cleanup can be proven"
+        );
+        return std::nullopt;
+    }
+
+    auto receiver_type = lowered_type_for_source_type_name(receiver_type_name, context.lowering);
+    if (!receiver_type.has_value() || receiver_type->type == "void") {
+        record_expression_lowering_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "DynamicArray receiver expression type is not lowerable: " + std::string {receiver_type_name}
+        );
+        return std::nullopt;
+    }
+
+    auto lowered_receiver = lower_expression(
+        receiver_expression,
+        receiver_type->type,
+        receiver_type->signedness,
+        context,
+        session,
+        output,
+        receiver_type_name
+    );
+    if (!lowered_receiver.has_value()) {
+        return std::nullopt;
+    }
+
+    auto cleanup_owner_name = std::string {"dynamic_array_receiver_tmp"};
+    cleanup_owner_name += std::to_string(session.state.next_temporary_index++);
+    auto descriptor_storage = "%" + cleanup_owner_name + ".addr";
+    output << "  " << descriptor_storage << " = alloca " << receiver_type->type << "\n";
+    output << "  store " << receiver_type->type << " " << lowered_receiver->value;
+    output << ", ptr " << descriptor_storage << "\n";
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        cleanup_owner_name,
+        receiver_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        record_expression_lowering_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "DynamicArray receiver cleanup could not be planned: " + std::string {receiver_type_name}
+        );
+        return std::nullopt;
+    }
+    cleanup_plan->descriptor_storage_name = descriptor_storage;
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = receiver_expression.line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+
+    auto receiver_argument = LoweredExpression {
+        .type = receiver_type->type,
+        .value = lowered_receiver->value,
+        .signedness = receiver_type->signedness,
+    };
+    if (!method_signature.parameter_types.empty() && method_signature.parameter_types.front() == "ptr") {
+        receiver_argument = LoweredExpression {
+            .type = "ptr",
+            .value = descriptor_storage,
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    return DirectDynamicArrayReceiver {
+        .argument = std::move(receiver_argument),
+        .cleanup_owner_name = std::move(cleanup_owner_name),
+    };
+}
+
 auto returned_dynamic_array_owner_name(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> expected_source_type_name,
@@ -4863,17 +4957,6 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        if (dynamic_array_receiver_expression_requires_named_binding(
-                *expression.left->left,
-                resolved.receiver.receiver_type_name
-            )) {
-            record_expression_lowering_failure(
-                failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                "DynamicArray receiver expression must be bound to a named local before member call cleanup can be proven"
-            );
-            return std::nullopt;
-        }
         auto const* method_signature = resolved.method.method == nullptr
             ? nullptr
             : &resolved.method.method->signature;
@@ -4953,17 +5036,48 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto arguments = lower_member_call_arguments(
-            *expression.left->left,
-            std::span<syntax::ExpressionSyntax const>(
-                expression.arguments.data(),
-                expression.arguments.size()
-            ),
-            *method_signature,
-            context,
-            session,
-            output
-        );
+        auto direct_receiver = std::optional<DirectDynamicArrayReceiver> {};
+        if (dynamic_array_receiver_expression_requires_named_binding(
+                *expression.left->left,
+                resolved.receiver.receiver_type_name
+            )) {
+            direct_receiver = lower_direct_dynamic_array_receiver(
+                *expression.left->left,
+                *method_signature,
+                resolved.receiver.receiver_type_name,
+                context,
+                session,
+                failures,
+                output
+            );
+            if (!direct_receiver.has_value()) {
+                return std::nullopt;
+            }
+        }
+
+        auto arguments = direct_receiver.has_value()
+            ? lower_member_call_arguments(
+                  direct_receiver->argument,
+                  std::span<syntax::ExpressionSyntax const>(
+                      expression.arguments.data(),
+                      expression.arguments.size()
+                  ),
+                  *method_signature,
+                  context,
+                  session,
+                  output
+              )
+            : lower_member_call_arguments(
+                  *expression.left->left,
+                  std::span<syntax::ExpressionSyntax const>(
+                      expression.arguments.data(),
+                      expression.arguments.size()
+                  ),
+                  *method_signature,
+                  context,
+                  session,
+                  output
+              );
         if (!arguments.has_value()) {
             if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
                 record_expression_lowering_failure(
@@ -4976,7 +5090,22 @@ auto lowered_expression(
         }
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        return emit_value_call(std::move(temporary_name), *method_signature, *arguments, output);
+        auto lowered_call = emit_value_call(std::move(temporary_name), *method_signature, *arguments, output);
+        if (direct_receiver.has_value() &&
+            !emit_dynamic_array_cleanup_for_owner(
+                direct_receiver->cleanup_owner_name,
+                context,
+                session,
+                output
+            )) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "DynamicArray receiver cleanup could not be emitted: " + resolved.receiver.receiver_type_name
+            );
+            return std::nullopt;
+        }
+        return lowered_call;
     }
 
     if (expression.kind == syntax::ExpressionKind::unary &&

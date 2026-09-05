@@ -1,4 +1,4 @@
-package fixtures.dynamicarray.receiverdirectternarycountrejected
+package fixtures.dynamicarray.receiverdirectternarycount
 
 extend DynamicArray<T>
     function count(this: shared This) -> IntSize

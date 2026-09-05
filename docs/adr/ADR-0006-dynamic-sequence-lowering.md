@@ -1431,11 +1431,12 @@ representation.
   `DynamicArray<Payload>` helper-result ternary arms can feed receiver-specialized `append_value(...)` and
   `replace_first(...)`, including replacement Drop and final descriptor Drop-walk cleanup. The missing-Drop fixture
   rejects both helper-owned push and receiver-owned append before unproven owned-element cleanup can lower.
-- Direct `DynamicArray<T>` receiver expressions such as `make_values().count()` are now rejected until temporary
-  descriptor cleanup is explicitly modeled. Programmers should bind helper-returned descriptors to a named local first,
-  preserving the existing cleanup-plan owner model and preventing silent descriptor leaks.
-- Parenthesized direct ternary receivers such as `(condition ? make_left() : make_right()).count()` now parse through
-  the shared postfix path and reject with the same named-local cleanup diagnostic. This pins the boundary without adding
+- Direct scalar/non-owning `DynamicArray<T>` receiver expressions such as `make_values().count()` now lower by storing
+  the returned descriptor in a synthesized internal cleanup owner, passing the receiver to the method, and immediately
+  emitting descriptor cleanup after the call. Direct owned-element receivers still require a named local until the
+  temporary path proves element-drop authorization.
+- Parenthesized direct ternary receivers such as `(condition ? make_left() : make_right()).count()` use the same
+  synthesized cleanup owner path for scalar/non-owning element types. This pins the grouped receiver path without adding
   any new source syntax.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
