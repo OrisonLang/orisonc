@@ -1,0 +1,35 @@
+package fixtures.dynamicarray.receiverdirectownedternarymethodchainappendstatement
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function forward(this: exclusive This) -> DynamicArray<T>
+        this
+
+    function append_value(this: exclusive This, value: T) -> Unit
+        this.push(value)
+
+function make_left() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(7 as UInt32)))
+    values
+
+function make_right() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(11 as UInt32)))
+    values
+
+function main() -> UInt32
+    (true ? make_left() : make_right()).forward().append_value(Payload(Nested(13 as UInt32)))
+    0 as UInt32

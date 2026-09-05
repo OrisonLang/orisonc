@@ -2699,6 +2699,9 @@ representation.
   `switch`, including same-owner cleanup success and distinct-owner rejection.
 - The 2026-09-03 implementation gap snapshot records `DynamicArray<T>` as production-usable for proven fixture
   families, with arbitrary user composition still incomplete.
+- Branch-selected direct temporary receiver chains now have production coverage for `count` and Unit-tail mutation
+  after descriptor-returning forwarding. The branch PHI feeds the synthesized receiver temporary; cleanup transfers
+  through the forwarding result and runs once after the tail call.
 
 ## Follow-up work
 
