@@ -27,6 +27,7 @@ void collect_generic_calls_from_expression(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 );
@@ -35,6 +36,7 @@ void collect_generic_calls_from_statement(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 );
@@ -62,6 +64,7 @@ void collect_generic_method_calls_from_expression(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 );
@@ -71,6 +74,7 @@ void collect_generic_method_calls_from_statement(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 );
@@ -560,6 +564,7 @@ void collect_generic_calls_from_expression(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 ) {
@@ -572,6 +577,7 @@ void collect_generic_calls_from_expression(
                 .generic_functions = &generic_functions,
                 .functions = &functions,
                 .local_source_types = &local_source_types,
+                .concrete_records = &concrete_records,
                 .generic_records = &generic_records,
             };
             if (auto substitutions =
@@ -602,6 +608,7 @@ void collect_generic_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -612,6 +619,7 @@ void collect_generic_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -622,6 +630,7 @@ void collect_generic_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -632,6 +641,7 @@ void collect_generic_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -642,6 +652,7 @@ void collect_generic_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -653,6 +664,7 @@ void collect_generic_calls_from_statement(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 ) {
@@ -661,6 +673,7 @@ void collect_generic_calls_from_statement(
         generic_functions,
         functions,
         local_source_types,
+        concrete_records,
         generic_records,
         specializations
     );
@@ -669,6 +682,7 @@ void collect_generic_calls_from_statement(
         generic_functions,
         functions,
         local_source_types,
+        concrete_records,
         generic_records,
         specializations
     );
@@ -678,6 +692,7 @@ void collect_generic_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -688,6 +703,7 @@ void collect_generic_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -698,6 +714,7 @@ void collect_generic_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             generic_records,
             specializations
         );
@@ -707,6 +724,7 @@ void collect_generic_calls_from_statement(
                 generic_functions,
                 functions,
                 local_source_types,
+                concrete_records,
                 generic_records,
                 specializations
             );
@@ -728,9 +746,12 @@ auto collect_generic_function_specializations(
         return {};
     }
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
+    auto concrete_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
     for (auto const& record : module.records) {
         if (!record.generic_parameters.empty()) {
             generic_records.emplace(record.name, &record);
+        } else {
+            concrete_records.emplace(record.name, &record);
         }
     }
 
@@ -752,6 +773,7 @@ auto collect_generic_function_specializations(
                     .generic_functions = &generic_functions,
                     .functions = &functions,
                     .local_source_types = &local_source_types,
+                    .concrete_records = &concrete_records,
                     .generic_records = &generic_records,
                 };
                 auto inferred_source_type = source_type_name_for_generic_call_argument(
@@ -767,6 +789,7 @@ auto collect_generic_function_specializations(
                 generic_functions,
                 functions,
                 local_source_types,
+                concrete_records,
                 generic_records,
                 specializations
             );
@@ -781,6 +804,7 @@ void collect_generic_method_calls_from_expression(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 ) {
@@ -792,6 +816,7 @@ void collect_generic_method_calls_from_expression(
             .generic_functions = &generic_functions,
             .functions = &functions,
             .local_source_types = &local_source_types,
+            .concrete_records = &concrete_records,
             .record_names = &record_names,
         };
         auto actual_receiver_type = source_type_name_for_generic_method_collection_expression(
@@ -854,6 +879,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -865,6 +891,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -876,6 +903,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -887,6 +915,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -898,6 +927,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -910,6 +940,7 @@ void collect_generic_method_calls_from_statement(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& concrete_records,
     std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 ) {
@@ -919,6 +950,7 @@ void collect_generic_method_calls_from_statement(
         generic_functions,
         functions,
         local_source_types,
+        concrete_records,
         record_names,
         specializations
     );
@@ -928,6 +960,7 @@ void collect_generic_method_calls_from_statement(
         generic_functions,
         functions,
         local_source_types,
+        concrete_records,
         record_names,
         specializations
     );
@@ -938,6 +971,7 @@ void collect_generic_method_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -949,6 +983,7 @@ void collect_generic_method_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -960,6 +995,7 @@ void collect_generic_method_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            concrete_records,
             record_names,
             specializations
         );
@@ -970,6 +1006,7 @@ void collect_generic_method_calls_from_statement(
                 generic_functions,
                 functions,
                 local_source_types,
+                concrete_records,
                 record_names,
                 specializations
             );
@@ -1084,9 +1121,12 @@ auto collect_generic_method_specializations(
         }
     }
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
+    auto concrete_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
     for (auto const& record : module.records) {
         if (!record.generic_parameters.empty()) {
             generic_records.emplace(record.name, &record);
+        } else {
+            concrete_records.emplace(record.name, &record);
         }
     }
 
@@ -1149,6 +1189,7 @@ auto collect_generic_method_specializations(
                         .generic_functions = &generic_functions,
                         .functions = &functions,
                         .local_source_types = &local_source_types,
+                        .concrete_records = &concrete_records,
                         .record_names = &record_names,
                     }
                 );
@@ -1168,6 +1209,7 @@ auto collect_generic_method_specializations(
                 generic_functions,
                 functions,
                 local_source_types,
+                concrete_records,
                 record_names,
                 specializations
             );

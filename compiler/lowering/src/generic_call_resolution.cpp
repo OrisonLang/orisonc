@@ -228,6 +228,33 @@ auto infer_generic_record_constructor_source_type_from_lowering_context(
     return render_source_type_name(concrete);
 }
 
+auto infer_concrete_record_member_source_type(
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (resolver.concrete_records == nullptr ||
+        expression.kind != syntax::ExpressionKind::member_access ||
+        expression.left == nullptr) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_generic_call_argument(*expression.left, resolver);
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto record = resolver.concrete_records->find(*base_source_type);
+    if (record == resolver.concrete_records->end()) {
+        return std::nullopt;
+    }
+    for (auto const& field : record->second->fields) {
+        if (field.name == expression.text) {
+            return render_source_type_name(field.type);
+        }
+    }
+    return std::nullopt;
+}
+
 struct GenericBindingConflict {
     std::string parameter_name;
     std::string expected_source_type;
@@ -409,6 +436,10 @@ auto source_type_name_for_generic_call_argument(
 
     if (expression.kind == syntax::ExpressionKind::string_literal) {
         return "Text";
+    }
+
+    if (auto member_source_type = infer_concrete_record_member_source_type(expression, resolver)) {
+        return member_source_type;
     }
 
     if (expression.kind == syntax::ExpressionKind::ternary &&

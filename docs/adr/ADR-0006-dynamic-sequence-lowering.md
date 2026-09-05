@@ -2702,6 +2702,9 @@ representation.
 - Branch-selected direct temporary receiver chains now have production coverage for `count` and Unit-tail mutation
   after descriptor-returning forwarding. The branch PHI feeds the synthesized receiver temporary; cleanup transfers
   through the forwarding result and runs once after the tail call.
+- Returned aggregate-field direct receiver chains now infer concrete record field source types during generic method
+  specialization collection. `make_box().values.forward().count()` and the Unit-tail mutation form now lower through
+  production run and emit-LLVM paths with cleanup transferred to the forwarded descriptor.
 
 ## Follow-up work
 
