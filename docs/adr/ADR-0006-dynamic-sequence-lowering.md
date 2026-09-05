@@ -1447,6 +1447,9 @@ representation.
 - Direct temporary receiver lowering now lives in a shared helper used by expression and statement member-call emission.
   The helper centralizes synthesized descriptor storage, Drop authorization, cleanup-plan registration, and receiver
   argument shaping while preserving caller-specific diagnostics.
+- Direct temporary receiver chains now preserve generic receiver-method source types during specialization collection.
+  A descriptor-returning receiver method transfers cleanup responsibility to the returned descriptor, so the input
+  temporary is marked consumed instead of being cleaned before the next receiver call.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.

@@ -87,6 +87,13 @@ auto dynamic_array_receiver_expression_requires_named_binding(
         dynamic_array_element_source_type_name(receiver_type_name).has_value();
 }
 
+auto direct_receiver_cleanup_transfers_to_result(
+    LoweredFunctionSignature const& method_signature
+) -> bool {
+    return !method_signature.source_return_type_name.empty() &&
+        dynamic_array_element_source_type_name(method_signature.source_return_type_name).has_value();
+}
+
 auto returned_dynamic_array_owner_name(
     syntax::ExpressionSyntax const& expression,
     std::optional<std::string_view> expected_source_type_name,
@@ -3963,6 +3970,24 @@ auto lowered_expression(
                 .signedness = mutable_binding->second.type.signedness,
             };
         }
+        if (binding->second.type != expected_llvm_type && expression.text == "this") {
+            auto addressable = state.addressable_bindings.find(expression.text);
+            auto source_type = state.source_type_names.find(expression.text);
+            if (addressable != state.addressable_bindings.end() &&
+                source_type != state.source_type_names.end() &&
+                binding->second.type == "ptr" &&
+                addressable->second.type.type == expected_llvm_type &&
+                dynamic_array_element_source_type_name(source_type->second).has_value()) {
+                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+                output << "  " << temporary_name << " = load " << expected_llvm_type
+                       << ", ptr " << addressable->second.storage << "\n";
+                return LoweredExpression {
+                    .type = std::string {expected_llvm_type},
+                    .value = std::move(temporary_name),
+                    .signedness = expected_signedness,
+                };
+            }
+        }
         if (binding->second.type != expected_llvm_type) {
             record_expression_lowering_failure(
                 failures,
@@ -5001,6 +5026,12 @@ auto lowered_expression(
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         auto lowered_call = emit_value_call(std::move(temporary_name), *method_signature, *arguments, output);
         if (direct_receiver.has_value() &&
+            direct_receiver_cleanup_transfers_to_result(*method_signature)) {
+            mark_owned_binding_consumed(
+                session.state.ownership_transfers,
+                direct_receiver->cleanup_owner_name
+            );
+        } else if (direct_receiver.has_value() &&
             !emit_dynamic_array_cleanup_for_owner(
                 direct_receiver->cleanup_owner_name,
                 context,

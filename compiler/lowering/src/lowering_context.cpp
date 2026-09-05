@@ -44,6 +44,18 @@ struct GenericMethodCandidate {
     std::vector<std::string> generic_parameters;
 };
 
+auto source_type_name_for_generic_method_collection_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string>;
+auto generic_method_collection_substitutions(
+    GenericMethodCandidate const& candidate,
+    syntax::ExpressionSyntax const& call,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>>;
+
 void collect_generic_method_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
     std::vector<GenericMethodCandidate> const& generic_methods,
@@ -782,7 +794,11 @@ void collect_generic_method_calls_from_expression(
             .local_source_types = &local_source_types,
             .record_names = &record_names,
         };
-        auto actual_receiver_type = source_type_name_for_generic_call_argument(*expression.left->left, resolver);
+        auto actual_receiver_type = source_type_name_for_generic_method_collection_expression(
+            *expression.left->left,
+            generic_methods,
+            resolver
+        );
         if (actual_receiver_type.has_value()) {
             for (auto const& candidate : generic_methods) {
                 if (candidate.receiver_type == nullptr ||
@@ -790,10 +806,10 @@ void collect_generic_method_calls_from_expression(
                     candidate.method->name != expression.left->text) {
                     continue;
                 }
-                auto substitutions = bind_generic_method_call_substitutions(
-                    *candidate.receiver_type,
-                    *candidate.method,
+                auto substitutions = generic_method_collection_substitutions(
+                    candidate,
                     expression,
+                    generic_methods,
                     resolver
                 );
                 if (!substitutions.has_value()) {
@@ -965,6 +981,97 @@ auto infer_constructor_expression_type(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
 ) -> std::optional<syntax::TypeSyntax>;
+
+auto generic_method_collection_substitutions(
+    GenericMethodCandidate const& candidate,
+    syntax::ExpressionSyntax const& call,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>> {
+    if (candidate.receiver_type == nullptr ||
+        candidate.method == nullptr ||
+        call.left == nullptr ||
+        call.left->left == nullptr ||
+        call.arguments.size() + 1 != candidate.method->parameters.size()) {
+        return std::nullopt;
+    }
+
+    auto actual_receiver_type =
+        source_type_name_for_generic_method_collection_expression(*call.left->left, generic_methods, resolver);
+    if (!actual_receiver_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto generic_parameters = generic_parameter_set(candidate.generic_parameters);
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    if (!unify_constructor_type(
+            *candidate.receiver_type,
+            parse_source_type_name(*actual_receiver_type),
+            generic_parameters,
+            substitutions
+        )) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index < call.arguments.size(); ++index) {
+        auto source_type_name = source_type_name_for_generic_method_collection_expression(
+            call.arguments[index],
+            generic_methods,
+            resolver
+        );
+        if (!source_type_name.has_value() ||
+            !unify_constructor_type(
+                candidate.method->parameters[index + 1].type,
+                parse_source_type_name(*source_type_name),
+                generic_parameters,
+                substitutions
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    for (auto const& generic_parameter : candidate.generic_parameters) {
+        if (!substitutions.contains(generic_parameter)) {
+            return std::nullopt;
+        }
+    }
+    return substitutions;
+}
+
+auto source_type_name_for_generic_method_collection_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (auto source_type = source_type_name_for_generic_call_argument(expression, resolver)) {
+        return source_type;
+    }
+
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::member_access ||
+        expression.left->left == nullptr) {
+        return std::nullopt;
+    }
+
+    for (auto const& candidate : generic_methods) {
+        if (candidate.method == nullptr || candidate.method->name != expression.left->text) {
+            continue;
+        }
+        auto substitutions = generic_method_collection_substitutions(
+            candidate,
+            expression,
+            generic_methods,
+            resolver
+        );
+        if (!substitutions.has_value()) {
+            continue;
+        }
+        return render_source_type_name(substitute_type(candidate.method->return_type, *substitutions));
+    }
+
+    return std::nullopt;
+}
 
 auto collect_generic_method_specializations(
     syntax::ModuleSyntax const& module,
