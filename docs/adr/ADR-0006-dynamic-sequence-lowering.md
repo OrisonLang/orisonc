@@ -1444,6 +1444,9 @@ representation.
 - Direct owned-element ternary receivers now share the same synthesized cleanup owner path after branch merge, and direct
   `Unit` receiver call statements can mutate a synthesized descriptor before immediate Drop-walk cleanup. Missing Drop
   proof remains rejected for direct receiver statements.
+- Direct temporary receiver lowering now lives in a shared helper used by expression and statement member-call emission.
+  The helper centralizes synthesized descriptor storage, Drop authorization, cleanup-plan registration, and receiver
+  argument shaping while preserving caller-specific diagnostics.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.

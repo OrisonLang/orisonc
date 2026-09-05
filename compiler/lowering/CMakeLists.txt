@@ -12,6 +12,7 @@ add_library(orison_lowering STATIC
     src/concurrency_runtime.cpp
     src/control_flow_emitter.cpp
     src/deferred_cleanup.cpp
+    src/direct_dynamic_array_receiver.cpp
     src/drop_metadata.cpp
     src/dynamic_array_cleanup_plan.cpp
     src/dynamic_array_runtime.cpp
