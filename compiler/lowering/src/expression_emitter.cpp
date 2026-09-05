@@ -86,6 +86,18 @@ auto dynamic_array_receiver_expression_requires_named_binding(
         dynamic_array_element_source_type_name(receiver_type_name).has_value();
 }
 
+auto direct_dynamic_array_receiver_element_drop_authorized(
+    std::string_view element_source_type_name,
+    EmissionContext const& context
+) -> bool {
+    auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
+    return std::ranges::any_of(context.options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+        return authorization.authorized &&
+            authorization.site.source_type_name == element_source_type_name &&
+            authorization.site.abi_symbol_name == symbol_name;
+    });
+}
+
 struct DirectDynamicArrayReceiver {
     LoweredExpression argument;
     std::string cleanup_owner_name;
@@ -104,11 +116,12 @@ auto lower_direct_dynamic_array_receiver(
     if (!element_source_type.has_value()) {
         return std::nullopt;
     }
-    if (!is_scalar_or_nonowning_source_type(*element_source_type)) {
+    if (!is_scalar_or_nonowning_source_type(*element_source_type) &&
+        !direct_dynamic_array_receiver_element_drop_authorized(*element_source_type, context)) {
         record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "DynamicArray receiver expression with owned elements must be bound to a named local before cleanup can be proven"
+            "DynamicArray receiver expression with owned elements requires authorized element drop"
         );
         return std::nullopt;
     }

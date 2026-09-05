@@ -1,0 +1,18 @@
+package fixtures.dynamicarray.receiverdirectownedcountmissingdrop
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+extend DynamicArray<T>
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values
+
+function main() -> UInt32
+    make_values().count() == 0 as IntSize ? 0 as UInt32 : 1 as UInt32

@@ -1,0 +1,26 @@
+package fixtures.dynamicarray.receiverdirectownedcount
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(7 as UInt32)))
+    values
+
+function main() -> UInt32
+    make_values().count() == 1 as IntSize ? 0 as UInt32 : 1 as UInt32

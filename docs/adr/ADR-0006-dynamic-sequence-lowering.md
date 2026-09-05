@@ -1438,6 +1438,9 @@ representation.
 - Parenthesized direct ternary receivers such as `(condition ? make_left() : make_right()).count()` use the same
   synthesized cleanup owner path for scalar/non-owning element types. This pins the grouped receiver path without adding
   any new source syntax.
+- Direct owned-element `DynamicArray<T>` receiver expressions now use the synthesized cleanup owner path when semantic
+  Drop lowering has authorized the element type. The cleanup emits the element Drop walk before descriptor deallocation;
+  missing Drop proof remains rejected at the direct receiver boundary.
 - Runtime-index cleanup function integration now builds a separate function-local IR rewrite candidate. The candidate
   splices the rendered cleanup CFG into the target function copy, verifies the cleanup and continuation labels appear
   exactly once, and leaves module `ir_text` unchanged by this function-candidate path.
