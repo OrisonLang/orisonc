@@ -1,0 +1,22 @@
+package fixtures.dynamicarray.receiverdirectownedmethodchainappendstatementmissingdrop
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+extend DynamicArray<T>
+    function forward(this: exclusive This) -> DynamicArray<T>
+        this
+
+    function append_value(this: exclusive This, value: T) -> Unit
+        this.push(value)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values
+
+function main() -> UInt32
+    make_values().forward().append_value(Payload(Nested(13 as UInt32)))
+    0 as UInt32
