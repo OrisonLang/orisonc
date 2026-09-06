@@ -159,6 +159,15 @@ void assert_cli_emit_llvm_existing_fixture_short_failure(
     assert(output.find("switch case lowering failed") == std::string::npos);
 }
 
+void assert_cli_run_existing_fixture_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " run " + path.string();
+    auto output = read_failing_command_output(command);
+    static_cast<void>(output);
+}
+
 void assert_cli_existing_fixture_production_failures(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -4759,6 +4768,14 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count_out_of_bounds.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

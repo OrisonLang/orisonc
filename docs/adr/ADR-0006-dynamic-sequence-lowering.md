@@ -2722,6 +2722,8 @@ representation.
 - Runtime-indexed fixed-array projections in returned aggregate receiver paths now emit a production bounds guard before
   the selected descriptor GEP. The guard compares the runtime index with the fixed array length and branches to the
   existing bounds-failed runtime trap on failure.
+- Runtime-indexed returned aggregate receiver bounds coverage now includes an out-of-bounds execution fixture. The
+  fixture uses `row = 2` for a two-element fixed array and verifies the generated trap path exits nonzero.
 
 ## Follow-up work
 
