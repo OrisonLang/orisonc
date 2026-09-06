@@ -2715,6 +2715,9 @@ representation.
 - Runtime-indexed aggregate-field direct receiver chains now reject on production emit paths until returned aggregate
   sibling cleanup is proven. Writers must bind runtime-indexed projections to named locals before using
   descriptor-returning receiver chains.
+- Returned aggregate projections with more than one reachable `DynamicArray` descriptor now reject on production emit
+  paths. This includes sibling record fields and fixed-array elements inside the returned aggregate. Single-descriptor
+  aggregate projections remain accepted.
 
 ## Follow-up work
 
@@ -2728,3 +2731,5 @@ representation.
   audit coverage.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
+- Model cleanup for unselected sibling descriptors in returned aggregate projections, then promote the currently
+  rejected direct receiver-chain fixtures back to production execution coverage.

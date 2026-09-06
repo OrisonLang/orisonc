@@ -9,6 +9,8 @@
 #include "orison/semantics/drop_model.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <optional>
 #include <utility>
 
 namespace orison::lowering {
@@ -68,6 +70,73 @@ auto contains_runtime_indexed_projection(
     return std::ranges::any_of(expression.arguments, contains_runtime_indexed_projection);
 }
 
+auto direct_projection_root_call(
+    syntax::ExpressionSyntax const& expression
+) -> syntax::ExpressionSyntax const* {
+    auto const* current = &expression;
+    auto saw_projection = false;
+    while ((current->kind == syntax::ExpressionKind::member_access ||
+            current->kind == syntax::ExpressionKind::index_access) &&
+           current->left != nullptr) {
+        saw_projection = true;
+        current = current->left.get();
+    }
+    if (!saw_projection || current->kind != syntax::ExpressionKind::call ||
+        current->left == nullptr || current->left->kind != syntax::ExpressionKind::name) {
+        return nullptr;
+    }
+    return current;
+}
+
+auto dynamic_array_descriptor_count(
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t depth = 0
+) -> std::size_t {
+    if (depth > 16) {
+        return 2;
+    }
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        return 1;
+    }
+
+    if (auto array_element_type = array_element_source_type_name(source_type_name)) {
+        auto element_count = dynamic_array_descriptor_count(*array_element_type, context, depth + 1);
+        return element_count == 0 ? 0 : 2;
+    }
+
+    auto record = context.records.find(std::string {source_type_name});
+    if (record == context.records.end()) {
+        return 0;
+    }
+
+    auto count = std::size_t {0};
+    for (auto const& field : record->second.fields) {
+        count += dynamic_array_descriptor_count(field.source_type_name, context, depth + 1);
+        if (count > 1) {
+            return count;
+        }
+    }
+    return count;
+}
+
+auto returned_aggregate_projection_requires_named_binding(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweringContext const& context
+) -> bool {
+    auto const* root_call = direct_projection_root_call(receiver_expression);
+    if (root_call == nullptr || root_call->left == nullptr) {
+        return false;
+    }
+
+    auto function = context.functions.find(root_call->left->text);
+    if (function == context.functions.end() || function->second.source_return_type_name.empty()) {
+        return false;
+    }
+
+    return dynamic_array_descriptor_count(function->second.source_return_type_name, context) > 1;
+}
+
 auto direct_receiver_failure(
     LoweringFailures& failures,
     bool record_expression_failures,
@@ -107,6 +176,13 @@ auto lower_direct_dynamic_array_receiver(
             failures,
             record_expression_failures,
             "DynamicArray receiver expression with runtime-indexed aggregate projection requires named binding"
+        );
+    }
+    if (returned_aggregate_projection_requires_named_binding(receiver_expression, context.lowering)) {
+        return direct_receiver_failure(
+            failures,
+            record_expression_failures,
+            "DynamicArray receiver expression over returned aggregate with sibling descriptors requires named binding"
         );
     }
     if (!is_scalar_or_nonowning_source_type(*element_source_type) &&
