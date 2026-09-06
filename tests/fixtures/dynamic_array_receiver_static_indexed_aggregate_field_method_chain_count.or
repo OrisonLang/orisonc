@@ -1,0 +1,38 @@
+package fixtures.dynamicarray.receiverstaticindexedaggregatefieldmethodchaincount
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function forward(this: exclusive This) -> DynamicArray<T>
+        this
+
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(seed)))
+    values
+
+function make_holder() -> Holder
+    Holder([Bucket(make_values(7 as UInt32)), Bucket(make_values(11 as UInt32))])
+
+function main() -> UInt32
+    make_holder().buckets[0].values.forward().count() == 1 as IntSize ? 0 as UInt32 : 1 as UInt32

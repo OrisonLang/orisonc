@@ -255,6 +255,30 @@ auto infer_concrete_record_member_source_type(
     return std::nullopt;
 }
 
+auto infer_indexed_sequence_source_type(
+    syntax::ExpressionSyntax const& expression,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::index_access ||
+        expression.left == nullptr ||
+        expression.arguments.size() != 1) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_generic_call_argument(*expression.left, resolver);
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    if (auto element_source_type = array_element_source_type_name(*base_source_type)) {
+        return element_source_type;
+    }
+    if (auto element_source_type = dynamic_array_element_source_type_name(*base_source_type)) {
+        return element_source_type;
+    }
+    return std::nullopt;
+}
+
 struct GenericBindingConflict {
     std::string parameter_name;
     std::string expected_source_type;
@@ -440,6 +464,10 @@ auto source_type_name_for_generic_call_argument(
 
     if (auto member_source_type = infer_concrete_record_member_source_type(expression, resolver)) {
         return member_source_type;
+    }
+
+    if (auto indexed_source_type = infer_indexed_sequence_source_type(expression, resolver)) {
+        return indexed_source_type;
     }
 
     if (expression.kind == syntax::ExpressionKind::ternary &&

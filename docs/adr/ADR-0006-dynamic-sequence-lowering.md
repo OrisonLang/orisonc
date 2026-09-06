@@ -2705,6 +2705,9 @@ representation.
 - Returned aggregate-field direct receiver chains now infer concrete record field source types during generic method
   specialization collection. `make_box().values.forward().count()` and the Unit-tail mutation form now lower through
   production run and emit-LLVM paths with cleanup transferred to the forwarded descriptor.
+- Static-indexed aggregate-field direct receiver chains now infer indexed sequence element source types during generic
+  method specialization collection. `make_holder().buckets[0].values.forward().count()` and the Unit-tail mutation
+  form now lower through production run and emit-LLVM paths with cleanup transferred to the forwarded descriptor.
 
 ## Follow-up work
 
