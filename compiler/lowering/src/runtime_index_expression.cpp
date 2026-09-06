@@ -1,9 +1,60 @@
 #include "orison/lowering/runtime_index_expression.hpp"
 
+#include <algorithm>
 #include <cstddef>
+#include <optional>
 #include <string>
+#include <string_view>
 
 namespace orison::lowering {
+
+auto decimal_integer_literal_text(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string_view> {
+    auto const* index_expression = &expression;
+    if (index_expression->kind == syntax::ExpressionKind::cast &&
+        index_expression->left != nullptr) {
+        index_expression = index_expression->left.get();
+    }
+    if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
+        index_expression->text.empty()) {
+        return std::nullopt;
+    }
+
+    auto all_decimal_digits = true;
+    for (auto const digit : index_expression->text) {
+        all_decimal_digits = all_decimal_digits && digit >= '0' && digit <= '9';
+    }
+    return all_decimal_digits
+        ? std::optional<std::string_view> {index_expression->text}
+        : std::nullopt;
+}
+
+auto is_runtime_index_expression(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    return !decimal_integer_literal_text(expression).has_value();
+}
+
+auto contains_runtime_indexed_projection(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::index_access &&
+        !expression.arguments.empty() &&
+        is_runtime_index_expression(expression.arguments.front())) {
+        return true;
+    }
+    if (expression.left != nullptr && contains_runtime_indexed_projection(*expression.left)) {
+        return true;
+    }
+    if (expression.right != nullptr && contains_runtime_indexed_projection(*expression.right)) {
+        return true;
+    }
+    if (expression.alternate != nullptr && contains_runtime_indexed_projection(*expression.alternate)) {
+        return true;
+    }
+    return std::ranges::any_of(expression.arguments, contains_runtime_indexed_projection);
+}
 
 auto runtime_index_expression_key(
     syntax::ExpressionSyntax const& expression

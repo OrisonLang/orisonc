@@ -99,10 +99,18 @@ auto ternary(
 }  // namespace
 
 int main() {
+    using orison::lowering::contains_runtime_indexed_projection;
+    using orison::lowering::decimal_integer_literal_text;
+    using orison::lowering::is_runtime_index_expression;
     using orison::lowering::runtime_index_expression_key;
 
     assert(runtime_index_expression_key(name("index")) == "index");
     assert(runtime_index_expression_key(integer_literal("7")) == "7");
+    assert(decimal_integer_literal_text(integer_literal("7")).value_or("") == "7");
+    assert(decimal_integer_literal_text(cast(integer_literal("7"), "UInt64")).value_or("") == "7");
+    assert(!decimal_integer_literal_text(name("index")).has_value());
+    assert(!is_runtime_index_expression(integer_literal("7")));
+    assert(is_runtime_index_expression(name("index")));
     assert(runtime_index_expression_key(binary(name("index"), "+", name("zero"))) == "(index + zero)");
     assert(runtime_index_expression_key(cast(name("index"), "UInt64")) == "index as UInt64");
     assert(runtime_index_expression_key(unary("not", name("flag"))) == "not flag");
@@ -120,4 +128,7 @@ int main() {
         runtime_index_expression_key(ternary(name("flag"), name("left"), name("right"))) ==
         "(flag ? left : right)"
     );
+    assert(!contains_runtime_indexed_projection(index(name("items"), integer_literal("0"))));
+    assert(contains_runtime_indexed_projection(index(name("items"), name("index"))));
+    assert(contains_runtime_indexed_projection(member(index(name("items"), name("index")), "value")));
 }

@@ -5,6 +5,7 @@
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
+#include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -25,29 +26,6 @@ auto computed_dynamic_array_for_base_name(
     return name;
 }
 
-auto decimal_integer_literal_text(
-    syntax::ExpressionSyntax const& expression
-) -> std::optional<std::string> {
-    auto const* index_expression = &expression;
-    if (index_expression->kind == syntax::ExpressionKind::cast &&
-        index_expression->left != nullptr) {
-        index_expression = index_expression->left.get();
-    }
-    if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
-        index_expression->text.empty()) {
-        return std::nullopt;
-    }
-
-    auto all_decimal_digits = true;
-    for (auto const digit : index_expression->text) {
-        all_decimal_digits = all_decimal_digits && digit >= '0' && digit <= '9';
-    }
-    if (!all_decimal_digits) {
-        return std::nullopt;
-    }
-    return index_expression->text;
-}
-
 auto append_aggregate_owner_step(
     std::string& owner_name,
     AggregatePathStep const& step
@@ -63,7 +41,7 @@ auto append_aggregate_owner_step(
             return false;
         }
         owner_name += ".element";
-        owner_name += *literal;
+        owner_name += std::string {*literal};
         return true;
     }
     return false;

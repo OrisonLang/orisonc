@@ -2724,6 +2724,8 @@ representation.
   existing bounds-failed runtime trap on failure.
 - Runtime-indexed returned aggregate receiver bounds coverage now includes an out-of-bounds execution fixture. The
   fixture uses `row = 2` for a two-element fixed array and verifies the generated trap path exits nonzero.
+- Runtime-index expression helpers now centralize decimal literal detection, runtime-index classification, and
+  recursive runtime-indexed projection discovery for lowering and module runtime declaration collection.
 
 ## Follow-up work
 

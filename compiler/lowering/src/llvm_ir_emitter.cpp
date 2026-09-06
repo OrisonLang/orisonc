@@ -10,6 +10,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/module_prelude.hpp"
 #include "orison/lowering/module_symbol_registry.hpp"
+#include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/syntax_traversal.hpp"
@@ -1671,24 +1672,6 @@ auto source_type_for_member_path(
     );
 }
 
-auto is_decimal_integer_literal(
-    syntax::ExpressionSyntax const& expression
-) -> bool {
-    auto const* index_expression = &expression;
-    if (index_expression->kind == syntax::ExpressionKind::cast &&
-        index_expression->left != nullptr) {
-        index_expression = index_expression->left.get();
-    }
-    if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
-        index_expression->text.empty()) {
-        return false;
-    }
-
-    return std::ranges::all_of(index_expression->text, [](auto const character) {
-        return character >= '0' && character <= '9';
-    });
-}
-
 void collect_source_type_names(
     syntax::StatementSyntax const& statement,
     std::vector<syntax::ChoiceSyntax> const& choices,
@@ -1877,7 +1860,7 @@ auto has_runtime_fixed_array_index_read(
             expression.kind != syntax::ExpressionKind::index_access ||
             expression.left == nullptr ||
             expression.arguments.empty() ||
-            is_decimal_integer_literal(expression.arguments.front())) {
+            !is_runtime_index_expression(expression.arguments.front())) {
             return;
         }
 
