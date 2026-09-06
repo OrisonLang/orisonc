@@ -213,6 +213,8 @@ auto dynamic_array_cleanup_action_authorized(
             authorization.site.source_type_name == action.source_type_name &&
             (authorization.site.owner_name == action.capture_name ||
              (action.capture_name.starts_with("dynamic_array_receiver_tmp") &&
+              action.capture_name.ends_with(".element")) ||
+             (action.capture_name.starts_with("dynamic_array_receiver_aggregate_tmp") &&
               action.capture_name.ends_with(".element")));
     });
 }

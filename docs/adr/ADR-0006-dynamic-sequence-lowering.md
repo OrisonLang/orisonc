@@ -525,8 +525,8 @@ representation.
   arms and `switch` cases. The descriptor deallocation remains test-only, but ordering now matches the existing
   function-exit cleanup model.
 - Loop-control coverage now pins that `break` and `continue` replay branch-local `defer` blocks without cleaning bound
-  dynamic-array parameters. Descriptor cleanup remains tied to the later function-exit path because the parameter is
-  still live after loop control transfers.
+  dynamic-array parameters. Descriptor cleanup remains tied to the later function-exit path while the parameter remains
+  live after loop control transfers.
 - Authorized owned-element cleanup coverage now pins early-return paths for bound `DynamicArray<Payload>` parameters:
   guard failures and non-final `if` arm returns emit the element drop walk before descriptor deallocation on each
   function-exit branch, with branch-local `defer` replay still ordered before container cleanup.
@@ -993,8 +993,8 @@ representation.
   `dynamic_array_owned_computed_literal_multidimensional_record_field_reassignment_run.or` fixtures pin
   `Holder.grid[0][col].values` and `Holder.grid[row][0].values` cleanup before replacement storage.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
-  and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
-  choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
+  and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet; unsupported choice
+  ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
 - Choice-constructor expression lowering now records a structured `unsupported choice ABI` failure when a matched choice
   layout lacks a usable payload ABI. This keeps future callers from collapsing descriptor-backed payload failures into
   generic expression rejections while the finite payload-buffer ABI remains incomplete for descriptor-backed payloads.
@@ -2707,17 +2707,18 @@ representation.
   production run and emit-LLVM paths with cleanup transferred to the forwarded descriptor.
 - Static-indexed aggregate-field direct receiver chains now infer indexed sequence element source types during generic
   method specialization collection. `make_holder().buckets[0].values.forward().count()` and the Unit-tail mutation
-  form now lower through production run and emit-LLVM paths with cleanup transferred to the forwarded descriptor.
+  form lower through production run and emit-LLVM paths, with selected descriptor cleanup transferred to the forwarded
+  descriptor and unselected sibling element descriptors cleaned at function return.
 - Nested static-indexed aggregate-field direct receiver chains now have production coverage for
   `make_grid().grid[1][0].values.forward().count()` and the Unit-tail mutation form. The existing indexed-sequence
-  source-type inference composes across nested fixed-array projections, and cleanup still transfers to the forwarded
-  descriptor.
+  source-type inference composes across nested fixed-array projections, with selected descriptor cleanup transferred to
+  the forwarded descriptor and unselected sibling descriptors cleaned at function return.
 - Runtime-indexed aggregate-field direct receiver chains now reject on production emit paths until returned aggregate
   sibling cleanup is proven. Writers must bind runtime-indexed projections to named locals before using
   descriptor-returning receiver chains.
-- Returned aggregate projections with more than one reachable `DynamicArray` descriptor now reject on production emit
-  paths. This includes sibling record fields and fixed-array elements inside the returned aggregate. Single-descriptor
-  aggregate projections remain accepted.
+- Returned aggregate projections with more than one reachable `DynamicArray` descriptor now lower on production emit
+  paths when every unselected descriptor has a static record-field or fixed-array path. Single-descriptor aggregate
+  projections remain accepted.
 
 ## Follow-up work
 
@@ -2731,5 +2732,5 @@ representation.
   audit coverage.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
-- Model cleanup for unselected sibling descriptors in returned aggregate projections, then promote the currently
-  rejected direct receiver-chain fixtures back to production execution coverage.
+- Extend returned aggregate sibling cleanup beyond static field and fixed-array paths only after runtime-indexed
+  projection cleanup is proven.

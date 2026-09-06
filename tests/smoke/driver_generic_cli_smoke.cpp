@@ -2284,6 +2284,23 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_field_method
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view sibling_owner
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("call") != std::string::npos);
+    assert(output.find("dynamic_array_receiver_aggregate_tmp") != std::string::npos);
+    assert(output.find(sibling_owner) != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_aggregate_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_aggregate_tmp") !=
+        std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4647,35 +4664,59 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_returned_aggregate_field_method_chain_append_statement.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_count.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_count.or",
-        "DynamicArray receiver expression over returned aggregate with sibling descriptors requires named binding"
+        "dynamic_array_receiver_aggregate_tmp0.buckets.element1.values.dynamic_array_cleanup"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_append_statement.or",
-        "lowering DynamicArray receiver expression failed"
+        "dynamic_array_receiver_aggregate_tmp0.buckets.element1.values.dynamic_array_cleanup"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count.or",
-        "DynamicArray receiver expression over returned aggregate with sibling descriptors requires named binding"
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement.or",
-        "lowering DynamicArray receiver expression failed"
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_count_rejected.or",
-        "DynamicArray receiver expression over returned aggregate with sibling descriptors requires named binding"
+        fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_count.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_append_statement_rejected.or",
-        "lowering DynamicArray receiver expression failed"
+        fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_count.or",
+        "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_append_statement.or",
+        "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
