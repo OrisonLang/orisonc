@@ -2713,12 +2713,12 @@ representation.
   `make_grid().grid[1][0].values.forward().count()` and the Unit-tail mutation form. The existing indexed-sequence
   source-type inference composes across nested fixed-array projections, with selected descriptor cleanup transferred to
   the forwarded descriptor and unselected sibling descriptors cleaned at function return.
-- Runtime-indexed aggregate-field direct receiver chains now reject on production emit paths until returned aggregate
-  sibling cleanup is proven. Writers must bind runtime-indexed projections to named locals before using
-  descriptor-returning receiver chains.
 - Returned aggregate projections with more than one reachable `DynamicArray` descriptor now lower on production emit
   paths when every unselected descriptor has a static record-field or fixed-array path. Single-descriptor aggregate
   projections remain accepted.
+- Runtime-indexed returned aggregate-field direct receiver chains now lower when the returned aggregate has a finite
+  record-field or fixed-array descriptor set. The selected descriptor is loaded through the runtime path, its original
+  slot is zeroed, and every descriptor slot in the spilled aggregate receives normal cleanup.
 
 ## Follow-up work
 
@@ -2732,5 +2732,5 @@ representation.
   audit coverage.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
-- Extend returned aggregate sibling cleanup beyond static field and fixed-array paths only after runtime-indexed
-  projection cleanup is proven.
+- Extend returned aggregate sibling cleanup beyond finite record-field and fixed-array descriptor sets only after a
+  broader dynamic descriptor-discovery model is proven.

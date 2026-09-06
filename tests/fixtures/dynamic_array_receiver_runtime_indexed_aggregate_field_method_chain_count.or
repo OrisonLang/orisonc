@@ -1,4 +1,4 @@
-package fixtures.dynamicarray.receiverruntimeindexedaggregatefieldmethodchaincountrejected
+package fixtures.dynamicarray.receiverruntimeindexedaggregatefieldmethodchaincount
 
 record Nested
     value: UInt32

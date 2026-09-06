@@ -4718,15 +4718,23 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_append_statement.or",
         "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count_rejected.or",
-        "DynamicArray receiver expression with runtime-indexed aggregate projection requires named binding"
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement_rejected.or",
-        "lowering DynamicArray receiver expression with runtime-indexed aggregate projection requires named binding"
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count.or",
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement.or",
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
