@@ -5,6 +5,8 @@
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/semantics/drop_model.hpp"
@@ -71,6 +73,32 @@ auto decimal_integer_literal_text(
     return all_decimal_digits
         ? std::optional<std::string_view> {index_expression->text}
         : std::nullopt;
+}
+
+void emit_fixed_array_runtime_index_bounds_check(
+    std::string_view index_value,
+    std::size_t length,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) {
+    auto prefix = std::string {"%returned_aggregate_receiver_array_index"};
+    prefix += std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        index_value,
+        std::to_string(length),
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("fixed_array.index.in_bounds", block_index);
+    auto failure_block = llvm_block_name("fixed_array.index.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
 }
 
 auto contains_runtime_indexed_projection(
@@ -277,6 +305,10 @@ auto lower_selected_descriptor_projection_path(
         if (step.index_expression == nullptr) {
             return std::nullopt;
         }
+        auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
+        if (!array_type.has_value()) {
+            return std::nullopt;
+        }
         auto index_text = decimal_integer_literal_text(*step.index_expression);
         auto lowered_index_value = std::string {};
         if (index_text.has_value()) {
@@ -284,7 +316,6 @@ auto lower_selected_descriptor_projection_path(
             for (auto character : *index_text) {
                 index_value = (index_value * 10) + static_cast<std::size_t>(character - '0');
             }
-            auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
             if (!array_type.has_value() || index_value >= array_type->length) {
                 return std::nullopt;
             }
@@ -302,6 +333,12 @@ auto lower_selected_descriptor_projection_path(
                 return std::nullopt;
             }
             lowered_index_value = lowered_index->value;
+            emit_fixed_array_runtime_index_bounds_check(
+                lowered_index_value,
+                array_type->length,
+                session,
+                output
+            );
         }
 
         auto result = advance_aggregate_path_index_with_temporary(

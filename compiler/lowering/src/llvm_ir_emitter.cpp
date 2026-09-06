@@ -1671,6 +1671,24 @@ auto source_type_for_member_path(
     );
 }
 
+auto is_decimal_integer_literal(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    auto const* index_expression = &expression;
+    if (index_expression->kind == syntax::ExpressionKind::cast &&
+        index_expression->left != nullptr) {
+        index_expression = index_expression->left.get();
+    }
+    if (index_expression->kind != syntax::ExpressionKind::integer_literal ||
+        index_expression->text.empty()) {
+        return false;
+    }
+
+    return std::ranges::all_of(index_expression->text, [](auto const character) {
+        return character >= '0' && character <= '9';
+    });
+}
+
 void collect_source_type_names(
     syntax::StatementSyntax const& statement,
     std::vector<syntax::ChoiceSyntax> const& choices,
@@ -1838,6 +1856,38 @@ auto has_dynamic_array_index_read(
     return found;
 }
 
+auto has_runtime_fixed_array_index_read(
+    syntax::FunctionSyntax const& function,
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    LoweringContext const& context
+) -> bool {
+    auto state = FunctionLoweringState {};
+    for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && !parameter.type.name.empty()) {
+            state.source_type_names[parameter.name] = render_source_type_name(parameter.type);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_source_type_names(statement, choices, state.source_type_names);
+    }
+
+    auto found = false;
+    walk_function_expressions(function, [&context, &found, &state](syntax::ExpressionSyntax const& expression) {
+        if (found ||
+            expression.kind != syntax::ExpressionKind::index_access ||
+            expression.left == nullptr ||
+            expression.arguments.empty() ||
+            is_decimal_integer_literal(expression.arguments.front())) {
+            return;
+        }
+
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        found = base_source_type.has_value() &&
+            array_element_source_type_name(*base_source_type).has_value();
+    });
+    return found;
+}
+
 auto has_dynamic_array_append_call(
     syntax::FunctionSyntax const& function
 ) -> bool {
@@ -1924,6 +1974,32 @@ auto has_dynamic_array_index_read(
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
             if (has_dynamic_array_index_read(method, module.choices, context)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+auto has_runtime_fixed_array_index_read(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> bool {
+    for (auto const& function : module.functions) {
+        if (has_runtime_fixed_array_index_read(function, module.choices, context)) {
+            return true;
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (has_runtime_fixed_array_index_read(method, module.choices, context)) {
+                return true;
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (has_runtime_fixed_array_index_read(method, module.choices, context)) {
                 return true;
             }
         }
@@ -2858,6 +2934,9 @@ auto collect_dynamic_array_runtime_operations(
         }
     }
     if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module, context)) {
+        push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
+    }
+    if (has_runtime_fixed_array_index_read(module, context)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
     }
     if (dynamic_array_parameter_descriptors_enabled(options) &&

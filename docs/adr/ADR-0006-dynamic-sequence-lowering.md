@@ -2719,6 +2719,9 @@ representation.
 - Runtime-indexed returned aggregate-field direct receiver chains now lower when the returned aggregate has a finite
   record-field or fixed-array descriptor set. The selected descriptor is loaded through the runtime path, its original
   slot is zeroed, and every descriptor slot in the spilled aggregate receives normal cleanup.
+- Runtime-indexed fixed-array projections in returned aggregate receiver paths now emit a production bounds guard before
+  the selected descriptor GEP. The guard compares the runtime index with the fixed array length and branches to the
+  existing bounds-failed runtime trap on failure.
 
 ## Follow-up work
 

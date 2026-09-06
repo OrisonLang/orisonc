@@ -2301,6 +2301,22 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_meth
     assert(output.find("ret i32") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find(".in_bounds = icmp ult i64 %row, 2") != std::string::npos);
+    assert(output.find("fixed_array.index.out_of_bounds.") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
+    assert(output.find("dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4727,6 +4743,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count.or",
         "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
     );
+    assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count.or"
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement.or"
@@ -4735,6 +4755,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement.or",
         "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
