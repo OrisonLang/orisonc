@@ -4781,6 +4781,16 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count_rejected.or",
+        "DynamicArray receiver expression with runtime-indexed aggregate projection requires named binding"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement_rejected.or",
+        "lowering DynamicArray receiver expression with runtime-indexed aggregate projection requires named binding"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or",
         "DynamicArray receiver expression with owned elements requires authorized element drop"
     );

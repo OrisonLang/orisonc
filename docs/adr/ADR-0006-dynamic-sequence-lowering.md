@@ -2712,6 +2712,9 @@ representation.
   `make_grid().grid[1][0].values.forward().count()` and the Unit-tail mutation form. The existing indexed-sequence
   source-type inference composes across nested fixed-array projections, and cleanup still transfers to the forwarded
   descriptor.
+- Runtime-indexed aggregate-field direct receiver chains now reject on production emit paths until returned aggregate
+  sibling cleanup is proven. Writers must bind runtime-indexed projections to named locals before using
+  descriptor-returning receiver chains.
 
 ## Follow-up work
 
