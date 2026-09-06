@@ -3977,8 +3977,12 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
     auto output = read_command_output(command);
     auto row_index = output.find("%row = add i64 0, 0");
     auto col_index = output.find("%col = add i64 0, 1");
-    auto row_address = output.find("getelementptr [2 x [2 x %record.Item]], ptr %tmp");
-    auto col_address = output.find("getelementptr [2 x %record.Item], ptr %tmp");
+    auto row_bounds = output.find(".in_bounds = icmp ult i64 %row, 2", row_index);
+    auto row_trap = output.find("fixed_array.index.out_of_bounds.", row_bounds);
+    auto row_address = output.find("getelementptr [2 x [2 x %record.Item]], ptr %tmp", row_trap);
+    auto col_bounds = output.find(".in_bounds = icmp ult i64 %col, 2", col_index);
+    auto col_trap = output.find("fixed_array.index.out_of_bounds.", col_bounds);
+    auto col_address = output.find("getelementptr [2 x %record.Item], ptr %tmp", col_trap);
     auto field_address = output.find("getelementptr %record.Item, ptr %tmp");
     auto cleanup = output.find("%holder.grid.element.element.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
@@ -3988,9 +3992,14 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element.element.values.dynamic_array_reassign_cleanup"
     );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp", deallocate);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
     assert(row_index != std::string::npos);
     assert(col_index != std::string::npos);
+    assert(row_bounds != std::string::npos);
+    assert(row_trap != std::string::npos);
     assert(row_address != std::string::npos);
+    assert(col_bounds != std::string::npos);
+    assert(col_trap != std::string::npos);
     assert(col_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(cleanup != std::string::npos);
@@ -3998,8 +4007,12 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
     assert(row_index < col_index);
-    assert(col_index < row_address);
-    assert(row_address < col_address);
+    assert(col_index < row_bounds);
+    assert(row_bounds < row_trap);
+    assert(row_trap < row_address);
+    assert(row_address < col_bounds);
+    assert(col_bounds < col_trap);
+    assert(col_trap < col_address);
     assert(col_address < field_address);
     assert(field_address < cleanup);
     assert(cleanup < drop);

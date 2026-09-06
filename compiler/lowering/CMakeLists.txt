@@ -18,6 +18,7 @@ add_library(orison_lowering STATIC
     src/dynamic_array_runtime.cpp
     src/expression_emitter.cpp
     src/for_loop_lowering.cpp
+    src/fixed_array_bounds.cpp
     src/function_emitter.cpp
     src/function_signature.cpp
     src/generic_call_resolution.cpp

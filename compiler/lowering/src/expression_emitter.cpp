@@ -11,6 +11,7 @@
 #include "orison/lowering/direct_dynamic_array_receiver.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
+#include "orison/lowering/fixed_array_bounds.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
@@ -2258,6 +2259,7 @@ auto advance_address_of_aggregate_path_step(
         return false;
     }
 
+    auto runtime_index = is_runtime_index_expression(*step.index_expression);
     auto lowered_index = lowered_expression(
         *step.index_expression,
         "i64",
@@ -2268,6 +2270,24 @@ auto advance_address_of_aggregate_path_step(
     );
     if (!lowered_index.has_value()) {
         return false;
+    }
+    if (runtime_index) {
+        auto array_type = parse_llvm_array_type(cursor.llvm_type_name);
+        if (!array_type.has_value()) {
+            record_unsupported_aggregate_path_failure(
+                failures,
+                "address_of index path",
+                AggregatePathError::expected_array
+            );
+            return false;
+        }
+        emit_fixed_array_runtime_index_bounds_check(
+            "aggregate_path_index",
+            lowered_index->value,
+            array_type->length,
+            session,
+            output
+        );
     }
 
     auto result = advance_aggregate_path_index_with_temporary(
@@ -2679,6 +2699,7 @@ auto lower_aggregate_path_read_from_storage(
             return std::nullopt;
         }
 
+        auto runtime_index = is_runtime_index_expression(*step.index_expression);
         auto lowered_index = lowered_expression(
             *step.index_expression,
             "i64",
@@ -2689,6 +2710,24 @@ auto lower_aggregate_path_read_from_storage(
         );
         if (!lowered_index.has_value()) {
             return std::nullopt;
+        }
+        if (runtime_index) {
+            auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
+            if (!array_type.has_value()) {
+                record_unsupported_aggregate_path_failure(
+                    session.failures,
+                    "aggregate index read '" + expression.text + "'",
+                    AggregatePathError::expected_array
+                );
+                return std::nullopt;
+            }
+            emit_fixed_array_runtime_index_bounds_check(
+                "aggregate_path_index",
+                lowered_index->value,
+                array_type->length,
+                session,
+                output
+            );
         }
 
         auto result = advance_aggregate_path_index_with_temporary(

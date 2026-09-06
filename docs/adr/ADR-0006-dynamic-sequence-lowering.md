@@ -2726,6 +2726,10 @@ representation.
   fixture uses `row = 2` for a two-element fixed array and verifies the generated trap path exits nonzero.
 - Runtime-index expression helpers now centralize decimal literal detection, runtime-index classification, and
   recursive runtime-indexed projection discovery for lowering and module runtime declaration collection.
+- Runtime-indexed fixed-array projections in aggregate read/address/assignment paths now share the same bounds guard
+  used by returned aggregate receiver lowering before emitting runtime-index GEPs.
+- Runtime bounds prelude declaration discovery records inferred record-constructor locals, so aggregate paths such as
+  `var log = Log(...); log.entries[index]` request the bounds trap declaration when guarded.
 
 ## Follow-up work
 

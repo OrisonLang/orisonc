@@ -1675,6 +1675,7 @@ auto source_type_for_member_path(
 void collect_source_type_names(
     syntax::StatementSyntax const& statement,
     std::vector<syntax::ChoiceSyntax> const& choices,
+    LoweringContext const& context,
     std::unordered_map<std::string, std::string>& source_type_names
 ) {
     if ((statement.kind == syntax::StatementKind::let_binding ||
@@ -1683,11 +1684,21 @@ void collect_source_type_names(
         !statement.annotated_type.name.empty()) {
         source_type_names[statement.name] = render_source_type_name(statement.annotated_type);
     }
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.name.empty() &&
+        statement.annotated_type.name.empty() &&
+        statement.expression.kind == syntax::ExpressionKind::call &&
+        statement.expression.left != nullptr &&
+        statement.expression.left->kind == syntax::ExpressionKind::name &&
+        context.records.contains(statement.expression.left->text)) {
+        source_type_names[statement.name] = statement.expression.left->text;
+    }
     for (auto const& nested_statement : statement.nested_statements) {
-        collect_source_type_names(nested_statement, choices, source_type_names);
+        collect_source_type_names(nested_statement, choices, context, source_type_names);
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_source_type_names(alternate_statement, choices, source_type_names);
+        collect_source_type_names(alternate_statement, choices, context, source_type_names);
     }
     for (auto const& switch_case : statement.switch_cases) {
         if (switch_case.pattern.kind == syntax::ExpressionKind::call &&
@@ -1711,7 +1722,7 @@ void collect_source_type_names(
         }
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
-                collect_source_type_names(*case_statement, choices, source_type_names);
+                collect_source_type_names(*case_statement, choices, context, source_type_names);
             }
         }
     }
@@ -1819,7 +1830,7 @@ auto has_dynamic_array_index_read(
     }
     for (auto const& statement : function.body_statements) {
         collect_dynamic_array_owner_names(statement, choices, owner_names);
-        collect_source_type_names(statement, choices, source_type_names);
+        collect_source_type_names(statement, choices, context, source_type_names);
     }
     auto found = false;
     walk_function_expressions(function, [&owner_names, &source_type_names, &found, &context](syntax::ExpressionSyntax const& expression) {
@@ -1851,7 +1862,7 @@ auto has_runtime_fixed_array_index_read(
         }
     }
     for (auto const& statement : function.body_statements) {
-        collect_source_type_names(statement, choices, state.source_type_names);
+        collect_source_type_names(statement, choices, context, state.source_type_names);
     }
 
     auto found = false;

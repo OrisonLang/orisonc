@@ -11,6 +11,7 @@
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/fixed_array_bounds.hpp"
 #include "orison/lowering/for_loop_lowering.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -20,9 +21,11 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/maybe_value_emitter.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
+#include "orison/lowering/type_lowering.hpp"
 
 #include "orison/semantics/drop_model.hpp"
 
@@ -1335,6 +1338,24 @@ auto lower_assignment_target(
             cursor = std::move(*next_cursor);
             cleanup_owner_name += ".element";
             continue;
+        }
+
+        if (is_runtime_index_expression(*step.index_expression)) {
+            auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
+            if (!array_type.has_value()) {
+                diagnostics.error(
+                    target.line,
+                    aggregate_assignment_target_failure("index target", AggregatePathError::expected_array)
+                );
+                return std::nullopt;
+            }
+            emit_fixed_array_runtime_index_bounds_check(
+                "aggregate_path_index",
+                lowered_index->value,
+                array_type->length,
+                session,
+                output
+            );
         }
 
         auto result = advance_aggregate_path_index_with_temporary(

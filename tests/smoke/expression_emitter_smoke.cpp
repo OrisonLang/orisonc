@@ -1286,12 +1286,19 @@ int main() {
         output
     );
     assert(array_field_address.has_value());
-    assert(array_field_address->value == "%tmp10");
+    assert(array_field_address->value == "%tmp11");
     assert(
         output.str() ==
         "  %tmp8 = getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0\n"
-        "  %tmp9 = getelementptr [4 x i8], ptr %tmp8, i64 0, i64 %index\n"
-        "  %tmp10 = ptrtoint ptr %tmp9 to i64\n"
+        "  %aggregate_path_index9.in_bounds = icmp ult i64 %index, 4\n"
+        "  br i1 %aggregate_path_index9.in_bounds, label %fixed_array.index.in_bounds.0, "
+        "label %fixed_array.index.out_of_bounds.0\n"
+        "fixed_array.index.out_of_bounds.0:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.0:\n"
+        "  %tmp10 = getelementptr [4 x i8], ptr %tmp8, i64 0, i64 %index\n"
+        "  %tmp11 = ptrtoint ptr %tmp10 to i64\n"
     );
 
     auto nested_array_address_call = orison::syntax::ExpressionSyntax {
@@ -1339,13 +1346,20 @@ int main() {
         output
     );
     assert(nested_array_address.has_value());
-    assert(nested_array_address->value == "%tmp14");
+    assert(nested_array_address->value == "%tmp16");
     assert(
         output.str() ==
-        "  %tmp11 = getelementptr %record.Device, ptr %device, i32 0, i32 1\n"
-        "  %tmp12 = getelementptr %record.Buffer, ptr %tmp11, i32 0, i32 0\n"
-        "  %tmp13 = getelementptr [4 x i8], ptr %tmp12, i64 0, i64 %index\n"
-        "  %tmp14 = ptrtoint ptr %tmp13 to i64\n"
+        "  %tmp12 = getelementptr %record.Device, ptr %device, i32 0, i32 1\n"
+        "  %tmp13 = getelementptr %record.Buffer, ptr %tmp12, i32 0, i32 0\n"
+        "  %aggregate_path_index14.in_bounds = icmp ult i64 %index, 4\n"
+        "  br i1 %aggregate_path_index14.in_bounds, label %fixed_array.index.in_bounds.1, "
+        "label %fixed_array.index.out_of_bounds.1\n"
+        "fixed_array.index.out_of_bounds.1:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.1:\n"
+        "  %tmp15 = getelementptr [4 x i8], ptr %tmp13, i64 0, i64 %index\n"
+        "  %tmp16 = ptrtoint ptr %tmp15 to i64\n"
     );
 
     auto array_of_records_address_call = orison::syntax::ExpressionSyntax {
@@ -1393,13 +1407,20 @@ int main() {
         output
     );
     assert(array_of_records_address.has_value());
-    assert(array_of_records_address->value == "%tmp18");
+    assert(array_of_records_address->value == "%tmp21");
     assert(
         output.str() ==
-        "  %tmp15 = getelementptr %record.Log, ptr %log, i32 0, i32 0\n"
-        "  %tmp16 = getelementptr [2 x %record.UartRegisters], ptr %tmp15, i64 0, i64 %index\n"
-        "  %tmp17 = getelementptr %record.UartRegisters, ptr %tmp16, i32 0, i32 1\n"
-        "  %tmp18 = ptrtoint ptr %tmp17 to i64\n"
+        "  %tmp17 = getelementptr %record.Log, ptr %log, i32 0, i32 0\n"
+        "  %aggregate_path_index18.in_bounds = icmp ult i64 %index, 2\n"
+        "  br i1 %aggregate_path_index18.in_bounds, label %fixed_array.index.in_bounds.2, "
+        "label %fixed_array.index.out_of_bounds.2\n"
+        "fixed_array.index.out_of_bounds.2:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.2:\n"
+        "  %tmp19 = getelementptr [2 x %record.UartRegisters], ptr %tmp17, i64 0, i64 %index\n"
+        "  %tmp20 = getelementptr %record.UartRegisters, ptr %tmp19, i32 0, i32 1\n"
+        "  %tmp21 = ptrtoint ptr %tmp20 to i64\n"
     );
 
     auto nested_indices_address_call = orison::syntax::ExpressionSyntax {
@@ -1450,13 +1471,27 @@ int main() {
         output
     );
     assert(nested_indices_address.has_value());
-    assert(nested_indices_address->value == "%tmp22");
+    assert(nested_indices_address->value == "%tmp27");
     assert(
         output.str() ==
-        "  %tmp19 = getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0\n"
-        "  %tmp20 = getelementptr [2 x [4 x i8]], ptr %tmp19, i64 0, i64 %index\n"
-        "  %tmp21 = getelementptr [4 x i8], ptr %tmp20, i64 0, i64 %inner\n"
-        "  %tmp22 = ptrtoint ptr %tmp21 to i64\n"
+        "  %tmp22 = getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0\n"
+        "  %aggregate_path_index23.in_bounds = icmp ult i64 %index, 2\n"
+        "  br i1 %aggregate_path_index23.in_bounds, label %fixed_array.index.in_bounds.3, "
+        "label %fixed_array.index.out_of_bounds.3\n"
+        "fixed_array.index.out_of_bounds.3:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.3:\n"
+        "  %tmp24 = getelementptr [2 x [4 x i8]], ptr %tmp22, i64 0, i64 %index\n"
+        "  %aggregate_path_index25.in_bounds = icmp ult i64 %inner, 4\n"
+        "  br i1 %aggregate_path_index25.in_bounds, label %fixed_array.index.in_bounds.4, "
+        "label %fixed_array.index.out_of_bounds.4\n"
+        "fixed_array.index.out_of_bounds.4:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.4:\n"
+        "  %tmp26 = getelementptr [4 x i8], ptr %tmp24, i64 0, i64 %inner\n"
+        "  %tmp27 = ptrtoint ptr %tmp26 to i64\n"
     );
 
     std::filesystem::remove(path);
