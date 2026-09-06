@@ -423,63 +423,6 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
-void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& path
-) {
-    auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
-    auto output = read_command_output(command);
-    assert(output.find("runtime-index cleanup audit entries 2") != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup function-module verification metadata available verifications 2 "
-        "candidate-functions found candidate-match true replacement-targets blocked module-changed true "
-        "separate-module true splice-conflicts 1 composition-failures 0 first-composition-failure none "
-        "llvm-ran true llvm-passed true verified false verified-count 0 "
-        "llvm-verified-count 2 diagnostics 0"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup function-module splice-conflict function select_both "
-        "left-candidate 0 left-line 46 "
-        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-        "left-range"
-    ) != std::string::npos);
-    assert(output.find(
-        "right-candidate 1 right-line 51 "
-        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index]) "
-        "right-range"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup function-module mutation requested true candidate-verified false "
-        "replacement-targets blocked mutation-applied false module-matches-candidate false "
-        "composition-failure none apply-stages unavailable branch-replacements false "
-        "cleanup-cfg-appended false phi-retargeted false llvm-passed false diagnostics 0"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
-        "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked ir-shape ready production blocked "
-        "blocker-count 2 blocker-kind function-splice-conflict "
-        "function select_both source-line 46 "
-        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-        "diagnostic runtime-index cleanup blocked: "
-        "overlapping same-function splice ranges left-line 46 right-line 51 "
-        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup module-ir production-readiness blocker index 0 "
-        "kind function-splice-conflict stage function splice conflict function select_both source-line 46 "
-        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup module-ir production-readiness blocker index 1 "
-        "kind function-integration stage function integration function select_both source-line 46 "
-        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
-    ) != std::string::npos);
-    assert(output.find("lowering does not yet support") == std::string::npos);
-}
-
 void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -625,6 +568,39 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
     assert(WEXITSTATUS(status) == 0);
 }
 
+void assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto declaration = output.find("declare void @__orison_dynamic_array_bounds_failed()");
+    auto index_value = output.find("%index = add i64 0, 0");
+    auto bounds_check = output.find(".in_bounds = icmp ult i64 %index, 2", index_value);
+    auto copied_array_gep = output.find("getelementptr [2 x %record.Inner], ptr %tmp", bounds_check);
+    auto selected_load = output.find("load %record.Inner, ptr %tmp", copied_array_gep);
+    auto source_gep = output.find("getelementptr [2 x %record.Inner], ptr %tmp", selected_load);
+    auto zero_source = output.find("store %record.Inner zeroinitializer, ptr %tmp", source_gep);
+    auto cleanup = output.find("br label %holder.items.runtime_cleanup.entry", zero_source);
+    assert(declaration != std::string::npos);
+    assert(index_value != std::string::npos);
+    assert(bounds_check != std::string::npos);
+    assert(output.find("fixed_array.index.out_of_bounds.", bounds_check) != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_bounds_failed()", bounds_check) != std::string::npos);
+    assert(copied_array_gep != std::string::npos);
+    assert(selected_load != std::string::npos);
+    assert(source_gep != std::string::npos);
+    assert(zero_source != std::string::npos);
+    assert(cleanup != std::string::npos);
+    assert(declaration < index_value);
+    assert(index_value < bounds_check);
+    assert(bounds_check < copied_array_gep);
+    assert(copied_array_gep < selected_load);
+    assert(selected_load < source_gep);
+    assert(source_gep < zero_source);
+    assert(zero_source < cleanup);
+}
+
 void assert_cli_emit_llvm_fixture_links_and_runs(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -679,28 +655,6 @@ void assert_cli_dynamic_array_owned_result_fixture_full_production_success(
     assert_cli_emit_llvm_fixture_links_and_runs(executable, path, output_base);
     assert_cli_emit_object_fixture_success(executable, path, output_base.string() + ".o");
     assert_cli_build_fixture_runs(executable, path, output_base.string() + "_build");
-}
-
-void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& path
-) {
-    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
-    auto output = read_failing_command_output(command);
-    assert(output.find(
-        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
-        "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration blocked splice-conflicts 1 "
-        "splice-conflict-check blocked ir-shape ready production blocked "
-        "blocker-count 2 blocker-kind function-splice-conflict "
-        "function select_both source-line 46 "
-        "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-        "diagnostic runtime-index cleanup blocked: "
-        "overlapping same-function splice ranges left-line 46 right-line 51 "
-        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
-    ) != std::string::npos);
-    assert(output.find("define i32 @select_both") == std::string::npos);
 }
 
 void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
@@ -5623,13 +5577,14 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_cleanup_two_function_candidates.or"
     );
-    assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_blocked(
+    assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
     );
-    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_blocked(
+    assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
-        fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or"
+        fixtures / "runtime_indexed_cleanup_same_function_two_candidates.or",
+        smoke_temp_root / "runtime_indexed_cleanup_same_function_two_candidates"
     );
     assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
         executable,
@@ -5991,6 +5946,10 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[index]"
     );
     assert_cli_run_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
+    );
+    assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
     );

@@ -2730,6 +2730,10 @@ representation.
   used by returned aggregate receiver lowering before emitting runtime-index GEPs.
 - Runtime bounds prelude declaration discovery records inferred record-constructor locals, so aggregate paths such as
   `var log = Log(...); log.entries[index]` request the bounds trap declaration when guarded.
+- Runtime-indexed fixed-array value indexing now emits a bounds guard before spilling and GEP-loading the selected
+  element. Runtime-index constructor source-slot finalization reuses that checked index for zeroing the moved slot.
+- Same-function runtime-index constructor cleanup with two fixed-array move candidates now verifies and runs when the
+  guarded value-index blocks give cleanup rewrite distinct insertion points.
 
 ## Follow-up work
 

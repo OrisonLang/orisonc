@@ -19419,9 +19419,9 @@ auto main() -> int {
             .same_function_splice_ranges_ordered
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-             .same_function_splice_ranges_non_overlapping
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+            .same_function_splice_ranges_non_overlapping
     );
     auto const& same_function_first_candidate =
         runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
@@ -19433,11 +19433,11 @@ auto main() -> int {
     assert(same_function_first_candidate.splice_range_available);
     assert(same_function_second_candidate.splice_range_available);
     assert(
-        same_function_first_candidate.splice_range.start_offset ==
+        same_function_first_candidate.splice_range.start_offset <
         same_function_second_candidate.splice_range.start_offset
     );
     assert(
-        same_function_first_candidate.splice_range.end_offset ==
+        same_function_first_candidate.splice_range.end_offset <=
         same_function_second_candidate.splice_range.end_offset
     );
     assert(same_function_first_candidate.source_line == 46);
@@ -19458,62 +19458,34 @@ auto main() -> int {
             .verification_count == 2
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_replacement_targets_unique
-    );
-    assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .same_function_splice_ranges_non_overlapping
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_replacement_targets_unique
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .splice_conflict_count == 1
-    );
-    auto const& same_function_splice_conflict =
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .splice_conflicts.front();
-    assert(same_function_splice_conflict.function_symbol_name == same_function_first_candidate.function_symbol_name);
-    assert(same_function_splice_conflict.left_candidate_index == 0);
-    assert(same_function_splice_conflict.right_candidate_index == 1);
-    assert(same_function_splice_conflict.left_source_line == 46);
-    assert(same_function_splice_conflict.right_source_line == 51);
-    assert(
-        same_function_splice_conflict.left_source_text ==
-        "var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
-    );
-    assert(
-        same_function_splice_conflict.right_source_text ==
-        "var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
-    );
-    assert(
-        same_function_splice_conflict.left_splice_range.start_offset ==
-        same_function_first_candidate.splice_range.start_offset
-    );
-    assert(
-        same_function_splice_conflict.left_splice_range.end_offset ==
-        same_function_first_candidate.splice_range.end_offset
-    );
-    assert(
-        same_function_splice_conflict.right_splice_range.start_offset ==
-        same_function_second_candidate.splice_range.start_offset
-    );
-    assert(
-        same_function_splice_conflict.right_splice_range.end_offset ==
-        same_function_second_candidate.splice_range.end_offset
-    );
-    assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-             .all_verified
+            .same_function_splice_ranges_non_overlapping
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .verified_count == 0
+            .splice_conflict_count == 0
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .splice_conflicts.empty()
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .all_verified
+    );
+    assert(
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            .verified_count == 2
     );
     assert(
         runtime_indexed_same_function_cleanup
@@ -19526,14 +19498,14 @@ auto main() -> int {
             .mutation_requested
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .candidate_verified
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .candidate_verified
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .replacement_targets_unique
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .replacement_targets_unique
     );
     assert(
         runtime_indexed_same_function_cleanup
@@ -19541,158 +19513,49 @@ auto main() -> int {
             .candidate_count == 2
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .mutation_applied
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .mutation_applied
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .module_matches_candidate
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .module_matches_candidate
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-             .llvm_verifier_passed
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_passed
     );
     assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .function_integration_ready
-    );
-    assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .function_splice_conflict_free
+        runtime_indexed_same_function_cleanup
+            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            .llvm_verifier_diagnostic_count == 0
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_splice_conflict_count == 1
+            .function_integration_ready
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_blocker_kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict
+            .function_splice_conflict_free
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .blockers.size() == 2
+            .function_splice_conflict_count == 0
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .blockers[0].kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict
+            .blockers.empty()
     );
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .blockers[1].kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_blocker_stage_name == "function splice conflict"
-    );
-    assert(
-        orison::pipeline::runtime_indexed_cleanup_production_readiness_blocker_kind_name(
-            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
-                .diagnostic_blocker_kind
-        ) == "function-splice-conflict"
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_function_symbol_name == "select_both"
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_left_candidate_index == 0
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_right_candidate_index == 1
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_left_source_line == 46
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_right_source_line == 51
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_left_source_text ==
-        "var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_right_source_text ==
-        "var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
-    );
-    assert(
-        runtime_indexed_same_function_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_text ==
-        "runtime-index cleanup blocked: overlapping same-function splice ranges left-line 46 right-line 51 "
-        "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-        "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
-    );
-    assert(
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
-            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
-        ) ==
-        runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_text
-    );
-    assert(
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
-            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
-        ).find(
-            "ir-shape ready production blocked blocker-count 2 blocker-kind function-splice-conflict "
-            "function select_both "
-            "source-line 46 "
-            "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-            "diagnostic runtime-index cleanup blocked: "
-            "overlapping same-function splice ranges left-line 46 right-line 51 "
-            "left-source var first_selected: TaggedInner = Secondary(first_holder.items[first_index]) "
-            "right-source var second_selected: TaggedInner = Primary(second_holder.items[second_index])"
-        ) != std::string::npos
-    );
-    auto runtime_indexed_same_function_cleanup_readiness_blocker_report =
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
-            runtime_indexed_same_function_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
-        );
-    assert(runtime_indexed_same_function_cleanup_readiness_blocker_report.size() == 2);
-    assert(
-        runtime_indexed_same_function_cleanup_readiness_blocker_report.front().find(
-            "index 0 kind function-splice-conflict stage function splice conflict function select_both "
-            "source-line 46 "
-            "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
-        ) != std::string::npos
-    );
-    assert(
-        runtime_indexed_same_function_cleanup_readiness_blocker_report.back().find(
-            "index 1 kind function-integration stage function integration function select_both "
-            "source-line 46 "
-            "source-text var first_selected: TaggedInner = Secondary(first_holder.items[first_index])"
-        ) != std::string::npos
-    );
-    assert(
-        !runtime_indexed_same_function_cleanup
-             .runtime_indexed_cleanup_module_ir_production_readiness_state
-             .production_ready
+            .production_ready
     );
 
     auto runtime_indexed_same_function_non_overlap_cleanup_path =

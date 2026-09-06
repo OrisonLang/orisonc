@@ -4306,6 +4306,22 @@ auto lowered_expression(
             output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
                    << lowered_base->value << ", " << lowered_index->value << "\n";
         } else {
+            auto array_type = parse_llvm_array_type(lowered_base->type);
+            if (!array_type.has_value()) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    expression.text
+                );
+                return std::nullopt;
+            }
+            emit_fixed_array_runtime_index_bounds_check(
+                "fixed_array_value_index",
+                lowered_index->value,
+                array_type->length,
+                session,
+                output
+            );
             auto storage_name =
                 spill_aggregate_value_to_temporary_storage(*lowered_base, session, output);
             if (!storage_name.has_value()) {
