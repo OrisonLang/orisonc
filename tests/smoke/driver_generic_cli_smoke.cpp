@@ -2332,6 +2332,58 @@ void assert_cli_emit_llvm_dynamic_array_receiver_static_indexed_aggregate_field_
         std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("%record.Bucket = type { { ptr, i64, i64 } }") != std::string::npos);
+    assert(output.find("%record.GridHolder = type { [2 x [2 x %record.Bucket]] }") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload(ptr %this)") !=
+        std::string::npos);
+    assert(output.find("call %record.GridHolder @make_grid()") != std::string::npos);
+    assert(output.find("getelementptr [2 x [2 x %record.Bucket]], ptr %tmp2, i64 0, i64 1") !=
+        std::string::npos);
+    assert(output.find("getelementptr [2 x %record.Bucket], ptr %tmp3, i64 0, i64 0") !=
+        std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload(ptr %dynamic_array_receiver_tmp7.addr)") !=
+        std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp8)") !=
+        std::string::npos);
+    assert(output.find("dynamic_array_receiver_tmp7.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp9") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp9") !=
+        std::string::npos);
+}
+
+void assert_cli_emit_llvm_dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("%record.Bucket = type { { ptr, i64, i64 } }") != std::string::npos);
+    assert(output.find("%record.GridHolder = type { [2 x [2 x %record.Bucket]] }") != std::string::npos);
+    assert(output.find("define { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload(ptr %this)") !=
+        std::string::npos);
+    assert(output.find("call %record.GridHolder @make_grid()") != std::string::npos);
+    assert(output.find("getelementptr [2 x [2 x %record.Bucket]], ptr %tmp2, i64 0, i64 1") !=
+        std::string::npos);
+    assert(output.find("getelementptr [2 x %record.Bucket], ptr %tmp3, i64 0, i64 0") !=
+        std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload(ptr %dynamic_array_receiver_tmp7.addr)") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %dynamic_array_receiver_tmp9.addr") !=
+        std::string::npos);
+    assert(output.find("dynamic_array_receiver_tmp7.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp9") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp9") !=
+        std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4710,6 +4762,22 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_static_indexed_aggregate_field_method_chain_append_statement_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_append_statement.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

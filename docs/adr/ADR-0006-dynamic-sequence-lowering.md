@@ -2708,6 +2708,10 @@ representation.
 - Static-indexed aggregate-field direct receiver chains now infer indexed sequence element source types during generic
   method specialization collection. `make_holder().buckets[0].values.forward().count()` and the Unit-tail mutation
   form now lower through production run and emit-LLVM paths with cleanup transferred to the forwarded descriptor.
+- Nested static-indexed aggregate-field direct receiver chains now have production coverage for
+  `make_grid().grid[1][0].values.forward().count()` and the Unit-tail mutation form. The existing indexed-sequence
+  source-type inference composes across nested fixed-array projections, and cleanup still transfers to the forwarded
+  descriptor.
 
 ## Follow-up work
 
