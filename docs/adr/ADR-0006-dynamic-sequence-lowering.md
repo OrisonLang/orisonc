@@ -2746,6 +2746,8 @@ representation.
 - Constructor computed-index move fixtures with production success now use `_run` names. The promoted set covers
   record, fixed-array, single-payload choice, multi-payload choice, owned multi-variant choice, and runtime-indexed
   DynamicArray constructor moves.
+- A follow-up runtime-index `_rejected` fixture probe found no remaining fixture that succeeds on both production
+  `run` and `--emit-llvm`. Current runtime-index `_rejected` names therefore continue to represent negative coverage.
 
 ## Follow-up work
 
