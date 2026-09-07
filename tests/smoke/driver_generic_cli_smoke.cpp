@@ -568,7 +568,7 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
     assert(WEXITSTATUS(status) == 0);
 }
 
-void assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
+void assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
     std::string_view index_literal
@@ -5957,12 +5957,12 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
     );
-    assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
+    assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or",
         "0"
     );
-    assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
+    assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_out_of_bounds.or",
         "2"
@@ -5983,6 +5983,15 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_run.or"
+    );
+    assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_out_of_bounds.or",
+        "2"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_out_of_bounds.or"
     );
     assert_cli_run_fixture_success(
         executable,

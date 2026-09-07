@@ -2736,6 +2736,8 @@ representation.
   guarded value-index blocks give cleanup rewrite distinct insertion points.
 - Runtime-indexed record-constructor fixed-array moves now include out-of-bounds execution coverage. Index `2` into
   `Array<Inner, 2>` reaches the shared bounds trap before element load or source-slot finalization.
+- Runtime-indexed choice-constructor fixed-array moves now have matching out-of-bounds execution coverage, confirming
+  the shared value-index guard also protects choice payload construction.
 
 ## Follow-up work
 
