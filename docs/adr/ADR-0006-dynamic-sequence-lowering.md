@@ -2755,6 +2755,8 @@ representation.
   `use after move` on production paths, without the generic unsupported-return-expression wrapper.
 - Runtime-indexed DynamicArray sibling and nested post-move reuse fixtures now assert the same direct ownership
   diagnostic and reject the stale unsupported-return-expression wrapper on emit-LLVM and production paths.
+- Runtime-indexed choice-payload DynamicArray post-move reuse fixtures now assert direct `use after move` diagnostics
+  and reject the stale unsupported-return-expression wrapper on emit-LLVM and production paths.
 
 ## Follow-up work
 

@@ -5752,27 +5752,31 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or"
     );
-    assert_cli_emit_llvm_existing_fixture_short_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
-        "use after move: items[(index + zero)]"
+        "use after move: items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_existing_fixture_production_failures_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_payload_member_reuse_rejected",
-        "use after move: items[(index + zero)]"
+        "use after move: items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_emit_llvm_existing_fixture_short_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
-        "use after move: holder.items[(index + zero)]"
+        "use after move: holder.items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_existing_fixture_production_failures_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_payload_nested_member_reuse_rejected",
-        "use after move: holder.items[(index + zero)]"
+        "use after move: holder.items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
