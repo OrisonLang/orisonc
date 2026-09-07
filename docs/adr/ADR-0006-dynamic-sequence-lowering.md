@@ -2792,6 +2792,9 @@ representation.
 - Computed-index named dynamic-element receiver coverage now includes the Unit-tail mutation form
   `holder.items[index + zero].values.forward().append_value(...)`. Production checks pin mutation cleanup, and
   follow-up reuse rejects with the same computed owner path.
+- Computed-index named dynamic-element receiver mutation now has out-of-bounds coverage. The fixture evaluates
+  `index + one` to `2`, checks the computed index before descriptor transfer, and traps through the shared bounds path
+  on production `run`.
 
 ## Follow-up work
 

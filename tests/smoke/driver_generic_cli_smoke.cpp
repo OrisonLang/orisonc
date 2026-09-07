@@ -2375,6 +2375,36 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_out
     assert(output.find("ret i32") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_computed_out_of_bounds_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto index_value = output.find("%index = add i64 0, 1");
+    auto one_value = output.find("%one = add i64 0, 1", index_value);
+    auto computed_index = output.find(" = add i64 %index, %one", one_value);
+    auto bounds_check = output.find(".in_bounds = icmp ult i64", computed_index);
+    auto trap = output.find("call void @__orison_dynamic_array_bounds_failed()", bounds_check);
+    auto descriptor_load = output.find("named_dynamic_array_receiver_descriptor", trap);
+    auto source_slot_zero = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp", descriptor_load);
+    assert(index_value != std::string::npos);
+    assert(one_value != std::string::npos);
+    assert(computed_index != std::string::npos);
+    assert(bounds_check != std::string::npos);
+    assert(trap != std::string::npos);
+    assert(descriptor_load != std::string::npos);
+    assert(source_slot_zero != std::string::npos);
+    assert(index_value < one_value);
+    assert(one_value < computed_index);
+    assert(computed_index < bounds_check);
+    assert(bounds_check < trap);
+    assert(trap < descriptor_load);
+    assert(descriptor_load < source_slot_zero);
+    assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
+    assert(output.find("ret i32 0") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_append_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -4987,6 +5017,14 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_reuse_rejected",
         "use after move: holder.items[(index + zero)].values",
         "lowering does not yet support this return expression"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_computed_out_of_bounds_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_out_of_bounds.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
