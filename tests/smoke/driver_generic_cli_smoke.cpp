@@ -5808,42 +5808,42 @@ auto main(int argc, char** argv) -> int {
             ":74: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
             "element Wrap"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_nested_member"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_two_owner"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_branch_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_branch_computed"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_switch_computed"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_nested"
     );
-    assert_cli_emit_llvm_fixture_links_and_runs(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_single_member"
@@ -5852,86 +5852,6 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_sibling_member"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_nested_member.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_two_owner.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_branch_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_branch_computed.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_switch_computed.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_nested.o"
-    );
-    assert_cli_emit_object_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_single_member.o"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_nested_member_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_two_owner_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_two_computed_nested_member_sibling_transfers.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_two_nested_owner_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_branch_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_branch_computed_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_switch_computed_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_choice_payload_nested_build"
-    );
-    assert_cli_build_fixture_runs(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
-        smoke_temp_root / "runtime_indexed_member_cleanup_single_member_build"
     );
     assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
         executable,

@@ -2762,6 +2762,9 @@ representation.
 - A fresh runtime-index `_rejected` fixture audit on 2026-09-07 found no fixture that succeeds on either production
   `run` or `--emit-llvm`. Record- and choice-constructor runtime-index post-move reuse fixtures now have production
   negative coverage and assert the direct `use after move` diagnostic without the unsupported-return-expression wrapper.
+- Runtime-indexed member-cleanup transfer fixtures for nested members, two owners, branch/switch-selected owners, and
+  choice payloads now use full production smoke coverage across `run`, `--emit-llvm` link/run, `--emit-object`, and
+  `--build` paths.
 
 ## Follow-up work
 
