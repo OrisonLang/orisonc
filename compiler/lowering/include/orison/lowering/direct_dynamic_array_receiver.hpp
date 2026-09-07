@@ -17,6 +17,7 @@ namespace orison::lowering {
 struct DirectDynamicArrayReceiver {
     LoweredExpression argument;
     std::string cleanup_owner_name;
+    std::string transferred_owner_name;
 };
 
 struct DirectDynamicArrayReceiverLowering {

@@ -9,6 +9,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -43,6 +44,64 @@ struct LoweredSelectedDescriptorProjection {
     std::string pointer;
     std::string source_type_name;
 };
+
+auto named_dynamic_array_element_receiver_owner_name(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto aggregate_path = collect_named_aggregate_path(receiver_expression);
+    if (!aggregate_path.has_value() ||
+        aggregate_path->base_expression == nullptr ||
+        aggregate_path->base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = state.source_type_names.find(aggregate_path->base_expression->text);
+    if (base_source_type == state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto owner_name = aggregate_path->base_expression->text;
+    auto cursor_source_type = base_source_type->second;
+    auto crossed_dynamic_array_element = false;
+    for (auto const& step : aggregate_path->steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.records.find(cursor_source_type);
+            if (record == context.records.end()) {
+                return std::nullopt;
+            }
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr || field->source_type_name.empty()) {
+                return std::nullopt;
+            }
+            owner_name += ".";
+            owner_name += step.field_name;
+            cursor_source_type = field->source_type_name;
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+        auto element_source_type = dynamic_array_element_source_type_name(cursor_source_type);
+        if (!element_source_type.has_value()) {
+            return std::nullopt;
+        }
+        owner_name += "[";
+        owner_name += runtime_index_expression_key(*step.index_expression);
+        owner_name += "]";
+        cursor_source_type = std::move(*element_source_type);
+        crossed_dynamic_array_element = true;
+    }
+
+    if (!crossed_dynamic_array_element ||
+        !dynamic_array_element_source_type_name(cursor_source_type).has_value()) {
+        return std::nullopt;
+    }
+
+    return owner_name;
+}
 
 auto direct_dynamic_array_receiver_element_drop_authorized(
     std::string_view element_source_type_name,
@@ -692,18 +751,22 @@ auto lower_returned_aggregate_projection_receiver(
 auto direct_receiver_failure(
     LoweringFailures& failures,
     bool record_expression_failures,
-    std::string message
+    std::string message,
+    ExpressionLoweringFailureReason reason = ExpressionLoweringFailureReason::unsupported_expression
 ) -> DirectDynamicArrayReceiverLowering {
     if (record_expression_failures) {
         record_expression_lowering_failure(
             failures,
-            ExpressionLoweringFailureReason::unsupported_expression,
+            reason,
             message
         );
     }
+    auto diagnostic = reason == ExpressionLoweringFailureReason::use_after_move
+        ? "use after move: " + message
+        : message;
     return DirectDynamicArrayReceiverLowering {
         .receiver = std::nullopt,
-        .diagnostic = std::move(message),
+        .diagnostic = std::move(diagnostic),
     };
 }
 
@@ -729,6 +792,20 @@ auto lower_direct_dynamic_array_receiver(
         collect_temporary_aggregate_path(receiver_expression).has_value();
     auto const requires_named_dynamic_array_element_transfer =
         named_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state);
+    auto const named_dynamic_array_element_owner_name = named_dynamic_array_element_receiver_owner_name(
+        receiver_expression,
+        context.lowering,
+        session.state
+    );
+    if (named_dynamic_array_element_owner_name.has_value() &&
+        is_owned_binding_consumed(session.state.ownership_transfers, *named_dynamic_array_element_owner_name)) {
+        return direct_receiver_failure(
+            failures,
+            record_expression_failures,
+            *named_dynamic_array_element_owner_name,
+            ExpressionLoweringFailureReason::use_after_move
+        );
+    }
     if (receiver_is_temporary_aggregate_projection &&
         temporary_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state)) {
         return direct_receiver_failure(
@@ -849,6 +926,7 @@ auto lower_direct_dynamic_array_receiver(
         .receiver = DirectDynamicArrayReceiver {
             .argument = std::move(receiver_argument),
             .cleanup_owner_name = std::move(cleanup_owner_name),
+            .transferred_owner_name = named_dynamic_array_element_owner_name.value_or(std::string {}),
         },
         .diagnostic = {},
     };

@@ -5080,6 +5080,12 @@ auto lowered_expression(
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         auto lowered_call = emit_value_call(std::move(temporary_name), *method_signature, *arguments, output);
+        if (direct_receiver.has_value() && !direct_receiver->transferred_owner_name.empty()) {
+            mark_owned_binding_consumed(
+                session.state.ownership_transfers,
+                direct_receiver->transferred_owner_name
+            );
+        }
         if (direct_receiver.has_value() &&
             direct_receiver_cleanup_transfers_to_result(*method_signature)) {
             mark_owned_binding_consumed(

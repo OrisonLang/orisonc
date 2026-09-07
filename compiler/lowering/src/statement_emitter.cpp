@@ -2092,6 +2092,12 @@ auto lower_void_member_call_statement(
     }
 
     emit_void_call(function, *arguments, output);
+    if (direct_receiver.has_value() && !direct_receiver->transferred_owner_name.empty()) {
+        mark_owned_binding_consumed(
+            session.state.ownership_transfers,
+            direct_receiver->transferred_owner_name
+        );
+    }
     if (direct_receiver.has_value() &&
         !emit_local_dynamic_array_cleanups_for_names(
             context,

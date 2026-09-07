@@ -2780,6 +2780,9 @@ representation.
 - Named dynamic-element receiver bounds coverage now includes an out-of-bounds count fixture. The guard compares the
   runtime index before selected descriptor load and source-slot zeroing, and production `run` exits nonzero through the
   shared bounds trap when index `2` targets a two-element owner.
+- Named dynamic-element receiver transfers now mark the selected nested descriptor owner consumed, using the
+  runtime-index owner path such as `holder.items[index].values`. Follow-up receiver reuse of that path rejects with a
+  direct `use after move` diagnostic on production emit and run paths.
 
 ## Follow-up work
 
