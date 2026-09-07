@@ -2777,6 +2777,9 @@ representation.
 - The same named dynamic-element receiver transfer path now covers Unit-tail mutation through
   `holder.items[index].values.forward().append_value(...)`. Production coverage pins run, emit-LLVM/link, emit-object,
   build, selected-slot zeroing, receiver cleanup, and parent `DynamicArray<Bucket>` cleanup.
+- Named dynamic-element receiver bounds coverage now includes an out-of-bounds count fixture. The guard compares the
+  runtime index before selected descriptor load and source-slot zeroing, and production `run` exits nonzero through the
+  shared bounds trap when index `2` targets a two-element owner.
 
 ## Follow-up work
 
