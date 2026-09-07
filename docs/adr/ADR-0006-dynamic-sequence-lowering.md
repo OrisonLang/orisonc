@@ -2738,6 +2738,9 @@ representation.
   `Array<Inner, 2>` reaches the shared bounds trap before element load or source-slot finalization.
 - Runtime-indexed choice-constructor fixed-array moves now have matching out-of-bounds execution coverage, confirming
   the shared value-index guard also protects choice payload construction.
+- Runtime-indexed fixed-array GEP audit found the active selected-value and source-slot finalization paths guarded
+  before runtime-index GEP emission. Cleanup-walk GEPs remain covered by their loop bounds rather than the selected
+  index guard.
 
 ## Follow-up work
 
