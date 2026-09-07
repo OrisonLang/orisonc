@@ -2753,6 +2753,8 @@ representation.
   member-cleanup helper are present.
 - Runtime-indexed DynamicArray direct post-move reuse diagnostics now report the ownership violation directly as
   `use after move` on production paths, without the generic unsupported-return-expression wrapper.
+- Runtime-indexed DynamicArray sibling and nested post-move reuse fixtures now assert the same direct ownership
+  diagnostic and reject the stale unsupported-return-expression wrapper on emit-LLVM and production paths.
 
 ## Follow-up work
 

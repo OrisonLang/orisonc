@@ -147,6 +147,18 @@ void assert_cli_emit_llvm_existing_fixture_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+void assert_cli_emit_llvm_existing_fixture_failure_without(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message,
+    std::string_view rejected_message
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+    assert(output.find(rejected_message) == std::string::npos);
+}
+
 void assert_cli_emit_llvm_existing_fixture_short_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -6166,16 +6178,18 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_direct_sibling"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
-        "use after move: items[index]"
+        "use after move: items[index]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_existing_fixture_production_failures_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_direct_sibling_reuse_rejected",
-        "use after move: items[index]"
+        "use after move: items[index]",
+        "lowering does not yet support this return expression"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6190,16 +6204,18 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_computed_sibling"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
-        "use after move: items[(index + zero)]"
+        "use after move: items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_existing_fixture_production_failures_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_computed_sibling_reuse_rejected",
-        "use after move: items[(index + zero)]"
+        "use after move: items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6214,16 +6230,18 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_nested_sibling_path"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
-        "use after move: items[(index + zero)]"
+        "use after move: items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_existing_fixture_production_failures_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_nested_sibling_reuse_rejected",
-        "use after move: items[(index + zero)]"
+        "use after move: items[(index + zero)]",
+        "lowering does not yet support this return expression"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
