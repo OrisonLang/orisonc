@@ -2774,6 +2774,9 @@ representation.
 - Named aggregate direct receivers can now transfer a nested descriptor out of a growable `DynamicArray` element path
   such as `holder.items[index].values.forward().count()`. Lowering loads the selected descriptor, zeroes the source
   slot before the receiver call, runs the synthesized receiver cleanup, and leaves parent-owner cleanup in place.
+- The same named dynamic-element receiver transfer path now covers Unit-tail mutation through
+  `holder.items[index].values.forward().append_value(...)`. Production coverage pins run, emit-LLVM/link, emit-object,
+  build, selected-slot zeroing, receiver cleanup, and parent `DynamicArray<Bucket>` cleanup.
 
 ## Follow-up work
 
