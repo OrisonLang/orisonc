@@ -120,18 +120,17 @@ auto returned_aggregate_projection_has_sibling_descriptors(
     return dynamic_array_descriptor_count(function->second.source_return_type_name, context) > 1;
 }
 
-auto temporary_aggregate_path_crosses_dynamic_array_element(
-    syntax::ExpressionSyntax const& receiver_expression,
+auto aggregate_path_crosses_dynamic_array_element(
+    AggregatePath const& aggregate_path,
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> bool {
-    auto aggregate_path = collect_temporary_aggregate_path(receiver_expression);
-    if (!aggregate_path.has_value() || aggregate_path->base_expression == nullptr) {
+    if (aggregate_path.base_expression == nullptr) {
         return false;
     }
 
     auto cursor_source_type = source_type_name_for_expression(
-        *aggregate_path->base_expression,
+        *aggregate_path.base_expression,
         context,
         state
     );
@@ -139,7 +138,7 @@ auto temporary_aggregate_path_crosses_dynamic_array_element(
         return false;
     }
 
-    for (auto const& step : aggregate_path->steps) {
+    for (auto const& step : aggregate_path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
             auto record = context.records.find(*cursor_source_type);
             if (record == context.records.end()) {
@@ -166,6 +165,26 @@ auto temporary_aggregate_path_crosses_dynamic_array_element(
     }
 
     return false;
+}
+
+auto temporary_aggregate_path_crosses_dynamic_array_element(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    auto aggregate_path = collect_temporary_aggregate_path(receiver_expression);
+    return aggregate_path.has_value() &&
+        aggregate_path_crosses_dynamic_array_element(*aggregate_path, context, state);
+}
+
+auto named_aggregate_path_crosses_dynamic_array_element(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    auto aggregate_path = collect_named_aggregate_path(receiver_expression);
+    return aggregate_path.has_value() &&
+        aggregate_path_crosses_dynamic_array_element(*aggregate_path, context, state);
 }
 
 auto collect_descriptor_projection_paths(
@@ -515,6 +534,13 @@ auto lower_direct_dynamic_array_receiver(
             failures,
             record_expression_failures,
             "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
+        );
+    }
+    if (named_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state)) {
+        return direct_receiver_failure(
+            failures,
+            record_expression_failures,
+            "DynamicArray receiver named aggregate cleanup cannot transfer descriptors through DynamicArray element projection"
         );
     }
     if (contains_runtime_indexed_projection(receiver_expression) &&
