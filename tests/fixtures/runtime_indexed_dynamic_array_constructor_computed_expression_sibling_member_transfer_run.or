@@ -1,4 +1,4 @@
-package tests.fixtures.runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_rejected
+package tests.fixtures.runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run
 
 record Inner
     value: UInt32

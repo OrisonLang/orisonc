@@ -5793,6 +5793,11 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_single_member"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or",
+        smoke_temp_root / "runtime_indexed_member_cleanup_sibling_member"
+    );
     assert_cli_emit_object_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",

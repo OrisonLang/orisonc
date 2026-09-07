@@ -2741,6 +2741,9 @@ representation.
 - Runtime-indexed fixed-array GEP audit found the active selected-value and source-slot finalization paths guarded
   before runtime-index GEP emission. Cleanup-walk GEPs remain covered by their loop bounds rather than the selected
   index guard.
+- Runtime-indexed DynamicArray constructor sibling-member transfer has been promoted from stale rejected fixture status
+  to production run coverage. The source moves `items[index + zero].item`, emits the member-cleanup helper for sibling
+  fields, deallocates the descriptor, and succeeds through run, emit-LLVM/link, emit-object, and build paths.
 
 ## Follow-up work
 

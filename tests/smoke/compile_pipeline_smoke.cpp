@@ -17131,7 +17131,7 @@ auto main() -> int {
     );
     auto runtime_indexed_sibling_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_rejected.or";
+        "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or";
     auto runtime_indexed_sibling_member_transfer_apply_request = pipeline.emit_llvm(
         runtime_indexed_sibling_member_transfer_path,
         runtime_indexed_cleanup_audit_module_rewrite_options()
