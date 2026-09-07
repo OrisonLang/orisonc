@@ -4931,6 +4931,19 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_run.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_reuse_rejected.or",
+        "use after move: holder.items[index].values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_reuse_rejected",
+        "use after move: holder.items[index].values",
+        "lowering does not yet support this return expression"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_ternary_call_result_count_mismatch.or",

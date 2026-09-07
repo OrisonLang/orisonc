@@ -2783,6 +2783,9 @@ representation.
 - Named dynamic-element receiver transfers now mark the selected nested descriptor owner consumed, using the
   runtime-index owner path such as `holder.items[index].values`. Follow-up receiver reuse of that path rejects with a
   direct `use after move` diagnostic on production emit and run paths.
+- Unit-tail named dynamic-element receiver mutation now has matching post-transfer reuse coverage:
+  `holder.items[index].values.forward().append_value(...)` followed by `holder.items[index].values.count()` rejects
+  statically with the same owner path.
 
 ## Follow-up work
 
