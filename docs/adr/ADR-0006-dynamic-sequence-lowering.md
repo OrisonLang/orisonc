@@ -2789,6 +2789,9 @@ representation.
 - Named dynamic-element receiver coverage now includes computed index expressions such as `index + zero`. The
   production success path preserves the dynamic bounds guard, selected descriptor transfer, and cleanup behavior; the
   reuse path rejects as `use after move: holder.items[(index + zero)].values`.
+- Computed-index named dynamic-element receiver coverage now includes the Unit-tail mutation form
+  `holder.items[index + zero].values.forward().append_value(...)`. Production checks pin mutation cleanup, and
+  follow-up reuse rejects with the same computed owner path.
 
 ## Follow-up work
 
