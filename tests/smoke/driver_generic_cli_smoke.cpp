@@ -6035,10 +6035,18 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_reuse_rejected.or",
-        "use after move: holder.items[index]"
+        "use after move: holder.items[index]",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_record_constructor_reuse_rejected",
+        "use after move: holder.items[index]",
+        "lowering does not yet support this return expression"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6057,10 +6065,18 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_reuse_rejected.or",
-        "use after move: holder.items[index]"
+        "use after move: holder.items[index]",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_reuse_rejected.or",
+        smoke_temp_root / "runtime_indexed_choice_constructor_reuse_rejected",
+        "use after move: holder.items[index]",
+        "lowering does not yet support this return expression"
     );
     assert_cli_run_fixture_success(
         executable,

@@ -2759,6 +2759,9 @@ representation.
   and reject the stale unsupported-return-expression wrapper on emit-LLVM and production paths.
 - Runtime-indexed choice-payload DynamicArray missing-Drop fixtures now assert line-bearing `DynamicArray.push`
   diagnostics at the first owned-element insertion site.
+- A fresh runtime-index `_rejected` fixture audit on 2026-09-07 found no fixture that succeeds on either production
+  `run` or `--emit-llvm`. Record- and choice-constructor runtime-index post-move reuse fixtures now have production
+  negative coverage and assert the direct `use after move` diagnostic without the unsupported-return-expression wrapper.
 
 ## Follow-up work
 
