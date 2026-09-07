@@ -1,11 +1,14 @@
 #include "orison/lowering/direct_dynamic_array_receiver.hpp"
 
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/fixed_array_bounds.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -185,6 +188,202 @@ auto named_aggregate_path_crosses_dynamic_array_element(
     auto aggregate_path = collect_named_aggregate_path(receiver_expression);
     return aggregate_path.has_value() &&
         aggregate_path_crosses_dynamic_array_element(*aggregate_path, context, state);
+}
+
+auto lower_named_dynamic_array_element_projection_receiver(
+    syntax::ExpressionSyntax const& receiver_expression,
+    std::string_view receiver_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    auto aggregate_path = collect_named_aggregate_path(receiver_expression);
+    if (!aggregate_path.has_value() || aggregate_path->base_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto const& base_name = aggregate_path->base_expression->text;
+    auto base_storage = aggregate_storage_for_name(base_name, session.state);
+    auto base_source_type = session.state.source_type_names.find(base_name);
+    if (!base_storage.has_value() || base_source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto cursor = initialize_aggregate_path_cursor(
+        *base_storage,
+        base_source_type->second,
+        context.lowering
+    );
+    if (!cursor.has_value()) {
+        return std::nullopt;
+    }
+
+    auto owner_name = base_name;
+    auto index_step_index = std::optional<std::size_t> {};
+    for (auto step_index = std::size_t {0}; step_index < aggregate_path->steps.size(); ++step_index) {
+        auto const& step = aggregate_path->steps[step_index];
+        if (step.kind == AggregatePathStepKind::index) {
+            if (!dynamic_array_element_source_type_name(cursor->source_type_name).has_value()) {
+                return std::nullopt;
+            }
+            index_step_index = step_index;
+            break;
+        }
+
+        auto result = advance_aggregate_path_member_with_temporary(
+            *cursor,
+            step.field_name,
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            return std::nullopt;
+        }
+        owner_name += ".";
+        owner_name += step.field_name;
+    }
+
+    if (!index_step_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const& index_step = aggregate_path->steps[*index_step_index];
+    if (index_step.index_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto element_source_type = dynamic_array_element_source_type_name(cursor->source_type_name);
+    if (!element_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto owner_cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        cursor->source_type_name,
+        context.lowering
+    );
+    if (!owner_cleanup_plan.has_value()) {
+        return std::nullopt;
+    }
+
+    auto lowered_index = lower_expression(
+        *index_step.index_expression,
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto prefix = "%" + owner_name + ".dynamic_array_receiver_element_path" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_descriptor_load(
+        prefix + ".descriptor",
+        cursor->pointer
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        lowered_index->value,
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("dynamic_array.receiver_element_path.in_bounds", block_index);
+    auto failure_block = llvm_block_name("dynamic_array.receiver_element_path.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_element_address(
+        *owner_cleanup_plan,
+        prefix + ".element.addr",
+        prefix + ".data",
+        lowered_index->value
+    );
+
+    auto selected_cursor = initialize_aggregate_path_cursor(
+        prefix + ".element.addr",
+        *element_source_type,
+        context.lowering
+    );
+    if (!selected_cursor.has_value()) {
+        return std::nullopt;
+    }
+
+    for (auto step_index = *index_step_index + 1; step_index < aggregate_path->steps.size(); ++step_index) {
+        auto const& step = aggregate_path->steps[step_index];
+        if (step.kind == AggregatePathStepKind::member) {
+            auto result = advance_aggregate_path_member_with_temporary(
+                *selected_cursor,
+                step.field_name,
+                context.lowering,
+                session.state.next_temporary_index,
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                return std::nullopt;
+            }
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+        auto lowered_nested_index = lower_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_nested_index.has_value()) {
+            return std::nullopt;
+        }
+        auto result = advance_aggregate_path_index_with_temporary(
+            *selected_cursor,
+            lowered_nested_index->value,
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            return std::nullopt;
+        }
+    }
+
+    if (selected_cursor->source_type_name != receiver_type_name) {
+        return std::nullopt;
+    }
+
+    auto temporary_name = std::string {"%named_dynamic_array_receiver_descriptor"};
+    temporary_name += std::to_string(session.state.next_temporary_index++);
+    output << "  " << temporary_name << " = load " << dynamic_array_descriptor_llvm_type()
+           << ", ptr " << selected_cursor->pointer << "\n";
+    output << "  store " << dynamic_array_descriptor_llvm_type()
+           << " zeroinitializer, ptr " << selected_cursor->pointer << "\n";
+
+    return LoweredExpression {
+        .type = std::string {dynamic_array_descriptor_llvm_type()},
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
 }
 
 auto collect_descriptor_projection_paths(
@@ -528,19 +727,14 @@ auto lower_direct_dynamic_array_receiver(
         returned_aggregate_projection_has_sibling_descriptors(receiver_expression, context.lowering);
     auto const receiver_is_temporary_aggregate_projection =
         collect_temporary_aggregate_path(receiver_expression).has_value();
+    auto const requires_named_dynamic_array_element_transfer =
+        named_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state);
     if (receiver_is_temporary_aggregate_projection &&
         temporary_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state)) {
         return direct_receiver_failure(
             failures,
             record_expression_failures,
             "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
-        );
-    }
-    if (named_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state)) {
-        return direct_receiver_failure(
-            failures,
-            record_expression_failures,
-            "DynamicArray receiver named aggregate cleanup cannot transfer descriptors through DynamicArray element projection"
         );
     }
     if (contains_runtime_indexed_projection(receiver_expression) &&
@@ -570,29 +764,47 @@ auto lower_direct_dynamic_array_receiver(
         );
     }
 
-    auto lowered_receiver = requires_returned_aggregate_sibling_cleanup
-        ? lower_returned_aggregate_projection_receiver(
-              receiver_expression,
-              receiver_type_name,
-              context,
-              session,
-              output
-          )
-        : lower_expression(
-              receiver_expression,
-              receiver_type->type,
-              receiver_type->signedness,
-              context,
-              session,
-              output,
-              receiver_type_name
-          );
+    auto lowered_receiver = [&]() -> std::optional<LoweredExpression> {
+        if (requires_returned_aggregate_sibling_cleanup) {
+            return lower_returned_aggregate_projection_receiver(
+                receiver_expression,
+                receiver_type_name,
+                context,
+                session,
+                output
+            );
+        }
+        if (requires_named_dynamic_array_element_transfer) {
+            return lower_named_dynamic_array_element_projection_receiver(
+                receiver_expression,
+                receiver_type_name,
+                context,
+                session,
+                output
+            );
+        }
+        return lower_expression(
+            receiver_expression,
+            receiver_type->type,
+            receiver_type->signedness,
+            context,
+            session,
+            output,
+            receiver_type_name
+        );
+    }();
     if (!lowered_receiver.has_value()) {
         return DirectDynamicArrayReceiverLowering {
             .receiver = std::nullopt,
-            .diagnostic = requires_returned_aggregate_sibling_cleanup
-                ? "DynamicArray receiver returned aggregate sibling cleanup could not be planned"
-                : "DynamicArray receiver expression failed",
+            .diagnostic = [&]() -> std::string {
+                if (requires_returned_aggregate_sibling_cleanup) {
+                    return "DynamicArray receiver returned aggregate sibling cleanup could not be planned";
+                }
+                if (requires_named_dynamic_array_element_transfer) {
+                    return "DynamicArray receiver named aggregate cleanup could not transfer descriptors through DynamicArray element projection";
+                }
+                return "DynamicArray receiver expression failed";
+            }(),
         };
     }
 

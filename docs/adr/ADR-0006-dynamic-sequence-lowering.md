@@ -2771,9 +2771,9 @@ representation.
 - Returned aggregate direct receivers now reject paths that cross a growable `DynamicArray` element before selecting a
   nested descriptor. The diagnostic names the dynamic descriptor-enumeration blocker instead of suggesting a named
   binding workaround for this temporary-aggregate shape.
-- Named aggregate direct receivers now also reject paths that cross a growable `DynamicArray` element before selecting
-  a nested descriptor. This pins the separate ownership-transfer blocker for moving a descriptor out of a dynamic
-  element while preserving cleanup for the selected slot and parent owner.
+- Named aggregate direct receivers can now transfer a nested descriptor out of a growable `DynamicArray` element path
+  such as `holder.items[index].values.forward().count()`. Lowering loads the selected descriptor, zeroes the source
+  slot before the receiver call, runs the synthesized receiver cleanup, and leaves parent-owner cleanup in place.
 
 ## Follow-up work
 
