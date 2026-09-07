@@ -120,6 +120,54 @@ auto returned_aggregate_projection_has_sibling_descriptors(
     return dynamic_array_descriptor_count(function->second.source_return_type_name, context) > 1;
 }
 
+auto temporary_aggregate_path_crosses_dynamic_array_element(
+    syntax::ExpressionSyntax const& receiver_expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    auto aggregate_path = collect_temporary_aggregate_path(receiver_expression);
+    if (!aggregate_path.has_value() || aggregate_path->base_expression == nullptr) {
+        return false;
+    }
+
+    auto cursor_source_type = source_type_name_for_expression(
+        *aggregate_path->base_expression,
+        context,
+        state
+    );
+    if (!cursor_source_type.has_value()) {
+        return false;
+    }
+
+    for (auto const& step : aggregate_path->steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.records.find(*cursor_source_type);
+            if (record == context.records.end()) {
+                return false;
+            }
+
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr || field->source_type_name.empty()) {
+                return false;
+            }
+            cursor_source_type = field->source_type_name;
+            continue;
+        }
+
+        if (dynamic_array_element_source_type_name(*cursor_source_type).has_value()) {
+            return true;
+        }
+
+        auto array_element = array_element_source_type_name(*cursor_source_type);
+        if (!array_element.has_value()) {
+            return false;
+        }
+        cursor_source_type = std::move(*array_element);
+    }
+
+    return false;
+}
+
 auto collect_descriptor_projection_paths(
     std::string owner_name,
     std::string_view source_type_name,
@@ -461,6 +509,14 @@ auto lower_direct_dynamic_array_receiver(
         returned_aggregate_projection_has_sibling_descriptors(receiver_expression, context.lowering);
     auto const receiver_is_temporary_aggregate_projection =
         collect_temporary_aggregate_path(receiver_expression).has_value();
+    if (receiver_is_temporary_aggregate_projection &&
+        temporary_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state)) {
+        return direct_receiver_failure(
+            failures,
+            record_expression_failures,
+            "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
+        );
+    }
     if (contains_runtime_indexed_projection(receiver_expression) &&
         receiver_is_temporary_aggregate_projection &&
         !requires_returned_aggregate_sibling_cleanup) {

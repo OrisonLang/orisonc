@@ -2768,6 +2768,9 @@ representation.
 - Runtime-indexed returned aggregate receiver bounds coverage now includes the Unit-tail append-chain shape. The new
   out-of-bounds fixture verifies the selected descriptor GEP remains guarded before mutation and traps on production
   `run`.
+- Returned aggregate direct receivers now reject paths that cross a growable `DynamicArray` element before selecting a
+  nested descriptor. The diagnostic names the dynamic descriptor-enumeration blocker instead of suggesting a named
+  binding workaround for this temporary-aggregate shape.
 
 ## Follow-up work
 

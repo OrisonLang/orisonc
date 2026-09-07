@@ -4820,6 +4820,11 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_count_rejected.or",
+        "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "dynamic_array_receiver_ternary_call_result_count_mismatch.or",
         "let initializer has incompatible ternary arm source types: DynamicArray<UInt32> and DynamicArray<UInt64>"
     );
