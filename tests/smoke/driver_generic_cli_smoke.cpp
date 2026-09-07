@@ -185,6 +185,25 @@ void assert_cli_existing_fixture_production_failures(
     }
 }
 
+void assert_cli_existing_fixture_production_failures_without(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_base,
+    std::string_view expected_message,
+    std::string_view rejected_message
+) {
+    for (auto const& command : {
+             executable.string() + " run " + path.string(),
+             executable.string() + " --emit-llvm " + path.string(),
+             executable.string() + " --emit-object " + path.string() + " -o " + output_base.string() + ".o",
+             executable.string() + " --build " + path.string() + " -o " + output_base.string() + "_build",
+         }) {
+        auto output = read_failing_command_output(command);
+        assert(output.find(expected_message) != std::string::npos);
+        assert(output.find(rejected_message) == std::string::npos);
+    }
+}
+
 void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1711,6 +1730,18 @@ void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
     auto command = executable.string() + " --test-only-runtime-indexed-constructor-move-run " + path.string();
     auto output = read_failing_command_output(command);
     assert(output.find(expected_message) != std::string::npos);
+}
+
+void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure_without(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message,
+    std::string_view rejected_message
+) {
+    auto command = executable.string() + " --test-only-runtime-indexed-constructor-move-run " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+    assert(output.find(rejected_message) == std::string::npos);
 }
 
 void assert_cli_emit_llvm_fixture_success(
@@ -6244,16 +6275,18 @@ auto main(int argc, char** argv) -> int {
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
         "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
+    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
-        "use after move: items[index]"
+        "use after move: items[index]",
+        "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_existing_fixture_production_failures_without(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_direct_member_reuse_rejected",
-        "use after move: items[index]"
+        "use after move: items[index]",
+        "lowering does not yet support this return expression"
     );
     }
 

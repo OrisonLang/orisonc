@@ -2332,6 +2332,18 @@ void emit_function_body(
             );
             return;
         }
+        if (failures.expression.reason == ExpressionLoweringFailureReason::use_after_move) {
+            diagnostics.error(
+                expression != nullptr ? expression->line : function.line,
+                expression_lowering_failure_detail(failures.expression)
+            );
+            preserve_function_emission_metadata(
+                state,
+                result,
+                consumed_descriptor_finalization_plans
+            );
+            return;
+        }
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
             append_expression_lowering_failure(

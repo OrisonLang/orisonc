@@ -2751,6 +2751,8 @@ representation.
 - Runtime-indexed DynamicArray nested member cleanup missing-Drop diagnostics now include the source line and trimmed
   source text for the move site. The fixture remains rejected until all sibling Drop bindings needed by the generated
   member-cleanup helper are present.
+- Runtime-indexed DynamicArray direct post-move reuse diagnostics now report the ownership violation directly as
+  `use after move` on production paths, without the generic unsupported-return-expression wrapper.
 
 ## Follow-up work
 
