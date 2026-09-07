@@ -2786,6 +2786,9 @@ representation.
 - Unit-tail named dynamic-element receiver mutation now has matching post-transfer reuse coverage:
   `holder.items[index].values.forward().append_value(...)` followed by `holder.items[index].values.count()` rejects
   statically with the same owner path.
+- Named dynamic-element receiver coverage now includes computed index expressions such as `index + zero`. The
+  production success path preserves the dynamic bounds guard, selected descriptor transfer, and cleanup behavior; the
+  reuse path rejects as `use after move: holder.items[(index + zero)].values`.
 
 ## Follow-up work
 
