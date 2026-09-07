@@ -4795,6 +4795,14 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_count_out_of_bounds.or"
     );
+    assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement_out_of_bounds.or"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or",

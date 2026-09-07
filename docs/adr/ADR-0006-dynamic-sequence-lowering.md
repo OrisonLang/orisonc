@@ -2765,6 +2765,9 @@ representation.
 - Runtime-indexed member-cleanup transfer fixtures for nested members, two owners, branch/switch-selected owners, and
   choice payloads now use full production smoke coverage across `run`, `--emit-llvm` link/run, `--emit-object`, and
   `--build` paths.
+- Runtime-indexed returned aggregate receiver bounds coverage now includes the Unit-tail append-chain shape. The new
+  out-of-bounds fixture verifies the selected descriptor GEP remains guarded before mutation and traps on production
+  `run`.
 
 ## Follow-up work
 
