@@ -5781,24 +5781,32 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
-        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Box"
+        (fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or").string() +
+            ":28: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
+            "element Box"
     );
     assert_cli_existing_fixture_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_payload_member_missing_drop_rejected",
-        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Box"
+        (fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or").string() +
+            ":28: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
+            "element Box"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
-        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Wrap"
+        (fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or").string() +
+            ":74: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
+            "element Wrap"
     );
     assert_cli_existing_fixture_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_payload_nested_member_missing_drop_rejected",
-        "lowering DynamicArray push to owned element requires authorized element drop: owner items element Wrap"
+        (fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or").string() +
+            ":74: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
+            "element Wrap"
     );
     assert_cli_emit_llvm_fixture_links_and_runs(
         executable,

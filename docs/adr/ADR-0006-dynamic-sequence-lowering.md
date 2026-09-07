@@ -2757,6 +2757,8 @@ representation.
   diagnostic and reject the stale unsupported-return-expression wrapper on emit-LLVM and production paths.
 - Runtime-indexed choice-payload DynamicArray post-move reuse fixtures now assert direct `use after move` diagnostics
   and reject the stale unsupported-return-expression wrapper on emit-LLVM and production paths.
+- Runtime-indexed choice-payload DynamicArray missing-Drop fixtures now assert line-bearing `DynamicArray.push`
+  diagnostics at the first owned-element insertion site.
 
 ## Follow-up work
 
