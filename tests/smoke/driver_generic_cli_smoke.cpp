@@ -570,12 +570,20 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
 
 void assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
     std::filesystem::path const& executable,
-    std::filesystem::path const& path
+    std::filesystem::path const& path,
+    std::string_view index_literal
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
+    auto expected_index_value_left = "%" + std::string {"index"} + " = add i64 " +
+        std::string {index_literal} + ", 0";
+    auto expected_index_value_right = "%" + std::string {"index"} + " = add i64 0, " +
+        std::string {index_literal};
     auto declaration = output.find("declare void @__orison_dynamic_array_bounds_failed()");
-    auto index_value = output.find("%index = add i64 0, 0");
+    auto index_value = output.find(expected_index_value_left);
+    if (index_value == std::string::npos) {
+        index_value = output.find(expected_index_value_right);
+    }
     auto bounds_check = output.find(".in_bounds = icmp ult i64 %index, 2", index_value);
     auto copied_array_gep = output.find("getelementptr [2 x %record.Inner], ptr %tmp", bounds_check);
     auto selected_load = output.find("load %record.Inner, ptr %tmp", copied_array_gep);
@@ -5951,7 +5959,17 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
         executable,
-        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or",
+        "0"
+    );
+    assert_cli_runtime_indexed_record_constructor_fixed_array_guard_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_out_of_bounds.or",
+        "2"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_out_of_bounds.or"
     );
     assert_cli_run_fixture_success(
         executable,

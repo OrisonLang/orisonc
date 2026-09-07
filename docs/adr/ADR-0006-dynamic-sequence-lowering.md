@@ -2734,6 +2734,8 @@ representation.
   element. Runtime-index constructor source-slot finalization reuses that checked index for zeroing the moved slot.
 - Same-function runtime-index constructor cleanup with two fixed-array move candidates now verifies and runs when the
   guarded value-index blocks give cleanup rewrite distinct insertion points.
+- Runtime-indexed record-constructor fixed-array moves now include out-of-bounds execution coverage. Index `2` into
+  `Array<Inner, 2>` reaches the shared bounds trap before element load or source-slot finalization.
 
 ## Follow-up work
 
