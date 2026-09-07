@@ -14622,7 +14622,7 @@ auto main() -> int {
 
     auto runtime_indexed_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or";
+        "choice_constructor_multi_variant_computed_index_owned_member_path_move_run.or";
     auto runtime_indexed_cleanup = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
         runtime_indexed_cleanup_source_drop_audit_options()
@@ -18924,7 +18924,7 @@ auto main() -> int {
     );
     auto runtime_indexed_dynamic_array_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or";
+        "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or";
     auto runtime_indexed_dynamic_array_cleanup = pipeline.emit_llvm(
         runtime_indexed_dynamic_array_cleanup_path,
         runtime_indexed_cleanup_audit_module_rewrite_options()
@@ -18935,7 +18935,7 @@ auto main() -> int {
     );
     auto runtime_indexed_fixed_array_same_shape_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or";
+        "runtime_indexed_fixed_array_constructor_computed_index_move_run.or";
     auto runtime_indexed_fixed_array_same_shape_cleanup = pipeline.emit_llvm(
         runtime_indexed_fixed_array_same_shape_cleanup_path,
         runtime_indexed_cleanup_emission_only_options(true)

@@ -5562,23 +5562,23 @@ auto main(int argc, char** argv) -> int {
     if (run_mode("runtime_indexed_cleanup")) {
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
+        fixtures / "choice_constructor_multi_variant_computed_index_owned_member_path_move_run.or"
     );
     assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
+        fixtures / "choice_constructor_multi_variant_computed_index_owned_member_path_move_run.or"
     );
     assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_cleanup"
     );
     assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
@@ -5901,11 +5901,11 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         executable,
-        fixtures / "choice_constructor_multi_variant_computed_index_member_path_move_rejected.or"
+        fixtures / "choice_constructor_multi_variant_computed_index_owned_member_path_move_run.or"
     );
     assert_cli_runtime_indexed_constructor_move_plan_metadata(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or",
         "{ ptr, i64, i64 }",
         "none",
         "ready",
@@ -5913,7 +5913,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_runtime_indexed_constructor_move_ir_shape(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or",
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or",
         "24",
         "ready",
         "blocked",
@@ -5926,7 +5926,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_runtime_indexed_constructor_move_plan_metadata(
         executable,
-        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or",
+        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_run.or",
         "[2 x %record.Inner]",
         "2",
         "blocked",
@@ -5934,7 +5934,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_runtime_indexed_constructor_move_ir_shape(
         executable,
-        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_rejected.or",
+        fixtures / "runtime_indexed_fixed_array_constructor_computed_index_move_run.or",
         "19",
         "blocked",
         "ready",
@@ -6046,11 +6046,11 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_payload_computed_index_member_path_move_rejected.or"
+        fixtures / "choice_constructor_multi_payload_computed_index_member_path_move_run.or"
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_multi_payload_second_computed_index_member_path_move_rejected.or"
+        fixtures / "choice_constructor_multi_payload_second_computed_index_member_path_move_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
@@ -6108,19 +6108,19 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6279,7 +6279,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_run_fixture_success(
         executable,
-        fixtures / "choice_constructor_computed_index_member_path_move_rejected.or"
+        fixtures / "choice_constructor_computed_index_member_path_move_run.or"
     );
     assert_cli_run_fixture_success(
         executable,

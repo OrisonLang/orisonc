@@ -807,17 +807,17 @@ representation.
 - Record constructor literal-index partial ownership now has same-element and sibling proof coverage. Reusing
   `holder.items[0]` after transfer reports `use after move: holder.items.element0`, while moving `holder.items[1]`
   after `holder.items[0]` remains valid.
-- Record constructor computed indexed ownership moves remain rejected until runtime-index partial ownership is modeled.
-  The `dynamic_array_owned_constructor_computed_index_member_path_move_rejected.or` fixture pins
-  `Outer(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
+- Record constructor computed indexed ownership moves are accepted when runtime-index partial ownership and cleanup
+  lowering are available. The `dynamic_array_owned_constructor_computed_index_member_path_move_run.or` fixture pins
+  `Outer(holder.items[index])` through production execution.
 - Single-payload choice constructor indexed ownership moves now support fixed-array decimal literal element transfers.
   The `choice_constructor_indexed_member_path_move_run.or` fixture pins `Some(holder.items[0])` cleanup handoff to
   `selected.Some.item` while preserving sibling cleanup under `holder.items.element1`.
 - Single-payload choice constructor literal-index partial ownership now mirrors record constructor coverage: same-element
   reuse reports `use after move: holder.items.element0`, and sibling transfer cleanup moves under `sibling.Some.item`.
-- Single-payload choice constructor computed indexed ownership moves remain rejected until runtime-index partial
-  ownership is modeled. The `choice_constructor_computed_index_member_path_move_rejected.or` fixture pins
-  `Some(holder.items[index])` with `indexed constructor ownership move requires explicit partial ownership support`.
+- Single-payload choice constructor computed indexed ownership moves are accepted when runtime-index partial ownership
+  and cleanup lowering are available. The `choice_constructor_computed_index_member_path_move_run.or` fixture pins
+  `Some(holder.items[index])` through production execution.
 - Choice constructor payload cleanup transfer now accepts member-only owned aggregate paths for directly lowered
   dynamic-array payloads. The `choice_constructor_member_path_move_run.or` fixture pins `Some(holder.values)` cleanup
   handoff to `selected.Some.values`, and the paired rejected fixture pins `use after move: holder.values`.
@@ -839,21 +839,19 @@ representation.
   `choice_constructor_multi_payload_indexed_member_path_reuse_rejected.or` fixture pins
   `use after move: holder.items.element0`, while sibling run fixtures pin moving `holder.items[1]` after
   `holder.items[0]` in both payload positions.
-- Multi-payload choice constructor computed indexed ownership moves remain rejected until runtime-index partial
-  ownership is modeled. The `choice_constructor_multi_payload_computed_index_member_path_move_rejected.or` fixture pins
-  `Ready(holder.items[index], 7 as UInt32)` with `indexed constructor ownership move requires explicit partial
-  ownership support`.
+- Multi-payload choice constructor computed indexed ownership moves are accepted when runtime-index partial ownership
+  and cleanup lowering are available. The `choice_constructor_multi_payload_computed_index_member_path_move_run.or`
+  fixture pins `Ready(holder.items[index], 7 as UInt32)` through production execution.
 - Multi-payload choice constructor cleanup now has symmetric payload-index coverage. The
   `choice_constructor_multi_payload_second_nested_member_path_move_run.or`,
   `choice_constructor_multi_payload_second_nested_member_path_reuse_rejected.or`, and
   `choice_constructor_multi_payload_second_indexed_member_path_move_run.or` fixtures pin
   `Ready(7 as UInt32, holder.items)` transfer, reuse, and `Ready(7 as UInt32, holder.items[0])` indexed transfer
   behavior.
-- Multi-payload choice constructor second-slot computed indexed ownership moves remain rejected until runtime-index
-  partial ownership is modeled. The
-  `choice_constructor_multi_payload_second_computed_index_member_path_move_rejected.or` fixture pins
-  `Ready(7 as UInt32, holder.items[index])` with `indexed constructor ownership move requires explicit partial
-  ownership support`.
+- Multi-payload choice constructor second-slot computed indexed ownership moves are accepted when runtime-index partial
+  ownership and cleanup lowering are available. The
+  `choice_constructor_multi_payload_second_computed_index_member_path_move_run.or` fixture pins
+  `Ready(7 as UInt32, holder.items[index])` through production execution.
 - Multi-variant choice constructor cleanup now has explicit tag-gated nested payload coverage. The
   `choice_constructor_multi_variant_nested_member_path_move_run.or` fixture pins `Secondary(holder.items)` cleanup
   handoff while retaining inactive `Primary(...)` cleanup blocks behind their own tag checks.
@@ -867,10 +865,11 @@ representation.
 - Multi-variant choice constructor literal-index partial ownership now mirrors the single-variant path. Reusing
   `holder.items[0]` after `Secondary(holder.items[0])` reports `use after move: holder.items.element0`, while moving
   `holder.items[1]` into `Primary(...)` remains valid.
-- Computed-index constructor ownership moves remain intentionally rejected across record, single-payload choice,
-  multi-payload choice, and multi-variant choice constructors. Supporting `holder.items[index]` safely requires a
-  runtime-index partial-owner model plus cleanup lowering that skips the moved element while still cleaning every
-  remaining element; the multi-variant computed-index fixture pins the current rejection boundary.
+- Computed-index constructor ownership moves are accepted across record, single-payload choice, multi-payload choice,
+  and multi-variant choice constructors once runtime-index partial-owner metadata and cleanup lowering can skip the
+  moved element while still cleaning every remaining element. The
+  `choice_constructor_multi_variant_computed_index_owned_member_path_move_run.or` fixture pins owned multi-variant
+  coverage.
 - Runtime-index partial-owner metadata now exists behind that rejection boundary. The model records owner, index
   expression, element source type, moved source type, cleanup strategy, and disabled constructor-move status, and the
   multi-variant computed-index fixture pins the rendered diagnostic metadata without enabling the move.
@@ -2744,6 +2743,9 @@ representation.
 - Runtime-indexed DynamicArray constructor sibling-member transfer has been promoted from stale rejected fixture status
   to production run coverage. The source moves `items[index + zero].item`, emits the member-cleanup helper for sibling
   fields, deallocates the descriptor, and succeeds through run, emit-LLVM/link, emit-object, and build paths.
+- Constructor computed-index move fixtures with production success now use `_run` names. The promoted set covers
+  record, fixed-array, single-payload choice, multi-payload choice, owned multi-variant choice, and runtime-indexed
+  DynamicArray constructor moves.
 
 ## Follow-up work
 

@@ -1,4 +1,4 @@
-package tests.fixtures.runtime_indexed_fixed_array_constructor_computed_index_move_rejected
+package tests.fixtures.runtime_indexed_fixed_array_constructor_computed_index_move_run
 
 record Inner
     value: UInt32
