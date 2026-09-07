@@ -17411,6 +17411,11 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(
+        runtime_indexed_nested_missing_sibling_drop_result.error_text.find(
+            "source-line 68 source-text var outer: Outer = Outer(items[index + zero].box.item)"
+        ) != std::string::npos
+    );
+    assert(
         runtime_indexed_nested_missing_sibling_drop_result
             .runtime_indexed_member_cleanup_sibling_fields.size() == 4
     );

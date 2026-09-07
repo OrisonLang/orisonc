@@ -6198,14 +6198,16 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_missing_sibling_drop_rejected.or",
         "member cleanup helper Drop bindings are missing owner items index (index + zero) element Wrap moved Inner "
-        "member-path box.item helper __orison_member_cleanup.Wrap.except.box.item"
+        "member-path box.item helper __orison_member_cleanup.Wrap.except.box.item source-line 68 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item)"
     );
     assert_cli_existing_fixture_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_missing_sibling_drop_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_nested_member_missing_sibling_drop_rejected",
         "member cleanup helper Drop bindings are missing owner items index (index + zero) element Wrap moved Inner "
-        "member-path box.item helper __orison_member_cleanup.Wrap.except.box.item"
+        "member-path box.item helper __orison_member_cleanup.Wrap.except.box.item source-line 68 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item)"
     );
     assert_cli_existing_fixture_production_failures(
         executable,

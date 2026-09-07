@@ -7,12 +7,59 @@
 #include "lowering_emission_reports.hpp"
 
 #include <cstddef>
+#include <algorithm>
+#include <cctype>
 #include <sstream>
+#include <string>
 #include <utility>
 
 namespace orison::pipeline {
 
 namespace {
+
+auto trim_source_line_text(std::string line) -> std::string {
+    auto const first_non_space = std::find_if(
+        line.begin(),
+        line.end(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    );
+    if (first_non_space == line.end()) {
+        return {};
+    }
+    auto const last_non_space = std::find_if(
+        line.rbegin(),
+        line.rend(),
+        [](unsigned char character) {
+            return !std::isspace(character);
+        }
+    ).base();
+    return std::string(first_non_space, last_non_space);
+}
+
+auto source_line_text(std::string const& source_text, std::size_t line_number) -> std::string {
+    if (line_number == 0) {
+        return {};
+    }
+    auto current_line = std::size_t {1};
+    auto line_start = std::size_t {0};
+    while (line_start <= source_text.size()) {
+        auto line_end = source_text.find('\n', line_start);
+        if (line_end == std::string::npos) {
+            line_end = source_text.size();
+        }
+        if (current_line == line_number) {
+            return trim_source_line_text(source_text.substr(line_start, line_end - line_start));
+        }
+        if (line_end == source_text.size()) {
+            break;
+        }
+        line_start = line_end + 1;
+        ++current_line;
+    }
+    return {};
+}
 
 auto runtime_indexed_member_cleanup_binding_error_text(
     CompilePipelineResult const& result,
@@ -40,6 +87,14 @@ auto runtime_indexed_member_cleanup_binding_error_text(
             diagnostic << bindings.moved_member_path[index];
         }
         diagnostic << " helper " << bindings.helper_symbol_name;
+        if (bindings.source_line != 0) {
+            diagnostic << " source-line " << bindings.source_line;
+            auto const source_text = result.source_file ? result.source_file->content() : std::string {};
+            auto const source_snippet = source_line_text(source_text, bindings.source_line);
+            if (!source_snippet.empty()) {
+                diagnostic << " source-text " << source_snippet;
+            }
+        }
         return diagnostic.str();
     }
 
