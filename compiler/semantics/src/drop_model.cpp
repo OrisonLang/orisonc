@@ -389,13 +389,25 @@ auto authorize_drop_lowering(
     std::vector<DropImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate
 ) -> DropLoweringAuthorization {
-    auto semantic_resolved = resolve_drop_implementation(site, implementations).resolved;
+    auto matching_implementation = std::find_if(
+        implementations.begin(),
+        implementations.end(),
+        [&site](DropImplementation const& implementation) {
+            return implementation.source_type_name == site.source_type_name &&
+                   implementation.abi_symbol_name == site.abi_symbol_name &&
+                   implementation.proven;
+        }
+    );
+    auto semantic_resolved = matching_implementation != implementations.end();
+    auto compiler_intrinsic_owned_cleanup =
+        semantic_resolved && matching_implementation->origin == DropImplementationOrigin::compiler_intrinsic;
     auto source_drop_lowering_enabled = source_drop_lowering_gate == SourceDropLoweringGate::enabled;
     return DropLoweringAuthorization {
         .site = std::move(site),
         .semantic_resolved = semantic_resolved,
         .source_drop_lowering_enabled = source_drop_lowering_enabled,
-        .authorized = semantic_resolved && source_drop_lowering_enabled,
+        .compiler_intrinsic_owned_cleanup = compiler_intrinsic_owned_cleanup,
+        .authorized = semantic_resolved && (compiler_intrinsic_owned_cleanup || source_drop_lowering_enabled),
     };
 }
 
@@ -405,7 +417,11 @@ auto format_drop_lowering_authorization(
     auto output = std::ostringstream {};
     output << "drop lowering authorization " << format_planned_drop_site(authorization.site);
     if (authorization.authorized) {
-        output << " semantic-resolved lowering-authorized source drop lowering accepted";
+        if (authorization.compiler_intrinsic_owned_cleanup) {
+            output << " semantic-resolved lowering-authorized compiler-owned cleanup accepted";
+        } else {
+            output << " semantic-resolved lowering-authorized source drop lowering accepted";
+        }
     } else if (authorization.semantic_resolved) {
         output << " semantic-resolved lowering-blocked source drop lowering not accepted";
     } else {

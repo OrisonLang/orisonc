@@ -14458,11 +14458,12 @@ auto main() -> int {
     );
     assert(semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
     assert(!semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
-    assert(!semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
+    assert(semantic_drops.semantic_drop_lowering_authorizations[0].compiler_intrinsic_owned_cleanup);
+    assert(semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
     assert_line_contains(
         semantic_drops_authorization_report,
         0,
-        "semantic-resolved lowering-blocked"
+        "semantic-resolved lowering-authorized compiler-owned cleanup accepted"
     );
     assert(semantic_drops_summary_report.size() == 1);
     assert_line_contains(semantic_drops_summary_report, 0, "resolved 2 missing 0");
@@ -14502,11 +14503,12 @@ auto main() -> int {
     assert(parsed_drop.semantic_drop_lowering_authorizations.size() == 1);
     assert(parsed_drop.semantic_drop_lowering_authorizations.front().semantic_resolved);
     assert(!parsed_drop.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(!parsed_drop.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop.semantic_drop_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
+    assert(parsed_drop.semantic_drop_lowering_authorizations.front().authorized);
     assert_line_contains(
         parsed_drop_authorization_report,
         0,
-        "semantic-resolved lowering-blocked"
+        "semantic-resolved lowering-authorized compiler-owned cleanup accepted"
     );
     auto parsed_drop_ir = pipeline.emit_llvm(parsed_drop_path);
     assert(!parsed_drop_ir.has_errors());
@@ -20030,6 +20032,7 @@ auto main() -> int {
     assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.size() == 1);
     assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().semantic_resolved);
     assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
     assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().authorized);
     assert(parsed_drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 0);
     assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.empty());

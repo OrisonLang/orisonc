@@ -598,7 +598,10 @@ int main() {
         run_semantic_drop_lowering_authorization(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         semantic_drop_lowering_authorization,
-        {"drop lowering authorization drop site __orison_drop.Payload", "semantic-resolved lowering-blocked"}
+        {
+            "drop lowering authorization drop site __orison_drop.Payload",
+            "semantic-resolved lowering-authorized compiler-owned cleanup accepted",
+        }
     );
 
     auto parsed_drop_candidate_path =
@@ -629,7 +632,10 @@ int main() {
         run_semantic_drop_lowering_authorization(app, parsed_drop_candidate_path);
     assert_success_with_stdout_contains(
         parsed_drop_candidate_lowering_authorization,
-        {"drop lowering authorization drop site __orison_drop.Payload", "semantic-resolved lowering-blocked"}
+        {
+            "drop lowering authorization drop site __orison_drop.Payload",
+            "semantic-resolved lowering-authorized compiler-owned cleanup accepted",
+        }
     );
     auto parsed_drop_candidate_emit = run_emit_llvm(app, parsed_drop_candidate_path);
     assert(parsed_drop_candidate_emit.exit_code == 0);
@@ -665,9 +671,8 @@ int main() {
     assert_success_with_stdout_contains(
         parsed_drop_readiness_blockers,
         {
-            "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0",
-            "drop readiness blocker source lowering not accepted __orison_drop.Payload",
-            "drop readiness blocker missing declaration __orison_drop.Payload",
+            "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
+            "source lowering blocked 0 missing declarations 0",
         }
     );
     auto parsed_drop_readiness_source =
@@ -675,9 +680,7 @@ int main() {
     assert_success_with_stdout_contains(
         parsed_drop_readiness_source,
         {
-            "drop readiness source correlations actions 1 semantic sites 1",
-            "__orison_thread_cleanup.launch.14.0 __orison_drop.Payload",
-            "semantic resolved source lowering not accepted declaration missing",
+            "drop readiness source correlations actions 0 semantic sites 1",
         }
     );
 
@@ -686,55 +689,47 @@ int main() {
     auto planned_drop_actions = run_planned_drop_actions(app, planned_drop_report_path);
     assert_success_with_stdout_contains(planned_drop_actions, {"planned drop action __orison_drop.Payload"});
     auto emitted_drops = run_emitted_drops(app, planned_drop_report_path);
-    assert_success_with_empty_stdout(emitted_drops);
-    auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
-        drop_cleanup_authorization,
-        {
-            "drop cleanup authorization __orison_thread_cleanup.launch.12.0 blocked",
-            "source drop lowering not accepted __orison_drop.Payload",
-            "missing drop declaration __orison_drop.Payload",
-        }
+        emitted_drops,
+        {"planned drop __orison_drop.Payload for Payload discovered at line 12"}
     );
+    auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
+    assert_success_with_empty_stdout(drop_cleanup_authorization);
     auto drop_readiness = run_drop_readiness(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         drop_readiness,
         {
             "drop readiness snapshot semantic authorizations 1",
             "semantic readiness __orison_drop.Payload",
-            "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked",
+            "cleanup readiness __orison_thread_cleanup.launch.12.0 authorized",
         }
     );
     auto drop_readiness_summary = run_drop_readiness_summary(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         drop_readiness_summary,
-        {"drop readiness summary semantic authorized 0 blocked 1"}
+        {"drop readiness summary semantic authorized 1 blocked 0"}
     );
     auto drop_readiness_relations = run_drop_readiness_relations(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         drop_readiness_relations,
         {
-            "drop readiness relation __orison_thread_cleanup.launch.12.0 blocked",
-            "drop readiness relation semantic blocker __orison_drop.Payload",
-            "drop readiness relation missing declaration __orison_drop.Payload",
+            "drop readiness relation __orison_thread_cleanup.launch.12.0 authorized",
+            "semantic blockers 0 emitted declarations 1 missing declarations 0",
         }
     );
     auto drop_readiness_blockers = run_drop_readiness_blockers(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         drop_readiness_blockers,
         {
-            "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0",
-            "drop readiness blocker source lowering not accepted __orison_drop.Payload",
-            "drop readiness blocker missing declaration __orison_drop.Payload",
+            "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
+            "source lowering blocked 0 missing declarations 0",
         }
     );
     auto drop_readiness_source = run_drop_readiness_source_correlations(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         drop_readiness_source,
         {
-            "drop readiness source correlations actions 1 semantic sites 1",
-            "__orison_thread_cleanup.launch.12.0 __orison_drop.Payload",
-            "semantic resolved source lowering not accepted declaration missing",
+            "drop readiness source correlations actions 0 semantic sites 1",
         }
     );
     auto multi_drop_readiness_fixture_path =
@@ -744,11 +739,8 @@ int main() {
     assert_success_with_stdout_contains(
         multi_fixture_drop_readiness_relations,
         {
-            "drop readiness relation __orison_thread_cleanup.launch.20.0 blocked",
-            "drop readiness relation semantic blocker __orison_drop.Payload",
-            "drop readiness relation semantic blocker __orison_drop.OtherPayload",
-            "drop readiness relation missing declaration __orison_drop.Payload",
-            "drop readiness relation missing declaration __orison_drop.OtherPayload",
+            "drop readiness relation __orison_thread_cleanup.launch.20.0 authorized",
+            "semantic blockers 0 emitted declarations 2 missing declarations 0",
         }
     );
     auto multi_fixture_drop_readiness_blockers =
@@ -756,12 +748,8 @@ int main() {
     assert_success_with_stdout_contains(
         multi_fixture_drop_readiness_blockers,
         {
-            "drop readiness blockers cleanups 1 semantic blockers 2 semantic unresolved 0",
-            "drop readiness blocker semantic __orison_drop.Payload",
-            "drop readiness blocker source lowering not accepted __orison_drop.Payload",
-            "drop readiness blocker source lowering not accepted __orison_drop.OtherPayload",
-            "drop readiness blocker missing declaration __orison_drop.Payload",
-            "drop readiness blocker missing declaration __orison_drop.OtherPayload",
+            "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
+            "source lowering blocked 0 missing declarations 0",
         }
     );
 
@@ -1478,15 +1466,7 @@ int main() {
     );
     auto multi_drop_cleanup_authorization =
         run_drop_cleanup_authorization(app, multi_drop_readiness_fixture_path);
-    assert_success_with_stdout_contains(
-        multi_drop_cleanup_authorization,
-        {
-            "drop cleanup authorization __orison_thread_cleanup.launch.20.0 blocked",
-            "semantic drop lowering blocked __orison_drop.Payload",
-            "semantic drop lowering blocked __orison_drop.OtherPayload",
-            "missing drop declaration __orison_drop.OtherPayload",
-        }
-    );
+    assert_success_with_empty_stdout(multi_drop_cleanup_authorization);
 
     auto deduped_planned_drop_report_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_deduped.or";

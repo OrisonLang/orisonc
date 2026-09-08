@@ -190,6 +190,16 @@ int main() {
         "drop implementation __orison_drop.Payload for Payload declared at line 4 origin compiler-intrinsic finite "
         "safe-boundary (proven)"
     );
+    auto compiler_owned_authorization = orison::semantics::authorize_drop_lowering(site, {compiler_owned});
+    assert(compiler_owned_authorization.semantic_resolved);
+    assert(!compiler_owned_authorization.source_drop_lowering_enabled);
+    assert(compiler_owned_authorization.compiler_intrinsic_owned_cleanup);
+    assert(compiler_owned_authorization.authorized);
+    assert(
+        orison::semantics::format_drop_lowering_authorization(compiler_owned_authorization) ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 12 "
+        "semantic-resolved lowering-authorized compiler-owned cleanup accepted"
+    );
 
     auto collected_implementations = orison::semantics::collect_source_derived_drop_implementations({
         orison::semantics::DropImplementationCandidate {},

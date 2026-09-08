@@ -79,6 +79,7 @@ struct DropLoweringAuthorization {
     PlannedDropSite site;
     bool semantic_resolved = false;
     bool source_drop_lowering_enabled = false;
+    bool compiler_intrinsic_owned_cleanup = false;
     bool authorized = false;
 };
 
