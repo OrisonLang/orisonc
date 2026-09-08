@@ -1433,7 +1433,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::project_semantic_drop_obligations(
                         semantic_result.semantic_module
                     ).front(),
@@ -3023,7 +3023,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
     options.semantic_drop_lowering_authorizations = {
-        orison::semantics::DropLoweringAuthorization {
+        orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::PlannedDropSite {
                 .source_type_name = "Payload",
                 .abi_symbol_name = "__orison_drop.Payload",
@@ -3129,7 +3129,7 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
     options.semantic_drop_lowering_authorizations = {
-        orison::semantics::DropLoweringAuthorization {
+        orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::PlannedDropSite {
                 .source_type_name = "Payload",
                 .abi_symbol_name = "__orison_drop.Payload",
@@ -3195,7 +3195,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -3257,7 +3257,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -3317,7 +3317,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -3382,7 +3382,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -3752,7 +3752,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
             },
             .test_only_render_dynamic_array_element_drop_walks = true,
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -3794,7 +3794,7 @@ void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
         .owner_name = "payload",
         .site_line = 12,
     };
-    auto authorization = orison::semantics::DropLoweringAuthorization {
+    auto authorization = orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = site,
         .semantic_resolved = true,
         .source_drop_lowering_enabled = false,
@@ -13037,7 +13037,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -13116,7 +13116,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -13229,7 +13229,7 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",

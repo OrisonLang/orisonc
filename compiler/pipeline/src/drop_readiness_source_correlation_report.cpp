@@ -35,12 +35,12 @@ void append_unique_action(
 
 auto find_semantic_authorization(
     lowering::PlannedDropAction const& action,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
-) -> semantics::DropLoweringAuthorization const* {
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
+) -> semantics::OwnedCleanupLoweringAuthorization const* {
     auto exact = std::find_if(
         authorizations.begin(),
         authorizations.end(),
-        [&action](semantics::DropLoweringAuthorization const& authorization) {
+        [&action](semantics::OwnedCleanupLoweringAuthorization const& authorization) {
             return authorization.site.abi_symbol_name == action.symbol_name &&
                    authorization.site.source_type_name == action.source_type_name &&
                    authorization.site.owner_name == action.capture_name;
@@ -53,7 +53,7 @@ auto find_semantic_authorization(
     auto same_type = std::find_if(
         authorizations.begin(),
         authorizations.end(),
-        [&action](semantics::DropLoweringAuthorization const& authorization) {
+        [&action](semantics::OwnedCleanupLoweringAuthorization const& authorization) {
             return authorization.site.abi_symbol_name == action.symbol_name &&
                    authorization.site.source_type_name == action.source_type_name;
         }

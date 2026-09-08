@@ -114,8 +114,8 @@ auto semantic_dynamic_array_descriptor_summary_state_report(
 
 auto semantic_drop_implementations(
     pipeline::SemanticDropState const& state
-) -> std::vector<semantics::DropImplementation> {
-    auto implementations = std::vector<semantics::DropImplementation> {};
+) -> std::vector<semantics::OwnedCleanupImplementation> {
+    auto implementations = std::vector<semantics::OwnedCleanupImplementation> {};
     implementations.reserve(state.discovered_implementations.size());
     for (auto const& discovered : state.discovered_implementations) {
         implementations.push_back(discovered.implementation);

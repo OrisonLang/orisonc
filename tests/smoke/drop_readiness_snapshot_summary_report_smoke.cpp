@@ -20,8 +20,8 @@ auto drop_authorization(
     std::string source_type_name,
     std::string abi_symbol_name,
     bool authorized
-) -> orison::semantics::DropLoweringAuthorization {
-    return orison::semantics::DropLoweringAuthorization {
+) -> orison::semantics::OwnedCleanupLoweringAuthorization {
+    return orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = orison::semantics::PlannedDropSite {
             .source_type_name = std::move(source_type_name),
             .abi_symbol_name = std::move(abi_symbol_name),

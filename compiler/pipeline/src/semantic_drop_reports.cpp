@@ -70,7 +70,7 @@ void populate_semantic_drop_reports(
         options,
         semantic_summary_drop_sites
     );
-    auto semantic_drop_implementations = std::vector<semantics::DropImplementation> {};
+    auto semantic_drop_implementations = std::vector<semantics::OwnedCleanupImplementation> {};
     semantic_drop_implementations.reserve(result.semantic_drop_state.discovered_implementations.size());
     for (auto const& implementation : result.semantic_drop_state.discovered_implementations) {
         semantic_drop_implementations.push_back(implementation.implementation);

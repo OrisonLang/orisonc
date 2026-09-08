@@ -574,8 +574,8 @@ auto semantic_dynamic_array_descriptor_summary_report(
 
 auto semantic_drop_implementations(
     orison::pipeline::SemanticDropState const& state
-) -> std::vector<orison::semantics::DropImplementation> {
-    auto implementations = std::vector<orison::semantics::DropImplementation> {};
+) -> std::vector<orison::semantics::OwnedCleanupImplementation> {
+    auto implementations = std::vector<orison::semantics::OwnedCleanupImplementation> {};
     implementations.reserve(state.discovered_implementations.size());
     for (auto const& discovered : state.discovered_implementations) {
         implementations.push_back(discovered.implementation);
@@ -5651,7 +5651,7 @@ auto main() -> int {
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -5733,7 +5733,7 @@ auto main() -> int {
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -5774,7 +5774,7 @@ auto main() -> int {
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -14077,7 +14077,7 @@ auto main() -> int {
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
@@ -14145,7 +14145,7 @@ auto main() -> int {
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = dynamic_array_source_owner_drop_sites[1],
                     .semantic_resolved = true,
                     .source_drop_lowering_enabled = true,
@@ -20062,7 +20062,7 @@ auto main() -> int {
                 orison::semantics::source_derived_drop_implementation(
                     "Payload",
                     3,
-                    orison::semantics::DropImplementationBodySummary {
+                    orison::semantics::OwnedCleanupImplementationBodySummary {
                         .finite = true,
                     }
                 ),
@@ -20102,17 +20102,17 @@ auto main() -> int {
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementation_candidates = {
-                orison::semantics::DropImplementationCandidate {
+                orison::semantics::OwnedCleanupImplementationCandidate {
                     .source_type_name = "Payload",
                     .declaration_line = 3,
-                    .body = orison::semantics::DropImplementationBodySummary {
+                    .body = orison::semantics::OwnedCleanupImplementationBodySummary {
                         .finite = true,
                     },
                 },
-                orison::semantics::DropImplementationCandidate {
+                orison::semantics::OwnedCleanupImplementationCandidate {
                     .source_type_name = "Payload",
                     .declaration_line = 4,
-                    .body = orison::semantics::DropImplementationBodySummary {},
+                    .body = orison::semantics::OwnedCleanupImplementationBodySummary {},
                 },
             },
         }
@@ -20147,7 +20147,7 @@ auto main() -> int {
                 orison::semantics::source_derived_drop_implementation(
                     "Payload",
                     3,
-                    orison::semantics::DropImplementationBodySummary {}
+                    orison::semantics::OwnedCleanupImplementationBodySummary {}
                 ),
             },
         }
@@ -20171,7 +20171,7 @@ auto main() -> int {
                 orison::semantics::source_derived_drop_implementation(
                     "Payload",
                     3,
-                    orison::semantics::DropImplementationBodySummary {
+                    orison::semantics::OwnedCleanupImplementationBodySummary {
                         .finite = true,
                     }
                 ),

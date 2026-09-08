@@ -23,7 +23,7 @@ int main() {
     assert(orison::semantics::format_planned_drop_site_report({}).empty());
     assert(orison::semantics::drop_abi_symbol_name("Pair<Payload>") == "__orison_drop.Pair_Payload_");
 
-    auto unproven = orison::semantics::DropImplementation {
+    auto unproven = orison::semantics::OwnedCleanupImplementation {
         .source_type_name = "Payload",
         .abi_symbol_name = "__orison_drop.Payload",
         .declaration_line = 7,
@@ -47,7 +47,7 @@ int main() {
     assert(!unproven_diagnostic.resolved);
     assert(
         unproven_diagnostic.blocker_reason ==
-        orison::semantics::DropImplementationBlockerReason::implementation_discovered_but_unproven
+        orison::semantics::OwnedCleanupImplementationBlockerReason::implementation_discovered_but_unproven
     );
     assert(
         orison::semantics::format_drop_implementation_diagnostic(unproven_diagnostic) ==
@@ -58,7 +58,7 @@ int main() {
     assert(!undiscovered_diagnostic.resolved);
     assert(
         undiscovered_diagnostic.blocker_reason ==
-        orison::semantics::DropImplementationBlockerReason::no_implementation_discovered
+        orison::semantics::OwnedCleanupImplementationBlockerReason::no_implementation_discovered
     );
     assert(
         orison::semantics::format_drop_implementation_diagnostic(undiscovered_diagnostic) ==
@@ -93,7 +93,7 @@ int main() {
     assert(resolved_report.front() == "resolved drop site __orison_drop.Payload for Payload owner payload at line 12");
     auto resolved_diagnostic = orison::semantics::diagnose_drop_implementation(site, {unproven, proven});
     assert(resolved_diagnostic.resolved);
-    assert(resolved_diagnostic.blocker_reason == orison::semantics::DropImplementationBlockerReason::none);
+    assert(resolved_diagnostic.blocker_reason == orison::semantics::OwnedCleanupImplementationBlockerReason::none);
     assert(
         orison::semantics::format_drop_implementation_diagnostic(resolved_diagnostic) ==
         "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 12 resolved"
@@ -141,7 +141,7 @@ int main() {
     auto source_derived = orison::semantics::source_derived_drop_implementation(
         "Payload",
         9,
-        orison::semantics::DropImplementationBodySummary {
+        orison::semantics::OwnedCleanupImplementationBodySummary {
             .finite = true,
             .unsafe_boundary_required = true,
             .referenced_functions = {"payload_release", "audit_drop"},
@@ -149,7 +149,7 @@ int main() {
     );
     assert(source_derived.proven);
     assert(source_derived.abi_symbol_name == "__orison_drop.Payload");
-    assert(source_derived.origin == orison::semantics::DropImplementationOrigin::source_derived);
+    assert(source_derived.origin == orison::semantics::OwnedCleanupImplementationOrigin::source_derived);
     assert(
         orison::semantics::format_drop_implementation(source_derived) ==
         "drop implementation __orison_drop.Payload for Payload declared at line 9 origin source-derived finite "
@@ -162,7 +162,7 @@ int main() {
     auto non_finite_source_derived = orison::semantics::source_derived_drop_implementation(
         "Payload",
         10,
-        orison::semantics::DropImplementationBodySummary {}
+        orison::semantics::OwnedCleanupImplementationBodySummary {}
     );
     assert(!non_finite_source_derived.proven);
     assert(
@@ -173,7 +173,7 @@ int main() {
     assert(!orison::semantics::resolve_drop_implementation(site, {non_finite_source_derived}).resolved);
 
     auto test_fixture = source_derived;
-    test_fixture.origin = orison::semantics::DropImplementationOrigin::test_fixture;
+    test_fixture.origin = orison::semantics::OwnedCleanupImplementationOrigin::test_fixture;
     assert(
         orison::semantics::format_drop_implementation(test_fixture) ==
         "drop implementation __orison_drop.Payload for Payload declared at line 9 origin test-fixture finite "
@@ -183,7 +183,7 @@ int main() {
     auto compiler_owned = orison::semantics::compiler_intrinsic_owned_cleanup_implementation("Payload", 4);
     assert(compiler_owned.proven);
     assert(compiler_owned.abi_symbol_name == "__orison_drop.Payload");
-    assert(compiler_owned.origin == orison::semantics::DropImplementationOrigin::compiler_intrinsic);
+    assert(compiler_owned.origin == orison::semantics::OwnedCleanupImplementationOrigin::compiler_intrinsic);
     assert(compiler_owned.body.finite);
     assert(
         orison::semantics::format_drop_implementation(compiler_owned) ==
@@ -202,27 +202,27 @@ int main() {
     );
 
     auto collected_implementations = orison::semantics::collect_source_derived_drop_implementations({
-        orison::semantics::DropImplementationCandidate {},
-        orison::semantics::DropImplementationCandidate {
+        orison::semantics::OwnedCleanupImplementationCandidate {},
+        orison::semantics::OwnedCleanupImplementationCandidate {
             .source_type_name = "Payload",
             .declaration_line = 20,
-            .body = orison::semantics::DropImplementationBodySummary {
+            .body = orison::semantics::OwnedCleanupImplementationBodySummary {
                 .finite = true,
                 .referenced_functions = {"payload_release"},
             },
         },
-        orison::semantics::DropImplementationCandidate {
+        orison::semantics::OwnedCleanupImplementationCandidate {
             .source_type_name = "Payload",
             .declaration_line = 21,
-            .body = orison::semantics::DropImplementationBodySummary {
+            .body = orison::semantics::OwnedCleanupImplementationBodySummary {
                 .finite = true,
                 .referenced_functions = {"payload_release_duplicate"},
             },
         },
-        orison::semantics::DropImplementationCandidate {
+        orison::semantics::OwnedCleanupImplementationCandidate {
             .source_type_name = "Resource",
             .declaration_line = 22,
-            .body = orison::semantics::DropImplementationBodySummary {},
+            .body = orison::semantics::OwnedCleanupImplementationBodySummary {},
         },
     });
     assert(collected_implementations.size() == 2);
@@ -365,10 +365,10 @@ int main() {
     assert(compiler_owned_implementations.size() == 2);
     assert(compiler_owned_implementations[0].source_type_name == "Payload");
     assert(compiler_owned_implementations[0].declaration_line == 4);
-    assert(compiler_owned_implementations[0].origin == orison::semantics::DropImplementationOrigin::compiler_intrinsic);
+    assert(compiler_owned_implementations[0].origin == orison::semantics::OwnedCleanupImplementationOrigin::compiler_intrinsic);
     assert(compiler_owned_implementations[1].source_type_name == "Box<Payload>");
     assert(compiler_owned_implementations[1].declaration_line == 5);
-    assert(compiler_owned_implementations[1].origin == orison::semantics::DropImplementationOrigin::compiler_intrinsic);
+    assert(compiler_owned_implementations[1].origin == orison::semantics::OwnedCleanupImplementationOrigin::compiler_intrinsic);
 
     auto resource_site = orison::semantics::PlannedDropSite {
         .source_type_name = "Resource",

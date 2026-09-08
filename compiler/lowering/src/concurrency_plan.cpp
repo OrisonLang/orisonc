@@ -361,12 +361,12 @@ auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool {
 
 auto matching_semantic_drop_authorization(
     PlannedDropAction const& action,
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
-) -> std::vector<semantics::DropLoweringAuthorization>::const_iterator {
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
+) -> std::vector<semantics::OwnedCleanupLoweringAuthorization>::const_iterator {
     return std::find_if(
         semantic_authorizations.begin(),
         semantic_authorizations.end(),
-        [&](semantics::DropLoweringAuthorization const& candidate) {
+        [&](semantics::OwnedCleanupLoweringAuthorization const& candidate) {
             return candidate.site.abi_symbol_name == action.symbol_name &&
                    candidate.site.source_type_name == action.source_type_name;
         }
@@ -383,7 +383,7 @@ auto plan_owned_cleanup_authorization(
 auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations,
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
 ) -> OwnedCleanupAuthorizationReport {
     auto report = OwnedCleanupAuthorizationReport {};
     if (plan.actions.empty()) {
@@ -527,7 +527,7 @@ auto format_owned_cleanup_authorization_report(
 }
 
 auto plan_owned_cleanup_readiness_snapshot(
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations,
     std::vector<PlannedDropDeclaration> const& declarations,
     std::vector<ConcurrencyDropCleanupPlan> const& cleanups
 ) -> OwnedCleanupReadinessSnapshot {

@@ -103,7 +103,7 @@ int main() {
         semantic_plan.cleanup.drop_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_drop_lowering_authorizations = {
-                orison::semantics::DropLoweringAuthorization {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::PlannedDropSite {
                         .source_type_name = "DropTestPayload",
                         .abi_symbol_name = "__orison_drop.DropTestPayload",

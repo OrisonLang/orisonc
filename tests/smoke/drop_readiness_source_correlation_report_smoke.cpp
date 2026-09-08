@@ -20,8 +20,8 @@ auto payload_authorization(
     std::string owner_name,
     bool semantic_resolved,
     bool lowering_enabled = false
-) -> orison::semantics::DropLoweringAuthorization {
-    return orison::semantics::DropLoweringAuthorization {
+) -> orison::semantics::OwnedCleanupLoweringAuthorization {
+    return orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = orison::semantics::PlannedDropSite {
             .source_type_name = "Payload",
             .abi_symbol_name = "__orison_drop.Payload",

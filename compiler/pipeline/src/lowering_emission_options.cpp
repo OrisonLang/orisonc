@@ -6,7 +6,7 @@ namespace orison::pipeline {
 namespace {
 
 void authorize_dynamic_array_owned_element_source_drops(
-    std::vector<semantics::DropLoweringAuthorization>& authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization>& authorizations
 ) {
     for (auto& authorization : authorizations) {
         auto const expected_symbol_name = semantics::drop_abi_symbol_name(authorization.site.source_type_name);

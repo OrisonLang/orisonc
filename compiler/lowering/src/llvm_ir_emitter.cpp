@@ -190,8 +190,8 @@ auto is_generic_receiver_pattern(
 }
 
 auto has_authorized_source_drop_definition(
-    semantics::DropImplementation const& implementation,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    semantics::OwnedCleanupImplementation const& implementation,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
     if (!implementation.proven ||
         !implementation.body.finite) {
@@ -199,7 +199,7 @@ auto has_authorized_source_drop_definition(
     }
     return std::ranges::any_of(
         authorizations,
-        [&](semantics::DropLoweringAuthorization const& authorization) {
+        [&](semantics::OwnedCleanupLoweringAuthorization const& authorization) {
             return authorization.authorized &&
                 authorization.site.source_type_name == implementation.source_type_name &&
                 authorization.site.abi_symbol_name == implementation.abi_symbol_name;
@@ -208,18 +208,18 @@ auto has_authorized_source_drop_definition(
 }
 
 auto has_runtime_indexed_cleanup_source_drop_definition(
-    semantics::DropImplementation const& implementation,
+    semantics::OwnedCleanupImplementation const& implementation,
     LlvmIrEmissionOptions const& options
 ) -> bool {
     return options.enable_runtime_indexed_cleanup_source_drop_emission &&
-        implementation.origin == semantics::DropImplementationOrigin::source_derived &&
+        implementation.origin == semantics::OwnedCleanupImplementationOrigin::source_derived &&
         implementation.proven &&
         implementation.body.finite;
 }
 
 auto source_drop_element_symbol(
     std::string_view source_type_name,
-    std::vector<semantics::DropImplementation> const& implementations
+    std::vector<semantics::OwnedCleanupImplementation> const& implementations
 ) -> std::optional<std::string> {
     if (is_scalar_or_nonowning_source_type(source_type_name)) {
         return std::nullopt;
@@ -227,7 +227,7 @@ auto source_drop_element_symbol(
     auto const symbol_name = semantics::drop_abi_symbol_name(source_type_name);
     auto match = std::ranges::find_if(
         implementations,
-        [&](semantics::DropImplementation const& implementation) {
+        [&](semantics::OwnedCleanupImplementation const& implementation) {
             return implementation.proven &&
                 implementation.body.finite &&
                 implementation.source_type_name == source_type_name &&
@@ -469,7 +469,7 @@ auto emit_fixed_array_dynamic_array_drop_field_sequence(
 auto emit_record_source_drop_body(
     std::string_view source_type_name,
     LoweringContext const& context,
-    std::vector<semantics::DropImplementation> const& implementations
+    std::vector<semantics::OwnedCleanupImplementation> const& implementations
 ) -> std::string {
     auto layout = context.records.find(std::string {source_type_name});
     if (layout == context.records.end()) {
@@ -560,7 +560,7 @@ auto emit_record_source_drop_body(
 auto collect_source_drop_definition_symbols(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string>;
 
@@ -568,14 +568,14 @@ void add_compiler_intrinsic_cleanup_dependency(
     std::string_view source_type_name,
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
-    std::vector<semantics::DropImplementation>& implementations,
+    std::vector<semantics::OwnedCleanupImplementation>& implementations,
     std::vector<std::string>& active_source_types
 );
 
 auto emit_source_drop_definitions(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
@@ -624,7 +624,7 @@ auto emit_source_drop_definitions(
     for (auto const& symbol : emitted_symbols) {
         auto implementation = std::ranges::find_if(
             implementations,
-            [&](semantics::DropImplementation const& candidate) {
+            [&](semantics::OwnedCleanupImplementation const& candidate) {
                 return candidate.abi_symbol_name == symbol;
             }
         );
@@ -663,7 +663,7 @@ void add_compiler_intrinsic_cleanup_dependency(
     std::string_view source_type_name,
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
-    std::vector<semantics::DropImplementation>& implementations,
+    std::vector<semantics::OwnedCleanupImplementation>& implementations,
     std::vector<std::string>& active_source_types
 ) {
     auto const source_type = std::string {source_type_name};
@@ -677,7 +677,7 @@ void add_compiler_intrinsic_cleanup_dependency(
     auto const symbol_name = semantics::drop_abi_symbol_name(source_type);
     auto implementation = std::ranges::find_if(
         implementations,
-        [&](semantics::DropImplementation const& candidate) {
+        [&](semantics::OwnedCleanupImplementation const& candidate) {
             return candidate.source_type_name == source_type &&
                 candidate.abi_symbol_name == symbol_name;
         }
@@ -725,12 +725,12 @@ void add_compiler_intrinsic_cleanup_dependency(
 
 auto source_drop_implementation_for_type(
     std::string_view source_type_name,
-    std::vector<semantics::DropImplementation> const& implementations
-) -> std::optional<semantics::DropImplementation> {
+    std::vector<semantics::OwnedCleanupImplementation> const& implementations
+) -> std::optional<semantics::OwnedCleanupImplementation> {
     auto const symbol_name = semantics::drop_abi_symbol_name(source_type_name);
     auto implementation = std::ranges::find_if(
         implementations,
-        [&](semantics::DropImplementation const& candidate) {
+        [&](semantics::OwnedCleanupImplementation const& candidate) {
             return candidate.proven &&
                 candidate.body.finite &&
                 candidate.source_type_name == source_type_name &&
@@ -746,7 +746,7 @@ auto source_drop_implementation_for_type(
 void add_source_drop_definition_symbol_with_dependencies(
     std::string_view source_type_name,
     LoweringContext const& context,
-    std::vector<semantics::DropImplementation> const& implementations,
+    std::vector<semantics::OwnedCleanupImplementation> const& implementations,
     std::vector<std::string>& symbols,
     std::vector<std::string>& active_source_types
 ) {
@@ -800,8 +800,8 @@ void add_source_drop_definition_symbol_with_dependencies(
 }
 
 auto collect_direct_source_drop_definition_types(
-    std::vector<semantics::DropImplementation> const& implementations,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    std::vector<semantics::OwnedCleanupImplementation> const& implementations,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
     auto source_types = std::vector<std::string> {};
@@ -821,7 +821,7 @@ auto collect_direct_source_drop_definition_types(
 auto collect_source_drop_definition_symbols(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
@@ -873,7 +873,7 @@ auto collect_direct_source_drop_definition_symbols(
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
     auto symbols = std::vector<std::string> {};
     for (auto const& implementation : implementations) {
-        if (implementation.origin != semantics::DropImplementationOrigin::source_derived ||
+        if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||
             !implementation.proven ||
             !implementation.body.finite) {
             continue;
@@ -1477,7 +1477,7 @@ auto declared_drop_declarations_for_runtime_indexed_cleanup(
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
     auto declarations = std::vector<PlannedDropDeclaration> {};
     for (auto const& implementation : implementations) {
-        if (implementation.origin != semantics::DropImplementationOrigin::source_derived ||
+        if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||
             !implementation.proven ||
             !implementation.body.finite) {
             continue;
@@ -1670,13 +1670,13 @@ auto validate_generated_type_symbols(
 auto has_authorized_dynamic_array_owned_element_cleanup(
     std::string const& owner_name,
     std::string const& element_source_type_name,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
     auto const expected_owner_name = owner_name + ".element";
     auto const expected_symbol_name = "__orison_drop." + element_source_type_name;
     return std::ranges::any_of(
         authorizations,
-        [&](semantics::DropLoweringAuthorization const& authorization) {
+        [&](semantics::OwnedCleanupLoweringAuthorization const& authorization) {
             return authorization.authorized &&
                 authorization.site.owner_name == expected_owner_name &&
                 authorization.site.source_type_name == element_source_type_name &&

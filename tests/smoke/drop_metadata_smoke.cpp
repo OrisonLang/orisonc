@@ -113,7 +113,7 @@ int main() {
     assert(declaration_from_action.discovery_line == 42);
     assert(!declaration_from_action.emit_declaration);
 
-    auto unresolved_authorization = orison::semantics::DropLoweringAuthorization {
+    auto unresolved_authorization = orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = orison::semantics::PlannedDropSite {
             .source_type_name = "Payload",
             .abi_symbol_name = "__orison_drop.Payload",
@@ -145,7 +145,7 @@ int main() {
     auto semantic_declarations = declared_drop_declarations_for_authorized_semantic_drops({
         unresolved_authorization,
         authorized_authorization,
-        orison::semantics::DropLoweringAuthorization {
+        orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::PlannedDropSite {
                 .source_type_name = "Payload",
                 .abi_symbol_name = "__orison_drop.Payload",

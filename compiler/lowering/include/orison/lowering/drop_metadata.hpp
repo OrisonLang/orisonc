@@ -48,11 +48,11 @@ auto add_planned_drop_declaration(
 auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> PlannedDropDeclaration;
 
 auto planned_drop_declaration_for_authorization(
-    semantics::DropLoweringAuthorization const& authorization
+    semantics::OwnedCleanupLoweringAuthorization const& authorization
 ) -> PlannedDropDeclaration;
 
 auto declared_drop_declarations_for_authorized_semantic_drops(
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> std::vector<PlannedDropDeclaration>;
 
 auto declared_drop_declarations_for_allowed_source_types(

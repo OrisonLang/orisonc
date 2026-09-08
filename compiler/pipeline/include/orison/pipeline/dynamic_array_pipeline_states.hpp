@@ -105,13 +105,13 @@ struct OwnedCleanupAuthorizationState {
 };
 
 struct SemanticDropImplementationDiscovery {
-    semantics::DropImplementation implementation;
+    semantics::OwnedCleanupImplementation implementation;
     std::string discovery_name;
 };
 
 struct SemanticDropState {
     std::vector<SemanticDropImplementationDiscovery> discovered_implementations;
-    std::vector<semantics::DropImplementationResolutionSummary> resolution_summaries;
+    std::vector<semantics::OwnedCleanupImplementationResolutionSummary> resolution_summaries;
 };
 
 struct DynamicArrayCleanupObligationState {

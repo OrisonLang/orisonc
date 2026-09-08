@@ -225,7 +225,7 @@ int main() {
             },
         },
         {
-            orison::semantics::DropLoweringAuthorization {
+            orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::PlannedDropSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",
@@ -265,7 +265,7 @@ int main() {
     );
     auto semantic_blocked_readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
         {
-            orison::semantics::DropLoweringAuthorization {
+            orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::PlannedDropSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",
@@ -302,7 +302,7 @@ int main() {
     );
     auto readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
         {
-            orison::semantics::DropLoweringAuthorization {
+            orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::PlannedDropSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",

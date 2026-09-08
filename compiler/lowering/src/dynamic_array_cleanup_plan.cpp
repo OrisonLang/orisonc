@@ -205,7 +205,7 @@ auto authorized_element_drop_symbol_name(
 
 auto dynamic_array_cleanup_action_authorized(
     PlannedDropAction const& action,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
     return std::ranges::any_of(authorizations, [&](auto const& authorization) {
         return authorization.authorized &&
@@ -221,14 +221,14 @@ auto dynamic_array_cleanup_action_authorized(
 
 auto synthetic_dynamic_array_parameter_cleanup_authorizations(
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans
-) -> std::vector<semantics::DropLoweringAuthorization> {
-    auto authorizations = std::vector<semantics::DropLoweringAuthorization> {};
+) -> std::vector<semantics::OwnedCleanupLoweringAuthorization> {
+    auto authorizations = std::vector<semantics::OwnedCleanupLoweringAuthorization> {};
     for (auto const& plan : plans) {
         if (!plan.element_drop_symbol_name.has_value()) {
             continue;
         }
         for (auto const& action : plan.sequence_plan.obligation.actions) {
-            authorizations.push_back(semantics::DropLoweringAuthorization {
+            authorizations.push_back(semantics::OwnedCleanupLoweringAuthorization {
                 .site = semantics::PlannedDropSite {
                     .source_type_name = action.source_type_name,
                     .abi_symbol_name = action.symbol_name,
@@ -797,7 +797,7 @@ auto prove_dynamic_array_cleanup_emission_capability(
     std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
     std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
     std::vector<DynamicArrayCleanupObligation> const& obligations,
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_drop_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability {
     auto cleanup_pairs = std::vector<std::string> {};
     auto cleanup_operation_names = std::vector<std::string> {};

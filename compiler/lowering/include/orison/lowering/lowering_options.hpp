@@ -76,7 +76,7 @@ struct LlvmIrEmissionOptions {
     bool enable_runtime_indexed_fixed_array_constructor_move_only = false;
     std::vector<DynamicArrayDescriptorLifetimePlan> dynamic_array_descriptor_lifetime_plans;
     std::vector<std::string> source_drop_definition_symbols;
-    std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 
 struct ComputedDynamicArrayCleanupCallInsertionCapability {

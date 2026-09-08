@@ -98,7 +98,7 @@ auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> Pla
 }
 
 auto planned_drop_declaration_for_authorization(
-    semantics::DropLoweringAuthorization const& authorization
+    semantics::OwnedCleanupLoweringAuthorization const& authorization
 ) -> PlannedDropDeclaration {
     return PlannedDropDeclaration {
         .symbol_name = authorization.site.abi_symbol_name,
@@ -109,7 +109,7 @@ auto planned_drop_declaration_for_authorization(
 }
 
 auto declared_drop_declarations_for_authorized_semantic_drops(
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> std::vector<PlannedDropDeclaration> {
     auto declarations = std::vector<PlannedDropDeclaration> {};
     for (auto const& authorization : authorizations) {

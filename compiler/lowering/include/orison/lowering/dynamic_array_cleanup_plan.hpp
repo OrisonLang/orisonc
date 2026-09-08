@@ -109,7 +109,7 @@ auto prove_dynamic_array_cleanup_emission_capability(
     std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
     std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
     std::vector<DynamicArrayCleanupObligation> const& obligations,
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_drop_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability;
 
 auto dynamic_array_cleanup_emission_capability_proven(

@@ -77,7 +77,7 @@ struct OwnedCleanupReadiness {
 };
 
 struct OwnedCleanupReadinessSnapshot {
-    std::vector<semantics::DropLoweringAuthorization> semantic_authorizations;
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_authorizations;
     std::vector<PlannedDropDeclaration> emitted_declarations;
     std::vector<OwnedCleanupReadiness> cleanup_authorizations;
 };
@@ -129,7 +129,7 @@ auto plan_owned_cleanup_authorization(
 auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations,
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
 ) -> OwnedCleanupAuthorizationReport;
 
 auto format_owned_cleanup_authorization_report(
@@ -138,7 +138,7 @@ auto format_owned_cleanup_authorization_report(
 ) -> std::vector<std::string>;
 
 auto plan_owned_cleanup_readiness_snapshot(
-    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations,
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations,
     std::vector<PlannedDropDeclaration> const& declarations,
     std::vector<ConcurrencyDropCleanupPlan> const& cleanups
 ) -> OwnedCleanupReadinessSnapshot;

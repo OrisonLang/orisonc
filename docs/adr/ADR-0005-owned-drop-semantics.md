@@ -173,6 +173,8 @@ inventing semantics outside the spec/tour.
   `__orison_drop.*` ABI symbols remain stable compatibility surfaces.
 - Typed lowering and pipeline readiness/authorization state now uses `OwnedCleanup*` names internally. Existing
   report text, CLI flags, test target names, and ABI symbols are unchanged compatibility surfaces.
+- Semantic cleanup implementation and lowering authorization types now use `OwnedCleanup*` names internally. Existing
+  semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 
 ## Consequences
 

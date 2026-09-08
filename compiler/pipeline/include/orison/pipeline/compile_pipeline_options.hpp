@@ -22,9 +22,9 @@ enum class DynamicArrayDescriptorLifetimePlanFaultInjection {
 };
 
 struct CompilePipelineOptions {
-    std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
-    std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
-    std::vector<semantics::DropLoweringAuthorization> test_only_semantic_drop_lowering_authorizations;
+    std::vector<semantics::OwnedCleanupImplementation> test_only_semantic_drop_implementations;
+    std::vector<semantics::OwnedCleanupImplementationCandidate> test_only_semantic_drop_implementation_candidates;
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> test_only_semantic_drop_lowering_authorizations;
     std::vector<lowering::FixtureDynamicArrayConstructionRequest> fixture_dynamic_array_construction_requests;
     bool test_only_enable_source_drop_lowering = false;
     bool source_drop_lowering_enabled = false;

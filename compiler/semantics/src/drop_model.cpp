@@ -74,13 +74,13 @@ auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string {
     return symbol;
 }
 
-auto drop_implementation_origin_name(DropImplementationOrigin origin) -> std::string_view {
+auto drop_implementation_origin_name(OwnedCleanupImplementationOrigin origin) -> std::string_view {
     switch (origin) {
-    case DropImplementationOrigin::source_derived:
+    case OwnedCleanupImplementationOrigin::source_derived:
         return "source-derived";
-    case DropImplementationOrigin::compiler_intrinsic:
+    case OwnedCleanupImplementationOrigin::compiler_intrinsic:
         return "compiler-intrinsic";
-    case DropImplementationOrigin::test_fixture:
+    case OwnedCleanupImplementationOrigin::test_fixture:
         return "test-fixture";
     }
     return "unknown";
@@ -89,16 +89,16 @@ auto drop_implementation_origin_name(DropImplementationOrigin origin) -> std::st
 auto source_derived_drop_implementation(
     std::string source_type_name,
     std::size_t declaration_line,
-    DropImplementationBodySummary body
-) -> DropImplementation {
+    OwnedCleanupImplementationBodySummary body
+) -> OwnedCleanupImplementation {
     auto symbol_name = drop_abi_symbol_name(source_type_name);
     auto proven = body.finite;
-    return DropImplementation {
+    return OwnedCleanupImplementation {
         .source_type_name = std::move(source_type_name),
         .abi_symbol_name = std::move(symbol_name),
         .declaration_line = declaration_line,
         .proven = proven,
-        .origin = DropImplementationOrigin::source_derived,
+        .origin = OwnedCleanupImplementationOrigin::source_derived,
         .body = std::move(body),
     };
 }
@@ -106,24 +106,24 @@ auto source_derived_drop_implementation(
 auto compiler_intrinsic_owned_cleanup_implementation(
     std::string source_type_name,
     std::size_t declaration_line
-) -> DropImplementation {
+) -> OwnedCleanupImplementation {
     auto symbol_name = drop_abi_symbol_name(source_type_name);
-    return DropImplementation {
+    return OwnedCleanupImplementation {
         .source_type_name = std::move(source_type_name),
         .abi_symbol_name = std::move(symbol_name),
         .declaration_line = declaration_line,
         .proven = true,
-        .origin = DropImplementationOrigin::compiler_intrinsic,
-        .body = DropImplementationBodySummary {
+        .origin = OwnedCleanupImplementationOrigin::compiler_intrinsic,
+        .body = OwnedCleanupImplementationBodySummary {
             .finite = true,
         },
     };
 }
 
 auto collect_source_derived_drop_implementations(
-    std::vector<DropImplementationCandidate> const& candidates
-) -> std::vector<DropImplementation> {
-    auto implementations = std::vector<DropImplementation> {};
+    std::vector<OwnedCleanupImplementationCandidate> const& candidates
+) -> std::vector<OwnedCleanupImplementation> {
+    auto implementations = std::vector<OwnedCleanupImplementation> {};
     for (auto const& candidate : candidates) {
         if (candidate.source_type_name.empty()) {
             continue;
@@ -132,7 +132,7 @@ auto collect_source_derived_drop_implementations(
         auto existing = std::find_if(
             implementations.begin(),
             implementations.end(),
-            [&candidate, &symbol_name](DropImplementation const& implementation) {
+            [&candidate, &symbol_name](OwnedCleanupImplementation const& implementation) {
                 return implementation.source_type_name == candidate.source_type_name &&
                        implementation.abi_symbol_name == symbol_name;
             }
@@ -151,7 +151,7 @@ auto collect_source_derived_drop_implementations(
 
 auto prove_source_derived_drop_implementation_body(
     syntax::ImplementationSyntax const& implementation
-) -> DropImplementationBodySummary {
+) -> OwnedCleanupImplementationBodySummary {
     auto method = std::find_if(
         implementation.methods.begin(),
         implementation.methods.end(),
@@ -160,30 +160,30 @@ auto prove_source_derived_drop_implementation_body(
         }
     );
     if (method == implementation.methods.end()) {
-        return DropImplementationBodySummary {};
+        return OwnedCleanupImplementationBodySummary {};
     }
     if (method->body_statements.empty()) {
-        return DropImplementationBodySummary {
+        return OwnedCleanupImplementationBodySummary {
             .finite = true,
         };
     }
     if (method->body_statements.size() == 1 && is_naked_return(method->body_statements.front())) {
-        return DropImplementationBodySummary {
+        return OwnedCleanupImplementationBodySummary {
             .finite = true,
         };
     }
-    return DropImplementationBodySummary {};
+    return OwnedCleanupImplementationBodySummary {};
 }
 
 auto collect_source_derived_drop_implementation_candidates(
     syntax::ModuleSyntax const& module
-) -> std::vector<DropImplementationCandidate> {
-    auto candidates = std::vector<DropImplementationCandidate> {};
+) -> std::vector<OwnedCleanupImplementationCandidate> {
+    auto candidates = std::vector<OwnedCleanupImplementationCandidate> {};
     for (auto const& implementation : module.implementations) {
         if (!is_drop_interface(implementation.interface_type) || !has_drop_method(implementation)) {
             continue;
         }
-        candidates.push_back(DropImplementationCandidate {
+        candidates.push_back(OwnedCleanupImplementationCandidate {
             .source_type_name = render_source_type_name(implementation.receiver_type),
             .declaration_line = drop_method_line(implementation),
             .body = prove_source_derived_drop_implementation_body(implementation),
@@ -195,8 +195,8 @@ auto collect_source_derived_drop_implementation_candidates(
 auto collect_compiler_intrinsic_owned_cleanup_implementations(
     std::vector<PlannedDropSite> const& sites,
     syntax::ModuleSyntax const& module
-) -> std::vector<DropImplementation> {
-    auto implementations = std::vector<DropImplementation> {};
+) -> std::vector<OwnedCleanupImplementation> {
+    auto implementations = std::vector<OwnedCleanupImplementation> {};
     for (auto const& site : sites) {
         if (site.source_type_name.empty()) {
             continue;
@@ -219,7 +219,7 @@ auto collect_compiler_intrinsic_owned_cleanup_implementations(
         auto existing = std::find_if(
             implementations.begin(),
             implementations.end(),
-            [&](DropImplementation const& implementation) {
+            [&](OwnedCleanupImplementation const& implementation) {
                 return implementation.source_type_name == site.source_type_name &&
                        implementation.abi_symbol_name == symbol_name;
             }
@@ -235,7 +235,7 @@ auto collect_compiler_intrinsic_owned_cleanup_implementations(
     return implementations;
 }
 
-auto format_drop_implementation(DropImplementation const& implementation) -> std::string {
+auto format_drop_implementation(OwnedCleanupImplementation const& implementation) -> std::string {
     auto output = std::ostringstream {};
     output << "drop implementation " << implementation.abi_symbol_name;
     if (!implementation.source_type_name.empty()) {
@@ -283,25 +283,25 @@ auto format_planned_drop_site_report(std::vector<PlannedDropSite> const& sites) 
 
 auto resolve_drop_implementation(
     PlannedDropSite site,
-    std::vector<DropImplementation> const& implementations
-) -> DropImplementationResolution {
+    std::vector<OwnedCleanupImplementation> const& implementations
+) -> OwnedCleanupImplementationResolution {
     for (auto const& implementation : implementations) {
         if (implementation.source_type_name == site.source_type_name &&
             implementation.abi_symbol_name == site.abi_symbol_name &&
             implementation.proven) {
-            return DropImplementationResolution {
+            return OwnedCleanupImplementationResolution {
                 .site = std::move(site),
                 .resolved = true,
             };
         }
     }
-    return DropImplementationResolution {
+    return OwnedCleanupImplementationResolution {
         .site = std::move(site),
     };
 }
 
 auto format_drop_implementation_resolution(
-    DropImplementationResolution const& resolution
+    OwnedCleanupImplementationResolution const& resolution
 ) -> std::string {
     auto output = std::ostringstream {};
     output << (resolution.resolved ? "resolved " : "missing ");
@@ -311,7 +311,7 @@ auto format_drop_implementation_resolution(
 
 auto format_drop_implementation_resolution_report(
     std::vector<PlannedDropSite> const& sites,
-    std::vector<DropImplementation> const& implementations
+    std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(sites.size());
@@ -321,13 +321,13 @@ auto format_drop_implementation_resolution_report(
     return report;
 }
 
-auto drop_implementation_blocker_reason_name(DropImplementationBlockerReason reason) -> std::string_view {
+auto drop_implementation_blocker_reason_name(OwnedCleanupImplementationBlockerReason reason) -> std::string_view {
     switch (reason) {
-    case DropImplementationBlockerReason::none:
+    case OwnedCleanupImplementationBlockerReason::none:
         return "none";
-    case DropImplementationBlockerReason::no_implementation_discovered:
+    case OwnedCleanupImplementationBlockerReason::no_implementation_discovered:
         return "no implementation discovered";
-    case DropImplementationBlockerReason::implementation_discovered_but_unproven:
+    case OwnedCleanupImplementationBlockerReason::implementation_discovered_but_unproven:
         return "implementation discovered but unproven";
     }
     return "unknown";
@@ -335,8 +335,8 @@ auto drop_implementation_blocker_reason_name(DropImplementationBlockerReason rea
 
 auto diagnose_drop_implementation(
     PlannedDropSite site,
-    std::vector<DropImplementation> const& implementations
-) -> DropImplementationDiagnostic {
+    std::vector<OwnedCleanupImplementation> const& implementations
+) -> OwnedCleanupImplementationDiagnostic {
     auto matching_unproven_found = false;
     for (auto const& implementation : implementations) {
         if (implementation.source_type_name != site.source_type_name ||
@@ -344,23 +344,23 @@ auto diagnose_drop_implementation(
             continue;
         }
         if (implementation.proven) {
-            return DropImplementationDiagnostic {
+            return OwnedCleanupImplementationDiagnostic {
                 .site = std::move(site),
                 .resolved = true,
             };
         }
         matching_unproven_found = true;
     }
-    return DropImplementationDiagnostic {
+    return OwnedCleanupImplementationDiagnostic {
         .site = std::move(site),
         .blocker_reason = matching_unproven_found
-            ? DropImplementationBlockerReason::implementation_discovered_but_unproven
-            : DropImplementationBlockerReason::no_implementation_discovered,
+            ? OwnedCleanupImplementationBlockerReason::implementation_discovered_but_unproven
+            : OwnedCleanupImplementationBlockerReason::no_implementation_discovered,
     };
 }
 
 auto format_drop_implementation_diagnostic(
-    DropImplementationDiagnostic const& diagnostic
+    OwnedCleanupImplementationDiagnostic const& diagnostic
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "drop diagnostic " << format_planned_drop_site(diagnostic.site);
@@ -374,7 +374,7 @@ auto format_drop_implementation_diagnostic(
 
 auto format_drop_implementation_diagnostic_report(
     std::vector<PlannedDropSite> const& sites,
-    std::vector<DropImplementation> const& implementations
+    std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(sites.size());
@@ -386,13 +386,13 @@ auto format_drop_implementation_diagnostic_report(
 
 auto authorize_drop_lowering(
     PlannedDropSite site,
-    std::vector<DropImplementation> const& implementations,
+    std::vector<OwnedCleanupImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate
-) -> DropLoweringAuthorization {
+) -> OwnedCleanupLoweringAuthorization {
     auto matching_implementation = std::find_if(
         implementations.begin(),
         implementations.end(),
-        [&site](DropImplementation const& implementation) {
+        [&site](OwnedCleanupImplementation const& implementation) {
             return implementation.source_type_name == site.source_type_name &&
                    implementation.abi_symbol_name == site.abi_symbol_name &&
                    implementation.proven;
@@ -400,9 +400,9 @@ auto authorize_drop_lowering(
     );
     auto semantic_resolved = matching_implementation != implementations.end();
     auto compiler_intrinsic_owned_cleanup =
-        semantic_resolved && matching_implementation->origin == DropImplementationOrigin::compiler_intrinsic;
+        semantic_resolved && matching_implementation->origin == OwnedCleanupImplementationOrigin::compiler_intrinsic;
     auto source_drop_lowering_enabled = source_drop_lowering_gate == SourceDropLoweringGate::enabled;
-    return DropLoweringAuthorization {
+    return OwnedCleanupLoweringAuthorization {
         .site = std::move(site),
         .semantic_resolved = semantic_resolved,
         .source_drop_lowering_enabled = source_drop_lowering_enabled,
@@ -412,7 +412,7 @@ auto authorize_drop_lowering(
 }
 
 auto format_drop_lowering_authorization(
-    DropLoweringAuthorization const& authorization
+    OwnedCleanupLoweringAuthorization const& authorization
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "drop lowering authorization " << format_planned_drop_site(authorization.site);
@@ -432,10 +432,10 @@ auto format_drop_lowering_authorization(
 
 auto authorize_drop_lowerings(
     std::vector<PlannedDropSite> const& sites,
-    std::vector<DropImplementation> const& implementations,
+    std::vector<OwnedCleanupImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate
-) -> std::vector<DropLoweringAuthorization> {
-    auto authorizations = std::vector<DropLoweringAuthorization> {};
+) -> std::vector<OwnedCleanupLoweringAuthorization> {
+    auto authorizations = std::vector<OwnedCleanupLoweringAuthorization> {};
     authorizations.reserve(sites.size());
     for (auto const& site : sites) {
         authorizations.push_back(authorize_drop_lowering(site, implementations, source_drop_lowering_gate));
@@ -445,13 +445,13 @@ auto authorize_drop_lowerings(
 
 auto format_drop_lowering_authorization(
     PlannedDropSite const& site,
-    std::vector<DropImplementation> const& implementations
+    std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::string {
     return format_drop_lowering_authorization(authorize_drop_lowering(site, implementations));
 }
 
 auto format_drop_lowering_authorization_report(
-    std::vector<DropLoweringAuthorization> const& authorizations
+    std::vector<OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(authorizations.size());
@@ -463,29 +463,29 @@ auto format_drop_lowering_authorization_report(
 
 auto format_drop_lowering_authorization_report(
     std::vector<PlannedDropSite> const& sites,
-    std::vector<DropImplementation> const& implementations
+    std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string> {
     return format_drop_lowering_authorization_report(authorize_drop_lowerings(sites, implementations));
 }
 
 auto summarize_drop_implementation_resolutions(
     std::vector<PlannedDropSite> const& sites,
-    std::vector<DropImplementation> const& implementations
-) -> std::vector<DropImplementationResolutionSummary> {
-    auto summaries = std::vector<DropImplementationResolutionSummary> {};
+    std::vector<OwnedCleanupImplementation> const& implementations
+) -> std::vector<OwnedCleanupImplementationResolutionSummary> {
+    auto summaries = std::vector<OwnedCleanupImplementationResolutionSummary> {};
     for (auto const& site : sites) {
         auto resolution = resolve_drop_implementation(site, implementations);
         auto existing = std::find_if(
             summaries.begin(),
             summaries.end(),
-            [&site](DropImplementationResolutionSummary const& summary) {
+            [&site](OwnedCleanupImplementationResolutionSummary const& summary) {
                 return summary.source_type_name == site.source_type_name &&
                        summary.abi_symbol_name == site.abi_symbol_name;
             }
         );
 
         if (existing == summaries.end()) {
-            summaries.push_back(DropImplementationResolutionSummary {
+            summaries.push_back(OwnedCleanupImplementationResolutionSummary {
                 .source_type_name = site.source_type_name,
                 .abi_symbol_name = site.abi_symbol_name,
             });
@@ -502,7 +502,7 @@ auto summarize_drop_implementation_resolutions(
 }
 
 auto format_drop_implementation_resolution_summary(
-    DropImplementationResolutionSummary const& summary
+    OwnedCleanupImplementationResolutionSummary const& summary
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "drop resolution summary " << summary.abi_symbol_name;
@@ -514,7 +514,7 @@ auto format_drop_implementation_resolution_summary(
 }
 
 auto format_drop_implementation_resolution_summary_report(
-    std::vector<DropImplementationResolutionSummary> const& summaries
+    std::vector<OwnedCleanupImplementationResolutionSummary> const& summaries
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(summaries.size());
