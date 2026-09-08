@@ -2798,6 +2798,9 @@ representation.
 - Named dynamic-element receiver coverage now composes computed indexing with an additional nested record-field hop:
   `holder.items[index + zero].box.values.forward().count()`. Production checks pin the nested `Bucket` to
   `BoxedValues` projection, selected descriptor transfer, cleanup, reuse rejection, and out-of-bounds trap behavior.
+- The nested computed-index receiver projection now covers the Unit-tail mutation form:
+  `holder.items[index + zero].box.values.forward().append_value(...)`. Production checks pin mutation cleanup, precise
+  post-transfer reuse rejection, and bounds trapping before the nested descriptor transfer.
 
 ## Follow-up work
 
