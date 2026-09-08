@@ -2808,6 +2808,9 @@ representation.
   enables choice-bound `DynamicArray` payload mutation chains such as
   `items[index + zero].box.values.forward().append_value(...)` inside switch cases, with production success, reuse
   rejection, and bounds coverage.
+- Multi-payload choice variants now have production receiver-chain coverage for switch-bound payloads. The smoke
+  matrix pins payload extraction for `Primary(items, marker)`, scalar payload use after receiver mutation, selected
+  descriptor transfer, cleanup, reuse rejection, and bounds trapping.
 
 ## Follow-up work
 
