@@ -2801,6 +2801,9 @@ representation.
 - The nested computed-index receiver projection now covers the Unit-tail mutation form:
   `holder.items[index + zero].box.values.forward().append_value(...)`. Production checks pin mutation cleanup, precise
   post-transfer reuse rejection, and bounds trapping before the nested descriptor transfer.
+- Generic method specialization collection now seeds switch-case choice payload source types before walking case
+  statements. Choice-bound `DynamicArray` payloads therefore support nested computed receiver chains such as
+  `items[index + zero].box.values.forward().count()`, with success, reuse rejection, and bounds coverage.
 
 ## Follow-up work
 

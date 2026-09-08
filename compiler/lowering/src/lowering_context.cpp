@@ -61,6 +61,7 @@ auto generic_method_collection_substitutions(
 void collect_generic_method_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
     std::vector<GenericMethodCandidate> const& generic_methods,
+    std::vector<syntax::ChoiceSyntax> const& choices,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
@@ -71,6 +72,7 @@ void collect_generic_method_calls_from_expression(
 void collect_generic_method_calls_from_statement(
     syntax::StatementSyntax const& statement,
     std::vector<GenericMethodCandidate> const& generic_methods,
+    std::vector<syntax::ChoiceSyntax> const& choices,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
@@ -798,9 +800,39 @@ auto collect_generic_function_specializations(
     return specializations;
 }
 
+void seed_choice_case_payload_source_types(
+    syntax::SwitchCaseSyntax const& switch_case,
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    std::unordered_map<std::string, std::string>& local_source_types
+) {
+    if (switch_case.pattern.kind != syntax::ExpressionKind::call ||
+        switch_case.pattern.left == nullptr ||
+        switch_case.pattern.left->kind != syntax::ExpressionKind::name) {
+        return;
+    }
+
+    for (auto const& choice : choices) {
+        for (auto const& variant : choice.variants) {
+            if (variant.name != switch_case.pattern.left->text ||
+                variant.payloads.size() != switch_case.pattern.arguments.size()) {
+                continue;
+            }
+            for (auto index = std::size_t {0}; index < switch_case.pattern.arguments.size(); ++index) {
+                auto const& argument = switch_case.pattern.arguments[index];
+                if (argument.kind == syntax::ExpressionKind::name &&
+                    !variant.payloads[index].type.name.empty()) {
+                    local_source_types[argument.text] = render_source_type_name(variant.payloads[index].type);
+                }
+            }
+            return;
+        }
+    }
+}
+
 void collect_generic_method_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
     std::vector<GenericMethodCandidate> const& generic_methods,
+    std::vector<syntax::ChoiceSyntax> const& choices,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
@@ -876,6 +908,7 @@ void collect_generic_method_calls_from_expression(
         collect_generic_method_calls_from_expression(
             argument,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -888,6 +921,7 @@ void collect_generic_method_calls_from_expression(
         collect_generic_method_calls_from_statement(
             *nested_statement,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -900,6 +934,7 @@ void collect_generic_method_calls_from_expression(
         collect_generic_method_calls_from_expression(
             *expression.left,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -912,6 +947,7 @@ void collect_generic_method_calls_from_expression(
         collect_generic_method_calls_from_expression(
             *expression.right,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -924,6 +960,7 @@ void collect_generic_method_calls_from_expression(
         collect_generic_method_calls_from_expression(
             *expression.alternate,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -937,6 +974,7 @@ void collect_generic_method_calls_from_expression(
 void collect_generic_method_calls_from_statement(
     syntax::StatementSyntax const& statement,
     std::vector<GenericMethodCandidate> const& generic_methods,
+    std::vector<syntax::ChoiceSyntax> const& choices,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
@@ -947,6 +985,7 @@ void collect_generic_method_calls_from_statement(
     collect_generic_method_calls_from_expression(
         statement.assignment_target,
         generic_methods,
+        choices,
         generic_functions,
         functions,
         local_source_types,
@@ -957,6 +996,7 @@ void collect_generic_method_calls_from_statement(
     collect_generic_method_calls_from_expression(
         statement.expression,
         generic_methods,
+        choices,
         generic_functions,
         functions,
         local_source_types,
@@ -968,6 +1008,7 @@ void collect_generic_method_calls_from_statement(
         collect_generic_method_calls_from_statement(
             nested_statement,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -980,6 +1021,7 @@ void collect_generic_method_calls_from_statement(
         collect_generic_method_calls_from_statement(
             alternate_statement,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -992,6 +1034,7 @@ void collect_generic_method_calls_from_statement(
         collect_generic_method_calls_from_expression(
             switch_case.pattern,
             generic_methods,
+            choices,
             generic_functions,
             functions,
             local_source_types,
@@ -999,13 +1042,16 @@ void collect_generic_method_calls_from_statement(
             record_names,
             specializations
         );
+        auto case_local_source_types = local_source_types;
+        seed_choice_case_payload_source_types(switch_case, choices, case_local_source_types);
         for (auto const& case_statement : switch_case.statements) {
             collect_generic_method_calls_from_statement(
                 *case_statement,
                 generic_methods,
+                choices,
                 generic_functions,
                 functions,
-                local_source_types,
+                case_local_source_types,
                 concrete_records,
                 record_names,
                 specializations
@@ -1206,6 +1252,7 @@ auto collect_generic_method_specializations(
             collect_generic_method_calls_from_statement(
                 statement,
                 generic_methods,
+                module.choices,
                 generic_functions,
                 functions,
                 local_source_types,

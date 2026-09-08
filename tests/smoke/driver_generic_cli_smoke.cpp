@@ -2423,7 +2423,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nes
     assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %holder.items.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_drop.Bucket(ptr %") !=
         std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
@@ -2482,7 +2482,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nes
     assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %holder.items.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_drop.Bucket(ptr %") !=
         std::string::npos);
     assert(output.find("ret i32 0") != std::string::npos);
 }
@@ -5203,6 +5203,36 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count_run.or",
+        smoke_temp_root / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count_run.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_reuse_rejected.or",
+        "use after move: items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_reuse_rejected",
+        "use after move: items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_out_of_bounds_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count_out_of_bounds.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
