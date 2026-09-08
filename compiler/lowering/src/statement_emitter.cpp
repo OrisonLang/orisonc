@@ -1662,6 +1662,10 @@ auto lower_prefix_statement(
     if (statement.kind == syntax::StatementKind::assignment_statement) {
         return lower_assignment_statement(statement, context, session, diagnostics, output);
     }
+    if (statement.kind == syntax::StatementKind::expression_statement &&
+        statement.expression.kind == syntax::ExpressionKind::call) {
+        return lower_call_statement(statement, context, session, diagnostics, output);
+    }
     if (statement.kind == syntax::StatementKind::defer_statement) {
         return record_deferred_cleanup(statement, session, diagnostics);
     }

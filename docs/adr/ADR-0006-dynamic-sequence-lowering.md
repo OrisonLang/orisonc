@@ -2804,6 +2804,10 @@ representation.
 - Generic method specialization collection now seeds switch-case choice payload source types before walking case
   statements. Choice-bound `DynamicArray` payloads therefore support nested computed receiver chains such as
   `items[index + zero].box.values.forward().count()`, with success, reuse rejection, and bounds coverage.
+- Value-producing statement blocks now accept leading `Unit` call statements before their final value expression. This
+  enables choice-bound `DynamicArray` payload mutation chains such as
+  `items[index + zero].box.values.forward().append_value(...)` inside switch cases, with production success, reuse
+  rejection, and bounds coverage.
 
 ## Follow-up work
 

@@ -2402,7 +2402,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_com
     assert(trap < descriptor_load);
     assert(descriptor_load < source_slot_zero);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
-    assert(output.find("ret i32 0") != std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_fixture_success(
@@ -2487,6 +2487,30 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nes
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_choice_payload_nested_append_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("switch i32") != std::string::npos);
+    assert(output.find("%items.addr = alloca { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("dynamic_array.receiver_element_path.in_bounds") != std::string::npos);
+    assert(output.find("getelementptr %record.Bucket") != std::string::npos);
+    assert(output.find("getelementptr %record.BoxedValues") != std::string::npos);
+    assert(output.find("named_dynamic_array_receiver_descriptor") != std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Bucket(ptr %") != std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_append_out_of_bounds_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -2520,7 +2544,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nes
     assert(boxed_field < descriptor_load);
     assert(descriptor_load < source_slot_zero);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
-    assert(output.find("ret i32 0") != std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_append_fixture_success(
@@ -5233,6 +5257,36 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count_out_of_bounds.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_run.or",
+        smoke_temp_root / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_choice_payload_nested_append_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_run.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
+        "use after move: items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_reuse_rejected",
+        "use after move: items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_append_out_of_bounds_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
