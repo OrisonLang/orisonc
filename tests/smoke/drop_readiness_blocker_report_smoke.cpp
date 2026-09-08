@@ -5,8 +5,8 @@
 
 namespace {
 
-auto payload_action() -> orison::lowering::PlannedDropAction {
-    return orison::lowering::PlannedDropAction {
+auto payload_action() -> orison::lowering::OwnedCleanupAction {
+    return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
         .symbol_name = "__orison_drop.Payload",

@@ -34,22 +34,22 @@ auto render_report_lines(std::vector<std::string> const& lines) -> std::string {
     return output.str();
 }
 
-auto planned_drop_declaration_state_report(
-    pipeline::PlannedDropDeclarationState const& state
+auto owned_cleanup_declaration_state_report(
+    pipeline::OwnedCleanupDeclarationState const& state
 ) -> std::vector<std::string> {
-    return lowering::format_planned_drop_report(state.declarations);
+    return lowering::format_owned_cleanup_declaration_report(state.declarations);
 }
 
 auto emitted_drop_declaration_state_report(
-    pipeline::PlannedDropDeclarationState const& state
+    pipeline::OwnedCleanupDeclarationState const& state
 ) -> std::vector<std::string> {
-    return lowering::format_emitted_drop_declaration_report(state.declarations);
+    return lowering::format_emitted_owned_cleanup_declaration_report(state.declarations);
 }
 
-auto planned_drop_action_state_report(
-    pipeline::PlannedDropActionState const& state
+auto owned_cleanup_action_state_report(
+    pipeline::OwnedCleanupActionState const& state
 ) -> std::vector<std::string> {
-    return lowering::format_planned_drop_action_report(state.actions);
+    return lowering::format_owned_cleanup_action_report(state.actions);
 }
 
 auto owned_cleanup_authorization_state_report(
@@ -1164,7 +1164,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--planned-drops") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return planned_drop_declaration_state_report(result.planned_drop_declaration_state);
+            return owned_cleanup_declaration_state_report(result.owned_cleanup_declaration_state);
         });
     }
 
@@ -1210,13 +1210,13 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--planned-drop-actions") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return planned_drop_action_state_report(result.planned_drop_action_state);
+            return owned_cleanup_action_state_report(result.owned_cleanup_action_state);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--emitted-drops") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return emitted_drop_declaration_state_report(result.planned_drop_declaration_state);
+            return emitted_drop_declaration_state_report(result.owned_cleanup_declaration_state);
         });
     }
 

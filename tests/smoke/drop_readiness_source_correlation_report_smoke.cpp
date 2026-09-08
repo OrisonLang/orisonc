@@ -6,8 +6,8 @@
 
 namespace {
 
-auto payload_action() -> orison::lowering::PlannedDropAction {
-    return orison::lowering::PlannedDropAction {
+auto payload_action() -> orison::lowering::OwnedCleanupAction {
+    return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
         .symbol_name = "__orison_drop.Payload",
@@ -22,7 +22,7 @@ auto payload_authorization(
     bool lowering_enabled = false
 ) -> orison::semantics::OwnedCleanupLoweringAuthorization {
     return orison::semantics::OwnedCleanupLoweringAuthorization {
-        .site = orison::semantics::PlannedDropSite {
+        .site = orison::semantics::OwnedCleanupSite {
             .source_type_name = "Payload",
             .abi_symbol_name = "__orison_drop.Payload",
             .owner_name = std::move(owner_name),
@@ -83,7 +83,7 @@ auto main() -> int {
     auto fallback_snapshot = resolved_snapshot;
     fallback_snapshot.semantic_authorizations = {payload_authorization("other_owner", true, true)};
     fallback_snapshot.emitted_declarations = {
-        orison::lowering::PlannedDropDeclaration {
+        orison::lowering::OwnedCleanupDeclaration {
             .symbol_name = "__orison_drop.Payload",
             .source_type_name = "Payload",
             .discovery_line = 12,

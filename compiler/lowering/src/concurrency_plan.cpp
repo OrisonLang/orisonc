@@ -232,11 +232,11 @@ auto cleanup_plan_for(
     return cleanup;
 }
 
-auto planned_drop_action_for_candidate(
+auto owned_cleanup_action_for_candidate(
     ConcurrencyCleanupFieldPlan const& candidate,
     std::size_t discovery_line
-) -> PlannedDropAction {
-    return PlannedDropAction {
+) -> OwnedCleanupAction {
+    return OwnedCleanupAction {
         .capture_name = candidate.name,
         .source_type_name = candidate.source_type_name,
         .symbol_name = candidate.drop_symbol_name,
@@ -255,12 +255,12 @@ auto drop_cleanup_plan_for(
     };
     plan.actions.reserve(candidates.size());
     for (auto const& candidate : candidates) {
-        plan.actions.push_back(planned_drop_action_for_candidate(candidate, discovery_line));
+        plan.actions.push_back(owned_cleanup_action_for_candidate(candidate, discovery_line));
     }
     return plan;
 }
 
-void collect_planned_drop_actions_from_expression(
+void collect_owned_cleanup_actions_from_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics,
@@ -319,7 +319,7 @@ void collect_planned_drop_cleanups_from_function(
         if (!is_concurrency_expression(expression)) {
             return;
         }
-        collect_planned_drop_actions_from_expression(
+        collect_owned_cleanup_actions_from_expression(
             expression,
             context,
             semantics,
@@ -350,7 +350,7 @@ auto format_concurrency_drop_cleanup_plan(
     }
     report.push_back(header.str());
 
-    auto action_report = format_planned_drop_action_report(plan.actions);
+    auto action_report = format_owned_cleanup_action_report(plan.actions);
     report.insert(report.end(), action_report.begin(), action_report.end());
     return report;
 }
@@ -360,7 +360,7 @@ auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool {
 }
 
 auto matching_semantic_drop_authorization(
-    PlannedDropAction const& action,
+    OwnedCleanupAction const& action,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
 ) -> std::vector<semantics::OwnedCleanupLoweringAuthorization>::const_iterator {
     return std::find_if(
@@ -375,14 +375,14 @@ auto matching_semantic_drop_authorization(
 
 auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
-    std::vector<PlannedDropDeclaration> const& declarations
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> OwnedCleanupAuthorizationReport {
     return plan_owned_cleanup_authorization(plan, declarations, {});
 }
 
 auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
-    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<OwnedCleanupDeclaration> const& declarations,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
 ) -> OwnedCleanupAuthorizationReport {
     auto report = OwnedCleanupAuthorizationReport {};
@@ -413,7 +413,7 @@ auto plan_owned_cleanup_authorization(
             auto already_blocked = std::find_if(
                 report.semantic_lowering_blockers.begin(),
                 report.semantic_lowering_blockers.end(),
-                [&](PlannedDropAction const& blocker) {
+                [&](OwnedCleanupAction const& blocker) {
                     return blocker.symbol_name == action.symbol_name &&
                            blocker.source_type_name == action.source_type_name &&
                            blocker.capture_name == action.capture_name &&
@@ -429,7 +429,7 @@ auto plan_owned_cleanup_authorization(
         auto const declaration = std::find_if(
             declarations.begin(),
             declarations.end(),
-            [&](PlannedDropDeclaration const& candidate) {
+            [&](OwnedCleanupDeclaration const& candidate) {
                 return candidate.symbol_name == action.symbol_name && candidate.emit_declaration;
             }
         );
@@ -528,7 +528,7 @@ auto format_owned_cleanup_authorization_report(
 
 auto plan_owned_cleanup_readiness_snapshot(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations,
-    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<OwnedCleanupDeclaration> const& declarations,
     std::vector<ConcurrencyDropCleanupPlan> const& cleanups
 ) -> OwnedCleanupReadinessSnapshot {
     auto snapshot = OwnedCleanupReadinessSnapshot {
@@ -777,7 +777,7 @@ auto format_owned_cleanup_readiness_relation_report(
 
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
-    std::vector<PlannedDropDeclaration> const& declarations
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> bool {
     auto report = plan_owned_cleanup_authorization(plan, declarations);
     plan.drop_call_emission = report.authorized
@@ -791,14 +791,14 @@ auto apply_drop_cleanup_authorization_options(
     LlvmIrEmissionOptions const& options
 ) -> bool {
     if (!options.test_only_declared_drop_source_type_allowlist.empty()) {
-        auto declarations = declared_drop_declarations_for_allowed_source_types(
+        auto declarations = declared_owned_cleanup_declarations_for_allowed_source_types(
             plan.actions,
             options.test_only_declared_drop_source_type_allowlist
         );
         return authorize_drop_cleanup_calls_for_declared_abi(plan, declarations);
     }
     if (!options.semantic_drop_lowering_authorizations.empty()) {
-        auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
+        auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
             options.semantic_drop_lowering_authorizations
         );
         return authorize_drop_cleanup_calls_for_declared_abi(plan, declarations);
@@ -888,10 +888,10 @@ auto plan_concurrency_planned_drops(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::vector<PlannedDropDeclaration> {
-    auto planned_drops = std::vector<PlannedDropDeclaration> {};
-    for (auto const& action : plan_concurrency_planned_drop_actions(module, context, semantics)) {
-        add_planned_drop_declaration(planned_drops, planned_drop_declaration_for_action(action));
+) -> std::vector<OwnedCleanupDeclaration> {
+    auto planned_drops = std::vector<OwnedCleanupDeclaration> {};
+    for (auto const& action : plan_concurrency_owned_cleanup_actions(module, context, semantics)) {
+        add_owned_cleanup_declaration(planned_drops, owned_cleanup_declaration_for_action(action));
     }
     return planned_drops;
 }
@@ -943,20 +943,20 @@ auto plan_concurrency_drop_cleanups(
     return drop_cleanups;
 }
 
-auto plan_concurrency_planned_drop_actions(
+auto plan_concurrency_owned_cleanup_actions(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::vector<PlannedDropAction> {
-    auto planned_drop_actions = std::vector<PlannedDropAction> {};
+) -> std::vector<OwnedCleanupAction> {
+    auto owned_cleanup_actions = std::vector<OwnedCleanupAction> {};
     for (auto const& cleanup : plan_concurrency_drop_cleanups(module, context, semantics)) {
-        planned_drop_actions.insert(
-            planned_drop_actions.end(),
+        owned_cleanup_actions.insert(
+            owned_cleanup_actions.end(),
             cleanup.actions.begin(),
             cleanup.actions.end()
         );
     }
-    return planned_drop_actions;
+    return owned_cleanup_actions;
 }
 
 }  // namespace orison::lowering

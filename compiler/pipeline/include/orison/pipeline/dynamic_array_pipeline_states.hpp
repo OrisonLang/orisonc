@@ -91,12 +91,12 @@ struct DynamicArrayAllocationCallEmissionState {
     std::size_t rendered_call_count = 0;
 };
 
-struct PlannedDropDeclarationState {
-    std::vector<lowering::PlannedDropDeclaration> declarations;
+struct OwnedCleanupDeclarationState {
+    std::vector<lowering::OwnedCleanupDeclaration> declarations;
 };
 
-struct PlannedDropActionState {
-    std::vector<lowering::PlannedDropAction> actions;
+struct OwnedCleanupActionState {
+    std::vector<lowering::OwnedCleanupAction> actions;
 };
 
 struct OwnedCleanupAuthorizationState {

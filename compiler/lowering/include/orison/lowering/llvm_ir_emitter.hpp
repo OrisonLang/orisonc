@@ -252,8 +252,8 @@ struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
     std::vector<ConcurrencyDropCleanupPlan> drop_cleanups;
-    std::vector<PlannedDropAction> planned_drop_actions;
-    std::vector<PlannedDropDeclaration> planned_drop_declarations;
+    std::vector<OwnedCleanupAction> owned_cleanup_actions;
+    std::vector<OwnedCleanupDeclaration> owned_cleanup_declarations;
     std::vector<DynamicArrayRuntimeOperation> dynamic_array_runtime_operations;
     std::vector<DynamicArrayConstructionPlan> dynamic_array_construction_plans;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_descriptor_cleanup_plans;
@@ -380,7 +380,7 @@ struct LlvmIrEmissionResult {
     auto computed_dynamic_array_for_production_emission_gate_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
-    auto planned_drop_action_report() const -> std::vector<std::string>;
+    auto owned_cleanup_action_report() const -> std::vector<std::string>;
     auto owned_cleanup_authorization_report() const -> std::vector<std::string>;
     auto owned_cleanup_readiness_snapshot() const -> OwnedCleanupReadinessSnapshot;
     auto owned_cleanup_readiness_snapshot_report() const -> std::vector<std::string>;

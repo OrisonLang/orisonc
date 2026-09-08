@@ -6081,7 +6081,7 @@ private:
         });
     }
 
-    void add_drop_obligation(PlannedDropSite const& site) {
+    void add_drop_obligation(OwnedCleanupSite const& site) {
         semantic_module_.drop_obligations.push_back(SemanticDropObligationSummary {
             .line = site.site_line,
             .owner_name = site.owner_name,
@@ -6265,7 +6265,7 @@ private:
                 .element_source_type_name = direct_element_type_name,
                 .binding_kind = binding_kind,
             });
-            add_drop_obligation(PlannedDropSite {
+            add_drop_obligation(OwnedCleanupSite {
                 .source_type_name = direct_element_type_name,
                 .abi_symbol_name = drop_abi_symbol_name(direct_element_type_name),
                 .owner_name = owner_name + ".element",
@@ -6321,7 +6321,7 @@ private:
                     .element_source_type_name = element_type_name,
                     .binding_kind = binding_kind,
                 });
-                add_drop_obligation(PlannedDropSite {
+                add_drop_obligation(OwnedCleanupSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = drop_abi_symbol_name(element_type_name),
                     .owner_name = field_owner_name + ".element",
@@ -6385,7 +6385,7 @@ private:
                     .binding_kind = dynamic_array_descriptor_binding_kind(binding),
                 });
             }
-            add_drop_obligation(PlannedDropSite {
+            add_drop_obligation(OwnedCleanupSite {
                 .source_type_name = binding.type_name,
                 .abi_symbol_name = drop_abi_symbol_name(binding.type_name),
                 .owner_name = binding.name,
@@ -6393,7 +6393,7 @@ private:
             });
             auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(binding.type_name);
             if (!element_type_name.empty()) {
-                add_drop_obligation(PlannedDropSite {
+                add_drop_obligation(OwnedCleanupSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = drop_abi_symbol_name(element_type_name),
                     .owner_name = binding.name + ".element",
@@ -6630,11 +6630,11 @@ auto format_semantic_drop_obligation_report(
 
 auto project_semantic_drop_obligations(
     SemanticModuleSummary const& summary
-) -> std::vector<PlannedDropSite> {
-    auto sites = std::vector<PlannedDropSite> {};
+) -> std::vector<OwnedCleanupSite> {
+    auto sites = std::vector<OwnedCleanupSite> {};
     sites.reserve(summary.drop_obligations.size());
     for (auto const& obligation : summary.drop_obligations) {
-        sites.push_back(PlannedDropSite {
+        sites.push_back(OwnedCleanupSite {
             .source_type_name = obligation.source_type_name,
             .abi_symbol_name = obligation.abi_symbol_name,
             .owner_name = obligation.owner_name,

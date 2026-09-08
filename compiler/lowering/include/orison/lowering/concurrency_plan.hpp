@@ -57,7 +57,7 @@ struct ConcurrencyCleanupFieldPlan {
 
 struct ConcurrencyDropCleanupPlan {
     std::string cleanup_symbol_name;
-    std::vector<PlannedDropAction> actions;
+    std::vector<OwnedCleanupAction> actions;
     DropCallEmissionEligibility drop_call_emission = DropCallEmissionEligibility::metadata_only;
     bool requires_semantic_authorization = false;
     bool requires_descriptor_deallocation = false;
@@ -65,10 +65,10 @@ struct ConcurrencyDropCleanupPlan {
 
 struct OwnedCleanupAuthorizationReport {
     bool authorized = false;
-    std::vector<PlannedDropAction> semantic_lowering_blockers;
-    std::vector<PlannedDropAction> semantic_unresolved_blockers;
-    std::vector<PlannedDropAction> source_drop_lowering_blockers;
-    std::vector<PlannedDropAction> missing_declarations;
+    std::vector<OwnedCleanupAction> semantic_lowering_blockers;
+    std::vector<OwnedCleanupAction> semantic_unresolved_blockers;
+    std::vector<OwnedCleanupAction> source_drop_lowering_blockers;
+    std::vector<OwnedCleanupAction> missing_declarations;
 };
 
 struct OwnedCleanupReadiness {
@@ -78,7 +78,7 @@ struct OwnedCleanupReadiness {
 
 struct OwnedCleanupReadinessSnapshot {
     std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_authorizations;
-    std::vector<PlannedDropDeclaration> emitted_declarations;
+    std::vector<OwnedCleanupDeclaration> emitted_declarations;
     std::vector<OwnedCleanupReadiness> cleanup_authorizations;
 };
 
@@ -92,10 +92,10 @@ struct OwnedCleanupReadinessSummary {
 
 struct OwnedCleanupReadinessBlockerSummary {
     std::size_t blocked_cleanups = 0;
-    std::vector<PlannedDropAction> semantic_lowering_blockers;
-    std::vector<PlannedDropAction> semantic_unresolved_blockers;
-    std::vector<PlannedDropAction> source_drop_lowering_blockers;
-    std::vector<PlannedDropAction> missing_declarations;
+    std::vector<OwnedCleanupAction> semantic_lowering_blockers;
+    std::vector<OwnedCleanupAction> semantic_unresolved_blockers;
+    std::vector<OwnedCleanupAction> source_drop_lowering_blockers;
+    std::vector<OwnedCleanupAction> missing_declarations;
 };
 
 struct ConcurrencyCleanupPlan {
@@ -123,12 +123,12 @@ auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool;
 
 auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
-    std::vector<PlannedDropDeclaration> const& declarations
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> OwnedCleanupAuthorizationReport;
 
 auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
-    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<OwnedCleanupDeclaration> const& declarations,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
 ) -> OwnedCleanupAuthorizationReport;
 
@@ -139,7 +139,7 @@ auto format_owned_cleanup_authorization_report(
 
 auto plan_owned_cleanup_readiness_snapshot(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations,
-    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<OwnedCleanupDeclaration> const& declarations,
     std::vector<ConcurrencyDropCleanupPlan> const& cleanups
 ) -> OwnedCleanupReadinessSnapshot;
 
@@ -169,7 +169,7 @@ auto format_owned_cleanup_readiness_relation_report(
 
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
-    std::vector<PlannedDropDeclaration> const& declarations
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> bool;
 
 auto apply_drop_cleanup_authorization_options(
@@ -190,7 +190,7 @@ auto plan_concurrency_planned_drops(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::vector<PlannedDropDeclaration>;
+) -> std::vector<OwnedCleanupDeclaration>;
 
 auto plan_concurrency_drop_cleanups(
     syntax::ModuleSyntax const& module,
@@ -198,10 +198,10 @@ auto plan_concurrency_drop_cleanups(
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::vector<ConcurrencyDropCleanupPlan>;
 
-auto plan_concurrency_planned_drop_actions(
+auto plan_concurrency_owned_cleanup_actions(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::vector<PlannedDropAction>;
+) -> std::vector<OwnedCleanupAction>;
 
 }  // namespace orison::lowering

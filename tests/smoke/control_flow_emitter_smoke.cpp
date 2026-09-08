@@ -605,7 +605,7 @@ int main() {
         .enable_dynamic_array_cleanup_emission = true,
         .semantic_drop_lowering_authorizations = {
             orison::semantics::OwnedCleanupLoweringAuthorization {
-                .site = orison::semantics::PlannedDropSite {
+                .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",
                     .owner_name = "items.element",

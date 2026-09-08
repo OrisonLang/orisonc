@@ -193,7 +193,7 @@ auto collect_source_derived_owned_cleanup_implementation_candidates(
 }
 
 auto collect_compiler_intrinsic_owned_cleanup_implementations(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     syntax::ModuleSyntax const& module
 ) -> std::vector<OwnedCleanupImplementation> {
     auto implementations = std::vector<OwnedCleanupImplementation> {};
@@ -257,7 +257,7 @@ auto format_owned_cleanup_implementation(OwnedCleanupImplementation const& imple
     return output.str();
 }
 
-auto format_planned_drop_site(PlannedDropSite const& site) -> std::string {
+auto format_planned_drop_site(OwnedCleanupSite const& site) -> std::string {
     auto output = std::ostringstream {};
     output << "drop site " << site.abi_symbol_name;
     if (!site.source_type_name.empty()) {
@@ -272,7 +272,7 @@ auto format_planned_drop_site(PlannedDropSite const& site) -> std::string {
     return output.str();
 }
 
-auto format_planned_drop_site_report(std::vector<PlannedDropSite> const& sites) -> std::vector<std::string> {
+auto format_planned_drop_site_report(std::vector<OwnedCleanupSite> const& sites) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(sites.size());
     for (auto const& site : sites) {
@@ -282,7 +282,7 @@ auto format_planned_drop_site_report(std::vector<PlannedDropSite> const& sites) 
 }
 
 auto resolve_owned_cleanup_implementation(
-    PlannedDropSite site,
+    OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> OwnedCleanupImplementationResolution {
     for (auto const& implementation : implementations) {
@@ -310,7 +310,7 @@ auto format_owned_cleanup_implementation_resolution(
 }
 
 auto format_owned_cleanup_implementation_resolution_report(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
@@ -334,7 +334,7 @@ auto owned_cleanup_implementation_blocker_reason_name(OwnedCleanupImplementation
 }
 
 auto diagnose_owned_cleanup_implementation(
-    PlannedDropSite site,
+    OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> OwnedCleanupImplementationDiagnostic {
     auto matching_unproven_found = false;
@@ -373,7 +373,7 @@ auto format_owned_cleanup_implementation_diagnostic(
 }
 
 auto format_owned_cleanup_implementation_diagnostic_report(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
@@ -385,7 +385,7 @@ auto format_owned_cleanup_implementation_diagnostic_report(
 }
 
 auto authorize_owned_cleanup_lowering(
-    PlannedDropSite site,
+    OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate
 ) -> OwnedCleanupLoweringAuthorization {
@@ -431,7 +431,7 @@ auto format_owned_cleanup_lowering_authorization(
 }
 
 auto authorize_owned_cleanup_lowerings(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate
 ) -> std::vector<OwnedCleanupLoweringAuthorization> {
@@ -444,7 +444,7 @@ auto authorize_owned_cleanup_lowerings(
 }
 
 auto format_owned_cleanup_lowering_authorization(
-    PlannedDropSite const& site,
+    OwnedCleanupSite const& site,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::string {
     return format_owned_cleanup_lowering_authorization(authorize_owned_cleanup_lowering(site, implementations));
@@ -462,14 +462,14 @@ auto format_owned_cleanup_lowering_authorization_report(
 }
 
 auto format_owned_cleanup_lowering_authorization_report(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string> {
     return format_owned_cleanup_lowering_authorization_report(authorize_owned_cleanup_lowerings(sites, implementations));
 }
 
 auto summarize_owned_cleanup_implementation_resolutions(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<OwnedCleanupImplementationResolutionSummary> {
     auto summaries = std::vector<OwnedCleanupImplementationResolutionSummary> {};

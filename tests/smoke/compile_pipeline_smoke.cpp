@@ -659,27 +659,27 @@ auto dynamic_array_runtime_request_report(
     );
 }
 
-auto planned_drop_declaration_report(
+auto owned_cleanup_declaration_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::lowering::format_planned_drop_report(
-        result.planned_drop_declaration_state.declarations
+    return orison::lowering::format_owned_cleanup_declaration_report(
+        result.owned_cleanup_declaration_state.declarations
     );
 }
 
 auto emitted_drop_declaration_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::lowering::format_emitted_drop_declaration_report(
-        result.planned_drop_declaration_state.declarations
+    return orison::lowering::format_emitted_owned_cleanup_declaration_report(
+        result.owned_cleanup_declaration_state.declarations
     );
 }
 
-auto planned_drop_action_report(
+auto owned_cleanup_action_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::lowering::format_planned_drop_action_report(
-        result.planned_drop_action_state.actions
+    return orison::lowering::format_owned_cleanup_action_report(
+        result.owned_cleanup_action_state.actions
     );
 }
 
@@ -1561,8 +1561,8 @@ auto main() -> int {
     assert(ir.ir_text.find("define i32 @main()") != std::string::npos);
     assert(ir.ir_text.find("ret i32 0") != std::string::npos);
     assert(ir.semantic_drop_lowering_authorizations.empty());
-    assert(ir.planned_drop_declaration_state.declarations.empty());
-    assert(planned_drop_declaration_report(ir).empty());
+    assert(ir.owned_cleanup_declaration_state.declarations.empty());
+    assert(owned_cleanup_declaration_report(ir).empty());
     assert(emitted_drop_declaration_report(ir).empty());
     assert(ir.owned_cleanup_readiness_snapshot.semantic_authorizations.empty());
     assert(ir.owned_cleanup_readiness_snapshot.emitted_declarations.empty());
@@ -1719,8 +1719,8 @@ auto main() -> int {
     );
     assert(!dynamic_array_drop_readiness.has_errors());
     auto dynamic_array_drop_readiness_action_report =
-        planned_drop_action_report(dynamic_array_drop_readiness);
-    assert(dynamic_array_drop_readiness.planned_drop_action_state.actions.size() == 1);
+        owned_cleanup_action_report(dynamic_array_drop_readiness);
+    assert(dynamic_array_drop_readiness.owned_cleanup_action_state.actions.size() == 1);
     assert_line_contains(
         dynamic_array_drop_readiness_action_report,
         0,
@@ -5652,7 +5652,7 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
                         .owner_name = "items.element",
@@ -5734,7 +5734,7 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
                         .owner_name = "items.element",
@@ -5775,7 +5775,7 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
                         .owner_name = "items.element",
@@ -14078,7 +14078,7 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
                         .owner_name = "items.element",
@@ -14180,8 +14180,8 @@ auto main() -> int {
     assert(dynamic_array_authorized_readiness.owned_cleanup_readiness_snapshot.emitted_declarations.size() == 1);
     assert(dynamic_array_authorized_readiness.owned_cleanup_readiness_snapshot.cleanup_authorizations.size() == 1);
     auto dynamic_array_authorized_readiness_action_report =
-        planned_drop_action_report(dynamic_array_authorized_readiness);
-    assert(dynamic_array_authorized_readiness.planned_drop_action_state.actions.size() == 1);
+        owned_cleanup_action_report(dynamic_array_authorized_readiness);
+    assert(dynamic_array_authorized_readiness.owned_cleanup_action_state.actions.size() == 1);
     assert_line_contains(dynamic_array_authorized_readiness_action_report, 0, "capture items.element");
     assert(dynamic_array_authorized_readiness.owned_cleanup_readiness_summary.semantic_authorized == 1);
     assert(dynamic_array_authorized_readiness.owned_cleanup_readiness_summary.cleanup_authorized == 1);
@@ -14221,13 +14221,13 @@ auto main() -> int {
     auto multi_drop_readiness = pipeline.emit_llvm(multi_drop_readiness_path);
     assert(!multi_drop_readiness.has_errors());
     auto multi_drop_readiness_planned_report =
-        planned_drop_declaration_report(multi_drop_readiness);
-    assert(multi_drop_readiness.planned_drop_declaration_state.declarations.size() == 2);
+        owned_cleanup_declaration_report(multi_drop_readiness);
+    assert(multi_drop_readiness.owned_cleanup_declaration_state.declarations.size() == 2);
     assert_line_contains(multi_drop_readiness_planned_report, 0, "__orison_drop.Payload");
     assert_line_contains(multi_drop_readiness_planned_report, 1, "__orison_drop.OtherPayload");
     auto multi_drop_readiness_action_report =
-        planned_drop_action_report(multi_drop_readiness);
-    assert(multi_drop_readiness.planned_drop_action_state.actions.size() == 2);
+        owned_cleanup_action_report(multi_drop_readiness);
+    assert(multi_drop_readiness.owned_cleanup_action_state.actions.size() == 2);
     assert_line_contains(multi_drop_readiness_action_report, 0, "capture payload: Payload");
     assert_line_contains(multi_drop_readiness_action_report, 1, "capture other: OtherPayload");
     auto multi_drop_readiness_authorization_report =
@@ -17375,9 +17375,9 @@ auto main() -> int {
     auto has_planned_drop_declaration = [](orison::pipeline::CompilePipelineResult const& result,
                                            std::string_view symbol_name) {
         return std::any_of(
-            result.planned_drop_declaration_state.declarations.begin(),
-            result.planned_drop_declaration_state.declarations.end(),
-            [&](orison::lowering::PlannedDropDeclaration const& declaration) {
+            result.owned_cleanup_declaration_state.declarations.begin(),
+            result.owned_cleanup_declaration_state.declarations.end(),
+            [&](orison::lowering::OwnedCleanupDeclaration const& declaration) {
                 return declaration.symbol_name == symbol_name;
             }
         );

@@ -6,7 +6,7 @@
 #include <utility>
 
 int main() {
-    auto site = orison::semantics::PlannedDropSite {
+    auto site = orison::semantics::OwnedCleanupSite {
         .source_type_name = "Payload",
         .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Payload"),
         .owner_name = "payload",
@@ -347,13 +347,13 @@ int main() {
         orison::semantics::collect_compiler_intrinsic_owned_cleanup_implementations(
             {
                 site,
-                orison::semantics::PlannedDropSite {
+                orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Box<Payload>",
                     .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Box<Payload>"),
                     .owner_name = "box",
                     .site_line = 14,
                 },
-                orison::semantics::PlannedDropSite {
+                orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Unknown",
                     .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Unknown"),
                     .owner_name = "unknown",
@@ -370,7 +370,7 @@ int main() {
     assert(compiler_owned_implementations[1].declaration_line == 5);
     assert(compiler_owned_implementations[1].origin == orison::semantics::OwnedCleanupImplementationOrigin::compiler_intrinsic);
 
-    auto resource_site = orison::semantics::PlannedDropSite {
+    auto resource_site = orison::semantics::OwnedCleanupSite {
         .source_type_name = "Resource",
         .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Resource"),
         .owner_name = "resource",

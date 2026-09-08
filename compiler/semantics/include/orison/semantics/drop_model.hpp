@@ -39,7 +39,7 @@ struct OwnedCleanupImplementationCandidate {
     OwnedCleanupImplementationBodySummary body;
 };
 
-struct PlannedDropSite {
+struct OwnedCleanupSite {
     std::string source_type_name;
     std::string abi_symbol_name;
     std::string owner_name;
@@ -47,7 +47,7 @@ struct PlannedDropSite {
 };
 
 struct OwnedCleanupImplementationResolution {
-    PlannedDropSite site;
+    OwnedCleanupSite site;
     bool resolved = false;
 };
 
@@ -58,7 +58,7 @@ enum class OwnedCleanupImplementationBlockerReason {
 };
 
 struct OwnedCleanupImplementationDiagnostic {
-    PlannedDropSite site;
+    OwnedCleanupSite site;
     bool resolved = false;
     OwnedCleanupImplementationBlockerReason blocker_reason = OwnedCleanupImplementationBlockerReason::none;
 };
@@ -76,7 +76,7 @@ enum class SourceDropLoweringGate {
 };
 
 struct OwnedCleanupLoweringAuthorization {
-    PlannedDropSite site;
+    OwnedCleanupSite site;
     bool semantic_resolved = false;
     bool source_drop_lowering_enabled = false;
     bool compiler_intrinsic_owned_cleanup = false;
@@ -111,18 +111,18 @@ auto collect_source_derived_owned_cleanup_implementation_candidates(
 ) -> std::vector<OwnedCleanupImplementationCandidate>;
 
 auto collect_compiler_intrinsic_owned_cleanup_implementations(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     syntax::ModuleSyntax const& module
 ) -> std::vector<OwnedCleanupImplementation>;
 
 auto format_owned_cleanup_implementation(OwnedCleanupImplementation const& implementation) -> std::string;
 
-auto format_planned_drop_site(PlannedDropSite const& site) -> std::string;
+auto format_planned_drop_site(OwnedCleanupSite const& site) -> std::string;
 
-auto format_planned_drop_site_report(std::vector<PlannedDropSite> const& sites) -> std::vector<std::string>;
+auto format_planned_drop_site_report(std::vector<OwnedCleanupSite> const& sites) -> std::vector<std::string>;
 
 auto resolve_owned_cleanup_implementation(
-    PlannedDropSite site,
+    OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> OwnedCleanupImplementationResolution;
 
@@ -131,14 +131,14 @@ auto format_owned_cleanup_implementation_resolution(
 ) -> std::string;
 
 auto format_owned_cleanup_implementation_resolution_report(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string>;
 
 auto owned_cleanup_implementation_blocker_reason_name(OwnedCleanupImplementationBlockerReason reason) -> std::string_view;
 
 auto diagnose_owned_cleanup_implementation(
-    PlannedDropSite site,
+    OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> OwnedCleanupImplementationDiagnostic;
 
@@ -147,18 +147,18 @@ auto format_owned_cleanup_implementation_diagnostic(
 ) -> std::string;
 
 auto format_owned_cleanup_implementation_diagnostic_report(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string>;
 
 auto authorize_owned_cleanup_lowering(
-    PlannedDropSite site,
+    OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
 ) -> OwnedCleanupLoweringAuthorization;
 
 auto authorize_owned_cleanup_lowerings(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
     SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
 ) -> std::vector<OwnedCleanupLoweringAuthorization>;
@@ -168,7 +168,7 @@ auto format_owned_cleanup_lowering_authorization(
 ) -> std::string;
 
 auto format_owned_cleanup_lowering_authorization(
-    PlannedDropSite const& site,
+    OwnedCleanupSite const& site,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::string;
 
@@ -177,12 +177,12 @@ auto format_owned_cleanup_lowering_authorization_report(
 ) -> std::vector<std::string>;
 
 auto format_owned_cleanup_lowering_authorization_report(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<std::string>;
 
 auto summarize_owned_cleanup_implementation_resolutions(
-    std::vector<PlannedDropSite> const& sites,
+    std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations
 ) -> std::vector<OwnedCleanupImplementationResolutionSummary>;
 

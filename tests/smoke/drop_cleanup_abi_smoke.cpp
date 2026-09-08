@@ -26,7 +26,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
             .drop_cleanup = orison::lowering::ConcurrencyDropCleanupPlan {
                 .cleanup_symbol_name = "__orison_thread_cleanup.allowed.1.0",
                 .actions = {
-                    orison::lowering::PlannedDropAction {
+                    orison::lowering::OwnedCleanupAction {
                         .capture_name = "payload",
                         .source_type_name = "DropTestPayload",
                         .symbol_name = "__orison_drop.DropTestPayload",
@@ -44,7 +44,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
 int main() {
     auto plan = cleanup_plan();
 
-    auto declarations = orison::lowering::declared_drop_declarations_for_allowed_source_types(
+    auto declarations = orison::lowering::declared_owned_cleanup_declarations_for_allowed_source_types(
         plan.cleanup.drop_cleanup.actions,
         {"DropTestPayload"}
     );
@@ -70,7 +70,7 @@ int main() {
         "}\n"
     );
 
-    auto denied = orison::lowering::declared_drop_declarations_for_allowed_source_types(
+    auto denied = orison::lowering::declared_owned_cleanup_declarations_for_allowed_source_types(
         plan.cleanup.drop_cleanup.actions,
         {"OtherPayload"}
     );
@@ -104,7 +104,7 @@ int main() {
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "DropTestPayload",
                         .abi_symbol_name = "__orison_drop.DropTestPayload",
                         .owner_name = "payload",

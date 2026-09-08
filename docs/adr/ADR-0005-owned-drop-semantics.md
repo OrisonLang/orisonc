@@ -177,6 +177,8 @@ inventing semantics outside the spec/tour.
   semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 - Semantic cleanup helper functions now use `owned_cleanup_*` names internally. Existing `drop` wording remains only in
   compatibility report text, CLI flags, fixture source, and the `__orison_drop.*` ABI surface.
+- Planned cleanup site, action, declaration, and pipeline state types now use `OwnedCleanup*` names internally. Report
+  text, CLI flags, fixture source, test target names, and ABI symbols remain stable compatibility surfaces.
 
 ## Consequences
 

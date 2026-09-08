@@ -676,19 +676,19 @@ auto build_dynamic_array_allocation_call_emission_state(
     return state;
 }
 
-auto build_planned_drop_declaration_state(
+auto build_owned_cleanup_declaration_state(
     lowering::LlvmIrEmissionResult const& emission
-) -> PlannedDropDeclarationState {
-    return PlannedDropDeclarationState {
-        .declarations = emission.planned_drop_declarations,
+) -> OwnedCleanupDeclarationState {
+    return OwnedCleanupDeclarationState {
+        .declarations = emission.owned_cleanup_declarations,
     };
 }
 
-auto build_planned_drop_action_state(
+auto build_owned_cleanup_action_state(
     lowering::LlvmIrEmissionResult const& emission
-) -> PlannedDropActionState {
-    return PlannedDropActionState {
-        .actions = emission.planned_drop_actions,
+) -> OwnedCleanupActionState {
+    return OwnedCleanupActionState {
+        .actions = emission.owned_cleanup_actions,
     };
 }
 
@@ -702,7 +702,7 @@ auto build_owned_cleanup_authorization_state(
         state.authorizations.push_back(
             lowering::plan_owned_cleanup_authorization(
                 cleanup,
-                emission.planned_drop_declarations,
+                emission.owned_cleanup_declarations,
                 emission.semantic_drop_lowering_authorizations
             )
         );
@@ -3952,10 +3952,10 @@ void populate_lowering_emission_reports(
         std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
-    result.planned_drop_declaration_state =
-        build_planned_drop_declaration_state(emission);
-    result.planned_drop_action_state =
-        build_planned_drop_action_state(emission);
+    result.owned_cleanup_declaration_state =
+        build_owned_cleanup_declaration_state(emission);
+    result.owned_cleanup_action_state =
+        build_owned_cleanup_action_state(emission);
     result.owned_cleanup_authorization_state =
         build_owned_cleanup_authorization_state(emission);
     result.owned_cleanup_readiness_snapshot = emission.owned_cleanup_readiness_snapshot();

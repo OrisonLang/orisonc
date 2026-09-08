@@ -12,7 +12,7 @@ namespace orison::lowering {
 struct DynamicArrayCleanupObligation {
     std::string cleanup_symbol_name;
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
-    std::vector<PlannedDropAction> actions;
+    std::vector<OwnedCleanupAction> actions;
     bool requires_descriptor_deallocation = true;
 };
 

@@ -94,7 +94,7 @@ int main() {
         {},
         {},
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
@@ -108,13 +108,13 @@ int main() {
         {},
         {},
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
                 .emit_declaration = true,
             },
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,

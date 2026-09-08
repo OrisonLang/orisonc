@@ -9,14 +9,14 @@
 
 namespace orison::lowering {
 
-struct PlannedDropDeclaration {
+struct OwnedCleanupDeclaration {
     std::string symbol_name;
     std::string source_type_name;
     std::size_t discovery_line = 0;
     bool emit_declaration = false;
 };
 
-struct PlannedDropAction {
+struct OwnedCleanupAction {
     std::string capture_name;
     std::string source_type_name;
     std::string symbol_name;
@@ -24,40 +24,40 @@ struct PlannedDropAction {
     std::size_t discovery_line = 0;
 };
 
-auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) -> std::string;
+auto format_owned_cleanup_declaration(OwnedCleanupDeclaration const& declaration) -> std::string;
 
-auto format_planned_drop_action(PlannedDropAction const& action) -> std::string;
+auto format_owned_cleanup_action(OwnedCleanupAction const& action) -> std::string;
 
-auto format_planned_drop_report(
-    std::vector<PlannedDropDeclaration> const& declarations
+auto format_owned_cleanup_declaration_report(
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> std::vector<std::string>;
 
-auto format_emitted_drop_declaration_report(
-    std::vector<PlannedDropDeclaration> const& declarations
+auto format_emitted_owned_cleanup_declaration_report(
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> std::vector<std::string>;
 
-auto format_planned_drop_action_report(
-    std::vector<PlannedDropAction> const& actions
+auto format_owned_cleanup_action_report(
+    std::vector<OwnedCleanupAction> const& actions
 ) -> std::vector<std::string>;
 
-auto add_planned_drop_declaration(
-    std::vector<PlannedDropDeclaration>& declarations,
-    PlannedDropDeclaration declaration
+auto add_owned_cleanup_declaration(
+    std::vector<OwnedCleanupDeclaration>& declarations,
+    OwnedCleanupDeclaration declaration
 ) -> bool;
 
-auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> PlannedDropDeclaration;
+auto owned_cleanup_declaration_for_action(OwnedCleanupAction const& action) -> OwnedCleanupDeclaration;
 
-auto planned_drop_declaration_for_authorization(
+auto owned_cleanup_declaration_for_authorization(
     semantics::OwnedCleanupLoweringAuthorization const& authorization
-) -> PlannedDropDeclaration;
+) -> OwnedCleanupDeclaration;
 
-auto declared_drop_declarations_for_authorized_semantic_drops(
+auto declared_owned_cleanup_declarations_for_authorized_semantic_drops(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
-) -> std::vector<PlannedDropDeclaration>;
+) -> std::vector<OwnedCleanupDeclaration>;
 
-auto declared_drop_declarations_for_allowed_source_types(
-    std::vector<PlannedDropAction> const& actions,
+auto declared_owned_cleanup_declarations_for_allowed_source_types(
+    std::vector<OwnedCleanupAction> const& actions,
     std::vector<std::string_view> const& allowed_source_type_names
-) -> std::vector<PlannedDropDeclaration>;
+) -> std::vector<OwnedCleanupDeclaration>;
 
 }  // namespace orison::lowering

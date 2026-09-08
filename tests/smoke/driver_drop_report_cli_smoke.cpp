@@ -127,7 +127,7 @@ auto run_semantic_dynamic_array_descriptor_origins(
     return run_single_file_command(app, "--semantic-dynamic-array-descriptor-origins", path);
 }
 
-auto run_planned_drop_actions(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+auto run_owned_cleanup_actions(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     return run_single_file_command(app, "--planned-drop-actions", path);
 }
@@ -686,8 +686,8 @@ int main() {
 
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
     assert_success_with_stdout_contains(semantic_drop_summary, {"drop resolution summary __orison_drop.Payload"});
-    auto planned_drop_actions = run_planned_drop_actions(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(planned_drop_actions, {"planned drop action __orison_drop.Payload"});
+    auto owned_cleanup_actions = run_owned_cleanup_actions(app, planned_drop_report_path);
+    assert_success_with_stdout_contains(owned_cleanup_actions, {"planned drop action __orison_drop.Payload"});
     auto emitted_drops = run_emitted_drops(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         emitted_drops,
@@ -769,8 +769,8 @@ int main() {
     auto empty_semantic_dynamic_array_descriptor_origins =
         run_semantic_dynamic_array_descriptor_origins(app, clean_emit_path);
     assert_success_with_empty_stdout(empty_semantic_dynamic_array_descriptor_origins);
-    auto empty_planned_drop_actions = run_planned_drop_actions(app, clean_emit_path);
-    assert_success_with_empty_stdout(empty_planned_drop_actions);
+    auto empty_owned_cleanup_actions = run_owned_cleanup_actions(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_owned_cleanup_actions);
     auto empty_emitted_drops = run_emitted_drops(app, clean_emit_path);
     assert_success_with_empty_stdout(empty_emitted_drops);
     auto empty_drop_cleanup_authorization = run_drop_cleanup_authorization(app, clean_emit_path);
@@ -1459,9 +1459,9 @@ int main() {
         multi_planned_drop_report,
         {"planned drop __orison_drop.Payload", "planned drop __orison_drop.OtherPayload"}
     );
-    auto multi_planned_drop_actions = run_planned_drop_actions(app, multi_drop_readiness_fixture_path);
+    auto multi_owned_cleanup_actions = run_owned_cleanup_actions(app, multi_drop_readiness_fixture_path);
     assert_success_with_stdout_contains(
-        multi_planned_drop_actions,
+        multi_owned_cleanup_actions,
         {"capture payload: Payload", "capture other: OtherPayload"}
     );
     auto multi_drop_cleanup_authorization =
@@ -1492,9 +1492,9 @@ int main() {
     );
     auto deduped_planned_drop_report = run_planned_drops(app, deduped_planned_drop_report_path);
     assert_success_with_stdout_contains(deduped_planned_drop_report, {"planned drop __orison_drop.Payload"});
-    auto deduped_planned_drop_actions = run_planned_drop_actions(app, deduped_planned_drop_report_path);
+    auto deduped_owned_cleanup_actions = run_owned_cleanup_actions(app, deduped_planned_drop_report_path);
     assert_success_with_stdout_contains(
-        deduped_planned_drop_actions,
+        deduped_owned_cleanup_actions,
         {"capture left: Payload", "capture right: Payload"}
     );
 

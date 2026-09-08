@@ -576,18 +576,18 @@ auto emit_source_drop_definitions(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
-    std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
+    std::vector<OwnedCleanupDeclaration> const& owned_cleanup_declarations,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
     auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
-    auto sites = std::vector<semantics::PlannedDropSite> {};
+    auto sites = std::vector<semantics::OwnedCleanupSite> {};
     sites.reserve(authorizations.size());
     for (auto const& authorization : authorizations) {
         sites.push_back(authorization.site);
     }
-    for (auto const& declaration : planned_drop_declarations) {
-        sites.push_back(semantics::PlannedDropSite {
+    for (auto const& declaration : owned_cleanup_declarations) {
+        sites.push_back(semantics::OwnedCleanupSite {
             .source_type_name = declaration.source_type_name,
             .abi_symbol_name = declaration.symbol_name,
             .site_line = declaration.discovery_line,
@@ -611,7 +611,7 @@ auto emit_source_drop_definitions(
         );
     }
     auto emitted_symbols = collect_source_drop_definition_symbols(module, context, authorizations, options);
-    for (auto const& declaration : planned_drop_declarations) {
+    for (auto const& declaration : owned_cleanup_declarations) {
         if (!declaration.emit_declaration) {
             continue;
         }
@@ -826,7 +826,7 @@ auto collect_source_drop_definition_symbols(
 ) -> std::vector<std::string> {
     auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
-    auto sites = std::vector<semantics::PlannedDropSite> {};
+    auto sites = std::vector<semantics::OwnedCleanupSite> {};
     sites.reserve(authorizations.size());
     for (auto const& authorization : authorizations) {
         sites.push_back(authorization.site);
@@ -1470,21 +1470,21 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     }
 }
 
-auto declared_drop_declarations_for_runtime_indexed_cleanup(
+auto declared_owned_cleanup_declarations_for_runtime_indexed_cleanup(
     syntax::ModuleSyntax const& module
-) -> std::vector<PlannedDropDeclaration> {
+) -> std::vector<OwnedCleanupDeclaration> {
     auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
-    auto declarations = std::vector<PlannedDropDeclaration> {};
+    auto declarations = std::vector<OwnedCleanupDeclaration> {};
     for (auto const& implementation : implementations) {
         if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||
             !implementation.proven ||
             !implementation.body.finite) {
             continue;
         }
-        add_planned_drop_declaration(
+        add_owned_cleanup_declaration(
             declarations,
-            PlannedDropDeclaration {
+            OwnedCleanupDeclaration {
                 .symbol_name = implementation.abi_symbol_name,
                 .source_type_name = implementation.source_type_name,
                 .discovery_line = implementation.declaration_line,
@@ -1517,7 +1517,7 @@ auto validate_prelude_module_symbols(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
-    std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
+    std::vector<OwnedCleanupDeclaration> const& owned_cleanup_declarations,
     std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations,
     std::vector<std::string> const& source_defined_drop_symbols,
     ModuleSymbolRegistry& registry,
@@ -1618,7 +1618,7 @@ auto validate_prelude_module_symbols(
             diagnostics
         );
     }
-    for (auto const& declaration : planned_drop_declarations) {
+    for (auto const& declaration : owned_cleanup_declarations) {
         if (!declaration.emit_declaration ||
             emitted_symbols.contains(declaration.symbol_name)) {
             continue;
@@ -3253,11 +3253,11 @@ auto dynamic_array_element_drop_action(
     DynamicArrayConstructionPlan const& plan,
     std::size_t ordinal,
     std::string_view owner_name
-) -> PlannedDropAction {
+) -> OwnedCleanupAction {
     auto capture_name = !owner_name.empty()
         ? std::string {owner_name} + ".element"
         : "dynamic_array" + std::to_string(ordinal) + ".element";
-    return PlannedDropAction {
+    return OwnedCleanupAction {
         .capture_name = std::move(capture_name),
         .source_type_name = plan.element_source_type_name,
         .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
@@ -3556,23 +3556,23 @@ auto collect_dynamic_array_descriptor_lifetime_plans(
     return plans;
 }
 
-void add_dynamic_array_planned_drop_declarations(
+void add_dynamic_array_owned_cleanup_declarations(
     LlvmIrEmissionOptions const& options,
-    std::vector<PlannedDropDeclaration>& declarations,
-    std::vector<PlannedDropAction> const& actions
+    std::vector<OwnedCleanupDeclaration>& declarations,
+    std::vector<OwnedCleanupAction> const& actions
 ) {
     if (options.test_only_declared_drop_source_type_allowlist.empty()) {
         for (auto const& action : actions) {
-            add_planned_drop_declaration(declarations, planned_drop_declaration_for_action(action));
+            add_owned_cleanup_declaration(declarations, owned_cleanup_declaration_for_action(action));
         }
         return;
     }
 
-    for (auto declaration : declared_drop_declarations_for_allowed_source_types(
+    for (auto declaration : declared_owned_cleanup_declarations_for_allowed_source_types(
              actions,
              options.test_only_declared_drop_source_type_allowlist
          )) {
-        add_planned_drop_declaration(declarations, std::move(declaration));
+        add_owned_cleanup_declaration(declarations, std::move(declaration));
     }
 }
 
@@ -3950,7 +3950,7 @@ auto LlvmIrEmissionResult::render(std::string_view path) const -> std::string {
 }
 
 auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::string> {
-    return format_planned_drop_report(planned_drop_declarations);
+    return format_owned_cleanup_declaration_report(owned_cleanup_declarations);
 }
 
 auto LlvmIrEmissionResult::dynamic_array_construction_plan_report() const -> std::vector<std::string> {
@@ -4055,11 +4055,11 @@ auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::
 }
 
 auto LlvmIrEmissionResult::emitted_drop_declaration_report() const -> std::vector<std::string> {
-    return format_emitted_drop_declaration_report(planned_drop_declarations);
+    return format_emitted_owned_cleanup_declaration_report(owned_cleanup_declarations);
 }
 
-auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std::string> {
-    return format_planned_drop_action_report(planned_drop_actions);
+auto LlvmIrEmissionResult::owned_cleanup_action_report() const -> std::vector<std::string> {
+    return format_owned_cleanup_action_report(owned_cleanup_actions);
 }
 
 auto LlvmIrEmissionResult::owned_cleanup_authorization_report() const -> std::vector<std::string> {
@@ -4067,7 +4067,7 @@ auto LlvmIrEmissionResult::owned_cleanup_authorization_report() const -> std::ve
     for (auto const& cleanup : drop_cleanups) {
         auto authorization = plan_owned_cleanup_authorization(
             cleanup,
-            planned_drop_declarations,
+            owned_cleanup_declarations,
             semantic_drop_lowering_authorizations
         );
         if (
@@ -4085,7 +4085,7 @@ auto LlvmIrEmissionResult::owned_cleanup_authorization_report() const -> std::ve
 auto LlvmIrEmissionResult::owned_cleanup_readiness_snapshot() const -> OwnedCleanupReadinessSnapshot {
     return plan_owned_cleanup_readiness_snapshot(
         semantic_drop_lowering_authorizations,
-        planned_drop_declarations,
+        owned_cleanup_declarations,
         drop_cleanups
     );
 }
@@ -4145,32 +4145,32 @@ auto emit_module(
         semantic_result
     );
     for (auto const& cleanup : result.drop_cleanups) {
-        result.planned_drop_actions.insert(
-            result.planned_drop_actions.end(),
+        result.owned_cleanup_actions.insert(
+            result.owned_cleanup_actions.end(),
             cleanup.actions.begin(),
             cleanup.actions.end()
         );
     }
     if (options.test_only_declared_drop_source_type_allowlist.empty()) {
-        for (auto const& action : result.planned_drop_actions) {
-            add_planned_drop_declaration(
-                result.planned_drop_declarations,
-                planned_drop_declaration_for_action(action)
+        for (auto const& action : result.owned_cleanup_actions) {
+            add_owned_cleanup_declaration(
+                result.owned_cleanup_declarations,
+                owned_cleanup_declaration_for_action(action)
             );
         }
-        for (auto declaration : declared_drop_declarations_for_authorized_semantic_drops(
+        for (auto declaration : declared_owned_cleanup_declarations_for_authorized_semantic_drops(
                  result.semantic_drop_lowering_authorizations
              )) {
-            add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
+            add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));
         }
         if (options.enable_runtime_indexed_cleanup_source_drop_emission) {
-            for (auto declaration : declared_drop_declarations_for_runtime_indexed_cleanup(module)) {
-                add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
+            for (auto declaration : declared_owned_cleanup_declarations_for_runtime_indexed_cleanup(module)) {
+                add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));
             }
         }
     } else {
-        result.planned_drop_declarations = declared_drop_declarations_for_allowed_source_types(
-            result.planned_drop_actions,
+        result.owned_cleanup_declarations = declared_owned_cleanup_declarations_for_allowed_source_types(
+            result.owned_cleanup_actions,
             options.test_only_declared_drop_source_type_allowlist
         );
     }
@@ -4348,14 +4348,14 @@ auto emit_module(
             std::make_move_iterator(dynamic_array_descriptor_drop_cleanups.end())
         );
         for (auto& cleanup : dynamic_array_drop_cleanups) {
-            result.planned_drop_actions.insert(
-                result.planned_drop_actions.end(),
+            result.owned_cleanup_actions.insert(
+                result.owned_cleanup_actions.end(),
                 cleanup.actions.begin(),
                 cleanup.actions.end()
             );
-            add_dynamic_array_planned_drop_declarations(
+            add_dynamic_array_owned_cleanup_declarations(
                 options,
-                result.planned_drop_declarations,
+                result.owned_cleanup_declarations,
                 cleanup.actions
             );
             result.generated_module_symbols.push_back(GeneratedModuleSymbol {
@@ -4692,7 +4692,7 @@ auto emit_module(
             module,
             context,
             concurrency_runtime_operations,
-            result.planned_drop_declarations,
+            result.owned_cleanup_declarations,
             result.dynamic_array_runtime_operations,
             source_defined_drop_symbols,
             module_symbol_registry,
@@ -4704,7 +4704,7 @@ auto emit_module(
         string_constants,
         context.foreign_declarations,
         concurrency_runtime_operations,
-        result.planned_drop_declarations,
+        result.owned_cleanup_declarations,
         result.dynamic_array_runtime_operations,
         source_defined_drop_symbols
     );
@@ -4712,7 +4712,7 @@ auto emit_module(
         module,
         context,
         result.semantic_drop_lowering_authorizations,
-        result.planned_drop_declarations,
+        result.owned_cleanup_declarations,
         options
     );
     for (auto const& function : module.functions) {

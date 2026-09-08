@@ -254,7 +254,7 @@ void test_authorizes_owned_element_cleanup() {
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
                         .owner_name = "items.element",
@@ -390,7 +390,7 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
             .semantic_drop_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
+                    .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
                         .abi_symbol_name = "__orison_drop.Payload",
                         .owner_name = "retained.element",

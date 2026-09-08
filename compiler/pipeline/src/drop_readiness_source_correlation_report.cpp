@@ -7,8 +7,8 @@ namespace orison::pipeline {
 namespace {
 
 auto same_planned_drop_action(
-    lowering::PlannedDropAction const& left,
-    lowering::PlannedDropAction const& right
+    lowering::OwnedCleanupAction const& left,
+    lowering::OwnedCleanupAction const& right
 ) -> bool {
     return left.symbol_name == right.symbol_name &&
            left.source_type_name == right.source_type_name &&
@@ -18,13 +18,13 @@ auto same_planned_drop_action(
 }
 
 void append_unique_action(
-    std::vector<lowering::PlannedDropAction>& actions,
-    lowering::PlannedDropAction const& action
+    std::vector<lowering::OwnedCleanupAction>& actions,
+    lowering::OwnedCleanupAction const& action
 ) {
     auto const existing = std::find_if(
         actions.begin(),
         actions.end(),
-        [&action](lowering::PlannedDropAction const& candidate) {
+        [&action](lowering::OwnedCleanupAction const& candidate) {
             return same_planned_drop_action(candidate, action);
         }
     );
@@ -34,7 +34,7 @@ void append_unique_action(
 }
 
 auto find_semantic_authorization(
-    lowering::PlannedDropAction const& action,
+    lowering::OwnedCleanupAction const& action,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> semantics::OwnedCleanupLoweringAuthorization const* {
     auto exact = std::find_if(
@@ -62,13 +62,13 @@ auto find_semantic_authorization(
 }
 
 auto has_emitted_declaration(
-    lowering::PlannedDropAction const& action,
-    std::vector<lowering::PlannedDropDeclaration> const& declarations
+    lowering::OwnedCleanupAction const& action,
+    std::vector<lowering::OwnedCleanupDeclaration> const& declarations
 ) -> bool {
     return std::find_if(
         declarations.begin(),
         declarations.end(),
-        [&action](lowering::PlannedDropDeclaration const& declaration) {
+        [&action](lowering::OwnedCleanupDeclaration const& declaration) {
             return declaration.symbol_name == action.symbol_name &&
                    declaration.source_type_name == action.source_type_name &&
                    declaration.emit_declaration;
@@ -82,7 +82,7 @@ auto format_drop_readiness_source_correlation_report(
     lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    auto correlated_actions = std::vector<lowering::PlannedDropAction> {};
+    auto correlated_actions = std::vector<lowering::OwnedCleanupAction> {};
     for (auto const& cleanup : snapshot.cleanup_authorizations) {
         for (auto const& action : cleanup.authorization.semantic_lowering_blockers) {
             append_unique_action(correlated_actions, action);
@@ -98,7 +98,7 @@ auto format_drop_readiness_source_correlation_report(
     lines.push_back(header.str());
 
     for (auto const& cleanup : snapshot.cleanup_authorizations) {
-        auto cleanup_actions = std::vector<lowering::PlannedDropAction> {};
+        auto cleanup_actions = std::vector<lowering::OwnedCleanupAction> {};
         for (auto const& action : cleanup.authorization.semantic_lowering_blockers) {
             append_unique_action(cleanup_actions, action);
         }

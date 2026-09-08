@@ -24,7 +24,7 @@ int main() {
             .drop_cleanup = orison::lowering::ConcurrencyDropCleanupPlan {
                 .cleanup_symbol_name = "__orison_thread_cleanup.manual.1.0",
                 .actions = {
-                    orison::lowering::PlannedDropAction {
+                    orison::lowering::OwnedCleanupAction {
                         .capture_name = "payload",
                         .source_type_name = "Payload",
                         .symbol_name = "__orison_drop.Payload",
@@ -39,7 +39,7 @@ int main() {
     assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         plan.cleanup.drop_cleanup,
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 1,

@@ -10,7 +10,7 @@ namespace {
 auto collect_discovered_drop_implementations(
     syntax::ModuleSyntax const& module,
     CompilePipelineOptions const& options,
-    std::vector<semantics::PlannedDropSite> const& semantic_summary_drop_sites
+    std::vector<semantics::OwnedCleanupSite> const& semantic_summary_drop_sites
 ) -> std::vector<SemanticDropImplementationDiscovery> {
     auto discovered_drop_implementations = std::vector<SemanticDropImplementationDiscovery> {};
     discovered_drop_implementations.reserve(

@@ -58,7 +58,7 @@ void planned_drop_declaration_collisions_are_diagnosed() {
     auto diagnostics = orison::diagnostics::DiagnosticBag {};
     assert(registry.register_symbol("__orison_drop.Payload", "source function symbol", 4, diagnostics));
 
-    auto declaration = orison::lowering::PlannedDropDeclaration {
+    auto declaration = orison::lowering::OwnedCleanupDeclaration {
         .symbol_name = "__orison_drop.Payload",
         .source_type_name = "Payload",
         .discovery_line = 18,

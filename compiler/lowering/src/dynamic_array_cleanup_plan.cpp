@@ -65,11 +65,11 @@ auto dynamic_array_parameter_element_cleanup_proven(
 auto dynamic_array_descriptor_element_drop_action(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::size_t ordinal
-) -> PlannedDropAction {
+) -> OwnedCleanupAction {
     auto capture_name = !plan.owner_name.empty()
         ? plan.owner_name + ".element"
         : "dynamic_array_descriptor" + std::to_string(ordinal) + ".element";
-    return PlannedDropAction {
+    return OwnedCleanupAction {
         .capture_name = std::move(capture_name),
         .source_type_name = plan.element_source_type_name,
         .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
@@ -81,8 +81,8 @@ auto dynamic_array_descriptor_element_drop_action(
 auto dynamic_array_parameter_drop_action(
     std::string_view name,
     DynamicArrayDescriptorCleanupPlan const& plan
-) -> PlannedDropAction {
-    return PlannedDropAction {
+) -> OwnedCleanupAction {
+    return OwnedCleanupAction {
         .capture_name = std::string {name} + ".element",
         .source_type_name = plan.element_source_type_name,
         .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
@@ -189,7 +189,7 @@ auto authorized_element_drop_symbol_name(
         .requires_semantic_authorization = true,
         .requires_descriptor_deallocation = true,
     };
-    auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
+    auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
         options.semantic_drop_lowering_authorizations
     );
     auto authorization = plan_owned_cleanup_authorization(
@@ -204,7 +204,7 @@ auto authorized_element_drop_symbol_name(
 }
 
 auto dynamic_array_cleanup_action_authorized(
-    PlannedDropAction const& action,
+    OwnedCleanupAction const& action,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
     return std::ranges::any_of(authorizations, [&](auto const& authorization) {
@@ -229,7 +229,7 @@ auto synthetic_dynamic_array_parameter_cleanup_authorizations(
         }
         for (auto const& action : plan.sequence_plan.obligation.actions) {
             authorizations.push_back(semantics::OwnedCleanupLoweringAuthorization {
-                .site = semantics::PlannedDropSite {
+                .site = semantics::OwnedCleanupSite {
                     .source_type_name = action.source_type_name,
                     .abi_symbol_name = action.symbol_name,
                     .owner_name = action.capture_name,
@@ -262,7 +262,7 @@ auto authorized_descriptor_element_drop_symbol_name(
         return std::nullopt;
     }
     auto cleanup = drop_cleanup_for_dynamic_array_cleanup_obligation(obligation);
-    auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
+    auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
         options.semantic_drop_lowering_authorizations
     );
     auto authorization = plan_owned_cleanup_authorization(
@@ -770,7 +770,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         }
         descriptor_cleanup = std::move(lifetime_plan->descriptor_cleanup);
 
-        auto actions = std::vector<PlannedDropAction> {};
+        auto actions = std::vector<OwnedCleanupAction> {};
         if (drop_symbol_name.has_value()) {
             actions.push_back(dynamic_array_parameter_drop_action(name, *descriptor_cleanup));
         }

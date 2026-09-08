@@ -193,7 +193,7 @@ auto format_semantic_drop_obligation_report(
 
 auto project_semantic_drop_obligations(
     SemanticModuleSummary const& summary
-) -> std::vector<PlannedDropSite>;
+) -> std::vector<OwnedCleanupSite>;
 
 class ModuleSemanticAnalyzer {
 public:

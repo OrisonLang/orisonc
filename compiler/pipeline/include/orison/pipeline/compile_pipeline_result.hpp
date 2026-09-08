@@ -99,8 +99,8 @@ struct CompilePipelineResult {
     ComputedDynamicArrayForProductionSequenceModuleIrArtifactState
         computed_dynamic_array_for_production_sequence_module_ir_artifact_state;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
-    PlannedDropDeclarationState planned_drop_declaration_state;
-    PlannedDropActionState planned_drop_action_state;
+    OwnedCleanupDeclarationState owned_cleanup_declaration_state;
+    OwnedCleanupActionState owned_cleanup_action_state;
     OwnedCleanupAuthorizationState owned_cleanup_authorization_state;
     lowering::OwnedCleanupReadinessSnapshot owned_cleanup_readiness_snapshot;
     lowering::OwnedCleanupReadinessSummary owned_cleanup_readiness_summary;

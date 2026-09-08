@@ -217,7 +217,7 @@ int main() {
     auto semantic_blocked_authorization = orison::lowering::plan_owned_cleanup_authorization(
         authorized_plan,
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
@@ -226,7 +226,7 @@ int main() {
         },
         {
             orison::semantics::OwnedCleanupLoweringAuthorization {
-                .site = orison::semantics::PlannedDropSite {
+                .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",
                     .owner_name = "payload",
@@ -266,7 +266,7 @@ int main() {
     auto semantic_blocked_readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
         {
             orison::semantics::OwnedCleanupLoweringAuthorization {
-                .site = orison::semantics::PlannedDropSite {
+                .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",
                     .owner_name = "payload",
@@ -278,7 +278,7 @@ int main() {
             },
         },
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
@@ -303,7 +303,7 @@ int main() {
     auto readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
         {
             orison::semantics::OwnedCleanupLoweringAuthorization {
-                .site = orison::semantics::PlannedDropSite {
+                .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
                     .abi_symbol_name = "__orison_drop.Payload",
                     .owner_name = "payload",
@@ -315,7 +315,7 @@ int main() {
             },
         },
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
@@ -360,7 +360,7 @@ int main() {
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         authorized_plan,
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
@@ -371,7 +371,7 @@ int main() {
     assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         authorized_plan,
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
@@ -383,7 +383,7 @@ int main() {
     auto successful_authorization = orison::lowering::plan_owned_cleanup_authorization(
         authorized_plan,
         {
-            orison::lowering::PlannedDropDeclaration {
+            orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_drop.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 20,

@@ -7,7 +7,7 @@
 
 namespace orison::lowering {
 
-auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) -> std::string {
+auto format_owned_cleanup_declaration(OwnedCleanupDeclaration const& declaration) -> std::string {
     auto output = std::ostringstream {};
     output << "planned drop " << declaration.symbol_name;
     if (!declaration.source_type_name.empty()) {
@@ -22,7 +22,7 @@ auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) 
     return output.str();
 }
 
-auto format_planned_drop_action(PlannedDropAction const& action) -> std::string {
+auto format_owned_cleanup_action(OwnedCleanupAction const& action) -> std::string {
     auto output = std::ostringstream {};
     output << "planned drop action " << action.symbol_name;
     if (!action.capture_name.empty()) {
@@ -39,44 +39,44 @@ auto format_planned_drop_action(PlannedDropAction const& action) -> std::string 
     return output.str();
 }
 
-auto format_planned_drop_report(
-    std::vector<PlannedDropDeclaration> const& declarations
+auto format_owned_cleanup_declaration_report(
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(declarations.size());
     for (auto const& declaration : declarations) {
-        report.push_back(format_planned_drop_declaration(declaration));
+        report.push_back(format_owned_cleanup_declaration(declaration));
     }
     return report;
 }
 
-auto format_emitted_drop_declaration_report(
-    std::vector<PlannedDropDeclaration> const& declarations
+auto format_emitted_owned_cleanup_declaration_report(
+    std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     for (auto const& declaration : declarations) {
         if (!declaration.emit_declaration) {
             continue;
         }
-        report.push_back(format_planned_drop_declaration(declaration));
+        report.push_back(format_owned_cleanup_declaration(declaration));
     }
     return report;
 }
 
-auto format_planned_drop_action_report(
-    std::vector<PlannedDropAction> const& actions
+auto format_owned_cleanup_action_report(
+    std::vector<OwnedCleanupAction> const& actions
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(actions.size());
     for (auto const& action : actions) {
-        report.push_back(format_planned_drop_action(action));
+        report.push_back(format_owned_cleanup_action(action));
     }
     return report;
 }
 
-auto add_planned_drop_declaration(
-    std::vector<PlannedDropDeclaration>& declarations,
-    PlannedDropDeclaration declaration
+auto add_owned_cleanup_declaration(
+    std::vector<OwnedCleanupDeclaration>& declarations,
+    OwnedCleanupDeclaration declaration
 ) -> bool {
     for (auto& existing_declaration : declarations) {
         if (existing_declaration.symbol_name == declaration.symbol_name) {
@@ -89,18 +89,18 @@ auto add_planned_drop_declaration(
     return true;
 }
 
-auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> PlannedDropDeclaration {
-    return PlannedDropDeclaration {
+auto owned_cleanup_declaration_for_action(OwnedCleanupAction const& action) -> OwnedCleanupDeclaration {
+    return OwnedCleanupDeclaration {
         .symbol_name = action.symbol_name,
         .source_type_name = action.source_type_name,
         .discovery_line = action.discovery_line,
     };
 }
 
-auto planned_drop_declaration_for_authorization(
+auto owned_cleanup_declaration_for_authorization(
     semantics::OwnedCleanupLoweringAuthorization const& authorization
-) -> PlannedDropDeclaration {
-    return PlannedDropDeclaration {
+) -> OwnedCleanupDeclaration {
+    return OwnedCleanupDeclaration {
         .symbol_name = authorization.site.abi_symbol_name,
         .source_type_name = authorization.site.source_type_name,
         .discovery_line = authorization.site.site_line,
@@ -108,27 +108,27 @@ auto planned_drop_declaration_for_authorization(
     };
 }
 
-auto declared_drop_declarations_for_authorized_semantic_drops(
+auto declared_owned_cleanup_declarations_for_authorized_semantic_drops(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
-) -> std::vector<PlannedDropDeclaration> {
-    auto declarations = std::vector<PlannedDropDeclaration> {};
+) -> std::vector<OwnedCleanupDeclaration> {
+    auto declarations = std::vector<OwnedCleanupDeclaration> {};
     for (auto const& authorization : authorizations) {
         if (!authorization.authorized) {
             continue;
         }
-        add_planned_drop_declaration(
+        add_owned_cleanup_declaration(
             declarations,
-            planned_drop_declaration_for_authorization(authorization)
+            owned_cleanup_declaration_for_authorization(authorization)
         );
     }
     return declarations;
 }
 
-auto declared_drop_declarations_for_allowed_source_types(
-    std::vector<PlannedDropAction> const& actions,
+auto declared_owned_cleanup_declarations_for_allowed_source_types(
+    std::vector<OwnedCleanupAction> const& actions,
     std::vector<std::string_view> const& allowed_source_type_names
-) -> std::vector<PlannedDropDeclaration> {
-    auto declarations = std::vector<PlannedDropDeclaration> {};
+) -> std::vector<OwnedCleanupDeclaration> {
+    auto declarations = std::vector<OwnedCleanupDeclaration> {};
     for (auto const& action : actions) {
         auto const allowed = std::find(
             allowed_source_type_names.begin(),
@@ -138,9 +138,9 @@ auto declared_drop_declarations_for_allowed_source_types(
         if (!allowed) {
             continue;
         }
-        auto declaration = planned_drop_declaration_for_action(action);
+        auto declaration = owned_cleanup_declaration_for_action(action);
         declaration.emit_declaration = true;
-        add_planned_drop_declaration(declarations, std::move(declaration));
+        add_owned_cleanup_declaration(declarations, std::move(declaration));
     }
     return declarations;
 }
