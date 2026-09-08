@@ -169,6 +169,8 @@ inventing semantics outside the spec/tour.
   internal compatibility seam for focused unit coverage.
 - Compiler-intrinsic owned cleanup authorization does not depend on the source-drop lowering gate. Source-derived
   cleanup implementations remain gated test seams until an explicit source finalization model is accepted.
+- Driver report adapters use owned-cleanup naming internally while existing `--drop-*` diagnostic flags and
+  `__orison_drop.*` ABI symbols remain stable compatibility surfaces.
 
 ## Consequences
 
