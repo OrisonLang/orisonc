@@ -42,12 +42,12 @@ auto main() -> int {
     assert(empty_report.front() == "drop readiness source correlations actions 0 semantic sites 0");
 
     auto action = payload_action();
-    auto unresolved_snapshot = orison::lowering::DropReadinessSnapshot {
+    auto unresolved_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .semantic_authorizations = {payload_authorization("payload", false)},
         .cleanup_authorizations = {
-            orison::lowering::DropCleanupReadiness {
+            orison::lowering::OwnedCleanupReadiness {
                 .cleanup_symbol_name = "__orison_thread_cleanup.launch.12.0",
-                .authorization = orison::lowering::DropCleanupAuthorizationReport {
+                .authorization = orison::lowering::OwnedCleanupAuthorizationReport {
                     .semantic_lowering_blockers = {action},
                     .semantic_unresolved_blockers = {action},
                     .missing_declarations = {action},

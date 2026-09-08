@@ -35,10 +35,10 @@ auto drop_authorization(
 }
 
 auto cleanup_readiness(
-    orison::lowering::DropCleanupAuthorizationReport authorization,
+    orison::lowering::OwnedCleanupAuthorizationReport authorization,
     int line = 12
-) -> orison::lowering::DropCleanupReadiness {
-    return orison::lowering::DropCleanupReadiness {
+) -> orison::lowering::OwnedCleanupReadiness {
+    return orison::lowering::OwnedCleanupReadiness {
         .cleanup_symbol_name = "__orison_thread_cleanup.launch." + std::to_string(line) + ".0",
         .authorization = std::move(authorization),
     };
@@ -47,32 +47,32 @@ auto cleanup_readiness(
 }  // namespace
 
 auto main() -> int {
-    auto empty_snapshot = orison::lowering::DropReadinessSnapshot {};
-    auto empty_snapshot_report = orison::lowering::format_drop_readiness_snapshot_report(empty_snapshot);
+    auto empty_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {};
+    auto empty_snapshot_report = orison::lowering::format_owned_cleanup_readiness_snapshot_report(empty_snapshot);
     assert(empty_snapshot_report.size() == 1);
     assert(
         empty_snapshot_report.front() ==
         "drop readiness snapshot semantic authorizations 0 emitted declarations 0 cleanup authorizations 0"
     );
-    auto empty_summary = orison::lowering::summarize_drop_readiness(empty_snapshot);
+    auto empty_summary = orison::lowering::summarize_owned_cleanup_readiness(empty_snapshot);
     assert(
-        orison::lowering::format_drop_readiness_summary(empty_summary) ==
+        orison::lowering::format_owned_cleanup_readiness_summary(empty_summary) ==
         "drop readiness summary semantic authorized 0 blocked 0 emitted declarations 0 cleanup authorized 0 blocked 0"
     );
 
     auto action = payload_action();
-    auto blocked_snapshot = orison::lowering::DropReadinessSnapshot {
+    auto blocked_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .semantic_authorizations = {
             drop_authorization("Payload", "__orison_drop.Payload", false),
         },
         .cleanup_authorizations = {
-            cleanup_readiness(orison::lowering::DropCleanupAuthorizationReport {
+            cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
                 .semantic_lowering_blockers = {action},
                 .missing_declarations = {action},
             }),
         },
     };
-    auto blocked_snapshot_report = orison::lowering::format_drop_readiness_snapshot_report(blocked_snapshot);
+    auto blocked_snapshot_report = orison::lowering::format_owned_cleanup_readiness_snapshot_report(blocked_snapshot);
     assert(blocked_snapshot_report.size() == 3);
     assert(
         blocked_snapshot_report[0] ==
@@ -83,13 +83,13 @@ auto main() -> int {
         blocked_snapshot_report[2] ==
         "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked semantic blockers 1 missing declarations 1"
     );
-    auto blocked_summary = orison::lowering::summarize_drop_readiness(blocked_snapshot);
+    auto blocked_summary = orison::lowering::summarize_owned_cleanup_readiness(blocked_snapshot);
     assert(
-        orison::lowering::format_drop_readiness_summary(blocked_summary) ==
+        orison::lowering::format_owned_cleanup_readiness_summary(blocked_summary) ==
         "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 cleanup authorized 0 blocked 1"
     );
 
-    auto authorized_snapshot = orison::lowering::DropReadinessSnapshot {
+    auto authorized_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .semantic_authorizations = {
             drop_authorization("Payload", "__orison_drop.Payload", true),
         },
@@ -102,12 +102,12 @@ auto main() -> int {
             },
         },
         .cleanup_authorizations = {
-            cleanup_readiness(orison::lowering::DropCleanupAuthorizationReport {
+            cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
                 .authorized = true,
             }),
         },
     };
-    auto authorized_snapshot_report = orison::lowering::format_drop_readiness_snapshot_report(authorized_snapshot);
+    auto authorized_snapshot_report = orison::lowering::format_owned_cleanup_readiness_snapshot_report(authorized_snapshot);
     assert(authorized_snapshot_report.size() == 4);
     assert(
         authorized_snapshot_report[0] ==
@@ -116,9 +116,9 @@ auto main() -> int {
     assert(authorized_snapshot_report[1] == "semantic readiness __orison_drop.Payload for Payload authorized");
     assert(authorized_snapshot_report[2] == "emitted declaration readiness __orison_drop.Payload for Payload");
     assert(authorized_snapshot_report[3] == "cleanup readiness __orison_thread_cleanup.launch.12.0 authorized");
-    auto authorized_summary = orison::lowering::summarize_drop_readiness(authorized_snapshot);
+    auto authorized_summary = orison::lowering::summarize_owned_cleanup_readiness(authorized_snapshot);
     assert(
-        orison::lowering::format_drop_readiness_summary(authorized_summary) ==
+        orison::lowering::format_owned_cleanup_readiness_summary(authorized_summary) ==
         "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
     );
 
@@ -128,16 +128,16 @@ auto main() -> int {
     );
     mixed_snapshot.cleanup_authorizations.push_back(
         cleanup_readiness(
-            orison::lowering::DropCleanupAuthorizationReport {
+            orison::lowering::OwnedCleanupAuthorizationReport {
                 .semantic_lowering_blockers = {action},
                 .missing_declarations = {action},
             },
             20
         )
     );
-    auto mixed_summary = orison::lowering::summarize_drop_readiness(mixed_snapshot);
+    auto mixed_summary = orison::lowering::summarize_owned_cleanup_readiness(mixed_snapshot);
     assert(
-        orison::lowering::format_drop_readiness_summary(mixed_summary) ==
+        orison::lowering::format_owned_cleanup_readiness_summary(mixed_summary) ==
         "drop readiness summary semantic authorized 1 blocked 1 emitted declarations 1 cleanup authorized 1 blocked 1"
     );
 

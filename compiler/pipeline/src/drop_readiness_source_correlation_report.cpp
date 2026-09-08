@@ -79,7 +79,7 @@ auto has_emitted_declaration(
 }  // namespace
 
 auto format_drop_readiness_source_correlation_report(
-    lowering::DropReadinessSnapshot const& snapshot
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     auto correlated_actions = std::vector<lowering::PlannedDropAction> {};

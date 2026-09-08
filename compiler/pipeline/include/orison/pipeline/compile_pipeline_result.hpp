@@ -101,10 +101,10 @@ struct CompilePipelineResult {
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     PlannedDropDeclarationState planned_drop_declaration_state;
     PlannedDropActionState planned_drop_action_state;
-    DropCleanupAuthorizationState drop_cleanup_authorization_state;
-    lowering::DropReadinessSnapshot drop_readiness_snapshot;
-    lowering::DropReadinessSummary drop_readiness_summary;
-    lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
+    OwnedCleanupAuthorizationState owned_cleanup_authorization_state;
+    lowering::OwnedCleanupReadinessSnapshot owned_cleanup_readiness_snapshot;
+    lowering::OwnedCleanupReadinessSummary owned_cleanup_readiness_summary;
+    lowering::OwnedCleanupReadinessBlockerSummary owned_cleanup_readiness_blocker_summary;
     RuntimeIndexedCleanupCapabilityState runtime_indexed_cleanup_capability_state;
     RuntimeIndexedCleanupEmissionPlanState runtime_indexed_cleanup_emission_plan_state;
     RuntimeIndexedCleanupIrRenderState runtime_indexed_cleanup_ir_render_state;

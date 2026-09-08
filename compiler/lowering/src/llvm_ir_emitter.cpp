@@ -4062,10 +4062,10 @@ auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std
     return format_planned_drop_action_report(planned_drop_actions);
 }
 
-auto LlvmIrEmissionResult::drop_cleanup_authorization_report() const -> std::vector<std::string> {
+auto LlvmIrEmissionResult::owned_cleanup_authorization_report() const -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     for (auto const& cleanup : drop_cleanups) {
-        auto authorization = plan_drop_cleanup_authorization(
+        auto authorization = plan_owned_cleanup_authorization(
             cleanup,
             planned_drop_declarations,
             semantic_drop_lowering_authorizations
@@ -4076,34 +4076,34 @@ auto LlvmIrEmissionResult::drop_cleanup_authorization_report() const -> std::vec
         ) {
             continue;
         }
-        auto cleanup_lines = format_drop_cleanup_authorization_report(cleanup, authorization);
+        auto cleanup_lines = format_owned_cleanup_authorization_report(cleanup, authorization);
         lines.insert(lines.end(), cleanup_lines.begin(), cleanup_lines.end());
     }
     return lines;
 }
 
-auto LlvmIrEmissionResult::drop_readiness_snapshot() const -> DropReadinessSnapshot {
-    return plan_drop_readiness_snapshot(
+auto LlvmIrEmissionResult::owned_cleanup_readiness_snapshot() const -> OwnedCleanupReadinessSnapshot {
+    return plan_owned_cleanup_readiness_snapshot(
         semantic_drop_lowering_authorizations,
         planned_drop_declarations,
         drop_cleanups
     );
 }
 
-auto LlvmIrEmissionResult::drop_readiness_snapshot_report() const -> std::vector<std::string> {
-    return format_drop_readiness_snapshot_report(drop_readiness_snapshot());
+auto LlvmIrEmissionResult::owned_cleanup_readiness_snapshot_report() const -> std::vector<std::string> {
+    return format_owned_cleanup_readiness_snapshot_report(owned_cleanup_readiness_snapshot());
 }
 
-auto LlvmIrEmissionResult::drop_readiness_summary() const -> DropReadinessSummary {
-    return summarize_drop_readiness(drop_readiness_snapshot());
+auto LlvmIrEmissionResult::owned_cleanup_readiness_summary() const -> OwnedCleanupReadinessSummary {
+    return summarize_owned_cleanup_readiness(owned_cleanup_readiness_snapshot());
 }
 
-auto LlvmIrEmissionResult::drop_readiness_summary_report() const -> std::vector<std::string> {
-    return {format_drop_readiness_summary(drop_readiness_summary())};
+auto LlvmIrEmissionResult::owned_cleanup_readiness_summary_report() const -> std::vector<std::string> {
+    return {format_owned_cleanup_readiness_summary(owned_cleanup_readiness_summary())};
 }
 
-auto LlvmIrEmissionResult::drop_readiness_relation_report() const -> std::vector<std::string> {
-    return format_drop_readiness_relation_report(drop_readiness_snapshot());
+auto LlvmIrEmissionResult::owned_cleanup_readiness_relation_report() const -> std::vector<std::string> {
+    return format_owned_cleanup_readiness_relation_report(owned_cleanup_readiness_snapshot());
 }
 
 auto emit_module(

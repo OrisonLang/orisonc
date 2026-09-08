@@ -692,15 +692,15 @@ auto build_planned_drop_action_state(
     };
 }
 
-auto build_drop_cleanup_authorization_state(
+auto build_owned_cleanup_authorization_state(
     lowering::LlvmIrEmissionResult const& emission
-) -> DropCleanupAuthorizationState {
-    auto state = DropCleanupAuthorizationState {};
+) -> OwnedCleanupAuthorizationState {
+    auto state = OwnedCleanupAuthorizationState {};
     state.cleanups = emission.drop_cleanups;
     state.authorizations.reserve(emission.drop_cleanups.size());
     for (auto const& cleanup : emission.drop_cleanups) {
         state.authorizations.push_back(
-            lowering::plan_drop_cleanup_authorization(
+            lowering::plan_owned_cleanup_authorization(
                 cleanup,
                 emission.planned_drop_declarations,
                 emission.semantic_drop_lowering_authorizations
@@ -3956,12 +3956,12 @@ void populate_lowering_emission_reports(
         build_planned_drop_declaration_state(emission);
     result.planned_drop_action_state =
         build_planned_drop_action_state(emission);
-    result.drop_cleanup_authorization_state =
-        build_drop_cleanup_authorization_state(emission);
-    result.drop_readiness_snapshot = emission.drop_readiness_snapshot();
-    result.drop_readiness_summary = emission.drop_readiness_summary();
-    result.drop_readiness_blocker_summary =
-        lowering::summarize_drop_readiness_blockers(result.drop_readiness_snapshot);
+    result.owned_cleanup_authorization_state =
+        build_owned_cleanup_authorization_state(emission);
+    result.owned_cleanup_readiness_snapshot = emission.owned_cleanup_readiness_snapshot();
+    result.owned_cleanup_readiness_summary = emission.owned_cleanup_readiness_summary();
+    result.owned_cleanup_readiness_blocker_summary =
+        lowering::summarize_owned_cleanup_readiness_blockers(result.owned_cleanup_readiness_snapshot);
     result.runtime_indexed_cleanup_capability_state =
         build_runtime_indexed_cleanup_capability_state(emission);
     result.runtime_indexed_cleanup_emission_plan_state =

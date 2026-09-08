@@ -8,7 +8,7 @@
 namespace orison::pipeline {
 
 auto format_drop_readiness_source_correlation_report(
-    lowering::DropReadinessSnapshot const& snapshot
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string>;
 
 }  // namespace orison::pipeline

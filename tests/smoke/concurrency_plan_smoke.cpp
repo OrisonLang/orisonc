@@ -196,11 +196,11 @@ int main() {
     auto authorized_plan = record_plan->cleanup.drop_cleanup;
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(authorized_plan, {}));
     assert(!orison::lowering::drop_calls_enabled(authorized_plan));
-    auto missing_authorization = orison::lowering::plan_drop_cleanup_authorization(authorized_plan, {});
+    auto missing_authorization = orison::lowering::plan_owned_cleanup_authorization(authorized_plan, {});
     assert(!missing_authorization.authorized);
     assert(missing_authorization.missing_declarations.size() == 1);
     assert(missing_authorization.missing_declarations.front().symbol_name == "__orison_drop.Payload");
-    auto missing_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto missing_authorization_report = orison::lowering::format_owned_cleanup_authorization_report(
         authorized_plan,
         missing_authorization
     );
@@ -214,7 +214,7 @@ int main() {
         missing_authorization_report[1] ==
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
     );
-    auto semantic_blocked_authorization = orison::lowering::plan_drop_cleanup_authorization(
+    auto semantic_blocked_authorization = orison::lowering::plan_owned_cleanup_authorization(
         authorized_plan,
         {
             orison::lowering::PlannedDropDeclaration {
@@ -243,7 +243,7 @@ int main() {
     assert(semantic_blocked_authorization.semantic_unresolved_blockers.empty());
     assert(semantic_blocked_authorization.source_drop_lowering_blockers.size() == 1);
     assert(semantic_blocked_authorization.missing_declarations.empty());
-    auto semantic_blocked_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto semantic_blocked_authorization_report = orison::lowering::format_owned_cleanup_authorization_report(
         authorized_plan,
         semantic_blocked_authorization
     );
@@ -263,7 +263,7 @@ int main() {
         "source drop lowering not accepted __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20"
     );
-    auto semantic_blocked_readiness_snapshot = orison::lowering::plan_drop_readiness_snapshot(
+    auto semantic_blocked_readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
         {
             orison::semantics::DropLoweringAuthorization {
                 .site = orison::semantics::PlannedDropSite {
@@ -288,7 +288,7 @@ int main() {
         {authorized_plan}
     );
     auto semantic_blocked_relation_report =
-        orison::lowering::format_drop_readiness_relation_report(semantic_blocked_readiness_snapshot);
+        orison::lowering::format_owned_cleanup_readiness_relation_report(semantic_blocked_readiness_snapshot);
     assert(semantic_blocked_relation_report.size() == 2);
     assert(
         semantic_blocked_relation_report[0] ==
@@ -300,7 +300,7 @@ int main() {
         "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20"
     );
-    auto readiness_snapshot = orison::lowering::plan_drop_readiness_snapshot(
+    auto readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
         {
             orison::semantics::DropLoweringAuthorization {
                 .site = orison::semantics::PlannedDropSite {
@@ -328,7 +328,7 @@ int main() {
     assert(readiness_snapshot.emitted_declarations.size() == 1);
     assert(readiness_snapshot.cleanup_authorizations.size() == 1);
     assert(readiness_snapshot.cleanup_authorizations.front().authorization.authorized);
-    auto readiness_snapshot_report = orison::lowering::format_drop_readiness_snapshot_report(readiness_snapshot);
+    auto readiness_snapshot_report = orison::lowering::format_owned_cleanup_readiness_snapshot_report(readiness_snapshot);
     assert(readiness_snapshot_report.size() == 4);
     assert(
         readiness_snapshot_report[0] ==
@@ -340,17 +340,17 @@ int main() {
         readiness_snapshot_report[3] ==
         "cleanup readiness __orison_thread_cleanup.record_worker.20.2 authorized"
     );
-    auto readiness_summary = orison::lowering::summarize_drop_readiness(readiness_snapshot);
+    auto readiness_summary = orison::lowering::summarize_owned_cleanup_readiness(readiness_snapshot);
     assert(readiness_summary.semantic_authorized == 1);
     assert(readiness_summary.semantic_blocked == 0);
     assert(readiness_summary.emitted_declarations == 1);
     assert(readiness_summary.cleanup_authorized == 1);
     assert(readiness_summary.cleanup_blocked == 0);
     assert(
-        orison::lowering::format_drop_readiness_summary(readiness_summary) ==
+        orison::lowering::format_owned_cleanup_readiness_summary(readiness_summary) ==
         "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
     );
-    auto readiness_relation_report = orison::lowering::format_drop_readiness_relation_report(readiness_snapshot);
+    auto readiness_relation_report = orison::lowering::format_owned_cleanup_readiness_relation_report(readiness_snapshot);
     assert(readiness_relation_report.size() == 1);
     assert(
         readiness_relation_report.front() ==
@@ -380,7 +380,7 @@ int main() {
         }
     ));
     assert(orison::lowering::drop_calls_enabled(authorized_plan));
-    auto successful_authorization = orison::lowering::plan_drop_cleanup_authorization(
+    auto successful_authorization = orison::lowering::plan_owned_cleanup_authorization(
         authorized_plan,
         {
             orison::lowering::PlannedDropDeclaration {
@@ -393,7 +393,7 @@ int main() {
     );
     assert(successful_authorization.authorized);
     assert(successful_authorization.missing_declarations.empty());
-    auto successful_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto successful_authorization_report = orison::lowering::format_owned_cleanup_authorization_report(
         authorized_plan,
         successful_authorization
     );

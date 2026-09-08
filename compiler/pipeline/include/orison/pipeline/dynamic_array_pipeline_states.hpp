@@ -99,9 +99,9 @@ struct PlannedDropActionState {
     std::vector<lowering::PlannedDropAction> actions;
 };
 
-struct DropCleanupAuthorizationState {
+struct OwnedCleanupAuthorizationState {
     std::vector<lowering::ConcurrencyDropCleanupPlan> cleanups;
-    std::vector<lowering::DropCleanupAuthorizationReport> authorizations;
+    std::vector<lowering::OwnedCleanupAuthorizationReport> authorizations;
 };
 
 struct SemanticDropImplementationDiscovery {

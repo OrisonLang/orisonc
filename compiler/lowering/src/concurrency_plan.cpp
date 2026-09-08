@@ -373,19 +373,19 @@ auto matching_semantic_drop_authorization(
     );
 }
 
-auto plan_drop_cleanup_authorization(
+auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations
-) -> DropCleanupAuthorizationReport {
-    return plan_drop_cleanup_authorization(plan, declarations, {});
+) -> OwnedCleanupAuthorizationReport {
+    return plan_owned_cleanup_authorization(plan, declarations, {});
 }
 
-auto plan_drop_cleanup_authorization(
+auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations,
     std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
-) -> DropCleanupAuthorizationReport {
-    auto report = DropCleanupAuthorizationReport {};
+) -> OwnedCleanupAuthorizationReport {
+    auto report = OwnedCleanupAuthorizationReport {};
     if (plan.actions.empty()) {
         report.authorized = plan.requires_descriptor_deallocation;
         return report;
@@ -443,9 +443,9 @@ auto plan_drop_cleanup_authorization(
     return report;
 }
 
-auto format_drop_cleanup_authorization_report(
+auto format_owned_cleanup_authorization_report(
     ConcurrencyDropCleanupPlan const& plan,
-    DropCleanupAuthorizationReport const& report
+    OwnedCleanupAuthorizationReport const& report
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     auto header = std::ostringstream {};
@@ -526,12 +526,12 @@ auto format_drop_cleanup_authorization_report(
     return lines;
 }
 
-auto plan_drop_readiness_snapshot(
+auto plan_owned_cleanup_readiness_snapshot(
     std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations,
     std::vector<PlannedDropDeclaration> const& declarations,
     std::vector<ConcurrencyDropCleanupPlan> const& cleanups
-) -> DropReadinessSnapshot {
-    auto snapshot = DropReadinessSnapshot {
+) -> OwnedCleanupReadinessSnapshot {
+    auto snapshot = OwnedCleanupReadinessSnapshot {
         .semantic_authorizations = semantic_authorizations,
     };
     for (auto const& declaration : declarations) {
@@ -541,16 +541,16 @@ auto plan_drop_readiness_snapshot(
     }
     snapshot.cleanup_authorizations.reserve(cleanups.size());
     for (auto const& cleanup : cleanups) {
-        snapshot.cleanup_authorizations.push_back(DropCleanupReadiness {
+        snapshot.cleanup_authorizations.push_back(OwnedCleanupReadiness {
             .cleanup_symbol_name = cleanup.cleanup_symbol_name,
-            .authorization = plan_drop_cleanup_authorization(cleanup, declarations, semantic_authorizations),
+            .authorization = plan_owned_cleanup_authorization(cleanup, declarations, semantic_authorizations),
         });
     }
     return snapshot;
 }
 
-auto format_drop_readiness_snapshot_report(
-    DropReadinessSnapshot const& snapshot
+auto format_owned_cleanup_readiness_snapshot_report(
+    OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     auto header = std::ostringstream {};
@@ -595,10 +595,10 @@ auto format_drop_readiness_snapshot_report(
     return lines;
 }
 
-auto summarize_drop_readiness(
-    DropReadinessSnapshot const& snapshot
-) -> DropReadinessSummary {
-    auto summary = DropReadinessSummary {
+auto summarize_owned_cleanup_readiness(
+    OwnedCleanupReadinessSnapshot const& snapshot
+) -> OwnedCleanupReadinessSummary {
+    auto summary = OwnedCleanupReadinessSummary {
         .emitted_declarations = snapshot.emitted_declarations.size(),
     };
     for (auto const& authorization : snapshot.semantic_authorizations) {
@@ -618,8 +618,8 @@ auto summarize_drop_readiness(
     return summary;
 }
 
-auto format_drop_readiness_summary(
-    DropReadinessSummary const& summary
+auto format_owned_cleanup_readiness_summary(
+    OwnedCleanupReadinessSummary const& summary
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "drop readiness summary semantic authorized " << summary.semantic_authorized
@@ -630,10 +630,10 @@ auto format_drop_readiness_summary(
     return output.str();
 }
 
-auto summarize_drop_readiness_blockers(
-    DropReadinessSnapshot const& snapshot
-) -> DropReadinessBlockerSummary {
-    auto summary = DropReadinessBlockerSummary {};
+auto summarize_owned_cleanup_readiness_blockers(
+    OwnedCleanupReadinessSnapshot const& snapshot
+) -> OwnedCleanupReadinessBlockerSummary {
+    auto summary = OwnedCleanupReadinessBlockerSummary {};
     for (auto const& cleanup : snapshot.cleanup_authorizations) {
         if (cleanup.authorization.authorized) {
             continue;
@@ -663,8 +663,8 @@ auto summarize_drop_readiness_blockers(
     return summary;
 }
 
-auto format_drop_readiness_blocker_report(
-    DropReadinessBlockerSummary const& summary
+auto format_owned_cleanup_readiness_blocker_report(
+    OwnedCleanupReadinessBlockerSummary const& summary
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     auto header = std::ostringstream {};
@@ -730,8 +730,8 @@ auto format_drop_readiness_blocker_report(
     return lines;
 }
 
-auto format_drop_readiness_relation_report(
-    DropReadinessSnapshot const& snapshot
+auto format_owned_cleanup_readiness_relation_report(
+    OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     for (auto const& cleanup : snapshot.cleanup_authorizations) {
@@ -779,7 +779,7 @@ auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
     std::vector<PlannedDropDeclaration> const& declarations
 ) -> bool {
-    auto report = plan_drop_cleanup_authorization(plan, declarations);
+    auto report = plan_owned_cleanup_authorization(plan, declarations);
     plan.drop_call_emission = report.authorized
         ? DropCallEmissionEligibility::declared_drop_abi
         : DropCallEmissionEligibility::metadata_only;

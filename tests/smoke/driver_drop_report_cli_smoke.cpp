@@ -147,7 +147,7 @@ auto run_drop_readiness(orison::driver::CompilerApp const& app, std::filesystem:
     return run_single_file_command(app, "--drop-readiness", path);
 }
 
-auto run_drop_readiness_summary(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+auto run_owned_cleanup_readiness_summary(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     return run_single_file_command(app, "--drop-readiness-summary", path);
 }
@@ -391,9 +391,9 @@ int main() {
             "    left < right",
         }
     );
-    auto drop_readiness_summary_failure = run_drop_readiness_summary(app, emit_failure_path);
+    auto owned_cleanup_readiness_summary_failure = run_owned_cleanup_readiness_summary(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        drop_readiness_summary_failure,
+        owned_cleanup_readiness_summary_failure,
         "lowering does not yet support this return expression: unsupported operator: <"
     );
     auto emitted_drops_failure = run_emitted_drops(app, emit_failure_path);
@@ -450,10 +450,10 @@ int main() {
             "    -value",
         }
     );
-    auto unary_drop_readiness_summary_failure =
-        run_drop_readiness_summary(app, unary_emit_failure_path);
+    auto unary_owned_cleanup_readiness_summary_failure =
+        run_owned_cleanup_readiness_summary(app, unary_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        unary_drop_readiness_summary_failure,
+        unary_owned_cleanup_readiness_summary_failure,
         "lowering does not yet support this return expression: unsupported operator: -"
     );
     auto unary_emitted_drops_failure = run_emitted_drops(app, unary_emit_failure_path);
@@ -478,10 +478,10 @@ int main() {
             "    -1 as UInt32",
         }
     );
-    auto cast_drop_readiness_summary_failure =
-        run_drop_readiness_summary(app, cast_emit_failure_path);
+    auto cast_owned_cleanup_readiness_summary_failure =
+        run_owned_cleanup_readiness_summary(app, cast_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        cast_drop_readiness_summary_failure,
+        cast_owned_cleanup_readiness_summary_failure,
         "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
     );
     auto cast_emitted_drops_failure = run_emitted_drops(app, cast_emit_failure_path);
@@ -509,10 +509,10 @@ int main() {
             "        false",
         }
     );
-    auto final_if_drop_readiness_summary_failure =
-        run_drop_readiness_summary(app, final_if_emit_failure_path);
+    auto final_if_owned_cleanup_readiness_summary_failure =
+        run_owned_cleanup_readiness_summary(app, final_if_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        final_if_drop_readiness_summary_failure,
+        final_if_owned_cleanup_readiness_summary_failure,
         "lowering does not yet support this final control-flow statement: "
         "if then arm lowering failed: unsupported operator: <"
     );
@@ -542,10 +542,10 @@ int main() {
             "        false => false",
         }
     );
-    auto final_switch_drop_readiness_summary_failure =
-        run_drop_readiness_summary(app, final_switch_emit_failure_path);
+    auto final_switch_owned_cleanup_readiness_summary_failure =
+        run_owned_cleanup_readiness_summary(app, final_switch_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        final_switch_drop_readiness_summary_failure,
+        final_switch_owned_cleanup_readiness_summary_failure,
         "lowering does not yet support this final control-flow statement: "
         "switch case lowering failed: unsupported operator: <"
     );
@@ -704,9 +704,9 @@ int main() {
             "cleanup readiness __orison_thread_cleanup.launch.12.0 authorized",
         }
     );
-    auto drop_readiness_summary = run_drop_readiness_summary(app, planned_drop_report_path);
+    auto owned_cleanup_readiness_summary = run_owned_cleanup_readiness_summary(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
-        drop_readiness_summary,
+        owned_cleanup_readiness_summary,
         {"drop readiness summary semantic authorized 1 blocked 0"}
     );
     auto drop_readiness_relations = run_drop_readiness_relations(app, planned_drop_report_path);
@@ -780,9 +780,9 @@ int main() {
         empty_drop_readiness,
         {"drop readiness snapshot semantic authorizations 0"}
     );
-    auto empty_drop_readiness_summary = run_drop_readiness_summary(app, clean_emit_path);
+    auto empty_owned_cleanup_readiness_summary = run_owned_cleanup_readiness_summary(app, clean_emit_path);
     assert_success_with_stdout_contains(
-        empty_drop_readiness_summary,
+        empty_owned_cleanup_readiness_summary,
         {"drop readiness summary semantic authorized 0 blocked 0"}
     );
     auto empty_drop_readiness_relations = run_drop_readiness_relations(app, clean_emit_path);

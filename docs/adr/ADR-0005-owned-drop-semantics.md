@@ -171,6 +171,8 @@ inventing semantics outside the spec/tour.
   cleanup implementations remain gated test seams until an explicit source finalization model is accepted.
 - Driver report adapters use owned-cleanup naming internally while existing `--drop-*` diagnostic flags and
   `__orison_drop.*` ABI symbols remain stable compatibility surfaces.
+- Typed lowering and pipeline readiness/authorization state now uses `OwnedCleanup*` names internally. Existing
+  report text, CLI flags, test target names, and ABI symbols are unchanged compatibility surfaces.
 
 ## Consequences
 

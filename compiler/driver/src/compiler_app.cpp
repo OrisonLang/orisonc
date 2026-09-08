@@ -53,7 +53,7 @@ auto planned_drop_action_state_report(
 }
 
 auto owned_cleanup_authorization_state_report(
-    pipeline::DropCleanupAuthorizationState const& state
+    pipeline::OwnedCleanupAuthorizationState const& state
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     for (auto index = std::size_t {0}; index < state.cleanups.size(); ++index) {
@@ -67,7 +67,7 @@ auto owned_cleanup_authorization_state_report(
         ) {
             continue;
         }
-        auto cleanup_lines = lowering::format_drop_cleanup_authorization_report(
+        auto cleanup_lines = lowering::format_owned_cleanup_authorization_report(
             state.cleanups[index],
             authorization
         );
@@ -77,31 +77,31 @@ auto owned_cleanup_authorization_state_report(
 }
 
 auto owned_cleanup_readiness_summary_state_report(
-    lowering::DropReadinessSummary const& summary
+    lowering::OwnedCleanupReadinessSummary const& summary
 ) -> std::vector<std::string> {
-    return {lowering::format_drop_readiness_summary(summary)};
+    return {lowering::format_owned_cleanup_readiness_summary(summary)};
 }
 
 auto owned_cleanup_readiness_snapshot_state_report(
-    lowering::DropReadinessSnapshot const& snapshot
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
-    return lowering::format_drop_readiness_snapshot_report(snapshot);
+    return lowering::format_owned_cleanup_readiness_snapshot_report(snapshot);
 }
 
 auto owned_cleanup_readiness_relation_state_report(
-    lowering::DropReadinessSnapshot const& snapshot
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
-    return lowering::format_drop_readiness_relation_report(snapshot);
+    return lowering::format_owned_cleanup_readiness_relation_report(snapshot);
 }
 
 auto owned_cleanup_readiness_blocker_state_report(
-    lowering::DropReadinessBlockerSummary const& summary
+    lowering::OwnedCleanupReadinessBlockerSummary const& summary
 ) -> std::vector<std::string> {
-    return lowering::format_drop_readiness_blocker_report(summary);
+    return lowering::format_owned_cleanup_readiness_blocker_report(summary);
 }
 
 auto owned_cleanup_readiness_source_correlation_state_report(
-    lowering::DropReadinessSnapshot const& snapshot
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
     return pipeline::format_drop_readiness_source_correlation_report(snapshot);
 }
@@ -1222,37 +1222,37 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-cleanup-authorization") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return owned_cleanup_authorization_state_report(result.drop_cleanup_authorization_state);
+            return owned_cleanup_authorization_state_report(result.owned_cleanup_authorization_state);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return owned_cleanup_readiness_snapshot_state_report(result.drop_readiness_snapshot);
+            return owned_cleanup_readiness_snapshot_state_report(result.owned_cleanup_readiness_snapshot);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-summary") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return owned_cleanup_readiness_summary_state_report(result.drop_readiness_summary);
+            return owned_cleanup_readiness_summary_state_report(result.owned_cleanup_readiness_summary);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-relations") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return owned_cleanup_readiness_relation_state_report(result.drop_readiness_snapshot);
+            return owned_cleanup_readiness_relation_state_report(result.owned_cleanup_readiness_snapshot);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-blockers") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return owned_cleanup_readiness_blocker_state_report(result.drop_readiness_blocker_summary);
+            return owned_cleanup_readiness_blocker_state_report(result.owned_cleanup_readiness_blocker_summary);
         });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-source-correlations") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return owned_cleanup_readiness_source_correlation_state_report(result.drop_readiness_snapshot);
+            return owned_cleanup_readiness_source_correlation_state_report(result.owned_cleanup_readiness_snapshot);
         });
     }
 

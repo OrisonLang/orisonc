@@ -63,7 +63,7 @@ struct ConcurrencyDropCleanupPlan {
     bool requires_descriptor_deallocation = false;
 };
 
-struct DropCleanupAuthorizationReport {
+struct OwnedCleanupAuthorizationReport {
     bool authorized = false;
     std::vector<PlannedDropAction> semantic_lowering_blockers;
     std::vector<PlannedDropAction> semantic_unresolved_blockers;
@@ -71,18 +71,18 @@ struct DropCleanupAuthorizationReport {
     std::vector<PlannedDropAction> missing_declarations;
 };
 
-struct DropCleanupReadiness {
+struct OwnedCleanupReadiness {
     std::string cleanup_symbol_name;
-    DropCleanupAuthorizationReport authorization;
+    OwnedCleanupAuthorizationReport authorization;
 };
 
-struct DropReadinessSnapshot {
+struct OwnedCleanupReadinessSnapshot {
     std::vector<semantics::DropLoweringAuthorization> semantic_authorizations;
     std::vector<PlannedDropDeclaration> emitted_declarations;
-    std::vector<DropCleanupReadiness> cleanup_authorizations;
+    std::vector<OwnedCleanupReadiness> cleanup_authorizations;
 };
 
-struct DropReadinessSummary {
+struct OwnedCleanupReadinessSummary {
     std::size_t semantic_authorized = 0;
     std::size_t semantic_blocked = 0;
     std::size_t emitted_declarations = 0;
@@ -90,7 +90,7 @@ struct DropReadinessSummary {
     std::size_t cleanup_blocked = 0;
 };
 
-struct DropReadinessBlockerSummary {
+struct OwnedCleanupReadinessBlockerSummary {
     std::size_t blocked_cleanups = 0;
     std::vector<PlannedDropAction> semantic_lowering_blockers;
     std::vector<PlannedDropAction> semantic_unresolved_blockers;
@@ -121,50 +121,50 @@ auto format_concurrency_drop_cleanup_plan(
 
 auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool;
 
-auto plan_drop_cleanup_authorization(
+auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations
-) -> DropCleanupAuthorizationReport;
+) -> OwnedCleanupAuthorizationReport;
 
-auto plan_drop_cleanup_authorization(
+auto plan_owned_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations,
     std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
-) -> DropCleanupAuthorizationReport;
+) -> OwnedCleanupAuthorizationReport;
 
-auto format_drop_cleanup_authorization_report(
+auto format_owned_cleanup_authorization_report(
     ConcurrencyDropCleanupPlan const& plan,
-    DropCleanupAuthorizationReport const& report
+    OwnedCleanupAuthorizationReport const& report
 ) -> std::vector<std::string>;
 
-auto plan_drop_readiness_snapshot(
+auto plan_owned_cleanup_readiness_snapshot(
     std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations,
     std::vector<PlannedDropDeclaration> const& declarations,
     std::vector<ConcurrencyDropCleanupPlan> const& cleanups
-) -> DropReadinessSnapshot;
+) -> OwnedCleanupReadinessSnapshot;
 
-auto format_drop_readiness_snapshot_report(
-    DropReadinessSnapshot const& snapshot
+auto format_owned_cleanup_readiness_snapshot_report(
+    OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string>;
 
-auto summarize_drop_readiness(
-    DropReadinessSnapshot const& snapshot
-) -> DropReadinessSummary;
+auto summarize_owned_cleanup_readiness(
+    OwnedCleanupReadinessSnapshot const& snapshot
+) -> OwnedCleanupReadinessSummary;
 
-auto format_drop_readiness_summary(
-    DropReadinessSummary const& summary
+auto format_owned_cleanup_readiness_summary(
+    OwnedCleanupReadinessSummary const& summary
 ) -> std::string;
 
-auto summarize_drop_readiness_blockers(
-    DropReadinessSnapshot const& snapshot
-) -> DropReadinessBlockerSummary;
+auto summarize_owned_cleanup_readiness_blockers(
+    OwnedCleanupReadinessSnapshot const& snapshot
+) -> OwnedCleanupReadinessBlockerSummary;
 
-auto format_drop_readiness_blocker_report(
-    DropReadinessBlockerSummary const& summary
+auto format_owned_cleanup_readiness_blocker_report(
+    OwnedCleanupReadinessBlockerSummary const& summary
 ) -> std::vector<std::string>;
 
-auto format_drop_readiness_relation_report(
-    DropReadinessSnapshot const& snapshot
+auto format_owned_cleanup_readiness_relation_report(
+    OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string>;
 
 auto authorize_drop_cleanup_calls_for_declared_abi(

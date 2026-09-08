@@ -27,10 +27,10 @@ auto other_action() -> orison::lowering::PlannedDropAction {
 }
 
 auto cleanup_readiness(
-    orison::lowering::DropCleanupAuthorizationReport authorization,
+    orison::lowering::OwnedCleanupAuthorizationReport authorization,
     int line = 12
-) -> orison::lowering::DropCleanupReadiness {
-    return orison::lowering::DropCleanupReadiness {
+) -> orison::lowering::OwnedCleanupReadiness {
+    return orison::lowering::OwnedCleanupReadiness {
         .cleanup_symbol_name = "__orison_thread_cleanup.launch." + std::to_string(line) + ".0",
         .authorization = std::move(authorization),
     };
@@ -39,19 +39,19 @@ auto cleanup_readiness(
 }  // namespace
 
 auto main() -> int {
-    auto empty_report = orison::lowering::format_drop_readiness_relation_report({});
+    auto empty_report = orison::lowering::format_owned_cleanup_readiness_relation_report({});
     assert(empty_report.empty());
 
     auto action = payload_action();
-    auto blocked_snapshot = orison::lowering::DropReadinessSnapshot {
+    auto blocked_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .cleanup_authorizations = {
-            cleanup_readiness(orison::lowering::DropCleanupAuthorizationReport {
+            cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
                 .semantic_lowering_blockers = {action},
                 .missing_declarations = {action},
             }),
         },
     };
-    auto blocked_report = orison::lowering::format_drop_readiness_relation_report(blocked_snapshot);
+    auto blocked_report = orison::lowering::format_owned_cleanup_readiness_relation_report(blocked_snapshot);
     assert(blocked_report.size() == 3);
     assert(
         blocked_report[0] ==
@@ -69,7 +69,7 @@ auto main() -> int {
         "discovered at line 12"
     );
 
-    auto emitted_snapshot = orison::lowering::DropReadinessSnapshot {
+    auto emitted_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .emitted_declarations = {
             orison::lowering::PlannedDropDeclaration {
                 .symbol_name = "__orison_drop.Payload",
@@ -79,12 +79,12 @@ auto main() -> int {
             },
         },
         .cleanup_authorizations = {
-            cleanup_readiness(orison::lowering::DropCleanupAuthorizationReport {
+            cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
                 .authorized = true,
             }),
         },
     };
-    auto emitted_report = orison::lowering::format_drop_readiness_relation_report(emitted_snapshot);
+    auto emitted_report = orison::lowering::format_owned_cleanup_readiness_relation_report(emitted_snapshot);
     assert(emitted_report.size() == 1);
     assert(
         emitted_report[0] ==
@@ -93,10 +93,10 @@ auto main() -> int {
     );
 
     auto other = other_action();
-    auto multi_snapshot = orison::lowering::DropReadinessSnapshot {
+    auto multi_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .cleanup_authorizations = {
             cleanup_readiness(
-                orison::lowering::DropCleanupAuthorizationReport {
+                orison::lowering::OwnedCleanupAuthorizationReport {
                     .semantic_lowering_blockers = {action, other},
                     .missing_declarations = {action, other},
                 },
@@ -104,7 +104,7 @@ auto main() -> int {
             ),
         },
     };
-    auto multi_report = orison::lowering::format_drop_readiness_relation_report(multi_snapshot);
+    auto multi_report = orison::lowering::format_owned_cleanup_readiness_relation_report(multi_snapshot);
     assert(multi_report.size() == 5);
     assert(
         multi_report[0] ==

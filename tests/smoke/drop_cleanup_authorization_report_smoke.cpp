@@ -35,9 +35,9 @@ auto cleanup_plan(int line = 12) -> orison::lowering::ConcurrencyDropCleanupPlan
 
 auto main() -> int {
     auto action = payload_action();
-    auto blocked_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto blocked_report = orison::lowering::format_owned_cleanup_authorization_report(
         cleanup_plan(),
-        orison::lowering::DropCleanupAuthorizationReport {
+        orison::lowering::OwnedCleanupAuthorizationReport {
             .semantic_lowering_blockers = {action},
             .semantic_unresolved_blockers = {action},
             .missing_declarations = {action},
@@ -63,9 +63,9 @@ auto main() -> int {
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 12"
     );
 
-    auto source_gated_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto source_gated_report = orison::lowering::format_owned_cleanup_authorization_report(
         cleanup_plan(),
-        orison::lowering::DropCleanupAuthorizationReport {
+        orison::lowering::OwnedCleanupAuthorizationReport {
             .semantic_lowering_blockers = {action},
             .source_drop_lowering_blockers = {action},
         }
@@ -77,9 +77,9 @@ auto main() -> int {
         "discovered at line 12"
     );
 
-    auto authorized_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto authorized_report = orison::lowering::format_owned_cleanup_authorization_report(
         cleanup_plan(),
-        orison::lowering::DropCleanupAuthorizationReport {
+        orison::lowering::OwnedCleanupAuthorizationReport {
             .authorized = true,
         }
     );
@@ -87,9 +87,9 @@ auto main() -> int {
     assert(authorized_report.front() == "drop cleanup authorization __orison_thread_cleanup.launch.12.0 authorized");
 
     auto other = other_action();
-    auto multi_report = orison::lowering::format_drop_cleanup_authorization_report(
+    auto multi_report = orison::lowering::format_owned_cleanup_authorization_report(
         cleanup_plan(20),
-        orison::lowering::DropCleanupAuthorizationReport {
+        orison::lowering::OwnedCleanupAuthorizationReport {
             .semantic_lowering_blockers = {action, other},
             .semantic_unresolved_blockers = {action, other},
             .missing_declarations = {action, other},

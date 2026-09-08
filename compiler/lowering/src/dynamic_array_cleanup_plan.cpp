@@ -192,7 +192,7 @@ auto authorized_element_drop_symbol_name(
     auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
         options.semantic_drop_lowering_authorizations
     );
-    auto authorization = plan_drop_cleanup_authorization(
+    auto authorization = plan_owned_cleanup_authorization(
         cleanup,
         declarations,
         options.semantic_drop_lowering_authorizations
@@ -265,7 +265,7 @@ auto authorized_descriptor_element_drop_symbol_name(
     auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
         options.semantic_drop_lowering_authorizations
     );
-    auto authorization = plan_drop_cleanup_authorization(
+    auto authorization = plan_owned_cleanup_authorization(
         cleanup,
         declarations,
         options.semantic_drop_lowering_authorizations

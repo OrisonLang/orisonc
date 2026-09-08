@@ -381,12 +381,12 @@ struct LlvmIrEmissionResult {
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;
-    auto drop_cleanup_authorization_report() const -> std::vector<std::string>;
-    auto drop_readiness_snapshot() const -> DropReadinessSnapshot;
-    auto drop_readiness_snapshot_report() const -> std::vector<std::string>;
-    auto drop_readiness_summary() const -> DropReadinessSummary;
-    auto drop_readiness_summary_report() const -> std::vector<std::string>;
-    auto drop_readiness_relation_report() const -> std::vector<std::string>;
+    auto owned_cleanup_authorization_report() const -> std::vector<std::string>;
+    auto owned_cleanup_readiness_snapshot() const -> OwnedCleanupReadinessSnapshot;
+    auto owned_cleanup_readiness_snapshot_report() const -> std::vector<std::string>;
+    auto owned_cleanup_readiness_summary() const -> OwnedCleanupReadinessSummary;
+    auto owned_cleanup_readiness_summary_report() const -> std::vector<std::string>;
+    auto owned_cleanup_readiness_relation_report() const -> std::vector<std::string>;
 };
 
 class LlvmIrEmitter {

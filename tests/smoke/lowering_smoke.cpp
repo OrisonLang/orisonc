@@ -645,10 +645,10 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
     assert(result.planned_drop_actions.empty());
     assert(result.planned_drop_declarations.empty());
     assert(result.drop_cleanups.empty());
-    auto readiness_summary = result.drop_readiness_summary();
+    auto readiness_summary = result.owned_cleanup_readiness_summary();
     assert(readiness_summary.cleanup_authorized == 0);
     assert(readiness_summary.cleanup_blocked == 0);
-    assert(result.drop_readiness_snapshot_report().front().find("cleanup authorizations 0") != std::string::npos);
+    assert(result.owned_cleanup_readiness_snapshot_report().front().find("cleanup authorizations 0") != std::string::npos);
 
     auto production_construction = lower_source(
         path,
@@ -1276,7 +1276,7 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
         "planned drop action __orison_drop.Payload for capture dynamic_array0.element: Payload "
         "field 0 (metadata only)"
     );
-    auto readiness_report = result.drop_readiness_snapshot_report();
+    auto readiness_report = result.owned_cleanup_readiness_snapshot_report();
     assert(readiness_report.size() == 2);
     assert(
         readiness_report[0] ==
@@ -1286,10 +1286,10 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
         readiness_report[1] ==
         "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 1"
     );
-    auto readiness_summary = result.drop_readiness_summary();
+    auto readiness_summary = result.owned_cleanup_readiness_summary();
     assert(readiness_summary.cleanup_authorized == 0);
     assert(readiness_summary.cleanup_blocked == 1);
-    auto relation_report = result.drop_readiness_relation_report();
+    auto relation_report = result.owned_cleanup_readiness_relation_report();
     assert(relation_report.size() == 3);
     assert(
         relation_report[0] ==
@@ -1400,7 +1400,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(blocked.planned_drop_actions.front().source_type_name == "Payload");
     assert(blocked.drop_cleanups.size() == 1);
     assert(blocked.drop_cleanups.front().cleanup_symbol_name == "__orison_dynamic_array_cleanup.0");
-    auto blocked_readiness = blocked.drop_readiness_snapshot_report();
+    auto blocked_readiness = blocked.owned_cleanup_readiness_snapshot_report();
     assert(blocked_readiness.size() == 2);
     assert(
         blocked_readiness[1] ==
@@ -1448,7 +1448,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(!authorized.has_errors());
     assert(authorized.dynamic_array_construction_plans.empty());
     assert(authorized.dynamic_array_runtime_operations.empty());
-    auto authorized_summary = authorized.drop_readiness_summary();
+    auto authorized_summary = authorized.owned_cleanup_readiness_summary();
     assert(authorized_summary.semantic_authorized == 1);
     assert(authorized_summary.emitted_declarations == 1);
     assert(authorized_summary.cleanup_authorized == 1);
@@ -1548,19 +1548,19 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         "drop cleanup plan __orison_dynamic_array_cleanup.0 actions 0 descriptor deallocation required "
         "drop calls disabled (metadata only)"
     );
-    auto readiness = result.drop_readiness_snapshot_report();
+    auto readiness = result.owned_cleanup_readiness_snapshot_report();
     assert(readiness.size() == 2);
     assert(
         readiness[0] ==
         "drop readiness snapshot semantic authorizations 0 emitted declarations 0 cleanup authorizations 1"
     );
     assert(readiness[1] == "cleanup readiness __orison_dynamic_array_cleanup.0 authorized");
-    auto summary = result.drop_readiness_summary();
+    auto summary = result.owned_cleanup_readiness_summary();
     assert(summary.semantic_authorized == 0);
     assert(summary.emitted_declarations == 0);
     assert(summary.cleanup_authorized == 1);
     assert(summary.cleanup_blocked == 0);
-    auto relation = result.drop_readiness_relation_report();
+    auto relation = result.owned_cleanup_readiness_relation_report();
     assert(relation.size() == 1);
     assert(
         relation.front() ==
@@ -1683,7 +1683,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(bound.planned_drop_actions.empty());
     assert(bound.drop_cleanups.size() == 1);
     assert(bound.drop_cleanups.front().requires_descriptor_deallocation);
-    auto summary = bound.drop_readiness_summary();
+    auto summary = bound.owned_cleanup_readiness_summary();
     assert(summary.cleanup_authorized == 1);
     assert(summary.cleanup_blocked == 0);
     assert(bound.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
@@ -3018,7 +3018,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         unauthorized.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
         orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
     );
-    assert(unauthorized.drop_readiness_summary().cleanup_blocked == 1);
+    assert(unauthorized.owned_cleanup_readiness_summary().cleanup_blocked == 1);
     assert(unauthorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
@@ -3040,8 +3040,8 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     assert(authorized.planned_drop_declarations.size() == 1);
     assert(authorized.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
     assert(authorized.planned_drop_declarations.front().emit_declaration);
-    assert(authorized.drop_readiness_summary().cleanup_authorized == 1);
-    assert(authorized.drop_readiness_summary().cleanup_blocked == 0);
+    assert(authorized.owned_cleanup_readiness_summary().cleanup_authorized == 1);
+    assert(authorized.owned_cleanup_readiness_summary().cleanup_blocked == 0);
     assert_ir_contains(authorized, "define void @__orison_drop.Payload(ptr %value)");
     assert_ir_contains(authorized, "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)");
     assert_ir_contains(
@@ -3101,8 +3101,8 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         production_authorized,
         "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
     );
-    assert(production_authorized.drop_readiness_summary().cleanup_authorized == 1);
-    assert(production_authorized.drop_readiness_summary().cleanup_blocked == 0);
+    assert(production_authorized.owned_cleanup_readiness_summary().cleanup_authorized == 1);
+    assert(production_authorized.owned_cleanup_readiness_summary().cleanup_blocked == 0);
 }
 
 void test_emits_authorized_owned_local_dynamic_array_cleanup() {
@@ -3727,11 +3727,11 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
 
     assert(allowlist_only.has_errors());
     assert(allowlist_only.emitted_drop_declaration_report().size() == 1);
-    auto allowlist_summary = allowlist_only.drop_readiness_summary();
+    auto allowlist_summary = allowlist_only.owned_cleanup_readiness_summary();
     assert(allowlist_summary.semantic_authorized == 0);
     assert(allowlist_summary.cleanup_authorized == 0);
     assert(allowlist_summary.cleanup_blocked == 1);
-    auto allowlist_readiness = allowlist_only.drop_readiness_snapshot_report();
+    auto allowlist_readiness = allowlist_only.owned_cleanup_readiness_snapshot_report();
     assert(allowlist_readiness.size() == 3);
     assert(allowlist_readiness[1] == "emitted declaration readiness __orison_drop.Payload for Payload");
     assert(
@@ -3768,12 +3768,12 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
     );
 
     assert(!authorized.has_errors());
-    auto authorized_summary = authorized.drop_readiness_summary();
+    auto authorized_summary = authorized.owned_cleanup_readiness_summary();
     assert(authorized_summary.semantic_authorized == 1);
     assert(authorized_summary.emitted_declarations == 1);
     assert(authorized_summary.cleanup_authorized == 1);
     assert(authorized_summary.cleanup_blocked == 0);
-    auto authorized_readiness = authorized.drop_readiness_snapshot_report();
+    auto authorized_readiness = authorized.owned_cleanup_readiness_snapshot_report();
     assert(authorized_readiness.size() == 4);
     assert(
         authorized_readiness[0] ==
@@ -13061,7 +13061,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
-    auto readiness_summary_report = result.drop_readiness_summary_report();
+    auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
     assert(readiness_summary_report.size() == 1);
     assert(
         readiness_summary_report.front() ==
@@ -13069,7 +13069,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
     );
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") == std::string::npos);
     assert(result.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
-    auto readiness_report = result.drop_readiness_snapshot_report();
+    auto readiness_report = result.owned_cleanup_readiness_snapshot_report();
     assert(readiness_report.size() == 4);
     assert(
         readiness_report[0] ==
@@ -13140,7 +13140,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
-    auto readiness_summary_report = result.drop_readiness_summary_report();
+    auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
     assert(readiness_summary_report.size() == 1);
     assert(
         readiness_summary_report.front() ==
@@ -13257,7 +13257,7 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 20");
-    auto readiness_summary_report = result.drop_readiness_summary_report();
+    auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
     assert(readiness_summary_report.size() == 1);
     assert(
         readiness_summary_report.front() ==
