@@ -268,12 +268,29 @@ auto preexisting_bound_dynamic_array_parameter_names(
     return names;
 }
 
+auto is_branch_local_consumed_owner(
+    std::string_view consumed_name,
+    std::string_view owner_name
+) -> bool {
+    return consumed_name == owner_name ||
+        (consumed_name.size() > owner_name.size() &&
+         consumed_name.starts_with(owner_name) &&
+         (consumed_name[owner_name.size()] == '.' || consumed_name[owner_name.size()] == '['));
+}
+
 auto erase_consumed_branch_local_cleanup_owners(
     OwnershipTransferState& transfers,
     std::vector<std::string> const& owner_names
 ) -> void {
     for (auto const& owner_name : owner_names) {
-        transfers.consumed_owned_bindings.erase(owner_name);
+        for (auto iterator = transfers.consumed_owned_bindings.begin();
+             iterator != transfers.consumed_owned_bindings.end();) {
+            if (is_branch_local_consumed_owner(*iterator, owner_name)) {
+                iterator = transfers.consumed_owned_bindings.erase(iterator);
+                continue;
+            }
+            ++iterator;
+        }
     }
 }
 

@@ -2814,6 +2814,9 @@ representation.
 - Multi-payload choice variants now also pin the expression-tail receiver-chain form. `Primary(items, marker)` coverage
   verifies `items[index + zero].box.values.forward().count()` can transfer and clean the selected descriptor while the
   scalar payload remains available for the final value expression.
+- Switch ownership merge now treats consumed descendants of case-local payload bindings as branch-local. Multi-variant
+  choices can therefore merge a receiver-transfer case such as `Primary(items, marker)` with a scalar fallback case
+  without leaking `items[...]` ownership transfers across cases.
 
 ## Follow-up work
 
