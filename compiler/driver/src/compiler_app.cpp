@@ -128,7 +128,7 @@ auto semantic_drop_resolution_state_report(
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
         semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
-    return semantics::format_drop_implementation_resolution_report(
+    return semantics::format_owned_cleanup_implementation_resolution_report(
         semantic_summary_drop_sites,
         semantic_drop_implementations(result.semantic_drop_state)
     );
@@ -139,7 +139,7 @@ auto semantic_drop_diagnostic_state_report(
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
         semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
-    return semantics::format_drop_implementation_diagnostic_report(
+    return semantics::format_owned_cleanup_implementation_diagnostic_report(
         semantic_summary_drop_sites,
         semantic_drop_implementations(result.semantic_drop_state)
     );
@@ -148,7 +148,7 @@ auto semantic_drop_diagnostic_state_report(
 auto semantic_drop_resolution_summary_state_report(
     pipeline::SemanticDropState const& state
 ) -> std::vector<std::string> {
-    return semantics::format_drop_implementation_resolution_summary_report(state.resolution_summaries);
+    return semantics::format_owned_cleanup_implementation_resolution_summary_report(state.resolution_summaries);
 }
 
 auto usage_text() -> std::string {
@@ -1190,7 +1190,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-lowering-authorization") {
         return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return semantics::format_drop_lowering_authorization_report(
+            return semantics::format_owned_cleanup_lowering_authorization_report(
                 result.semantic_drop_lowering_authorizations
             );
         });

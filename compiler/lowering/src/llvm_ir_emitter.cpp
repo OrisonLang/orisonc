@@ -579,8 +579,8 @@ auto emit_source_drop_definitions(
     std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
-    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
     auto sites = std::vector<semantics::PlannedDropSite> {};
     sites.reserve(authorizations.size());
     for (auto const& authorization : authorizations) {
@@ -824,8 +824,8 @@ auto collect_source_drop_definition_symbols(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
-    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
     auto sites = std::vector<semantics::PlannedDropSite> {};
     sites.reserve(authorizations.size());
     for (auto const& authorization : authorizations) {
@@ -869,8 +869,8 @@ auto collect_source_drop_definition_symbols(
 auto collect_direct_source_drop_definition_symbols(
     syntax::ModuleSyntax const& module
 ) -> std::vector<std::string> {
-    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
     auto symbols = std::vector<std::string> {};
     for (auto const& implementation : implementations) {
         if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||
@@ -1473,8 +1473,8 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
 auto declared_drop_declarations_for_runtime_indexed_cleanup(
     syntax::ModuleSyntax const& module
 ) -> std::vector<PlannedDropDeclaration> {
-    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
     auto declarations = std::vector<PlannedDropDeclaration> {};
     for (auto const& implementation : implementations) {
         if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||

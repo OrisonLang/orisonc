@@ -590,7 +590,7 @@ auto semantic_drop_implementation_discovery_report(
     report.reserve(state.discovered_implementations.size());
     for (auto const& discovered : state.discovered_implementations) {
         report.push_back(
-            orison::semantics::format_drop_implementation(discovered.implementation) +
+            orison::semantics::format_owned_cleanup_implementation(discovered.implementation) +
             " discovery " + discovered.discovery_name
         );
     }
@@ -610,7 +610,7 @@ auto semantic_drop_resolution_report(
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
         orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
-    return orison::semantics::format_drop_implementation_resolution_report(
+    return orison::semantics::format_owned_cleanup_implementation_resolution_report(
         semantic_summary_drop_sites,
         semantic_drop_implementations(result.semantic_drop_state)
     );
@@ -621,7 +621,7 @@ auto semantic_drop_diagnostic_report(
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
         orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
-    return orison::semantics::format_drop_implementation_diagnostic_report(
+    return orison::semantics::format_owned_cleanup_implementation_diagnostic_report(
         semantic_summary_drop_sites,
         semantic_drop_implementations(result.semantic_drop_state)
     );
@@ -630,7 +630,7 @@ auto semantic_drop_diagnostic_report(
 auto semantic_drop_lowering_authorization_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::semantics::format_drop_lowering_authorization_report(
+    return orison::semantics::format_owned_cleanup_lowering_authorization_report(
         result.semantic_drop_lowering_authorizations
     );
 }
@@ -638,7 +638,7 @@ auto semantic_drop_lowering_authorization_report(
 auto semantic_drop_resolution_summary_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::semantics::format_drop_implementation_resolution_summary_report(
+    return orison::semantics::format_owned_cleanup_implementation_resolution_summary_report(
         result.semantic_drop_state.resolution_summaries
     );
 }
@@ -20059,7 +20059,7 @@ auto main() -> int {
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementations = {
-                orison::semantics::source_derived_drop_implementation(
+                orison::semantics::source_derived_owned_cleanup_implementation(
                     "Payload",
                     3,
                     orison::semantics::OwnedCleanupImplementationBodySummary {
@@ -20144,7 +20144,7 @@ auto main() -> int {
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementations = {
-                orison::semantics::source_derived_drop_implementation(
+                orison::semantics::source_derived_owned_cleanup_implementation(
                     "Payload",
                     3,
                     orison::semantics::OwnedCleanupImplementationBodySummary {}
@@ -20168,7 +20168,7 @@ auto main() -> int {
         partial_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementations = {
-                orison::semantics::source_derived_drop_implementation(
+                orison::semantics::source_derived_owned_cleanup_implementation(
                     "Payload",
                     3,
                     orison::semantics::OwnedCleanupImplementationBodySummary {

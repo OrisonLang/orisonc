@@ -24,7 +24,7 @@ auto collect_discovered_drop_implementations(
             .discovery_name = "test-injection",
         });
     }
-    auto source_derived_implementations = semantics::collect_source_derived_drop_implementations(
+    auto source_derived_implementations = semantics::collect_source_derived_owned_cleanup_implementations(
         options.test_only_semantic_drop_implementation_candidates
     );
     for (auto const& implementation : source_derived_implementations) {
@@ -78,12 +78,12 @@ void populate_semantic_drop_reports(
     auto const source_drop_lowering_gate = source_drop_lowering_enabled(options)
                                               ? semantics::SourceDropLoweringGate::enabled
                                               : semantics::SourceDropLoweringGate::disabled;
-    result.semantic_drop_lowering_authorizations = semantics::authorize_drop_lowerings(
+    result.semantic_drop_lowering_authorizations = semantics::authorize_owned_cleanup_lowerings(
         semantic_summary_drop_sites,
         semantic_drop_implementations,
         source_drop_lowering_gate
     );
-    result.semantic_drop_state.resolution_summaries = semantics::summarize_drop_implementation_resolutions(
+    result.semantic_drop_state.resolution_summaries = semantics::summarize_owned_cleanup_implementation_resolutions(
         semantic_summary_drop_sites,
         semantic_drop_implementations
     );
