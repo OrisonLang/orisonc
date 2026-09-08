@@ -2795,6 +2795,9 @@ representation.
 - Computed-index named dynamic-element receiver mutation now has out-of-bounds coverage. The fixture evaluates
   `index + one` to `2`, checks the computed index before descriptor transfer, and traps through the shared bounds path
   on production `run`.
+- Named dynamic-element receiver coverage now composes computed indexing with an additional nested record-field hop:
+  `holder.items[index + zero].box.values.forward().count()`. Production checks pin the nested `Bucket` to
+  `BoxedValues` projection, selected descriptor transfer, cleanup, reuse rejection, and out-of-bounds trap behavior.
 
 ## Follow-up work
 

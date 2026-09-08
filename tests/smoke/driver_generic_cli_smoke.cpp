@@ -2405,6 +2405,65 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_com
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("dynamic_array.receiver_element_path.in_bounds") != std::string::npos);
+    assert(output.find("getelementptr %record.Bucket") != std::string::npos);
+    assert(output.find("getelementptr %record.BoxedValues") != std::string::npos);
+    assert(output.find("named_dynamic_array_receiver_descriptor") != std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
+        std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
+    assert(output.find("call void @__orison_drop.Bucket(ptr %holder.items.dynamic_array_cleanup") !=
+        std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
+void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_out_of_bounds_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto index_value = output.find("%index = add i64 0, 1");
+    auto one_value = output.find("%one = add i64 0, 1", index_value);
+    auto computed_index = output.find(" = add i64 %index, %one", one_value);
+    auto bounds_check = output.find(".in_bounds = icmp ult i64", computed_index);
+    auto trap = output.find("call void @__orison_dynamic_array_bounds_failed()", bounds_check);
+    auto bucket_field = output.find("getelementptr %record.Bucket", trap);
+    auto boxed_field = output.find("getelementptr %record.BoxedValues", bucket_field);
+    auto descriptor_load = output.find("named_dynamic_array_receiver_descriptor", boxed_field);
+    auto source_slot_zero = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp", descriptor_load);
+    assert(index_value != std::string::npos);
+    assert(one_value != std::string::npos);
+    assert(computed_index != std::string::npos);
+    assert(bounds_check != std::string::npos);
+    assert(trap != std::string::npos);
+    assert(bucket_field != std::string::npos);
+    assert(boxed_field != std::string::npos);
+    assert(descriptor_load != std::string::npos);
+    assert(source_slot_zero != std::string::npos);
+    assert(index_value < one_value);
+    assert(one_value < computed_index);
+    assert(computed_index < bounds_check);
+    assert(bounds_check < trap);
+    assert(trap < bucket_field);
+    assert(bucket_field < boxed_field);
+    assert(boxed_field < descriptor_load);
+    assert(descriptor_load < source_slot_zero);
+    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_append_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5025,6 +5084,36 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_run.or",
+        smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_run.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_reuse_rejected.or",
+        "use after move: holder.items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_reuse_rejected",
+        "use after move: holder.items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_out_of_bounds_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_out_of_bounds.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

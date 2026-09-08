@@ -1,0 +1,58 @@
+package fixtures.dynamicarray.receivernameddynamicarrayelementcomputedindexnestedfieldmethodchaincountoutofbounds
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+record BoxedValues
+    values: DynamicArray<Payload>
+
+record Bucket
+    box: BoxedValues
+
+record Holder
+    items: DynamicArray<Bucket>
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for BoxedValues
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Bucket
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function forward(this: exclusive This) -> DynamicArray<T>
+        this
+
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(seed)))
+    values
+
+function make_items() -> DynamicArray<Bucket>
+    var items: DynamicArray<Bucket> = DynamicArray()
+    items.push(Bucket(BoxedValues(make_values(7 as UInt32))))
+    items.push(Bucket(BoxedValues(make_values(11 as UInt32))))
+    items
+
+function make_holder() -> Holder
+    Holder(make_items())
+
+function main() -> UInt32
+    var holder: Holder = make_holder()
+    let index: UInt64 = 1 as UInt64
+    let one: UInt64 = 1 as UInt64
+    holder.items[index + one].box.values.forward().count() == 1 as IntSize ? 0 as UInt32 : 1 as UInt32
