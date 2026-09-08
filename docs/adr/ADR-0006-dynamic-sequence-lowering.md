@@ -2811,6 +2811,9 @@ representation.
 - Multi-payload choice variants now have production receiver-chain coverage for switch-bound payloads. The smoke
   matrix pins payload extraction for `Primary(items, marker)`, scalar payload use after receiver mutation, selected
   descriptor transfer, cleanup, reuse rejection, and bounds trapping.
+- Multi-payload choice variants now also pin the expression-tail receiver-chain form. `Primary(items, marker)` coverage
+  verifies `items[index + zero].box.values.forward().count()` can transfer and clean the selected descriptor while the
+  scalar payload remains available for the final value expression.
 
 ## Follow-up work
 

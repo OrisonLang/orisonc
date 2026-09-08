@@ -2511,6 +2511,36 @@ void assert_cli_emit_llvm_dynamic_array_receiver_choice_payload_nested_append_fi
     assert(output.find("ret i32") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_count_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto payload_extract = output.find("extractvalue { i32, { { ptr, i64, i64 }, i32 } } %packet, 1");
+    auto items_extract = output.find("extractvalue { { ptr, i64, i64 }, i32 }", payload_extract);
+    auto marker_extract = output.find("extractvalue { { ptr, i64, i64 }, i32 }", items_extract + 1);
+    auto count_call = output.find("call i64 @method.DynamicArray_Payload_.count__Payload", marker_extract);
+    auto marker_subtract = output.find("sub i32", count_call);
+    assert(payload_extract != std::string::npos);
+    assert(items_extract != std::string::npos);
+    assert(marker_extract != std::string::npos);
+    assert(count_call != std::string::npos);
+    assert(marker_subtract != std::string::npos);
+    assert(output.find("%items.addr = alloca { ptr, i64, i64 }") != std::string::npos);
+    assert(output.find("dynamic_array.receiver_element_path.in_bounds") != std::string::npos);
+    assert(output.find("getelementptr %record.Bucket") != std::string::npos);
+    assert(output.find("getelementptr %record.BoxedValues") != std::string::npos);
+    assert(output.find("named_dynamic_array_receiver_descriptor") != std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Bucket(ptr %") != std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_append_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5316,6 +5346,36 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_run.or",
+        smoke_temp_root / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_count_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_run.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_reuse_rejected.or",
+        "use after move: items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_reuse_rejected",
+        "use after move: items[(index + zero)].box.values",
+        "lowering does not yet support this return expression"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_out_of_bounds_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_out_of_bounds.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

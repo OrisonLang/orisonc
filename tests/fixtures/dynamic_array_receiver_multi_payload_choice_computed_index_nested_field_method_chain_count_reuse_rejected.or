@@ -1,0 +1,62 @@
+package fixtures.dynamicarray.receivermultipayloadchoicecomputedindexnestedfieldmethodchaincountreuserejected
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+record BoxedValues
+    values: DynamicArray<Payload>
+
+record Bucket
+    box: BoxedValues
+
+choice Packet
+    Primary(items: DynamicArray<Bucket>, marker: UInt32)
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for BoxedValues
+    function drop(this: exclusive This) -> Unit
+        return
+
+implements Drop for Bucket
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function forward(this: exclusive This) -> DynamicArray<T>
+        this
+
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(seed)))
+    values
+
+function make_packet() -> Packet
+    var items: DynamicArray<Bucket> = DynamicArray()
+    items.push(Bucket(BoxedValues(make_values(7 as UInt32))))
+    items.push(Bucket(BoxedValues(make_values(11 as UInt32))))
+    Primary(items, 42 as UInt32)
+
+function consume(packet: Packet) -> UInt32
+    switch packet
+        Primary(items, marker) =>
+            let index: UInt64 = 0 as UInt64
+            let zero: UInt64 = 0 as UInt64
+            let moved_count: IntSize = items[index + zero].box.values.forward().count()
+            let marker_copy: UInt32 = marker
+            let reused_count: IntSize = items[index + zero].box.values.count()
+            reused_count == moved_count + marker_copy as IntSize ? 0 as UInt32 : 1 as UInt32
+
+function main() -> UInt32
+    consume(make_packet())
