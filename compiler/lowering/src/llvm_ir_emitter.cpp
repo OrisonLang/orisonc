@@ -29,6 +29,21 @@
 namespace orison::lowering {
 namespace {
 
+auto cleanup_local_name_part(std::string_view text) -> std::string {
+    auto name = std::string {};
+    name.reserve(text.size());
+    for (auto character : text) {
+        auto const allowed =
+            (character >= 'a' && character <= 'z') ||
+            (character >= 'A' && character <= 'Z') ||
+            (character >= '0' && character <= '9') ||
+            character == '.' ||
+            character == '_';
+        name.push_back(allowed ? character : '_');
+    }
+    return name;
+}
+
 auto can_emit_record_layout(syntax::RecordSyntax const& record, LoweredRecordLayout const& layout) -> bool {
     if (!record.generic_parameters.empty() || layout.fields.size() != record.fields.size()) {
         return false;
@@ -178,8 +193,7 @@ auto has_authorized_source_drop_definition(
     semantics::DropImplementation const& implementation,
     std::vector<semantics::DropLoweringAuthorization> const& authorizations
 ) -> bool {
-    if (implementation.origin != semantics::DropImplementationOrigin::source_derived ||
-        !implementation.proven ||
+    if (!implementation.proven ||
         !implementation.body.finite) {
         return false;
     }
@@ -214,8 +228,7 @@ auto source_drop_element_symbol(
     auto match = std::ranges::find_if(
         implementations,
         [&](semantics::DropImplementation const& implementation) {
-            return implementation.origin == semantics::DropImplementationOrigin::source_derived &&
-                implementation.proven &&
+            return implementation.proven &&
                 implementation.body.finite &&
                 implementation.source_type_name == source_type_name &&
                 implementation.abi_symbol_name == symbol_name;
@@ -366,6 +379,93 @@ auto emit_fixed_array_record_drop_field_sequence(
     return output.str();
 }
 
+auto emit_fixed_array_dynamic_array_drop_field_sequence(
+    LoweredRecordLayout const& layout,
+    LoweredRecordField const& field,
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view source_type_name,
+    std::string_view length_value,
+    std::optional<std::string> const& element_drop_symbol
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto field_pointer_name = "%" + std::string {source_type_name} + ".drop." + field.name + ".addr";
+    auto prefix = "%" + std::string {source_type_name} + ".drop." + field.name;
+    auto label_prefix = std::string {prefix};
+    if (!label_prefix.empty() && label_prefix.front() == '%') {
+        label_prefix.erase(label_prefix.begin());
+    }
+
+    output << "  " << field_pointer_name << " = getelementptr " << layout.llvm_type_name
+           << ", ptr %value, i32 0, i32 " << field.index << "\n";
+    output << "  br label %" << label_prefix << ".cleanup.entry\n";
+    output << label_prefix << ".cleanup.entry:\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.walk:\n";
+    output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix
+           << ".cleanup.entry ], [ " << prefix << ".drop.next, %" << label_prefix
+           << ".element.done ]\n";
+    output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix
+           << ".drop.index, " << length_value << "\n";
+    output << "  br i1 " << prefix << ".drop.more, label %" << label_prefix
+           << ".drop.body, label %" << label_prefix << ".drop.done\n";
+    output << label_prefix << ".drop.body:\n";
+    output << "  " << prefix << ".drop.element.addr = getelementptr " << field.llvm_type
+           << ", ptr " << field_pointer_name << ", i64 0, i64 " << prefix << ".drop.index\n";
+    output << "  " << prefix << ".element.descriptor = load " << dynamic_array_descriptor_llvm_type()
+           << ", ptr " << prefix << ".drop.element.addr\n";
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".element.cleanup.data",
+        prefix + ".element.descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".element.cleanup.length",
+        prefix + ".element.descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".element.cleanup.capacity",
+        prefix + ".element.descriptor",
+        DynamicArrayDescriptorField::capacity
+    );
+    if (element_drop_symbol.has_value()) {
+        output << "  br label %" << label_prefix << ".element.cleanup.entry\n";
+        output << label_prefix << ".element.cleanup.entry:\n";
+        output << "  br label %" << label_prefix << ".element.drop.walk\n";
+        output << label_prefix << ".element.drop.walk:\n";
+        output << "  " << prefix << ".element.drop.index = phi i64 [ 0, %" << label_prefix
+               << ".element.cleanup.entry ], [ " << prefix << ".element.drop.next, %"
+               << label_prefix << ".element.drop.body ]\n";
+        output << "  " << prefix << ".element.drop.more = icmp ult i64 " << prefix
+               << ".element.drop.index, " << prefix << ".element.cleanup.length\n";
+        output << "  br i1 " << prefix << ".element.drop.more, label %" << label_prefix
+               << ".element.drop.body, label %" << label_prefix << ".element.drop.done\n";
+        output << label_prefix << ".element.drop.body:\n";
+        output << emit_dynamic_array_element_address(
+            plan,
+            prefix + ".element.drop.element.addr",
+            prefix + ".element.cleanup.data",
+            prefix + ".element.drop.index"
+        );
+        output << "  call void @" << *element_drop_symbol << "(ptr "
+               << prefix << ".element.drop.element.addr)\n";
+        output << "  " << prefix << ".element.drop.next = add i64 "
+               << prefix << ".element.drop.index, 1\n";
+        output << "  br label %" << label_prefix << ".element.drop.walk\n";
+        output << label_prefix << ".element.drop.done:\n";
+    }
+    output << "  call void @__orison_dynamic_array_deallocate(ptr " << prefix
+           << ".element.cleanup.data, i64 " << plan.element_size_bytes << ", i64 "
+           << prefix << ".element.cleanup.capacity)\n";
+    output << emit_dynamic_array_descriptor_finalization(prefix + ".drop.element.addr");
+    output << "  br label %" << label_prefix << ".element.done\n";
+    output << label_prefix << ".element.done:\n";
+    output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.done:\n";
+    return output.str();
+}
+
 auto emit_record_source_drop_body(
     std::string_view source_type_name,
     LoweringContext const& context,
@@ -377,6 +477,7 @@ auto emit_record_source_drop_body(
     }
 
     auto output = std::ostringstream {};
+    auto const cleanup_name = cleanup_local_name_part(source_type_name);
     for (auto const& field : layout->second.fields) {
         auto plan = plan_dynamic_array_descriptor_cleanup(
             std::string {source_type_name} + "." + field.name,
@@ -386,8 +487,8 @@ auto emit_record_source_drop_body(
         if (!plan.has_value()) {
             continue;
         }
-        auto field_pointer_name = "%" + std::string {source_type_name} + ".drop." + field.name + ".addr";
-        auto prefix = "%" + std::string {source_type_name} + ".drop." + field.name;
+        auto field_pointer_name = "%" + cleanup_name + ".drop." + field.name + ".addr";
+        auto prefix = "%" + cleanup_name + ".drop." + field.name;
         output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
                << ", ptr %value, i32 0, i32 " << field.index << "\n";
         output << emit_dynamic_array_drop_field_sequence(
@@ -408,7 +509,7 @@ auto emit_record_source_drop_body(
             output << emit_record_field_drop_sequence(
                 layout->second,
                 field,
-                source_type_name,
+                cleanup_name,
                 *drop_symbol
             );
             continue;
@@ -417,6 +518,23 @@ auto emit_record_source_drop_body(
         auto element_source_type_name = array_element_source_type_name(field.source_type_name);
         auto length_value = fixed_array_length_value(field.source_type_name);
         if (!element_source_type_name.has_value() || !length_value.has_value()) {
+            continue;
+        }
+
+        auto dynamic_array_element_plan = plan_dynamic_array_descriptor_cleanup(
+            std::string {source_type_name} + "." + field.name + ".element",
+            *element_source_type_name,
+            context
+        );
+        if (dynamic_array_element_plan.has_value()) {
+            output << emit_fixed_array_dynamic_array_drop_field_sequence(
+                layout->second,
+                field,
+                *dynamic_array_element_plan,
+                cleanup_name,
+                *length_value,
+                source_drop_element_symbol(dynamic_array_element_plan->element_source_type_name, implementations)
+            );
             continue;
         }
 
@@ -429,7 +547,7 @@ auto emit_record_source_drop_body(
         output << emit_fixed_array_record_drop_field_sequence(
             layout->second,
             field,
-            source_type_name,
+            cleanup_name,
             *element_llvm_type_name,
             *length_value,
             *element_drop_symbol
@@ -446,15 +564,62 @@ auto collect_source_drop_definition_symbols(
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string>;
 
+void add_compiler_intrinsic_cleanup_dependency(
+    std::string_view source_type_name,
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    std::vector<semantics::DropImplementation>& implementations,
+    std::vector<std::string>& active_source_types
+);
+
 auto emit_source_drop_definitions(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     std::vector<semantics::DropLoweringAuthorization> const& authorizations,
+    std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto sites = std::vector<semantics::PlannedDropSite> {};
+    sites.reserve(authorizations.size());
+    for (auto const& authorization : authorizations) {
+        sites.push_back(authorization.site);
+    }
+    for (auto const& declaration : planned_drop_declarations) {
+        sites.push_back(semantics::PlannedDropSite {
+            .source_type_name = declaration.source_type_name,
+            .abi_symbol_name = declaration.symbol_name,
+            .site_line = declaration.discovery_line,
+        });
+    }
+    auto compiler_intrinsic_implementations =
+        semantics::collect_compiler_intrinsic_owned_cleanup_implementations(sites, module);
+    implementations.insert(
+        implementations.end(),
+        compiler_intrinsic_implementations.begin(),
+        compiler_intrinsic_implementations.end()
+    );
+    auto active_source_types = std::vector<std::string> {};
+    for (auto const& implementation : compiler_intrinsic_implementations) {
+        add_compiler_intrinsic_cleanup_dependency(
+            implementation.source_type_name,
+            module,
+            context,
+            implementations,
+            active_source_types
+        );
+    }
     auto emitted_symbols = collect_source_drop_definition_symbols(module, context, authorizations, options);
+    for (auto const& declaration : planned_drop_declarations) {
+        if (!declaration.emit_declaration) {
+            continue;
+        }
+        if (std::ranges::find(emitted_symbols, declaration.symbol_name) != emitted_symbols.end()) {
+            continue;
+        }
+        emitted_symbols.push_back(declaration.symbol_name);
+    }
     auto output = std::ostringstream {};
     for (auto const& symbol : emitted_symbols) {
         auto implementation = std::ranges::find_if(
@@ -478,6 +643,86 @@ auto emit_source_drop_definitions(
     return output.str();
 }
 
+auto record_declaration_line(
+    std::string_view source_type_name,
+    syntax::ModuleSyntax const& module
+) -> std::size_t {
+    auto record = std::ranges::find_if(
+        module.records,
+        [&](syntax::RecordSyntax const& candidate) {
+            return candidate.name == source_type_name;
+        }
+    );
+    if (record == module.records.end()) {
+        return 0;
+    }
+    return record->line;
+}
+
+void add_compiler_intrinsic_cleanup_dependency(
+    std::string_view source_type_name,
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    std::vector<semantics::DropImplementation>& implementations,
+    std::vector<std::string>& active_source_types
+) {
+    auto const source_type = std::string {source_type_name};
+    if (!context.records.contains(source_type)) {
+        return;
+    }
+    if (std::ranges::find(active_source_types, source_type) != active_source_types.end()) {
+        return;
+    }
+
+    auto const symbol_name = semantics::drop_abi_symbol_name(source_type);
+    auto implementation = std::ranges::find_if(
+        implementations,
+        [&](semantics::DropImplementation const& candidate) {
+            return candidate.source_type_name == source_type &&
+                candidate.abi_symbol_name == symbol_name;
+        }
+    );
+    if (implementation == implementations.end()) {
+        implementations.push_back(semantics::compiler_intrinsic_owned_cleanup_implementation(
+            source_type,
+            record_declaration_line(source_type, module)
+        ));
+    }
+
+    active_source_types.push_back(source_type);
+    auto const& layout = context.records.at(source_type);
+    for (auto const& field : layout.fields) {
+        if (auto element_source_type = dynamic_array_element_source_type_name(field.source_type_name)) {
+            add_compiler_intrinsic_cleanup_dependency(
+                *element_source_type,
+                module,
+                context,
+                implementations,
+                active_source_types
+            );
+            continue;
+        }
+        if (auto element_source_type = array_element_source_type_name(field.source_type_name)) {
+            add_compiler_intrinsic_cleanup_dependency(
+                *element_source_type,
+                module,
+                context,
+                implementations,
+                active_source_types
+            );
+            continue;
+        }
+        add_compiler_intrinsic_cleanup_dependency(
+            field.source_type_name,
+            module,
+            context,
+            implementations,
+            active_source_types
+        );
+    }
+    active_source_types.pop_back();
+}
+
 auto source_drop_implementation_for_type(
     std::string_view source_type_name,
     std::vector<semantics::DropImplementation> const& implementations
@@ -486,8 +731,7 @@ auto source_drop_implementation_for_type(
     auto implementation = std::ranges::find_if(
         implementations,
         [&](semantics::DropImplementation const& candidate) {
-            return candidate.origin == semantics::DropImplementationOrigin::source_derived &&
-                candidate.proven &&
+            return candidate.proven &&
                 candidate.body.finite &&
                 candidate.source_type_name == source_type_name &&
                 candidate.abi_symbol_name == symbol_name;
@@ -582,8 +826,30 @@ auto collect_source_drop_definition_symbols(
 ) -> std::vector<std::string> {
     auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
     auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
-    auto symbols = std::vector<std::string> {};
+    auto sites = std::vector<semantics::PlannedDropSite> {};
+    sites.reserve(authorizations.size());
+    for (auto const& authorization : authorizations) {
+        sites.push_back(authorization.site);
+    }
+    auto compiler_intrinsic_implementations =
+        semantics::collect_compiler_intrinsic_owned_cleanup_implementations(sites, module);
+    implementations.insert(
+        implementations.end(),
+        compiler_intrinsic_implementations.begin(),
+        compiler_intrinsic_implementations.end()
+    );
     auto active_source_types = std::vector<std::string> {};
+    for (auto const& implementation : compiler_intrinsic_implementations) {
+        add_compiler_intrinsic_cleanup_dependency(
+            implementation.source_type_name,
+            module,
+            context,
+            implementations,
+            active_source_types
+        );
+    }
+    auto symbols = std::vector<std::string> {};
+    active_source_types.clear();
     for (auto const& source_type : collect_direct_source_drop_definition_types(
              implementations,
              authorizations,
@@ -4442,7 +4708,13 @@ auto emit_module(
         result.dynamic_array_runtime_operations,
         source_defined_drop_symbols
     );
-    output << emit_source_drop_definitions(module, context, result.semantic_drop_lowering_authorizations, options);
+    output << emit_source_drop_definitions(
+        module,
+        context,
+        result.semantic_drop_lowering_authorizations,
+        result.planned_drop_declarations,
+        options
+    );
     for (auto const& function : module.functions) {
         if (is_uninstantiated_generic_function(function)) {
             continue;

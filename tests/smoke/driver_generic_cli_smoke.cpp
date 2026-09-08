@@ -147,6 +147,15 @@ void assert_cli_emit_llvm_existing_fixture_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+void assert_cli_emit_llvm_existing_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define ") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_existing_fixture_failure_without(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -4397,21 +4406,23 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_succes
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto field_address = output.find("%holder.values.addr");
-    auto cleanup = output.find("%holder.values.dynamic_array_cleanup");
-    auto drop = output.find("call void @__orison_drop.Payload(ptr %holder.values.dynamic_array_cleanup");
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.dynamic_array_cleanup"
+    auto holder_drop_definition = output.find("define void @__orison_drop.Holder(ptr %value)");
+    auto holder_field_drop = output.find("call void @__orison_drop.Payload(ptr %Holder.drop.values.drop.element.addr)");
+    auto holder_field_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.cleanup.data"
     );
+    auto holder_drop_call = output.find("call void @__orison_drop.Holder(ptr %holder.addr)");
     auto return_value = output.find("ret i32 0");
     assert(field_address != std::string::npos);
-    assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
+    assert(holder_drop_definition != std::string::npos);
+    assert(holder_field_drop != std::string::npos);
+    assert(holder_field_deallocate != std::string::npos);
+    assert(holder_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
-    assert(field_address < cleanup);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < return_value);
+    assert(holder_drop_definition < holder_field_drop);
+    assert(holder_field_drop < holder_field_deallocate);
+    assert(field_address < holder_drop_call);
+    assert(holder_drop_call < return_value);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture_success(
@@ -4422,23 +4433,30 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture
     auto output = read_command_output(command);
     auto inner_address = output.find("%outer.inner.addr");
     auto field_address = output.find("%outer.inner.values.addr");
-    auto cleanup = output.find("%outer.inner.values.dynamic_array_cleanup");
-    auto drop = output.find("call void @__orison_drop.Payload(ptr %outer.inner.values.dynamic_array_cleanup");
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.values.dynamic_array_cleanup"
+    auto inner_drop_definition = output.find("define void @__orison_drop.Inner(ptr %value)");
+    auto outer_drop_definition = output.find("define void @__orison_drop.Outer(ptr %value)");
+    auto inner_field_drop = output.find("call void @__orison_drop.Payload(ptr %Inner.drop.values.drop.element.addr)");
+    auto inner_field_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %Inner.drop.values.cleanup.data"
     );
+    auto outer_inner_drop = output.find("call void @__orison_drop.Inner(ptr %Outer.drop.inner.addr)");
+    auto outer_drop_call = output.find("call void @__orison_drop.Outer(ptr %outer.addr)");
     auto return_value = output.find("ret i32 0");
     assert(inner_address != std::string::npos);
     assert(field_address != std::string::npos);
-    assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
+    assert(inner_drop_definition != std::string::npos);
+    assert(outer_drop_definition != std::string::npos);
+    assert(inner_field_drop != std::string::npos);
+    assert(inner_field_deallocate != std::string::npos);
+    assert(outer_inner_drop != std::string::npos);
+    assert(outer_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
     assert(inner_address < field_address);
-    assert(field_address < cleanup);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < return_value);
+    assert(inner_drop_definition < inner_field_drop);
+    assert(inner_field_drop < inner_field_deallocate);
+    assert(outer_drop_definition < outer_inner_drop);
+    assert(field_address < outer_drop_call);
+    assert(outer_drop_call < return_value);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixture_success(
@@ -4450,47 +4468,40 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     auto items_address = output.find("%outer.items.addr");
     auto first_item_address = output.find("%outer.items.element0.addr");
     auto first_field_address = output.find("%outer.items.element0.values.addr");
-    auto first_cleanup = output.find("%outer.items.element0.values.dynamic_array_cleanup");
-    auto first_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_cleanup"
-    );
-    auto first_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_cleanup"
-    );
     auto second_item_address = output.find("%outer.items.element1.addr");
     auto second_field_address = output.find("%outer.items.element1.values.addr");
-    auto second_cleanup = output.find("%outer.items.element1.values.dynamic_array_cleanup");
-    auto second_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.items.element1.values.dynamic_array_cleanup"
+    auto item_drop_definition = output.find("define void @__orison_drop.Item(ptr %value)");
+    auto outer_drop_definition = output.find("define void @__orison_drop.Outer(ptr %value)");
+    auto item_field_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %Item.drop.values.drop.element.addr)"
     );
-    auto second_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element1.values.dynamic_array_cleanup"
+    auto item_field_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %Item.drop.values.cleanup.data"
     );
+    auto outer_item_drop = output.find("call void @__orison_drop.Item(ptr %Outer.drop.items.drop.element.addr)");
+    auto outer_drop_call = output.find("call void @__orison_drop.Outer(ptr %outer.addr)");
     auto return_value = output.find("ret i32 0");
     assert(items_address != std::string::npos);
     assert(first_item_address != std::string::npos);
     assert(first_field_address != std::string::npos);
-    assert(first_cleanup != std::string::npos);
-    assert(first_drop != std::string::npos);
-    assert(first_deallocate != std::string::npos);
     assert(second_item_address != std::string::npos);
     assert(second_field_address != std::string::npos);
-    assert(second_cleanup != std::string::npos);
-    assert(second_drop != std::string::npos);
-    assert(second_deallocate != std::string::npos);
+    assert(item_drop_definition != std::string::npos);
+    assert(outer_drop_definition != std::string::npos);
+    assert(item_field_drop != std::string::npos);
+    assert(item_field_deallocate != std::string::npos);
+    assert(outer_item_drop != std::string::npos);
+    assert(outer_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
     assert(items_address < first_item_address);
     assert(first_item_address < first_field_address);
     assert(first_field_address < second_item_address);
     assert(second_item_address < second_field_address);
-    assert(second_field_address < first_cleanup);
-    assert(first_field_address < first_cleanup);
-    assert(first_cleanup < first_drop);
-    assert(first_drop < first_deallocate);
-    assert(first_deallocate < second_cleanup);
-    assert(second_cleanup < second_drop);
-    assert(second_drop < second_deallocate);
-    assert(second_deallocate < return_value);
+    assert(item_drop_definition < item_field_drop);
+    assert(item_field_drop < item_field_deallocate);
+    assert(outer_drop_definition < outer_item_drop);
+    assert(second_field_address < outer_drop_call);
+    assert(outer_drop_call < return_value);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixture_success(
@@ -4501,41 +4512,33 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixtu
     auto output = read_command_output(command);
     auto values_address = output.find("%holder.values.addr");
     auto first_element_address = output.find("%holder.values.element0.addr");
-    auto first_cleanup = output.find("%holder.values.element0.dynamic_array_cleanup");
-    auto first_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.values.element0.dynamic_array_cleanup"
-    );
-    auto first_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element0.dynamic_array_cleanup"
-    );
     auto second_element_address = output.find("%holder.values.element1.addr");
-    auto second_cleanup = output.find("%holder.values.element1.dynamic_array_cleanup");
-    auto second_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.values.element1.dynamic_array_cleanup"
+    auto holder_drop_definition = output.find("define void @__orison_drop.Holder(ptr %value)");
+    auto holder_value_cleanup = output.find("%Holder.drop.values.drop.walk");
+    auto holder_element_drop = output.find(
+        "call void @__orison_drop.Payload(ptr %Holder.drop.values.element.drop.element.addr)"
     );
-    auto second_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element1.dynamic_array_cleanup"
+    auto holder_element_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.element.cleanup.data"
     );
+    auto holder_drop_call = output.find("call void @__orison_drop.Holder(ptr %holder.addr)");
     auto return_value = output.find("ret i32 0");
     assert(values_address != std::string::npos);
     assert(first_element_address != std::string::npos);
-    assert(first_cleanup != std::string::npos);
-    assert(first_drop != std::string::npos);
-    assert(first_deallocate != std::string::npos);
     assert(second_element_address != std::string::npos);
-    assert(second_cleanup != std::string::npos);
-    assert(second_drop != std::string::npos);
-    assert(second_deallocate != std::string::npos);
+    assert(holder_drop_definition != std::string::npos);
+    assert(holder_value_cleanup != std::string::npos);
+    assert(holder_element_drop != std::string::npos);
+    assert(holder_element_deallocate != std::string::npos);
+    assert(holder_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
     assert(values_address < first_element_address);
     assert(first_element_address < second_element_address);
-    assert(second_element_address < first_cleanup);
-    assert(first_cleanup < first_drop);
-    assert(first_drop < first_deallocate);
-    assert(first_deallocate < second_cleanup);
-    assert(second_cleanup < second_drop);
-    assert(second_drop < second_deallocate);
-    assert(second_deallocate < return_value);
+    assert(holder_drop_definition < holder_value_cleanup);
+    assert(holder_value_cleanup < holder_element_drop);
+    assert(holder_element_drop < holder_element_deallocate);
+    assert(second_element_address < holder_drop_call);
+    assert(holder_drop_call < return_value);
 }
 
 auto generic_method_lines() -> std::vector<std::string> {
@@ -4832,35 +4835,29 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection_mismatch.or",
         "second_inner_item argument 1 has incompatible ternary arm source types: DynamicArray<Outer<UInt32>> and DynamicArray<Outer<UInt64>>"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_projection_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_generic_nested_fixed_array_projection_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_owned_element_projection_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_generic_nested_owned_element_projection_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_owned_element_projection_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_generic_owned_element_projection_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_owned_parameter_missing_drop.or",
-        "lowering DynamicArray parameter 'values' with owned element type Payload requires ownership/drop proof before production lowering"
+        fixtures / "dynamic_array_generic_owned_parameter_missing_drop.or"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -5146,20 +5143,17 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement_out_of_bounds.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or",
-        "DynamicArray receiver expression with owned elements requires authorized element drop"
+        fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_touch_statement_missing_drop.or",
-        "lowering DynamicArray receiver expression with owned elements requires authorized element drop"
+        fixtures / "dynamic_array_receiver_direct_owned_touch_statement_missing_drop.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop.or",
-        "lowering DynamicArray receiver expression with owned elements requires authorized element drop"
+        fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
@@ -5493,10 +5487,9 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_ternary_owned_methods.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_ternary_owned_methods_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_receiver_ternary_owned_methods_missing_drop.or"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6448,35 +6441,21 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
-        (fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or").string() +
-            ":28: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
-            "element Box"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or",
-        smoke_temp_root / "runtime_indexed_choice_payload_member_missing_drop_rejected",
-        (fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or").string() +
-            ":28: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
-            "element Box"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
-        (fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or").string() +
-            ":74: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
-            "element Wrap"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or"
     );
-    assert_cli_existing_fixture_production_failures(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or",
-        smoke_temp_root / "runtime_indexed_choice_payload_nested_member_missing_drop_rejected",
-        (fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or").string() +
-            ":74: error: lowering DynamicArray push to owned element requires authorized element drop: owner items "
-            "element Wrap"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
@@ -7070,10 +7049,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "aggregate_owned_projection_return_rejected.or",
         "aggregate path read of owned projection requires an explicit ownership transfer"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_append_missing_drop.or",
-        "lowering DynamicArray push to owned element requires authorized element drop"
+        fixtures / "dynamic_array_receiver_append_missing_drop.or"
     );
     }
 

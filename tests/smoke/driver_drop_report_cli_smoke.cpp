@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
+#include <iostream>
 #include <span>
 #include <string>
 #include <string_view>
@@ -283,6 +284,10 @@ void assert_success_with_stdout_contains(
     assert(result.exit_code == 0);
     assert(result.stderr_text.empty());
     for (auto expected_fragment : expected_fragments) {
+        if (result.stdout_text.find(expected_fragment) == std::string::npos) {
+            std::cerr << "missing expected fragment: " << expected_fragment << '\n';
+            std::cerr << "stdout:\n" << result.stdout_text << '\n';
+        }
         assert(result.stdout_text.find(expected_fragment) != std::string::npos);
     }
 }
@@ -296,6 +301,10 @@ void assert_success_with_stdout_contains_in_order(
     auto search_offset = std::size_t {0};
     for (auto expected_fragment : expected_fragments) {
         auto found = result.stdout_text.find(expected_fragment, search_offset);
+        if (found == std::string::npos) {
+            std::cerr << "missing expected fragment in order: " << expected_fragment << '\n';
+            std::cerr << "stdout:\n" << result.stdout_text << '\n';
+        }
         assert(found != std::string::npos);
         search_offset = found + expected_fragment.size();
     }
@@ -565,30 +574,31 @@ int main() {
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
             "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
+            "  call void @__orison_drop.Payload(ptr %cleanup.field.0)\n"
             "  ret void\n"
             "}",
         }
     );
     assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
     assert(planned_drop_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
-    assert(planned_drop_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
+    assert(planned_drop_emit.stdout_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
 
     auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
     assert_success_with_stdout_contains(planned_drop_report, {"planned drop __orison_drop.Payload"});
     auto semantic_planned_drop_report = run_semantic_planned_drops(app, planned_drop_report_path);
     assert_success_with_stdout_contains(semantic_planned_drop_report, {"drop obligation __orison_drop.Payload"});
     auto semantic_drop_resolution = run_semantic_drop_resolution(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(semantic_drop_resolution, {"missing drop site __orison_drop.Payload"});
+    assert_success_with_stdout_contains(semantic_drop_resolution, {"resolved drop site __orison_drop.Payload"});
     auto semantic_drop_diagnostics = run_semantic_drop_diagnostics(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         semantic_drop_diagnostics,
-        {"drop diagnostic drop site __orison_drop.Payload", "no implementation discovered"}
+        {"drop diagnostic drop site __orison_drop.Payload", "resolved"}
     );
     auto semantic_drop_lowering_authorization =
         run_semantic_drop_lowering_authorization(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         semantic_drop_lowering_authorization,
-        {"drop lowering authorization drop site __orison_drop.Payload", "semantic-unresolved lowering-blocked"}
+        {"drop lowering authorization drop site __orison_drop.Payload", "semantic-resolved lowering-blocked"}
     );
 
     auto parsed_drop_candidate_path =
@@ -624,8 +634,7 @@ int main() {
     auto parsed_drop_candidate_emit = run_emit_llvm(app, parsed_drop_candidate_path);
     assert(parsed_drop_candidate_emit.exit_code == 0);
     assert(parsed_drop_candidate_emit.stderr_text.empty());
-    assert(parsed_drop_candidate_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
-    assert(parsed_drop_candidate_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
+    assert(parsed_drop_candidate_emit.stdout_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
 
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_parsed_drop_readiness.or";
@@ -683,7 +692,7 @@ int main() {
         drop_cleanup_authorization,
         {
             "drop cleanup authorization __orison_thread_cleanup.launch.12.0 blocked",
-            "semantic drop unresolved __orison_drop.Payload",
+            "source drop lowering not accepted __orison_drop.Payload",
             "missing drop declaration __orison_drop.Payload",
         }
     );
@@ -714,8 +723,8 @@ int main() {
     assert_success_with_stdout_contains(
         drop_readiness_blockers,
         {
-            "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 1",
-            "drop readiness blocker semantic unresolved __orison_drop.Payload",
+            "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0",
+            "drop readiness blocker source lowering not accepted __orison_drop.Payload",
             "drop readiness blocker missing declaration __orison_drop.Payload",
         }
     );
@@ -725,7 +734,7 @@ int main() {
         {
             "drop readiness source correlations actions 1 semantic sites 1",
             "__orison_thread_cleanup.launch.12.0 __orison_drop.Payload",
-            "semantic unresolved source lowering not accepted declaration missing",
+            "semantic resolved source lowering not accepted declaration missing",
         }
     );
     auto multi_drop_readiness_fixture_path =
@@ -738,6 +747,7 @@ int main() {
             "drop readiness relation __orison_thread_cleanup.launch.20.0 blocked",
             "drop readiness relation semantic blocker __orison_drop.Payload",
             "drop readiness relation semantic blocker __orison_drop.OtherPayload",
+            "drop readiness relation missing declaration __orison_drop.Payload",
             "drop readiness relation missing declaration __orison_drop.OtherPayload",
         }
     );
@@ -746,9 +756,11 @@ int main() {
     assert_success_with_stdout_contains(
         multi_fixture_drop_readiness_blockers,
         {
-            "drop readiness blockers cleanups 1 semantic blockers 2 semantic unresolved 2",
+            "drop readiness blockers cleanups 1 semantic blockers 2 semantic unresolved 0",
             "drop readiness blocker semantic __orison_drop.Payload",
-            "drop readiness blocker semantic unresolved __orison_drop.OtherPayload",
+            "drop readiness blocker source lowering not accepted __orison_drop.Payload",
+            "drop readiness blocker source lowering not accepted __orison_drop.OtherPayload",
+            "drop readiness blocker missing declaration __orison_drop.Payload",
             "drop readiness blocker missing declaration __orison_drop.OtherPayload",
         }
     );
@@ -882,7 +894,7 @@ int main() {
         {
             "dynamic array descriptor cleanup DynamicArray<Payload>",
             "owner items",
-            "descriptor %items.addr audit",
+            "descriptor %items.addr bound",
         }
     );
     auto dynamic_array_blocked_lifetime_plan =
@@ -895,7 +907,7 @@ int main() {
             "owner items",
             "origin parameter",
             "cleanup callee-owned-parameter-cleanup",
-            "storage audit",
+            "storage bound",
             "descriptor %items.addr",
             "cleanup-plan available",
         }
@@ -973,8 +985,8 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_blocked_cleanup_capability,
         {
-            "dynamic array cleanup emission capability blocked",
-            "[element cleanup missing]",
+            "dynamic array cleanup emission capability proven",
+            "[element cleanup ok]",
         }
     );
     auto dynamic_array_blocked_cleanup_audit =
@@ -990,11 +1002,10 @@ int main() {
             "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
             "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
             "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
-            "dynamic array cleanup emission capability blocked",
-            "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]",
-            "[element cleanup missing]",
-            "dynamic array cleanup production readiness blocked",
-            "[cleanup capability missing]",
+            "dynamic array cleanup emission capability proven",
+            "[element cleanup ok]",
+            "dynamic array cleanup production readiness ready",
+            "[cleanup capability ok]",
             "[production signatures ok]",
         }
     );
@@ -1003,10 +1014,9 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_blocked_production_readiness,
         {
-            "dynamic array cleanup production readiness blocked",
+            "dynamic array cleanup production readiness ready",
             "[descriptor origins ok]",
-            "[cleanup capability missing]",
-            "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]",
+            "[cleanup capability ok]",
             "[production signatures ok]",
         }
     );
@@ -1039,11 +1049,11 @@ int main() {
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_capability.stdout_text.find(" element-drop-pairs ") ==
+        dynamic_array_blocked_cleanup_capability.stdout_text.find(" element-drop-pairs ") !=
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_audit.stdout_text.find(" element-drop-pairs ") ==
+        dynamic_array_blocked_cleanup_audit.stdout_text.find(" element-drop-pairs ") !=
         std::string::npos
     );
 

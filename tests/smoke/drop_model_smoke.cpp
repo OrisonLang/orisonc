@@ -180,6 +180,17 @@ int main() {
         "unsafe-boundary references payload_release audit_drop (proven)"
     );
 
+    auto compiler_owned = orison::semantics::compiler_intrinsic_owned_cleanup_implementation("Payload", 4);
+    assert(compiler_owned.proven);
+    assert(compiler_owned.abi_symbol_name == "__orison_drop.Payload");
+    assert(compiler_owned.origin == orison::semantics::DropImplementationOrigin::compiler_intrinsic);
+    assert(compiler_owned.body.finite);
+    assert(
+        orison::semantics::format_drop_implementation(compiler_owned) ==
+        "drop implementation __orison_drop.Payload for Payload declared at line 4 origin compiler-intrinsic finite "
+        "safe-boundary (proven)"
+    );
+
     auto collected_implementations = orison::semantics::collect_source_derived_drop_implementations({
         orison::semantics::DropImplementationCandidate {},
         orison::semantics::DropImplementationCandidate {
@@ -217,6 +228,15 @@ int main() {
     assert(!collected_implementations[1].proven);
 
     auto module = orison::syntax::ModuleSyntax {};
+    module.records.push_back(orison::syntax::RecordSyntax {
+        .line = 4,
+        .name = "Payload",
+    });
+    module.records.push_back(orison::syntax::RecordSyntax {
+        .line = 5,
+        .name = "Box",
+        .generic_parameters = {"T"},
+    });
     auto drop_implementation = orison::syntax::ImplementationSyntax {};
     drop_implementation.interface_type.name = "Drop";
     drop_implementation.receiver_type.name = "Payload";
@@ -312,6 +332,33 @@ int main() {
     assert(!source_candidates[2].body.finite);
     assert(!source_candidates[2].body.unsafe_boundary_required);
     assert(source_candidates[2].body.referenced_functions.empty());
+
+    auto compiler_owned_implementations =
+        orison::semantics::collect_compiler_intrinsic_owned_cleanup_implementations(
+            {
+                site,
+                orison::semantics::PlannedDropSite {
+                    .source_type_name = "Box<Payload>",
+                    .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Box<Payload>"),
+                    .owner_name = "box",
+                    .site_line = 14,
+                },
+                orison::semantics::PlannedDropSite {
+                    .source_type_name = "Unknown",
+                    .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Unknown"),
+                    .owner_name = "unknown",
+                    .site_line = 15,
+                },
+            },
+            module
+        );
+    assert(compiler_owned_implementations.size() == 2);
+    assert(compiler_owned_implementations[0].source_type_name == "Payload");
+    assert(compiler_owned_implementations[0].declaration_line == 4);
+    assert(compiler_owned_implementations[0].origin == orison::semantics::DropImplementationOrigin::compiler_intrinsic);
+    assert(compiler_owned_implementations[1].source_type_name == "Box<Payload>");
+    assert(compiler_owned_implementations[1].declaration_line == 5);
+    assert(compiler_owned_implementations[1].origin == orison::semantics::DropImplementationOrigin::compiler_intrinsic);
 
     auto resource_site = orison::semantics::PlannedDropSite {
         .source_type_name = "Resource",

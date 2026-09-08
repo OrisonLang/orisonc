@@ -92,6 +92,11 @@ auto source_derived_drop_implementation(
     DropImplementationBodySummary body
 ) -> DropImplementation;
 
+auto compiler_intrinsic_owned_cleanup_implementation(
+    std::string source_type_name,
+    std::size_t declaration_line
+) -> DropImplementation;
+
 auto collect_source_derived_drop_implementations(
     std::vector<DropImplementationCandidate> const& candidates
 ) -> std::vector<DropImplementation>;
@@ -103,6 +108,11 @@ auto prove_source_derived_drop_implementation_body(
 auto collect_source_derived_drop_implementation_candidates(
     syntax::ModuleSyntax const& module
 ) -> std::vector<DropImplementationCandidate>;
+
+auto collect_compiler_intrinsic_owned_cleanup_implementations(
+    std::vector<PlannedDropSite> const& sites,
+    syntax::ModuleSyntax const& module
+) -> std::vector<DropImplementation>;
 
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string;
 

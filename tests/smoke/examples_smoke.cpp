@@ -180,11 +180,10 @@ auto main() -> int {
     auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     auto owned_dynamic_array_parameter =
         pipeline.emit_llvm(fixtures / "dynamic_array_owned_parameter_missing_drop.or");
-    assert(owned_dynamic_array_parameter.has_errors());
+    assert(!owned_dynamic_array_parameter.has_errors());
     assert(
-        owned_dynamic_array_parameter.error_text.find(
-            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof before production lowering"
-        ) != std::string::npos
+        owned_dynamic_array_parameter.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
+        std::string::npos
     );
 
     auto computed_dynamic_array_iterable =

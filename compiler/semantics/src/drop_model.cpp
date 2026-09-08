@@ -103,6 +103,23 @@ auto source_derived_drop_implementation(
     };
 }
 
+auto compiler_intrinsic_owned_cleanup_implementation(
+    std::string source_type_name,
+    std::size_t declaration_line
+) -> DropImplementation {
+    auto symbol_name = drop_abi_symbol_name(source_type_name);
+    return DropImplementation {
+        .source_type_name = std::move(source_type_name),
+        .abi_symbol_name = std::move(symbol_name),
+        .declaration_line = declaration_line,
+        .proven = true,
+        .origin = DropImplementationOrigin::compiler_intrinsic,
+        .body = DropImplementationBodySummary {
+            .finite = true,
+        },
+    };
+}
+
 auto collect_source_derived_drop_implementations(
     std::vector<DropImplementationCandidate> const& candidates
 ) -> std::vector<DropImplementation> {
@@ -173,6 +190,49 @@ auto collect_source_derived_drop_implementation_candidates(
         });
     }
     return candidates;
+}
+
+auto collect_compiler_intrinsic_owned_cleanup_implementations(
+    std::vector<PlannedDropSite> const& sites,
+    syntax::ModuleSyntax const& module
+) -> std::vector<DropImplementation> {
+    auto implementations = std::vector<DropImplementation> {};
+    for (auto const& site : sites) {
+        if (site.source_type_name.empty()) {
+            continue;
+        }
+        auto const generic_start = site.source_type_name.find('<');
+        auto const base_name = generic_start == std::string::npos
+                                   ? site.source_type_name
+                                   : site.source_type_name.substr(0, generic_start);
+        auto record = std::find_if(
+            module.records.begin(),
+            module.records.end(),
+            [&](syntax::RecordSyntax const& candidate) {
+                return candidate.name == base_name;
+            }
+        );
+        if (record == module.records.end()) {
+            continue;
+        }
+        auto const symbol_name = drop_abi_symbol_name(site.source_type_name);
+        auto existing = std::find_if(
+            implementations.begin(),
+            implementations.end(),
+            [&](DropImplementation const& implementation) {
+                return implementation.source_type_name == site.source_type_name &&
+                       implementation.abi_symbol_name == symbol_name;
+            }
+        );
+        if (existing != implementations.end()) {
+            continue;
+        }
+        implementations.push_back(compiler_intrinsic_owned_cleanup_implementation(
+            site.source_type_name,
+            record->line
+        ));
+    }
+    return implementations;
 }
 
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string {

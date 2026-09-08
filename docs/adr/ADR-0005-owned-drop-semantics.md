@@ -163,6 +163,10 @@ inventing semantics outside the spec/tour.
   behavior or source-language surface.
 - Module emission now validates planned drop declarations and generated DynamicArray cleanup helper symbols through the
   shared lowering module symbol registry before generated LLVM IR is accepted.
+- User-authored `interface Drop` / `implements Drop` declarations are not a source-language cleanup contract. The
+  production pipeline derives owned cleanup proof from semantic ownership obligations plus record declarations, then
+  emits compiler-owned cleanup bodies as an internal lowering concern. Test-only injected drop candidates remain an
+  internal compatibility seam for focused unit coverage.
 
 ## Consequences
 
@@ -177,10 +181,13 @@ inventing semantics outside the spec/tour.
   resources, and how move/consume analysis prevents double drops.
 - Cleanup thunk call emission can become production behavior only after semantic analysis proves ownership and the module
   prelude emits every required finite drop declaration.
+- Ordinary Orison writers do not spell cleanup calls or implement a public `Drop` protocol. Cleanup remains observable
+  through diagnostics, audit reports, and generated LLVM/runtime ABI symbols only.
 
 ## Follow-up work
 
-- Decide the source-level syntax and placement for user-defined drop behavior.
+- Decide whether user-defined resource finalization needs any future source syntax. The default answer remains
+  compiler-derived automatic cleanup.
 - Add semantic ownership/drop analysis that identifies owned values, moved values, and deterministic drop sites.
 - Add diagnostics for missing or invalid drop implementations before code generation.
 - Replace the test-only declaration allowlist with declarations derived from accepted source-level drop implementations.

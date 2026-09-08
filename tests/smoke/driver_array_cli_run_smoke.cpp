@@ -44,6 +44,14 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+void assert_cli_emit_llvm_existing_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("define ") != std::string::npos);
+}
+
 void assert_contains(std::string const& text, std::string_view expected_fragment) {
     assert(text.find(expected_fragment) != std::string::npos);
 }
@@ -5452,7 +5460,7 @@ auto main(int argc, char** argv) -> int {
         owned_dynamic_array_parameter_branch_join_path,
         smoke_temp_root / "dynamic_array_owned_parameter_branch_join"
     );
-    assert_owned_dynamic_array_parameter_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         owned_dynamic_array_parameter_missing_drop_path
     );
@@ -5522,23 +5530,23 @@ auto main(int argc, char** argv) -> int {
         executable,
         dynamic_array_parameter_push_path
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         owned_computed_dynamic_array_missing_drop_path
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         owned_nested_computed_dynamic_array_missing_drop_path
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         returned_owned_computed_dynamic_array_missing_drop_path
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         returned_aggregate_field_owned_computed_dynamic_array_missing_drop_path
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         returned_nested_aggregate_field_owned_computed_dynamic_array_missing_drop_path
     );
@@ -5707,11 +5715,11 @@ auto main(int argc, char** argv) -> int {
         forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_path,
         "returned.inner.values"
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         choice_payload_switch_binding_owned_computed_dynamic_array_missing_drop_path
     );
-    assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
+    assert_cli_emit_llvm_existing_fixture_success(
         executable,
         choice_payload_final_switch_binding_owned_computed_dynamic_array_missing_drop_path
     );
