@@ -108,7 +108,7 @@ auto direct_dynamic_array_receiver_element_drop_authorized(
     LoweringEmissionContext const& context
 ) -> bool {
     auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
-    return std::ranges::any_of(context.options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+    return std::ranges::any_of(context.options.semantic_owned_cleanup_lowering_authorizations, [&](auto const& authorization) {
         return authorization.authorized &&
             authorization.site.source_type_name == element_source_type_name &&
             authorization.site.abi_symbol_name == symbol_name;

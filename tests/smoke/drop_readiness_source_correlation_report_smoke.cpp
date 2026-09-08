@@ -29,7 +29,7 @@ auto payload_authorization(
             .site_line = 11,
         },
         .semantic_resolved = semantic_resolved,
-        .source_drop_lowering_enabled = lowering_enabled,
+        .source_owned_cleanup_lowering_enabled = lowering_enabled,
         .authorized = semantic_resolved && lowering_enabled,
     };
 }
@@ -69,7 +69,7 @@ auto main() -> int {
     auto resolved_snapshot = unresolved_snapshot;
     resolved_snapshot.semantic_authorizations = {payload_authorization("payload", true)};
     resolved_snapshot.cleanup_authorizations.front().authorization.semantic_unresolved_blockers.clear();
-    resolved_snapshot.cleanup_authorizations.front().authorization.source_drop_lowering_blockers = {action};
+    resolved_snapshot.cleanup_authorizations.front().authorization.source_owned_cleanup_lowering_blockers = {action};
     auto resolved_report =
         orison::pipeline::format_drop_readiness_source_correlation_report(resolved_snapshot);
     assert(resolved_report.size() == 2);

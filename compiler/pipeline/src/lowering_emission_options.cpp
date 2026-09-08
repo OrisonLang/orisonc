@@ -16,7 +16,7 @@ void authorize_dynamic_array_owned_element_source_drops(
             continue;
         }
 
-        authorization.source_drop_lowering_enabled = true;
+        authorization.source_owned_cleanup_lowering_enabled = true;
         authorization.authorized = true;
     }
 }
@@ -62,9 +62,9 @@ auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& option
         options.dynamic_array_production_cleanup_emission_enabled;
 }
 
-auto source_drop_lowering_enabled(CompilePipelineOptions const& options) -> bool {
-    return options.source_drop_lowering_enabled ||
-        options.test_only_enable_source_drop_lowering;
+auto source_owned_cleanup_lowering_enabled(CompilePipelineOptions const& options) -> bool {
+    return options.source_owned_cleanup_lowering_enabled ||
+        options.test_only_enable_source_owned_cleanup_lowering;
 }
 
 auto dynamic_array_descriptor_cleanup_planning_enabled(CompilePipelineOptions const& options) -> bool {
@@ -78,14 +78,14 @@ auto build_lowering_emission_options(
     LoweringEmissionMode mode
 ) -> lowering::LlvmIrEmissionOptions {
     auto emission_options = lowering::LlvmIrEmissionOptions {};
-    emission_options.semantic_drop_lowering_authorizations =
-        options.test_only_semantic_drop_lowering_authorizations;
-    emission_options.semantic_drop_lowering_authorizations.insert(
-        emission_options.semantic_drop_lowering_authorizations.end(),
-        result.semantic_drop_lowering_authorizations.begin(),
-        result.semantic_drop_lowering_authorizations.end()
+    emission_options.semantic_owned_cleanup_lowering_authorizations =
+        options.test_only_semantic_owned_cleanup_lowering_authorizations;
+    emission_options.semantic_owned_cleanup_lowering_authorizations.insert(
+        emission_options.semantic_owned_cleanup_lowering_authorizations.end(),
+        result.semantic_owned_cleanup_lowering_authorizations.begin(),
+        result.semantic_owned_cleanup_lowering_authorizations.end()
     );
-    authorize_dynamic_array_owned_element_source_drops(emission_options.semantic_drop_lowering_authorizations);
+    authorize_dynamic_array_owned_element_source_drops(emission_options.semantic_owned_cleanup_lowering_authorizations);
     emission_options.fixture_dynamic_array_construction_requests =
         options.fixture_dynamic_array_construction_requests;
     emission_options.fixture_derive_dynamic_array_cleanup_from_semantics =
@@ -120,11 +120,11 @@ auto build_lowering_emission_options(
         options.collect_aggregate_projection_access_metadata;
     emission_options.enable_runtime_indexed_cleanup_emission =
         options.runtime_indexed_cleanup_emission_enabled;
-    emission_options.enable_runtime_indexed_cleanup_source_drop_emission =
+    emission_options.enable_runtime_indexed_cleanup_source_owned_cleanup_emission =
         options.runtime_indexed_cleanup_module_ir_insertion_enabled ||
         options.runtime_indexed_cleanup_module_ir_mutation_enabled ||
         options.runtime_indexed_cleanup_function_ir_module_rewrite_enabled ||
-        options.runtime_indexed_cleanup_source_drop_emission_enabled;
+        options.runtime_indexed_cleanup_source_owned_cleanup_emission_enabled;
     emission_options.enable_runtime_indexed_constructor_move =
         options.runtime_indexed_constructor_move_enabled;
     emission_options.enable_runtime_indexed_member_cleanup_ir_mutation_request =

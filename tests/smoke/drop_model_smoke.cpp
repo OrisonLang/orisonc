@@ -106,22 +106,22 @@ int main() {
     auto unresolved_lowering_authorization = orison::semantics::authorize_owned_cleanup_lowering(
         site,
         {unproven},
-        orison::semantics::SourceDropLoweringGate::enabled
+        orison::semantics::SourceOwnedCleanupLoweringGate::enabled
     );
     assert(!unresolved_lowering_authorization.semantic_resolved);
-    assert(unresolved_lowering_authorization.source_drop_lowering_enabled);
+    assert(unresolved_lowering_authorization.source_owned_cleanup_lowering_enabled);
     assert(!unresolved_lowering_authorization.authorized);
     auto disabled_lowering_authorization = orison::semantics::authorize_owned_cleanup_lowering(site, {proven});
     assert(disabled_lowering_authorization.semantic_resolved);
-    assert(!disabled_lowering_authorization.source_drop_lowering_enabled);
+    assert(!disabled_lowering_authorization.source_owned_cleanup_lowering_enabled);
     assert(!disabled_lowering_authorization.authorized);
     auto enabled_lowering_authorization = orison::semantics::authorize_owned_cleanup_lowering(
         site,
         {proven},
-        orison::semantics::SourceDropLoweringGate::enabled
+        orison::semantics::SourceOwnedCleanupLoweringGate::enabled
     );
     assert(enabled_lowering_authorization.semantic_resolved);
-    assert(enabled_lowering_authorization.source_drop_lowering_enabled);
+    assert(enabled_lowering_authorization.source_owned_cleanup_lowering_enabled);
     assert(enabled_lowering_authorization.authorized);
     assert(
         orison::semantics::format_owned_cleanup_lowering_authorization(site, {proven}) ==
@@ -192,7 +192,7 @@ int main() {
     );
     auto compiler_owned_authorization = orison::semantics::authorize_owned_cleanup_lowering(site, {compiler_owned});
     assert(compiler_owned_authorization.semantic_resolved);
-    assert(!compiler_owned_authorization.source_drop_lowering_enabled);
+    assert(!compiler_owned_authorization.source_owned_cleanup_lowering_enabled);
     assert(compiler_owned_authorization.compiler_intrinsic_owned_cleanup);
     assert(compiler_owned_authorization.authorized);
     assert(

@@ -230,7 +230,7 @@ auto emit_llvm_report_with_failure_output(
 
 auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions {
     return pipeline::CompilePipelineOptions {
-        .source_drop_lowering_enabled = true,
+        .source_owned_cleanup_lowering_enabled = true,
         .dynamic_array_descriptor_cleanup_planning_enabled = true,
         .dynamic_array_parameter_descriptor_audit_bindings_enabled = true,
         .collect_computed_dynamic_array_for_descriptor_renders = true,
@@ -269,10 +269,10 @@ auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions
 
 auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipelineOptions {
     auto options = pipeline::CompilePipelineOptions {};
-    options.source_drop_lowering_enabled = true;
+    options.source_owned_cleanup_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
-    options.runtime_indexed_cleanup_source_drop_emission_enabled = true;
+    options.runtime_indexed_cleanup_source_owned_cleanup_emission_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
     return options;
 }
@@ -1191,7 +1191,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-lowering-authorization") {
         return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
             return semantics::format_owned_cleanup_lowering_authorization_report(
-                result.semantic_drop_lowering_authorizations
+                result.semantic_owned_cleanup_lowering_authorizations
             );
         });
     }

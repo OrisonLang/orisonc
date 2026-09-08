@@ -179,6 +179,8 @@ inventing semantics outside the spec/tour.
   compatibility report text, CLI flags, fixture source, and the `__orison_drop.*` ABI surface.
 - Planned cleanup site, action, declaration, and pipeline state types now use `OwnedCleanup*` names internally. Report
   text, CLI flags, fixture source, test target names, and ABI symbols remain stable compatibility surfaces.
+- Source cleanup lowering gates, authorization vectors, and test-only declaration allowlists now use owned-cleanup names
+  internally. Backend helper names that still mention source drop remain a later migration slice around ABI emission.
 
 ## Consequences
 

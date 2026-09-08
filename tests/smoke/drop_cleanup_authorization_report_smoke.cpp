@@ -67,7 +67,7 @@ auto main() -> int {
         cleanup_plan(),
         orison::lowering::OwnedCleanupAuthorizationReport {
             .semantic_lowering_blockers = {action},
-            .source_drop_lowering_blockers = {action},
+            .source_owned_cleanup_lowering_blockers = {action},
         }
     );
     assert(source_gated_report.size() == 3);

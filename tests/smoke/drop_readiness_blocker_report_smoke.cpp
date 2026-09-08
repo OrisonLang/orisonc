@@ -31,7 +31,7 @@ auto main() -> int {
     assert(empty_summary.blocked_cleanups == 0);
     assert(empty_summary.semantic_lowering_blockers.empty());
     assert(empty_summary.semantic_unresolved_blockers.empty());
-    assert(empty_summary.source_drop_lowering_blockers.empty());
+    assert(empty_summary.source_owned_cleanup_lowering_blockers.empty());
     assert(empty_summary.missing_declarations.empty());
     auto empty_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(empty_summary);
     assert(empty_report.size() == 1);
@@ -55,7 +55,7 @@ auto main() -> int {
     assert(unresolved_summary.blocked_cleanups == 1);
     assert(unresolved_summary.semantic_lowering_blockers.size() == 1);
     assert(unresolved_summary.semantic_unresolved_blockers.size() == 1);
-    assert(unresolved_summary.source_drop_lowering_blockers.empty());
+    assert(unresolved_summary.source_owned_cleanup_lowering_blockers.empty());
     assert(unresolved_summary.missing_declarations.size() == 1);
     auto unresolved_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(unresolved_summary);
     assert(unresolved_report.size() == 4);
@@ -84,7 +84,7 @@ auto main() -> int {
         .cleanup_authorizations = {
             cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
                 .semantic_lowering_blockers = {action},
-                .source_drop_lowering_blockers = {action},
+                .source_owned_cleanup_lowering_blockers = {action},
                 .missing_declarations = {action},
             }),
         },
@@ -93,7 +93,7 @@ auto main() -> int {
     assert(source_gated_summary.blocked_cleanups == 1);
     assert(source_gated_summary.semantic_lowering_blockers.size() == 1);
     assert(source_gated_summary.semantic_unresolved_blockers.empty());
-    assert(source_gated_summary.source_drop_lowering_blockers.size() == 1);
+    assert(source_gated_summary.source_owned_cleanup_lowering_blockers.size() == 1);
     assert(source_gated_summary.missing_declarations.size() == 1);
     auto source_gated_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(source_gated_summary);
     assert(source_gated_report.size() == 4);

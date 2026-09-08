@@ -387,7 +387,7 @@ auto format_owned_cleanup_implementation_diagnostic_report(
 auto authorize_owned_cleanup_lowering(
     OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceDropLoweringGate source_drop_lowering_gate
+    SourceOwnedCleanupLoweringGate source_drop_lowering_gate
 ) -> OwnedCleanupLoweringAuthorization {
     auto matching_implementation = std::find_if(
         implementations.begin(),
@@ -401,13 +401,13 @@ auto authorize_owned_cleanup_lowering(
     auto semantic_resolved = matching_implementation != implementations.end();
     auto compiler_intrinsic_owned_cleanup =
         semantic_resolved && matching_implementation->origin == OwnedCleanupImplementationOrigin::compiler_intrinsic;
-    auto source_drop_lowering_enabled = source_drop_lowering_gate == SourceDropLoweringGate::enabled;
+    auto source_owned_cleanup_lowering_enabled = source_drop_lowering_gate == SourceOwnedCleanupLoweringGate::enabled;
     return OwnedCleanupLoweringAuthorization {
         .site = std::move(site),
         .semantic_resolved = semantic_resolved,
-        .source_drop_lowering_enabled = source_drop_lowering_enabled,
+        .source_owned_cleanup_lowering_enabled = source_owned_cleanup_lowering_enabled,
         .compiler_intrinsic_owned_cleanup = compiler_intrinsic_owned_cleanup,
-        .authorized = semantic_resolved && (compiler_intrinsic_owned_cleanup || source_drop_lowering_enabled),
+        .authorized = semantic_resolved && (compiler_intrinsic_owned_cleanup || source_owned_cleanup_lowering_enabled),
     };
 }
 
@@ -433,7 +433,7 @@ auto format_owned_cleanup_lowering_authorization(
 auto authorize_owned_cleanup_lowerings(
     std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceDropLoweringGate source_drop_lowering_gate
+    SourceOwnedCleanupLoweringGate source_drop_lowering_gate
 ) -> std::vector<OwnedCleanupLoweringAuthorization> {
     auto authorizations = std::vector<OwnedCleanupLoweringAuthorization> {};
     authorizations.reserve(sites.size());

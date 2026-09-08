@@ -450,8 +450,8 @@ auto source_drop_symbol_available(
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
     auto symbol_name = semantics::drop_abi_symbol_name(source_type_name);
-    if (std::ranges::find(options.source_drop_definition_symbols, symbol_name) ==
-        options.source_drop_definition_symbols.end()) {
+    if (std::ranges::find(options.source_owned_cleanup_definition_symbols, symbol_name) ==
+        options.source_owned_cleanup_definition_symbols.end()) {
         return std::nullopt;
     }
     return symbol_name;
@@ -900,11 +900,11 @@ auto dynamic_array_parameter_element_cleanup_proven(
 
     auto const expected_owner_name = std::string {parameter_name} + ".element";
     auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
-    if (std::ranges::find(options.source_drop_definition_symbols, expected_symbol_name) !=
-        options.source_drop_definition_symbols.end()) {
+    if (std::ranges::find(options.source_owned_cleanup_definition_symbols, expected_symbol_name) !=
+        options.source_owned_cleanup_definition_symbols.end()) {
         return true;
     }
-    return std::ranges::any_of(options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+    return std::ranges::any_of(options.semantic_owned_cleanup_lowering_authorizations, [&](auto const& authorization) {
         return authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&
             authorization.site.source_type_name == sequence->element_source_type_name &&

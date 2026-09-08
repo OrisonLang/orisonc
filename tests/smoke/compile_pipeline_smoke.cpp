@@ -38,7 +38,7 @@ namespace smoke = orison::tests::smoke;
 
 void test_production_compile_pipeline_options_gate_promotions() {
     auto const options = orison::pipeline::production_compile_pipeline_options();
-    assert(options.source_drop_lowering_enabled);
+    assert(options.source_owned_cleanup_lowering_enabled);
     assert(options.runtime_indexed_cleanup_emission_enabled);
     assert(options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled);
     assert(options.runtime_indexed_constructor_move_enabled);
@@ -54,8 +54,8 @@ void test_production_compile_pipeline_options_gate_promotions() {
     assert(options.dynamic_array_production_for_lowering_enabled);
 
     auto explicit_source_drop_options = options;
-    explicit_source_drop_options.source_drop_lowering_enabled = true;
-    assert(explicit_source_drop_options.source_drop_lowering_enabled);
+    explicit_source_drop_options.source_owned_cleanup_lowering_enabled = true;
+    assert(explicit_source_drop_options.source_owned_cleanup_lowering_enabled);
 }
 
 void test_no_option_pipeline_emission_uses_production_defaults(
@@ -478,7 +478,7 @@ void assert_emit_object_link_run_success(
     auto object = pipeline.emit_object(
         source_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -497,7 +497,7 @@ void assert_production_source_drop_emit_object_link_run_success(
     std::filesystem::path const& executable_path
 ) {
     auto options = orison::pipeline::production_compile_pipeline_options();
-    options.source_drop_lowering_enabled = true;
+    options.source_owned_cleanup_lowering_enabled = true;
     auto object = pipeline.emit_object(source_path, options);
     assert(!object.has_errors());
     assert(!object.object_bytes.empty());
@@ -631,7 +631,7 @@ auto semantic_drop_lowering_authorization_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     return orison::semantics::format_owned_cleanup_lowering_authorization_report(
-        result.semantic_drop_lowering_authorizations
+        result.semantic_owned_cleanup_lowering_authorizations
     );
 }
 
@@ -1365,7 +1365,7 @@ auto runtime_indexed_cleanup_audit_module_rewrite_options() ->
 auto runtime_indexed_cleanup_source_drop_audit_options() ->
     orison::pipeline::CompilePipelineOptions {
     auto options = orison::pipeline::CompilePipelineOptions {};
-    options.source_drop_lowering_enabled = true;
+    options.source_owned_cleanup_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
     return options;
 }
@@ -1387,20 +1387,20 @@ auto runtime_indexed_cleanup_audit_only_options() ->
     return options;
 }
 
-auto runtime_indexed_cleanup_emission_only_options(bool source_drop_lowering_enabled) ->
+auto runtime_indexed_cleanup_emission_only_options(bool source_owned_cleanup_lowering_enabled) ->
     orison::pipeline::CompilePipelineOptions {
     auto options = orison::pipeline::CompilePipelineOptions {};
-    options.source_drop_lowering_enabled = source_drop_lowering_enabled;
+    options.source_owned_cleanup_lowering_enabled = source_owned_cleanup_lowering_enabled;
     options.collect_runtime_indexed_cleanup_audit = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
     return options;
 }
 
 auto runtime_indexed_cleanup_constructor_move_emission_options(
-    bool source_drop_lowering_enabled
+    bool source_owned_cleanup_lowering_enabled
 ) -> orison::pipeline::CompilePipelineOptions {
     auto options = runtime_indexed_cleanup_emission_only_options(
-        source_drop_lowering_enabled
+        source_owned_cleanup_lowering_enabled
     );
     options.runtime_indexed_constructor_move_enabled = true;
     return options;
@@ -1460,13 +1460,13 @@ auto runtime_indexed_cleanup_production_gate_request_options() ->
 
 void test_runtime_indexed_cleanup_option_helpers() {
     auto const audit_only = runtime_indexed_cleanup_source_drop_audit_options();
-    assert(audit_only.source_drop_lowering_enabled);
+    assert(audit_only.source_owned_cleanup_lowering_enabled);
     assert(audit_only.collect_runtime_indexed_cleanup_audit);
     assert(!audit_only.runtime_indexed_member_cleanup_rewrite_execution_enabled);
 
     auto const rewrite_execution =
         runtime_indexed_cleanup_rewrite_execution_only_options();
-    assert(rewrite_execution.source_drop_lowering_enabled);
+    assert(rewrite_execution.source_owned_cleanup_lowering_enabled);
     assert(rewrite_execution.collect_runtime_indexed_cleanup_audit);
     assert(rewrite_execution.runtime_indexed_member_cleanup_rewrite_execution_enabled);
 }
@@ -1551,7 +1551,7 @@ auto main() -> int {
     assert(semantic_drop_implementation_discovery_report(analysis.semantic_drop_state).empty());
     assert(semantic_drop_resolution_report(analysis).empty());
     assert(semantic_drop_diagnostic_report(analysis).empty());
-    assert(analysis.semantic_drop_lowering_authorizations.empty());
+    assert(analysis.semantic_owned_cleanup_lowering_authorizations.empty());
     assert(semantic_drop_lowering_authorization_report(analysis).empty());
     assert(semantic_drop_resolution_summary_report(analysis).empty());
     assert(analysis.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
@@ -1560,7 +1560,7 @@ auto main() -> int {
     assert(!ir.has_errors());
     assert(ir.ir_text.find("define i32 @main()") != std::string::npos);
     assert(ir.ir_text.find("ret i32 0") != std::string::npos);
-    assert(ir.semantic_drop_lowering_authorizations.empty());
+    assert(ir.semantic_owned_cleanup_lowering_authorizations.empty());
     assert(ir.owned_cleanup_declaration_state.declarations.empty());
     assert(owned_cleanup_declaration_report(ir).empty());
     assert(emitted_drop_declaration_report(ir).empty());
@@ -1586,7 +1586,7 @@ auto main() -> int {
     assert(ir.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
     assert(ir.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
     assert(ir.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
-    assert(ir.owned_cleanup_readiness_blocker_summary.source_drop_lowering_blockers.empty());
+    assert(ir.owned_cleanup_readiness_blocker_summary.source_owned_cleanup_lowering_blockers.empty());
     assert(ir.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
     auto ir_drop_readiness_blocker_report = drop_readiness_blocker_report(ir);
     assert(ir_drop_readiness_blocker_report.size() == 1);
@@ -1675,7 +1675,7 @@ auto main() -> int {
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
-    assert(drop_readiness.owned_cleanup_readiness_blocker_summary.source_drop_lowering_blockers.empty());
+    assert(drop_readiness.owned_cleanup_readiness_blocker_summary.source_owned_cleanup_lowering_blockers.empty());
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
     auto drop_readiness_blocker_report_lines = drop_readiness_blocker_report(drop_readiness);
     assert(drop_readiness_blocker_report_lines.size() == 1);
@@ -1939,7 +1939,7 @@ auto main() -> int {
         "drop readiness source correlations actions 0 semantic sites"
     );
     auto cleanup_metadata_options = orison::pipeline::CompilePipelineOptions {
-        .source_drop_lowering_enabled = true,
+        .source_owned_cleanup_lowering_enabled = true,
         .dynamic_array_descriptor_cleanup_planning_enabled = true,
         .dynamic_array_parameter_descriptor_audit_bindings_enabled = true,
         .dynamic_array_production_cleanup_emission_enabled = true,
@@ -5650,7 +5650,7 @@ auto main() -> int {
     auto dynamic_array_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_lowering_authorizations = {
+            .test_only_semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -5659,7 +5659,7 @@ auto main() -> int {
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -5732,7 +5732,7 @@ auto main() -> int {
     auto dynamic_array_owned_signature_gate_only = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_lowering_authorizations = {
+            .test_only_semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -5741,7 +5741,7 @@ auto main() -> int {
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -5773,7 +5773,7 @@ auto main() -> int {
     auto dynamic_array_owned_construction_gate = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_lowering_authorizations = {
+            .test_only_semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -5782,7 +5782,7 @@ auto main() -> int {
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -6347,13 +6347,13 @@ auto main() -> int {
     auto dynamic_array_local_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_local_owned_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
     assert(!dynamic_array_local_owned_cleanup.has_errors());
-    assert(dynamic_array_local_owned_cleanup.semantic_drop_lowering_authorizations.size() == 2);
+    assert(dynamic_array_local_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.size() == 2);
     assert(dynamic_array_local_owned_cleanup.dynamic_array_runtime_request_state.operations.size() == 2);
     assert(
         dynamic_array_local_owned_cleanup.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
@@ -6565,7 +6565,7 @@ auto main() -> int {
     auto dynamic_array_returned_payload_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6617,7 +6617,7 @@ auto main() -> int {
     auto dynamic_array_returned_payload_object = pipeline.emit_object(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6641,7 +6641,7 @@ auto main() -> int {
     auto dynamic_array_returned_parameter_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_parameter_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6715,7 +6715,7 @@ auto main() -> int {
     auto dynamic_array_returned_parameter_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_parameter_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6739,7 +6739,7 @@ auto main() -> int {
     auto dynamic_array_returned_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6780,7 +6780,7 @@ auto main() -> int {
     auto dynamic_array_branch_returned_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_branch_returned_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6825,7 +6825,7 @@ auto main() -> int {
     auto dynamic_array_switch_returned_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_switch_returned_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6875,7 +6875,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6918,7 +6918,7 @@ auto main() -> int {
     auto dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -6976,7 +6976,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7040,7 +7040,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_returned_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7088,7 +7088,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7144,7 +7144,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7199,7 +7199,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -7263,7 +7263,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7335,7 +7335,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7419,7 +7419,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7441,7 +7441,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7512,7 +7512,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -7576,7 +7576,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7648,7 +7648,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7733,7 +7733,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7759,7 +7759,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7831,7 +7831,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -7886,7 +7886,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -7950,7 +7950,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8026,7 +8026,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8110,7 +8110,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8132,7 +8132,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8207,7 +8207,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -8271,7 +8271,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8347,7 +8347,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8432,7 +8432,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8458,7 +8458,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8534,7 +8534,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8601,7 +8601,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -8644,7 +8644,7 @@ auto main() -> int {
     auto dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -8704,7 +8704,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8768,7 +8768,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8824,7 +8824,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -8879,7 +8879,7 @@ auto main() -> int {
     auto dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -8919,7 +8919,7 @@ auto main() -> int {
     auto dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9112,7 +9112,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9129,7 +9129,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9146,7 +9146,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9163,7 +9163,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9180,7 +9180,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9197,7 +9197,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9214,7 +9214,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9231,7 +9231,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9248,7 +9248,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9267,7 +9267,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9284,7 +9284,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_forwarded_returned_nested_aggregate_field_final_if_owner_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9301,7 +9301,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9318,7 +9318,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9335,7 +9335,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9352,7 +9352,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9369,7 +9369,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9386,7 +9386,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9403,7 +9403,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9420,7 +9420,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9437,7 +9437,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9456,7 +9456,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9473,7 +9473,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9517,7 +9517,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_choice_payload_final_switch_binding_owned_computed_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -9572,7 +9572,7 @@ auto main() -> int {
     auto dynamic_array_returned_multi_hop_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_multi_hop_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9656,7 +9656,7 @@ auto main() -> int {
     auto dynamic_array_returned_multi_hop_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_multi_hop_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9680,7 +9680,7 @@ auto main() -> int {
     auto dynamic_array_returned_branch_join_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_branch_join_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9764,7 +9764,7 @@ auto main() -> int {
     auto dynamic_array_returned_branch_join_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_branch_join_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9788,7 +9788,7 @@ auto main() -> int {
     auto dynamic_array_returned_choice_branch_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_choice_branch_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9892,7 +9892,7 @@ auto main() -> int {
     auto dynamic_array_returned_choice_branch_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_choice_branch_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -9916,7 +9916,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10023,7 +10023,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_aggregate_field_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10047,7 +10047,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_nested_aggregate_field_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10175,7 +10175,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_nested_aggregate_field_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10199,7 +10199,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_branch_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_nested_aggregate_field_branch_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10339,7 +10339,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_branch_forwarding_object = pipeline.emit_object(
         dynamic_array_returned_nested_aggregate_field_branch_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10363,7 +10363,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_choice_payload_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_choice_payload_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10452,7 +10452,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10497,7 +10497,7 @@ auto main() -> int {
     auto dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10565,7 +10565,7 @@ auto main() -> int {
     auto dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_ir = pipeline.emit_llvm(
         dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10620,7 +10620,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -10697,7 +10697,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -10730,7 +10730,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -10762,7 +10762,7 @@ auto main() -> int {
     auto dynamic_array_local_final_if_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_local_final_if_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10786,7 +10786,7 @@ auto main() -> int {
     auto dynamic_array_local_final_switch_case_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_local_final_switch_case_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10811,7 +10811,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_final_if_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_final_if_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10836,7 +10836,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_final_switch_case_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_final_switch_case_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10862,7 +10862,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_returned_local_final_if_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_returned_local_final_if_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10889,7 +10889,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_returned_local_final_switch_case_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_returned_local_final_switch_case_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10920,7 +10920,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_nested_final_if_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_nested_final_if_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10947,7 +10947,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_nested_final_switch_case_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_nested_final_switch_case_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -10976,7 +10976,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_if_switch_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_if_switch_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11002,7 +11002,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_switch_if_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_switch_if_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11028,7 +11028,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_direct_nested_if_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_direct_nested_if_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11053,7 +11053,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_direct_nested_switch_branch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_direct_nested_switch_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11082,7 +11082,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_three_case_switch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_three_case_switch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11108,7 +11108,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_three_case_mixed_switch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_three_case_mixed_switch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11137,7 +11137,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_three_case_nested_switch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_three_case_nested_switch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11170,7 +11170,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_multi_nested_switch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_multi_nested_switch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11207,7 +11207,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11254,7 +11254,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_if_two_switches_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_if_two_switches_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11287,7 +11287,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11340,7 +11340,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_if_two_switches_consumed_scratch_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_if_two_switches_consumed_scratch_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11357,7 +11357,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_if_two_switches_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_if_two_switches_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11399,7 +11399,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_switch_two_ifs_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_switch_two_ifs_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11436,7 +11436,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11481,7 +11481,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11513,7 +11513,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11547,7 +11547,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_named_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_named_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11585,7 +11585,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11625,7 +11625,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11653,7 +11653,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_local_return_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_local_return_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11693,7 +11693,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_chained_branch_consumer_local_return_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_chained_branch_consumer_local_return_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11737,7 +11737,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_scratch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_scratch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11785,7 +11785,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_alias_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11833,7 +11833,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_nested_alias_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_nested_alias_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11889,7 +11889,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_alias_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_asymmetric_alias_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -11945,7 +11945,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_alias_helper_call_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_alias_helper_call_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12010,7 +12010,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_alias_helper_call_local_return_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12074,7 +12074,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12146,7 +12146,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12226,7 +12226,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_distinct_local_names_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_distinct_local_names_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12326,7 +12326,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12402,7 +12402,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_nested_helper_argument_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_nested_helper_argument_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12455,7 +12455,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_asymmetric_nested_helper_argument_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12507,7 +12507,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_nested_argument_local_chain_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_nested_argument_local_chain_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12599,7 +12599,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12672,7 +12672,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_asymmetric_wrapper_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12733,7 +12733,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_mixed_wrapper_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12799,7 +12799,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_nested_wrapper_argument_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12879,7 +12879,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_wrapper_result_final_consumer_cleanup_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12934,7 +12934,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_wrapper_result_final_consumer_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12953,7 +12953,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -12971,7 +12971,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_nested_wrapper_argument_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -12991,7 +12991,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_asymmetric_wrapper_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -13011,7 +13011,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_mixed_wrapper_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -13030,7 +13030,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_scratch_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_scratch_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13047,7 +13047,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_alias_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_alias_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13064,7 +13064,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_nested_alias_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13081,7 +13081,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_alias_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_asymmetric_alias_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13098,7 +13098,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_alias_helper_call_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_alias_helper_call_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13116,7 +13116,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_alias_helper_call_local_return_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -13133,7 +13133,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_three_local_helper_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13150,7 +13150,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_distinct_local_names_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_distinct_local_names_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13167,7 +13167,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_nested_argument_local_chain_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_nested_argument_local_chain_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13184,7 +13184,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_mixed_direct_distinct_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13202,7 +13202,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_nested_helper_argument_selected_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -13220,7 +13220,7 @@ auto main() -> int {
         pipeline.emit_llvm(
             dynamic_array_owned_result_ternary_branch_consumer_asymmetric_nested_helper_argument_selected_reuse_path,
             orison::pipeline::CompilePipelineOptions {
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .dynamic_array_descriptor_cleanup_planning_enabled = true,
             }
         );
@@ -13238,7 +13238,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_asymmetric_stored_helper_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13255,7 +13255,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_chained_branch_consumer_selected_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_chained_branch_consumer_selected_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13272,7 +13272,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_branch_consumer_local_return_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_branch_consumer_local_return_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13289,7 +13289,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_named_helper_call_local_return_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_named_helper_call_local_return_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13306,7 +13306,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_ternary_named_chained_helper_call_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13323,7 +13323,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_multi_nested_switch_returned_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_multi_nested_switch_returned_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13340,7 +13340,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_helper_call_returned_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_helper_call_returned_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13357,7 +13357,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13393,7 +13393,7 @@ auto main() -> int {
     auto dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_ir = pipeline.emit_llvm(
         dynamic_array_owned_result_multi_nested_switch_consumed_scratch_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
         }
     );
@@ -13407,7 +13407,7 @@ auto main() -> int {
     auto dynamic_array_returned_payload_mismatched_lifetime_ir = pipeline.emit_llvm(
         dynamic_array_returned_payload_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .dynamic_array_descriptor_cleanup_planning_enabled = true,
             .test_only_dynamic_array_descriptor_lifetime_plan_fault =
                 orison::pipeline::DynamicArrayDescriptorLifetimePlanFaultInjection::MismatchCleanupPlanOwners,
@@ -13485,7 +13485,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_forwarding_reuse = pipeline.emit_llvm(
         dynamic_array_owned_parameter_forwarding_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_forwarding_reuse.has_errors());
@@ -13528,7 +13528,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_branch_join_ir = pipeline.emit_llvm(
         dynamic_array_owned_parameter_branch_join_run_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_owned_parameter_branch_join_ir.has_errors());
@@ -13546,7 +13546,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_branch_join_run = pipeline.emit_object(
         dynamic_array_owned_parameter_branch_join_run_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_owned_parameter_branch_join_run.has_errors());
@@ -13569,7 +13569,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_branch_cleanup = pipeline.emit_llvm(
         dynamic_array_owned_parameter_branch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_owned_parameter_branch_cleanup.has_errors());
@@ -13604,7 +13604,7 @@ auto main() -> int {
     auto dynamic_array_local_final_if_consumed_owner_cleanup = pipeline.emit_llvm(
         dynamic_array_local_final_if_consumed_owner_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_local_final_if_consumed_owner_cleanup.has_errors());
@@ -13639,7 +13639,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_branch_cleanup_reuse = pipeline.emit_llvm(
         dynamic_array_owned_parameter_branch_cleanup_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_branch_cleanup_reuse.has_errors());
@@ -13654,7 +13654,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_switch_cleanup = pipeline.emit_llvm(
         dynamic_array_owned_parameter_switch_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_owned_parameter_switch_cleanup.has_errors());
@@ -13689,7 +13689,7 @@ auto main() -> int {
     auto dynamic_array_local_final_switch_consumed_owner_cleanup = pipeline.emit_llvm(
         dynamic_array_local_final_switch_consumed_owner_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_local_final_switch_consumed_owner_cleanup.has_errors());
@@ -13727,7 +13727,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_switch_cleanup_reuse = pipeline.emit_llvm(
         dynamic_array_owned_parameter_switch_cleanup_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_switch_cleanup_reuse.has_errors());
@@ -13769,7 +13769,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_statement_branch_mismatch = pipeline.emit_llvm(
         dynamic_array_owned_parameter_statement_branch_mismatch_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_statement_branch_mismatch.has_errors());
@@ -13808,7 +13808,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_second_use = pipeline.emit_llvm(
         dynamic_array_owned_parameter_second_use_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_second_use.has_errors());
@@ -13846,7 +13846,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_length_after_move = pipeline.emit_llvm(
         dynamic_array_owned_parameter_length_after_move_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_length_after_move.has_errors());
@@ -13885,7 +13885,7 @@ auto main() -> int {
     auto dynamic_array_owned_parameter_push_after_move = pipeline.emit_llvm(
         dynamic_array_owned_parameter_push_after_move_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_parameter_push_after_move.has_errors());
@@ -13920,7 +13920,7 @@ auto main() -> int {
     auto dynamic_array_push_owned_payload_reuse = pipeline.emit_llvm(
         dynamic_array_push_owned_payload_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_push_owned_payload_reuse.has_errors());
@@ -13958,7 +13958,7 @@ auto main() -> int {
     auto dynamic_array_push_owned_field_reuse = pipeline.emit_llvm(
         dynamic_array_push_owned_field_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_push_owned_field_reuse.has_errors());
@@ -13994,7 +13994,7 @@ auto main() -> int {
     auto dynamic_array_owned_element_assignment = pipeline.emit_llvm(
         dynamic_array_owned_element_assignment_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!dynamic_array_owned_element_assignment.has_errors());
@@ -14063,7 +14063,7 @@ auto main() -> int {
     auto dynamic_array_owned_element_assignment_rhs_reuse = pipeline.emit_llvm(
         dynamic_array_owned_element_assignment_rhs_reuse_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_element_assignment_rhs_reuse.has_errors());
@@ -14076,7 +14076,7 @@ auto main() -> int {
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_lowering_authorizations = {
+            .test_only_semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -14085,7 +14085,7 @@ auto main() -> int {
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -14144,11 +14144,11 @@ auto main() -> int {
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_lowering_authorizations = {
+            .test_only_semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = dynamic_array_source_owner_drop_sites[1],
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -14286,7 +14286,7 @@ auto main() -> int {
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
-    assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.source_drop_lowering_blockers.empty());
+    assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.source_owned_cleanup_lowering_blockers.empty());
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
     auto multi_drop_readiness_blocker_report = drop_readiness_blocker_report(multi_drop_readiness);
     assert(multi_drop_readiness_blocker_report.size() == 1);
@@ -14447,19 +14447,19 @@ auto main() -> int {
     assert_line_contains(semantic_drops_diagnostic_report, 0, "resolved");
     assert_line_contains(semantic_drops_diagnostic_report, 1, "owner local");
     assert(semantic_drops_authorization_report.size() == 2);
-    assert(semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
+    assert(semantic_drops.semantic_owned_cleanup_lowering_authorizations.size() == 2);
     assert(
-        semantic_drops.semantic_drop_lowering_authorizations[0].site.owner_name ==
+        semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].site.owner_name ==
         semantic_drops.semantic_result.semantic_module.drop_obligations[0].owner_name
     );
     assert(
-        semantic_drops.semantic_drop_lowering_authorizations[1].site.owner_name ==
+        semantic_drops.semantic_owned_cleanup_lowering_authorizations[1].site.owner_name ==
         semantic_drops.semantic_result.semantic_module.drop_obligations[1].owner_name
     );
-    assert(semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
-    assert(!semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
-    assert(semantic_drops.semantic_drop_lowering_authorizations[0].compiler_intrinsic_owned_cleanup);
-    assert(semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
+    assert(semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].semantic_resolved);
+    assert(!semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].source_owned_cleanup_lowering_enabled);
+    assert(semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].compiler_intrinsic_owned_cleanup);
+    assert(semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].authorized);
     assert_line_contains(
         semantic_drops_authorization_report,
         0,
@@ -14500,11 +14500,11 @@ auto main() -> int {
     assert(parsed_drop_diagnostic_report.size() == 1);
     assert_line_contains(parsed_drop_diagnostic_report, 0, "resolved");
     assert(parsed_drop_authorization_report.size() == 1);
-    assert(parsed_drop.semantic_drop_lowering_authorizations.size() == 1);
-    assert(parsed_drop.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(!parsed_drop.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(parsed_drop.semantic_drop_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
-    assert(parsed_drop.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(!parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
+    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
+    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert_line_contains(
         parsed_drop_authorization_report,
         0,
@@ -14512,22 +14512,22 @@ auto main() -> int {
     );
     auto parsed_drop_ir = pipeline.emit_llvm(parsed_drop_path);
     assert(!parsed_drop_ir.has_errors());
-    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.size() == 1);
-    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
+    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert(parsed_drop_ir.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
     auto parsed_drop_source_lowering_ir = pipeline.emit_llvm(
         parsed_drop_path,
         orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
         }
     );
     assert(!parsed_drop_source_lowering_ir.has_errors());
-    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.size() == 1);
-    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_source_lowering_ir.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_drop_source_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(parsed_drop_source_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
+    assert(parsed_drop_source_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert(
         parsed_drop_source_lowering_ir.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
         std::string::npos
@@ -20029,15 +20029,15 @@ auto main() -> int {
     }
     auto parsed_drop_readiness = pipeline.emit_llvm(parsed_drop_readiness_path);
     assert(!parsed_drop_readiness.has_errors());
-    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.size() == 1);
-    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
-    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
+    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
+    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
     assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
     assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
-    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.source_drop_lowering_blockers.empty());
+    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.source_owned_cleanup_lowering_blockers.empty());
     assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
     auto parsed_drop_readiness_blocker_report = drop_readiness_blocker_report(parsed_drop_readiness);
     assert(parsed_drop_readiness_blocker_report.size() == 1);
@@ -20086,10 +20086,10 @@ auto main() -> int {
     assert_line_contains(resolved_semantic_drops_diagnostic_report, 0, "resolved");
     assert_line_contains(resolved_semantic_drops_diagnostic_report, 1, "owner local");
     assert(resolved_semantic_drops_authorization_report.size() == 2);
-    assert(resolved_semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
-    assert(resolved_semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
-    assert(!resolved_semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
-    assert(!resolved_semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
+    assert(resolved_semantic_drops.semantic_owned_cleanup_lowering_authorizations.size() == 2);
+    assert(resolved_semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].semantic_resolved);
+    assert(!resolved_semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].source_owned_cleanup_lowering_enabled);
+    assert(!resolved_semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].authorized);
     assert_line_contains(
         resolved_semantic_drops_authorization_report,
         0,

@@ -703,7 +703,7 @@ auto build_owned_cleanup_authorization_state(
             lowering::plan_owned_cleanup_authorization(
                 cleanup,
                 emission.owned_cleanup_declarations,
-                emission.semantic_drop_lowering_authorizations
+                emission.semantic_owned_cleanup_lowering_authorizations
             )
         );
     }
@@ -4108,7 +4108,7 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses);
     result.runtime_indexed_member_cleanup_execution_summaries =
         runtime_indexed_member_cleanup_execution_summaries(result);
-    result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
+    result.semantic_owned_cleanup_lowering_authorizations = std::move(emission.semantic_owned_cleanup_lowering_authorizations);
 }
 
 }  // namespace orison::pipeline

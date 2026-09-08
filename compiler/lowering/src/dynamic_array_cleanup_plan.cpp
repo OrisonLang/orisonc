@@ -58,8 +58,8 @@ auto dynamic_array_parameter_element_cleanup_proven(
     }
 
     auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
-    return std::ranges::find(options.source_drop_definition_symbols, expected_symbol_name) !=
-        options.source_drop_definition_symbols.end();
+    return std::ranges::find(options.source_owned_cleanup_definition_symbols, expected_symbol_name) !=
+        options.source_owned_cleanup_definition_symbols.end();
 }
 
 auto dynamic_array_descriptor_element_drop_action(
@@ -190,12 +190,12 @@ auto authorized_element_drop_symbol_name(
         .requires_descriptor_deallocation = true,
     };
     auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
-        options.semantic_drop_lowering_authorizations
+        options.semantic_owned_cleanup_lowering_authorizations
     );
     auto authorization = plan_owned_cleanup_authorization(
         cleanup,
         declarations,
-        options.semantic_drop_lowering_authorizations
+        options.semantic_owned_cleanup_lowering_authorizations
     );
     if (!authorization.authorized) {
         return std::nullopt;
@@ -236,7 +236,7 @@ auto synthetic_dynamic_array_parameter_cleanup_authorizations(
                     .site_line = action.discovery_line,
                 },
                 .semantic_resolved = true,
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .authorized = true,
             });
         }
@@ -263,12 +263,12 @@ auto authorized_descriptor_element_drop_symbol_name(
     }
     auto cleanup = drop_cleanup_for_dynamic_array_cleanup_obligation(obligation);
     auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
-        options.semantic_drop_lowering_authorizations
+        options.semantic_owned_cleanup_lowering_authorizations
     );
     auto authorization = plan_owned_cleanup_authorization(
         cleanup,
         declarations,
-        options.semantic_drop_lowering_authorizations
+        options.semantic_owned_cleanup_lowering_authorizations
     );
     if (!authorization.authorized) {
         return std::nullopt;
@@ -286,7 +286,7 @@ auto authorized_choice_payload_element_drop_symbol_name(
     }
 
     auto const& action = obligation.actions.front();
-    for (auto const& authorization : options.semantic_drop_lowering_authorizations) {
+    for (auto const& authorization : options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.source_type_name == action.source_type_name &&
             authorization.site.abi_symbol_name == action.symbol_name) {
@@ -797,7 +797,7 @@ auto prove_dynamic_array_cleanup_emission_capability(
     std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
     std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
     std::vector<DynamicArrayCleanupObligation> const& obligations,
-    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_drop_lowering_authorizations
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_owned_cleanup_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability {
     auto cleanup_pairs = std::vector<std::string> {};
     auto cleanup_operation_names = std::vector<std::string> {};
@@ -816,7 +816,7 @@ auto prove_dynamic_array_cleanup_emission_capability(
         for (auto const& action : obligation.actions) {
             auto const action_pair =
                 obligation.descriptor_cleanup.owner_name + ":" + action.capture_name + ":" + action.symbol_name;
-            if (dynamic_array_cleanup_action_authorized(action, semantic_drop_lowering_authorizations)) {
+            if (dynamic_array_cleanup_action_authorized(action, semantic_owned_cleanup_lowering_authorizations)) {
                 element_drop_pairs.push_back(action_pair);
             } else {
                 missing_element_drop_pairs.push_back(action_pair);
@@ -846,7 +846,7 @@ auto prove_dynamic_array_cleanup_emission_capability(
                 std::ranges::all_of(obligation.actions, [&](auto const& action) {
                     return dynamic_array_cleanup_action_authorized(
                         action,
-                        semantic_drop_lowering_authorizations
+                        semantic_owned_cleanup_lowering_authorizations
                     );
                 });
         }),
@@ -948,7 +948,7 @@ auto prove_local_dynamic_array_cleanup_emission_capability(
         descriptor_cleanup_plans,
         sequence_verifications,
         obligations,
-        context.options.semantic_drop_lowering_authorizations
+        context.options.semantic_owned_cleanup_lowering_authorizations
     );
 }
 

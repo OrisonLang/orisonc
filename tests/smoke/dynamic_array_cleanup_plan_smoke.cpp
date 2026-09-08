@@ -252,7 +252,7 @@ void test_authorizes_owned_element_cleanup() {
         .options = orison::lowering::LlvmIrEmissionOptions {
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -260,7 +260,7 @@ void test_authorizes_owned_element_cleanup() {
                         .owner_name = "items.element",
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -298,7 +298,7 @@ void test_authorizes_owned_element_cleanup() {
         {plans->front().descriptor_cleanup},
         {plans->front().sequence_verification},
         {plans->front().sequence_plan.obligation},
-        context.options.semantic_drop_lowering_authorizations
+        context.options.semantic_owned_cleanup_lowering_authorizations
     );
     assert(shared_capability.element_cleanup_authorized_or_not_required);
     assert(shared_capability.element_drop_pairs.size() == 1);
@@ -388,7 +388,7 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
         .options = orison::lowering::LlvmIrEmissionOptions {
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -396,7 +396,7 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
                         .owner_name = "retained.element",
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },

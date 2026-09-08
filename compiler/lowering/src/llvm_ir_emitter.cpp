@@ -211,7 +211,7 @@ auto has_runtime_indexed_cleanup_source_drop_definition(
     semantics::OwnedCleanupImplementation const& implementation,
     LlvmIrEmissionOptions const& options
 ) -> bool {
-    return options.enable_runtime_indexed_cleanup_source_drop_emission &&
+    return options.enable_runtime_indexed_cleanup_source_owned_cleanup_emission &&
         implementation.origin == semantics::OwnedCleanupImplementationOrigin::source_derived &&
         implementation.proven &&
         implementation.body.finite;
@@ -557,7 +557,7 @@ auto emit_record_source_drop_body(
     return output.str();
 }
 
-auto collect_source_drop_definition_symbols(
+auto collect_source_owned_cleanup_definition_symbols(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
@@ -610,7 +610,7 @@ auto emit_source_drop_definitions(
             active_source_types
         );
     }
-    auto emitted_symbols = collect_source_drop_definition_symbols(module, context, authorizations, options);
+    auto emitted_symbols = collect_source_owned_cleanup_definition_symbols(module, context, authorizations, options);
     for (auto const& declaration : owned_cleanup_declarations) {
         if (!declaration.emit_declaration) {
             continue;
@@ -818,7 +818,7 @@ auto collect_direct_source_drop_definition_types(
     return source_types;
 }
 
-auto collect_source_drop_definition_symbols(
+auto collect_source_owned_cleanup_definition_symbols(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
@@ -866,7 +866,7 @@ auto collect_source_drop_definition_symbols(
     return symbols;
 }
 
-auto collect_direct_source_drop_definition_symbols(
+auto collect_direct_source_owned_cleanup_definition_symbols(
     syntax::ModuleSyntax const& module
 ) -> std::vector<std::string> {
     auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
@@ -1695,7 +1695,7 @@ auto can_lower_dynamic_array_parameter_descriptor(
         has_authorized_dynamic_array_owned_element_cleanup(
             parameter.name,
             sequence.element_source_type_name,
-            options.semantic_drop_lowering_authorizations
+            options.semantic_owned_cleanup_lowering_authorizations
         );
 }
 
@@ -3561,7 +3561,7 @@ void add_dynamic_array_owned_cleanup_declarations(
     std::vector<OwnedCleanupDeclaration>& declarations,
     std::vector<OwnedCleanupAction> const& actions
 ) {
-    if (options.test_only_declared_drop_source_type_allowlist.empty()) {
+    if (options.test_only_declared_owned_cleanup_source_type_allowlist.empty()) {
         for (auto const& action : actions) {
             add_owned_cleanup_declaration(declarations, owned_cleanup_declaration_for_action(action));
         }
@@ -3570,7 +3570,7 @@ void add_dynamic_array_owned_cleanup_declarations(
 
     for (auto declaration : declared_owned_cleanup_declarations_for_allowed_source_types(
              actions,
-             options.test_only_declared_drop_source_type_allowlist
+             options.test_only_declared_owned_cleanup_source_type_allowlist
          )) {
         add_owned_cleanup_declaration(declarations, std::move(declaration));
     }
@@ -4068,7 +4068,7 @@ auto LlvmIrEmissionResult::owned_cleanup_authorization_report() const -> std::ve
         auto authorization = plan_owned_cleanup_authorization(
             cleanup,
             owned_cleanup_declarations,
-            semantic_drop_lowering_authorizations
+            semantic_owned_cleanup_lowering_authorizations
         );
         if (
             authorization.authorized ||
@@ -4084,7 +4084,7 @@ auto LlvmIrEmissionResult::owned_cleanup_authorization_report() const -> std::ve
 
 auto LlvmIrEmissionResult::owned_cleanup_readiness_snapshot() const -> OwnedCleanupReadinessSnapshot {
     return plan_owned_cleanup_readiness_snapshot(
-        semantic_drop_lowering_authorizations,
+        semantic_owned_cleanup_lowering_authorizations,
         owned_cleanup_declarations,
         drop_cleanups
     );
@@ -4113,7 +4113,7 @@ auto emit_module(
     bool metadata_only
 ) -> LlvmIrEmissionResult {
     auto result = LlvmIrEmissionResult {};
-    result.semantic_drop_lowering_authorizations = options.semantic_drop_lowering_authorizations;
+    result.semantic_owned_cleanup_lowering_authorizations = options.semantic_owned_cleanup_lowering_authorizations;
     if (semantic_result.has_errors()) {
         result.diagnostics.error(1, "cannot lower module with semantic errors");
         return result;
@@ -4151,7 +4151,7 @@ auto emit_module(
             cleanup.actions.end()
         );
     }
-    if (options.test_only_declared_drop_source_type_allowlist.empty()) {
+    if (options.test_only_declared_owned_cleanup_source_type_allowlist.empty()) {
         for (auto const& action : result.owned_cleanup_actions) {
             add_owned_cleanup_declaration(
                 result.owned_cleanup_declarations,
@@ -4159,11 +4159,11 @@ auto emit_module(
             );
         }
         for (auto declaration : declared_owned_cleanup_declarations_for_authorized_semantic_drops(
-                 result.semantic_drop_lowering_authorizations
+                 result.semantic_owned_cleanup_lowering_authorizations
              )) {
             add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));
         }
-        if (options.enable_runtime_indexed_cleanup_source_drop_emission) {
+        if (options.enable_runtime_indexed_cleanup_source_owned_cleanup_emission) {
             for (auto declaration : declared_owned_cleanup_declarations_for_runtime_indexed_cleanup(module)) {
                 add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));
             }
@@ -4171,7 +4171,7 @@ auto emit_module(
     } else {
         result.owned_cleanup_declarations = declared_owned_cleanup_declarations_for_allowed_source_types(
             result.owned_cleanup_actions,
-            options.test_only_declared_drop_source_type_allowlist
+            options.test_only_declared_owned_cleanup_source_type_allowlist
         );
     }
     result.generated_module_type_symbols = collect_emitted_record_type_symbols(module, context);
@@ -4227,7 +4227,7 @@ auto emit_module(
                 result.dynamic_array_descriptor_cleanup_plans,
                 result.dynamic_array_cleanup_sequence_verifications,
                 result.dynamic_array_cleanup_obligations,
-                result.semantic_drop_lowering_authorizations
+                result.semantic_owned_cleanup_lowering_authorizations
             );
             for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {
                 if (plan.descriptor_storage_status ==
@@ -4640,12 +4640,12 @@ auto emit_module(
         return result;
     }
     auto source_defined_drop_symbols =
-        collect_source_drop_definition_symbols(module, context, result.semantic_drop_lowering_authorizations, options);
-    auto direct_source_defined_drop_symbols = collect_direct_source_drop_definition_symbols(module);
+        collect_source_owned_cleanup_definition_symbols(module, context, result.semantic_owned_cleanup_lowering_authorizations, options);
+    auto direct_source_defined_drop_symbols = collect_direct_source_owned_cleanup_definition_symbols(module);
     auto function_options = options;
-    function_options.source_drop_definition_symbols = source_defined_drop_symbols;
-    function_options.source_drop_definition_symbols.insert(
-        function_options.source_drop_definition_symbols.end(),
+    function_options.source_owned_cleanup_definition_symbols = source_defined_drop_symbols;
+    function_options.source_owned_cleanup_definition_symbols.insert(
+        function_options.source_owned_cleanup_definition_symbols.end(),
         direct_source_defined_drop_symbols.begin(),
         direct_source_defined_drop_symbols.end()
     );
@@ -4711,7 +4711,7 @@ auto emit_module(
     output << emit_source_drop_definitions(
         module,
         context,
-        result.semantic_drop_lowering_authorizations,
+        result.semantic_owned_cleanup_lowering_authorizations,
         result.owned_cleanup_declarations,
         options
     );

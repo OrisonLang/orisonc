@@ -121,14 +121,14 @@ int main() {
             .site_line = 7,
         },
         .semantic_resolved = false,
-        .source_drop_lowering_enabled = true,
+        .source_owned_cleanup_lowering_enabled = true,
         .authorized = false,
     };
     auto disabled_authorization = unresolved_authorization;
     disabled_authorization.semantic_resolved = true;
-    disabled_authorization.source_drop_lowering_enabled = false;
+    disabled_authorization.source_owned_cleanup_lowering_enabled = false;
     auto authorized_authorization = disabled_authorization;
-    authorized_authorization.source_drop_lowering_enabled = true;
+    authorized_authorization.source_owned_cleanup_lowering_enabled = true;
     authorized_authorization.authorized = true;
 
     auto declaration_from_authorization = owned_cleanup_declaration_for_authorization(authorized_authorization);
@@ -153,7 +153,7 @@ int main() {
                 .site_line = 9,
             },
             .semantic_resolved = true,
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .authorized = true,
         },
     });

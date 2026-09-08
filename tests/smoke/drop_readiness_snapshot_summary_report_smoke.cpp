@@ -29,7 +29,7 @@ auto drop_authorization(
             .site_line = 12,
         },
         .semantic_resolved = authorized,
-        .source_drop_lowering_enabled = authorized,
+        .source_owned_cleanup_lowering_enabled = authorized,
         .authorized = authorized,
     };
 }

@@ -84,7 +84,7 @@ int main() {
     assert(orison::lowering::apply_drop_cleanup_authorization_options(
         allowlist_plan.cleanup.drop_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_declared_drop_source_type_allowlist = {"DropTestPayload"},
+            .test_only_declared_owned_cleanup_source_type_allowlist = {"DropTestPayload"},
         }
     ));
     assert(orison::lowering::drop_calls_enabled(allowlist_plan.cleanup.drop_cleanup));
@@ -93,7 +93,7 @@ int main() {
     assert(!orison::lowering::apply_drop_cleanup_authorization_options(
         denied_allowlist_plan.cleanup.drop_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_declared_drop_source_type_allowlist = {"OtherPayload"},
+            .test_only_declared_owned_cleanup_source_type_allowlist = {"OtherPayload"},
         }
     ));
     assert(!orison::lowering::drop_calls_enabled(denied_allowlist_plan.cleanup.drop_cleanup));
@@ -102,7 +102,7 @@ int main() {
     assert(orison::lowering::apply_drop_cleanup_authorization_options(
         semantic_plan.cleanup.drop_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "DropTestPayload",
@@ -111,7 +111,7 @@ int main() {
                         .site_line = 1,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },

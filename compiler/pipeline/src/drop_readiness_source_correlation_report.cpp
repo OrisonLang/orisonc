@@ -129,7 +129,7 @@ auto format_drop_readiness_source_correlation_report(
                     line << " site line " << semantic->site.site_line;
                 }
                 line << (semantic->semantic_resolved ? " semantic resolved" : " semantic unresolved");
-                line << (semantic->source_drop_lowering_enabled
+                line << (semantic->source_owned_cleanup_lowering_enabled
                     ? " source lowering accepted"
                     : " source lowering not accepted");
             } else {

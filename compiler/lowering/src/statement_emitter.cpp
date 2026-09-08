@@ -265,7 +265,7 @@ auto authorized_dynamic_array_element_drop_symbol_name(
     auto element_owner_name = std::string {owner_name};
     element_owner_name += ".element";
     auto const normalized_element_owner_name = normalize_fixed_array_element_owner_name(element_owner_name);
-    for (auto const& authorization : context.options.semantic_drop_lowering_authorizations) {
+    for (auto const& authorization : context.options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.source_type_name == element_source_type_name &&
             authorization.site.abi_symbol_name == symbol_name &&
@@ -283,7 +283,7 @@ auto has_authorized_dynamic_array_element_drop_type(
     LoweringEmissionContext const& context
 ) -> bool {
     auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
-    for (auto const& authorization : context.options.semantic_drop_lowering_authorizations) {
+    for (auto const& authorization : context.options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.source_type_name == element_source_type_name &&
             authorization.site.abi_symbol_name == symbol_name) {

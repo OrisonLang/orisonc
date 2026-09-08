@@ -70,7 +70,7 @@ struct OwnedCleanupImplementationResolutionSummary {
     std::size_t missing_sites = 0;
 };
 
-enum class SourceDropLoweringGate {
+enum class SourceOwnedCleanupLoweringGate {
     disabled,
     enabled,
 };
@@ -78,7 +78,7 @@ enum class SourceDropLoweringGate {
 struct OwnedCleanupLoweringAuthorization {
     OwnedCleanupSite site;
     bool semantic_resolved = false;
-    bool source_drop_lowering_enabled = false;
+    bool source_owned_cleanup_lowering_enabled = false;
     bool compiler_intrinsic_owned_cleanup = false;
     bool authorized = false;
 };
@@ -154,13 +154,13 @@ auto format_owned_cleanup_implementation_diagnostic_report(
 auto authorize_owned_cleanup_lowering(
     OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
+    SourceOwnedCleanupLoweringGate source_drop_lowering_gate = SourceOwnedCleanupLoweringGate::disabled
 ) -> OwnedCleanupLoweringAuthorization;
 
 auto authorize_owned_cleanup_lowerings(
     std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
+    SourceOwnedCleanupLoweringGate source_drop_lowering_gate = SourceOwnedCleanupLoweringGate::disabled
 ) -> std::vector<OwnedCleanupLoweringAuthorization>;
 
 auto format_owned_cleanup_lowering_authorization(

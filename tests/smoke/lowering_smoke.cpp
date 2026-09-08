@@ -1432,13 +1432,13 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         orison::lowering::LlvmIrEmissionOptions {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::project_semantic_drop_obligations(
                         semantic_result.semantic_module
                     ).front(),
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3022,7 +3022,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     assert(unauthorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
-    options.semantic_drop_lowering_authorizations = {
+    options.semantic_owned_cleanup_lowering_authorizations = {
         orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::OwnedCleanupSite {
                 .source_type_name = "Payload",
@@ -3031,7 +3031,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
                 .site_line = 6,
             },
             .semantic_resolved = true,
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .authorized = true,
         },
     };
@@ -3082,7 +3082,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         .fixture_derive_dynamic_array_cleanup_from_semantics = true,
         .enable_dynamic_array_parameter_descriptors = true,
         .enable_dynamic_array_cleanup_emission = true,
-        .semantic_drop_lowering_authorizations = options.semantic_drop_lowering_authorizations,
+        .semantic_owned_cleanup_lowering_authorizations = options.semantic_owned_cleanup_lowering_authorizations,
     };
     auto production_authorized = lower_source(path, source, production_options);
     assert(!production_authorized.has_errors());
@@ -3128,7 +3128,7 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
     assert(unauthorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
-    options.semantic_drop_lowering_authorizations = {
+    options.semantic_owned_cleanup_lowering_authorizations = {
         orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::OwnedCleanupSite {
                 .source_type_name = "Payload",
@@ -3137,7 +3137,7 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
                 .site_line = 7,
             },
             .semantic_resolved = true,
-            .source_drop_lowering_enabled = true,
+            .source_owned_cleanup_lowering_enabled = true,
             .authorized = true,
         },
     };
@@ -3194,7 +3194,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -3203,7 +3203,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3256,7 +3256,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -3265,7 +3265,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
                         .site_line = 9,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3316,7 +3316,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -3325,7 +3325,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3381,7 +3381,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .fixture_emit_bound_dynamic_array_parameter_cleanups = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -3390,7 +3390,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
                         .site_line = 9,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3714,7 +3714,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
         path,
         source,
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_declared_drop_source_type_allowlist = {"Payload"},
+            .test_only_declared_owned_cleanup_source_type_allowlist = {"Payload"},
             .fixture_dynamic_array_construction_requests = {
                 orison::lowering::FixtureDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
@@ -3751,7 +3751,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
                 },
             },
             .test_only_render_dynamic_array_element_drop_walks = true,
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -3760,7 +3760,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
                         .site_line = 0,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3797,7 +3797,7 @@ void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
     auto authorization = orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = site,
         .semantic_resolved = true,
-        .source_drop_lowering_enabled = false,
+        .source_owned_cleanup_lowering_enabled = false,
         .authorized = false,
     };
     auto result = lower_source(
@@ -3807,16 +3807,16 @@ void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
         "function main() -> UInt32\n"
         "    1 as UInt32\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .semantic_drop_lowering_authorizations = {authorization},
+            .semantic_owned_cleanup_lowering_authorizations = {authorization},
         }
     );
 
     assert(!result.has_errors());
-    assert(result.semantic_drop_lowering_authorizations.size() == 1);
-    assert(result.semantic_drop_lowering_authorizations.front().site.abi_symbol_name == "__orison_drop.Payload");
-    assert(result.semantic_drop_lowering_authorizations.front().semantic_resolved);
-    assert(!result.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
-    assert(!result.semantic_drop_lowering_authorizations.front().authorized);
+    assert(result.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(result.semantic_owned_cleanup_lowering_authorizations.front().site.abi_symbol_name == "__orison_drop.Payload");
+    assert(result.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(!result.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
+    assert(!result.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert(result.ir_text.find("__orison_drop.Payload") == std::string::npos);
 }
 
@@ -13036,7 +13036,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
         "\n"
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -13045,7 +13045,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
                         .site_line = 13,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -13115,7 +13115,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
         "\n"
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -13124,7 +13124,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
                         .site_line = 11,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -13192,7 +13192,7 @@ void test_reject_partial_record_capture_drop_abi_calls() {
         "\n"
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_declared_drop_source_type_allowlist = {"Payload"},
+            .test_only_declared_owned_cleanup_source_type_allowlist = {"Payload"},
         }
     );
 
@@ -13228,7 +13228,7 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
         "\n"
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .semantic_drop_lowering_authorizations = {
+            .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
@@ -13237,7 +13237,7 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
                         .site_line = 18,
                     },
                     .semantic_resolved = true,
-                    .source_drop_lowering_enabled = true,
+                    .source_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },

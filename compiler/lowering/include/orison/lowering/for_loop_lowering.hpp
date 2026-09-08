@@ -230,7 +230,7 @@ inline auto computed_dynamic_array_element_drop_symbol_name(
 ) -> std::optional<std::string> {
     auto expected_owner_name = std::string {cleanup_owner_name} + ".element";
     auto expected_symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
-    for (auto const& authorization : options.semantic_drop_lowering_authorizations) {
+    for (auto const& authorization : options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&
             authorization.site.source_type_name == element_source_type_name &&
@@ -238,7 +238,7 @@ inline auto computed_dynamic_array_element_drop_symbol_name(
             return expected_symbol_name;
         }
     }
-    for (auto const& authorization : options.semantic_drop_lowering_authorizations) {
+    for (auto const& authorization : options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.owner_name.ends_with(".element") &&
             authorization.site.source_type_name == element_source_type_name &&
@@ -582,7 +582,7 @@ auto lower_sequence_for_statement(
                                     std::vector<DynamicArrayDescriptorCleanupPlan> {*emitted_cleanup},
                                     std::vector<DynamicArrayCleanupSequenceVerification> {sequence_verification},
                                     std::vector<DynamicArrayCleanupObligation> {obligation},
-                                    context.options.semantic_drop_lowering_authorizations
+                                    context.options.semantic_owned_cleanup_lowering_authorizations
                                 )
                             );
                         }

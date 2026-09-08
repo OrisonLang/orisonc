@@ -17,7 +17,7 @@ struct FixtureDynamicArrayConstructionRequest {
 
 struct LlvmIrEmissionOptions {
     // Test seam only. Do not expose this as user/compiler-driver surface.
-    std::vector<std::string_view> test_only_declared_drop_source_type_allowlist;
+    std::vector<std::string_view> test_only_declared_owned_cleanup_source_type_allowlist;
     std::vector<FixtureDynamicArrayConstructionRequest> fixture_dynamic_array_construction_requests;
     bool fixture_derive_dynamic_array_cleanup_from_semantics = false;
     bool enable_dynamic_array_descriptor_cleanup_planning = false;
@@ -67,7 +67,7 @@ struct LlvmIrEmissionOptions {
     bool suppress_computed_dynamic_array_cleanup_operand_metadata = false;
     bool collect_aggregate_projection_access_metadata = false;
     bool enable_runtime_indexed_cleanup_emission = false;
-    bool enable_runtime_indexed_cleanup_source_drop_emission = false;
+    bool enable_runtime_indexed_cleanup_source_owned_cleanup_emission = false;
     bool enable_runtime_indexed_constructor_move = false;
     bool enable_runtime_indexed_member_cleanup_ir_mutation_request = false;
     bool enable_runtime_indexed_member_cleanup_production_gate_request = false;
@@ -75,8 +75,8 @@ struct LlvmIrEmissionOptions {
     bool enable_runtime_indexed_member_cleanup_rewrite_execution_request = false;
     bool enable_runtime_indexed_fixed_array_constructor_move_only = false;
     std::vector<DynamicArrayDescriptorLifetimePlan> dynamic_array_descriptor_lifetime_plans;
-    std::vector<std::string> source_drop_definition_symbols;
-    std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_drop_lowering_authorizations;
+    std::vector<std::string> source_owned_cleanup_definition_symbols;
+    std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_owned_cleanup_lowering_authorizations;
 };
 
 struct ComputedDynamicArrayCleanupCallInsertionCapability {

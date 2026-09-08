@@ -603,7 +603,7 @@ int main() {
         .enable_dynamic_array_parameter_descriptors = true,
         .enable_dynamic_array_construction_lowering = true,
         .enable_dynamic_array_cleanup_emission = true,
-        .semantic_drop_lowering_authorizations = {
+        .semantic_owned_cleanup_lowering_authorizations = {
             orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
@@ -611,7 +611,7 @@ int main() {
                     .owner_name = "items.element",
                 },
                 .semantic_resolved = true,
-                .source_drop_lowering_enabled = true,
+                .source_owned_cleanup_lowering_enabled = true,
                 .authorized = true,
             },
         },
