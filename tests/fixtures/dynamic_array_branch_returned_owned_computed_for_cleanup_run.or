@@ -3,13 +3,6 @@ package fixtures.dynamicarraybranchreturnedownedcomputedforcleanuprun
 record Payload
     public value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function make_left() -> DynamicArray<Payload>
     var items: DynamicArray<Payload> = DynamicArray()
     items.push(Payload(5 as UInt32))
