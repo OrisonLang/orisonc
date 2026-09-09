@@ -3,13 +3,6 @@ package fixtures.dynamicarrayforwardedparameterdepth8ownedcomputedforcleanuprun
 record Payload
     value: Int64
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function forward_depth1(items: DynamicArray<Payload>) -> DynamicArray<Payload>
     forward_depth2(items)
 

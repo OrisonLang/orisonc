@@ -6572,11 +6572,17 @@ auto main() -> int {
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
     }
 
-    auto const migrated_owned_computed_parameter_fixtures = std::array<std::string_view, 4> {
+    auto const migrated_owned_computed_parameter_fixtures = std::array<std::string_view, 10> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_if_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_if_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_for_cleanup_run.or",
     };
     for (auto fixture_name : migrated_owned_computed_parameter_fixtures) {
         auto migrated = pipeline.emit_llvm(

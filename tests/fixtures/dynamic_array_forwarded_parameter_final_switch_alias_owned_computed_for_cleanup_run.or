@@ -3,13 +3,6 @@ package fixtures.dynamicarrayforwardedparameterfinalswitchaliasownedcomputedforc
 record Payload
     value: Int64
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function forward_final_switch_alias(flag: Bool, items: DynamicArray<Payload>) -> DynamicArray<Payload>
     switch flag
         true =>
