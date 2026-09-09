@@ -192,6 +192,9 @@ inventing semantics outside the spec/tour.
 - Positive final-if/final-switch forwarded-parameter owned-computed DynamicArray fixtures no longer declare
   `interface Drop` or `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for depth-limited,
   final-control, alias, and nested final-control forwarding.
+- Positive returned owned-computed DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`;
+  pipeline smoke pins compiler-derived cleanup emission for direct return, alias-chain return, helper-call return, and
+  returned choice-payload cleanup.
 
 ## Consequences
 
