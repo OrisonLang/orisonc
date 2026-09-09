@@ -7019,6 +7019,10 @@ auto main() -> int {
         dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
         "switch case ownership mismatch"
     );
+    assert_ir_excludes(
+        dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
+        "method.Payload.drop"
+    );
     assert_emit_object_link_run_success(
         pipeline,
         dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_path,
@@ -7130,6 +7134,10 @@ auto main() -> int {
     assert_ir_contains(
         dynamic_array_branch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
         "store { ptr, i64, i64 } zeroinitializer, ptr %returned.values.addr"
+    );
+    assert_ir_excludes(
+        dynamic_array_branch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
+        "method.Payload.drop"
     );
     assert_emit_object_link_run_success(
         pipeline,
