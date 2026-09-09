@@ -209,6 +209,9 @@ inventing semantics outside the spec/tour.
 - Positive forwarded/mixed returned aggregate-field owned-computed DynamicArray fixtures no longer declare
   `interface Drop` or `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for helper, branch,
   switch, and mixed branch aggregate-field returns.
+- Positive final nested forwarded/mixed returned aggregate-field owned-computed DynamicArray fixtures no longer declare
+  `interface Drop` or `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for helper, switch, and
+  mixed branch nested aggregate-field returns.
 
 ## Consequences
 
