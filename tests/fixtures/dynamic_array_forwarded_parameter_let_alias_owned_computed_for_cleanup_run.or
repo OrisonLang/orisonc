@@ -3,13 +3,6 @@ package fixtures.dynamicarrayforwardedparameterletaliasownedcomputedforcleanupru
 record Payload
     value: Int64
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function forward_let_alias(items: DynamicArray<Payload>) -> DynamicArray<Payload>
     let alias: DynamicArray<Payload> = items
     alias

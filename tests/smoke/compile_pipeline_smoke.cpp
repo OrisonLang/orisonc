@@ -6572,6 +6572,21 @@ auto main() -> int {
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
     }
 
+    auto const migrated_owned_computed_parameter_fixtures = std::array<std::string_view, 4> {
+        "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or",
+    };
+    for (auto fixture_name : migrated_owned_computed_parameter_fixtures) {
+        auto migrated = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+        assert(!migrated.has_errors());
+        assert_ir_contains(migrated.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
+        assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
+    }
+
     auto dynamic_array_returned_payload_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "choice_dynamic_array_return_payload_run.or";

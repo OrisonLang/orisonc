@@ -186,6 +186,9 @@ inventing semantics outside the spec/tour.
 - Positive owned-parameter DynamicArray forwarding, branch-join, branch-cleanup, and switch-cleanup fixtures no longer
   declare `interface Drop` or `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for this fixture
   group.
+- Positive forwarded-parameter owned-computed DynamicArray fixtures no longer declare `interface Drop` or
+  `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for direct, multi-hop, `var` alias, and
+  `let` alias forwarding.
 
 ## Consequences
 
