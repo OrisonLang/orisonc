@@ -183,6 +183,9 @@ inventing semantics outside the spec/tour.
   internally. Backend helper names and ABI symbols now use owned-cleanup spelling.
 - Public owned-element DynamicArray examples no longer declare `interface Drop` or `implements Drop`; they demonstrate
   compiler-derived owned cleanup while tests assert no user-authored `method.Payload.drop` is generated for them.
+- Positive owned-parameter DynamicArray forwarding, branch-join, branch-cleanup, and switch-cleanup fixtures no longer
+  declare `interface Drop` or `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for this fixture
+  group.
 
 ## Consequences
 

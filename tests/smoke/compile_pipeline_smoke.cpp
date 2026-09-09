@@ -6559,6 +6559,19 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_owned_parameter_forwarding_run_status));
     assert(WEXITSTATUS(dynamic_array_owned_parameter_forwarding_run_status) == 0);
 
+    auto const migrated_owned_parameter_fixtures = std::array<std::string_view, 2> {
+        "dynamic_array_owned_parameter_forwarding_run.or",
+        "dynamic_array_owned_parameter_branch_join_run.or",
+    };
+    for (auto fixture_name : migrated_owned_parameter_fixtures) {
+        auto migrated = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+        assert(!migrated.has_errors());
+        assert_ir_contains(migrated.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
+        assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
+    }
+
     auto dynamic_array_returned_payload_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "choice_dynamic_array_return_payload_run.or";
@@ -13591,6 +13604,11 @@ auto main() -> int {
         dynamic_array_owned_parameter_branch_cleanup.ir_text,
         "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
     );
+    assert_ir_contains(
+        dynamic_array_owned_parameter_branch_cleanup.ir_text,
+        "define void @__orison_owned_cleanup.Payload(ptr %value)"
+    );
+    assert_ir_excludes(dynamic_array_owned_parameter_branch_cleanup.ir_text, "method.Payload.drop");
     assert_ir_excludes(dynamic_array_owned_parameter_branch_cleanup.ir_text, "if branch ownership mismatch");
     assert_emit_object_link_run_success(
         pipeline,
@@ -13676,6 +13694,11 @@ auto main() -> int {
         dynamic_array_owned_parameter_switch_cleanup.ir_text,
         "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
     );
+    assert_ir_contains(
+        dynamic_array_owned_parameter_switch_cleanup.ir_text,
+        "define void @__orison_owned_cleanup.Payload(ptr %value)"
+    );
+    assert_ir_excludes(dynamic_array_owned_parameter_switch_cleanup.ir_text, "method.Payload.drop");
     assert_ir_excludes(dynamic_array_owned_parameter_switch_cleanup.ir_text, "switch case ownership mismatch");
     assert_emit_object_link_run_success(
         pipeline,
