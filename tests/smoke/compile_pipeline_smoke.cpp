@@ -6625,6 +6625,21 @@ auto main() -> int {
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
     }
 
+    auto const migrated_local_final_control_cleanup_fixtures = std::array<std::string_view, 4> {
+        "dynamic_array_local_final_if_branch_cleanup_run.or",
+        "dynamic_array_local_final_if_consumed_owner_cleanup_run.or",
+        "dynamic_array_local_final_switch_case_cleanup_run.or",
+        "dynamic_array_local_final_switch_consumed_owner_cleanup_run.or",
+    };
+    for (auto fixture_name : migrated_local_final_control_cleanup_fixtures) {
+        auto migrated = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+        assert(!migrated.has_errors());
+        assert_ir_contains(migrated.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
+        assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
+    }
+
     auto dynamic_array_returned_payload_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "choice_dynamic_array_return_payload_run.or";
