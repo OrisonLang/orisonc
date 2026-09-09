@@ -220,6 +220,9 @@ inventing semantics outside the spec/tour.
   forwarded helper static-indexed aggregate cleanup.
 - Positive local final-control DynamicArray cleanup fixtures no longer declare `interface Drop` or `implements Drop`;
   pipeline smoke pins compiler-derived cleanup emission for final if/switch branch locals and consumed owners.
+- Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
+  smoke pins compiler-derived cleanup emission for direct fields, nested fields, indexed fields, and direct indexed
+  DynamicArray elements.
 
 ## Consequences
 
