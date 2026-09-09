@@ -223,6 +223,9 @@ inventing semantics outside the spec/tour.
 - Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
   smoke pins compiler-derived cleanup emission for direct fields, nested fields, indexed fields, and direct indexed
   DynamicArray elements.
+- Positive `dynamic_array_*cleanup_run.or` fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
+  smoke audits the source fixture set to prevent user-authored cleanup syntax from returning to positive cleanup-run
+  coverage.
 
 ## Consequences
 

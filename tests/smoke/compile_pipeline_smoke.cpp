@@ -6655,6 +6655,25 @@ auto main() -> int {
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
     }
 
+    auto const fixtures_dir = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+    for (auto const& entry : std::filesystem::directory_iterator(fixtures_dir)) {
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        auto const fixture_name = entry.path().filename().string();
+        if (!fixture_name.starts_with("dynamic_array_") || !fixture_name.ends_with("cleanup_run.or")) {
+            continue;
+        }
+
+        auto source = std::ifstream(entry.path());
+        assert(source);
+        auto line = std::string {};
+        while (std::getline(source, line)) {
+            assert(line != "interface Drop");
+            assert(!line.starts_with("implements Drop for "));
+        }
+    }
+
     auto dynamic_array_returned_payload_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "choice_dynamic_array_return_payload_run.or";

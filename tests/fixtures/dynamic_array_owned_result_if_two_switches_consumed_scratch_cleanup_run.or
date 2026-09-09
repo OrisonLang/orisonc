@@ -3,12 +3,6 @@ package fixtures.dynamicarrayownedresultiftwoswitchesconsumedscratchcleanuprun
 record Payload
     public value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
