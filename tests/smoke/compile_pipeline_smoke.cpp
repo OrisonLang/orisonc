@@ -7087,6 +7087,10 @@ auto main() -> int {
         dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
         "switch case ownership mismatch"
     );
+    assert_ir_excludes(
+        dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
+        "method.Payload.drop"
+    );
     assert_emit_object_link_run_success(
         pipeline,
         dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_path,
@@ -7195,6 +7199,10 @@ auto main() -> int {
         dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
         "%box.values.dynamic_array_cleanup"
     );
+    assert_ir_excludes(
+        dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
+        "method.Payload.drop"
+    );
     assert_emit_object_link_run_success(
         pipeline,
         dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_path,
@@ -7250,6 +7258,10 @@ auto main() -> int {
     assert_ir_excludes(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
         "%box.values.dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
+        "method.Payload.drop"
     );
     assert_emit_object_link_run_success(
         pipeline,

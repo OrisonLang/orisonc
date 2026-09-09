@@ -3,13 +3,6 @@ package fixtures.dynamicarrayswitchforwardedreturnedaggregatefieldownedcomputedf
 record Payload
     public value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record PayloadBox
     public values: DynamicArray<Payload>
 
