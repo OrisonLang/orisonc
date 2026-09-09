@@ -9048,6 +9048,24 @@ auto main() -> int {
         dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run"
     );
+    auto const migrated_choice_payload_owned_computed_fixtures = std::array<std::string_view, 8> {
+        "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_if_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_switch_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+    };
+    for (auto fixture_name : migrated_choice_payload_owned_computed_fixtures) {
+        auto migrated = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+        assert(!migrated.has_errors());
+        assert_ir_contains(migrated.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
+        assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
+    }
     auto dynamic_array_returned_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_owned_computed_cleanup_missing_drop.or";

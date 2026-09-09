@@ -212,6 +212,9 @@ inventing semantics outside the spec/tour.
 - Positive final nested forwarded/mixed returned aggregate-field owned-computed DynamicArray fixtures no longer declare
   `interface Drop` or `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for helper, switch, and
   mixed branch nested aggregate-field returns.
+- Positive choice-payload switch-binding owned-computed DynamicArray fixtures no longer declare `interface Drop` or
+  `implements Drop`; pipeline smoke pins compiler-derived cleanup emission for direct, forwarded, final-control, alias,
+  and nested alias switch-binding payload cleanup.
 
 ## Consequences
 
