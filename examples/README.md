@@ -4,8 +4,8 @@
 `dynamic_array_parameter_reads.or` demonstrates scalar `DynamicArray<UInt32>` parameter descriptor `.length()`,
 checked indexing, iteration, and parameter cleanup on the default compiler path.
 `dynamic_array_owned_parameter.or` demonstrates owned-element `DynamicArray<Payload>` parameter transfer,
-descriptor `.length()`, descriptor `for` iteration with record-field reads, and source-backed element Drop cleanup on
-the default compiler path.
+descriptor `.length()`, descriptor `for` iteration with record-field reads, and compiler-derived element cleanup on the
+default compiler path.
 `ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
 `ffi_aggregate_scalar_parameters.or` demonstrates a finite C FFI contract with an aggregate-derived scalar parameter.
 `nested_pointer_aggregate_assignment.or` demonstrates nested pointer-backed aggregate assignment on records and fixed arrays.
@@ -29,11 +29,11 @@ final-use deallocation and descriptor finalization on the default compiler path.
 `local_dynamic_array_nested_computed_for.or` demonstrates nested computed same-owner `DynamicArray<UInt32>` iteration
 with append/grow, final-use deallocation, descriptor finalization, and executable `run` coverage.
 `local_dynamic_array_owned_computed_for.or` demonstrates a computed same-owner `DynamicArray<Payload>` `for` iterable
-with source-backed initialized-element drops before final-use deallocation and descriptor finalization.
+with compiler-derived initialized-element cleanup before final-use deallocation and descriptor finalization.
 `local_dynamic_array_owned_nested_computed_for.or` demonstrates the same owned-element cleanup proof over a nested
 computed same-owner iterable.
 `local_dynamic_array_owned_replacement.or` demonstrates local `DynamicArray<Payload>` indexed replacement with a
-source-backed old-element drop before the new owned value is stored.
+compiler-derived old-element cleanup before the new owned value is stored.
 `local_null_safe_generic_aggregate.or` demonstrates null-safe access through a concrete generic record method returning
 an aggregate, followed by explicit `switch` consumption of the resulting `Maybe<UInt32>`.
 `local_result_choice_switch.or` demonstrates generic `Result<UInt32>` choice construction and explicit backend
@@ -113,7 +113,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | Example | Demonstrates | Current validation |
 | --- | --- | --- |
 | `dynamic_array_parameter_reads.or` | scalar `DynamicArray<UInt32>` parameter descriptor length, checked index reads, iteration, and cleanup | backend |
-| `dynamic_array_owned_parameter.or` | owned-element `DynamicArray<Payload>` parameter transfer, descriptor `.length()`, descriptor `for` iteration with record-field reads, and source-backed element Drop cleanup | backend |
+| `dynamic_array_owned_parameter.or` | owned-element `DynamicArray<Payload>` parameter transfer, descriptor `.length()`, descriptor `for` iteration with record-field reads, and compiler-derived element cleanup | backend |
 | `ffi_aggregate_scalar_parameters.or` | C FFI with an aggregate-derived scalar fixed parameter | backend |
 | `tour_01_packages_imports.or` | `package`, `import`, `from`, `as`, `type` | backend |
 | `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | backend |
@@ -145,9 +145,9 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_dynamic_array_append.or` | local `DynamicArray<UInt32>` construction, append/grow, checked index read, iteration, and cleanup | backend |
 | `local_dynamic_array_computed_for.or` | local computed same-owner `DynamicArray<UInt32>` `for` iteration with final-use cleanup | backend |
 | `local_dynamic_array_nested_computed_for.or` | local nested computed same-owner `DynamicArray<UInt32>` iteration with append/grow and final-use cleanup | backend |
-| `local_dynamic_array_owned_computed_for.or` | local computed same-owner `DynamicArray<Payload>` iteration with source-backed final-use element drops | backend |
-| `local_dynamic_array_owned_nested_computed_for.or` | local nested computed same-owner `DynamicArray<Payload>` iteration with source-backed final-use element drops | backend |
-| `local_dynamic_array_owned_replacement.or` | local `DynamicArray<Payload>` indexed replacement with source-backed old-element drop ordering | backend |
+| `local_dynamic_array_owned_computed_for.or` | local computed same-owner `DynamicArray<Payload>` iteration with compiler-derived final-use element cleanup | backend |
+| `local_dynamic_array_owned_nested_computed_for.or` | local nested computed same-owner `DynamicArray<Payload>` iteration with compiler-derived final-use element cleanup | backend |
+| `local_dynamic_array_owned_replacement.or` | local `DynamicArray<Payload>` indexed replacement with compiler-derived old-element cleanup ordering | backend |
 | `local_null_safe_generic_aggregate.or` | concrete generic null-safe aggregate-return method call plus explicit `Maybe<UInt32>` switch consumption | backend |
 | `local_result_choice_switch.or` | generic `Result<UInt32>` construction plus explicit `switch` payload consumption | backend |
 | `local_result_distinct_choice_switch.or` | generic `Result<UInt32, Bool>` construction plus distinct-payload `switch` consumption | backend |
@@ -217,8 +217,8 @@ coverage. Use `local_dynamic_array_append.or` for the local growable-sequence pi
 `local_dynamic_array_computed_for.or` and `local_dynamic_array_nested_computed_for.or` for computed same-owner
 growable-sequence iteration with final-use cleanup. Use
 `local_dynamic_array_owned_computed_for.or` and `local_dynamic_array_owned_nested_computed_for.or` for owned-element
-computed-loop final-use cleanup drop ordering. Use
-`local_dynamic_array_owned_replacement.or` for owned-element replacement drop ordering. Use
+computed-loop final-use cleanup ordering. Use
+`local_dynamic_array_owned_replacement.or` for owned-element replacement cleanup ordering. Use
 `dynamic_array_parameter_reads.or` for scalar growable-sequence parameter descriptor coverage. Use
 `dynamic_array_owned_parameter.or` for owned growable-sequence parameter length, descriptor iteration with
 record-field reads, transfer, and callee cleanup coverage. Use

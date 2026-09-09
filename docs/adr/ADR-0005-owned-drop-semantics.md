@@ -181,6 +181,8 @@ inventing semantics outside the spec/tour.
   text, CLI flags, fixture source, and test target names remain compatibility surfaces.
 - Source cleanup lowering gates, authorization vectors, and test-only declaration allowlists now use owned-cleanup names
   internally. Backend helper names and ABI symbols now use owned-cleanup spelling.
+- Public owned-element DynamicArray examples no longer declare `interface Drop` or `implements Drop`; they demonstrate
+  compiler-derived owned cleanup while tests assert no user-authored `method.Payload.drop` is generated for them.
 
 ## Consequences
 

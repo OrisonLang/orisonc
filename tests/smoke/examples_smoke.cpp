@@ -177,6 +177,32 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto owned_dynamic_array_parameter_example =
+        pipeline.emit_llvm(examples / "dynamic_array_owned_parameter.or");
+    assert(!owned_dynamic_array_parameter_example.has_errors());
+    assert(
+        owned_dynamic_array_parameter_example.ir_text.find(
+            "define void @__orison_owned_cleanup.Payload(ptr %value)"
+        ) != std::string::npos
+    );
+    assert(
+        owned_dynamic_array_parameter_example.ir_text.find("method.Payload.drop") ==
+        std::string::npos
+    );
+
+    auto owned_dynamic_array_replacement_example =
+        pipeline.emit_llvm(examples / "local_dynamic_array_owned_replacement.or");
+    assert(!owned_dynamic_array_replacement_example.has_errors());
+    assert(
+        owned_dynamic_array_replacement_example.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_assign"
+        ) != std::string::npos
+    );
+    assert(
+        owned_dynamic_array_replacement_example.ir_text.find("method.Payload.drop") ==
+        std::string::npos
+    );
+
     auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     auto owned_dynamic_array_parameter =
         pipeline.emit_llvm(fixtures / "dynamic_array_owned_parameter_missing_drop.or");
@@ -621,6 +647,10 @@ auto main() -> int {
     assert(owned_example_drop != std::string::npos);
     assert(owned_example_deallocation != std::string::npos);
     assert(owned_example_finalization != std::string::npos);
+    assert(
+        owned_computed_local_same_owner_dynamic_array_example.ir_text.find("method.Payload.drop") ==
+        std::string::npos
+    );
     assert(owned_example_drop < owned_example_deallocation);
     assert(owned_example_deallocation < owned_example_finalization);
 
@@ -709,6 +739,10 @@ auto main() -> int {
     assert(owned_nested_drop != std::string::npos);
     assert(owned_nested_deallocation != std::string::npos);
     assert(owned_nested_finalization != std::string::npos);
+    assert(
+        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find("method.Payload.drop") ==
+        std::string::npos
+    );
     assert(owned_nested_drop < owned_nested_deallocation);
     assert(owned_nested_deallocation < owned_nested_finalization);
 
