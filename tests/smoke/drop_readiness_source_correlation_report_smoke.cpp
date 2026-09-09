@@ -10,7 +10,7 @@ auto payload_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .field_index = 0,
         .discovery_line = 12,
     };
@@ -24,7 +24,7 @@ auto payload_authorization(
     return orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = orison::semantics::OwnedCleanupSite {
             .source_type_name = "Payload",
-            .abi_symbol_name = "__orison_drop.Payload",
+            .abi_symbol_name = "__orison_owned_cleanup.Payload",
             .owner_name = std::move(owner_name),
             .site_line = 11,
         },
@@ -61,7 +61,7 @@ auto main() -> int {
     assert(unresolved_report[0] == "drop readiness source correlations actions 1 semantic sites 1");
     assert(
         unresolved_report[1] ==
-        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_drop.Payload for Payload "
+        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_owned_cleanup.Payload for Payload "
         "capture payload field 0 action line 12 semantic owner payload site line 11 semantic unresolved "
         "source lowering not accepted declaration missing"
     );
@@ -75,7 +75,7 @@ auto main() -> int {
     assert(resolved_report.size() == 2);
     assert(
         resolved_report[1] ==
-        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_drop.Payload for Payload "
+        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_owned_cleanup.Payload for Payload "
         "capture payload field 0 action line 12 semantic owner payload site line 11 semantic resolved "
         "source lowering not accepted declaration missing"
     );
@@ -84,7 +84,7 @@ auto main() -> int {
     fallback_snapshot.semantic_authorizations = {payload_authorization("other_owner", true, true)};
     fallback_snapshot.emitted_declarations = {
         orison::lowering::OwnedCleanupDeclaration {
-            .symbol_name = "__orison_drop.Payload",
+            .symbol_name = "__orison_owned_cleanup.Payload",
             .source_type_name = "Payload",
             .discovery_line = 12,
             .emit_declaration = true,
@@ -95,7 +95,7 @@ auto main() -> int {
     assert(fallback_report.size() == 2);
     assert(
         fallback_report[1] ==
-        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_drop.Payload for Payload "
+        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_owned_cleanup.Payload for Payload "
         "capture payload field 0 action line 12 semantic owner other_owner site line 11 semantic resolved "
         "source lowering accepted declaration emitted"
     );

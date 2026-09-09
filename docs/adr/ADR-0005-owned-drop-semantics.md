@@ -9,7 +9,7 @@ Concurrency cleanup lowering now records planned drop actions for owned aggregat
 declarations, and has a test-only path that proves cleanup thunk calls are only emitted when every planned action has a
 matching emitted declaration. That scaffolding is intentionally not language semantics yet.
 
-Orison still needs a real ownership/drop model before generated cleanup thunks may call `__orison_drop.<Type>` in normal
+Orison still needs a real ownership/drop model before generated cleanup thunks may call `__orison_owned_cleanup.<Type>` in normal
 compilation. Enabling calls from metadata alone would hide destruction cost, make ownership incomplete, and risk
 inventing semantics outside the spec/tour.
 
@@ -169,18 +169,18 @@ inventing semantics outside the spec/tour.
   internal compatibility seam for focused unit coverage.
 - Compiler-intrinsic owned cleanup authorization does not depend on the source-drop lowering gate. Source-derived
   cleanup implementations remain gated test seams until an explicit source finalization model is accepted.
-- Driver report adapters use owned-cleanup naming internally while existing `--drop-*` diagnostic flags and
-  `__orison_drop.*` ABI symbols remain stable compatibility surfaces.
+- Driver report adapters use owned-cleanup naming internally while existing `--drop-*` diagnostic flags remain report
+  compatibility surfaces. Owned cleanup ABI symbols now use `__orison_owned_cleanup.*`.
 - Typed lowering and pipeline readiness/authorization state now uses `OwnedCleanup*` names internally. Existing
-  report text, CLI flags, test target names, and ABI symbols are unchanged compatibility surfaces.
+  report text, CLI flags, and test target names remain compatibility surfaces.
 - Semantic cleanup implementation and lowering authorization types now use `OwnedCleanup*` names internally. Existing
   semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 - Semantic cleanup helper functions now use `owned_cleanup_*` names internally. Existing `drop` wording remains only in
-  compatibility report text, CLI flags, fixture source, and the `__orison_drop.*` ABI surface.
+  compatibility report text, CLI flags, fixture source, and internal semantic model names.
 - Planned cleanup site, action, declaration, and pipeline state types now use `OwnedCleanup*` names internally. Report
-  text, CLI flags, fixture source, test target names, and ABI symbols remain stable compatibility surfaces.
+  text, CLI flags, fixture source, and test target names remain compatibility surfaces.
 - Source cleanup lowering gates, authorization vectors, and test-only declaration allowlists now use owned-cleanup names
-  internally. Backend helper names that still mention source drop remain a later migration slice around ABI emission.
+  internally. Backend helper names and ABI symbols now use owned-cleanup spelling.
 
 ## Consequences
 

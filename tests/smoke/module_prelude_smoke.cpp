@@ -95,7 +95,7 @@ int main() {
         {},
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_drop.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
             },
@@ -109,19 +109,19 @@ int main() {
         {},
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_drop.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
                 .emit_declaration = true,
             },
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_drop.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
                 .emit_declaration = true,
             },
         }
     );
-    assert(enabled_drop_prelude == "declare void @__orison_drop.Payload(ptr)\n\n");
+    assert(enabled_drop_prelude == "declare void @__orison_owned_cleanup.Payload(ptr)\n\n");
     return 0;
 }

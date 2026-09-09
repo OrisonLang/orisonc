@@ -19,7 +19,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
                     .name = "payload",
                     .source_type_name = "DropTestPayload",
                     .llvm_type = "%record.DropTestPayload",
-                    .drop_symbol_name = "__orison_drop.DropTestPayload",
+                    .drop_symbol_name = "__orison_owned_cleanup.DropTestPayload",
                     .field_index = 0,
                 },
             },
@@ -29,7 +29,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
                     orison::lowering::OwnedCleanupAction {
                         .capture_name = "payload",
                         .source_type_name = "DropTestPayload",
-                        .symbol_name = "__orison_drop.DropTestPayload",
+                        .symbol_name = "__orison_owned_cleanup.DropTestPayload",
                         .field_index = 0,
                         .discovery_line = 1,
                     },
@@ -52,7 +52,7 @@ int main() {
     assert(declarations.front().emit_declaration);
     assert(
         orison::lowering::emit_module_prelude({}, {}, {}, declarations) ==
-        "declare void @__orison_drop.DropTestPayload(ptr)\n\n"
+        "declare void @__orison_owned_cleanup.DropTestPayload(ptr)\n\n"
     );
 
     assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
@@ -64,8 +64,8 @@ int main() {
         "define private void @__orison_thread_cleanup.allowed.1.0(ptr %environment) {\n"
         "entry:\n"
         "  %cleanup.field.0 = getelementptr { %record.DropTestPayload }, ptr %environment, i32 0, i32 0\n"
-        "  ; cleanup candidate payload: DropTestPayload field 0 drop __orison_drop.DropTestPayload\n"
-        "  call void @__orison_drop.DropTestPayload(ptr %cleanup.field.0)\n"
+        "  ; cleanup candidate payload: DropTestPayload field 0 drop __orison_owned_cleanup.DropTestPayload\n"
+        "  call void @__orison_owned_cleanup.DropTestPayload(ptr %cleanup.field.0)\n"
         "  ret void\n"
         "}\n"
     );
@@ -106,7 +106,7 @@ int main() {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "DropTestPayload",
-                        .abi_symbol_name = "__orison_drop.DropTestPayload",
+                        .abi_symbol_name = "__orison_owned_cleanup.DropTestPayload",
                         .owner_name = "payload",
                         .site_line = 1,
                     },

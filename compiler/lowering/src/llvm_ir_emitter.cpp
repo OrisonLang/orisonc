@@ -189,7 +189,7 @@ auto is_generic_receiver_pattern(
     return false;
 }
 
-auto has_authorized_source_drop_definition(
+auto has_authorized_source_owned_cleanup_definition(
     semantics::OwnedCleanupImplementation const& implementation,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
@@ -207,7 +207,7 @@ auto has_authorized_source_drop_definition(
     );
 }
 
-auto has_runtime_indexed_cleanup_source_drop_definition(
+auto has_runtime_indexed_cleanup_source_owned_cleanup_definition(
     semantics::OwnedCleanupImplementation const& implementation,
     LlvmIrEmissionOptions const& options
 ) -> bool {
@@ -217,14 +217,14 @@ auto has_runtime_indexed_cleanup_source_drop_definition(
         implementation.body.finite;
 }
 
-auto source_drop_element_symbol(
+auto source_owned_cleanup_element_symbol(
     std::string_view source_type_name,
     std::vector<semantics::OwnedCleanupImplementation> const& implementations
 ) -> std::optional<std::string> {
     if (is_scalar_or_nonowning_source_type(source_type_name)) {
         return std::nullopt;
     }
-    auto const symbol_name = semantics::drop_abi_symbol_name(source_type_name);
+    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type_name);
     auto match = std::ranges::find_if(
         implementations,
         [&](semantics::OwnedCleanupImplementation const& implementation) {
@@ -466,7 +466,7 @@ auto emit_fixed_array_dynamic_array_drop_field_sequence(
     return output.str();
 }
 
-auto emit_record_source_drop_body(
+auto emit_record_source_owned_cleanup_body(
     std::string_view source_type_name,
     LoweringContext const& context,
     std::vector<semantics::OwnedCleanupImplementation> const& implementations
@@ -495,7 +495,7 @@ auto emit_record_source_drop_body(
             *plan,
             field_pointer_name,
             prefix,
-            source_drop_element_symbol(plan->element_source_type_name, implementations)
+            source_owned_cleanup_element_symbol(plan->element_source_type_name, implementations)
         );
         continue;
     }
@@ -504,7 +504,7 @@ auto emit_record_source_drop_body(
         if (dynamic_array_element_source_type_name(field.source_type_name).has_value()) {
             continue;
         }
-        auto drop_symbol = source_drop_element_symbol(field.source_type_name, implementations);
+        auto drop_symbol = source_owned_cleanup_element_symbol(field.source_type_name, implementations);
         if (drop_symbol.has_value() && context.records.contains(field.source_type_name)) {
             output << emit_record_field_drop_sequence(
                 layout->second,
@@ -533,12 +533,12 @@ auto emit_record_source_drop_body(
                 *dynamic_array_element_plan,
                 cleanup_name,
                 *length_value,
-                source_drop_element_symbol(dynamic_array_element_plan->element_source_type_name, implementations)
+                source_owned_cleanup_element_symbol(dynamic_array_element_plan->element_source_type_name, implementations)
             );
             continue;
         }
 
-        auto element_drop_symbol = source_drop_element_symbol(*element_source_type_name, implementations);
+        auto element_drop_symbol = source_owned_cleanup_element_symbol(*element_source_type_name, implementations);
         auto element_llvm_type_name = llvm_type_for_source_type_name(*element_source_type_name, context);
         if (!element_drop_symbol.has_value() || !element_llvm_type_name.has_value() ||
             !context.records.contains(*element_source_type_name)) {
@@ -572,7 +572,7 @@ void add_compiler_intrinsic_cleanup_dependency(
     std::vector<std::string>& active_source_types
 );
 
-auto emit_source_drop_definitions(
+auto emit_source_owned_cleanup_definitions(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
@@ -633,7 +633,7 @@ auto emit_source_drop_definitions(
         }
         output << "define void @" << implementation->abi_symbol_name << "(ptr %value) {\n";
         output << "entry:\n";
-        output << emit_record_source_drop_body(
+        output << emit_record_source_owned_cleanup_body(
             implementation->source_type_name,
             context,
             implementations
@@ -674,7 +674,7 @@ void add_compiler_intrinsic_cleanup_dependency(
         return;
     }
 
-    auto const symbol_name = semantics::drop_abi_symbol_name(source_type);
+    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type);
     auto implementation = std::ranges::find_if(
         implementations,
         [&](semantics::OwnedCleanupImplementation const& candidate) {
@@ -723,11 +723,11 @@ void add_compiler_intrinsic_cleanup_dependency(
     active_source_types.pop_back();
 }
 
-auto source_drop_implementation_for_type(
+auto source_owned_cleanup_implementation_for_type(
     std::string_view source_type_name,
     std::vector<semantics::OwnedCleanupImplementation> const& implementations
 ) -> std::optional<semantics::OwnedCleanupImplementation> {
-    auto const symbol_name = semantics::drop_abi_symbol_name(source_type_name);
+    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type_name);
     auto implementation = std::ranges::find_if(
         implementations,
         [&](semantics::OwnedCleanupImplementation const& candidate) {
@@ -743,14 +743,14 @@ auto source_drop_implementation_for_type(
     return *implementation;
 }
 
-void add_source_drop_definition_symbol_with_dependencies(
+void add_source_owned_cleanup_definition_symbol_with_dependencies(
     std::string_view source_type_name,
     LoweringContext const& context,
     std::vector<semantics::OwnedCleanupImplementation> const& implementations,
     std::vector<std::string>& symbols,
     std::vector<std::string>& active_source_types
 ) {
-    auto implementation = source_drop_implementation_for_type(source_type_name, implementations);
+    auto implementation = source_owned_cleanup_implementation_for_type(source_type_name, implementations);
     if (!implementation.has_value()) {
         return;
     }
@@ -766,7 +766,7 @@ void add_source_drop_definition_symbol_with_dependencies(
     if (layout != context.records.end()) {
         for (auto const& field : layout->second.fields) {
             if (auto element_source_type = dynamic_array_element_source_type_name(field.source_type_name)) {
-                add_source_drop_definition_symbol_with_dependencies(
+                add_source_owned_cleanup_definition_symbol_with_dependencies(
                     *element_source_type,
                     context,
                     implementations,
@@ -776,7 +776,7 @@ void add_source_drop_definition_symbol_with_dependencies(
                 continue;
             }
             if (auto element_source_type = array_element_source_type_name(field.source_type_name)) {
-                add_source_drop_definition_symbol_with_dependencies(
+                add_source_owned_cleanup_definition_symbol_with_dependencies(
                     *element_source_type,
                     context,
                     implementations,
@@ -785,7 +785,7 @@ void add_source_drop_definition_symbol_with_dependencies(
                 );
                 continue;
             }
-            add_source_drop_definition_symbol_with_dependencies(
+            add_source_owned_cleanup_definition_symbol_with_dependencies(
                 field.source_type_name,
                 context,
                 implementations,
@@ -799,15 +799,15 @@ void add_source_drop_definition_symbol_with_dependencies(
     symbols.push_back(implementation->abi_symbol_name);
 }
 
-auto collect_direct_source_drop_definition_types(
+auto collect_direct_source_owned_cleanup_definition_types(
     std::vector<semantics::OwnedCleanupImplementation> const& implementations,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
     auto source_types = std::vector<std::string> {};
     for (auto const& implementation : implementations) {
-        if (!has_authorized_source_drop_definition(implementation, authorizations) &&
-            !has_runtime_indexed_cleanup_source_drop_definition(implementation, options)) {
+        if (!has_authorized_source_owned_cleanup_definition(implementation, authorizations) &&
+            !has_runtime_indexed_cleanup_source_owned_cleanup_definition(implementation, options)) {
             continue;
         }
         if (std::ranges::find(source_types, implementation.source_type_name) != source_types.end()) {
@@ -850,12 +850,12 @@ auto collect_source_owned_cleanup_definition_symbols(
     }
     auto symbols = std::vector<std::string> {};
     active_source_types.clear();
-    for (auto const& source_type : collect_direct_source_drop_definition_types(
+    for (auto const& source_type : collect_direct_source_owned_cleanup_definition_types(
              implementations,
              authorizations,
              options
          )) {
-        add_source_drop_definition_symbol_with_dependencies(
+        add_source_owned_cleanup_definition_symbol_with_dependencies(
             source_type,
             context,
             implementations,
@@ -926,7 +926,7 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
                 if (field.name == selected_field_name || field.source_type_name.empty() || field.llvm_type.empty()) {
                     continue;
                 }
-                auto drop_symbol_name = semantics::drop_abi_symbol_name(field.source_type_name);
+                auto drop_symbol_name = semantics::owned_cleanup_abi_symbol_name(field.source_type_name);
                 auto const drop_definition_available =
                     std::ranges::find(source_defined_drop_symbols, drop_symbol_name) !=
                     source_defined_drop_symbols.end();
@@ -1673,7 +1673,7 @@ auto has_authorized_dynamic_array_owned_element_cleanup(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
     auto const expected_owner_name = owner_name + ".element";
-    auto const expected_symbol_name = "__orison_drop." + element_source_type_name;
+    auto const expected_symbol_name = "__orison_owned_cleanup." + element_source_type_name;
     return std::ranges::any_of(
         authorizations,
         [&](semantics::OwnedCleanupLoweringAuthorization const& authorization) {
@@ -3260,7 +3260,7 @@ auto dynamic_array_element_drop_action(
     return OwnedCleanupAction {
         .capture_name = std::move(capture_name),
         .source_type_name = plan.element_source_type_name,
-        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+        .symbol_name = semantics::owned_cleanup_abi_symbol_name(plan.element_source_type_name),
         .field_index = ordinal,
     };
 }
@@ -4708,7 +4708,7 @@ auto emit_module(
         result.dynamic_array_runtime_operations,
         source_defined_drop_symbols
     );
-    output << emit_source_drop_definitions(
+    output << emit_source_owned_cleanup_definitions(
         module,
         context,
         result.semantic_owned_cleanup_lowering_authorizations,

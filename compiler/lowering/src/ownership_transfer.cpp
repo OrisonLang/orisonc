@@ -811,7 +811,7 @@ auto runtime_indexed_cleanup_emission_plan(
             .skip_block_name = plan.owner_name + ".runtime_cleanup.skip",
             .drop_block_name = plan.owner_name + ".runtime_cleanup.drop",
             .element_address_name = "%" + plan.owner_name + ".runtime_cleanup.element.addr",
-            .drop_callee_name = "__orison_drop." + plan.element_source_type_name,
+            .drop_callee_name = "__orison_owned_cleanup." + plan.element_source_type_name,
             .continue_block_name = plan.owner_name + ".runtime_cleanup.continue",
             .next_index_name = "%" + plan.owner_name + ".runtime_cleanup.next_index",
             .exit_block_name = plan.owner_name + ".runtime_cleanup.exit",

@@ -40,7 +40,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
             .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
             .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
             .cleanup_owner_names = {"items"},
-            .element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
+            .element_drop_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
             .capability_metadata_available = true,
             .proven = true,
             .emission_enabled = true,
@@ -59,7 +59,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
         std::string::npos
     );
     assert(
-        proven.front().find("element-drop-pairs [items:items.element:__orison_drop.Payload]") !=
+        proven.front().find("element-drop-pairs [items:items.element:__orison_owned_cleanup.Payload]") !=
         std::string::npos
     );
     assert(proven.front().find("[element cleanup ok]") != std::string::npos);
@@ -70,7 +70,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
             .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
             .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
             .cleanup_owner_names = {"items"},
-            .missing_element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
+            .missing_element_drop_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
             .capability_metadata_available = true,
             .proven = false,
             .emission_enabled = true,
@@ -83,7 +83,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
     assert(blocked.size() == 1);
     assert(blocked.front().find("dynamic array cleanup emission capability blocked") != std::string::npos);
     assert(
-        blocked.front().find("missing-element-drop-pairs [items:items.element:__orison_drop.Payload]") !=
+        blocked.front().find("missing-element-drop-pairs [items:items.element:__orison_owned_cleanup.Payload]") !=
         std::string::npos
     );
     assert(blocked.front().find("[element cleanup missing]") != std::string::npos);
@@ -924,7 +924,7 @@ void assert_computed_dynamic_array_production_reports() {
 
     auto blocked = driver::dynamic_array_cleanup_production_readiness_state_report(
         pipeline::DynamicArrayCleanupProductionReadiness {
-            .missing_element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
+            .missing_element_drop_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
             .descriptor_summaries_available = true,
             .descriptor_summary_blockers_absent = true,
             .descriptor_cleanup_plans_available = true,
@@ -943,7 +943,7 @@ void assert_computed_dynamic_array_production_reports() {
         "dynamic array cleanup production readiness blocked [descriptor origins ok] "
         "[descriptor origin blockers absent] [cleanup plans ok] [cleanup obligations ok] "
         "[sequence verification ok] [sequence passed ok] [cleanup capability missing] missing-element-drop-pairs "
-        "[items:items.element:__orison_drop.Payload] [production signatures ok] [production construction ok] "
+        "[items:items.element:__orison_owned_cleanup.Payload] [production signatures ok] [production construction ok] "
         "[production cleanup emission ok] (metadata only)"
     );
 

@@ -57,7 +57,7 @@ auto dynamic_array_parameter_element_cleanup_proven(
         return false;
     }
 
-    auto const expected_symbol_name = semantics::drop_abi_symbol_name(sequence->element_source_type_name);
+    auto const expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(sequence->element_source_type_name);
     return std::ranges::find(options.source_owned_cleanup_definition_symbols, expected_symbol_name) !=
         options.source_owned_cleanup_definition_symbols.end();
 }
@@ -72,7 +72,7 @@ auto dynamic_array_descriptor_element_drop_action(
     return OwnedCleanupAction {
         .capture_name = std::move(capture_name),
         .source_type_name = plan.element_source_type_name,
-        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+        .symbol_name = semantics::owned_cleanup_abi_symbol_name(plan.element_source_type_name),
         .field_index = ordinal,
         .discovery_line = plan.source_line,
     };
@@ -85,7 +85,7 @@ auto dynamic_array_parameter_drop_action(
     return OwnedCleanupAction {
         .capture_name = std::string {name} + ".element",
         .source_type_name = plan.element_source_type_name,
-        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+        .symbol_name = semantics::owned_cleanup_abi_symbol_name(plan.element_source_type_name),
     };
 }
 

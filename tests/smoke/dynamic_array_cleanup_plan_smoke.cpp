@@ -148,7 +148,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(a_cleanup != std::string::npos);
     assert(z_cleanup != std::string::npos);
     assert(a_cleanup < z_cleanup);
-    assert(ir.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(ir.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
     assert(ir.find("call void @__orison_dynamic_array_deallocate") != std::string::npos);
     assert(state.next_temporary_index == 2);
     assert(state.consumed_descriptor_finalization_plans.size() == 2);
@@ -256,7 +256,7 @@ void test_authorizes_owned_element_cleanup() {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                     },
                     .semantic_resolved = true,
@@ -272,7 +272,7 @@ void test_authorizes_owned_element_cleanup() {
     assert(plans->size() == 1);
     assert(plans->front().descriptor_cleanup.owner_name == "items");
     assert(plans->front().descriptor_cleanup.element_source_type_name == "Payload");
-    assert(plans->front().element_drop_symbol_name == "__orison_drop.Payload");
+    assert(plans->front().element_drop_symbol_name == "__orison_owned_cleanup.Payload");
     assert(plans->front().sequence_plan.phases.size() == 3);
     assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
         plans->front().sequence_verification
@@ -283,13 +283,13 @@ void test_authorizes_owned_element_cleanup() {
     );
     assert(capability.element_cleanup_authorized_or_not_required);
     assert(capability.element_drop_pairs.size() == 1);
-    assert(capability.element_drop_pairs.front() == "items:items.element:__orison_drop.Payload");
+    assert(capability.element_drop_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
         "dynamic array cleanup emission capability proven cleanup-pairs [items:__orison_dynamic_array_cleanup.0] "
         "cleanup-operations [__orison_dynamic_array_cleanup.0] cleanup-owners [items] "
-        "element-drop-pairs [items:items.element:__orison_drop.Payload] "
+        "element-drop-pairs [items:items.element:__orison_owned_cleanup.Payload] "
         "[emission ok] [descriptor storage ok] [sequence verification ok] [element cleanup ok] "
         "[descriptor deallocation ok] (metadata only)"
     );
@@ -302,13 +302,13 @@ void test_authorizes_owned_element_cleanup() {
     );
     assert(shared_capability.element_cleanup_authorized_or_not_required);
     assert(shared_capability.element_drop_pairs.size() == 1);
-    assert(shared_capability.element_drop_pairs.front() == "items:items.element:__orison_drop.Payload");
+    assert(shared_capability.element_drop_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(shared_capability));
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));
     auto ir = output.str();
-    auto drop_call = ir.find("call void @__orison_drop.Payload");
+    auto drop_call = ir.find("call void @__orison_owned_cleanup.Payload");
     auto deallocate_call = ir.find("call void @__orison_dynamic_array_deallocate");
     assert(drop_call != std::string::npos);
     assert(deallocate_call != std::string::npos);
@@ -392,7 +392,7 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "retained.element",
                     },
                     .semantic_resolved = true,
@@ -478,7 +478,7 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(obligations[1].descriptor_cleanup.owner_name == "items");
     assert(obligations[1].actions.size() == 1);
     assert(obligations[1].actions.front().capture_name == "items.element");
-    assert(obligations[1].actions.front().symbol_name == "__orison_drop.Payload");
+    assert(obligations[1].actions.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(obligations[1].actions.front().discovery_line == 22);
 
     auto cleanup = orison::lowering::drop_cleanup_for_dynamic_array_cleanup_obligation(obligations[1]);
@@ -559,7 +559,7 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(!blocked_capability.element_cleanup_authorized_or_not_required);
     assert(blocked_capability.element_drop_pairs.empty());
     assert(blocked_capability.missing_element_drop_pairs.size() == 1);
-    assert(blocked_capability.missing_element_drop_pairs.front() == "items:items.element:__orison_drop.Payload");
+    assert(blocked_capability.missing_element_drop_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     auto blocked_capability_report =
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability);
@@ -571,7 +571,7 @@ void test_plans_descriptor_cleanup_obligations() {
     );
     assert(
         blocked_capability_report.find(
-            "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]"
+            "missing-element-drop-pairs [items:items.element:__orison_owned_cleanup.Payload]"
         ) != std::string::npos
     );
     assert(blocked_capability_report.find("[element cleanup missing]") != std::string::npos);

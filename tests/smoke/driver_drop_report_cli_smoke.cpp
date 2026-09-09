@@ -573,33 +573,33 @@ int main() {
             "define private void @__orison_thread_cleanup.launch.12.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
-            "  call void @__orison_drop.Payload(ptr %cleanup.field.0)\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_owned_cleanup.Payload\n"
+            "  call void @__orison_owned_cleanup.Payload(ptr %cleanup.field.0)\n"
             "  ret void\n"
             "}",
         }
     );
-    assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
-    assert(planned_drop_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
-    assert(planned_drop_emit.stdout_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(planned_drop_emit.stdout_text.find("planned drop __orison_owned_cleanup.Payload") == std::string::npos);
+    assert(planned_drop_emit.stdout_text.find("declare void @__orison_owned_cleanup.Payload(ptr)") == std::string::npos);
+    assert(planned_drop_emit.stdout_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
 
     auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(planned_drop_report, {"planned drop __orison_drop.Payload"});
+    assert_success_with_stdout_contains(planned_drop_report, {"planned drop __orison_owned_cleanup.Payload"});
     auto semantic_planned_drop_report = run_semantic_planned_drops(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(semantic_planned_drop_report, {"drop obligation __orison_drop.Payload"});
+    assert_success_with_stdout_contains(semantic_planned_drop_report, {"drop obligation __orison_owned_cleanup.Payload"});
     auto semantic_drop_resolution = run_semantic_drop_resolution(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(semantic_drop_resolution, {"resolved drop site __orison_drop.Payload"});
+    assert_success_with_stdout_contains(semantic_drop_resolution, {"resolved drop site __orison_owned_cleanup.Payload"});
     auto semantic_drop_diagnostics = run_semantic_drop_diagnostics(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         semantic_drop_diagnostics,
-        {"drop diagnostic drop site __orison_drop.Payload", "resolved"}
+        {"drop diagnostic drop site __orison_owned_cleanup.Payload", "resolved"}
     );
     auto semantic_drop_lowering_authorization =
         run_semantic_drop_lowering_authorization(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         semantic_drop_lowering_authorization,
         {
-            "drop lowering authorization drop site __orison_drop.Payload",
+            "drop lowering authorization drop site __orison_owned_cleanup.Payload",
             "semantic-resolved lowering-authorized compiler-owned cleanup accepted",
         }
     );
@@ -626,21 +626,21 @@ int main() {
     auto parsed_drop_candidate_diagnostics = run_semantic_drop_diagnostics(app, parsed_drop_candidate_path);
     assert_success_with_stdout_contains(
         parsed_drop_candidate_diagnostics,
-        {"drop diagnostic drop site __orison_drop.Payload", "resolved"}
+        {"drop diagnostic drop site __orison_owned_cleanup.Payload", "resolved"}
     );
     auto parsed_drop_candidate_lowering_authorization =
         run_semantic_drop_lowering_authorization(app, parsed_drop_candidate_path);
     assert_success_with_stdout_contains(
         parsed_drop_candidate_lowering_authorization,
         {
-            "drop lowering authorization drop site __orison_drop.Payload",
+            "drop lowering authorization drop site __orison_owned_cleanup.Payload",
             "semantic-resolved lowering-authorized compiler-owned cleanup accepted",
         }
     );
     auto parsed_drop_candidate_emit = run_emit_llvm(app, parsed_drop_candidate_path);
     assert(parsed_drop_candidate_emit.exit_code == 0);
     assert(parsed_drop_candidate_emit.stderr_text.empty());
-    assert(parsed_drop_candidate_emit.stdout_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(parsed_drop_candidate_emit.stdout_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
 
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_parsed_drop_readiness.or";
@@ -685,13 +685,13 @@ int main() {
     );
 
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(semantic_drop_summary, {"drop resolution summary __orison_drop.Payload"});
+    assert_success_with_stdout_contains(semantic_drop_summary, {"drop resolution summary __orison_owned_cleanup.Payload"});
     auto owned_cleanup_actions = run_owned_cleanup_actions(app, planned_drop_report_path);
-    assert_success_with_stdout_contains(owned_cleanup_actions, {"planned drop action __orison_drop.Payload"});
+    assert_success_with_stdout_contains(owned_cleanup_actions, {"planned drop action __orison_owned_cleanup.Payload"});
     auto emitted_drops = run_emitted_drops(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
         emitted_drops,
-        {"planned drop __orison_drop.Payload for Payload discovered at line 12"}
+        {"planned drop __orison_owned_cleanup.Payload for Payload discovered at line 12"}
     );
     auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
     assert_success_with_empty_stdout(drop_cleanup_authorization);
@@ -700,7 +700,7 @@ int main() {
         drop_readiness,
         {
             "drop readiness snapshot semantic authorizations 1",
-            "semantic readiness __orison_drop.Payload",
+            "semantic readiness __orison_owned_cleanup.Payload",
             "cleanup readiness __orison_thread_cleanup.launch.12.0 authorized",
         }
     );
@@ -1009,31 +1009,31 @@ int main() {
         }
     );
     assert(
-        dynamic_array_blocked_cleanup_capability.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_cleanup_capability.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_descriptor_cleanup_plan.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_descriptor_cleanup_plan.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_obligations.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_cleanup_obligations.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_sequence_plan.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_cleanup_sequence_plan.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_sequence_verification.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_cleanup_sequence_verification.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_emission_gate.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_cleanup_emission_gate.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_audit.stdout_text.find("call void @__orison_drop.Payload") ==
+        dynamic_array_blocked_cleanup_audit.stdout_text.find("call void @__orison_owned_cleanup.Payload") ==
         std::string::npos
     );
     assert(
@@ -1122,7 +1122,7 @@ int main() {
             "function use_items dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
             "function use_items dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "function use_items dynamic array cleanup emission capability proven",
-            "element-drop-pairs [items:items.element:__orison_drop.Payload]",
+            "element-drop-pairs [items:items.element:__orison_owned_cleanup.Payload]",
             "[element cleanup ok]",
             "computed DynamicArray consumed descriptor finalization plans ready computed-descriptor-plans 0 "
             "emitted-finalization-plans 1 ready 1 blocked 0 (metadata only)",
@@ -1457,7 +1457,7 @@ int main() {
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
     assert_success_with_stdout_contains(
         multi_planned_drop_report,
-        {"planned drop __orison_drop.Payload", "planned drop __orison_drop.OtherPayload"}
+        {"planned drop __orison_owned_cleanup.Payload", "planned drop __orison_owned_cleanup.OtherPayload"}
     );
     auto multi_owned_cleanup_actions = run_owned_cleanup_actions(app, multi_drop_readiness_fixture_path);
     assert_success_with_stdout_contains(
@@ -1491,7 +1491,7 @@ int main() {
         }
     );
     auto deduped_planned_drop_report = run_planned_drops(app, deduped_planned_drop_report_path);
-    assert_success_with_stdout_contains(deduped_planned_drop_report, {"planned drop __orison_drop.Payload"});
+    assert_success_with_stdout_contains(deduped_planned_drop_report, {"planned drop __orison_owned_cleanup.Payload"});
     auto deduped_owned_cleanup_actions = run_owned_cleanup_actions(app, deduped_planned_drop_report_path);
     assert_success_with_stdout_contains(
         deduped_owned_cleanup_actions,

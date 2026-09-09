@@ -85,7 +85,7 @@ auto find_final_outer_drop(
     std::string_view owner_name,
     std::size_t after
 ) -> std::size_t {
-    return output.find("call void @__orison_drop.Outer(ptr %" + std::string {owner_name} + ".addr)", after);
+    return output.find("call void @__orison_owned_cleanup.Outer(ptr %" + std::string {owner_name} + ".addr)", after);
 }
 
 template <typename SourceLines>
@@ -328,7 +328,7 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
     auto outer_store = output.find("store %record.Outer %tmp5, ptr %outer.addr");
     auto cleanup_branch = output.find("br label %items.runtime_cleanup.entry");
     auto cleanup_entry = output.find("items.runtime_cleanup.entry:");
-    auto live_drop = output.find("call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)");
+    auto live_drop = output.find("call void @__orison_owned_cleanup.Inner(ptr %items.runtime_cleanup.element.addr)");
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)"
@@ -367,7 +367,7 @@ void assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
     assert(output.find("items.runtime_cleanup.check_live:") != std::string::npos);
     assert(output.find("%items.runtime_cleanup.skip_moved = icmp eq i64 %items.runtime_cleanup.index, %index") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %items.runtime_cleanup.element.addr)") !=
         std::string::npos);
     assert(output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
@@ -501,18 +501,18 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("define i32 @select_both(i1 %skip_first, i1 %skip_second)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Outer(ptr %value)") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %Inner.drop.values.drop.element.addr)") !=
+    assert(output.find("define void @__orison_owned_cleanup.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Outer(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %Inner.drop.values.drop.element.addr)") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %Inner.drop.values.cleanup.data") !=
         std::string::npos);
     assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %Inner.drop.values.addr") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Inner(ptr %Outer.drop.primary.addr)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.primary.addr)") != std::string::npos);
     assert(output.find("store %record.Inner zeroinitializer, ptr %Outer.drop.primary.addr") != std::string::npos);
     assert(output.find("Outer.drop.items.drop.walk:\n") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Inner(ptr %Outer.drop.items.drop.element.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.items.drop.element.addr)") !=
         std::string::npos);
     assert(output.find("store %record.Inner zeroinitializer, ptr %Outer.drop.items.drop.element.addr") !=
         std::string::npos);
@@ -522,10 +522,10 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     assert(output.find("first_holder.items.runtime_cleanup.condition:\n") != std::string::npos);
     assert(output.find("second_holder.items.runtime_cleanup.condition:\n") != std::string::npos);
     assert(output.find(
-        "  call void @__orison_drop.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
+        "  call void @__orison_owned_cleanup.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
     ) != std::string::npos);
     assert(output.find(
-        "  call void @__orison_drop.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
+        "  call void @__orison_owned_cleanup.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -537,21 +537,21 @@ void assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
     auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("define i32 @select_outer(i64 %index)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.SelectedOuter(ptr %value)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Outer(ptr %value)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer(ptr %SelectedOuter.drop.item.addr)") !=
+    assert(output.find("define void @__orison_owned_cleanup.SelectedOuter(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Outer(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Outer(ptr %SelectedOuter.drop.item.addr)") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Inner(ptr %Outer.drop.primary.addr)") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Inner(ptr %Outer.drop.items.drop.element.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.primary.addr)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.items.drop.element.addr)") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.SelectedOuter(ptr %selected.addr)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.SelectedOuter(ptr %selected.addr)") != std::string::npos);
     assert(output.find("store %record.SelectedOuter zeroinitializer, ptr %selected.addr") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer(ptr %outers.runtime_cleanup.element.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer(ptr %outers.runtime_cleanup.element.addr)") !=
         std::string::npos);
     assert(output.find("store %record.Outer zeroinitializer, ptr %outers.runtime_cleanup.element.addr") !=
         std::string::npos);
-    assert(output.find("%outers.source_drop.element") == std::string::npos);
+    assert(output.find("%outers.source_owned_cleanup.element") == std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -563,18 +563,18 @@ void assert_cli_runtime_indexed_choice_payload_source_drop_emit_llvm_fixture_suc
     auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("define i32 @select_outer(i64 %index)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Holder(ptr %value)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Outer(ptr %value)") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Inner(ptr %value)") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Holder(ptr %holder.addr)") == std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Holder(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Outer(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)") == std::string::npos);
     assert(output.find("br label %holder.items.runtime_cleanup.entry") != std::string::npos);
     assert(output.find("holder.items.runtime_cleanup.condition:") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer(ptr %holder.items.runtime_cleanup.element.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer(ptr %holder.items.runtime_cleanup.element.addr)") !=
         std::string::npos);
     assert(output.find("store %record.Outer zeroinitializer, ptr %holder.items.runtime_cleanup.element.addr") !=
         std::string::npos);
     assert(output.find("%selected.Some.item.item.values.choice_dynamic_array_cleanup") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %selected.Some.item.item.values.choice_dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %selected.Some.item.item.values.choice_dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %selected.Some.item.item.values.choice_dynamic_array_cleanup") !=
         std::string::npos);
@@ -736,7 +736,7 @@ void assert_cli_runtime_indexed_constructor_move_plan_metadata(
         "runtime-index cleanup constructor-move plan owner items index index element Inner "
         "element-llvm %record.Inner owner-llvm " + std::string(owner_llvm_type) +
         " static-length " + std::string(static_length) +
-        " element-size 4 drop-callee __orison_drop.Inner operation-count 5 "
+        " element-size 4 drop-callee __orison_owned_cleanup.Inner operation-count 5 "
         "descriptor-owner " + std::string(descriptor_owner) +
         " static-length-ready " + std::string(static_length_ready) +
         " production enabled"
@@ -1166,10 +1166,10 @@ void assert_cli_runtime_indexed_member_cleanup_emit_llvm_fixture_success(
         "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"
     ) != std::string::npos);
     assert(output.find(
-        "call void @__orison_drop.Head(ptr %Wrap.member_cleanup.head.addr)"
+        "call void @__orison_owned_cleanup.Head(ptr %Wrap.member_cleanup.head.addr)"
     ) != std::string::npos);
     assert(output.find(
-        "call void @__orison_drop.Tail(ptr %Wrap.member_cleanup.tail.addr)"
+        "call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)"
     ) != std::string::npos);
     assert(output.find(
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %items.member_cleanup.moved.addr)"
@@ -1197,7 +1197,7 @@ void assert_cli_runtime_indexed_single_member_cleanup_emit_llvm_fixture_success(
         "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
     );
     auto full_drop = output.find(
-        "call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
@@ -1242,7 +1242,7 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_emit_llvm_fixture
         "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
     );
     auto full_drop = output.find(
-        "call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
@@ -1290,7 +1290,7 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_emit_llvm_fixture
         "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
     );
     auto full_drop = output.find(
-        "call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
@@ -1342,7 +1342,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm
         "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
     );
     auto full_drop = output.find(
-        "call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
@@ -1397,7 +1397,7 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_em
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %holder.items.member_cleanup.moved.addr)"
     );
     auto full_drop = output.find(
-        "call void @__orison_drop.Wrap(ptr %holder.items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Wrap(ptr %holder.items.member_cleanup.element.addr)"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.member_cleanup.cleanup.data, i64 20, "
@@ -1445,7 +1445,7 @@ void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
         "call void @__orison_member_cleanup.Box.except.item(ptr %left_items.member_cleanup.moved.addr)"
     );
     auto left_full_drop = output.find(
-        "call void @__orison_drop.Box(ptr %left_items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Box(ptr %left_items.member_cleanup.element.addr)"
     );
     auto left_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %left_items.member_cleanup.cleanup.data, i64 4, "
@@ -1463,7 +1463,7 @@ void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
         "call void @__orison_member_cleanup.Box.except.item(ptr %right_items.member_cleanup.moved.addr)"
     );
     auto right_full_drop = output.find(
-        "call void @__orison_drop.Box(ptr %right_items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Box(ptr %right_items.member_cleanup.element.addr)"
     );
     auto right_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %right_items.member_cleanup.cleanup.data, i64 4, "
@@ -1528,7 +1528,7 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %left_items.member_cleanup.moved.addr)"
     );
     auto left_full_drop = output.find(
-        "call void @__orison_drop.Wrap(ptr %left_items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Wrap(ptr %left_items.member_cleanup.element.addr)"
     );
     auto left_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %left_items.member_cleanup.cleanup.data, i64 20, "
@@ -1546,7 +1546,7 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %right_items.member_cleanup.moved.addr)"
     );
     auto right_full_drop = output.find(
-        "call void @__orison_drop.Wrap(ptr %right_items.member_cleanup.element.addr)"
+        "call void @__orison_owned_cleanup.Wrap(ptr %right_items.member_cleanup.element.addr)"
     );
     auto right_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %right_items.member_cleanup.cleanup.data, i64 20, "
@@ -1558,13 +1558,13 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
         std::string::npos);
     assert(occurrence_count(output, "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)") == 1);
     assert(occurrence_count(output, "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %") == 2);
-    assert(output.find("call void @__orison_drop.Head(ptr %Wrap.member_cleanup.head.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Head(ptr %Wrap.member_cleanup.head.addr)") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Tail(ptr %Wrap.member_cleanup.tail.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Left(ptr %Wrap.member_cleanup.box.left.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Left(ptr %Wrap.member_cleanup.box.left.addr)") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Right(ptr %Wrap.member_cleanup.box.right.addr)") !=
+    assert(output.find("call void @__orison_owned_cleanup.Right(ptr %Wrap.member_cleanup.box.right.addr)") !=
         std::string::npos);
     assert(left_index_expression != std::string::npos);
     assert(left_moved_member_load != std::string::npos);
@@ -1787,7 +1787,7 @@ void assert_cli_emit_llvm_owned_dynamic_array_generic_fixture_success(
     auto output = read_command_output(command);
     assert(output.find("define i64 @count_items__Payload({ ptr, i64, i64 } %values)") != std::string::npos);
     assert(output.find("call i64 @count_items__Payload({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup"
@@ -1810,7 +1810,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_owned_element_projection_fixture
     assert(output.find(
         "getelementptr %record.Box_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Box_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Box_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -1831,7 +1831,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_owned_element_projection_
     assert(output.find(
         "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -1852,7 +1852,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_projection_fi
     assert(output.find(
         "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -1874,7 +1874,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_call_result_p
     assert(output.find(
         "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -1899,7 +1899,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_local_call_re
     assert(output.find(
         "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -1922,7 +1922,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_ternary_call_
     assert(output.find(
         "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -1948,7 +1948,7 @@ void assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_local_ternary
     assert(output.find(
         "getelementptr %record.Outer_UInt32_, ptr %values.dynamic_array_element_path"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Outer_UInt32_(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -2138,11 +2138,11 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_count_fixture_succ
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("call { ptr, i64, i64 } @make_values()") != std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
@@ -2154,13 +2154,13 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_count_fixt
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("define { ptr, i64, i64 } @make_left()") != std::string::npos);
     assert(output.find("define { ptr, i64, i64 } @make_right()") != std::string::npos);
     assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
@@ -2172,10 +2172,10 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_append_statement_f
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
@@ -2194,7 +2194,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_method_chain_count
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp") !=
         std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp1.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp3") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp3") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp3") !=
         std::string::npos);
@@ -2213,7 +2213,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_method_chain_appen
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %dynamic_array_receiver_tmp3") !=
         std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp1.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp3") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp3") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp3") !=
         std::string::npos);
@@ -2235,7 +2235,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_method_cha
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp4)") !=
         std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp3.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp5") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp5") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp5") !=
         std::string::npos);
@@ -2257,7 +2257,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_method_cha
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %dynamic_array_receiver_tmp5.addr") !=
         std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp3.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp5") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp5") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp5") !=
         std::string::npos);
@@ -2279,7 +2279,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_field_method
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp5)") !=
         std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp4.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp6") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp6") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp6") !=
         std::string::npos);
@@ -2301,7 +2301,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_field_method
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %dynamic_array_receiver_tmp6.addr") !=
         std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp4.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp6") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp6") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp6") !=
         std::string::npos);
@@ -2317,7 +2317,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_meth
     assert(output.find("call") != std::string::npos);
     assert(output.find("dynamic_array_receiver_aggregate_tmp") != std::string::npos);
     assert(output.find(sibling_owner) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_aggregate_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_aggregate_tmp") !=
         std::string::npos);
@@ -2354,7 +2354,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_fix
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
@@ -2429,10 +2429,10 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nes
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %") !=
+    assert(output.find("call void @__orison_owned_cleanup.BoxedValues") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") !=
         std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
@@ -2488,10 +2488,10 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nes
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %") !=
+    assert(output.find("call void @__orison_owned_cleanup.BoxedValues") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") !=
         std::string::npos);
     assert(output.find("ret i32 0") != std::string::npos);
 }
@@ -2513,10 +2513,10 @@ void assert_cli_emit_llvm_dynamic_array_receiver_choice_payload_nested_append_fi
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.BoxedValues") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.BoxedValues") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
 
@@ -2544,9 +2544,9 @@ void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_cou
     assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
 
@@ -2586,9 +2586,9 @@ void assert_cli_emit_llvm_dynamic_array_receiver_multi_variant_choice_nested_cou
     assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
     assert(output.find("switch case ownership mismatch") == std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
@@ -2616,9 +2616,9 @@ void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_app
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
 
@@ -2672,9 +2672,9 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_app
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %dynamic_array_receiver_tmp") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Bucket(ptr %holder.items.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %holder.items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
@@ -2690,7 +2690,7 @@ void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_s
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("%record.Payload = type { %record.Nested }") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
     assert(output.find(
         "call void @method.DynamicArray_Payload_.append_value__Payload(ptr %values.addr, %record.Payload %tmp"
@@ -2698,9 +2698,9 @@ void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_s
     assert(output.find(
         "call void @method.DynamicArray_Payload_.replace_first__Payload(ptr %values.addr, %record.Payload %tmp"
     ) != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %this.dynamic_array_assign") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %this.dynamic_array_assign") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
@@ -2748,7 +2748,7 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.replace_first__Payload(ptr %values.addr, %record.Payload %tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %this.dynamic_array_assign") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %this.dynamic_array_assign") !=
         std::string::npos);
     assert(output.find("define i32 @method.DynamicArray_Payload_.first_value__Payload({ ptr, i64, i64 } %this)") !=
         std::string::npos);
@@ -2772,7 +2772,7 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_Payload_.count_each__Payload({ ptr, i64, i64 } %tmp") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
 }
 
@@ -2808,11 +2808,11 @@ void assert_cli_emit_llvm_choice_dynamic_array_return_payload_fixture_success(
         std::string::npos);
     assert(output.find("%returned.dynamic_array_length") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %returned.dynamic_array_reassign_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %returned.dynamic_array_reassign_cleanup") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.dynamic_array_reassign_cleanup") !=
         std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %returned.dynamic_array_cleanup") !=
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %returned.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.dynamic_array_cleanup") !=
         std::string::npos);
@@ -2844,7 +2844,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success
     auto output = read_command_output(command);
     auto cleanup = output.find("%holder.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.values.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.values.dynamic_array_reassign_cleanup"
@@ -2869,7 +2869,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_
     auto first_element_address = output.find("%holder.values.element0.reassign.addr");
     auto first_cleanup = output.find("%holder.values.element0.dynamic_array_reassign_cleanup");
     auto first_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
     );
     auto first_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
@@ -2877,7 +2877,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_
     auto second_element_address = output.find("%holder.values.element1.reassign.addr");
     auto second_cleanup = output.find("%holder.values.element1.dynamic_array_reassign_cleanup");
     auto second_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.values.element1.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.values.element1.dynamic_array_reassign_cleanup"
     );
     auto second_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element1.dynamic_array_reassign_cleanup"
@@ -2914,7 +2914,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_element_reassignmen
     auto element_address = output.find("%holder.values.element0.addr");
     auto cleanup = output.find("%holder.values.element0.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element0.dynamic_array_reassign_cleanup"
@@ -2942,7 +2942,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_field_reassignment_
     auto first_field_address = output.find("%holder.items.element0.values.reassign.addr");
     auto first_cleanup = output.find("%holder.items.element0.values.dynamic_array_reassign_cleanup");
     auto first_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
     );
     auto first_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
@@ -2951,7 +2951,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_field_reassignment_
     auto second_field_address = output.find("%holder.items.element1.values.reassign.addr");
     auto second_cleanup = output.find("%holder.items.element1.values.dynamic_array_reassign_cleanup");
     auto second_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element1.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.values.dynamic_array_reassign_cleanup"
     );
     auto second_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.values.dynamic_array_reassign_cleanup"
@@ -2992,7 +2992,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_element_field_reass
     auto field_address = output.find("%holder.items.element0.values.addr");
     auto cleanup = output.find("%holder.items.element0.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
@@ -3022,7 +3022,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_record_field_reassi
     auto field_address = output.find("%holder.items.element0.inner.values.addr");
     auto cleanup = output.find("%holder.items.element0.inner.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
@@ -3054,7 +3054,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_record_sibling_fiel
     auto field_address = output.find("%holder.items.element0.inner.spare.addr");
     auto cleanup = output.find("%holder.items.element0.inner.spare.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
@@ -3086,7 +3086,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_index_nested_record_sibli
     auto field_address = output.find("getelementptr %record.Inner, ptr %tmp");
     auto cleanup = output.find("%holder.items.element.inner.spare.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
@@ -3119,7 +3119,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_dynamic_index_record_field_reassig
     auto field_address = output.find("getelementptr %record.Item, ptr %items.dynamic_array_index", element_address);
     auto cleanup = output.find("%items.element.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %items.element.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.element.values.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.element.values.dynamic_array_reassign_cleanup"
@@ -3157,7 +3157,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_record_field_
     auto field_address = output.find("getelementptr %record.Item, ptr %groups.element.items.dynamic_array_index", nested_element);
     auto cleanup = output.find("%groups.element.items.element.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
@@ -3204,7 +3204,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_sibling_field
     );
     auto cleanup = output.find("%groups.element.items.element.spare.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
@@ -3251,7 +3251,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_multi_field_r
     auto values_address = output.find("%groups.element.items.element.values.reassign.addr", nested_element);
     auto values_cleanup = output.find("%groups.element.items.element.values.dynamic_array_reassign_cleanup");
     auto values_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
     );
     auto values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
@@ -3259,7 +3259,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_multi_field_r
     auto spare_address = output.find("%groups.element.items.element.spare.reassign.addr", values_deallocate);
     auto spare_cleanup = output.find("%groups.element.items.element.spare.dynamic_array_reassign_cleanup");
     auto spare_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
     );
     auto spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
@@ -3311,7 +3311,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
     auto stale_spare_cleanup = output.find("%inner.spare.dynamic_array_cleanup", maker_start);
     auto replacement_cleanup = output.find("%outer.inner.values.dynamic_array_reassign_cleanup", maker_end);
     auto replacement_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup",
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup",
         replacement_cleanup
     );
     auto replacement_deallocate = output.find(
@@ -3346,7 +3346,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_
     auto stale_second_spare_cleanup = output.find("%items.element1.spare.dynamic_array_cleanup", maker_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", maker_end);
     auto replacement_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_cleanup
     );
     auto replacement_deallocate = output.find(
@@ -3390,7 +3390,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_fie
         output.find("%replacement_items.element1.spare.dynamic_array_cleanup", main_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
     auto replacement_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_cleanup
     );
     auto replacement_deallocate = output.find(
@@ -3429,7 +3429,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
     auto stale_second_spare_cleanup = output.find("%holder.items.element1.spare.dynamic_array_cleanup", main_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
     auto replacement_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_cleanup
     );
     auto replacement_deallocate = output.find(
@@ -3514,7 +3514,7 @@ void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
     auto stale_member_cleanup = output.find("%holder.values.dynamic_array_cleanup", main_start);
     auto selected_cleanup = output.find("%selected.Some.values.choice_dynamic_array_cleanup", main_start);
     auto selected_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %selected.Some.values.choice_dynamic_array_cleanup",
+        "call void @__orison_owned_cleanup.Payload(ptr %selected.Some.values.choice_dynamic_array_cleanup",
         selected_cleanup
     );
     auto selected_deallocate = output.find(
@@ -4070,7 +4070,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_mov
         output.find("%nested.holder.items.element1.spare.dynamic_array_cleanup", main_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
     auto replacement_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
         replacement_cleanup
     );
     auto replacement_deallocate = output.find(
@@ -4101,28 +4101,28 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassig
     auto items_address = output.find("%holder.items.addr");
     auto first_values_cleanup = output.find("%holder.items.element0.values.dynamic_array_reassign_cleanup");
     auto first_values_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
     );
     auto first_values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
     );
     auto first_spare_cleanup = output.find("%holder.items.element0.spare.dynamic_array_reassign_cleanup");
     auto first_spare_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.spare.dynamic_array_reassign_cleanup"
     );
     auto first_spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.spare.dynamic_array_reassign_cleanup"
     );
     auto second_values_cleanup = output.find("%holder.items.element1.values.dynamic_array_reassign_cleanup");
     auto second_values_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element1.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.values.dynamic_array_reassign_cleanup"
     );
     auto second_values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.values.dynamic_array_reassign_cleanup"
     );
     auto second_spare_cleanup = output.find("%holder.items.element1.spare.dynamic_array_reassign_cleanup");
     auto second_spare_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element1.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.spare.dynamic_array_reassign_cleanup"
     );
     auto second_spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.spare.dynamic_array_reassign_cleanup"
@@ -4166,14 +4166,14 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_nested_record_reassign
     auto inner_address = output.find("%outer.inner.addr");
     auto values_cleanup = output.find("%outer.inner.values.dynamic_array_reassign_cleanup");
     auto values_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
     );
     auto values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
     );
     auto spare_cleanup = output.find("%outer.inner.spare.dynamic_array_reassign_cleanup");
     auto spare_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %outer.inner.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.inner.spare.dynamic_array_reassign_cleanup"
     );
     auto spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.spare.dynamic_array_reassign_cleanup"
@@ -4205,28 +4205,28 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_multi_field_reassig
     auto items_address = output.find("%holder.items.addr");
     auto first_values_cleanup = output.find("%holder.items.element0.inner.values.dynamic_array_reassign_cleanup");
     auto first_values_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
     );
     auto first_values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
     );
     auto first_spare_cleanup = output.find("%holder.items.element0.inner.spare.dynamic_array_reassign_cleanup");
     auto first_spare_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
     );
     auto first_spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
     );
     auto second_values_cleanup = output.find("%holder.items.element1.inner.values.dynamic_array_reassign_cleanup");
     auto second_values_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element1.inner.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.inner.values.dynamic_array_reassign_cleanup"
     );
     auto second_values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.inner.values.dynamic_array_reassign_cleanup"
     );
     auto second_spare_cleanup = output.find("%holder.items.element1.inner.spare.dynamic_array_reassign_cleanup");
     auto second_spare_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.items.element1.inner.spare.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.inner.spare.dynamic_array_reassign_cleanup"
     );
     auto second_spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.inner.spare.dynamic_array_reassign_cleanup"
@@ -4270,28 +4270,28 @@ void assert_cli_emit_llvm_dynamic_array_owned_multidimensional_record_field_reas
     auto grid_address = output.find("%holder.grid.addr");
     auto first_cleanup = output.find("%holder.grid.element0.element0.values.dynamic_array_reassign_cleanup");
     auto first_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
     );
     auto first_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
     );
     auto second_cleanup = output.find("%holder.grid.element0.element1.values.dynamic_array_reassign_cleanup");
     auto second_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
     );
     auto second_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
     );
     auto third_cleanup = output.find("%holder.grid.element1.element0.values.dynamic_array_reassign_cleanup");
     auto third_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
     );
     auto third_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
     );
     auto fourth_cleanup = output.find("%holder.grid.element1.element1.values.dynamic_array_reassign_cleanup");
     auto fourth_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
     );
     auto fourth_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
@@ -4343,7 +4343,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
     auto field_address = output.find("getelementptr %record.Item, ptr %tmp");
     auto cleanup = output.find("%holder.grid.element.element.values.dynamic_array_reassign_cleanup");
     auto drop = output.find(
-        "call void @__orison_drop.Payload(ptr %holder.grid.element.element.values.dynamic_array_reassign_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element.element.values.dynamic_array_reassign_cleanup"
     );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element.element.values.dynamic_array_reassign_cleanup"
@@ -4385,7 +4385,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_mixed_multidimensional_record_fiel
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto cleanup = output.find("%" + owner_prefix + ".dynamic_array_reassign_cleanup");
-    auto drop = output.find("call void @__orison_drop.Payload(ptr %" + owner_prefix + ".dynamic_array_reassign_cleanup");
+    auto drop = output.find("call void @__orison_owned_cleanup.Payload(ptr %" + owner_prefix + ".dynamic_array_reassign_cleanup");
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %" + owner_prefix + ".dynamic_array_reassign_cleanup"
     );
@@ -4406,12 +4406,12 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_succes
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto field_address = output.find("%holder.values.addr");
-    auto holder_drop_definition = output.find("define void @__orison_drop.Holder(ptr %value)");
-    auto holder_field_drop = output.find("call void @__orison_drop.Payload(ptr %Holder.drop.values.drop.element.addr)");
+    auto holder_drop_definition = output.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
+    auto holder_field_drop = output.find("call void @__orison_owned_cleanup.Payload(ptr %Holder.drop.values.drop.element.addr)");
     auto holder_field_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.cleanup.data"
     );
-    auto holder_drop_call = output.find("call void @__orison_drop.Holder(ptr %holder.addr)");
+    auto holder_drop_call = output.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)");
     auto return_value = output.find("ret i32 0");
     assert(field_address != std::string::npos);
     assert(holder_drop_definition != std::string::npos);
@@ -4433,14 +4433,14 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture
     auto output = read_command_output(command);
     auto inner_address = output.find("%outer.inner.addr");
     auto field_address = output.find("%outer.inner.values.addr");
-    auto inner_drop_definition = output.find("define void @__orison_drop.Inner(ptr %value)");
-    auto outer_drop_definition = output.find("define void @__orison_drop.Outer(ptr %value)");
-    auto inner_field_drop = output.find("call void @__orison_drop.Payload(ptr %Inner.drop.values.drop.element.addr)");
+    auto inner_drop_definition = output.find("define void @__orison_owned_cleanup.Inner(ptr %value)");
+    auto outer_drop_definition = output.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
+    auto inner_field_drop = output.find("call void @__orison_owned_cleanup.Payload(ptr %Inner.drop.values.drop.element.addr)");
     auto inner_field_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %Inner.drop.values.cleanup.data"
     );
-    auto outer_inner_drop = output.find("call void @__orison_drop.Inner(ptr %Outer.drop.inner.addr)");
-    auto outer_drop_call = output.find("call void @__orison_drop.Outer(ptr %outer.addr)");
+    auto outer_inner_drop = output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.inner.addr)");
+    auto outer_drop_call = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     auto return_value = output.find("ret i32 0");
     assert(inner_address != std::string::npos);
     assert(field_address != std::string::npos);
@@ -4470,16 +4470,16 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     auto first_field_address = output.find("%outer.items.element0.values.addr");
     auto second_item_address = output.find("%outer.items.element1.addr");
     auto second_field_address = output.find("%outer.items.element1.values.addr");
-    auto item_drop_definition = output.find("define void @__orison_drop.Item(ptr %value)");
-    auto outer_drop_definition = output.find("define void @__orison_drop.Outer(ptr %value)");
+    auto item_drop_definition = output.find("define void @__orison_owned_cleanup.Item(ptr %value)");
+    auto outer_drop_definition = output.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
     auto item_field_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %Item.drop.values.drop.element.addr)"
+        "call void @__orison_owned_cleanup.Payload(ptr %Item.drop.values.drop.element.addr)"
     );
     auto item_field_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %Item.drop.values.cleanup.data"
     );
-    auto outer_item_drop = output.find("call void @__orison_drop.Item(ptr %Outer.drop.items.drop.element.addr)");
-    auto outer_drop_call = output.find("call void @__orison_drop.Outer(ptr %outer.addr)");
+    auto outer_item_drop = output.find("call void @__orison_owned_cleanup.Item(ptr %Outer.drop.items.drop.element.addr)");
+    auto outer_drop_call = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     auto return_value = output.find("ret i32 0");
     assert(items_address != std::string::npos);
     assert(first_item_address != std::string::npos);
@@ -4513,15 +4513,15 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixtu
     auto values_address = output.find("%holder.values.addr");
     auto first_element_address = output.find("%holder.values.element0.addr");
     auto second_element_address = output.find("%holder.values.element1.addr");
-    auto holder_drop_definition = output.find("define void @__orison_drop.Holder(ptr %value)");
+    auto holder_drop_definition = output.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
     auto holder_value_cleanup = output.find("%Holder.drop.values.drop.walk");
     auto holder_element_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %Holder.drop.values.element.drop.element.addr)"
+        "call void @__orison_owned_cleanup.Payload(ptr %Holder.drop.values.element.drop.element.addr)"
     );
     auto holder_element_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.element.cleanup.data"
     );
-    auto holder_drop_call = output.find("call void @__orison_drop.Holder(ptr %holder.addr)");
+    auto holder_drop_call = output.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)");
     auto return_value = output.find("ret i32 0");
     assert(values_address != std::string::npos);
     assert(first_element_address != std::string::npos);

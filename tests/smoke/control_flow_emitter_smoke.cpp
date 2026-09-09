@@ -607,7 +607,7 @@ int main() {
             orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
-                    .abi_symbol_name = "__orison_drop.Payload",
+                    .abi_symbol_name = "__orison_owned_cleanup.Payload",
                     .owner_name = "items.element",
                 },
                 .semantic_resolved = true,

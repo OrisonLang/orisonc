@@ -53,9 +53,9 @@ void test_production_compile_pipeline_options_gate_promotions() {
     assert(options.dynamic_array_production_cleanup_emission_enabled);
     assert(options.dynamic_array_production_for_lowering_enabled);
 
-    auto explicit_source_drop_options = options;
-    explicit_source_drop_options.source_owned_cleanup_lowering_enabled = true;
-    assert(explicit_source_drop_options.source_owned_cleanup_lowering_enabled);
+    auto explicit_source_owned_cleanup_options = options;
+    explicit_source_owned_cleanup_options.source_owned_cleanup_lowering_enabled = true;
+    assert(explicit_source_owned_cleanup_options.source_owned_cleanup_lowering_enabled);
 }
 
 void test_no_option_pipeline_emission_uses_production_defaults(
@@ -253,10 +253,10 @@ void assert_mixed_switch_returned_field_final_control_cleanup_ir(
     assert_ir_contains(result.ir_text, "phi %record.PayloadBox");
     assert_ir_contains(result.ir_text, final_control_flow_fragment);
     assert_ir_contains(result.ir_text, "returned.values.computed_for.1.condition:\n");
-    assert_ir_contains(result.ir_text, "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup");
+    assert_ir_contains(result.ir_text, "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup");
     assert_ir_contains(result.ir_text, "call void @__orison_dynamic_array_deallocate(ptr %returned.values.computed_for.1.data");
     assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %returned.values.addr");
-    assert_ir_contains(result.ir_text, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
+    assert_ir_contains(result.ir_text, "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup");
     assert_ir_contains(result.ir_text, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
     assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %scratch.addr");
     assert_ir_excludes(result.ir_text, "%box.values.dynamic_array_cleanup");
@@ -279,14 +279,14 @@ void assert_mixed_switch_nested_returned_field_final_control_cleanup_ir(
     assert_ir_contains(result.ir_text, "returned.inner.values.computed_for.1.condition:\n");
     assert_ir_contains(
         result.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         result.ir_text,
         "call void @__orison_dynamic_array_deallocate(ptr %returned.inner.values.computed_for.1.data"
     );
     assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %returned.inner.values.addr");
-    assert_ir_contains(result.ir_text, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
+    assert_ir_contains(result.ir_text, "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup");
     assert_ir_contains(result.ir_text, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
     assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %scratch.addr");
     assert_ir_excludes(result.ir_text, "%box.inner.values.dynamic_array_cleanup");
@@ -304,8 +304,8 @@ void assert_branch_local_named_dynamic_array_cleanup_ir(
     auto right_cleanup = std::string {right_owner} + ".dynamic_array_cleanup";
     assert_ir_contains(ir_text, left_cleanup);
     assert_ir_contains(ir_text, right_cleanup);
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %" + left_cleanup);
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %" + right_cleanup);
+    assert_ir_contains(ir_text, "call void @__orison_owned_cleanup.Payload(ptr %" + left_cleanup);
+    assert_ir_contains(ir_text, "call void @__orison_owned_cleanup.Payload(ptr %" + right_cleanup);
     assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %" + left_cleanup);
     assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %" + right_cleanup);
     assert_ir_contains(ir_text, "phi " + std::string {phi_type} + " [0, %" + left_cleanup);
@@ -316,7 +316,7 @@ void assert_branch_local_scratch_dynamic_array_cleanup_ir(
     std::string const& ir_text
 ) {
     assert_ir_contains(ir_text, "scratch.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup");
     assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
     assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
     assert_ir_contains(ir_text, "%scratch.dynamic_array_cleanup");
@@ -328,8 +328,8 @@ void assert_branch_local_returned_dynamic_array_cleanup_ir(
 ) {
     assert_ir_contains(ir_text, "left_values.dynamic_array_cleanup");
     assert_ir_contains(ir_text, "right_values.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup");
-    assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_owned_cleanup.Payload(ptr %left_values.dynamic_array_cleanup");
+    assert_ir_contains(ir_text, "call void @__orison_owned_cleanup.Payload(ptr %right_values.dynamic_array_cleanup");
     assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup");
     assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup");
     assert_ir_contains(ir_text, "phi { ptr, i64, i64 } [%tmp");
@@ -344,7 +344,7 @@ void assert_branch_local_dynamic_array_cleanup_for_owners_ir(
     for (auto const owner_name : owner_names) {
         auto cleanup_name = std::string {owner_name} + ".dynamic_array_cleanup";
         assert_ir_contains(ir_text, cleanup_name);
-        assert_ir_contains(ir_text, "call void @__orison_drop.Payload(ptr %" + cleanup_name);
+        assert_ir_contains(ir_text, "call void @__orison_owned_cleanup.Payload(ptr %" + cleanup_name);
         assert_ir_contains(ir_text, "call void @__orison_dynamic_array_deallocate(ptr %" + cleanup_name);
     }
 }
@@ -491,7 +491,7 @@ void assert_emit_object_link_run_success(
     assert(WEXITSTATUS(status) == 0);
 }
 
-void assert_production_source_drop_emit_object_link_run_success(
+void assert_production_source_owned_cleanup_emit_object_link_run_success(
     orison::pipeline::CompilePipeline& pipeline,
     std::filesystem::path const& source_path,
     std::filesystem::path const& executable_path
@@ -1162,7 +1162,7 @@ auto inline_runtime_indexed_cleanup_ir_shape_plan()
             "items.runtime_cleanup.drop:\n",
             "  %items.runtime_cleanup.element.addr = getelementptr [2 x %record.Inner], "
                 "ptr %items.addr, i64 0, i64 %items.runtime_cleanup.index\n",
-            "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
+            "  call void @__orison_owned_cleanup.Inner(ptr %items.runtime_cleanup.element.addr)\n",
             "  store %record.Inner zeroinitializer, ptr %items.runtime_cleanup.element.addr\n",
             "  br label %items.runtime_cleanup.continue\n",
             "items.runtime_cleanup.continue:\n",
@@ -1184,7 +1184,7 @@ auto inline_runtime_indexed_cleanup_ir_shape_plan()
             .skip_block_name = "items.runtime_cleanup.skip",
             .drop_block_name = "items.runtime_cleanup.drop",
             .element_address_name = "%items.runtime_cleanup.element.addr",
-            .drop_callee_name = "__orison_drop.Inner",
+            .drop_callee_name = "__orison_owned_cleanup.Inner",
             .continue_block_name = "items.runtime_cleanup.continue",
             .next_index_name = "%items.runtime_cleanup.next",
             .exit_block_name = "items.runtime_cleanup.exit",
@@ -1239,7 +1239,7 @@ auto descriptor_runtime_indexed_cleanup_ir_shape_plan()
             "items.runtime_cleanup.drop:\n",
             "  %items.runtime_cleanup.element.addr = getelementptr %record.Inner, "
                 "ptr %items.runtime_cleanup.data, i64 %items.runtime_cleanup.index\n",
-            "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
+            "  call void @__orison_owned_cleanup.Inner(ptr %items.runtime_cleanup.element.addr)\n",
             "  br label %items.runtime_cleanup.continue\n",
             "items.runtime_cleanup.continue:\n",
             "  %items.runtime_cleanup.next = add i64 %items.runtime_cleanup.index, 1\n",
@@ -1267,7 +1267,7 @@ auto descriptor_runtime_indexed_cleanup_ir_shape_plan()
             .skip_block_name = "items.runtime_cleanup.skip",
             .drop_block_name = "items.runtime_cleanup.drop",
             .element_address_name = "%items.runtime_cleanup.element.addr",
-            .drop_callee_name = "__orison_drop.Inner",
+            .drop_callee_name = "__orison_owned_cleanup.Inner",
             .continue_block_name = "items.runtime_cleanup.continue",
             .next_index_name = "%items.runtime_cleanup.next",
             .exit_block_name = "items.runtime_cleanup.exit",
@@ -1362,7 +1362,7 @@ auto runtime_indexed_cleanup_audit_module_rewrite_options() ->
     return options;
 }
 
-auto runtime_indexed_cleanup_source_drop_audit_options() ->
+auto runtime_indexed_cleanup_source_owned_cleanup_audit_options() ->
     orison::pipeline::CompilePipelineOptions {
     auto options = orison::pipeline::CompilePipelineOptions {};
     options.source_owned_cleanup_lowering_enabled = true;
@@ -1372,7 +1372,7 @@ auto runtime_indexed_cleanup_source_drop_audit_options() ->
 
 auto runtime_indexed_cleanup_rewrite_execution_only_options() ->
     orison::pipeline::CompilePipelineOptions {
-    auto options = runtime_indexed_cleanup_source_drop_audit_options();
+    auto options = runtime_indexed_cleanup_source_owned_cleanup_audit_options();
     options.runtime_indexed_member_cleanup_rewrite_execution_enabled = true;
     return options;
 }
@@ -1459,7 +1459,7 @@ auto runtime_indexed_cleanup_production_gate_request_options() ->
 }
 
 void test_runtime_indexed_cleanup_option_helpers() {
-    auto const audit_only = runtime_indexed_cleanup_source_drop_audit_options();
+    auto const audit_only = runtime_indexed_cleanup_source_owned_cleanup_audit_options();
     assert(audit_only.source_owned_cleanup_lowering_enabled);
     assert(audit_only.collect_runtime_indexed_cleanup_audit);
     assert(!audit_only.runtime_indexed_member_cleanup_rewrite_execution_enabled);
@@ -1515,25 +1515,25 @@ auto main() -> int {
     orison::pipeline::CompilePipeline pipeline;
     test_no_option_pipeline_emission_uses_production_defaults(pipeline);
     assert_aggregate_projection_access_plan_state(pipeline, smoke_temp_root);
-    assert_production_source_drop_emit_object_link_run_success(
+    assert_production_source_owned_cleanup_emit_object_link_run_success(
         pipeline,
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or",
         smoke_temp_root / "dynamic_array_owned_constructor_fixed_array_record_field_move_source_drop"
     );
-    assert_production_source_drop_emit_object_link_run_success(
+    assert_production_source_owned_cleanup_emit_object_link_run_success(
         pipeline,
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_constructor_member_path_move_run.or",
         smoke_temp_root / "dynamic_array_owned_constructor_member_path_move_source_drop"
     );
-    assert_production_source_drop_emit_object_link_run_success(
+    assert_production_source_owned_cleanup_emit_object_link_run_success(
         pipeline,
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_returned_fixed_array_record_field_move_run.or",
         smoke_temp_root / "dynamic_array_owned_returned_fixed_array_record_field_move_source_drop"
     );
-    assert_production_source_drop_emit_object_link_run_success(
+    assert_production_source_owned_cleanup_emit_object_link_run_success(
         pipeline,
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_returned_nested_record_field_move_run.or",
@@ -1639,11 +1639,11 @@ auto main() -> int {
         std::string::npos
     );
     assert(
-        owned_cleanup_readiness_snapshot_report_lines[1].find("__orison_drop.Payload") !=
+        owned_cleanup_readiness_snapshot_report_lines[1].find("__orison_owned_cleanup.Payload") !=
         std::string::npos
     );
     assert(
-        owned_cleanup_readiness_snapshot_report_lines[2].find("emitted declaration readiness __orison_drop.Payload") !=
+        owned_cleanup_readiness_snapshot_report_lines[2].find("emitted declaration readiness __orison_owned_cleanup.Payload") !=
         std::string::npos
     );
     assert(
@@ -1737,17 +1737,17 @@ auto main() -> int {
     assert_line_contains(
         dynamic_array_drop_readiness_authorization_report,
         1,
-        "semantic drop lowering blocked __orison_drop.Payload"
+        "semantic drop lowering blocked __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
         dynamic_array_drop_readiness_authorization_report,
         2,
-        "semantic drop unresolved __orison_drop.Payload"
+        "semantic drop unresolved __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
         dynamic_array_drop_readiness_authorization_report,
         3,
-        "missing drop declaration __orison_drop.Payload"
+        "missing drop declaration __orison_owned_cleanup.Payload"
     );
     assert(dynamic_array_drop_readiness.owned_cleanup_readiness_snapshot.cleanup_authorizations.size() == 1);
     assert(dynamic_array_drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 1);
@@ -1765,12 +1765,12 @@ auto main() -> int {
     assert_line_contains(
         dynamic_array_drop_readiness_relation_report,
         1,
-        "semantic blocker __orison_drop.Payload"
+        "semantic blocker __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
         dynamic_array_drop_readiness_relation_report,
         2,
-        "missing declaration __orison_drop.Payload"
+        "missing declaration __orison_owned_cleanup.Payload"
     );
     auto dynamic_array_drop_readiness_source_correlation_report =
         drop_readiness_source_correlation_report(dynamic_array_drop_readiness);
@@ -1782,14 +1782,14 @@ auto main() -> int {
     assert_line_contains(
         dynamic_array_drop_readiness_source_correlation_report,
         1,
-        "__orison_dynamic_array_cleanup.0 __orison_drop.Payload"
+        "__orison_dynamic_array_cleanup.0 __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
         dynamic_array_drop_readiness_source_correlation_report,
         1,
         "semantic absent source lowering absent declaration missing"
     );
-    assert(dynamic_array_drop_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(dynamic_array_drop_readiness.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
 
     auto dynamic_array_source_owner_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_source_owner.or";
@@ -3930,7 +3930,7 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_owned_same_owner_for_without_drop.has_errors());
     assert(
         computed_dynamic_array_local_owned_same_owner_for_without_drop.ir_text.find(
-            "call void @__orison_drop.Payload"
+            "call void @__orison_owned_cleanup.Payload"
         ) != std::string::npos
     );
 
@@ -3966,11 +3966,11 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_owned_same_owner_for.has_errors());
     assert(
         computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
-            "define void @__orison_drop.Payload(ptr %value)"
+            "define void @__orison_owned_cleanup.Payload(ptr %value)"
         ) != std::string::npos
     );
     auto computed_owned_drop = computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
-        "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup"
     );
     auto computed_owned_deallocate = computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
@@ -5607,7 +5607,7 @@ auto main() -> int {
     assert(dynamic_array_blocked_owned_cleanup.owned_cleanup_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_blocked_owned_cleanup.owned_cleanup_readiness_summary.cleanup_blocked == 0);
     assert(
-        dynamic_array_blocked_owned_cleanup.ir_text.find("call void @__orison_drop.Payload") !=
+        dynamic_array_blocked_owned_cleanup.ir_text.find("call void @__orison_owned_cleanup.Payload") !=
         std::string::npos
     );
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
@@ -5654,7 +5654,7 @@ auto main() -> int {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 6,
                     },
@@ -5681,7 +5681,7 @@ auto main() -> int {
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.size() == 1);
     assert(
         dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.front() ==
-        "items:items.element:__orison_drop.Payload"
+        "items:items.element:__orison_owned_cleanup.Payload"
     );
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_summaries_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
@@ -5693,12 +5693,12 @@ auto main() -> int {
     assert(dynamic_array_owned_cleanup.owned_cleanup_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_owned_cleanup.owned_cleanup_readiness_summary.cleanup_blocked == 0);
     assert(
-        dynamic_array_owned_cleanup.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
+        dynamic_array_owned_cleanup.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
         std::string::npos
     );
     assert(
         dynamic_array_owned_cleanup.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
     assert(
@@ -5736,7 +5736,7 @@ auto main() -> int {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 6,
                     },
@@ -5777,7 +5777,7 @@ auto main() -> int {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 6,
                     },
@@ -6356,12 +6356,12 @@ auto main() -> int {
     assert(dynamic_array_local_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.size() == 2);
     assert(dynamic_array_local_owned_cleanup.dynamic_array_runtime_request_state.operations.size() == 2);
     assert(
-        dynamic_array_local_owned_cleanup.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
+        dynamic_array_local_owned_cleanup.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
         std::string::npos
     );
     assert(
         dynamic_array_local_owned_cleanup.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
     assert(
@@ -6370,7 +6370,7 @@ auto main() -> int {
             "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
         ) != std::string::npos
     );
-    auto local_owned_drop = dynamic_array_local_owned_cleanup.ir_text.find("call void @__orison_drop.Payload");
+    auto local_owned_drop = dynamic_array_local_owned_cleanup.ir_text.find("call void @__orison_owned_cleanup.Payload");
     auto local_owned_deallocate =
         dynamic_array_local_owned_cleanup.ir_text.find("call void @__orison_dynamic_array_deallocate");
     auto local_owned_return = dynamic_array_local_owned_cleanup.ir_text.find("ret i32 1");
@@ -6755,7 +6755,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_owned_computed_for_cleanup_ir.ir_text,
@@ -6800,7 +6800,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_returned_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %selected.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %selected.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_returned_owned_computed_for_cleanup_ir.ir_text,
@@ -6850,7 +6850,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %selected.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %selected.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_owned_computed_for_cleanup_ir.ir_text,
@@ -6893,7 +6893,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -6946,7 +6946,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -7010,7 +7010,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -7066,7 +7066,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -7118,7 +7118,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -7174,7 +7174,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -7221,7 +7221,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7233,7 +7233,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7293,7 +7293,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7305,7 +7305,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7373,7 +7373,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7385,7 +7385,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7471,7 +7471,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7483,7 +7483,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7534,7 +7534,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7546,7 +7546,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7606,7 +7606,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7618,7 +7618,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7686,7 +7686,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7698,7 +7698,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7789,7 +7789,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7801,7 +7801,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7849,7 +7849,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7861,7 +7861,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_ir.ir_text,
@@ -7908,7 +7908,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -7920,7 +7920,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -7984,7 +7984,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -7996,7 +7996,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8064,7 +8064,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8076,7 +8076,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8166,7 +8166,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8178,7 +8178,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8229,7 +8229,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8241,7 +8241,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8305,7 +8305,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8317,7 +8317,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8385,7 +8385,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8397,7 +8397,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8492,7 +8492,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8504,7 +8504,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8560,7 +8560,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8572,7 +8572,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_ir.ir_text,
@@ -8619,7 +8619,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -8674,7 +8674,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -8738,7 +8738,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -8798,7 +8798,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -8854,7 +8854,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_ir.ir_text,
@@ -8894,7 +8894,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_ir.ir_text,
@@ -8934,7 +8934,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_ir.ir_text,
-        "call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %values.computed_dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_ir.ir_text,
@@ -8962,7 +8962,7 @@ auto main() -> int {
     assert(!dynamic_array_returned_owned_computed_cleanup_missing_drop_ir.has_errors());
     assert_ir_contains(
         dynamic_array_returned_owned_computed_cleanup_missing_drop_ir.ir_text,
-        "call void @__orison_drop.Payload"
+        "call void @__orison_owned_cleanup.Payload"
     );
     auto dynamic_array_returned_aggregate_field_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8972,7 +8972,7 @@ auto main() -> int {
     assert(!dynamic_array_returned_aggregate_field_owned_computed_cleanup_missing_drop_ir.has_errors());
     assert_ir_contains(
         dynamic_array_returned_aggregate_field_owned_computed_cleanup_missing_drop_ir.ir_text,
-        "call void @__orison_drop.Payload"
+        "call void @__orison_owned_cleanup.Payload"
     );
     auto dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8982,7 +8982,7 @@ auto main() -> int {
     assert(!dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop_ir.has_errors());
     assert_ir_contains(
         dynamic_array_returned_nested_aggregate_field_owned_computed_cleanup_missing_drop_ir.ir_text,
-        "call void @__orison_drop.Payload"
+        "call void @__orison_owned_cleanup.Payload"
     );
     auto dynamic_array_returned_aggregate_field_owned_computed_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9491,7 +9491,7 @@ auto main() -> int {
     assert(!dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_ir.has_errors());
     assert_ir_contains(
         dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_ir.ir_text,
-        "call void @__orison_drop.Payload"
+        "call void @__orison_owned_cleanup.Payload"
     );
     auto dynamic_array_choice_payload_final_switch_binding_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9503,7 +9503,7 @@ auto main() -> int {
     assert(!dynamic_array_choice_payload_final_switch_binding_owned_computed_cleanup_missing_drop_ir.has_errors());
     assert_ir_contains(
         dynamic_array_choice_payload_final_switch_binding_owned_computed_cleanup_missing_drop_ir.ir_text,
-        "call void @__orison_drop.Payload"
+        "call void @__orison_owned_cleanup.Payload"
     );
     assert(
         dynamic_array_choice_payload_final_switch_binding_owned_computed_cleanup_missing_drop_ir.error_text.find(
@@ -13585,7 +13585,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_owned_parameter_branch_cleanup.ir_text,
-        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_owned_parameter_branch_cleanup.ir_text,
@@ -13620,7 +13620,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_local_final_if_consumed_owner_cleanup.ir_text,
-        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_local_final_if_consumed_owner_cleanup.ir_text,
@@ -13670,7 +13670,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_owned_parameter_switch_cleanup.ir_text,
-        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_owned_parameter_switch_cleanup.ir_text,
@@ -13705,7 +13705,7 @@ auto main() -> int {
     );
     assert_ir_contains(
         dynamic_array_local_final_switch_consumed_owner_cleanup.ir_text,
-        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup"
     );
     assert_ir_contains(
         dynamic_array_local_final_switch_consumed_owner_cleanup.ir_text,
@@ -13999,10 +13999,10 @@ auto main() -> int {
     );
     assert(!dynamic_array_owned_element_assignment.has_errors());
     auto replacement_drop = dynamic_array_owned_element_assignment.ir_text.find(
-        "call void @__orison_drop.Payload(ptr %items.dynamic_array_assign"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_assign"
     );
     auto cleanup_drop = dynamic_array_owned_element_assignment.ir_text.find(
-        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup"
     );
     assert(replacement_drop != std::string::npos);
     auto replacement_store = dynamic_array_owned_element_assignment.ir_text.find(
@@ -14080,7 +14080,7 @@ auto main() -> int {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 6,
                     },
@@ -14109,12 +14109,12 @@ auto main() -> int {
         std::string::npos
     );
     assert(
-        dynamic_array_owned_production_ready.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
+        dynamic_array_owned_production_ready.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
         std::string::npos
     );
     assert(
         dynamic_array_owned_production_ready.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
     assert(
@@ -14124,7 +14124,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     auto parameter_owned_drop = dynamic_array_owned_production_ready.ir_text.find(
-        "call void @__orison_drop.Payload"
+        "call void @__orison_owned_cleanup.Payload"
     );
     auto parameter_owned_deallocate = dynamic_array_owned_production_ready.ir_text.find(
         "call void @__orison_dynamic_array_deallocate"
@@ -14169,7 +14169,7 @@ auto main() -> int {
     assert_line_contains(
         dynamic_array_authorized_readiness_emitted_report,
         0,
-        "__orison_drop.Payload"
+        "__orison_owned_cleanup.Payload"
     );
     assert(drop_cleanup_authorization_report(dynamic_array_authorized_readiness).empty());
     assert(dynamic_array_authorized_readiness.owned_cleanup_readiness_snapshot.semantic_authorizations.size() == 1);
@@ -14211,10 +14211,10 @@ auto main() -> int {
         "drop readiness source correlations actions 0 semantic sites 1"
     );
     assert(
-        dynamic_array_authorized_readiness.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
+        dynamic_array_authorized_readiness.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
         std::string::npos
     );
-    assert(dynamic_array_authorized_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(dynamic_array_authorized_readiness.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
 
     auto multi_drop_readiness_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
@@ -14223,8 +14223,8 @@ auto main() -> int {
     auto multi_drop_readiness_planned_report =
         owned_cleanup_declaration_report(multi_drop_readiness);
     assert(multi_drop_readiness.owned_cleanup_declaration_state.declarations.size() == 2);
-    assert_line_contains(multi_drop_readiness_planned_report, 0, "__orison_drop.Payload");
-    assert_line_contains(multi_drop_readiness_planned_report, 1, "__orison_drop.OtherPayload");
+    assert_line_contains(multi_drop_readiness_planned_report, 0, "__orison_owned_cleanup.Payload");
+    assert_line_contains(multi_drop_readiness_planned_report, 1, "__orison_owned_cleanup.OtherPayload");
     auto multi_drop_readiness_action_report =
         owned_cleanup_action_report(multi_drop_readiness);
     assert(multi_drop_readiness.owned_cleanup_action_state.actions.size() == 2);
@@ -14243,21 +14243,21 @@ auto main() -> int {
         std::string::npos
     );
     assert(
-        multi_owned_cleanup_readiness_snapshot_report[1].find("__orison_drop.Payload") !=
+        multi_owned_cleanup_readiness_snapshot_report[1].find("__orison_owned_cleanup.Payload") !=
         std::string::npos
     );
     assert(
-        multi_owned_cleanup_readiness_snapshot_report[2].find("__orison_drop.OtherPayload") !=
+        multi_owned_cleanup_readiness_snapshot_report[2].find("__orison_owned_cleanup.OtherPayload") !=
         std::string::npos
     );
     assert(
         multi_owned_cleanup_readiness_snapshot_report[3].find(
-            "emitted declaration readiness __orison_drop.Payload"
+            "emitted declaration readiness __orison_owned_cleanup.Payload"
         ) != std::string::npos
     );
     assert(
         multi_owned_cleanup_readiness_snapshot_report[4].find(
-            "emitted declaration readiness __orison_drop.OtherPayload"
+            "emitted declaration readiness __orison_owned_cleanup.OtherPayload"
         ) != std::string::npos
     );
     assert(
@@ -14516,7 +14516,7 @@ auto main() -> int {
     assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
     assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
     assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
-    assert(parsed_drop_ir.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(parsed_drop_ir.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     auto parsed_drop_source_lowering_ir = pipeline.emit_llvm(
         parsed_drop_path,
         orison::pipeline::CompilePipelineOptions {
@@ -14529,7 +14529,7 @@ auto main() -> int {
     assert(parsed_drop_source_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
     assert(parsed_drop_source_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert(
-        parsed_drop_source_lowering_ir.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
+        parsed_drop_source_lowering_ir.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
         std::string::npos
     );
 
@@ -14538,7 +14538,7 @@ auto main() -> int {
         "choice_constructor_multi_variant_computed_index_owned_member_path_move_run.or";
     auto runtime_indexed_cleanup = pipeline.emit_llvm(
         runtime_indexed_cleanup_path,
-        runtime_indexed_cleanup_source_drop_audit_options()
+        runtime_indexed_cleanup_source_owned_cleanup_audit_options()
     );
     assert(runtime_indexed_cleanup.has_errors());
     assert(
@@ -15967,7 +15967,7 @@ auto main() -> int {
                     owner + ".member_cleanup.drop_element:\n"
                     "  %" + owner + ".member_cleanup.element.addr = getelementptr %record.Box, ptr %" +
                     owner + ".member_cleanup.cleanup.data, i64 %" + owner + ".member_cleanup.index\n"
-                    "  call void @__orison_drop.Box(ptr %" + owner + ".member_cleanup.element.addr)\n"
+                    "  call void @__orison_owned_cleanup.Box(ptr %" + owner + ".member_cleanup.element.addr)\n"
                     "  store %record.Box zeroinitializer, ptr %" + owner + ".member_cleanup.element.addr\n"
                 ) != std::string::npos
             );
@@ -16020,7 +16020,7 @@ auto main() -> int {
     assert(
         occurrence_count(
             two_member_transfers_ir,
-            "call void @__orison_drop.Box"
+            "call void @__orison_owned_cleanup.Box"
         ) == 2
     );
     assert(
@@ -16128,13 +16128,13 @@ auto main() -> int {
     assert(
         occurrence_count(
             two_nested_member_transfers_ir,
-            "call void @__orison_drop.Wrap"
+            "call void @__orison_owned_cleanup.Wrap"
         ) == 2
     );
     assert(
         occurrence_count(
             two_nested_member_transfers_ir,
-            "call void @__orison_drop.Tail"
+            "call void @__orison_owned_cleanup.Tail"
         ) == 2
     );
     assert(
@@ -17021,7 +17021,7 @@ auto main() -> int {
             "items.member_cleanup.drop_element:\n"
             "  %items.member_cleanup.element.addr = getelementptr %record.Box, ptr "
             "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
-            "  call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)\n"
+            "  call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)\n"
             "  store %record.Box zeroinitializer, ptr %items.member_cleanup.element.addr\n"
         ) != std::string::npos
     );
@@ -17065,7 +17065,7 @@ auto main() -> int {
     assert(prefix_member_cleanup_field.field_name == "prefix");
     assert(prefix_member_cleanup_field.field_source_type_name == "Sibling");
     assert(prefix_member_cleanup_field.field_llvm_type_name == "%record.Sibling");
-    assert(prefix_member_cleanup_field.drop_symbol_name == "__orison_drop.Sibling");
+    assert(prefix_member_cleanup_field.drop_symbol_name == "__orison_owned_cleanup.Sibling");
     assert(prefix_member_cleanup_field.field_index == 0);
     assert(prefix_member_cleanup_field.drop_definition_available);
     auto const& tail_member_cleanup_field =
@@ -17079,7 +17079,7 @@ auto main() -> int {
     assert(tail_member_cleanup_field.field_name == "tail");
     assert(tail_member_cleanup_field.field_source_type_name == "Tail");
     assert(tail_member_cleanup_field.field_llvm_type_name == "%record.Tail");
-    assert(tail_member_cleanup_field.drop_symbol_name == "__orison_drop.Tail");
+    assert(tail_member_cleanup_field.drop_symbol_name == "__orison_owned_cleanup.Tail");
     assert(tail_member_cleanup_field.field_index == 2);
     assert(tail_member_cleanup_field.drop_definition_available);
     assert(
@@ -17101,7 +17101,7 @@ auto main() -> int {
             "items.member_cleanup.drop_element:\n"
             "  %items.member_cleanup.element.addr = getelementptr %record.Box, ptr "
             "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
-            "  call void @__orison_drop.Box(ptr %items.member_cleanup.element.addr)\n"
+            "  call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)\n"
             "  store %record.Box zeroinitializer, ptr %items.member_cleanup.element.addr\n"
         ) != std::string::npos
     );
@@ -17122,10 +17122,10 @@ auto main() -> int {
             "define void @__orison_member_cleanup.Box.except.item(ptr %value) {\n"
             "entry:\n"
             "  %Box.member_cleanup.prefix.addr = getelementptr %record.Box, ptr %value, i32 0, i32 0\n"
-            "  call void @__orison_drop.Sibling(ptr %Box.member_cleanup.prefix.addr)\n"
+            "  call void @__orison_owned_cleanup.Sibling(ptr %Box.member_cleanup.prefix.addr)\n"
             "  store %record.Sibling zeroinitializer, ptr %Box.member_cleanup.prefix.addr\n"
             "  %Box.member_cleanup.tail.addr = getelementptr %record.Box, ptr %value, i32 0, i32 2\n"
-            "  call void @__orison_drop.Tail(ptr %Box.member_cleanup.tail.addr)\n"
+            "  call void @__orison_owned_cleanup.Tail(ptr %Box.member_cleanup.tail.addr)\n"
             "  store %record.Tail zeroinitializer, ptr %Box.member_cleanup.tail.addr\n"
             "  ret void\n"
             "}\n"
@@ -17138,12 +17138,12 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
-            "define void @__orison_drop.Sibling(ptr %value)"
+            "define void @__orison_owned_cleanup.Sibling(ptr %value)"
         ) != std::string::npos
     );
     assert(
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
-            "define void @__orison_drop.Tail(ptr %value)"
+            "define void @__orison_owned_cleanup.Tail(ptr %value)"
         ) != std::string::npos
     );
 
@@ -17206,7 +17206,7 @@ auto main() -> int {
             assert(field.field_name == field_name);
             assert(field.field_source_type_name == field_source_type_name);
             assert(field.field_llvm_type_name == "%record." + std::string {field_source_type_name});
-            assert(field.drop_symbol_name == "__orison_drop." + std::string {field_source_type_name});
+            assert(field.drop_symbol_name == "__orison_owned_cleanup." + std::string {field_source_type_name});
             assert(field.field_path == field_path);
             assert(field.field_indices == field_indices);
             assert(field.container_llvm_type_names == container_llvm_type_names);
@@ -17254,17 +17254,17 @@ auto main() -> int {
             "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value) {\n"
             "entry:\n"
             "  %Wrap.member_cleanup.head.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 0\n"
-            "  call void @__orison_drop.Head(ptr %Wrap.member_cleanup.head.addr)\n"
+            "  call void @__orison_owned_cleanup.Head(ptr %Wrap.member_cleanup.head.addr)\n"
             "  store %record.Head zeroinitializer, ptr %Wrap.member_cleanup.head.addr\n"
             "  %Wrap.member_cleanup.tail.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 2\n"
-            "  call void @__orison_drop.Tail(ptr %Wrap.member_cleanup.tail.addr)\n"
+            "  call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)\n"
             "  store %record.Tail zeroinitializer, ptr %Wrap.member_cleanup.tail.addr\n"
             "  %Wrap.member_cleanup.box.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 1\n"
             "  %Wrap.member_cleanup.box.left.addr = getelementptr %record.Box, ptr %Wrap.member_cleanup.box.addr, i32 0, i32 0\n"
-            "  call void @__orison_drop.Left(ptr %Wrap.member_cleanup.box.left.addr)\n"
+            "  call void @__orison_owned_cleanup.Left(ptr %Wrap.member_cleanup.box.left.addr)\n"
             "  store %record.Left zeroinitializer, ptr %Wrap.member_cleanup.box.left.addr\n"
             "  %Wrap.member_cleanup.box.right.addr = getelementptr %record.Box, ptr %Wrap.member_cleanup.box.addr, i32 0, i32 2\n"
-            "  call void @__orison_drop.Right(ptr %Wrap.member_cleanup.box.right.addr)\n"
+            "  call void @__orison_owned_cleanup.Right(ptr %Wrap.member_cleanup.box.right.addr)\n"
             "  store %record.Right zeroinitializer, ptr %Wrap.member_cleanup.box.right.addr\n"
             "  ret void\n"
             "}\n"
@@ -17294,7 +17294,7 @@ auto main() -> int {
             "items.member_cleanup.drop_element:\n"
             "  %items.member_cleanup.element.addr = getelementptr %record.Wrap, ptr "
             "%items.member_cleanup.cleanup.data, i64 %items.member_cleanup.index\n"
-            "  call void @__orison_drop.Wrap(ptr %items.member_cleanup.element.addr)\n"
+            "  call void @__orison_owned_cleanup.Wrap(ptr %items.member_cleanup.element.addr)\n"
             "  store %record.Wrap zeroinitializer, ptr %items.member_cleanup.element.addr\n"
         ) != std::string::npos
     );
@@ -17352,7 +17352,7 @@ auto main() -> int {
         runtime_indexed_nested_missing_sibling_drop_result.runtime_indexed_member_cleanup_sibling_fields.end()
     );
     assert(missing_tail_field->field_source_type_name == "Tail");
-    assert(missing_tail_field->drop_symbol_name == "__orison_drop.Tail");
+    assert(missing_tail_field->drop_symbol_name == "__orison_owned_cleanup.Tail");
     assert(!missing_tail_field->drop_definition_available);
     auto runtime_indexed_nested_sibling_member_transfer_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
@@ -17391,7 +17391,7 @@ auto main() -> int {
     assert(
         !has_planned_drop_declaration(
             runtime_indexed_cleanup_narrow_drop_surface,
-            "__orison_drop.Inner"
+            "__orison_owned_cleanup.Inner"
         )
     );
 
@@ -17403,7 +17403,7 @@ auto main() -> int {
     assert(
         has_planned_drop_declaration(
             runtime_indexed_cleanup_module_drop_surface,
-            "__orison_drop.Inner"
+            "__orison_owned_cleanup.Inner"
         )
     );
 
@@ -18745,7 +18745,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .ir_plan.drop_callee_name == "__orison_drop.Inner"
+            .ir_plan.drop_callee_name == "__orison_owned_cleanup.Inner"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -18812,7 +18812,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
             .gated_ir_slice_lines[13] ==
-        "  call void @__orison_drop.Inner(ptr %holder.items.runtime_cleanup.element.addr)\n"
+        "  call void @__orison_owned_cleanup.Inner(ptr %holder.items.runtime_cleanup.element.addr)\n"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -19043,7 +19043,7 @@ auto main() -> int {
         ) ==
         "runtime-index cleanup constructor-move plan owner items index index element Inner "
         "element-llvm %record.Inner owner-llvm [2 x %record.Inner] static-length 2 "
-        "element-size 4 drop-callee __orison_drop.Inner operation-count 5 "
+        "element-size 4 drop-callee __orison_owned_cleanup.Inner operation-count 5 "
         "descriptor-owner blocked static-length-ready true production enabled"
     );
     auto same_shape_plan_report_lines =
@@ -19652,12 +19652,12 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
-            "  call void @__orison_drop.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
+            "  call void @__orison_owned_cleanup.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
         ) != std::string::npos
     );
     assert(
         runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
-            "  call void @__orison_drop.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
+            "  call void @__orison_owned_cleanup.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
         ) != std::string::npos
     );
     assert(
@@ -19916,7 +19916,7 @@ auto main() -> int {
                 .function_symbol_name = "main",
                 .owner_name = "items",
                 .gated_ir_slice_lines = {
-                    "  call void @__orison_drop.Inner(ptr %items.runtime_cleanup.element.addr)\n",
+                    "  call void @__orison_owned_cleanup.Inner(ptr %items.runtime_cleanup.element.addr)\n",
                 },
                 .ir_plan = orison::lowering::RuntimeIndexedCleanupIrPlan {
                     .owner_name = "items",
@@ -19928,7 +19928,7 @@ auto main() -> int {
                     .skip_block_name = "items.runtime_cleanup.skip",
                     .drop_block_name = "items.runtime_cleanup.drop",
                     .element_address_name = "%items.runtime_cleanup.element.addr",
-                    .drop_callee_name = "__orison_drop.Inner",
+                    .drop_callee_name = "__orison_owned_cleanup.Inner",
                     .continue_block_name = "items.runtime_cleanup.continue",
                     .exit_block_name = "items.runtime_cleanup.exit",
                     .complete = true,
@@ -20053,7 +20053,7 @@ auto main() -> int {
         parsed_drop_readiness_source_correlation_report[0] ==
         "drop readiness source correlations actions 0 semantic sites 1"
     );
-    assert(parsed_drop_readiness.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(parsed_drop_readiness.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
@@ -20183,7 +20183,7 @@ auto main() -> int {
     auto partial_semantic_drops_summary_report = semantic_drop_resolution_summary_report(partial_semantic_drops);
     assert(partial_semantic_drops_resolution_report.size() == 4);
     assert_line_contains(partial_semantic_drops_resolution_report, 0, "resolved drop site");
-    assert_line_contains(partial_semantic_drops_resolution_report, 1, "__orison_drop.Resource");
+    assert_line_contains(partial_semantic_drops_resolution_report, 1, "__orison_owned_cleanup.Resource");
     assert_line_contains(partial_semantic_drops_resolution_report, 2, "owner local_payload");
     assert_line_contains(partial_semantic_drops_resolution_report, 3, "owner local_resource");
     assert(partial_semantic_drops_summary_report.size() == 2);

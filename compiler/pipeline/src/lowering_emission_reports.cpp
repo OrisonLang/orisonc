@@ -2101,7 +2101,7 @@ auto member_cleanup_executable_cfg_append(
                << "  " << prefix << ".element.addr = getelementptr "
                << cleanup_plan.element_llvm_type << ", ptr "
                << prefix << ".cleanup.data, i64 " << prefix << ".index\n"
-               << "  call void @" << semantics::drop_abi_symbol_name(plan.element_source_type_name)
+               << "  call void @" << semantics::owned_cleanup_abi_symbol_name(plan.element_source_type_name)
                << "(ptr " << prefix << ".element.addr)\n"
                << "  store " << cleanup_plan.element_llvm_type
                << " zeroinitializer, ptr " << prefix << ".element.addr\n"

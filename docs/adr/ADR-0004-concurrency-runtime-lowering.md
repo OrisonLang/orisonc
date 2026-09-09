@@ -80,10 +80,10 @@ drop/cleanup decisions.
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
   planned symbols but do not call them until drop semantics are accepted.
-- Module prelude emission has an explicit drop-declaration seam for future `__orison_drop.<Type>` declarations, but
+- Module prelude emission has an explicit drop-declaration seam for future `__orison_owned_cleanup.<Type>` declarations, but
   planned declarations are disabled by default and current concurrency lowering does not request them.
 - LLVM IR emission now collects cleanup-candidate drop declarations as disabled metadata before prelude emission, so
-  needed `__orison_drop.<Type>` symbols are discoverable end-to-end without changing emitted IR.
+  needed `__orison_owned_cleanup.<Type>` symbols are discoverable end-to-end without changing emitted IR.
 - Lowering metadata scans now share a syntax traversal helper so runtime-symbol discovery and disabled drop-declaration
   discovery walk expressions consistently.
 - Planned drop declarations now retain the source type and concurrency expression line where the future drop need was
@@ -103,8 +103,8 @@ drop/cleanup decisions.
 - Drop cleanup authorization reports now split semantic-lowering blockers into unresolved semantic drops versus
   source-drop-lowering-not-accepted blockers. This lets parsed/proven source-derived drop candidates reduce the
   semantic uncertainty in reports while normal lowering still emits no drop declarations or calls.
-- Drop readiness source-correlation reporting is pipeline-owned because it combines semantic planned-drop sites with
-  lowering cleanup actions. It traces cleanup action source type/capture metadata back to semantic owner/drop-site
+- Drop readiness source-correlation reporting is pipeline-owned; it combines semantic planned-drop sites with lowering
+  cleanup actions. It traces cleanup action source type/capture metadata back to semantic owner/drop-site
   status and emitted-declaration status without changing generated IR.
   The source-correlation formatter lives in a dedicated pipeline report component so compile orchestration does not own
   report matching and rendering policy, and direct smoke coverage pins its matching behavior independently from the

@@ -10,7 +10,7 @@ auto payload_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .field_index = 0,
         .discovery_line = 12,
     };
@@ -63,7 +63,7 @@ auto main() -> int {
     auto action = payload_action();
     auto blocked_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .semantic_authorizations = {
-            drop_authorization("Payload", "__orison_drop.Payload", false),
+            drop_authorization("Payload", "__orison_owned_cleanup.Payload", false),
         },
         .cleanup_authorizations = {
             cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
@@ -78,7 +78,7 @@ auto main() -> int {
         blocked_snapshot_report[0] ==
         "drop readiness snapshot semantic authorizations 1 emitted declarations 0 cleanup authorizations 1"
     );
-    assert(blocked_snapshot_report[1] == "semantic readiness __orison_drop.Payload for Payload blocked");
+    assert(blocked_snapshot_report[1] == "semantic readiness __orison_owned_cleanup.Payload for Payload blocked");
     assert(
         blocked_snapshot_report[2] ==
         "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked semantic blockers 1 missing declarations 1"
@@ -91,11 +91,11 @@ auto main() -> int {
 
     auto authorized_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .semantic_authorizations = {
-            drop_authorization("Payload", "__orison_drop.Payload", true),
+            drop_authorization("Payload", "__orison_owned_cleanup.Payload", true),
         },
         .emitted_declarations = {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_drop.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
                 .emit_declaration = true,
@@ -113,8 +113,8 @@ auto main() -> int {
         authorized_snapshot_report[0] ==
         "drop readiness snapshot semantic authorizations 1 emitted declarations 1 cleanup authorizations 1"
     );
-    assert(authorized_snapshot_report[1] == "semantic readiness __orison_drop.Payload for Payload authorized");
-    assert(authorized_snapshot_report[2] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(authorized_snapshot_report[1] == "semantic readiness __orison_owned_cleanup.Payload for Payload authorized");
+    assert(authorized_snapshot_report[2] == "emitted declaration readiness __orison_owned_cleanup.Payload for Payload");
     assert(authorized_snapshot_report[3] == "cleanup readiness __orison_thread_cleanup.launch.12.0 authorized");
     auto authorized_summary = orison::lowering::summarize_owned_cleanup_readiness(authorized_snapshot);
     assert(
@@ -124,7 +124,7 @@ auto main() -> int {
 
     auto mixed_snapshot = authorized_snapshot;
     mixed_snapshot.semantic_authorizations.push_back(
-        drop_authorization("OtherPayload", "__orison_drop.OtherPayload", false)
+        drop_authorization("OtherPayload", "__orison_owned_cleanup.OtherPayload", false)
     );
     mixed_snapshot.cleanup_authorizations.push_back(
         cleanup_readiness(

@@ -10,7 +10,7 @@ auto payload_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .field_index = 0,
         .discovery_line = 12,
     };
@@ -20,7 +20,7 @@ auto other_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "other",
         .source_type_name = "OtherPayload",
-        .symbol_name = "__orison_drop.OtherPayload",
+        .symbol_name = "__orison_owned_cleanup.OtherPayload",
         .field_index = 1,
         .discovery_line = 20,
     };
@@ -60,19 +60,19 @@ auto main() -> int {
     );
     assert(
         blocked_report[1] ==
-        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
+        "drop readiness relation semantic blocker __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
     assert(
         blocked_report[2] ==
-        "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "drop readiness relation missing declaration __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
 
     auto emitted_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .emitted_declarations = {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_drop.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload",
                 .source_type_name = "Payload",
                 .discovery_line = 12,
                 .emit_declaration = true,
@@ -113,12 +113,12 @@ auto main() -> int {
     );
     assert(
         multi_report[2] ==
-        "drop readiness relation semantic blocker __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "drop readiness relation semantic blocker __orison_owned_cleanup.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
     assert(
         multi_report[4] ==
-        "drop readiness relation missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "drop readiness relation missing declaration __orison_owned_cleanup.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
 

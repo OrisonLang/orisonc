@@ -9,7 +9,7 @@ auto payload_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .field_index = 0,
         .discovery_line = 12,
     };
@@ -19,7 +19,7 @@ auto other_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "other",
         .source_type_name = "OtherPayload",
-        .symbol_name = "__orison_drop.OtherPayload",
+        .symbol_name = "__orison_owned_cleanup.OtherPayload",
         .field_index = 1,
         .discovery_line = 20,
     };
@@ -51,16 +51,16 @@ auto main() -> int {
     );
     assert(
         blocked_report[1] ==
-        "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
+        "semantic drop lowering blocked __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
     assert(
         blocked_report[2] ==
-        "semantic drop unresolved __orison_drop.Payload for Payload capture payload field 0 discovered at line 12"
+        "semantic drop unresolved __orison_owned_cleanup.Payload for Payload capture payload field 0 discovered at line 12"
     );
     assert(
         blocked_report[3] ==
-        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 12"
+        "missing drop declaration __orison_owned_cleanup.Payload for Payload capture payload field 0 discovered at line 12"
     );
 
     auto source_gated_report = orison::lowering::format_owned_cleanup_authorization_report(
@@ -73,7 +73,7 @@ auto main() -> int {
     assert(source_gated_report.size() == 3);
     assert(
         source_gated_report[2] ==
-        "source drop lowering not accepted __orison_drop.Payload for Payload capture payload field 0 "
+        "source drop lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
 
@@ -103,17 +103,17 @@ auto main() -> int {
     );
     assert(
         multi_report[2] ==
-        "semantic drop lowering blocked __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "semantic drop lowering blocked __orison_owned_cleanup.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
     assert(
         multi_report[4] ==
-        "semantic drop unresolved __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "semantic drop unresolved __orison_owned_cleanup.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
     assert(
         multi_report[6] ==
-        "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "missing drop declaration __orison_owned_cleanup.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
 

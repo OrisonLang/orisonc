@@ -9,7 +9,7 @@ auto payload_action() -> orison::lowering::OwnedCleanupAction {
     return orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .field_index = 0,
         .discovery_line = 12,
     };
@@ -66,17 +66,17 @@ auto main() -> int {
     );
     assert(
         unresolved_report[1] ==
-        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "drop readiness blocker semantic __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
     assert(
         unresolved_report[2] ==
-        "drop readiness blocker semantic unresolved __orison_drop.Payload for Payload capture payload field 0 "
+        "drop readiness blocker semantic unresolved __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
     assert(
         unresolved_report[3] ==
-        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "drop readiness blocker missing declaration __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
 
@@ -104,7 +104,7 @@ auto main() -> int {
     );
     assert(
         source_gated_report[2] ==
-        "drop readiness blocker source lowering not accepted __orison_drop.Payload for Payload capture payload "
+        "drop readiness blocker source lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload "
         "field 0 discovered at line 12"
     );
 

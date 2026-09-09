@@ -1254,10 +1254,10 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     assert(result.owned_cleanup_actions.size() == 1);
     assert(result.owned_cleanup_actions.front().capture_name == "dynamic_array0.element");
     assert(result.owned_cleanup_actions.front().source_type_name == "Payload");
-    assert(result.owned_cleanup_actions.front().symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_actions.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_actions.front().field_index == 0);
     assert(result.owned_cleanup_declarations.size() == 1);
-    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(!result.owned_cleanup_declarations.front().emit_declaration);
     assert(result.drop_cleanups.size() == 1);
     assert(result.drop_cleanups.front().cleanup_symbol_name == "__orison_dynamic_array_cleanup.0");
@@ -1273,7 +1273,7 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     assert(action_report.size() == 1);
     assert(
         action_report.front() ==
-        "planned drop action __orison_drop.Payload for capture dynamic_array0.element: Payload "
+        "planned drop action __orison_owned_cleanup.Payload for capture dynamic_array0.element: Payload "
         "field 0 (metadata only)"
     );
     auto readiness_report = result.owned_cleanup_readiness_snapshot_report();
@@ -1298,16 +1298,16 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     );
     assert(
         relation_report[1] ==
-        "drop readiness relation semantic blocker __orison_drop.Payload for Payload "
+        "drop readiness relation semantic blocker __orison_owned_cleanup.Payload for Payload "
         "capture dynamic_array0.element field 0"
     );
     assert(
         relation_report[2] ==
-        "drop readiness relation missing declaration __orison_drop.Payload for Payload "
+        "drop readiness relation missing declaration __orison_owned_cleanup.Payload for Payload "
         "capture dynamic_array0.element field 0"
     );
-    assert(result.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
-    assert(result.ir_text.find("declare void @__orison_drop.Payload") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.Payload") == std::string::npos);
 }
 
 void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin() {
@@ -1335,7 +1335,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
             .line = 8,
             .owner_name = "items.element",
             .source_type_name = "Payload",
-            .abi_symbol_name = "__orison_drop.Payload",
+            .abi_symbol_name = "__orison_owned_cleanup.Payload",
         }
     );
 
@@ -1457,11 +1457,11 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(authorized_action_report.size() == 1);
     assert(
         authorized_action_report.front() ==
-        "planned drop action __orison_drop.Payload for capture items.element: Payload field 0 "
+        "planned drop action __orison_owned_cleanup.Payload for capture items.element: Payload field 0 "
         "discovered at line 8 (metadata only)"
     );
-    assert(authorized.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
-    assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(authorized.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
+    assert(authorized.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
     assert(authorized.ir_text.find("__orison_dynamic_array_allocate") == std::string::npos);
     assert(authorized.ir_text.find("%items.addr = alloca { ptr, i64, i64 }") == std::string::npos);
     assert(authorized.ir_text.find("%dynamic_array0.descriptor = load { ptr, i64, i64 }") == std::string::npos);
@@ -3019,14 +3019,14 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
     );
     assert(unauthorized.owned_cleanup_readiness_summary().cleanup_blocked == 1);
-    assert(unauthorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(unauthorized.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
     options.semantic_owned_cleanup_lowering_authorizations = {
         orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::OwnedCleanupSite {
                 .source_type_name = "Payload",
-                .abi_symbol_name = "__orison_drop.Payload",
+                .abi_symbol_name = "__orison_owned_cleanup.Payload",
                 .owner_name = "items.element",
                 .site_line = 6,
             },
@@ -3038,11 +3038,11 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     auto authorized = lower_source(path, source, options);
     assert(!authorized.has_errors());
     assert(authorized.owned_cleanup_declarations.size() == 1);
-    assert(authorized.owned_cleanup_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(authorized.owned_cleanup_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(authorized.owned_cleanup_declarations.front().emit_declaration);
     assert(authorized.owned_cleanup_readiness_summary().cleanup_authorized == 1);
     assert(authorized.owned_cleanup_readiness_summary().cleanup_blocked == 0);
-    assert_ir_contains(authorized, "define void @__orison_drop.Payload(ptr %value)");
+    assert_ir_contains(authorized, "define void @__orison_owned_cleanup.Payload(ptr %value)");
     assert_ir_contains(authorized, "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)");
     assert_ir_contains(
         authorized,
@@ -3055,7 +3055,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     );
     assert_ir_contains(
         authorized,
-        "  call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
+        "  call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
     );
     assert_ir_contains(
         authorized,
@@ -3066,7 +3066,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         authorized,
         "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
     );
-    auto drop_call = authorized.ir_text.find("call void @__orison_drop.Payload");
+    auto drop_call = authorized.ir_text.find("call void @__orison_owned_cleanup.Payload");
     auto deallocate_call = authorized.ir_text.find("call void @__orison_dynamic_array_deallocate");
     auto descriptor_clear = authorized.ir_text.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
     auto return_instruction = authorized.ir_text.find("ret i32 1");
@@ -3087,10 +3087,10 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     auto production_authorized = lower_source(path, source, production_options);
     assert(!production_authorized.has_errors());
     assert_ir_contains(production_authorized, "define i32 @use_items({ ptr, i64, i64 } %items)");
-    assert_ir_contains(production_authorized, "define void @__orison_drop.Payload(ptr %value)");
+    assert_ir_contains(production_authorized, "define void @__orison_owned_cleanup.Payload(ptr %value)");
     assert_ir_contains(
         production_authorized,
-        "  call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
+        "  call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
     );
     assert_ir_contains(
         production_authorized,
@@ -3125,14 +3125,14 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
 
     auto unauthorized = lower_source(path, source, options);
     assert(!unauthorized.has_errors());
-    assert(unauthorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(unauthorized.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
     assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
     options.semantic_owned_cleanup_lowering_authorizations = {
         orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::OwnedCleanupSite {
                 .source_type_name = "Payload",
-                .abi_symbol_name = "__orison_drop.Payload",
+                .abi_symbol_name = "__orison_owned_cleanup.Payload",
                 .owner_name = "items.element",
                 .site_line = 7,
             },
@@ -3144,9 +3144,9 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
     auto authorized = lower_source(path, source, options);
     assert(!authorized.has_errors());
     assert(authorized.owned_cleanup_declarations.size() == 1);
-    assert(authorized.owned_cleanup_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(authorized.owned_cleanup_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(authorized.owned_cleanup_declarations.front().emit_declaration);
-    assert_ir_contains(authorized, "define void @__orison_drop.Payload(ptr %value)");
+    assert_ir_contains(authorized, "define void @__orison_owned_cleanup.Payload(ptr %value)");
     assert_ir_contains(authorized, "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)");
     assert_ir_contains(
         authorized,
@@ -3159,14 +3159,14 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
     );
     assert_ir_contains(
         authorized,
-        "  call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
+        "  call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
     );
     assert_ir_contains(
         authorized,
         "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
         "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
     );
-    auto drop_call = authorized.ir_text.find("call void @__orison_drop.Payload");
+    auto drop_call = authorized.ir_text.find("call void @__orison_owned_cleanup.Payload");
     auto deallocate_call = authorized.ir_text.find("call void @__orison_dynamic_array_deallocate");
     auto return_instruction = authorized.ir_text.find("ret i32 1");
     assert(drop_call != std::string::npos);
@@ -3198,7 +3198,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 6,
                     },
@@ -3214,10 +3214,10 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
     auto const function_pos = result.ir_text.find("define i32 @use_items");
     assert(function_pos != std::string::npos);
     auto const function_ir = result.ir_text.substr(function_pos);
-    auto const first_drop = function_ir.find("call void @__orison_drop.Payload");
+    auto const first_drop = function_ir.find("call void @__orison_owned_cleanup.Payload");
     auto const first_deallocate = function_ir.find("call void @__orison_dynamic_array_deallocate");
     auto const guard_return = function_ir.find("ret i32 7");
-    auto const second_drop = function_ir.find("call void @__orison_drop.Payload", first_drop + 1);
+    auto const second_drop = function_ir.find("call void @__orison_owned_cleanup.Payload", first_drop + 1);
     auto const second_deallocate =
         function_ir.find("call void @__orison_dynamic_array_deallocate", first_deallocate + 1);
     auto const final_return = function_ir.find("ret i32 1");
@@ -3260,7 +3260,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 9,
                     },
@@ -3277,10 +3277,10 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
     assert(function_pos != std::string::npos);
     auto const function_ir = result.ir_text.substr(function_pos);
     auto const defer_call = function_ir.find("call void @observe(i32 41)");
-    auto const first_drop = function_ir.find("call void @__orison_drop.Payload");
+    auto const first_drop = function_ir.find("call void @__orison_owned_cleanup.Payload");
     auto const first_deallocate = function_ir.find("call void @__orison_dynamic_array_deallocate");
     auto const arm_return = function_ir.find("ret i32 7");
-    auto const second_drop = function_ir.find("call void @__orison_drop.Payload", first_drop + 1);
+    auto const second_drop = function_ir.find("call void @__orison_owned_cleanup.Payload", first_drop + 1);
     auto const second_deallocate =
         function_ir.find("call void @__orison_dynamic_array_deallocate", first_deallocate + 1);
     auto const final_return = function_ir.find("ret i32 1");
@@ -3320,7 +3320,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 6,
                     },
@@ -3336,10 +3336,10 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
     auto const function_pos = result.ir_text.find("define void @use_items");
     assert(function_pos != std::string::npos);
     auto const function_ir = result.ir_text.substr(function_pos);
-    auto const first_drop = function_ir.find("call void @__orison_drop.Payload");
+    auto const first_drop = function_ir.find("call void @__orison_owned_cleanup.Payload");
     auto const first_deallocate = function_ir.find("call void @__orison_dynamic_array_deallocate");
     auto const first_return = function_ir.find("ret void");
-    auto const second_drop = function_ir.find("call void @__orison_drop.Payload", first_drop + 1);
+    auto const second_drop = function_ir.find("call void @__orison_owned_cleanup.Payload", first_drop + 1);
     auto const second_deallocate =
         function_ir.find("call void @__orison_dynamic_array_deallocate", first_deallocate + 1);
     auto const second_return = function_ir.find("ret void", first_return + 1);
@@ -3385,7 +3385,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "items.element",
                         .site_line = 9,
                     },
@@ -3402,14 +3402,14 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
     assert(function_pos != std::string::npos);
     auto const function_ir = result.ir_text.substr(function_pos);
     auto const defer_call = function_ir.find("call void @observe(i32 42)");
-    auto const first_drop = function_ir.find("call void @__orison_drop.Payload");
+    auto const first_drop = function_ir.find("call void @__orison_owned_cleanup.Payload");
     auto const first_deallocate = function_ir.find("call void @__orison_dynamic_array_deallocate");
     auto const first_return = function_ir.find("ret i32 7");
-    auto const second_drop = function_ir.find("call void @__orison_drop.Payload", first_drop + 1);
+    auto const second_drop = function_ir.find("call void @__orison_owned_cleanup.Payload", first_drop + 1);
     auto const second_deallocate =
         function_ir.find("call void @__orison_dynamic_array_deallocate", first_deallocate + 1);
     auto const second_return = function_ir.find("ret i32 9");
-    auto const third_drop = function_ir.find("call void @__orison_drop.Payload", second_drop + 1);
+    auto const third_drop = function_ir.find("call void @__orison_owned_cleanup.Payload", second_drop + 1);
     auto const third_deallocate =
         function_ir.find("call void @__orison_dynamic_array_deallocate", second_deallocate + 1);
     auto const third_return = function_ir.find("ret i32 1");
@@ -3733,12 +3733,12 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
     assert(allowlist_summary.cleanup_blocked == 1);
     auto allowlist_readiness = allowlist_only.owned_cleanup_readiness_snapshot_report();
     assert(allowlist_readiness.size() == 3);
-    assert(allowlist_readiness[1] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(allowlist_readiness[1] == "emitted declaration readiness __orison_owned_cleanup.Payload for Payload");
     assert(
         allowlist_readiness[2] ==
         "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 0"
     );
-    assert(allowlist_only.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(allowlist_only.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
 
     auto authorized = lower_source(
         path,
@@ -3755,7 +3755,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "dynamic_array0.element",
                         .site_line = 0,
                     },
@@ -3779,18 +3779,18 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
         authorized_readiness[0] ==
         "drop readiness snapshot semantic authorizations 1 emitted declarations 1 cleanup authorizations 1"
     );
-    assert(authorized_readiness[1] == "semantic readiness __orison_drop.Payload for Payload authorized");
-    assert(authorized_readiness[2] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(authorized_readiness[1] == "semantic readiness __orison_owned_cleanup.Payload for Payload authorized");
+    assert(authorized_readiness[2] == "emitted declaration readiness __orison_owned_cleanup.Payload for Payload");
     assert(authorized_readiness[3] == "cleanup readiness __orison_dynamic_array_cleanup.0 authorized");
-    assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
-    assert(authorized.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(authorized.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
+    assert(authorized.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_semantic_drop_authorization_metadata.or";
     auto site = orison::semantics::OwnedCleanupSite {
         .source_type_name = "Payload",
-        .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Payload"),
+        .abi_symbol_name = orison::semantics::owned_cleanup_abi_symbol_name("Payload"),
         .owner_name = "payload",
         .site_line = 12,
     };
@@ -3813,11 +3813,11 @@ void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
 
     assert(!result.has_errors());
     assert(result.semantic_owned_cleanup_lowering_authorizations.size() == 1);
-    assert(result.semantic_owned_cleanup_lowering_authorizations.front().site.abi_symbol_name == "__orison_drop.Payload");
+    assert(result.semantic_owned_cleanup_lowering_authorizations.front().site.abi_symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
     assert(!result.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
     assert(!result.semantic_owned_cleanup_lowering_authorizations.front().authorized);
-    assert(result.ir_text.find("__orison_drop.Payload") == std::string::npos);
+    assert(result.ir_text.find("__orison_owned_cleanup.Payload") == std::string::npos);
 }
 
 void test_emit_let_bound_uint32_return() {
@@ -12871,12 +12871,12 @@ void test_emit_record_capture_cleanup_field_address() {
     assert(!result.has_errors());
     assert(result.owned_cleanup_actions.size() == 2);
     assert(result.owned_cleanup_actions[0].capture_name == "payload");
-    assert(result.owned_cleanup_actions[0].symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_actions[0].symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_actions[0].source_type_name == "Payload");
     assert(result.owned_cleanup_actions[0].field_index == 0);
     assert(result.owned_cleanup_actions[0].discovery_line == 20);
     assert(result.owned_cleanup_actions[1].capture_name == "other");
-    assert(result.owned_cleanup_actions[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(result.owned_cleanup_actions[1].symbol_name == "__orison_owned_cleanup.OtherPayload");
     assert(result.owned_cleanup_actions[1].source_type_name == "OtherPayload");
     assert(result.owned_cleanup_actions[1].field_index == 1);
     assert(result.owned_cleanup_actions[1].discovery_line == 20);
@@ -12884,20 +12884,20 @@ void test_emit_record_capture_cleanup_field_address() {
     assert(action_report.size() == 2);
     assert(
         action_report[0] ==
-        "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
+        "planned drop action __orison_owned_cleanup.Payload for capture payload: Payload field 0 "
         "discovered at line 20 (metadata only)"
     );
     assert(
         action_report[1] ==
-        "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 "
+        "planned drop action __orison_owned_cleanup.OtherPayload for capture other: OtherPayload field 1 "
         "discovered at line 20 (metadata only)"
     );
     assert(result.owned_cleanup_declarations.size() == 2);
-    assert(result.owned_cleanup_declarations[0].symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_declarations[0].symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_declarations[0].source_type_name == "Payload");
     assert(result.owned_cleanup_declarations[0].discovery_line == 20);
     assert(!result.owned_cleanup_declarations[0].emit_declaration);
-    assert(result.owned_cleanup_declarations[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(result.owned_cleanup_declarations[1].symbol_name == "__orison_owned_cleanup.OtherPayload");
     assert(result.owned_cleanup_declarations[1].source_type_name == "OtherPayload");
     assert(result.owned_cleanup_declarations[1].discovery_line == 20);
     assert(!result.owned_cleanup_declarations[1].emit_declaration);
@@ -12905,11 +12905,11 @@ void test_emit_record_capture_cleanup_field_address() {
     assert(report.size() == 2);
     assert(
         report[0] ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 20 (metadata only)"
+        "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 20 (metadata only)"
     );
     assert(
         report[1] ==
-        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
+        "planned drop __orison_owned_cleanup.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
     );
     assert(result.ir_text.find("%record.Payload = type { i64 }") != std::string::npos);
     assert(result.ir_text.find("%record.OtherPayload = type { i64 }") != std::string::npos);
@@ -12935,17 +12935,17 @@ void test_emit_record_capture_cleanup_field_address() {
             "define private void @__orison_thread_cleanup.on_thread.20.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_owned_cleanup.Payload\n"
             "  %cleanup.field.1 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 1\n"
-            "  ; cleanup candidate other: OtherPayload field 1 drop __orison_drop.OtherPayload\n"
+            "  ; cleanup candidate other: OtherPayload field 1 drop __orison_owned_cleanup.OtherPayload\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
     );
-    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
-    assert(result.ir_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
-    assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
-    assert(result.ir_text.find("call void @__orison_drop.OtherPayload(ptr") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.Payload(ptr)") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_owned_cleanup.Payload(ptr") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.OtherPayload(ptr)") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_owned_cleanup.OtherPayload(ptr") == std::string::npos);
 }
 
 void test_emit_same_type_record_capture_drop_metadata_dedupes() {
@@ -12973,27 +12973,27 @@ void test_emit_same_type_record_capture_drop_metadata_dedupes() {
     assert(!result.has_errors());
     assert(result.owned_cleanup_actions.size() == 2);
     assert(result.owned_cleanup_actions[0].capture_name == "left");
-    assert(result.owned_cleanup_actions[0].symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_actions[0].symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_actions[0].field_index == 0);
     assert(result.owned_cleanup_actions[0].discovery_line == 13);
     assert(result.owned_cleanup_actions[1].capture_name == "right");
-    assert(result.owned_cleanup_actions[1].symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_actions[1].symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_actions[1].field_index == 1);
     assert(result.owned_cleanup_actions[1].discovery_line == 13);
     auto action_report = result.owned_cleanup_action_report();
     assert(action_report.size() == 2);
     assert(
         action_report[0] ==
-        "planned drop action __orison_drop.Payload for capture left: Payload field 0 "
+        "planned drop action __orison_owned_cleanup.Payload for capture left: Payload field 0 "
         "discovered at line 13 (metadata only)"
     );
     assert(
         action_report[1] ==
-        "planned drop action __orison_drop.Payload for capture right: Payload field 1 "
+        "planned drop action __orison_owned_cleanup.Payload for capture right: Payload field 1 "
         "discovered at line 13 (metadata only)"
     );
     assert(result.owned_cleanup_declarations.size() == 1);
-    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_declarations.front().source_type_name == "Payload");
     assert(result.owned_cleanup_declarations.front().discovery_line == 13);
     assert(!result.owned_cleanup_declarations.front().emit_declaration);
@@ -13004,15 +13004,15 @@ void test_emit_same_type_record_capture_drop_metadata_dedupes() {
             "define private void @__orison_thread_cleanup.on_thread.13.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate left: Payload field 0 drop __orison_drop.Payload\n"
+            "  ; cleanup candidate left: Payload field 0 drop __orison_owned_cleanup.Payload\n"
             "  %cleanup.field.1 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 1\n"
-            "  ; cleanup candidate right: Payload field 1 drop __orison_drop.Payload\n"
+            "  ; cleanup candidate right: Payload field 1 drop __orison_owned_cleanup.Payload\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
     );
-    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
-    assert(result.ir_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.Payload(ptr)") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_owned_cleanup.Payload(ptr") == std::string::npos);
 }
 
 void test_emit_allowed_record_capture_drop_abi_calls() {
@@ -13040,7 +13040,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "left",
                         .site_line = 13,
                     },
@@ -13054,40 +13054,40 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
 
     assert(!result.has_errors());
     assert(result.owned_cleanup_declarations.size() == 1);
-    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_declarations.front().source_type_name == "Payload");
     assert(result.owned_cleanup_declarations.front().discovery_line == 13);
     assert(result.owned_cleanup_declarations.front().emit_declaration);
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
-    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
+    assert(emitted_report.front() == "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 13");
     auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
     assert(readiness_summary_report.size() == 1);
     assert(
         readiness_summary_report.front() ==
         "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
     );
-    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") == std::string::npos);
-    assert(result.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.Payload(ptr)\n\n") == std::string::npos);
+    assert(result.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     auto readiness_report = result.owned_cleanup_readiness_snapshot_report();
     assert(readiness_report.size() == 4);
     assert(
         readiness_report[0] ==
         "drop readiness snapshot semantic authorizations 1 emitted declarations 1 cleanup authorizations 1"
     );
-    assert(readiness_report[1] == "semantic readiness __orison_drop.Payload for Payload authorized");
-    assert(readiness_report[2] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(readiness_report[1] == "semantic readiness __orison_owned_cleanup.Payload for Payload authorized");
+    assert(readiness_report[2] == "emitted declaration readiness __orison_owned_cleanup.Payload for Payload");
     assert(readiness_report[3] == "cleanup readiness __orison_thread_cleanup.on_thread.13.0 authorized");
     assert(
         result.ir_text.find(
             "define private void @__orison_thread_cleanup.on_thread.13.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate left: Payload field 0 drop __orison_drop.Payload\n"
-            "  call void @__orison_drop.Payload(ptr %cleanup.field.0)\n"
+            "  ; cleanup candidate left: Payload field 0 drop __orison_owned_cleanup.Payload\n"
+            "  call void @__orison_owned_cleanup.Payload(ptr %cleanup.field.0)\n"
             "  %cleanup.field.1 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 1\n"
-            "  ; cleanup candidate right: Payload field 1 drop __orison_drop.Payload\n"
-            "  call void @__orison_drop.Payload(ptr %cleanup.field.1)\n"
+            "  ; cleanup candidate right: Payload field 1 drop __orison_owned_cleanup.Payload\n"
+            "  call void @__orison_owned_cleanup.Payload(ptr %cleanup.field.1)\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
@@ -13119,7 +13119,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "left",
                         .site_line = 11,
                     },
@@ -13133,31 +13133,31 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
 
     assert(!result.has_errors());
     assert(result.owned_cleanup_declarations.size() == 1);
-    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_declarations.front().source_type_name == "Payload");
     assert(result.owned_cleanup_declarations.front().discovery_line == 13);
     assert(result.owned_cleanup_declarations.front().emit_declaration);
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
-    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
+    assert(emitted_report.front() == "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 13");
     auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
     assert(readiness_summary_report.size() == 1);
     assert(
         readiness_summary_report.front() ==
         "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
     );
-    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") == std::string::npos);
-    assert(result.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.Payload(ptr)\n\n") == std::string::npos);
+    assert(result.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(
         result.ir_text.find(
             "define private void @__orison_thread_cleanup.on_thread.13.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate left: Payload field 0 drop __orison_drop.Payload\n"
-            "  call void @__orison_drop.Payload(ptr %cleanup.field.0)\n"
+            "  ; cleanup candidate left: Payload field 0 drop __orison_owned_cleanup.Payload\n"
+            "  call void @__orison_owned_cleanup.Payload(ptr %cleanup.field.0)\n"
             "  %cleanup.field.1 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 1\n"
-            "  ; cleanup candidate right: Payload field 1 drop __orison_drop.Payload\n"
-            "  call void @__orison_drop.Payload(ptr %cleanup.field.1)\n"
+            "  ; cleanup candidate right: Payload field 1 drop __orison_owned_cleanup.Payload\n"
+            "  call void @__orison_owned_cleanup.Payload(ptr %cleanup.field.1)\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
@@ -13232,7 +13232,7 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {
                         .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload",
                         .owner_name = "payload",
                         .site_line = 18,
                     },
@@ -13246,40 +13246,40 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
 
     assert(!result.has_errors());
     assert(result.owned_cleanup_declarations.size() == 2);
-    assert(result.owned_cleanup_declarations[0].symbol_name == "__orison_drop.Payload");
+    assert(result.owned_cleanup_declarations[0].symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.owned_cleanup_declarations[0].source_type_name == "Payload");
     assert(result.owned_cleanup_declarations[0].discovery_line == 20);
     assert(result.owned_cleanup_declarations[0].emit_declaration);
-    assert(result.owned_cleanup_declarations[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(result.owned_cleanup_declarations[1].symbol_name == "__orison_owned_cleanup.OtherPayload");
     assert(result.owned_cleanup_declarations[1].source_type_name == "OtherPayload");
     assert(result.owned_cleanup_declarations[1].discovery_line == 20);
     assert(!result.owned_cleanup_declarations[1].emit_declaration);
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
-    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 20");
+    assert(emitted_report.front() == "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 20");
     auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
     assert(readiness_summary_report.size() == 1);
     assert(
         readiness_summary_report.front() ==
         "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 0 blocked 1"
     );
-    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") == std::string::npos);
-    assert(result.ir_text.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
-    assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.Payload(ptr)\n\n") == std::string::npos);
+    assert(result.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_owned_cleanup.OtherPayload(ptr)") == std::string::npos);
     assert(
         result.ir_text.find(
             "define private void @__orison_thread_cleanup.on_thread.20.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_owned_cleanup.Payload\n"
             "  %cleanup.field.1 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 1\n"
-            "  ; cleanup candidate other: OtherPayload field 1 drop __orison_drop.OtherPayload\n"
+            "  ; cleanup candidate other: OtherPayload field 1 drop __orison_owned_cleanup.OtherPayload\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
     );
-    assert(result.ir_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
-    assert(result.ir_text.find("call void @__orison_drop.OtherPayload(ptr") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_owned_cleanup.Payload(ptr") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_owned_cleanup.OtherPayload(ptr") == std::string::npos);
 }
 
 void test_reject_unsupported_final_if_arm_expression() {

@@ -207,7 +207,7 @@ auto capture_llvm_types(
 }
 
 auto drop_symbol_name_for(std::string_view source_type_name) -> std::string {
-    auto symbol = std::string {"__orison_drop."};
+    auto symbol = std::string {"__orison_owned_cleanup."};
     append_sanitized_symbol_part(symbol, source_type_name);
     return symbol;
 }

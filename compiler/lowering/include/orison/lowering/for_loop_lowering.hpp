@@ -229,7 +229,7 @@ inline auto computed_dynamic_array_element_drop_symbol_name(
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
     auto expected_owner_name = std::string {cleanup_owner_name} + ".element";
-    auto expected_symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
+    auto expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(element_source_type_name);
     for (auto const& authorization : options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&

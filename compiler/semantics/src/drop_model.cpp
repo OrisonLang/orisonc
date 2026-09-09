@@ -62,8 +62,8 @@ auto is_naked_return(syntax::StatementSyntax const& statement) -> bool {
 
 }  // namespace
 
-auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string {
-    auto symbol = std::string {"__orison_drop."};
+auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::string {
+    auto symbol = std::string {"__orison_owned_cleanup."};
     for (auto character : source_type_name) {
         auto const allowed =
             (character >= 'a' && character <= 'z') ||
@@ -91,7 +91,7 @@ auto source_derived_owned_cleanup_implementation(
     std::size_t declaration_line,
     OwnedCleanupImplementationBodySummary body
 ) -> OwnedCleanupImplementation {
-    auto symbol_name = drop_abi_symbol_name(source_type_name);
+    auto symbol_name = owned_cleanup_abi_symbol_name(source_type_name);
     auto proven = body.finite;
     return OwnedCleanupImplementation {
         .source_type_name = std::move(source_type_name),
@@ -107,7 +107,7 @@ auto compiler_intrinsic_owned_cleanup_implementation(
     std::string source_type_name,
     std::size_t declaration_line
 ) -> OwnedCleanupImplementation {
-    auto symbol_name = drop_abi_symbol_name(source_type_name);
+    auto symbol_name = owned_cleanup_abi_symbol_name(source_type_name);
     return OwnedCleanupImplementation {
         .source_type_name = std::move(source_type_name),
         .abi_symbol_name = std::move(symbol_name),
@@ -128,7 +128,7 @@ auto collect_source_derived_owned_cleanup_implementations(
         if (candidate.source_type_name.empty()) {
             continue;
         }
-        auto symbol_name = drop_abi_symbol_name(candidate.source_type_name);
+        auto symbol_name = owned_cleanup_abi_symbol_name(candidate.source_type_name);
         auto existing = std::find_if(
             implementations.begin(),
             implementations.end(),
@@ -215,7 +215,7 @@ auto collect_compiler_intrinsic_owned_cleanup_implementations(
         if (record == module.records.end()) {
             continue;
         }
-        auto const symbol_name = drop_abi_symbol_name(site.source_type_name);
+        auto const symbol_name = owned_cleanup_abi_symbol_name(site.source_type_name);
         auto existing = std::find_if(
             implementations.begin(),
             implementations.end(),
@@ -387,7 +387,7 @@ auto format_owned_cleanup_implementation_diagnostic_report(
 auto authorize_owned_cleanup_lowering(
     OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceOwnedCleanupLoweringGate source_drop_lowering_gate
+    SourceOwnedCleanupLoweringGate source_owned_cleanup_lowering_gate
 ) -> OwnedCleanupLoweringAuthorization {
     auto matching_implementation = std::find_if(
         implementations.begin(),
@@ -401,7 +401,8 @@ auto authorize_owned_cleanup_lowering(
     auto semantic_resolved = matching_implementation != implementations.end();
     auto compiler_intrinsic_owned_cleanup =
         semantic_resolved && matching_implementation->origin == OwnedCleanupImplementationOrigin::compiler_intrinsic;
-    auto source_owned_cleanup_lowering_enabled = source_drop_lowering_gate == SourceOwnedCleanupLoweringGate::enabled;
+    auto source_owned_cleanup_lowering_enabled =
+        source_owned_cleanup_lowering_gate == SourceOwnedCleanupLoweringGate::enabled;
     return OwnedCleanupLoweringAuthorization {
         .site = std::move(site),
         .semantic_resolved = semantic_resolved,
@@ -433,12 +434,12 @@ auto format_owned_cleanup_lowering_authorization(
 auto authorize_owned_cleanup_lowerings(
     std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceOwnedCleanupLoweringGate source_drop_lowering_gate
+    SourceOwnedCleanupLoweringGate source_owned_cleanup_lowering_gate
 ) -> std::vector<OwnedCleanupLoweringAuthorization> {
     auto authorizations = std::vector<OwnedCleanupLoweringAuthorization> {};
     authorizations.reserve(sites.size());
     for (auto const& site : sites) {
-        authorizations.push_back(authorize_owned_cleanup_lowering(site, implementations, source_drop_lowering_gate));
+        authorizations.push_back(authorize_owned_cleanup_lowering(site, implementations, source_owned_cleanup_lowering_gate));
     }
     return authorizations;
 }

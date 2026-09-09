@@ -1318,7 +1318,7 @@ representation.
   beyond computed-loop cleanup and makes local cleanup idempotency explicit in emitted IR.
 - `examples/local_dynamic_array_owned_replacement.or` is now the checked-in local owned-element replacement demo. The
   array CLI smoke pins it through `orisonc run`, `--emit-llvm`, `--emit-object`, and `--build`, asserting that
-  `__orison_drop.Payload` is source-defined, the old element is dropped before the replacement store, and the remaining
+  `__orison_owned_cleanup.Payload` is source-defined, the old element is dropped before the replacement store, and the remaining
   live element is dropped during normal local descriptor cleanup.
 - Local owned-element `DynamicArray<T>` RHS move-reuse diagnostics now have checked-in CLI coverage. Moving `payload`
   or `box.payload` into `.push(...)`, and moving `payload` into indexed replacement, reject later reuse of the moved
@@ -1555,7 +1555,7 @@ representation.
   end-to-end without dynamic-array allocator side effects.
 - Runtime-index cleanup emission now defines proven finite source-derived drop functions needed by generated cleanup
   loops under the runtime-index cleanup gate, preventing linked artifacts from carrying unresolved element-drop
-  symbols such as `__orison_drop.Inner`.
+  symbols such as `__orison_owned_cleanup.Inner`.
 - A test-only runtime-index cleanup production-readiness CLI command now exercises the production-readiness diagnostic
   surface without printing the full audit transcript. Blocked same-function splice conflicts return a nonzero exit
   code and the source-correlated readiness diagnostic; non-overlapping same-function cleanup candidates return success
@@ -1703,7 +1703,7 @@ representation.
 - Generic `DynamicArray<Box<T>>` owned-element scalar projection now lowers on the default CLI path when source Drop
   proof exists for the concrete generic record element. Dynamic-array parameter cleanup and element source-drop
   authorization use the canonical Drop ABI symbol renderer, so concrete generic elements such as `Box<UInt32>` map to
-  `__orison_drop.Box_UInt32_` consistently across push, parameter cleanup, and source Drop definition emission.
+  `__orison_owned_cleanup.Box_UInt32_` consistently across push, parameter cleanup, and source Drop definition emission.
 - The same path rejects concrete generic record elements without source Drop proof. Missing concrete authorization for
   `DynamicArray<Box<UInt32>>` blocks owned-element append and keeps parameter cleanup from lowering through an
   unproven Drop path.

@@ -9,7 +9,7 @@ void authorize_dynamic_array_owned_element_source_drops(
     std::vector<semantics::OwnedCleanupLoweringAuthorization>& authorizations
 ) {
     for (auto& authorization : authorizations) {
-        auto const expected_symbol_name = semantics::drop_abi_symbol_name(authorization.site.source_type_name);
+        auto const expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(authorization.site.source_type_name);
         if (!authorization.semantic_resolved ||
             !authorization.site.owner_name.ends_with(".element") ||
             authorization.site.abi_symbol_name != expected_symbol_name) {

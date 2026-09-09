@@ -606,7 +606,7 @@ auto main() -> int {
     );
     auto const owned_example_drop =
         owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+            "call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup"
         );
     auto const owned_example_deallocation =
         owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
@@ -694,7 +694,7 @@ auto main() -> int {
     );
     auto const owned_nested_drop =
         owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+            "call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup"
         );
     auto const owned_nested_deallocation =
         owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
@@ -759,7 +759,7 @@ auto main() -> int {
         "%buffer.Ready.values.choice_dynamic_array_cleanup2.is_active = icmp eq i32"
     );
     auto choice_owned_drop = choice_dynamic_array_owned_payload.ir_text.find(
-        "call void @__orison_drop.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
+        "call void @__orison_owned_cleanup.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
     );
     auto choice_owned_deallocate = choice_dynamic_array_owned_payload.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
@@ -799,7 +799,7 @@ auto main() -> int {
         choice_distinct_payload_load
     );
     auto choice_distinct_drop = choice_dynamic_array_distinct_payload.ir_text.find(
-        "call void @__orison_drop.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
+        "call void @__orison_owned_cleanup.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
     );
     auto choice_distinct_deallocate = choice_dynamic_array_distinct_payload.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
@@ -810,7 +810,7 @@ auto main() -> int {
         "define i32 @consume_switch({ i32, [24 x i8] } %buffer)"
     );
     auto choice_distinct_switch_drop = choice_dynamic_array_distinct_payload.ir_text.find(
-        "call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup"
     );
     auto choice_distinct_switch_deallocate = choice_dynamic_array_distinct_payload.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup"
@@ -898,12 +898,12 @@ auto main() -> int {
     );
     assert(
         owned_dynamic_array_parameter_source_drop.ir_text.find(
-            "define void @__orison_drop.Payload(ptr %value)"
+            "define void @__orison_owned_cleanup.Payload(ptr %value)"
         ) != std::string::npos
     );
     assert(
         owned_dynamic_array_parameter_source_drop.ir_text.find(
-            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
     assert(
@@ -913,7 +913,7 @@ auto main() -> int {
         ) != std::string::npos
     );
     auto owned_parameter_drop =
-        owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_drop.Payload");
+        owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_owned_cleanup.Payload");
     auto owned_parameter_deallocate =
         owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_dynamic_array_deallocate");
     auto owned_parameter_return = owned_dynamic_array_parameter_source_drop.ir_text.find("ret i32 1");

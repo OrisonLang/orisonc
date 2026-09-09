@@ -56,10 +56,10 @@ void generated_concurrency_cleanup_collisions_are_diagnosed() {
 void planned_drop_declaration_collisions_are_diagnosed() {
     auto registry = orison::lowering::ModuleSymbolRegistry {};
     auto diagnostics = orison::diagnostics::DiagnosticBag {};
-    assert(registry.register_symbol("__orison_drop.Payload", "source function symbol", 4, diagnostics));
+    assert(registry.register_symbol("__orison_owned_cleanup.Payload", "source function symbol", 4, diagnostics));
 
     auto declaration = orison::lowering::OwnedCleanupDeclaration {
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .source_type_name = "Payload",
         .discovery_line = 18,
         .emit_declaration = true,
@@ -72,7 +72,7 @@ void planned_drop_declaration_collisions_are_diagnosed() {
         diagnostics
     ));
     assert(single_message(diagnostics) ==
-        "LLVM symbol '__orison_drop.Payload' for planned drop declaration collides with source function symbol");
+        "LLVM symbol '__orison_owned_cleanup.Payload' for planned drop declaration collides with source function symbol");
 }
 
 void non_colliding_generated_symbols_pass() {
@@ -93,7 +93,7 @@ void non_colliding_generated_symbols_pass() {
         diagnostics
     ));
     assert(registry.validate_symbol(
-        "__orison_drop.Payload",
+        "__orison_owned_cleanup.Payload",
         "planned drop declaration",
         18,
         diagnostics

@@ -6267,7 +6267,7 @@ private:
             });
             add_drop_obligation(OwnedCleanupSite {
                 .source_type_name = direct_element_type_name,
-                .abi_symbol_name = drop_abi_symbol_name(direct_element_type_name),
+                .abi_symbol_name = owned_cleanup_abi_symbol_name(direct_element_type_name),
                 .owner_name = owner_name + ".element",
                 .site_line = declaration_line,
             });
@@ -6323,7 +6323,7 @@ private:
                 });
                 add_drop_obligation(OwnedCleanupSite {
                     .source_type_name = element_type_name,
-                    .abi_symbol_name = drop_abi_symbol_name(element_type_name),
+                    .abi_symbol_name = owned_cleanup_abi_symbol_name(element_type_name),
                     .owner_name = field_owner_name + ".element",
                     .site_line = declaration_line,
                 });
@@ -6387,7 +6387,7 @@ private:
             }
             add_drop_obligation(OwnedCleanupSite {
                 .source_type_name = binding.type_name,
-                .abi_symbol_name = drop_abi_symbol_name(binding.type_name),
+                .abi_symbol_name = owned_cleanup_abi_symbol_name(binding.type_name),
                 .owner_name = binding.name,
                 .site_line = binding.declaration_line,
             });
@@ -6395,7 +6395,7 @@ private:
             if (!element_type_name.empty()) {
                 add_drop_obligation(OwnedCleanupSite {
                     .source_type_name = element_type_name,
-                    .abi_symbol_name = drop_abi_symbol_name(element_type_name),
+                    .abi_symbol_name = owned_cleanup_abi_symbol_name(element_type_name),
                     .owner_name = binding.name + ".element",
                     .site_line = binding.declaration_line,
                 });

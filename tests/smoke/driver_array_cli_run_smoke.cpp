@@ -61,7 +61,7 @@ void assert_excludes(std::string const& text, std::string_view unexpected_fragme
 }
 
 void assert_dynamic_array_payload_consumer_cleanup(std::string const& output) {
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup");
 }
 
@@ -149,12 +149,12 @@ void assert_owned_dynamic_array_replacement_emit_llvm_success(
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(output.find("%record.Payload = type { i64 }") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_allocate") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_deallocate") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_bounds_failed") != std::string::npos);
 
-    auto const replacement_drop = output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_assign");
+    auto const replacement_drop = output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_assign");
     assert(replacement_drop != std::string::npos);
     auto const replacement_store = output.find("store %record.Payload ", replacement_drop);
     assert(replacement_store != std::string::npos);
@@ -163,7 +163,7 @@ void assert_owned_dynamic_array_replacement_emit_llvm_success(
         output.substr(replacement_store, replacement_store_line_end - replacement_store)
             .find("%items.dynamic_array_assign") != std::string::npos
     );
-    auto const cleanup_drop = output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    auto const cleanup_drop = output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup");
     assert(cleanup_drop != std::string::npos);
     assert(replacement_drop < replacement_store);
     assert(replacement_store < cleanup_drop);
@@ -175,7 +175,7 @@ void assert_owned_computed_dynamic_array_emit_llvm_success(
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(output.find("%record.Payload = type { i64 }") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_allocate") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_deallocate") != std::string::npos);
     assert(output.find("items.computed_for.") != std::string::npos);
@@ -183,7 +183,7 @@ void assert_owned_computed_dynamic_array_emit_llvm_success(
     assert(output.find(".body:") != std::string::npos);
 
     auto const computed_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup"
     );
     auto const computed_deallocation = output.find("call void @__orison_dynamic_array_deallocate", computed_drop);
     auto const finalization = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
@@ -204,7 +204,7 @@ void assert_owned_nested_computed_dynamic_array_emit_llvm_success(
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(output.find("%record.Payload = type { i32 }") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("declare void @__orison_dynamic_array_grow") != std::string::npos);
     assert(output.find("items.computed_for.2.condition:") != std::string::npos);
     assert(output.find("items.computed_for.2.body:") != std::string::npos);
@@ -223,7 +223,7 @@ void assert_owned_nested_computed_dynamic_array_emit_llvm_success(
     );
 
     auto const computed_drop =
-        output.find("call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup");
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup");
     auto const computed_deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.2.data", computed_drop);
     auto const finalization =
@@ -248,7 +248,7 @@ void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_succ
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "%record.Bucket = type { { ptr, i64, i64 } }");
     assert_contains(output, holder_type);
-    assert_contains(output, "define void @__orison_drop.Payload(ptr %value)");
+    assert_contains(output, "define void @__orison_owned_cleanup.Payload(ptr %value)");
     auto owner = std::string {owner_name};
     assert_contains(output, owner + ".computed_for.0.condition:");
     assert_contains(output, owner + ".computed_for.0.body:");
@@ -265,7 +265,7 @@ void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_succ
     );
 
     auto const computed_drop = output.find(
-        "call void @__orison_drop.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup"
     );
     auto const computed_deallocation = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.0.data",
@@ -297,7 +297,7 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(output.find("%record.Payload = type { i64 }") != std::string::npos);
-    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(
         output.find("define i64 @consume_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
@@ -317,7 +317,7 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
     assert(loop_load != std::string::npos);
     assert(loop_field_read != std::string::npos);
     assert(
-        output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") !=
         std::string::npos
     );
     auto const deallocation = output.find("call void @__orison_dynamic_array_deallocate");
@@ -355,7 +355,7 @@ void assert_owned_dynamic_array_parameter_branch_join_emit_llvm_success(
     assert(first_transfer != std::string::npos);
     assert(output.find("call i32 @use_items({ ptr, i64, i64 } %items)", first_transfer + 1) != std::string::npos);
     assert(
-        output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") !=
         std::string::npos
     );
     auto const deallocation = output.find("call void @__orison_dynamic_array_deallocate");
@@ -373,7 +373,7 @@ void assert_owned_dynamic_array_parameter_branch_cleanup_emit_llvm_success(
     assert(output.find(control_flow_ir) != std::string::npos);
     assert(output.find("call i32 @use_items({ ptr, i64, i64 } %items)") != std::string::npos);
     assert(
-        output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") !=
         std::string::npos
     );
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
@@ -435,8 +435,8 @@ void assert_branch_local_named_dynamic_array_cleanup(
     auto right_cleanup = std::string {right_owner} + ".dynamic_array_cleanup";
     assert_contains(output, left_cleanup);
     assert_contains(output, right_cleanup);
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %" + left_cleanup);
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %" + right_cleanup);
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %" + left_cleanup);
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %" + right_cleanup);
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %" + left_cleanup);
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %" + right_cleanup);
     assert_contains(output, "phi " + std::string {phi_type} + " [0, %" + left_cleanup);
@@ -447,7 +447,7 @@ void assert_branch_local_scratch_dynamic_array_cleanup(
     std::string const& output
 ) {
     assert_contains(output, "scratch.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup");
     assert_contains(output, "phi { ptr, i64, i64 } [%tmp");
     assert_contains(output, "%scratch.dynamic_array_cleanup");
@@ -459,8 +459,8 @@ void assert_branch_local_returned_dynamic_array_cleanup(
 ) {
     assert_contains(output, "left_values.dynamic_array_cleanup");
     assert_contains(output, "right_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %left_values.dynamic_array_cleanup");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %right_values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %left_values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %right_values.dynamic_array_cleanup");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %left_values.dynamic_array_cleanup");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %right_values.dynamic_array_cleanup");
     assert_contains(output, "phi { ptr, i64, i64 } [%tmp");
@@ -475,7 +475,7 @@ void assert_branch_local_dynamic_array_cleanup_for_owners(
     for (auto const owner_name : owner_names) {
         auto cleanup_name = std::string {owner_name} + ".dynamic_array_cleanup";
         assert_contains(output, cleanup_name);
-        assert_contains(output, "call void @__orison_drop.Payload(ptr %" + cleanup_name);
+        assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %" + cleanup_name);
         assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %" + cleanup_name);
     }
 }
@@ -622,7 +622,7 @@ void assert_dynamic_array_local_final_if_consumed_owner_cleanup_emit_llvm_succes
     assert_contains(output, "define i32 @choose(i1 %flag)");
     assert_contains(output, "br i1 %flag");
     assert_contains(output, "call i32 @use_items({ ptr, i64, i64 } %tmp");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup");
     assert_excludes(output, "if branch ownership mismatch");
 }
@@ -635,7 +635,7 @@ void assert_dynamic_array_local_final_switch_consumed_owner_cleanup_emit_llvm_su
     assert_contains(output, "define i32 @choose(i1 %flag)");
     assert_contains(output, "switch i1 %flag");
     assert_contains(output, "call i32 @use_items({ ptr, i64, i64 } %tmp");
-    assert_contains(output, "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup");
     assert_excludes(output, "switch case ownership mismatch");
 }
@@ -1776,7 +1776,7 @@ void assert_returned_dynamic_array_parameter_forwarding_emit_llvm_success(
     assert(output.find("define i32 @use_items({ ptr, i64, i64 } %items)") != std::string::npos);
     assert(output.find("%returned.addr = alloca { ptr, i64, i64 }") != std::string::npos);
     assert(output.find("call i32 @use_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
@@ -1806,7 +1806,7 @@ void assert_returned_owned_computed_dynamic_array_emit_llvm_success(
         ) != std::string::npos
     );
     auto const drop_walk = output.find("returned.computed_dynamic_array_cleanup");
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %returned.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %returned.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
     auto const finalization =
@@ -1838,7 +1838,7 @@ void assert_returned_alias_chain_owned_computed_dynamic_array_emit_llvm_success(
     assert(output.find("returned.computed_for.0.body:") != std::string::npos);
     assert(output.find("returned.computed_for.0.exit:") != std::string::npos);
     auto const drop_walk = output.find("returned.computed_dynamic_array_cleanup");
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %returned.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %returned.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
     auto const finalization =
@@ -1874,7 +1874,7 @@ void assert_returned_helper_call_owned_computed_dynamic_array_emit_llvm_success(
     assert(output.find("returned.computed_for.0.body:") != std::string::npos);
     assert(output.find("returned.computed_for.0.exit:") != std::string::npos);
     auto const drop_walk = output.find("returned.computed_dynamic_array_cleanup");
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %returned.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %returned.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
     auto const finalization =
@@ -1920,7 +1920,7 @@ void assert_branch_returned_owned_computed_dynamic_array_emit_llvm_success(
         ) != std::string::npos
     );
     auto const drop_walk = output.find("selected.computed_dynamic_array_cleanup");
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %selected.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %selected.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %selected.computed_for.0.data", drop_call);
     auto const finalization =
@@ -1972,7 +1972,7 @@ void assert_switch_returned_owned_computed_dynamic_array_emit_llvm_success(
         ) != std::string::npos
     );
     auto const drop_walk = output.find("selected.computed_dynamic_array_cleanup");
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %selected.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %selected.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %selected.computed_for.0.data", drop_call);
     auto const finalization =
@@ -2020,7 +2020,7 @@ void assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_succ
     );
     auto const drop_walk = output.find(owner + ".computed_dynamic_array_cleanup");
     auto const drop_call =
-        output.find("call void @__orison_drop.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.0.data", drop_call);
     auto const finalization =
@@ -2048,13 +2048,13 @@ void assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm
     auto const owner = std::string {owner_name};
     auto const returned_loop = output.find(owner + ".computed_for.1.condition:");
     auto const returned_drop =
-        output.find("call void @__orison_drop.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
     auto const returned_deallocate =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.1.data");
     auto const returned_finalize =
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %" + owner + ".addr", returned_deallocate);
     auto const scratch_drop =
-        output.find("call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup", returned_finalize);
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup", returned_finalize);
     auto const scratch_deallocate =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup", scratch_drop);
     auto const scratch_finalize =
@@ -2092,13 +2092,13 @@ void assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_suc
     auto const owner = std::string {owner_name};
     auto const returned_loop = output.find(owner + ".computed_for.1.condition:");
     auto const returned_drop =
-        output.find("call void @__orison_drop.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %" + owner + ".computed_dynamic_array_cleanup");
     auto const returned_deallocate =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.1.data");
     auto const returned_finalize =
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %" + owner + ".addr", returned_deallocate);
     auto const scratch_drop =
-        output.find("call void @__orison_drop.Payload(ptr %scratch.dynamic_array_cleanup", returned_finalize);
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %scratch.dynamic_array_cleanup", returned_finalize);
     auto const scratch_deallocate =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %scratch.dynamic_array_cleanup", scratch_drop);
     auto const scratch_finalize =
@@ -2158,7 +2158,7 @@ void assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm
             "from values.loop.entry to values [cleanup calls enabled]"
         ) != std::string::npos
     );
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %values.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %values.computed_for.", drop_call);
     auto const finalization =
@@ -2203,7 +2203,7 @@ void assert_returned_choice_payload_owned_computed_dynamic_array_emit_llvm_succe
             "from values.loop.entry to values [cleanup calls enabled]"
         ) != std::string::npos
     );
-    auto const drop_call = output.find("call void @__orison_drop.Payload(ptr %values.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %values.computed_dynamic_array_cleanup");
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %values.computed_for.", drop_call);
     auto const finalization =
@@ -2233,7 +2233,7 @@ void assert_returned_dynamic_array_multi_hop_forwarding_emit_llvm_success(
     assert(output.find("define i32 @forward_items({ ptr, i64, i64 } %items)") != std::string::npos);
     assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %items)") != std::string::npos);
     assert(output.find("call i32 @forward_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
@@ -2259,7 +2259,7 @@ void assert_returned_dynamic_array_branch_join_forwarding_emit_llvm_success(
     assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %items)", first_consume + 1) !=
         std::string::npos);
     assert(output.find("call i32 @choose_items(i1 0, { ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
@@ -2287,7 +2287,7 @@ void assert_returned_dynamic_array_choice_branch_forwarding_emit_llvm_success(
     assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %items)", first_consume + 1) !=
         std::string::npos);
     assert(output.find("call i32 @choose_items(i1 0, { ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
@@ -2314,7 +2314,7 @@ void assert_returned_dynamic_array_aggregate_field_forwarding_emit_llvm_success(
     assert(output.find("%returned.addr = alloca %record.PayloadBox") != std::string::npos);
     assert(output.find("%returned.values.addr") != std::string::npos);
     assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%returned.dynamic_array_cleanup") == std::string::npos);
@@ -2341,7 +2341,7 @@ void assert_returned_dynamic_array_nested_aggregate_field_forwarding_emit_llvm_s
     assert(output.find("%returned.addr = alloca %record.OuterBox") != std::string::npos);
     assert(output.find("%returned.inner.values.addr") != std::string::npos);
     assert(output.find("call i32 @consume_items({ ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%inner.values.dynamic_array_cleanup") == std::string::npos);
@@ -2375,7 +2375,7 @@ void assert_returned_dynamic_array_nested_aggregate_field_branch_forwarding_emit
     assert(output.find("%returned.addr = alloca %record.OuterBox") != std::string::npos);
     assert(output.find("%returned.inner.values.addr") != std::string::npos);
     assert(output.find("call i32 @choose_items(i1 0, { ptr, i64, i64 } %tmp") != std::string::npos);
-    assert(output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup") !=
         std::string::npos);
     assert(output.find("%inner.values.dynamic_array_cleanup") == std::string::npos);

@@ -83,7 +83,7 @@ struct OwnedCleanupLoweringAuthorization {
     bool authorized = false;
 };
 
-auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string;
+auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::string;
 
 auto owned_cleanup_implementation_origin_name(OwnedCleanupImplementationOrigin origin) -> std::string_view;
 
@@ -154,13 +154,13 @@ auto format_owned_cleanup_implementation_diagnostic_report(
 auto authorize_owned_cleanup_lowering(
     OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceOwnedCleanupLoweringGate source_drop_lowering_gate = SourceOwnedCleanupLoweringGate::disabled
+    SourceOwnedCleanupLoweringGate source_owned_cleanup_lowering_gate = SourceOwnedCleanupLoweringGate::disabled
 ) -> OwnedCleanupLoweringAuthorization;
 
 auto authorize_owned_cleanup_lowerings(
     std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceOwnedCleanupLoweringGate source_drop_lowering_gate = SourceOwnedCleanupLoweringGate::disabled
+    SourceOwnedCleanupLoweringGate source_owned_cleanup_lowering_gate = SourceOwnedCleanupLoweringGate::disabled
 ) -> std::vector<OwnedCleanupLoweringAuthorization>;
 
 auto format_owned_cleanup_lowering_authorization(

@@ -18,26 +18,26 @@ int main() {
     using orison::lowering::owned_cleanup_declaration_for_action;
 
     auto metadata_only = OwnedCleanupDeclaration {
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .source_type_name = "Payload",
         .discovery_line = 12,
     };
     assert(
         format_owned_cleanup_declaration(metadata_only) ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)"
+        "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 12 (metadata only)"
     );
 
     auto enabled = metadata_only;
     enabled.emit_declaration = true;
     assert(
         format_owned_cleanup_declaration(enabled) ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 12"
+        "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 12"
     );
 
     assert(
         format_owned_cleanup_declaration(OwnedCleanupDeclaration {
-            .symbol_name = "__orison_drop.Unknown",
-        }) == "planned drop __orison_drop.Unknown (metadata only)"
+            .symbol_name = "__orison_owned_cleanup.Unknown",
+        }) == "planned drop __orison_owned_cleanup.Unknown (metadata only)"
     );
 
     auto planned_drops = std::vector<OwnedCleanupDeclaration> {};
@@ -45,7 +45,7 @@ int main() {
     assert(!add_owned_cleanup_declaration(
         planned_drops,
         OwnedCleanupDeclaration {
-            .symbol_name = "__orison_drop.Payload",
+            .symbol_name = "__orison_owned_cleanup.Payload",
             .source_type_name = "Payload",
             .discovery_line = 99,
         }
@@ -57,7 +57,7 @@ int main() {
     assert(!add_owned_cleanup_declaration(
         planned_drops,
         OwnedCleanupDeclaration {
-            .symbol_name = "__orison_drop.Payload",
+            .symbol_name = "__orison_owned_cleanup.Payload",
             .source_type_name = "Payload",
             .discovery_line = 100,
             .emit_declaration = true,
@@ -71,23 +71,23 @@ int main() {
     assert(add_owned_cleanup_declaration(
         planned_drops,
         OwnedCleanupDeclaration {
-            .symbol_name = "__orison_drop.OtherPayload",
+            .symbol_name = "__orison_owned_cleanup.OtherPayload",
             .source_type_name = "OtherPayload",
             .discovery_line = 20,
         }
     ));
     assert(planned_drops.size() == 2);
-    assert(planned_drops[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(planned_drops[1].symbol_name == "__orison_owned_cleanup.OtherPayload");
 
     auto report = format_owned_cleanup_declaration_report(planned_drops);
     assert(report.size() == 2);
     assert(
         report[0] ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)"
+        "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 12 (metadata only)"
     );
     assert(
         report[1] ==
-        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
+        "planned drop __orison_owned_cleanup.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
     );
 
     auto empty_report = format_owned_cleanup_declaration_report({});
@@ -97,18 +97,18 @@ int main() {
         enabled,
     });
     assert(emitted_report.size() == 1);
-    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 12");
+    assert(emitted_report.front() == "planned drop __orison_owned_cleanup.Payload for Payload discovered at line 12");
     assert(format_emitted_owned_cleanup_declaration_report({metadata_only}).empty());
 
     auto action = orison::lowering::OwnedCleanupAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
-        .symbol_name = "__orison_drop.Payload",
+        .symbol_name = "__orison_owned_cleanup.Payload",
         .field_index = 3,
         .discovery_line = 42,
     };
     auto declaration_from_action = owned_cleanup_declaration_for_action(action);
-    assert(declaration_from_action.symbol_name == "__orison_drop.Payload");
+    assert(declaration_from_action.symbol_name == "__orison_owned_cleanup.Payload");
     assert(declaration_from_action.source_type_name == "Payload");
     assert(declaration_from_action.discovery_line == 42);
     assert(!declaration_from_action.emit_declaration);
@@ -116,7 +116,7 @@ int main() {
     auto unresolved_authorization = orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = orison::semantics::OwnedCleanupSite {
             .source_type_name = "Payload",
-            .abi_symbol_name = "__orison_drop.Payload",
+            .abi_symbol_name = "__orison_owned_cleanup.Payload",
             .owner_name = "payload",
             .site_line = 7,
         },
@@ -132,7 +132,7 @@ int main() {
     authorized_authorization.authorized = true;
 
     auto declaration_from_authorization = owned_cleanup_declaration_for_authorization(authorized_authorization);
-    assert(declaration_from_authorization.symbol_name == "__orison_drop.Payload");
+    assert(declaration_from_authorization.symbol_name == "__orison_owned_cleanup.Payload");
     assert(declaration_from_authorization.source_type_name == "Payload");
     assert(declaration_from_authorization.discovery_line == 7);
     assert(declaration_from_authorization.emit_declaration);
@@ -148,7 +148,7 @@ int main() {
         orison::semantics::OwnedCleanupLoweringAuthorization {
             .site = orison::semantics::OwnedCleanupSite {
                 .source_type_name = "Payload",
-                .abi_symbol_name = "__orison_drop.Payload",
+                .abi_symbol_name = "__orison_owned_cleanup.Payload",
                 .owner_name = "other",
                 .site_line = 9,
             },
@@ -158,13 +158,13 @@ int main() {
         },
     });
     assert(semantic_declarations.size() == 1);
-    assert(semantic_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(semantic_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(semantic_declarations.front().discovery_line == 7);
     assert(semantic_declarations.front().emit_declaration);
 
     assert(
         format_owned_cleanup_action(action) ==
-        "planned drop action __orison_drop.Payload for capture payload: Payload field 3 "
+        "planned drop action __orison_owned_cleanup.Payload for capture payload: Payload field 3 "
         "discovered at line 42 (metadata only)"
     );
     auto action_report = format_owned_cleanup_action_report({action});
@@ -178,14 +178,14 @@ int main() {
             orison::lowering::OwnedCleanupAction {
                 .capture_name = "payload_again",
                 .source_type_name = "Payload",
-                .symbol_name = "__orison_drop.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload",
                 .field_index = 4,
                 .discovery_line = 50,
             },
             orison::lowering::OwnedCleanupAction {
                 .capture_name = "other",
                 .source_type_name = "OtherPayload",
-                .symbol_name = "__orison_drop.OtherPayload",
+                .symbol_name = "__orison_owned_cleanup.OtherPayload",
                 .field_index = 5,
                 .discovery_line = 51,
             },
@@ -193,7 +193,7 @@ int main() {
         {"Payload"}
     );
     assert(declared_test_drops.size() == 1);
-    assert(declared_test_drops.front().symbol_name == "__orison_drop.Payload");
+    assert(declared_test_drops.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(declared_test_drops.front().source_type_name == "Payload");
     assert(declared_test_drops.front().discovery_line == 42);
     assert(declared_test_drops.front().emit_declaration);
@@ -201,7 +201,7 @@ int main() {
     auto dynamic_array_action = orison::lowering::OwnedCleanupAction {
         .capture_name = "items",
         .source_type_name = "DynamicArray<UInt32>",
-        .symbol_name = orison::semantics::drop_abi_symbol_name("DynamicArray<UInt32>"),
+        .symbol_name = orison::semantics::owned_cleanup_abi_symbol_name("DynamicArray<UInt32>"),
         .field_index = 1,
         .discovery_line = 64,
     };
