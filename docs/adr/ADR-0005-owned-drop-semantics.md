@@ -221,6 +221,9 @@ inventing semantics outside the spec/tour.
 - Static-indexed aggregate owned-computed DynamicArray rejection fixtures no longer declare `interface Drop` or
   `implements Drop`; array CLI smoke coverage pins compiler-derived cleanup while preserving owner-mismatch,
   dynamic-index, and unsupported-helper-shape diagnostics.
+- Owned-parameter DynamicArray rejection fixtures no longer declare `interface Drop` or `implements Drop`; array CLI
+  and pipeline smoke coverage pin compiler-derived cleanup while preserving second-use, receiver-after-move,
+  forwarding, branch, and switch cleanup diagnostics.
 - Positive runtime-indexed member-transfer fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
   and driver smoke coverage pins compiler-derived member cleanup bindings for direct, sibling, paired, final-control,
   and choice-payload transfers.
