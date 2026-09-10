@@ -6447,19 +6447,19 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_cleanup_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_missing_drop_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_cleanup_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_cleanup_run.or"
     );
     assert_cli_emit_llvm_existing_fixture_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_missing_drop_rejected.or"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_cleanup_run.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

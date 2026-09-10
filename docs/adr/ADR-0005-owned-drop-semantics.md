@@ -288,6 +288,9 @@ inventing semantics outside the spec/tour.
   `implements Drop`. Array CLI, generic CLI, and pipeline smoke coverage pin compiler-derived cleanup while preserving
   branch/switch owner-mismatch, returned choice-payload reuse, final switch-binding reuse, helper-return reuse, and
   multi-switch consumed-scratch reuse diagnostics.
+- Runtime-indexed choice-payload computed-member boundary fixtures no longer declare `interface Drop` or
+  `implements Drop`. Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct and nested
+  computed-member cleanup success plus post-move reuse diagnostics.
 
 ## Consequences
 
