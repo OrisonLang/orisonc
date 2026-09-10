@@ -64,7 +64,7 @@ void populate_semantic_drop_reports(
     CompilePipelineOptions const& options
 ) {
     auto semantic_summary_drop_sites =
-        semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
+        semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     result.semantic_owned_cleanup_state.discovered_implementations = collect_discovered_owned_cleanup_implementations(
         result.parse_result.module,
         options,

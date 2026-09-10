@@ -127,7 +127,7 @@ auto semantic_drop_resolution_state_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
-        semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
+        semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     return semantics::format_owned_cleanup_implementation_resolution_report(
         semantic_summary_drop_sites,
         semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
@@ -138,7 +138,7 @@ auto semantic_drop_diagnostic_state_report(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
-        semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
+        semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     return semantics::format_owned_cleanup_implementation_diagnostic_report(
         semantic_summary_drop_sites,
         semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
@@ -1170,8 +1170,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-planned-drops") {
         return analyze_report(std::filesystem::path(args[2]), [](auto const& result) {
-            return semantics::format_semantic_drop_obligation_report(
-                result.semantic_result.semantic_module.drop_obligations
+            return semantics::format_semantic_owned_cleanup_obligation_report(
+                result.semantic_result.semantic_module.owned_cleanup_obligations
             );
         });
     }

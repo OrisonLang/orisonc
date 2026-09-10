@@ -62,6 +62,8 @@
   syntax.
 - 2026-09-10: Pipeline-owned semantic cleanup state now uses `SemanticOwnedCleanup*` naming internally. Existing
   `semantic-drop` report helpers, CLI flags, and test target names remain compatibility surfaces.
+- 2026-09-10: Semantic module owned-cleanup obligations now use `SemanticOwnedCleanupObligation*` names internally.
+  Existing rendered `drop obligation` text remains compatibility output.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

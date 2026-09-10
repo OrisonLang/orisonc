@@ -6001,7 +6001,7 @@ private:
 
     void pop_scope() {
         if (!scope_stack_.empty()) {
-            collect_drop_obligations(scope_stack_.back());
+            collect_owned_cleanup_obligations(scope_stack_.back());
             scope_stack_.pop_back();
         }
     }
@@ -6081,8 +6081,8 @@ private:
         });
     }
 
-    void add_drop_obligation(OwnedCleanupSite const& site) {
-        semantic_module_.drop_obligations.push_back(SemanticDropObligationSummary {
+    void add_owned_cleanup_obligation(OwnedCleanupSite const& site) {
+        semantic_module_.owned_cleanup_obligations.push_back(SemanticOwnedCleanupObligationSummary {
             .line = site.site_line,
             .owner_name = site.owner_name,
             .source_type_name = site.source_type_name,
@@ -6265,7 +6265,7 @@ private:
                 .element_source_type_name = direct_element_type_name,
                 .binding_kind = binding_kind,
             });
-            add_drop_obligation(OwnedCleanupSite {
+            add_owned_cleanup_obligation(OwnedCleanupSite {
                 .source_type_name = direct_element_type_name,
                 .abi_symbol_name = owned_cleanup_abi_symbol_name(direct_element_type_name),
                 .owner_name = owner_name + ".element",
@@ -6321,7 +6321,7 @@ private:
                     .element_source_type_name = element_type_name,
                     .binding_kind = binding_kind,
                 });
-                add_drop_obligation(OwnedCleanupSite {
+                add_owned_cleanup_obligation(OwnedCleanupSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = owned_cleanup_abi_symbol_name(element_type_name),
                     .owner_name = field_owner_name + ".element",
@@ -6366,7 +6366,7 @@ private:
         return DynamicArrayDescriptorBindingKind::local_binding;
     }
 
-    void collect_drop_obligations(std::vector<Binding> const& bindings) {
+    void collect_owned_cleanup_obligations(std::vector<Binding> const& bindings) {
         for (auto const& binding : bindings) {
             if (binding.module_constant || binding.receiver_binding ||
                 binding.value_origin == ValueOriginKind::task || binding.value_origin == ValueOriginKind::thread ||
@@ -6385,7 +6385,7 @@ private:
                     .binding_kind = dynamic_array_descriptor_binding_kind(binding),
                 });
             }
-            add_drop_obligation(OwnedCleanupSite {
+            add_owned_cleanup_obligation(OwnedCleanupSite {
                 .source_type_name = binding.type_name,
                 .abi_symbol_name = owned_cleanup_abi_symbol_name(binding.type_name),
                 .owner_name = binding.name,
@@ -6393,7 +6393,7 @@ private:
             });
             auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(binding.type_name);
             if (!element_type_name.empty()) {
-                add_drop_obligation(OwnedCleanupSite {
+                add_owned_cleanup_obligation(OwnedCleanupSite {
                     .source_type_name = element_type_name,
                     .abi_symbol_name = owned_cleanup_abi_symbol_name(element_type_name),
                     .owner_name = binding.name + ".element",
@@ -6599,7 +6599,7 @@ auto format_dynamic_array_descriptor_summary_report(
     return report;
 }
 
-auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obligation) -> std::string {
+auto format_semantic_owned_cleanup_obligation(SemanticOwnedCleanupObligationSummary const& obligation) -> std::string {
     auto output = std::string {"drop obligation "};
     output += obligation.abi_symbol_name;
     if (!obligation.source_type_name.empty()) {
@@ -6617,23 +6617,23 @@ auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obliga
     return output;
 }
 
-auto format_semantic_drop_obligation_report(
-    std::vector<SemanticDropObligationSummary> const& obligations
+auto format_semantic_owned_cleanup_obligation_report(
+    std::vector<SemanticOwnedCleanupObligationSummary> const& obligations
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(obligations.size());
     for (auto const& obligation : obligations) {
-        report.push_back(format_semantic_drop_obligation(obligation));
+        report.push_back(format_semantic_owned_cleanup_obligation(obligation));
     }
     return report;
 }
 
-auto project_semantic_drop_obligations(
+auto project_semantic_owned_cleanup_obligations(
     SemanticModuleSummary const& summary
 ) -> std::vector<OwnedCleanupSite> {
     auto sites = std::vector<OwnedCleanupSite> {};
-    sites.reserve(summary.drop_obligations.size());
-    for (auto const& obligation : summary.drop_obligations) {
+    sites.reserve(summary.owned_cleanup_obligations.size());
+    for (auto const& obligation : summary.owned_cleanup_obligations) {
         sites.push_back(OwnedCleanupSite {
             .source_type_name = obligation.source_type_name,
             .abi_symbol_name = obligation.abi_symbol_name,

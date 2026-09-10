@@ -600,8 +600,8 @@ auto semantic_owned_cleanup_implementation_discovery_report(
 auto semantic_planned_drop_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    return orison::semantics::format_semantic_drop_obligation_report(
-        result.semantic_result.semantic_module.drop_obligations
+    return orison::semantics::format_semantic_owned_cleanup_obligation_report(
+        result.semantic_result.semantic_module.owned_cleanup_obligations
     );
 }
 
@@ -609,7 +609,7 @@ auto semantic_drop_resolution_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
-        orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
+        orison::semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_owned_cleanup_implementation_resolution_report(
         semantic_summary_drop_sites,
         semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
@@ -620,7 +620,7 @@ auto semantic_drop_diagnostic_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     auto semantic_summary_drop_sites =
-        orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
+        orison::semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_owned_cleanup_implementation_diagnostic_report(
         semantic_summary_drop_sites,
         semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
@@ -14341,7 +14341,7 @@ auto main() -> int {
     assert(parameter_owned_drop < parameter_owned_deallocate);
     assert(parameter_owned_deallocate < parameter_owned_return);
     auto dynamic_array_source_owner_drop_sites =
-        orison::semantics::project_semantic_drop_obligations(
+        orison::semantics::project_semantic_owned_cleanup_obligations(
             dynamic_array_source_owner.semantic_result.semantic_module
         );
     assert(dynamic_array_source_owner_drop_sites.size() == 2);
@@ -14642,7 +14642,7 @@ auto main() -> int {
     auto semantic_drops_authorization_report = semantic_drop_lowering_authorization_report(semantic_drops);
     auto semantic_drops_summary_report = semantic_drop_resolution_summary_report(semantic_drops);
     assert(semantic_drops_planned_report.size() == 2);
-    assert(semantic_drops.semantic_result.semantic_module.drop_obligations.size() == 2);
+    assert(semantic_drops.semantic_result.semantic_module.owned_cleanup_obligations.size() == 2);
     assert_line_contains(semantic_drops_planned_report, 0, "owner input");
     assert_line_contains(semantic_drops_planned_report, 1, "owner local");
     assert(semantic_drops_resolution_report.size() == 2);
@@ -14655,11 +14655,11 @@ auto main() -> int {
     assert(semantic_drops.semantic_owned_cleanup_lowering_authorizations.size() == 2);
     assert(
         semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].site.owner_name ==
-        semantic_drops.semantic_result.semantic_module.drop_obligations[0].owner_name
+        semantic_drops.semantic_result.semantic_module.owned_cleanup_obligations[0].owner_name
     );
     assert(
         semantic_drops.semantic_owned_cleanup_lowering_authorizations[1].site.owner_name ==
-        semantic_drops.semantic_result.semantic_module.drop_obligations[1].owner_name
+        semantic_drops.semantic_result.semantic_module.owned_cleanup_obligations[1].owner_name
     );
     assert(semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].semantic_resolved);
     assert(!semantic_drops.semantic_owned_cleanup_lowering_authorizations[0].semantic_owned_cleanup_lowering_enabled);

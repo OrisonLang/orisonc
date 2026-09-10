@@ -301,6 +301,8 @@ inventing semantics outside the spec/tour.
   in this area is source-location, source-type, or source-correlation metadata, not user-facing cleanup syntax.
 - Pipeline-owned semantic cleanup state now uses `SemanticOwnedCleanup*` naming internally. Existing `semantic-drop`
   report helpers, CLI flags, and test target names remain compatibility surfaces.
+- Semantic module owned-cleanup obligations now use `SemanticOwnedCleanupObligation*` names internally. Existing
+  rendered `drop obligation` text remains compatibility output.
 
 ## Consequences
 

@@ -7697,29 +7697,29 @@ void test_semantic_module_summary_success() {
     assert(found_scalar_copied_fact);
     assert(found_receiver_fact);
 
-    bool found_box_drop_obligation = false;
-    for (auto const& obligation : summary.drop_obligations) {
+    bool found_box_owned_cleanup_obligation = false;
+    for (auto const& obligation : summary.owned_cleanup_obligations) {
         if (obligation.owner_name == "box" && obligation.source_type_name == "Box<UInt32>") {
-            found_box_drop_obligation = true;
+            found_box_owned_cleanup_obligation = true;
             assert(obligation.abi_symbol_name == "__orison_owned_cleanup.Box_UInt32_");
             assert(
-                orison::semantics::format_semantic_drop_obligation(obligation) ==
+                orison::semantics::format_semantic_owned_cleanup_obligation(obligation) ==
                 "drop obligation __orison_owned_cleanup.Box_UInt32_ for Box<UInt32> owner box at line 23"
             );
         }
     }
-    assert(found_box_drop_obligation);
-    auto projected_drop_sites = orison::semantics::project_semantic_drop_obligations(summary);
-    assert(projected_drop_sites.size() == summary.drop_obligations.size());
-    assert(projected_drop_sites.front().source_type_name == "Box<UInt32>");
-    assert(projected_drop_sites.front().abi_symbol_name == "__orison_owned_cleanup.Box_UInt32_");
-    assert(projected_drop_sites.front().owner_name == "box");
-    assert(projected_drop_sites.front().site_line == 23);
-    auto drop_obligation_report =
-        orison::semantics::format_semantic_drop_obligation_report(summary.drop_obligations);
-    assert(drop_obligation_report.size() == summary.drop_obligations.size());
+    assert(found_box_owned_cleanup_obligation);
+    auto projected_owned_cleanup_sites = orison::semantics::project_semantic_owned_cleanup_obligations(summary);
+    assert(projected_owned_cleanup_sites.size() == summary.owned_cleanup_obligations.size());
+    assert(projected_owned_cleanup_sites.front().source_type_name == "Box<UInt32>");
+    assert(projected_owned_cleanup_sites.front().abi_symbol_name == "__orison_owned_cleanup.Box_UInt32_");
+    assert(projected_owned_cleanup_sites.front().owner_name == "box");
+    assert(projected_owned_cleanup_sites.front().site_line == 23);
+    auto owned_cleanup_obligation_report =
+        orison::semantics::format_semantic_owned_cleanup_obligation_report(summary.owned_cleanup_obligations);
+    assert(owned_cleanup_obligation_report.size() == summary.owned_cleanup_obligations.size());
     assert(
-        drop_obligation_report.front() ==
+        owned_cleanup_obligation_report.front() ==
         "drop obligation __orison_owned_cleanup.Box_UInt32_ for Box<UInt32> owner box at line 23"
     );
 
@@ -13509,7 +13509,7 @@ void test_thread_capture_receiver_this_failure() {
     assert_receiver_capture_diagnostic(path, 5);
 }
 
-void test_owned_binding_drop_obligations_success() {
+void test_owned_binding_owned_cleanup_obligations_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_owned_binding_drop_sites_success.or";
     write_concurrency_fixture(
         path,
@@ -13526,20 +13526,20 @@ void test_owned_binding_drop_obligations_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.semantic_module.dynamic_array_descriptors.empty());
-    auto drop_obligation_report =
-        orison::semantics::format_semantic_drop_obligation_report(analysis.semantic_module.drop_obligations);
-    assert(drop_obligation_report.size() == 2);
+    auto owned_cleanup_obligation_report =
+        orison::semantics::format_semantic_owned_cleanup_obligation_report(analysis.semantic_module.owned_cleanup_obligations);
+    assert(owned_cleanup_obligation_report.size() == 2);
     assert(
-        drop_obligation_report[0] ==
+        owned_cleanup_obligation_report[0] ==
         "drop obligation __orison_owned_cleanup.Buffer for Buffer owner input at line 4"
     );
     assert(
-        drop_obligation_report[1] ==
+        owned_cleanup_obligation_report[1] ==
         "drop obligation __orison_owned_cleanup.Buffer for Buffer owner local at line 5"
     );
 }
 
-void test_dynamic_array_binding_drop_obligations_success() {
+void test_dynamic_array_binding_owned_cleanup_obligations_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_dynamic_array_drop_sites_success.or";
     write_concurrency_fixture(
         path,
@@ -13573,20 +13573,20 @@ void test_dynamic_array_binding_drop_obligations_success() {
         "dynamic array descriptor summary DynamicArray<Payload> owner items element Payload at line 4 origin parameter "
         "(metadata only)"
     );
-    auto drop_obligation_report =
-        orison::semantics::format_semantic_drop_obligation_report(analysis.semantic_module.drop_obligations);
-    assert(drop_obligation_report.size() == 2);
+    auto owned_cleanup_obligation_report =
+        orison::semantics::format_semantic_owned_cleanup_obligation_report(analysis.semantic_module.owned_cleanup_obligations);
+    assert(owned_cleanup_obligation_report.size() == 2);
     assert(
-        drop_obligation_report[0] ==
+        owned_cleanup_obligation_report[0] ==
         "drop obligation __orison_owned_cleanup.DynamicArray_Payload_ for DynamicArray<Payload> owner items at line 4"
     );
     assert(
-        drop_obligation_report[1] ==
+        owned_cleanup_obligation_report[1] ==
         "drop obligation __orison_owned_cleanup.Payload for Payload owner items.element at line 4"
     );
 }
 
-void test_scalar_dynamic_array_binding_drop_obligations_skip_element_success() {
+void test_scalar_dynamic_array_binding_owned_cleanup_obligations_skip_element_success() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_semantics_scalar_dynamic_array_drop_sites_success.or";
     write_concurrency_fixture(
@@ -13609,11 +13609,11 @@ void test_scalar_dynamic_array_binding_drop_obligations_skip_element_success() {
         "dynamic array descriptor summary DynamicArray<UInt32> owner words element UInt32 at line 2 origin parameter "
         "(metadata only)"
     );
-    auto drop_obligation_report =
-        orison::semantics::format_semantic_drop_obligation_report(analysis.semantic_module.drop_obligations);
-    assert(drop_obligation_report.size() == 1);
+    auto owned_cleanup_obligation_report =
+        orison::semantics::format_semantic_owned_cleanup_obligation_report(analysis.semantic_module.owned_cleanup_obligations);
+    assert(owned_cleanup_obligation_report.size() == 1);
     assert(
-        drop_obligation_report.front() ==
+        owned_cleanup_obligation_report.front() ==
         "drop obligation __orison_owned_cleanup.DynamicArray_UInt32_ for DynamicArray<UInt32> owner words at line 2"
     );
 }
@@ -13682,7 +13682,7 @@ void test_returned_dynamic_array_descriptor_binding_kind_success() {
     );
 }
 
-void test_trivial_binding_drop_obligations_ignored_success() {
+void test_trivial_binding_owned_cleanup_obligations_ignored_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_trivial_binding_drop_sites_ignored.or";
     write_concurrency_fixture(
         path,
@@ -13699,7 +13699,7 @@ void test_trivial_binding_drop_obligations_ignored_success() {
 
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
-    assert(analysis.semantic_module.drop_obligations.empty());
+    assert(analysis.semantic_module.owned_cleanup_obligations.empty());
 }
 
 }  // namespace
@@ -14382,12 +14382,12 @@ int main() {
     test_task_capture_mutable_outer_local_failure();
     test_thread_capture_mutable_outer_local_failure();
     test_thread_capture_receiver_this_failure();
-    test_owned_binding_drop_obligations_success();
-    test_dynamic_array_binding_drop_obligations_success();
-    test_scalar_dynamic_array_binding_drop_obligations_skip_element_success();
+    test_owned_binding_owned_cleanup_obligations_success();
+    test_dynamic_array_binding_owned_cleanup_obligations_success();
+    test_scalar_dynamic_array_binding_owned_cleanup_obligations_skip_element_success();
     test_local_dynamic_array_descriptor_binding_kind_success();
     test_returned_dynamic_array_descriptor_binding_kind_success();
-    test_trivial_binding_drop_obligations_ignored_success();
+    test_trivial_binding_owned_cleanup_obligations_ignored_success();
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

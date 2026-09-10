@@ -1330,8 +1330,8 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
             .element_source_type_name = "Payload",
         }
     );
-    semantic_result.semantic_module.drop_obligations.push_back(
-        orison::semantics::SemanticDropObligationSummary {
+    semantic_result.semantic_module.owned_cleanup_obligations.push_back(
+        orison::semantics::SemanticOwnedCleanupObligationSummary {
             .line = 8,
             .owner_name = "items.element",
             .source_type_name = "Payload",
@@ -1434,7 +1434,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
             .test_only_render_dynamic_array_element_drop_walks = true,
             .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
-                    .site = orison::semantics::project_semantic_drop_obligations(
+                    .site = orison::semantics::project_semantic_owned_cleanup_obligations(
                         semantic_result.semantic_module
                     ).front(),
                     .semantic_resolved = true,

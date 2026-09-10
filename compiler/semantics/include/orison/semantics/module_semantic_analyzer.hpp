@@ -113,7 +113,7 @@ struct SemanticOwnershipSummary {
     bool requires_drop = false;
 };
 
-struct SemanticDropObligationSummary {
+struct SemanticOwnedCleanupObligationSummary {
     std::size_t line = 0;
     std::string owner_name;
     std::string source_type_name;
@@ -155,7 +155,7 @@ struct SemanticModuleSummary {
     std::vector<SemanticChoiceVariantSummary> choice_variants;
     std::vector<SemanticExpressionSummary> expressions;
     std::vector<SemanticOwnershipSummary> ownership_facts;
-    std::vector<SemanticDropObligationSummary> drop_obligations;
+    std::vector<SemanticOwnedCleanupObligationSummary> owned_cleanup_obligations;
     std::vector<SemanticDynamicArrayDescriptorSummary> dynamic_array_descriptors;
     std::vector<SemanticAggregatePathSummary> aggregate_paths;
 };
@@ -185,13 +185,13 @@ auto format_dynamic_array_descriptor_summary_report(
     std::vector<SemanticDynamicArrayDescriptorSummary> const& descriptors
 ) -> std::vector<std::string>;
 
-auto format_semantic_drop_obligation(SemanticDropObligationSummary const& obligation) -> std::string;
+auto format_semantic_owned_cleanup_obligation(SemanticOwnedCleanupObligationSummary const& obligation) -> std::string;
 
-auto format_semantic_drop_obligation_report(
-    std::vector<SemanticDropObligationSummary> const& obligations
+auto format_semantic_owned_cleanup_obligation_report(
+    std::vector<SemanticOwnedCleanupObligationSummary> const& obligations
 ) -> std::vector<std::string>;
 
-auto project_semantic_drop_obligations(
+auto project_semantic_owned_cleanup_obligations(
     SemanticModuleSummary const& summary
 ) -> std::vector<OwnedCleanupSite>;
 
