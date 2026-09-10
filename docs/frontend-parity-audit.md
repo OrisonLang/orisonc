@@ -3225,3 +3225,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup preserves named-element,
   computed-index, nested-field, choice-payload, multi-payload, multi-variant, append-statement, and count reuse
   diagnostics.
+- 2026-09-10: DynamicArray read/projection/push rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Generic CLI, array CLI, and pipeline smoke coverage verify compiler-derived cleanup preserves
+  owned-read, owned-projection, push-after-transfer, and indexed-assignment RHS reuse diagnostics.

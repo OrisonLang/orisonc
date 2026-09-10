@@ -281,6 +281,9 @@ inventing semantics outside the spec/tour.
 - Receiver/member-chain DynamicArray rejection fixtures no longer declare `interface Drop` or `implements Drop`.
   Generic CLI smoke coverage pins compiler-derived cleanup while preserving named-element, computed-index,
   nested-field, choice-payload, multi-payload, multi-variant, append-statement, and count reuse diagnostics.
+- DynamicArray read/projection/push rejection fixtures no longer declare `interface Drop` or `implements Drop`.
+  Generic CLI, array CLI, and pipeline smoke coverage pin compiler-derived cleanup while preserving owned-read,
+  owned-projection, push-after-transfer, and indexed-assignment RHS reuse diagnostics.
 
 ## Consequences
 
