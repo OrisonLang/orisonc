@@ -3169,3 +3169,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   further split into returned-final, forwarded-computed, forwarded-final, and wrapper-final-consumer CTest modes.
 - 2026-08-30: Generic CLI runtime-indexed constructor/member cleanup coverage is isolated into its own CTest mode so
   `core` no longer carries that lowering-heavy fixture family.
+- 2026-09-09: Positive runtime-indexed member-transfer fixtures no longer declare `interface Drop` or
+  `implements Drop`. Pipeline and driver smoke coverage verifies compiler-derived member cleanup bindings for direct,
+  sibling, paired, final-control, and choice-payload transfers.

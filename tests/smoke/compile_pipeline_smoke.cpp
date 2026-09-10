@@ -15796,9 +15796,9 @@ auto main() -> int {
         has_runtime_indexed_member_transfer_audit_line(
             with_source_text(
                 "runtime-index member cleanup target owner items index (index + zero) element Box moved Inner "
-                "member-path item source-line 33 operation drop-live-member-siblings "
+                "member-path item source-line 18 operation drop-live-member-siblings "
                 "drop-metadata __orison_member_cleanup.Box.except.item metadata ready production disabled",
-                33,
+                18,
                 "var outer: Outer = Outer(items[index + zero].item)"
             )
         )
@@ -15807,12 +15807,12 @@ auto main() -> int {
         has_runtime_indexed_member_transfer_audit_line(
             with_source_text(
                 "runtime-index member cleanup production-readiness owner items index (index + zero) "
-                "element Box moved Inner member-path item source-line 33 proof ready target-metadata ready "
+                "element Box moved Inner member-path item source-line 18 proof ready target-metadata ready "
                 "helper-drop-bindings ready cfg-slice ready module-mutation blocked "
                 "production-member-cleanup blocked production-gate blocked production-enabled false "
                 "production blocked blockers 2 blocker member-cleanup-module-mutation "
                 "blocker production-member-cleanup",
-                33,
+                18,
                 "var outer: Outer = Outer(items[index + zero].item)"
             )
         )
@@ -15820,7 +15820,7 @@ auto main() -> int {
     assert(
         has_runtime_indexed_member_transfer_audit_line(
             "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) seam selected count valid order valid "
             "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid "
             "operations-ready ready no-operations-applied true validation ready report-only true "
@@ -15832,7 +15832,7 @@ auto main() -> int {
     assert(
         has_runtime_indexed_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) verdict blocked guarded-rewrite blocked "
             "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
             "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
@@ -15913,7 +15913,7 @@ auto main() -> int {
     assert(
         has_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) validation ready conflict-free true "
             "ir-mutation requested production-gate disabled apply-requested false authorization blocked "
             "apply-authorized false "
@@ -15925,7 +15925,7 @@ auto main() -> int {
     assert(
         has_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) preview ready apply-authorized false "
             "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
             "report-only true production disabled blockers 5 blocker member-cleanup-module-mutation "
@@ -15975,7 +15975,7 @@ auto main() -> int {
     assert(
         has_production_gate_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) validation ready conflict-free true "
             "ir-mutation requested production-gate enabled apply-requested false authorization ready "
             "apply-authorized false "
@@ -15985,7 +15985,7 @@ auto main() -> int {
     assert(
         has_production_gate_member_transfer_audit_line(
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) preview ready apply-authorized false "
             "actions-applied false expected-checks 3 expected-checks-ready true verification blocked "
             "report-only true production disabled blockers 2 blocker member-cleanup-mutation-apply-authorization "
@@ -16006,7 +16006,7 @@ auto main() -> int {
             runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front()
         ) ==
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 33 checklist ready ir-mutation-requested true "
+        "element Box moved Inner member-path item source-line 18 checklist ready ir-mutation-requested true "
         "production-gate-requested true ir-mutation enabled production-gate enabled "
         "gate ready report-only false production enabled blockers 0"
     );
@@ -16018,7 +16018,7 @@ auto main() -> int {
     assert(runtime_indexed_member_transfer_execution_summary.element_source_type_name == "Box");
     assert(runtime_indexed_member_transfer_execution_summary.moved_source_type_name == "Inner");
     assert(runtime_indexed_member_transfer_execution_summary.moved_member_path == std::vector<std::string> {"item"});
-    assert(runtime_indexed_member_transfer_execution_summary.source_line == 33);
+    assert(runtime_indexed_member_transfer_execution_summary.source_line == 18);
     assert(runtime_indexed_member_transfer_execution_summary.helper_symbol_name == "__orison_member_cleanup.Box.except.item");
     assert(runtime_indexed_member_transfer_execution_summary.helper_binding_count == 1);
     assert(runtime_indexed_member_transfer_execution_summary.helper_sibling_binding_count == 0);
@@ -16035,7 +16035,7 @@ auto main() -> int {
             runtime_indexed_member_transfer_execution_summary
         ) ==
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 33 typed-gate ready apply authorized "
+        "element Box moved Inner member-path item source-line 18 typed-gate ready apply authorized "
         "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
         "rewrite-promotion ready helper-bindings 1 helper-target "
         "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
@@ -17060,7 +17060,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) validation ready conflict-free true "
             "ir-mutation requested production-gate enabled apply-requested true authorization ready "
             "apply-authorized true report-only false production enabled blockers 0"
@@ -17069,7 +17069,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) preview ready apply-authorized true "
             "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
             "report-only false production enabled blockers 0 expected-check branch-target items.final-cleanup "
@@ -17080,7 +17080,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-promotion-summary owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) operations 3 operations-ready ready validation ready "
             "conflict-free true authorization ready preview ready actions 3 post-apply-verification ready "
             "expected-checks 3 promotion ready report-only false production enabled blockers 0"
@@ -17089,7 +17089,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) promotion ready post-apply-verification ready "
             "authorization ready ir-mutation requested production-gate enabled readiness ready "
             "report-only false production enabled blockers 0"
@@ -17098,7 +17098,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) readiness ready guarded-rewrite ready "
             "blockers 0 diagnostics 0 report-only false production enabled"
         )
@@ -17106,7 +17106,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) verdict ready guarded-rewrite ready "
             "authorization ready rewrite-requested true rewrite-authorized true report-only false "
             "production enabled blockers 0"
@@ -17115,7 +17115,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) authorization ready rewrite-authorized true "
             "execution-plan ready execution-requested true execution enabled report-only false "
             "production enabled blockers 0"
@@ -17124,7 +17124,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) execution-plan ready execution enabled blockers 0 "
             "diagnostics 0 report-only false production enabled"
         )
@@ -17132,7 +17132,7 @@ auto main() -> int {
     assert(
         has_apply_requested_member_transfer_audit_line(
             "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-            "element Box moved Inner member-path item source-line 33 source-text "
+            "element Box moved Inner member-path item source-line 18 source-text "
             "var outer: Outer = Outer(items[index + zero].item) authorization ready execution-plan ready "
             "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false "
             "production enabled"
@@ -17382,13 +17382,13 @@ auto main() -> int {
     assert(nested_helper_drop_bindings.nested_member_path);
     assert(nested_helper_drop_bindings.helper_definition_ready);
     assert(!nested_helper_drop_bindings.production_enabled);
-    assert(nested_helper_drop_bindings.source_line == 72);
+    assert(nested_helper_drop_bindings.source_line == 37);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report(
             nested_helper_drop_bindings
         ) ==
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 "
+        "element Wrap moved Inner member-path box.item source-line 37 "
         "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
     );

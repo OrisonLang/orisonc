@@ -805,7 +805,7 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     assert(production_readiness == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) "
         "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
@@ -814,20 +814,20 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     assert(output.find("blocker production-member-cleanup") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-operation-plan owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) seam selected operations 3 operations-ready ready "
         "operations-applied false report-only true production disabled blockers 0 "
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) seam selected count valid order valid "
         "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid operations-ready ready "
         "no-operations-applied true validation ready report-only true production disabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-conflict-detection owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) validation ready branch-anchor-matches 1 "
         "branch-anchor unique closing-anchor-matches 1 closing-anchor unique phi-predecessor-matches 1 "
         "phi-predecessor unique conflict-free true apply-allowed false report-only true production disabled "
@@ -835,28 +835,28 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-apply-authorization owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) validation ready conflict-free true "
         "ir-mutation requested production-gate enabled apply-requested true authorization ready "
         "apply-authorized true report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-post-apply-verification owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) preview ready apply-authorized true "
         "actions-applied true expected-checks 3 expected-checks-ready true verification ready "
         "report-only false production enabled blockers 0 "
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-promotion-summary owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) operations 3 operations-ready ready validation ready "
         "conflict-free true authorization ready preview ready actions 3 post-apply-verification ready "
         "expected-checks 3 promotion ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) promotion ready post-apply-verification ready "
         "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
         "production enabled blockers 0"
@@ -865,33 +865,33 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     assert(output.find("blocker production-member-cleanup-ir-mutation ") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation readiness verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) readiness ready guarded-rewrite ready "
         "blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite authorization owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) verdict ready guarded-rewrite ready "
         "authorization ready rewrite-requested true rewrite-authorized true report-only false "
         "production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution-plan owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) authorization ready rewrite-authorized true "
         "execution-plan ready execution-requested true execution enabled report-only false production enabled "
         "blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite execution verdict owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) execution-plan ready execution enabled blockers 0 "
         "diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) authorization ready execution-plan ready "
         "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
@@ -964,13 +964,13 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
     assert_owner_lines(
         "left_items",
         "(left_index + left_zero)",
-        33,
+        18,
         "var left_outer: Outer = Outer(left_items[left_index + left_zero].item)"
     );
     assert_owner_lines(
         "right_items",
         "(right_index + right_zero)",
-        40,
+        25,
         "var right_outer: Outer = Outer(right_items[right_index + right_zero].item)"
     );
     assert(output.find("blocker blocked-rewrite-promotion") == std::string::npos);
@@ -996,7 +996,7 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_readiness_fixture
     assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index choose_index(true) "
-        "element Box moved Inner member-path item source-line 31 source-text "
+        "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(true)].item) "
         "helper __orison_member_cleanup.Box.except.item "
         "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
@@ -1007,14 +1007,14 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_readiness_fixture
     ) == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner items index choose_index(true) "
-        "element Box moved Inner member-path item source-line 31 source-text "
+        "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(true)].item) promotion ready post-apply-verification ready "
         "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
         "production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index choose_index(true) "
-        "element Box moved Inner member-path item source-line 31 source-text "
+        "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(true)].item) authorization ready execution-plan ready "
         "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
@@ -1042,7 +1042,7 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_readiness_fixture
     assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index choose_index(1 as UInt32) "
-        "element Box moved Inner member-path item source-line 31 source-text "
+        "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(1 as UInt32)].item) "
         "helper __orison_member_cleanup.Box.except.item "
         "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
@@ -1053,14 +1053,14 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_readiness_fixture
     ) == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner items index choose_index(1 as UInt32) "
-        "element Box moved Inner member-path item source-line 31 source-text "
+        "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(1 as UInt32)].item) promotion ready "
         "post-apply-verification ready authorization ready ir-mutation requested production-gate enabled "
         "readiness ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index choose_index(1 as UInt32) "
-        "element Box moved Inner member-path item source-line 31 source-text "
+        "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(1 as UInt32)].item) authorization ready "
         "execution-plan ready execution-verdict ready promotion ready blockers 0 diagnostics 0 "
         "report-only false production enabled"
@@ -1089,7 +1089,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness
     assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 41 source-text "
+        "element Box moved Inner member-path item source-line 26 source-text "
         "var outer: Outer = Outer(items[index + zero].item) "
         "helper __orison_member_cleanup.Box.except.item "
         "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
@@ -1100,14 +1100,14 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness
     ) == std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 41 source-text "
+        "element Box moved Inner member-path item source-line 26 source-text "
         "var outer: Outer = Outer(items[index + zero].item) promotion ready post-apply-verification ready "
         "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
         "production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 41 source-text "
+        "element Box moved Inner member-path item source-line 26 source-text "
         "var outer: Outer = Outer(items[index + zero].item) authorization ready execution-plan ready "
         "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
@@ -1132,21 +1132,21 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_re
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup helper-drop-bindings owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 90 source-text "
+        "element Wrap moved Inner member-path box.item source-line 51 source-text "
         "var outer: Outer = Outer(holder.items[index + zero].box.item) "
         "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 90 source-text "
+        "element Wrap moved Inner member-path box.item source-line 51 source-text "
         "var outer: Outer = Outer(holder.items[index + zero].box.item) promotion ready "
         "post-apply-verification ready authorization ready ir-mutation requested production-gate enabled "
         "readiness ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation rewrite promotion-status owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 90 source-text "
+        "element Wrap moved Inner member-path box.item source-line 51 source-text "
         "var outer: Outer = Outer(holder.items[index + zero].box.item) authorization ready "
         "execution-plan ready execution-verdict ready promotion ready blockers 0 diagnostics 0 "
         "report-only false production enabled"
@@ -1631,7 +1631,7 @@ void assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 72 source-text "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) typed-gate ready"
     ) != std::string::npos);
     assert(output.find(
@@ -1647,11 +1647,11 @@ void assert_cli_runtime_indexed_single_member_cleanup_summary_fixture_success(
     auto output = read_command_output(command);
     assert(output.find(
         "runtime-index member cleanup typed-promotion-gate owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 33"
+        "element Box moved Inner member-path item source-line 18"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup execution-summary owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 33 source-text "
+        "element Box moved Inner member-path item source-line 18 source-text "
         "var outer: Outer = Outer(items[index + zero].item) typed-gate ready"
     ) != std::string::npos);
     assert(output.find(
@@ -1690,13 +1690,13 @@ void assert_cli_runtime_indexed_two_member_cleanup_summary_fixture_success(
     assert_owner_lines(
         "left_items",
         "(left_index + left_zero)",
-        33,
+        18,
         "var left_outer: Outer = Outer(left_items[left_index + left_zero].item)"
     );
     assert_owner_lines(
         "right_items",
         "(right_index + right_zero)",
-        40,
+        25,
         "var right_outer: Outer = Outer(right_items[right_index + right_zero].item)"
     );
 }
@@ -1732,13 +1732,13 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_succes
     assert_owner_lines(
         "left_items",
         "(left_index + left_zero)",
-        72,
+        37,
         "var left_outer: Outer = Outer(left_items[left_index + left_zero].box.item)"
     );
     assert_owner_lines(
         "right_items",
         "(right_index + right_zero)",
-        79,
+        44,
         "var right_outer: Outer = Outer(right_items[right_index + right_zero].box.item)"
     );
 }
