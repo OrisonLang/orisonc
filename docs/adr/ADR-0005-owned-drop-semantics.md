@@ -251,6 +251,9 @@ inventing semantics outside the spec/tour.
 - DynamicArray record-constructor member-path reuse rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct post-move reuse
   diagnostics for direct, indexed, and nested constructor member paths.
+- Runtime-indexed record and choice constructor computed-index reuse rejection fixtures no longer declare
+  `interface Drop` or `implements Drop`. Generic CLI smoke coverage pins compiler-derived cleanup while preserving the
+  direct `use after move: holder.items[index]` diagnostic across emit-LLVM and production paths.
 
 ## Consequences
 

@@ -3194,3 +3194,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: DynamicArray record-constructor member-path reuse rejection fixtures no longer declare `interface Drop`
   or `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup preserves direct post-move reuse
   diagnostics for direct, indexed, and nested constructor member paths.
+- 2026-09-09: Runtime-indexed record and choice constructor computed-index reuse rejection fixtures no longer declare
+  `interface Drop` or `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup preserves the
+  direct `use after move: holder.items[index]` diagnostic across emit-LLVM and production paths.
