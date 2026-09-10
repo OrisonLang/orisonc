@@ -248,6 +248,9 @@ inventing semantics outside the spec/tour.
 - Choice-constructor member-path reuse rejection fixtures no longer declare `interface Drop` or `implements Drop`.
   Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct post-move reuse diagnostics across
   single-payload, multi-payload, multi-variant, indexed, computed-index, and nested paths.
+- DynamicArray record-constructor member-path reuse rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct post-move reuse
+  diagnostics for direct, indexed, and nested constructor member paths.
 
 ## Consequences
 
