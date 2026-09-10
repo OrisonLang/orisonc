@@ -60,6 +60,8 @@
 - 2026-09-10: Semantic cleanup implementation collectors now use semantic-candidate naming internally. Remaining source
   terminology in this area is source-location, source-type, or source-correlation metadata, not user-facing cleanup
   syntax.
+- 2026-09-10: Pipeline-owned semantic cleanup state now uses `SemanticOwnedCleanup*` naming internally. Existing
+  `semantic-drop` report helpers, CLI flags, and test target names remain compatibility surfaces.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

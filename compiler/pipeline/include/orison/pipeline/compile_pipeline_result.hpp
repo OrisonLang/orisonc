@@ -54,7 +54,7 @@ struct CompilePipelineResult {
     semantics::SemanticAnalysisResult semantic_result;
     std::string ir_text;
     std::string object_bytes;
-    SemanticDropState semantic_drop_state;
+    SemanticOwnedCleanupState semantic_owned_cleanup_state;
     std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_owned_cleanup_lowering_authorizations;
     DynamicArrayDescriptorCleanupPlanState dynamic_array_descriptor_cleanup_plan_state;
     DynamicArrayDescriptorLifetimePlanState dynamic_array_descriptor_lifetime_plan_state;

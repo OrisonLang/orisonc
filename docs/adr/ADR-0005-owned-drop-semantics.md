@@ -299,6 +299,8 @@ inventing semantics outside the spec/tour.
 - Semantic authorization gates now use semantic-owned-cleanup naming for options, readiness blockers, and reports.
 - Semantic cleanup implementation collectors now use semantic-candidate naming internally. Remaining source terminology
   in this area is source-location, source-type, or source-correlation metadata, not user-facing cleanup syntax.
+- Pipeline-owned semantic cleanup state now uses `SemanticOwnedCleanup*` naming internally. Existing `semantic-drop`
+  report helpers, CLI flags, and test target names remain compatibility surfaces.
 
 ## Consequences
 

@@ -572,8 +572,8 @@ auto semantic_dynamic_array_descriptor_summary_report(
     );
 }
 
-auto semantic_drop_implementations(
-    orison::pipeline::SemanticDropState const& state
+auto semantic_owned_cleanup_implementations(
+    orison::pipeline::SemanticOwnedCleanupState const& state
 ) -> std::vector<orison::semantics::OwnedCleanupImplementation> {
     auto implementations = std::vector<orison::semantics::OwnedCleanupImplementation> {};
     implementations.reserve(state.discovered_implementations.size());
@@ -583,8 +583,8 @@ auto semantic_drop_implementations(
     return implementations;
 }
 
-auto semantic_drop_implementation_discovery_report(
-    orison::pipeline::SemanticDropState const& state
+auto semantic_owned_cleanup_implementation_discovery_report(
+    orison::pipeline::SemanticOwnedCleanupState const& state
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     report.reserve(state.discovered_implementations.size());
@@ -612,7 +612,7 @@ auto semantic_drop_resolution_report(
         orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_owned_cleanup_implementation_resolution_report(
         semantic_summary_drop_sites,
-        semantic_drop_implementations(result.semantic_drop_state)
+        semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
     );
 }
 
@@ -623,7 +623,7 @@ auto semantic_drop_diagnostic_report(
         orison::semantics::project_semantic_drop_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_owned_cleanup_implementation_diagnostic_report(
         semantic_summary_drop_sites,
-        semantic_drop_implementations(result.semantic_drop_state)
+        semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
     );
 }
 
@@ -639,7 +639,7 @@ auto semantic_drop_resolution_summary_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     return orison::semantics::format_owned_cleanup_implementation_resolution_summary_report(
-        result.semantic_drop_state.resolution_summaries
+        result.semantic_owned_cleanup_state.resolution_summaries
     );
 }
 
@@ -1548,7 +1548,7 @@ auto main() -> int {
     assert(analysis.parse_result.module.package_name == "demo.minimal");
     assert(analysis.parse_result.module.functions.size() == 1);
     assert(semantic_planned_drop_report(analysis).empty());
-    assert(semantic_drop_implementation_discovery_report(analysis.semantic_drop_state).empty());
+    assert(semantic_owned_cleanup_implementation_discovery_report(analysis.semantic_owned_cleanup_state).empty());
     assert(semantic_drop_resolution_report(analysis).empty());
     assert(semantic_drop_diagnostic_report(analysis).empty());
     assert(analysis.semantic_owned_cleanup_lowering_authorizations.empty());
@@ -14691,7 +14691,7 @@ auto main() -> int {
     assert(!parsed_drop.has_errors());
     auto parsed_drop_planned_report = semantic_planned_drop_report(parsed_drop);
     auto parsed_drop_implementation_report =
-        semantic_drop_implementation_discovery_report(parsed_drop.semantic_drop_state);
+        semantic_owned_cleanup_implementation_discovery_report(parsed_drop.semantic_owned_cleanup_state);
     auto parsed_drop_resolution_report = semantic_drop_resolution_report(parsed_drop);
     auto parsed_drop_diagnostic_report = semantic_drop_diagnostic_report(parsed_drop);
     auto parsed_drop_authorization_report = semantic_drop_lowering_authorization_report(parsed_drop);
@@ -20263,7 +20263,7 @@ auto main() -> int {
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_implementations = {
+            .test_only_semantic_owned_cleanup_implementations = {
                 orison::semantics::semantic_owned_cleanup_implementation(
                     "Payload",
                     3,
@@ -20276,7 +20276,7 @@ auto main() -> int {
     );
     assert(!resolved_semantic_drops.has_errors());
     auto resolved_semantic_drops_implementation_report =
-        semantic_drop_implementation_discovery_report(resolved_semantic_drops.semantic_drop_state);
+        semantic_owned_cleanup_implementation_discovery_report(resolved_semantic_drops.semantic_owned_cleanup_state);
     auto resolved_semantic_drops_resolution_report = semantic_drop_resolution_report(resolved_semantic_drops);
     auto resolved_semantic_drops_diagnostic_report = semantic_drop_diagnostic_report(resolved_semantic_drops);
     auto resolved_semantic_drops_authorization_report =
@@ -20306,7 +20306,7 @@ auto main() -> int {
     auto candidate_resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_implementation_candidates = {
+            .test_only_semantic_owned_cleanup_implementation_candidates = {
                 orison::semantics::OwnedCleanupImplementationCandidate {
                     .source_type_name = "Payload",
                     .declaration_line = 3,
@@ -20324,7 +20324,7 @@ auto main() -> int {
     );
     assert(!candidate_resolved_semantic_drops.has_errors());
     auto candidate_resolved_semantic_drops_implementation_report =
-        semantic_drop_implementation_discovery_report(candidate_resolved_semantic_drops.semantic_drop_state);
+        semantic_owned_cleanup_implementation_discovery_report(candidate_resolved_semantic_drops.semantic_owned_cleanup_state);
     auto candidate_resolved_semantic_drops_resolution_report =
         semantic_drop_resolution_report(candidate_resolved_semantic_drops);
     auto candidate_resolved_semantic_drops_summary_report =
@@ -20348,7 +20348,7 @@ auto main() -> int {
     auto unproven_semantic_drops = pipeline.analyze(
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_implementations = {
+            .test_only_semantic_owned_cleanup_implementations = {
                 orison::semantics::semantic_owned_cleanup_implementation(
                     "Payload",
                     3,
@@ -20372,7 +20372,7 @@ auto main() -> int {
     auto partial_semantic_drops = pipeline.analyze(
         partial_drop_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_semantic_drop_implementations = {
+            .test_only_semantic_owned_cleanup_implementations = {
                 orison::semantics::semantic_owned_cleanup_implementation(
                     "Payload",
                     3,

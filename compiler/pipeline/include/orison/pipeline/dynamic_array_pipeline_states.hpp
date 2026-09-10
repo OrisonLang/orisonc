@@ -104,13 +104,13 @@ struct OwnedCleanupAuthorizationState {
     std::vector<lowering::OwnedCleanupAuthorizationReport> authorizations;
 };
 
-struct SemanticDropImplementationDiscovery {
+struct SemanticOwnedCleanupImplementationDiscovery {
     semantics::OwnedCleanupImplementation implementation;
     std::string discovery_name;
 };
 
-struct SemanticDropState {
-    std::vector<SemanticDropImplementationDiscovery> discovered_implementations;
+struct SemanticOwnedCleanupState {
+    std::vector<SemanticOwnedCleanupImplementationDiscovery> discovered_implementations;
     std::vector<semantics::OwnedCleanupImplementationResolutionSummary> resolution_summaries;
 };
 
