@@ -3172,3 +3172,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: Positive runtime-indexed member-transfer fixtures no longer declare `interface Drop` or
   `implements Drop`. Pipeline and driver smoke coverage verifies compiler-derived member cleanup bindings for direct,
   sibling, paired, final-control, and choice-payload transfers.
+- 2026-09-09: Positive direct owned DynamicArray receiver fixtures no longer declare `interface Drop` or
+  `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup for direct, forwarded, ternary,
+  append, replace, and count receiver calls.

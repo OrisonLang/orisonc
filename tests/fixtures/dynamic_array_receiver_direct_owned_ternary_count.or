@@ -6,13 +6,6 @@ record Nested
 record Payload
     child: Nested
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 extend DynamicArray<T>
     function count(this: shared This) -> IntSize
         this.length()
