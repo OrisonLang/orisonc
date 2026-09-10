@@ -75,7 +75,7 @@ struct LlvmIrEmissionOptions {
     bool enable_runtime_indexed_member_cleanup_rewrite_execution_request = false;
     bool enable_runtime_indexed_fixed_array_constructor_move_only = false;
     std::vector<DynamicArrayDescriptorLifetimePlan> dynamic_array_descriptor_lifetime_plans;
-    std::vector<std::string> source_owned_cleanup_definition_symbols;
+    std::vector<std::string> owned_cleanup_definition_symbols;
     std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_owned_cleanup_lowering_authorizations;
 };
 

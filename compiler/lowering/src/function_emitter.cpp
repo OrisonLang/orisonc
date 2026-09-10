@@ -445,13 +445,13 @@ auto source_type_has_dynamic_array_cleanup_descendant(
     );
 }
 
-auto source_owned_cleanup_symbol_available(
+auto owned_cleanup_symbol_available(
     std::string_view source_type_name,
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
     auto symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type_name);
-    if (std::ranges::find(options.source_owned_cleanup_definition_symbols, symbol_name) ==
-        options.source_owned_cleanup_definition_symbols.end()) {
+    if (std::ranges::find(options.owned_cleanup_definition_symbols, symbol_name) ==
+        options.owned_cleanup_definition_symbols.end()) {
         return std::nullopt;
     }
     return symbol_name;
@@ -511,7 +511,7 @@ void remove_runtime_indexed_owner_local_dynamic_array_cleanup_plans(FunctionLowe
     }
 }
 
-auto emit_source_owned_cleanup_record_local_cleanups(
+auto emit_owned_cleanup_record_local_cleanups(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
@@ -538,7 +538,7 @@ auto emit_source_owned_cleanup_record_local_cleanups(
         if (!owner_has_local_dynamic_array_cleanup_plan(name, session)) {
             continue;
         }
-        if (!source_owned_cleanup_symbol_available(source_type_name, context.options).has_value()) {
+        if (!owned_cleanup_symbol_available(source_type_name, context.options).has_value()) {
             continue;
         }
         if (!aggregate_storage_for_name(name, session.state).has_value()) {
@@ -555,7 +555,7 @@ auto emit_source_owned_cleanup_record_local_cleanups(
         }
         auto const record = context.lowering.records.find(source_type->second);
         auto const storage = aggregate_storage_for_name(name, session.state);
-        auto const symbol = source_owned_cleanup_symbol_available(source_type->second, context.options);
+        auto const symbol = owned_cleanup_symbol_available(source_type->second, context.options);
         if (record == context.lowering.records.end() || !storage.has_value() || !symbol.has_value()) {
             continue;
         }
@@ -568,7 +568,7 @@ auto emit_source_owned_cleanup_record_local_cleanups(
     return true;
 }
 
-auto emit_source_owned_cleanup_fixed_array_local_cleanups(
+auto emit_owned_cleanup_fixed_array_local_cleanups(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
@@ -598,7 +598,7 @@ auto emit_source_owned_cleanup_fixed_array_local_cleanups(
         if (!owner_has_local_dynamic_array_cleanup_plan(name, session)) {
             continue;
         }
-        if (!source_owned_cleanup_symbol_available(*element_source_type, context.options).has_value()) {
+        if (!owned_cleanup_symbol_available(*element_source_type, context.options).has_value()) {
             continue;
         }
         if (!aggregate_storage_for_name(name, session.state).has_value()) {
@@ -620,13 +620,13 @@ auto emit_source_owned_cleanup_fixed_array_local_cleanups(
             continue;
         }
         auto const parsed_array_type = parse_llvm_array_type(array_type->type);
-        auto const symbol = source_owned_cleanup_symbol_available(*element_source_type, context.options);
+        auto const symbol = owned_cleanup_symbol_available(*element_source_type, context.options);
         if (!parsed_array_type.has_value() || !symbol.has_value()) {
             continue;
         }
 
         for (auto index = std::size_t {0}; index < parsed_array_type->length; ++index) {
-            auto element_pointer = "%" + name + ".source_owned_cleanup.element" + std::to_string(index) + ".addr" +
+            auto element_pointer = "%" + name + ".owned_cleanup.element" + std::to_string(index) + ".addr" +
                 std::to_string(session.state.next_temporary_index++);
             output << "  " << element_pointer << " = getelementptr " << array_type->type
                    << ", ptr " << *storage << ", i64 0, i64 " << index << "\n";
@@ -640,13 +640,13 @@ auto emit_source_owned_cleanup_fixed_array_local_cleanups(
     return true;
 }
 
-auto emit_source_owned_cleanup_local_cleanups(
+auto emit_owned_cleanup_local_cleanups(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> bool {
-    return emit_source_owned_cleanup_record_local_cleanups(context, session, output) &&
-        emit_source_owned_cleanup_fixed_array_local_cleanups(context, session, output);
+    return emit_owned_cleanup_record_local_cleanups(context, session, output) &&
+        emit_owned_cleanup_fixed_array_local_cleanups(context, session, output);
 }
 
 auto emit_function_return_cleanup(
@@ -666,7 +666,7 @@ auto emit_function_return_cleanup(
     )) {
         return false;
     }
-    if (!emit_source_owned_cleanup_local_cleanups(context, session, output)) {
+    if (!emit_owned_cleanup_local_cleanups(context, session, output)) {
         return false;
     }
     remove_runtime_indexed_owner_local_dynamic_array_cleanup_plans(session);
@@ -900,8 +900,8 @@ auto dynamic_array_parameter_element_cleanup_proven(
 
     auto const expected_owner_name = std::string {parameter_name} + ".element";
     auto const expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(sequence->element_source_type_name);
-    if (std::ranges::find(options.source_owned_cleanup_definition_symbols, expected_symbol_name) !=
-        options.source_owned_cleanup_definition_symbols.end()) {
+    if (std::ranges::find(options.owned_cleanup_definition_symbols, expected_symbol_name) !=
+        options.owned_cleanup_definition_symbols.end()) {
         return true;
     }
     return std::ranges::any_of(options.semantic_owned_cleanup_lowering_authorizations, [&](auto const& authorization) {

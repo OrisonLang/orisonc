@@ -555,7 +555,7 @@ void assert_cli_runtime_indexed_nested_cleanup_emit_llvm_fixture_success(
         std::string::npos);
     assert(output.find("store %record.Outer zeroinitializer, ptr %outers.runtime_cleanup.element.addr") !=
         std::string::npos);
-    assert(output.find("%outers.source_owned_cleanup.element") == std::string::npos);
+    assert(output.find("%outers.owned_cleanup.element") == std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }

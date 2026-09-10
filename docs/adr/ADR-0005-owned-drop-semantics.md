@@ -294,6 +294,9 @@ inventing semantics outside the spec/tour.
 - The last checked-in `.or` cleanup fixtures no longer declare `interface Drop` or `implements Drop`. Examples and
   generic CLI smoke coverage pin compiler-derived owned parameter, runtime-indexed nested, and runtime-indexed
   choice-payload cleanup emission without source-visible cleanup syntax.
+- Lowering now names generated cleanup definition symbols, local cleanup emitters, and fixed-array cleanup temporaries
+  as owned cleanup internals instead of source cleanup internals. The semantic authorization gate names remain a
+  separate compatibility cleanup.
 
 ## Consequences
 

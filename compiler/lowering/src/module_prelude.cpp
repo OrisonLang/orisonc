@@ -45,7 +45,7 @@ auto emit_module_prelude(
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
     std::vector<OwnedCleanupDeclaration> const& owned_cleanup_declarations,
     std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations,
-    std::vector<std::string> const& source_defined_drop_symbols
+    std::vector<std::string> const& owned_cleanup_symbols
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -120,7 +120,7 @@ auto emit_module_prelude(
         if (!declaration.emit_declaration) {
             continue;
         }
-        if (has_emitted_symbol(source_defined_drop_symbols, declaration.symbol_name)) {
+        if (has_emitted_symbol(owned_cleanup_symbols, declaration.symbol_name)) {
             continue;
         }
         if (has_emitted_symbol(emitted_drop_symbols, declaration.symbol_name)) {

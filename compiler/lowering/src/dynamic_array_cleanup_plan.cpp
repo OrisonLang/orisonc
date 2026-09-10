@@ -58,8 +58,8 @@ auto dynamic_array_parameter_element_cleanup_proven(
     }
 
     auto const expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(sequence->element_source_type_name);
-    return std::ranges::find(options.source_owned_cleanup_definition_symbols, expected_symbol_name) !=
-        options.source_owned_cleanup_definition_symbols.end();
+    return std::ranges::find(options.owned_cleanup_definition_symbols, expected_symbol_name) !=
+        options.owned_cleanup_definition_symbols.end();
 }
 
 auto dynamic_array_descriptor_element_drop_action(

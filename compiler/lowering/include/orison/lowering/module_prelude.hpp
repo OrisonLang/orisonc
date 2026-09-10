@@ -17,7 +17,7 @@ auto emit_module_prelude(
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations = {},
     std::vector<OwnedCleanupDeclaration> const& owned_cleanup_declarations = {},
     std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations = {},
-    std::vector<std::string> const& source_defined_drop_symbols = {}
+    std::vector<std::string> const& owned_cleanup_symbols = {}
 ) -> std::string;
 
 }  // namespace orison::lowering
