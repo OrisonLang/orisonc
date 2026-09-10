@@ -30,7 +30,7 @@ int main() {
     };
     assert(
         orison::semantics::format_owned_cleanup_implementation(unproven) ==
-        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 7 origin source-derived "
+        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 7 origin semantic-candidate "
         "non-finite safe-boundary (unproven)"
     );
     auto missing = orison::semantics::resolve_owned_cleanup_implementation(site, {unproven});
@@ -79,7 +79,7 @@ int main() {
     proven.body.finite = true;
     assert(
         orison::semantics::format_owned_cleanup_implementation(proven) ==
-        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 7 origin source-derived finite "
+        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 7 origin semantic-candidate finite "
         "safe-boundary (proven)"
     );
     auto resolved = orison::semantics::resolve_owned_cleanup_implementation(site, {proven});
@@ -138,7 +138,7 @@ int main() {
     );
     assert(orison::semantics::format_owned_cleanup_lowering_authorization_report({}, {}).empty());
 
-    auto source_derived = orison::semantics::source_derived_owned_cleanup_implementation(
+    auto semantic_candidate = orison::semantics::semantic_owned_cleanup_implementation(
         "Payload",
         9,
         orison::semantics::OwnedCleanupImplementationBodySummary {
@@ -147,32 +147,32 @@ int main() {
             .referenced_functions = {"payload_release", "audit_drop"},
         }
     );
-    assert(source_derived.proven);
-    assert(source_derived.abi_symbol_name == "__orison_owned_cleanup.Payload");
-    assert(source_derived.origin == orison::semantics::OwnedCleanupImplementationOrigin::source_derived);
+    assert(semantic_candidate.proven);
+    assert(semantic_candidate.abi_symbol_name == "__orison_owned_cleanup.Payload");
+    assert(semantic_candidate.origin == orison::semantics::OwnedCleanupImplementationOrigin::semantic_candidate);
     assert(
-        orison::semantics::format_owned_cleanup_implementation(source_derived) ==
-        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 9 origin source-derived finite "
+        orison::semantics::format_owned_cleanup_implementation(semantic_candidate) ==
+        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 9 origin semantic-candidate finite "
         "unsafe-boundary references payload_release audit_drop (proven)"
     );
-    auto resolved_source_derived =
-        orison::semantics::resolve_owned_cleanup_implementation(site, {source_derived});
-    assert(resolved_source_derived.resolved);
+    auto resolved_semantic_candidate =
+        orison::semantics::resolve_owned_cleanup_implementation(site, {semantic_candidate});
+    assert(resolved_semantic_candidate.resolved);
 
-    auto non_finite_source_derived = orison::semantics::source_derived_owned_cleanup_implementation(
+    auto non_finite_semantic_candidate = orison::semantics::semantic_owned_cleanup_implementation(
         "Payload",
         10,
         orison::semantics::OwnedCleanupImplementationBodySummary {}
     );
-    assert(!non_finite_source_derived.proven);
+    assert(!non_finite_semantic_candidate.proven);
     assert(
-        orison::semantics::format_owned_cleanup_implementation(non_finite_source_derived) ==
-        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 10 origin source-derived non-finite "
+        orison::semantics::format_owned_cleanup_implementation(non_finite_semantic_candidate) ==
+        "drop implementation __orison_owned_cleanup.Payload for Payload declared at line 10 origin semantic-candidate non-finite "
         "safe-boundary (unproven)"
     );
-    assert(!orison::semantics::resolve_owned_cleanup_implementation(site, {non_finite_source_derived}).resolved);
+    assert(!orison::semantics::resolve_owned_cleanup_implementation(site, {non_finite_semantic_candidate}).resolved);
 
-    auto test_fixture = source_derived;
+    auto test_fixture = semantic_candidate;
     test_fixture.origin = orison::semantics::OwnedCleanupImplementationOrigin::test_fixture;
     assert(
         orison::semantics::format_owned_cleanup_implementation(test_fixture) ==
@@ -201,7 +201,7 @@ int main() {
         "semantic-resolved lowering-authorized compiler-owned cleanup accepted"
     );
 
-    auto collected_implementations = orison::semantics::collect_source_derived_owned_cleanup_implementations({
+    auto collected_implementations = orison::semantics::collect_semantic_owned_cleanup_implementations({
         orison::semantics::OwnedCleanupImplementationCandidate {},
         orison::semantics::OwnedCleanupImplementationCandidate {
             .source_type_name = "Payload",
@@ -302,7 +302,7 @@ int main() {
     module.implementations.push_back(std::move(nonfinite_drop_implementation));
 
     auto empty_body_summary =
-        orison::semantics::prove_source_derived_owned_cleanup_implementation_body(module.implementations[0]);
+        orison::semantics::prove_semantic_owned_cleanup_implementation_body(module.implementations[0]);
     assert(empty_body_summary.finite);
     assert(!empty_body_summary.unsafe_boundary_required);
     assert(empty_body_summary.referenced_functions.empty());
@@ -320,28 +320,28 @@ int main() {
     });
     naked_return_implementation.methods.push_back(std::move(naked_return_method));
     auto naked_return_body_summary =
-        orison::semantics::prove_source_derived_owned_cleanup_implementation_body(naked_return_implementation);
+        orison::semantics::prove_semantic_owned_cleanup_implementation_body(naked_return_implementation);
     assert(naked_return_body_summary.finite);
     assert(!naked_return_body_summary.unsafe_boundary_required);
     assert(naked_return_body_summary.referenced_functions.empty());
 
-    auto source_candidates = orison::semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
-    assert(source_candidates.size() == 3);
-    assert(source_candidates[0].source_type_name == "Payload");
-    assert(source_candidates[0].declaration_line == 30);
-    assert(source_candidates[0].body.finite);
-    assert(!source_candidates[0].body.unsafe_boundary_required);
-    assert(source_candidates[0].body.referenced_functions.empty());
-    assert(source_candidates[1].source_type_name == "Box<Payload>");
-    assert(source_candidates[1].declaration_line == 31);
-    assert(source_candidates[1].body.finite);
-    assert(!source_candidates[1].body.unsafe_boundary_required);
-    assert(source_candidates[1].body.referenced_functions.empty());
-    assert(source_candidates[2].source_type_name == "Resource");
-    assert(source_candidates[2].declaration_line == 34);
-    assert(!source_candidates[2].body.finite);
-    assert(!source_candidates[2].body.unsafe_boundary_required);
-    assert(source_candidates[2].body.referenced_functions.empty());
+    auto semantic_candidates = orison::semantics::collect_semantic_owned_cleanup_implementation_candidates(module);
+    assert(semantic_candidates.size() == 3);
+    assert(semantic_candidates[0].source_type_name == "Payload");
+    assert(semantic_candidates[0].declaration_line == 30);
+    assert(semantic_candidates[0].body.finite);
+    assert(!semantic_candidates[0].body.unsafe_boundary_required);
+    assert(semantic_candidates[0].body.referenced_functions.empty());
+    assert(semantic_candidates[1].source_type_name == "Box<Payload>");
+    assert(semantic_candidates[1].declaration_line == 31);
+    assert(semantic_candidates[1].body.finite);
+    assert(!semantic_candidates[1].body.unsafe_boundary_required);
+    assert(semantic_candidates[1].body.referenced_functions.empty());
+    assert(semantic_candidates[2].source_type_name == "Resource");
+    assert(semantic_candidates[2].declaration_line == 34);
+    assert(!semantic_candidates[2].body.finite);
+    assert(!semantic_candidates[2].body.unsafe_boundary_required);
+    assert(semantic_candidates[2].body.referenced_functions.empty());
 
     auto compiler_owned_implementations =
         orison::semantics::collect_compiler_intrinsic_owned_cleanup_implementations(

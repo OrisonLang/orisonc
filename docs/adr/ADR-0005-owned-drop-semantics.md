@@ -297,7 +297,8 @@ inventing semantics outside the spec/tour.
 - Lowering now names generated cleanup definition symbols, local cleanup emitters, and fixed-array cleanup temporaries
   as owned cleanup internals instead of source cleanup internals.
 - Semantic authorization gates now use semantic-owned-cleanup naming for options, readiness blockers, and reports.
-  Historical source-derived implementation collector names remain until user-defined finalization syntax is decided.
+- Semantic cleanup implementation collectors now use semantic-candidate naming internally. Remaining source terminology
+  in this area is source-location, source-type, or source-correlation metadata, not user-facing cleanup syntax.
 
 ## Consequences
 

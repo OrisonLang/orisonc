@@ -20264,7 +20264,7 @@ auto main() -> int {
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementations = {
-                orison::semantics::source_derived_owned_cleanup_implementation(
+                orison::semantics::semantic_owned_cleanup_implementation(
                     "Payload",
                     3,
                     orison::semantics::OwnedCleanupImplementationBodySummary {
@@ -20333,7 +20333,7 @@ auto main() -> int {
     assert_line_contains(
         candidate_resolved_semantic_drops_implementation_report,
         0,
-        "discovery candidate-collection"
+        "discovery semantic-candidate"
     );
     assert(candidate_resolved_semantic_drops_resolution_report.size() == 2);
     assert_line_contains(candidate_resolved_semantic_drops_resolution_report, 0, "resolved drop site");
@@ -20349,7 +20349,7 @@ auto main() -> int {
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementations = {
-                orison::semantics::source_derived_owned_cleanup_implementation(
+                orison::semantics::semantic_owned_cleanup_implementation(
                     "Payload",
                     3,
                     orison::semantics::OwnedCleanupImplementationBodySummary {}
@@ -20373,7 +20373,7 @@ auto main() -> int {
         partial_drop_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_implementations = {
-                orison::semantics::source_derived_owned_cleanup_implementation(
+                orison::semantics::semantic_owned_cleanup_implementation(
                     "Payload",
                     3,
                     orison::semantics::OwnedCleanupImplementationBodySummary {

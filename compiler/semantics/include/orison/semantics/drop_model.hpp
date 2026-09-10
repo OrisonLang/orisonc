@@ -13,7 +13,7 @@ struct ModuleSyntax;
 namespace orison::semantics {
 
 enum class OwnedCleanupImplementationOrigin {
-    source_derived,
+    semantic_candidate,
     compiler_intrinsic,
     test_fixture,
 };
@@ -29,7 +29,7 @@ struct OwnedCleanupImplementation {
     std::string abi_symbol_name;
     std::size_t declaration_line = 0;
     bool proven = false;
-    OwnedCleanupImplementationOrigin origin = OwnedCleanupImplementationOrigin::source_derived;
+    OwnedCleanupImplementationOrigin origin = OwnedCleanupImplementationOrigin::semantic_candidate;
     OwnedCleanupImplementationBodySummary body;
 };
 
@@ -87,7 +87,7 @@ auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::st
 
 auto owned_cleanup_implementation_origin_name(OwnedCleanupImplementationOrigin origin) -> std::string_view;
 
-auto source_derived_owned_cleanup_implementation(
+auto semantic_owned_cleanup_implementation(
     std::string source_type_name,
     std::size_t declaration_line,
     OwnedCleanupImplementationBodySummary body
@@ -98,15 +98,15 @@ auto compiler_intrinsic_owned_cleanup_implementation(
     std::size_t declaration_line
 ) -> OwnedCleanupImplementation;
 
-auto collect_source_derived_owned_cleanup_implementations(
+auto collect_semantic_owned_cleanup_implementations(
     std::vector<OwnedCleanupImplementationCandidate> const& candidates
 ) -> std::vector<OwnedCleanupImplementation>;
 
-auto prove_source_derived_owned_cleanup_implementation_body(
+auto prove_semantic_owned_cleanup_implementation_body(
     syntax::ImplementationSyntax const& implementation
 ) -> OwnedCleanupImplementationBodySummary;
 
-auto collect_source_derived_owned_cleanup_implementation_candidates(
+auto collect_semantic_owned_cleanup_implementation_candidates(
     syntax::ModuleSyntax const& module
 ) -> std::vector<OwnedCleanupImplementationCandidate>;
 

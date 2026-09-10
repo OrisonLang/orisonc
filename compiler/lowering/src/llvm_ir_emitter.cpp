@@ -212,7 +212,7 @@ auto has_runtime_indexed_cleanup_owned_cleanup_definition(
     LlvmIrEmissionOptions const& options
 ) -> bool {
     return options.enable_runtime_indexed_cleanup_semantic_owned_cleanup_emission &&
-        implementation.origin == semantics::OwnedCleanupImplementationOrigin::source_derived &&
+        implementation.origin == semantics::OwnedCleanupImplementationOrigin::semantic_candidate &&
         implementation.proven &&
         implementation.body.finite;
 }
@@ -579,8 +579,8 @@ auto emit_owned_cleanup_definitions(
     std::vector<OwnedCleanupDeclaration> const& owned_cleanup_declarations,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
-    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
+    auto candidates = semantics::collect_semantic_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_semantic_owned_cleanup_implementations(candidates);
     auto sites = std::vector<semantics::OwnedCleanupSite> {};
     sites.reserve(authorizations.size());
     for (auto const& authorization : authorizations) {
@@ -824,8 +824,8 @@ auto collect_owned_cleanup_definition_symbols(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations,
     LlvmIrEmissionOptions const& options
 ) -> std::vector<std::string> {
-    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
+    auto candidates = semantics::collect_semantic_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_semantic_owned_cleanup_implementations(candidates);
     auto sites = std::vector<semantics::OwnedCleanupSite> {};
     sites.reserve(authorizations.size());
     for (auto const& authorization : authorizations) {
@@ -869,11 +869,11 @@ auto collect_owned_cleanup_definition_symbols(
 auto collect_direct_owned_cleanup_definition_symbols(
     syntax::ModuleSyntax const& module
 ) -> std::vector<std::string> {
-    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
+    auto candidates = semantics::collect_semantic_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_semantic_owned_cleanup_implementations(candidates);
     auto symbols = std::vector<std::string> {};
     for (auto const& implementation : implementations) {
-        if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||
+        if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::semantic_candidate ||
             !implementation.proven ||
             !implementation.body.finite) {
             continue;
@@ -1473,11 +1473,11 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
 auto declared_owned_cleanup_declarations_for_runtime_indexed_cleanup(
     syntax::ModuleSyntax const& module
 ) -> std::vector<OwnedCleanupDeclaration> {
-    auto candidates = semantics::collect_source_derived_owned_cleanup_implementation_candidates(module);
-    auto implementations = semantics::collect_source_derived_owned_cleanup_implementations(candidates);
+    auto candidates = semantics::collect_semantic_owned_cleanup_implementation_candidates(module);
+    auto implementations = semantics::collect_semantic_owned_cleanup_implementations(candidates);
     auto declarations = std::vector<OwnedCleanupDeclaration> {};
     for (auto const& implementation : implementations) {
-        if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::source_derived ||
+        if (implementation.origin != semantics::OwnedCleanupImplementationOrigin::semantic_candidate ||
             !implementation.proven ||
             !implementation.body.finite) {
             continue;

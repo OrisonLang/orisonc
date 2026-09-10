@@ -76,8 +76,8 @@ auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::st
 
 auto owned_cleanup_implementation_origin_name(OwnedCleanupImplementationOrigin origin) -> std::string_view {
     switch (origin) {
-    case OwnedCleanupImplementationOrigin::source_derived:
-        return "source-derived";
+    case OwnedCleanupImplementationOrigin::semantic_candidate:
+        return "semantic-candidate";
     case OwnedCleanupImplementationOrigin::compiler_intrinsic:
         return "compiler-intrinsic";
     case OwnedCleanupImplementationOrigin::test_fixture:
@@ -86,7 +86,7 @@ auto owned_cleanup_implementation_origin_name(OwnedCleanupImplementationOrigin o
     return "unknown";
 }
 
-auto source_derived_owned_cleanup_implementation(
+auto semantic_owned_cleanup_implementation(
     std::string source_type_name,
     std::size_t declaration_line,
     OwnedCleanupImplementationBodySummary body
@@ -98,7 +98,7 @@ auto source_derived_owned_cleanup_implementation(
         .abi_symbol_name = std::move(symbol_name),
         .declaration_line = declaration_line,
         .proven = proven,
-        .origin = OwnedCleanupImplementationOrigin::source_derived,
+        .origin = OwnedCleanupImplementationOrigin::semantic_candidate,
         .body = std::move(body),
     };
 }
@@ -120,7 +120,7 @@ auto compiler_intrinsic_owned_cleanup_implementation(
     };
 }
 
-auto collect_source_derived_owned_cleanup_implementations(
+auto collect_semantic_owned_cleanup_implementations(
     std::vector<OwnedCleanupImplementationCandidate> const& candidates
 ) -> std::vector<OwnedCleanupImplementation> {
     auto implementations = std::vector<OwnedCleanupImplementation> {};
@@ -140,7 +140,7 @@ auto collect_source_derived_owned_cleanup_implementations(
         if (existing != implementations.end()) {
             continue;
         }
-        implementations.push_back(source_derived_owned_cleanup_implementation(
+        implementations.push_back(semantic_owned_cleanup_implementation(
             candidate.source_type_name,
             candidate.declaration_line,
             candidate.body
@@ -149,7 +149,7 @@ auto collect_source_derived_owned_cleanup_implementations(
     return implementations;
 }
 
-auto prove_source_derived_owned_cleanup_implementation_body(
+auto prove_semantic_owned_cleanup_implementation_body(
     syntax::ImplementationSyntax const& implementation
 ) -> OwnedCleanupImplementationBodySummary {
     auto method = std::find_if(
@@ -175,7 +175,7 @@ auto prove_source_derived_owned_cleanup_implementation_body(
     return OwnedCleanupImplementationBodySummary {};
 }
 
-auto collect_source_derived_owned_cleanup_implementation_candidates(
+auto collect_semantic_owned_cleanup_implementation_candidates(
     syntax::ModuleSyntax const& module
 ) -> std::vector<OwnedCleanupImplementationCandidate> {
     auto candidates = std::vector<OwnedCleanupImplementationCandidate> {};
@@ -186,7 +186,7 @@ auto collect_source_derived_owned_cleanup_implementation_candidates(
         candidates.push_back(OwnedCleanupImplementationCandidate {
             .source_type_name = render_source_type_name(implementation.receiver_type),
             .declaration_line = drop_method_line(implementation),
-            .body = prove_source_derived_owned_cleanup_implementation_body(implementation),
+            .body = prove_semantic_owned_cleanup_implementation_body(implementation),
         });
     }
     return candidates;

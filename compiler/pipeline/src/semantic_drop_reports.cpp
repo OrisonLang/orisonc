@@ -24,13 +24,13 @@ auto collect_discovered_drop_implementations(
             .discovery_name = "test-injection",
         });
     }
-    auto source_derived_implementations = semantics::collect_source_derived_owned_cleanup_implementations(
+    auto semantic_candidate_implementations = semantics::collect_semantic_owned_cleanup_implementations(
         options.test_only_semantic_drop_implementation_candidates
     );
-    for (auto const& implementation : source_derived_implementations) {
+    for (auto const& implementation : semantic_candidate_implementations) {
         discovered_drop_implementations.push_back(SemanticDropImplementationDiscovery {
             .implementation = implementation,
-            .discovery_name = "candidate-collection",
+            .discovery_name = "semantic-candidate",
         });
     }
     auto compiler_intrinsic_implementations = semantics::collect_compiler_intrinsic_owned_cleanup_implementations(

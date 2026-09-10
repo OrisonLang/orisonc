@@ -57,6 +57,9 @@
 - 2026-09-10: Semantic authorization gates now use semantic-owned-cleanup naming for options, readiness blockers, and
   reports. Source-derived implementation collector names remain historical until user-defined finalization syntax is
   decided.
+- 2026-09-10: Semantic cleanup implementation collectors now use semantic-candidate naming internally. Remaining source
+  terminology in this area is source-location, source-type, or source-correlation metadata, not user-facing cleanup
+  syntax.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
