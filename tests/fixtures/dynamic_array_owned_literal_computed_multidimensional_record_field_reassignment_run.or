@@ -3,13 +3,6 @@ package tests.fixtures.dynamic_array_owned_literal_computed_multidimensional_rec
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Item
     values: DynamicArray<Payload>
 

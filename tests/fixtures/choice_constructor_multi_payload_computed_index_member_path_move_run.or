@@ -3,27 +3,12 @@ package tests.fixtures.choice_constructor_multi_payload_computed_index_member_pa
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Inner
     values: DynamicArray<Payload>
     spare: DynamicArray<Payload>
 
-implements Drop for Inner
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Holder
     items: Array<Inner, 2>
-
-implements Drop for Holder
-    function drop(this: exclusive This) -> Unit
-        return
 
 choice TaggedInner
     Empty

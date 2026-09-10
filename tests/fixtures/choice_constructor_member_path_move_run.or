@@ -3,19 +3,8 @@ package tests.fixtures.choice_constructor_member_path_move_run
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Holder
     values: DynamicArray<Payload>
-
-implements Drop for Holder
-    function drop(this: exclusive This) -> Unit
-        return
 
 choice MaybeItems
     Empty

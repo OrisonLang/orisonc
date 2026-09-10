@@ -6674,6 +6674,27 @@ auto main() -> int {
         }
     }
 
+    for (auto const& entry : std::filesystem::directory_iterator(fixtures_dir)) {
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        auto const fixture_name = entry.path().filename().string();
+        if (!fixture_name.ends_with("_run.or")) {
+            continue;
+        }
+        if (fixture_name == "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or") {
+            continue;
+        }
+
+        auto source = std::ifstream(entry.path());
+        assert(source);
+        auto line = std::string {};
+        while (std::getline(source, line)) {
+            assert(line != "interface Drop");
+            assert(!line.starts_with("implements Drop for "));
+        }
+    }
+
     auto dynamic_array_returned_payload_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "choice_dynamic_array_return_payload_run.or";
@@ -15162,10 +15183,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[7] ==
         with_source_text(
             "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
-            "member-path none source-line 46 owner-known true index-known true element-type-known true "
+            "member-path none source-line 31 owner-known true index-known true element-type-known true "
             "moved-type-known true member-path-known false cleanup-element-matches-move true "
             "member-granular-required false prerequisites missing production disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15173,10 +15194,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[8] ==
         with_source_text(
             "runtime-index member cleanup proof owner holder.items index index element Inner moved Inner "
-            "member-path none source-line 46 plan-ready false whole-element-cleanup-matches-move true "
+            "member-path none source-line 31 plan-ready false whole-element-cleanup-matches-move true "
             "member-cleanup-required false member-scope-proven false whole-element-cleanup-blocked false "
             "prerequisites missing production disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15184,9 +15205,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[9] ==
         with_source_text(
             "runtime-index member cleanup emission-sketch owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 snippets 0 proof-ready false report-only true "
+            "moved Inner member-path none source-line 31 snippets 0 proof-ready false report-only true "
             "production-emission disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15194,10 +15215,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[10] ==
         with_source_text(
             "runtime-index member cleanup emission-gate owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 sketch-ready false member-drop-metadata missing "
+            "moved Inner member-path none source-line 31 sketch-ready false member-drop-metadata missing "
             "ir-insertion missing prerequisites missing production disabled blockers 3 "
             "blocker member-cleanup-sketch blocker member-drop-metadata blocker member-cleanup-ir-insertion",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15205,10 +15226,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[11] ==
         with_source_text(
             "runtime-index member cleanup ir-insertion-plan owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "moved Inner member-path none source-line 31 anchor missing entry missing skip missing "
             "sibling-drop missing preserve missing exit missing target-metadata missing insertion-points missing "
             "report-only true production disabled preview-operations 0",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15216,10 +15237,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[12] ==
         with_source_text(
             "runtime-index member cleanup ir-composition-plan owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "moved Inner member-path none source-line 31 anchor missing entry missing skip missing "
             "sibling-drop missing preserve missing exit missing cleanup-target missing insertion-plan missing "
             "block-topology missing preview-operations missing report-only true production disabled topology-edges 0",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15227,10 +15248,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[13] ==
         with_source_text(
             "runtime-index member cleanup cfg-slice owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "moved Inner member-path none source-line 31 anchor missing entry missing skip missing "
             "sibling-drop missing preserve missing exit missing cleanup-target missing composition missing "
             "slice missing report-only true production disabled cfg-lines 0",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15238,12 +15259,12 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[14] ==
         with_source_text(
             "runtime-index member cleanup function-rewrite-candidate owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 46 anchor missing entry missing "
+            "element Inner moved Inner member-path none source-line 31 anchor missing entry missing "
             "sibling-drop missing preserve missing exit missing cleanup-target missing cfg-slice missing "
             "anchor-state missing branch-rewrite blocked cfg-append blocked candidate missing "
             "verification blocked report-only true production disabled replaced-terminator missing "
             "replacement-branch missing appended-cfg-lines 0",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15251,13 +15272,13 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[15] ==
         with_source_text(
             "runtime-index member cleanup function-rewrite-edit-script-plan owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 anchor missing "
+            "index index element Inner moved Inner member-path none source-line 31 anchor missing "
             "entry missing sibling-drop missing preserve missing exit missing cleanup-target missing "
             "candidate blocked branch-replacement missing cleanup-cfg-append missing phi-retarget missing "
             "edit-script blocked report-only true production disabled expected-branch missing "
             "replacement-branch missing append-placement missing expected-closing missing phi-old missing "
             "phi-new missing appended-cfg-lines 0",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15265,13 +15286,13 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[16] ==
         with_source_text(
             "runtime-index member cleanup function-rewrite-edit-script-validation owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 anchor missing "
+            "index index element Inner moved Inner member-path none source-line 31 anchor missing "
             "entry missing exit missing edit-script blocked branch-replacement invalid "
             "cleanup-cfg-append invalid phi-retarget invalid validation blocked report-only true "
             "production disabled blockers 5 blocker member-cleanup-edit-script "
             "blocker member-cleanup-branch-replacement blocker member-cleanup-cfg-append "
             "blocker member-cleanup-phi-retarget blocker production-member-cleanup-module-mutation",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15279,9 +15300,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[17] ==
         with_source_text(
             "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-edit-script detail member cleanup edit script is not ready",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15289,9 +15310,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[18] ==
         with_source_text(
             "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-branch-replacement detail member cleanup branch replacement is invalid",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15299,9 +15320,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[19] ==
         with_source_text(
             "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-cfg-append detail member cleanup CFG append is invalid",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15309,9 +15330,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[20] ==
         with_source_text(
             "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-phi-retarget detail member cleanup PHI retarget is invalid",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15319,10 +15340,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[21] ==
         with_source_text(
             "runtime-index member cleanup edit-script validation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker production-member-cleanup-module-mutation "
             "detail member cleanup edit script is validated but production module mutation is disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15330,13 +15351,13 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[22] ==
         with_source_text(
             "runtime-index member cleanup function-rewrite-staged-apply-plan owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 anchor missing "
+            "index index element Inner moved Inner member-path none source-line 31 anchor missing "
             "entry missing exit missing validation blocked branch-replacement blocked cleanup-cfg-append blocked "
             "phi-retarget blocked staged-apply blocked branch-applied false cfg-appended false "
             "phi-applied false report-only true production disabled blockers 2 "
             "blocker member-cleanup-edit-script-validation "
             "blocker production-member-cleanup-module-mutation",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15344,10 +15365,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[23] ==
         with_source_text(
             "runtime-index member cleanup staged-apply diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-edit-script-validation "
             "detail member cleanup staged apply is blocked by edit script validation",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15355,10 +15376,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[24] ==
         with_source_text(
             "runtime-index member cleanup staged-apply diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker production-member-cleanup-module-mutation "
             "detail member cleanup staged plan is ready but production module mutation is disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15366,13 +15387,13 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[25] ==
         with_source_text(
             "runtime-index member cleanup module-mutation-gate owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 anchor missing entry missing skip missing "
+            "moved Inner member-path none source-line 31 anchor missing entry missing skip missing "
             "sibling-drop missing preserve missing exit missing cfg-slice missing edit-script-validation missing "
             "staged-apply missing module-mutation disabled production-member-cleanup disabled "
             "prerequisites missing production disabled blockers 5 blocker member-cleanup-cfg-slice "
             "blocker member-cleanup-edit-script-validation blocker member-cleanup-staged-apply "
             "blocker member-cleanup-module-mutation blocker production-member-cleanup",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15380,10 +15401,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[26] ==
         with_source_text(
             "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-cfg-slice "
             "detail member cleanup module mutation is blocked by missing CFG slice",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15391,10 +15412,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[27] ==
         with_source_text(
             "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-edit-script-validation "
             "detail member cleanup module mutation is blocked by edit script validation",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15402,10 +15423,10 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[28] ==
         with_source_text(
             "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-staged-apply "
             "detail member cleanup module mutation is blocked by staged apply readiness",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15413,9 +15434,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[29] ==
         with_source_text(
             "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker member-cleanup-module-mutation detail member cleanup module mutation is disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15423,9 +15444,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[30] ==
         with_source_text(
             "runtime-index member cleanup module-mutation diagnostic owner holder.items "
-            "index index element Inner moved Inner member-path none source-line 46 "
+            "index index element Inner moved Inner member-path none source-line 31 "
             "blocker production-member-cleanup detail production member cleanup is disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15433,12 +15454,12 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[31] ==
         with_source_text(
             "runtime-index member cleanup production-readiness owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 proof missing target-metadata missing "
+            "moved Inner member-path none source-line 31 proof missing target-metadata missing "
             "helper-drop-bindings ready cfg-slice missing module-mutation blocked production-member-cleanup blocked "
             "production-gate blocked production-enabled false production blocked blockers 5 "
             "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
             "blocker member-cleanup-module-mutation blocker production-member-cleanup",
-            46,
+            31,
             "var selected: TaggedInner = Secondary(holder.items[index])"
         )
     );
@@ -15446,9 +15467,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[32] ==
         with_source_text(
             "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 blocker member-cleanup-proof "
+            "moved Inner member-path none source-line 31 blocker member-cleanup-proof "
             "detail member cleanup proof is missing",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15456,9 +15477,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[33] ==
         with_source_text(
             "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 blocker member-drop-metadata "
+            "moved Inner member-path none source-line 31 blocker member-drop-metadata "
             "detail member Drop metadata is missing",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15466,9 +15487,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[34] ==
         with_source_text(
             "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 blocker member-cleanup-cfg-slice "
+            "moved Inner member-path none source-line 31 blocker member-cleanup-cfg-slice "
             "detail member cleanup CFG slice is missing",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15476,9 +15497,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[35] ==
         with_source_text(
             "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 blocker member-cleanup-module-mutation "
+            "moved Inner member-path none source-line 31 blocker member-cleanup-module-mutation "
             "detail member cleanup module mutation is disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15486,9 +15507,9 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[36] ==
         with_source_text(
             "runtime-index member cleanup production blocker owner holder.items index index element Inner "
-            "moved Inner member-path none source-line 46 blocker production-member-cleanup "
+            "moved Inner member-path none source-line 31 blocker production-member-cleanup "
             "detail production member cleanup is disabled",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15496,14 +15517,14 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[37] ==
         with_source_text(
             "runtime-index member cleanup promotion-checklist owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 46 candidate blocked edit-script blocked "
+            "element Inner moved Inner member-path none source-line 31 candidate blocked edit-script blocked "
             "validation blocked staged-apply blocked module-mutation blocked production-readiness blocked "
             "promotion blocked report-only true production disabled blockers 9 "
             "blocker member-cleanup-rewrite-candidate blocker member-cleanup-edit-script "
             "blocker member-cleanup-edit-script-validation blocker member-cleanup-staged-apply "
             "blocker member-cleanup-cfg-slice blocker member-cleanup-module-mutation "
             "blocker production-member-cleanup blocker member-cleanup-proof blocker member-drop-metadata",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15511,7 +15532,7 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[38] ==
         with_source_text(
             "runtime-index member cleanup promotion-seam owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 46 checklist blocked mutation-seam blocked "
+            "element Inner moved Inner member-path none source-line 31 checklist blocked mutation-seam blocked "
             "ir-mutation disabled production-gate disabled promotion blocked report-only true "
             "production disabled blockers 12 blocker member-cleanup-rewrite-candidate "
             "blocker member-cleanup-edit-script blocker member-cleanup-edit-script-validation "
@@ -15520,7 +15541,7 @@ auto main() -> int {
             "blocker member-cleanup-proof blocker member-drop-metadata "
             "blocker member-cleanup-promotion-checklist blocker member-cleanup-ir-mutation "
             "blocker production-member-cleanup-ir-mutation",
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15530,7 +15551,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_operation_plan_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_operation_plans.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15540,7 +15561,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_operation_validation_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_operation_validations.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15550,7 +15571,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_conflict_detections.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15560,7 +15581,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_apply_authorization_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_apply_authorizations.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15570,7 +15591,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_apply_preview_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_apply_previews.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15580,7 +15601,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_post_apply_verification_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_post_apply_verifications.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15590,7 +15611,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_promotion_summary_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_promotion_summaries.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15600,7 +15621,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_mutation_production_readiness_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_mutation_production_readiness.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15614,7 +15635,7 @@ auto main() -> int {
             runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[47 + index] ==
             with_source_text(
                 runtime_indexed_mutation_production_diagnostics[index],
-                46,
+                31,
                 runtime_indexed_cleanup_source_text
             )
         );
@@ -15622,14 +15643,14 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[66] ==
         "runtime-index member cleanup mutation readiness verdict owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) readiness blocked guarded-rewrite blocked "
         "blockers 19 diagnostics 19 report-only true production disabled"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[67] ==
         "runtime-index member cleanup mutation rewrite authorization owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) verdict blocked guarded-rewrite blocked "
         "authorization blocked rewrite-requested false rewrite-authorized false report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
@@ -15638,21 +15659,21 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[68] ==
         "runtime-index member cleanup mutation rewrite authorization blocker owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) "
         "blocker member-cleanup-mutation-readiness-verdict detail member cleanup mutation readiness verdict is blocked"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[69] ==
         "runtime-index member cleanup mutation rewrite authorization blocker owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) "
         "blocker member-cleanup-mutation-guarded-rewrite detail member cleanup mutation guarded rewrite is blocked"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[70] ==
         "runtime-index member cleanup mutation rewrite execution-plan owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) authorization blocked rewrite-authorized false "
         "execution-plan blocked execution-requested false execution disabled report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
@@ -15661,7 +15682,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[71] ==
         "runtime-index member cleanup mutation rewrite execution-plan blocker owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) "
         "blocker member-cleanup-mutation-rewrite-authorization "
         "detail member cleanup mutation rewrite authorization is blocked"
@@ -15669,7 +15690,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[72] ==
         "runtime-index member cleanup mutation rewrite execution-plan blocker owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) "
         "blocker member-cleanup-mutation-rewrite-not-authorized "
         "detail member cleanup mutation rewrite is not authorized"
@@ -15677,14 +15698,14 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[73] ==
         "runtime-index member cleanup mutation rewrite execution verdict owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) execution-plan blocked execution disabled "
         "blockers 2 diagnostics 2 report-only true production disabled"
     );
     assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[74] ==
         "runtime-index member cleanup mutation rewrite promotion-status owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) authorization blocked execution-plan blocked "
         "execution-verdict blocked promotion blocked blockers 2 diagnostics 2 report-only true "
         "production disabled"
@@ -15695,7 +15716,7 @@ auto main() -> int {
             orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
                 runtime_indexed_cleanup.runtime_indexed_member_cleanup_typed_promotion_gates.front()
             ),
-            46,
+            31,
             runtime_indexed_cleanup_source_text
         )
     );
@@ -15706,14 +15727,14 @@ auto main() -> int {
     assert_any_line_contains(
         runtime_indexed_cleanup_promotion_lines,
         "runtime-index member cleanup promotion blocker owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) "
         "blocker blocked-production-readiness"
     );
     assert_any_line_contains(
         runtime_indexed_cleanup_promotion_lines,
         "runtime-index member cleanup promotion blocker owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) "
         "blocker typed-promotion-disabled"
     );
@@ -15727,7 +15748,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[67] ==
         "runtime-index member cleanup mutation rewrite authorization owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) verdict blocked guarded-rewrite blocked "
         "authorization blocked rewrite-requested true rewrite-authorized false report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-readiness-verdict "
@@ -15736,7 +15757,7 @@ auto main() -> int {
     assert(
         runtime_indexed_cleanup_rewrite_request.runtime_indexed_cleanup_audit_lines[70] ==
         "runtime-index member cleanup mutation rewrite execution-plan owner holder.items index index "
-        "element Inner moved Inner member-path none source-line 46 source-text "
+        "element Inner moved Inner member-path none source-line 31 source-text "
         "var selected: TaggedInner = Secondary(holder.items[index]) authorization blocked rewrite-authorized false "
         "execution-plan blocked execution-requested true execution disabled report-only true "
         "production disabled blockers 2 blocker member-cleanup-mutation-rewrite-authorization "
@@ -17588,7 +17609,7 @@ auto main() -> int {
     );
     assert(!runtime_indexed_cleanup_module_drop_surface.has_errors());
     assert(
-        has_planned_drop_declaration(
+        !has_planned_drop_declaration(
             runtime_indexed_cleanup_module_drop_surface,
             "__orison_owned_cleanup.Inner"
         )

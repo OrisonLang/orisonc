@@ -3,19 +3,8 @@ package tests.fixtures.runtime_indexed_fixed_array_constructor_computed_index_mo
 record Inner
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Inner
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Outer
     item: Inner
-
-implements Drop for Outer
-    function drop(this: exclusive This) -> Unit
-        return
 
 function main() -> UInt32
     var items: Array<Inner, 2> = [Inner(7 as UInt32), Inner(11 as UInt32)]

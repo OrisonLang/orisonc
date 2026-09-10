@@ -3,34 +3,15 @@ package tests.fixtures.dynamic_array_owned_constructor_computed_index_member_pat
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Inner
     values: DynamicArray<Payload>
     spare: DynamicArray<Payload>
 
-implements Drop for Inner
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Holder
     items: Array<Inner, 2>
 
-implements Drop for Holder
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Outer
     item: Inner
-
-implements Drop for Outer
-    function drop(this: exclusive This) -> Unit
-        return
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()

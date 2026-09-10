@@ -3,26 +3,11 @@ package tests.fixtures.dynamic_array_owned_nested_dynamic_index_record_field_rea
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Item
     values: DynamicArray<Payload>
 
-implements Drop for Item
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Group
     items: DynamicArray<Item>
-
-implements Drop for Group
-    function drop(this: exclusive This) -> Unit
-        return
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()

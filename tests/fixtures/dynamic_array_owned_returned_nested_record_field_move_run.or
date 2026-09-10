@@ -3,27 +3,12 @@ package tests.fixtures.dynamic_array_owned_returned_nested_record_field_move_run
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Inner
     values: DynamicArray<Payload>
     spare: DynamicArray<Payload>
 
-implements Drop for Inner
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Outer
     inner: Inner
-
-implements Drop for Outer
-    function drop(this: exclusive This) -> Unit
-        return
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
