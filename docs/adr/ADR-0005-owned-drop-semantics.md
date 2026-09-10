@@ -245,6 +245,9 @@ inventing semantics outside the spec/tour.
 - Positive run fixtures no longer declare `interface Drop` or `implements Drop`. Runtime-indexed sibling-member
   transfer cleanup now binds helper sibling cleanup through compiler-derived owned cleanup symbols, and pipeline smoke
   audits the full positive run-fixture source set.
+- Choice-constructor member-path reuse rejection fixtures no longer declare `interface Drop` or `implements Drop`.
+  Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct post-move reuse diagnostics across
+  single-payload, multi-payload, multi-variant, indexed, computed-index, and nested paths.
 
 ## Consequences
 

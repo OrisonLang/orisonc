@@ -3188,3 +3188,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: Out-of-bounds runtime-trap fixtures no longer declare `interface Drop` or `implements Drop`. Generic CLI
   smoke coverage verifies compiler-derived cleanup preserves dynamic-index guard and trap behavior for runtime-indexed
   constructor moves and DynamicArray receiver chains.
+- 2026-09-09: Choice-constructor member-path reuse rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup preserves direct post-move reuse
+  diagnostics for single-payload, multi-payload, multi-variant, indexed, computed-index, and nested member paths.
