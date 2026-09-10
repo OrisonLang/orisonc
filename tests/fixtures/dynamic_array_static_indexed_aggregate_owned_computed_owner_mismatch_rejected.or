@@ -3,13 +3,6 @@ package tests.fixtures.dynamic_array_static_indexed_aggregate_owned_computed_own
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Bucket
     values: DynamicArray<Payload>
 

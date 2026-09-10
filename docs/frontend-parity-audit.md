@@ -3209,3 +3209,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: Forwarded returned aggregate-field DynamicArray rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Array CLI and pipeline smoke coverage verify compiler-derived cleanup preserves returned-field
   post-move reuse, final-control branch-local reuse, helper owner-mismatch, and unsupported-shape diagnostics.
+- 2026-09-09: Static-indexed aggregate DynamicArray rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Array CLI smoke coverage verifies compiler-derived cleanup preserves owner-mismatch,
+  dynamic-index, and unsupported-helper-shape diagnostics.
