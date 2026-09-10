@@ -15,21 +15,6 @@ record Bucket
 choice Packet
     Primary(items: DynamicArray<Bucket>)
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
-implements Drop for BoxedValues
-    function drop(this: exclusive This) -> Unit
-        return
-
-implements Drop for Bucket
-    function drop(this: exclusive This) -> Unit
-        return
-
 extend DynamicArray<T>
     function forward(this: exclusive This) -> DynamicArray<T>
         this

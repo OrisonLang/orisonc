@@ -2817,6 +2817,10 @@ representation.
 - Switch ownership merge now treats consumed descendants of case-local payload bindings as branch-local. Multi-variant
   choices can therefore merge a receiver-transfer case such as `Primary(items, marker)` with a scalar fallback case
   without leaking `items[...]` ownership transfers across cases.
+- Out-of-bounds runtime-trap fixtures now rely on compiler-derived cleanup instead of source-authored `interface Drop`
+  and `implements Drop` stubs. Generic CLI smoke coverage preserves dynamic bounds guards, selected descriptor
+  transfer setup, and nonzero runtime trap behavior for runtime-indexed constructor moves and DynamicArray receiver
+  chains.
 
 ## Follow-up work
 

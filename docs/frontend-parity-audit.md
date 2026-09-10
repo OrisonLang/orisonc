@@ -3185,3 +3185,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: The remaining non-rejected cleanup-stub fixtures no longer declare `interface Drop` or
   `implements Drop`. Generic mismatch diagnostics and runtime-index cleanup candidate/composition fixtures now use
   compiler-derived cleanup while preserving their smoke-test contracts.
+- 2026-09-09: Out-of-bounds runtime-trap fixtures no longer declare `interface Drop` or `implements Drop`. Generic CLI
+  smoke coverage verifies compiler-derived cleanup preserves dynamic-index guard and trap behavior for runtime-indexed
+  constructor moves and DynamicArray receiver chains.
