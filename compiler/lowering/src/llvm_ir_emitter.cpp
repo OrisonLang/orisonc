@@ -4158,7 +4158,7 @@ auto emit_module(
                 owned_cleanup_declaration_for_action(action)
             );
         }
-        for (auto declaration : declared_owned_cleanup_declarations_for_authorized_semantic_drops(
+        for (auto declaration : declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups(
                  result.semantic_owned_cleanup_lowering_authorizations
              )) {
             add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));

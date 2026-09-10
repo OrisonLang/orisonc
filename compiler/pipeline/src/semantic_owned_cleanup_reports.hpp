@@ -4,7 +4,7 @@
 
 namespace orison::pipeline {
 
-void populate_semantic_drop_reports(
+void populate_semantic_owned_cleanup_reports(
     CompilePipelineResult& result,
     CompilePipelineOptions const& options
 );

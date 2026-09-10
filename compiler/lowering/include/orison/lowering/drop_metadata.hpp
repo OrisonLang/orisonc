@@ -51,7 +51,7 @@ auto owned_cleanup_declaration_for_authorization(
     semantics::OwnedCleanupLoweringAuthorization const& authorization
 ) -> OwnedCleanupDeclaration;
 
-auto declared_owned_cleanup_declarations_for_authorized_semantic_drops(
+auto declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups(
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> std::vector<OwnedCleanupDeclaration>;
 

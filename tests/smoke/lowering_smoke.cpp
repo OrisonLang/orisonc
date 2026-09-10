@@ -3786,8 +3786,8 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
     assert(authorized.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
 }
 
-void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
-    auto path = std::filesystem::temp_directory_path() / "orison_lowering_semantic_drop_authorization_metadata.or";
+void test_emit_carries_semantic_owned_cleanup_lowering_authorization_metadata() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_semantic_owned_cleanup_authorization_metadata.or";
     auto site = orison::semantics::OwnedCleanupSite {
         .source_type_name = "Payload",
         .abi_symbol_name = orison::semantics::owned_cleanup_abi_symbol_name("Payload"),
@@ -14451,7 +14451,7 @@ auto main() -> int {
     test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_break();
     test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_continue();
     test_dynamic_array_element_drop_readiness_requires_semantic_authorization();
-    test_emit_carries_semantic_drop_lowering_authorization_metadata();
+    test_emit_carries_semantic_owned_cleanup_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_compound_assignment_return();

@@ -608,10 +608,10 @@ auto semantic_planned_drop_report(
 auto semantic_drop_resolution_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    auto semantic_summary_drop_sites =
+    auto semantic_summary_owned_cleanup_sites =
         orison::semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_owned_cleanup_implementation_resolution_report(
-        semantic_summary_drop_sites,
+        semantic_summary_owned_cleanup_sites,
         semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
     );
 }
@@ -619,10 +619,10 @@ auto semantic_drop_resolution_report(
 auto semantic_drop_diagnostic_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
-    auto semantic_summary_drop_sites =
+    auto semantic_summary_owned_cleanup_sites =
         orison::semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     return orison::semantics::format_owned_cleanup_implementation_diagnostic_report(
-        semantic_summary_drop_sites,
+        semantic_summary_owned_cleanup_sites,
         semantic_owned_cleanup_implementations(result.semantic_owned_cleanup_state)
     );
 }

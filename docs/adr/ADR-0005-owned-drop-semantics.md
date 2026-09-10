@@ -303,6 +303,8 @@ inventing semantics outside the spec/tour.
   report helpers, CLI flags, and test target names remain compatibility surfaces.
 - Semantic module owned-cleanup obligations now use `SemanticOwnedCleanupObligation*` names internally. Existing
   rendered `drop obligation` text remains compatibility output.
+- Semantic cleanup report orchestration now uses owned-cleanup source filenames and helper names internally. CLI flags,
+  rendered report text, and drop-readiness source-correlation naming remain compatibility surfaces.
 
 ## Consequences
 

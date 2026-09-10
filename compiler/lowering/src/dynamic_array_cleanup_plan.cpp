@@ -189,7 +189,7 @@ auto authorized_element_drop_symbol_name(
         .requires_semantic_authorization = true,
         .requires_descriptor_deallocation = true,
     };
-    auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
+    auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups(
         options.semantic_owned_cleanup_lowering_authorizations
     );
     auto authorization = plan_owned_cleanup_authorization(
@@ -262,7 +262,7 @@ auto authorized_descriptor_element_drop_symbol_name(
         return std::nullopt;
     }
     auto cleanup = drop_cleanup_for_dynamic_array_cleanup_obligation(obligation);
-    auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
+    auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups(
         options.semantic_owned_cleanup_lowering_authorizations
     );
     auto authorization = plan_owned_cleanup_authorization(

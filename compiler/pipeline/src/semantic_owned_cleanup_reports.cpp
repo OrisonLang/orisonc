@@ -1,4 +1,4 @@
-#include "semantic_drop_reports.hpp"
+#include "semantic_owned_cleanup_reports.hpp"
 
 #include "lowering_emission_options.hpp"
 
@@ -10,13 +10,13 @@ namespace {
 auto collect_discovered_owned_cleanup_implementations(
     syntax::ModuleSyntax const& module,
     CompilePipelineOptions const& options,
-    std::vector<semantics::OwnedCleanupSite> const& semantic_summary_drop_sites
+    std::vector<semantics::OwnedCleanupSite> const& semantic_summary_owned_cleanup_sites
 ) -> std::vector<SemanticOwnedCleanupImplementationDiscovery> {
     auto discovered_owned_cleanup_implementations = std::vector<SemanticOwnedCleanupImplementationDiscovery> {};
     discovered_owned_cleanup_implementations.reserve(
         options.test_only_semantic_owned_cleanup_implementations.size() +
         options.test_only_semantic_owned_cleanup_implementation_candidates.size() +
-        semantic_summary_drop_sites.size()
+        semantic_summary_owned_cleanup_sites.size()
     );
     for (auto const& implementation : options.test_only_semantic_owned_cleanup_implementations) {
         discovered_owned_cleanup_implementations.push_back(SemanticOwnedCleanupImplementationDiscovery {
@@ -34,7 +34,7 @@ auto collect_discovered_owned_cleanup_implementations(
         });
     }
     auto compiler_intrinsic_implementations = semantics::collect_compiler_intrinsic_owned_cleanup_implementations(
-        semantic_summary_drop_sites,
+        semantic_summary_owned_cleanup_sites,
         module
     );
     for (auto const& implementation : compiler_intrinsic_implementations) {
@@ -59,16 +59,16 @@ auto collect_discovered_owned_cleanup_implementations(
 
 }  // namespace
 
-void populate_semantic_drop_reports(
+void populate_semantic_owned_cleanup_reports(
     CompilePipelineResult& result,
     CompilePipelineOptions const& options
 ) {
-    auto semantic_summary_drop_sites =
+    auto semantic_summary_owned_cleanup_sites =
         semantics::project_semantic_owned_cleanup_obligations(result.semantic_result.semantic_module);
     result.semantic_owned_cleanup_state.discovered_implementations = collect_discovered_owned_cleanup_implementations(
         result.parse_result.module,
         options,
-        semantic_summary_drop_sites
+        semantic_summary_owned_cleanup_sites
     );
     auto semantic_owned_cleanup_implementations = std::vector<semantics::OwnedCleanupImplementation> {};
     semantic_owned_cleanup_implementations.reserve(result.semantic_owned_cleanup_state.discovered_implementations.size());
@@ -79,12 +79,12 @@ void populate_semantic_drop_reports(
                                                        ? semantics::SemanticOwnedCleanupLoweringGate::enabled
                                                        : semantics::SemanticOwnedCleanupLoweringGate::disabled;
     result.semantic_owned_cleanup_lowering_authorizations = semantics::authorize_owned_cleanup_lowerings(
-        semantic_summary_drop_sites,
+        semantic_summary_owned_cleanup_sites,
         semantic_owned_cleanup_implementations,
         semantic_owned_cleanup_lowering_gate
     );
     result.semantic_owned_cleanup_state.resolution_summaries = semantics::summarize_owned_cleanup_implementation_resolutions(
-        semantic_summary_drop_sites,
+        semantic_summary_owned_cleanup_sites,
         semantic_owned_cleanup_implementations
     );
 }

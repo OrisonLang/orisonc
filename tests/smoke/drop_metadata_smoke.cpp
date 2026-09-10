@@ -7,7 +7,7 @@
 int main() {
     using orison::lowering::OwnedCleanupDeclaration;
     using orison::lowering::add_owned_cleanup_declaration;
-    using orison::lowering::declared_owned_cleanup_declarations_for_authorized_semantic_drops;
+    using orison::lowering::declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups;
     using orison::lowering::declared_owned_cleanup_declarations_for_allowed_source_types;
     using orison::lowering::format_owned_cleanup_action;
     using orison::lowering::format_owned_cleanup_action_report;
@@ -137,12 +137,12 @@ int main() {
     assert(declaration_from_authorization.discovery_line == 7);
     assert(declaration_from_authorization.emit_declaration);
 
-    assert(declared_owned_cleanup_declarations_for_authorized_semantic_drops({
+    assert(declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups({
         unresolved_authorization,
         disabled_authorization,
     }).empty());
 
-    auto semantic_declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops({
+    auto semantic_declarations = declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups({
         unresolved_authorization,
         authorized_authorization,
         orison::semantics::OwnedCleanupLoweringAuthorization {
@@ -209,6 +209,6 @@ int main() {
     assert(dynamic_array_invariants.element_drop_walk_required);
     assert(!dynamic_array_invariants.lowered_signatures_enabled);
     assert(declared_owned_cleanup_declarations_for_allowed_source_types({dynamic_array_action}, {}).empty());
-    assert(declared_owned_cleanup_declarations_for_authorized_semantic_drops({}).empty());
+    assert(declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups({}).empty());
     return 0;
 }

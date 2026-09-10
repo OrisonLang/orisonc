@@ -359,7 +359,7 @@ auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool {
     return plan.drop_call_emission == DropCallEmissionEligibility::declared_drop_abi;
 }
 
-auto matching_semantic_drop_authorization(
+auto matching_semantic_owned_cleanup_authorization(
     OwnedCleanupAction const& action,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& semantic_authorizations
 ) -> std::vector<semantics::OwnedCleanupLoweringAuthorization>::const_iterator {
@@ -393,7 +393,7 @@ auto plan_owned_cleanup_authorization(
 
     for (auto const& action : plan.actions) {
         auto const semantic_authorization =
-            matching_semantic_drop_authorization(action, semantic_authorizations);
+            matching_semantic_owned_cleanup_authorization(action, semantic_authorizations);
         if (
             semantic_authorization != semantic_authorizations.end() &&
             !semantic_authorization->authorized
@@ -798,7 +798,7 @@ auto apply_drop_cleanup_authorization_options(
         return authorize_drop_cleanup_calls_for_declared_abi(plan, declarations);
     }
     if (!options.semantic_owned_cleanup_lowering_authorizations.empty()) {
-        auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_drops(
+        auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups(
             options.semantic_owned_cleanup_lowering_authorizations
         );
         return authorize_drop_cleanup_calls_for_declared_abi(plan, declarations);

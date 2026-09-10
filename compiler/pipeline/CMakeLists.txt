@@ -14,7 +14,7 @@ add_library(orison_pipeline STATIC
     src/runtime_indexed_member_cleanup_execution_summary.cpp
     src/runtime_indexed_member_cleanup_readiness_report.cpp
     src/semantic_analysis_stage.cpp
-    src/semantic_drop_reports.cpp
+    src/semantic_owned_cleanup_reports.cpp
 )
 
 target_include_directories(orison_pipeline
