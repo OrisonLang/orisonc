@@ -260,6 +260,9 @@ inventing semantics outside the spec/tour.
 - Forwarded-parameter DynamicArray owned-computed rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Array CLI smoke coverage pins compiler-derived cleanup while preserving owner-mismatch, cycle,
   depth-limit, alias-extra-statement, and alias-reassignment diagnostics across direct and final-control helper paths.
+- Forwarded choice-payload DynamicArray owned-computed rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Array CLI smoke coverage pins compiler-derived cleanup while preserving switch-binding reuse,
+  final-control owner-mismatch, branch-local alias, and alias-reassignment diagnostics.
 
 ## Consequences
 

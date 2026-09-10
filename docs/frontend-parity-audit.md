@@ -3203,3 +3203,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: Forwarded-parameter DynamicArray owned-computed rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Array CLI smoke coverage verifies compiler-derived cleanup preserves owner-mismatch, cycle,
   depth-limit, alias-extra-statement, and alias-reassignment diagnostics across direct and final-control helper paths.
+- 2026-09-09: Forwarded choice-payload DynamicArray owned-computed rejection fixtures no longer declare
+  `interface Drop` or `implements Drop`. Array CLI smoke coverage verifies compiler-derived cleanup preserves
+  switch-binding reuse, final-control owner-mismatch, branch-local alias, and alias-reassignment diagnostics.
