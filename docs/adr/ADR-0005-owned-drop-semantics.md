@@ -226,9 +226,9 @@ inventing semantics outside the spec/tour.
 - Positive `dynamic_array_*cleanup_run.or` fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
   smoke audits the source fixture set to prevent user-authored cleanup syntax from returning to positive cleanup-run
   coverage.
-- Positive run fixtures no longer declare `interface Drop` or `implements Drop`, except the one runtime-indexed
-  sibling-member transfer fixture that still needs compiler-derived helper binding ownership. Pipeline smoke audits
-  the source fixture set and names that remaining blocker explicitly.
+- Positive run fixtures no longer declare `interface Drop` or `implements Drop`. Runtime-indexed sibling-member
+  transfer cleanup now binds helper sibling cleanup through compiler-derived owned cleanup symbols, and pipeline smoke
+  audits the full positive run-fixture source set.
 
 ## Consequences
 

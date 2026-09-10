@@ -6682,9 +6682,6 @@ auto main() -> int {
         if (!fixture_name.ends_with("_run.or")) {
             continue;
         }
-        if (fixture_name == "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or") {
-            continue;
-        }
 
         auto source = std::ifstream(entry.path());
         assert(source);
@@ -17518,50 +17515,50 @@ auto main() -> int {
             "  br label %items.member_cleanup.preserve_moved\n"
         ) != std::string::npos
     );
-    auto runtime_indexed_nested_missing_sibling_drop_path =
+    auto runtime_indexed_nested_compiler_derived_sibling_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_missing_sibling_drop_rejected.or";
-    auto runtime_indexed_nested_missing_sibling_drop_result = pipeline.emit_llvm(
-        runtime_indexed_nested_missing_sibling_drop_path,
+        "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_compiler_derived_sibling_cleanup.or";
+    auto runtime_indexed_nested_compiler_derived_sibling_cleanup_result = pipeline.emit_llvm(
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_path,
         runtime_indexed_cleanup_audit_module_rewrite_options()
     );
-    assert(runtime_indexed_nested_missing_sibling_drop_result.has_errors());
+    assert(!runtime_indexed_nested_compiler_derived_sibling_cleanup_result.has_errors());
     assert(
-        runtime_indexed_nested_missing_sibling_drop_result.error_text.find(
-            "member cleanup helper Drop bindings are missing"
-        ) != std::string::npos
-    );
-    assert(
-        runtime_indexed_nested_missing_sibling_drop_result.error_text.find(
-            "source-line 68 source-text var outer: Outer = Outer(items[index + zero].box.item)"
-        ) != std::string::npos
-    );
-    assert(
-        runtime_indexed_nested_missing_sibling_drop_result
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result
             .runtime_indexed_member_cleanup_sibling_fields.size() == 4
     );
     assert(
-        runtime_indexed_nested_missing_sibling_drop_result
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result
             .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 1
     );
-    auto const& missing_sibling_drop_bindings =
-        runtime_indexed_nested_missing_sibling_drop_result
+    auto const& compiler_derived_sibling_cleanup_bindings =
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result
             .runtime_indexed_member_cleanup_helper_drop_bindings.front();
-    assert(!missing_sibling_drop_bindings.all_drop_definitions_available);
-    assert(!missing_sibling_drop_bindings.helper_definition_ready);
-    auto const missing_tail_field = std::ranges::find_if(
-        runtime_indexed_nested_missing_sibling_drop_result.runtime_indexed_member_cleanup_sibling_fields,
+    assert(compiler_derived_sibling_cleanup_bindings.all_drop_definitions_available);
+    assert(compiler_derived_sibling_cleanup_bindings.helper_definition_ready);
+    auto const compiler_derived_tail_field = std::ranges::find_if(
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result.runtime_indexed_member_cleanup_sibling_fields,
         [](auto const& field) {
             return field.field_path == (std::vector<std::string> {"tail"});
         }
     );
     assert(
-        missing_tail_field !=
-        runtime_indexed_nested_missing_sibling_drop_result.runtime_indexed_member_cleanup_sibling_fields.end()
+        compiler_derived_tail_field !=
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result.runtime_indexed_member_cleanup_sibling_fields.end()
     );
-    assert(missing_tail_field->field_source_type_name == "Tail");
-    assert(missing_tail_field->drop_symbol_name == "__orison_owned_cleanup.Tail");
-    assert(!missing_tail_field->drop_definition_available);
+    assert(compiler_derived_tail_field->field_source_type_name == "Tail");
+    assert(compiler_derived_tail_field->drop_symbol_name == "__orison_owned_cleanup.Tail");
+    assert(compiler_derived_tail_field->drop_definition_available);
+    assert(
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result.ir_text.find(
+            "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"
+        ) != std::string::npos
+    );
+    assert(
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result.ir_text.find(
+            "call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)"
+        ) != std::string::npos
+    );
     auto runtime_indexed_nested_sibling_member_transfer_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
             runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text

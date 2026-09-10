@@ -2085,8 +2085,8 @@ representation.
   against another owner or cleanup-loop index.
 - Runtime-index `DynamicArray<T>` computed-expression member-transfer fixtures now use positive filenames after the
   default-path promotion. The rename is test/documentation hygiene only and does not alter source syntax.
-- Runtime-index member-cleanup helper synthesis now requires direct source-backed `Drop` definitions for every live
-  sibling field. Missing sibling `Drop` metadata blocks production-gated `emit_llvm` instead of allowing incomplete
+- Runtime-index member-cleanup helper synthesis now accepts compiler-derived owned cleanup symbols for every live
+  sibling field. Missing sibling cleanup metadata blocks production-gated `emit_llvm` instead of allowing incomplete
   cleanup IR to omit or reference unavailable helper calls.
 - Two-owner nested source-backed `DynamicArray<Wrap>` member transfers now have positive helper-binding coverage. Each
   owner independently proves the same `Wrap.box.item` helper target with four sibling `Drop` bindings before native
@@ -2591,8 +2591,8 @@ representation.
   `--emit-object`, and `--build` for post-move reuse and missing-Drop boundaries.
 - Runtime-index direct computed-index member reuse rejection now uses the same production diagnostic matrix as sibling
   and nested reuse rejects.
-- Runtime-index nested missing sibling-Drop rejection now pins the detailed helper blocker with owner, computed index,
-  element, moved member, member path, and helper symbol.
+- Runtime-index nested sibling-member cleanup now pins compiler-derived helper bindings for outer and nested sibling
+  fields, replacing the old source-backed missing-sibling rejection with positive production coverage.
 - Runtime-index member cleanup multi-owner IR checks now pin helper reuse: same-shape cleanup emits one helper
   definition and owner-specific helper calls for each cleanup site.
 - Runtime-index choice-payload member cleanup IR checks now pin packet choice cleanup handoff before the promoted

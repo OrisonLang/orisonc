@@ -45,8 +45,8 @@
   `--emit-llvm`, `--emit-object`, and `--build` for reuse and missing-Drop boundaries.
 - 2026-08-31: Runtime-index direct computed-index member reuse rejection now uses the same production diagnostic
   matrix as sibling and nested reuse rejects.
-- 2026-08-31: Runtime-index nested missing sibling-Drop rejection now pins the detailed helper blocker with owner,
-  computed index, element, moved member, member path, and helper symbol.
+- 2026-09-09: Runtime-index sibling-member cleanup now has compiler-derived helper-binding coverage for direct and
+  nested sibling fields without user-authored `Drop` syntax in positive run fixtures.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
@@ -891,7 +891,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   callers can append a specific ABI reason instead of losing context behind a generic expression rejection.
 - 2026-07-24: unsupported choice payload ABI diagnostics now use a shared lowering diagnostic helper across function
   and statement emitters. Return, parameter, annotated `let`, and annotated `var` boundaries keep the same pinned
-  diagnostics; assignment/reassignment cannot yet reach an unsupported choice ABI value because those boundary checks
+  diagnostics; assignment/reassignment cannot yet reach an unsupported choice ABI value since those boundary checks
   reject the value before mutable storage exists.
 - 2026-07-24: unsupported choice payload ABI diagnostics were pinned for descriptor-backed payloads at return,
   parameter, annotated `let`, and annotated `var` boundaries. This historical rejection was superseded on 2026-08-02
@@ -1666,7 +1666,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-01: connected semantic drop lowering authorizations to cleanup authorization reports so blocked cleanup thunks
   distinguish disabled semantic/source lowering gates from missing emitted drop ABI declarations.
 - 2026-07-01: added a pure bridge from authorized semantic drop lowering sites to planned drop declarations, preserving
-  disabled-by-default behavior because current source-drop-lowering authorizations remain blocked.
+  disabled-by-default behavior while current source-drop-lowering authorizations remain blocked.
 - 2026-07-01: added lowering smoke coverage for explicitly authorized semantic drop metadata, proving declarations can
   appear from semantic authorization while cleanup calls still require full per-thunk authorization.
 - 2026-07-01: added a lowering/pipeline report seam for emitted drop declarations so tooling can inspect
@@ -1802,7 +1802,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-25: modules with implementation or extension methods no longer require a top-level function before LLVM IR
   emission, so `tour_03_interfaces_methods.or` is now backend-validated through method body lowering.
 - 2026-06-25: `tour_01_packages_imports.or`, `tour_02_records_choices.or`, `tour_06_control_flow.or`,
-  `tour_07_recursion.or`, and `tour_10_unsafe_memory.or` are now backend-validated examples because their existing
+  `tour_07_recursion.or`, and `tour_10_unsafe_memory.or` are now backend-validated examples as their existing
   lowering paths emit object code successfully.
 - 2026-06-25: integer bitwise and shift expressions now lower to LLVM, `bit_not` lowers through an all-bits XOR, and
   unannotated scalar `let` bindings can infer supported binary/unary initializer types; `tour_05_bindings_operators.or`
@@ -1826,7 +1826,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-24: aggregate index-step temporary naming and cursor advancement now live in the shared aggregate path helper;
   expression lowering still owns recursive lowering of the index operand.
 - 2026-06-24: aggregate member-step temporary naming and cursor advancement now live in the shared aggregate path helper;
-  index-step handling remains in expression lowering because index operands recursively lower expressions.
+  index-step handling remains in expression lowering since index operands recursively lower expressions.
 - 2026-06-24: aggregate path cursor load emission now lives in the shared aggregate path helper, while expression
   lowering retains expected-type validation, index-expression lowering, and diagnostics.
 - 2026-06-24: aggregate path collection now exposes named-base and temporary-base classifiers, removing duplicated
@@ -2348,7 +2348,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: simple payload constructor overlap now treats name-binding payloads as wildcards against literal payloads, so `Int(value)` followed by `Int(1)` is rejected while nested payload-pattern overlap remains deferred.
 - 2026-05-08: wildcard/literal payload overlap now has explicit CLI no-cascade coverage, keeping mixed simple-payload overlap diagnostics separate from top-level value-pattern duplicate wording.
 - 2026-05-08: multi-payload simple constructor overlap is now covered explicitly for partial wildcard/literal matches such as `Both(left, 1)` followed by `Both(other, 1)`, still without attempting nested pattern reasoning.
-- 2026-05-08: multi-payload simple constructor overlap now also has disjoint-literal regression coverage, so `Both(left, 1)` followed by `Both(other, 2)` remains valid because the literal-constrained positions do not overlap.
+- 2026-05-08: multi-payload simple constructor overlap now also has disjoint-literal regression coverage, so `Both(left, 1)` followed by `Both(other, 2)` remains valid when the literal-constrained positions do not overlap.
 - 2026-05-08: wildcard/literal payload overlap now has order-reversed regression coverage too, so `Int(1)` followed by `Int(value)` is rejected symmetrically with `Int(value)` followed by `Int(1)`.
 - 2026-05-08: mixed simple payload non-overlap now has leading-literal regression coverage too, so `Both(1, left)` followed by `Both(2, right)` remains valid when the first constrained payload differs.
 - 2026-05-08: nested payload constructor overlap now has a first narrow implementation for identical nested simple constructor shapes, so `Wrap(Some(value))` followed by `Wrap(Some(other))` is rejected without attempting broader nested pattern algebra.
@@ -2366,9 +2366,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: deeper nested zero-payload constructor distinction now has coverage too, so `Wrap(Hold(Some(value)))` and `Wrap(Hold(Empty))` remain distinct while duplicate `Wrap(Hold(Empty))` arms are rejected.
 - 2026-05-08: payload-bearing `choice` switch exhaustiveness now has a narrow full-variant coverage rule: constructor arms with only binding-name payloads, such as `Some(value)`, cover that variant for redundant-default detection, so a `Maybe<T>` switch covering `Some(value)` plus `Empty` rejects a trailing `default` while the same arm set without `default` remains valid; literal-constrained and nested constructor arms are not treated as exhaustive.
 - 2026-05-09: payload-bearing `choice` switches without `default` now report the first missing variant when the same narrow full-variant coverage model can prove one is uncovered, while duplicate payload-constructor arms keep their overlap diagnostic primary and suppress the missing-variant follow-up.
-- 2026-05-09: literal-constrained payload constructor arms now have explicit exhaustiveness boundary coverage: `Some(1)` plus `Empty` still accepts a trailing `default`, while the no-default form reports `Some` as missing because the literal arm does not cover the whole payload-bearing variant.
-- 2026-05-09: nested payload constructor arms now have matching exhaustiveness boundary coverage: `Wrap(Some(value))` plus `Blank` still accepts a trailing `default`, while the no-default form reports `Wrap` as missing because the nested pattern does not cover the whole outer payload-bearing variant.
-- 2026-05-09: partial multi-payload constructor arms now have the same exhaustiveness boundary coverage: `Both(left, 1)` plus `Empty` still accepts a trailing `default`, while the no-default form reports `Both` as missing because one payload position is literal-constrained.
+- 2026-05-09: literal-constrained payload constructor arms now have explicit exhaustiveness boundary coverage: `Some(1)` plus `Empty` still accepts a trailing `default`, while the no-default form reports `Some` as missing when the literal arm does not cover the whole payload-bearing variant.
+- 2026-05-09: nested payload constructor arms now have matching exhaustiveness boundary coverage: `Wrap(Some(value))` plus `Blank` still accepts a trailing `default`, while the no-default form reports `Wrap` as missing when the nested pattern does not cover the whole outer payload-bearing variant.
+- 2026-05-09: partial multi-payload constructor arms now have the same exhaustiveness boundary coverage: `Both(left, 1)` plus `Empty` still accepts a trailing `default`, while the no-default form reports `Both` as missing when one payload position is literal-constrained.
 - 2026-05-09: payload-bearing choice exhaustiveness smoke fixtures now share local fixture writers across semantic and CLI coverage, keeping the full-cover, literal-boundary, nested-boundary, multi-payload-boundary, and no-cascade cases aligned without repeating source text setup.
 - 2026-05-09: payload-bearing choice exhaustiveness now has order-reversed smoke coverage too, so `Empty` before `Some(value)` remains exhaustive while `Empty` before literal-constrained `Some(1)` still reports `Some` as missing.
 - 2026-05-09: payload-bearing choice exhaustiveness semantic smoke assertions now share a local single-diagnostic helper, keeping the repeated line/message checks consistent as new boundary cases are added.

@@ -4656,7 +4656,7 @@ auto emit_module(
             collect_runtime_indexed_member_cleanup_sibling_fields(
                 context,
                 result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
-                direct_source_defined_drop_symbols
+                source_defined_drop_symbols
             );
         result.runtime_indexed_member_cleanup_helper_drop_bindings =
             collect_runtime_indexed_member_cleanup_helper_drop_bindings(

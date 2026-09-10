@@ -9,36 +9,13 @@ record Sibling
 record Tail
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Inner
-    function drop(this: exclusive This) -> Unit
-        return
-
-implements Drop for Sibling
-    function drop(this: exclusive This) -> Unit
-        return
-
-implements Drop for Tail
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Box
     prefix: Sibling
     item: Inner
     tail: Tail
 
-implements Drop for Box
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Outer
     item: Inner
-
-implements Drop for Outer
-    function drop(this: exclusive This) -> Unit
-        return
 
 function main() -> UInt32
     var items: DynamicArray<Box> = DynamicArray()
