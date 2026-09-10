@@ -275,6 +275,9 @@ inventing semantics outside the spec/tour.
 - Forwarded returned aggregate-field DynamicArray rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Array CLI and pipeline smoke coverage pin compiler-derived cleanup while preserving returned-field
   post-move reuse, final-control branch-local reuse, helper owner-mismatch, and unsupported-shape diagnostics.
+- Returned aggregate-field DynamicArray rejection fixtures no longer declare `interface Drop` or `implements Drop`.
+  Array CLI and pipeline smoke coverage pin compiler-derived cleanup while preserving direct, branch-returned,
+  switch-returned, nested, final-if, and final-switch reuse diagnostics.
 
 ## Consequences
 

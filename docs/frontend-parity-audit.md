@@ -3218,3 +3218,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-10: Owned-result ternary DynamicArray rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Array CLI and pipeline smoke coverage verify compiler-derived cleanup preserves selected-result
   reuse, branch-consumer alias, helper, scratch, and nested-wrapper diagnostics.
+- 2026-09-10: Returned aggregate-field DynamicArray rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Array CLI and pipeline smoke coverage verify compiler-derived cleanup preserves direct,
+  branch-returned, switch-returned, nested, final-if, and final-switch reuse diagnostics.
