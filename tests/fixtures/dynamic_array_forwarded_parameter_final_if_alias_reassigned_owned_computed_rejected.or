@@ -3,13 +3,6 @@ package fixtures.dynamicarrayforwardedparameterfinalifaliasreassignedownedcomput
 record Payload
     value: Int64
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function forward_final_if_alias_reassigned(flag: Bool, items: DynamicArray<Payload>) -> DynamicArray<Payload>
     if flag
         var alias: DynamicArray<Payload> = items

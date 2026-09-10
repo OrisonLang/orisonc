@@ -257,6 +257,9 @@ inventing semantics outside the spec/tour.
 - Runtime-indexed DynamicArray constructor computed-index reuse rejection fixtures no longer declare `interface Drop`
   or `implements Drop`. Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct post-move
   reuse diagnostics for direct, sibling-preserving, computed-expression, and nested sibling paths.
+- Forwarded-parameter DynamicArray owned-computed rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Array CLI smoke coverage pins compiler-derived cleanup while preserving owner-mismatch, cycle,
+  depth-limit, alias-extra-statement, and alias-reassignment diagnostics across direct and final-control helper paths.
 
 ## Consequences
 

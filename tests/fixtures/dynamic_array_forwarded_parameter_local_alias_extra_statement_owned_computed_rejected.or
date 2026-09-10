@@ -3,13 +3,6 @@ package fixtures.dynamicarrayforwardedparameterlocalaliasextrastatementownedcomp
 record Payload
     value: Int64
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function forward_alias_with_extra(items: DynamicArray<Payload>) -> DynamicArray<Payload>
     var alias: DynamicArray<Payload> = items
     var marker = 1 as Int64

@@ -3200,3 +3200,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: Runtime-indexed DynamicArray constructor computed-index reuse rejection fixtures no longer declare
   `interface Drop` or `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup preserves direct
   post-move reuse diagnostics for direct, sibling-preserving, computed-expression, and nested sibling paths.
+- 2026-09-09: Forwarded-parameter DynamicArray owned-computed rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Array CLI smoke coverage verifies compiler-derived cleanup preserves owner-mismatch, cycle,
+  depth-limit, alias-extra-statement, and alias-reassignment diagnostics across direct and final-control helper paths.
