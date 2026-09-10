@@ -3,13 +3,6 @@ package tests.dynamicarraygenericownedparameter
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function count_items<T>(values: DynamicArray<T>) -> IntSize
     values.length()
 

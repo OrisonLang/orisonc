@@ -7,13 +7,6 @@ record Payload
     child: Nested
     bytes: Array<UInt32, 2>
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 extend DynamicArray<T>
     function count(this: shared This) -> IntSize
         this.length()

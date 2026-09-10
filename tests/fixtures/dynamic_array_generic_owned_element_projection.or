@@ -3,13 +3,6 @@ package tests.dynamicarraygenericownedelementprojection
 record Box<T>
     value: T
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Box<UInt32>
-    function drop(this: exclusive This) -> Unit
-        return
-
 function first_value<T>(values: DynamicArray<Box<T>>) -> T
     values[0].value
 
