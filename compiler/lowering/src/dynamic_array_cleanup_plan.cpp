@@ -236,7 +236,7 @@ auto synthetic_dynamic_array_parameter_cleanup_authorizations(
                     .site_line = action.discovery_line,
                 },
                 .semantic_resolved = true,
-                .source_owned_cleanup_lowering_enabled = true,
+                .semantic_owned_cleanup_lowering_enabled = true,
                 .authorized = true,
             });
         }

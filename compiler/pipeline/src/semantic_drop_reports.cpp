@@ -75,13 +75,13 @@ void populate_semantic_drop_reports(
     for (auto const& implementation : result.semantic_drop_state.discovered_implementations) {
         semantic_drop_implementations.push_back(implementation.implementation);
     }
-    auto const source_owned_cleanup_lowering_gate = source_owned_cleanup_lowering_enabled(options)
-                                                       ? semantics::SourceOwnedCleanupLoweringGate::enabled
-                                                       : semantics::SourceOwnedCleanupLoweringGate::disabled;
+    auto const semantic_owned_cleanup_lowering_gate = semantic_owned_cleanup_lowering_enabled(options)
+                                                       ? semantics::SemanticOwnedCleanupLoweringGate::enabled
+                                                       : semantics::SemanticOwnedCleanupLoweringGate::disabled;
     result.semantic_owned_cleanup_lowering_authorizations = semantics::authorize_owned_cleanup_lowerings(
         semantic_summary_drop_sites,
         semantic_drop_implementations,
-        source_owned_cleanup_lowering_gate
+        semantic_owned_cleanup_lowering_gate
     );
     result.semantic_drop_state.resolution_summaries = semantics::summarize_owned_cleanup_implementation_resolutions(
         semantic_summary_drop_sites,

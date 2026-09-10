@@ -400,7 +400,7 @@ auto plan_owned_cleanup_authorization(
         ) {
             report.semantic_lowering_blockers.push_back(action);
             if (semantic_authorization->semantic_resolved) {
-                report.source_owned_cleanup_lowering_blockers.push_back(action);
+                report.semantic_owned_cleanup_lowering_blockers.push_back(action);
             } else {
                 report.semantic_unresolved_blockers.push_back(action);
             }
@@ -492,9 +492,9 @@ auto format_owned_cleanup_authorization_report(
         lines.push_back(line.str());
     }
 
-    for (auto const& blocker : report.source_owned_cleanup_lowering_blockers) {
+    for (auto const& blocker : report.semantic_owned_cleanup_lowering_blockers) {
         auto line = std::ostringstream {};
-        line << "source drop lowering not accepted " << blocker.symbol_name;
+        line << "semantic owned cleanup lowering not accepted " << blocker.symbol_name;
         if (!blocker.source_type_name.empty()) {
             line << " for " << blocker.source_type_name;
         }
@@ -649,10 +649,10 @@ auto summarize_owned_cleanup_readiness_blockers(
             cleanup.authorization.semantic_unresolved_blockers.begin(),
             cleanup.authorization.semantic_unresolved_blockers.end()
         );
-        summary.source_owned_cleanup_lowering_blockers.insert(
-            summary.source_owned_cleanup_lowering_blockers.end(),
-            cleanup.authorization.source_owned_cleanup_lowering_blockers.begin(),
-            cleanup.authorization.source_owned_cleanup_lowering_blockers.end()
+        summary.semantic_owned_cleanup_lowering_blockers.insert(
+            summary.semantic_owned_cleanup_lowering_blockers.end(),
+            cleanup.authorization.semantic_owned_cleanup_lowering_blockers.begin(),
+            cleanup.authorization.semantic_owned_cleanup_lowering_blockers.end()
         );
         summary.missing_declarations.insert(
             summary.missing_declarations.end(),
@@ -671,7 +671,7 @@ auto format_owned_cleanup_readiness_blocker_report(
     header << "drop readiness blockers cleanups " << summary.blocked_cleanups
            << " semantic blockers " << summary.semantic_lowering_blockers.size()
            << " semantic unresolved " << summary.semantic_unresolved_blockers.size()
-           << " source lowering blocked " << summary.source_owned_cleanup_lowering_blockers.size()
+           << " semantic lowering blocked " << summary.semantic_owned_cleanup_lowering_blockers.size()
            << " missing declarations " << summary.missing_declarations.size();
     lines.push_back(header.str());
 
@@ -701,7 +701,7 @@ auto format_owned_cleanup_readiness_blocker_report(
         lines.push_back(detail.str());
     }
 
-    for (auto const& blocker : summary.source_owned_cleanup_lowering_blockers) {
+    for (auto const& blocker : summary.semantic_owned_cleanup_lowering_blockers) {
         auto detail = std::ostringstream {};
         detail << "drop readiness blocker source lowering not accepted " << blocker.symbol_name;
         if (!blocker.source_type_name.empty()) {

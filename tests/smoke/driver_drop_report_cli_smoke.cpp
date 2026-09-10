@@ -672,7 +672,7 @@ int main() {
         parsed_drop_readiness_blockers,
         {
             "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
-            "source lowering blocked 0 missing declarations 0",
+            "semantic lowering blocked 0 missing declarations 0",
         }
     );
     auto parsed_drop_readiness_source =
@@ -722,7 +722,7 @@ int main() {
         drop_readiness_blockers,
         {
             "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
-            "source lowering blocked 0 missing declarations 0",
+            "semantic lowering blocked 0 missing declarations 0",
         }
     );
     auto drop_readiness_source = run_drop_readiness_source_correlations(app, planned_drop_report_path);
@@ -749,7 +749,7 @@ int main() {
         multi_fixture_drop_readiness_blockers,
         {
             "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
-            "source lowering blocked 0 missing declarations 0",
+            "semantic lowering blocked 0 missing declarations 0",
         }
     );
 

@@ -67,7 +67,7 @@ struct OwnedCleanupAuthorizationReport {
     bool authorized = false;
     std::vector<OwnedCleanupAction> semantic_lowering_blockers;
     std::vector<OwnedCleanupAction> semantic_unresolved_blockers;
-    std::vector<OwnedCleanupAction> source_owned_cleanup_lowering_blockers;
+    std::vector<OwnedCleanupAction> semantic_owned_cleanup_lowering_blockers;
     std::vector<OwnedCleanupAction> missing_declarations;
 };
 
@@ -94,7 +94,7 @@ struct OwnedCleanupReadinessBlockerSummary {
     std::size_t blocked_cleanups = 0;
     std::vector<OwnedCleanupAction> semantic_lowering_blockers;
     std::vector<OwnedCleanupAction> semantic_unresolved_blockers;
-    std::vector<OwnedCleanupAction> source_owned_cleanup_lowering_blockers;
+    std::vector<OwnedCleanupAction> semantic_owned_cleanup_lowering_blockers;
     std::vector<OwnedCleanupAction> missing_declarations;
 };
 

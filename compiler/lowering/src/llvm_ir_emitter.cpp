@@ -211,7 +211,7 @@ auto has_runtime_indexed_cleanup_owned_cleanup_definition(
     semantics::OwnedCleanupImplementation const& implementation,
     LlvmIrEmissionOptions const& options
 ) -> bool {
-    return options.enable_runtime_indexed_cleanup_source_owned_cleanup_emission &&
+    return options.enable_runtime_indexed_cleanup_semantic_owned_cleanup_emission &&
         implementation.origin == semantics::OwnedCleanupImplementationOrigin::source_derived &&
         implementation.proven &&
         implementation.body.finite;
@@ -4163,7 +4163,7 @@ auto emit_module(
              )) {
             add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));
         }
-        if (options.enable_runtime_indexed_cleanup_source_owned_cleanup_emission) {
+        if (options.enable_runtime_indexed_cleanup_semantic_owned_cleanup_emission) {
             for (auto declaration : declared_owned_cleanup_declarations_for_runtime_indexed_cleanup(module)) {
                 add_owned_cleanup_declaration(result.owned_cleanup_declarations, std::move(declaration));
             }

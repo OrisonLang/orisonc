@@ -233,7 +233,7 @@ int main() {
                     .site_line = 20,
                 },
                 .semantic_resolved = true,
-                .source_owned_cleanup_lowering_enabled = false,
+                .semantic_owned_cleanup_lowering_enabled = false,
                 .authorized = false,
             },
         }
@@ -241,7 +241,7 @@ int main() {
     assert(!semantic_blocked_authorization.authorized);
     assert(semantic_blocked_authorization.semantic_lowering_blockers.size() == 1);
     assert(semantic_blocked_authorization.semantic_unresolved_blockers.empty());
-    assert(semantic_blocked_authorization.source_owned_cleanup_lowering_blockers.size() == 1);
+    assert(semantic_blocked_authorization.semantic_owned_cleanup_lowering_blockers.size() == 1);
     assert(semantic_blocked_authorization.missing_declarations.empty());
     auto semantic_blocked_authorization_report = orison::lowering::format_owned_cleanup_authorization_report(
         authorized_plan,
@@ -260,7 +260,7 @@ int main() {
     );
     assert(
         semantic_blocked_authorization_report[2] ==
-        "source drop lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload field 0 "
+        "semantic owned cleanup lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 20"
     );
     auto semantic_blocked_readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
@@ -273,7 +273,7 @@ int main() {
                     .site_line = 20,
                 },
                 .semantic_resolved = true,
-                .source_owned_cleanup_lowering_enabled = false,
+                .semantic_owned_cleanup_lowering_enabled = false,
                 .authorized = false,
             },
         },
@@ -310,7 +310,7 @@ int main() {
                     .site_line = 20,
                 },
                 .semantic_resolved = true,
-                .source_owned_cleanup_lowering_enabled = true,
+                .semantic_owned_cleanup_lowering_enabled = true,
                 .authorized = true,
             },
         },

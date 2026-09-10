@@ -31,14 +31,14 @@ auto main() -> int {
     assert(empty_summary.blocked_cleanups == 0);
     assert(empty_summary.semantic_lowering_blockers.empty());
     assert(empty_summary.semantic_unresolved_blockers.empty());
-    assert(empty_summary.source_owned_cleanup_lowering_blockers.empty());
+    assert(empty_summary.semantic_owned_cleanup_lowering_blockers.empty());
     assert(empty_summary.missing_declarations.empty());
     auto empty_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(empty_summary);
     assert(empty_report.size() == 1);
     assert(
         empty_report.front() ==
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
-        "source lowering blocked 0 missing declarations 0"
+        "semantic lowering blocked 0 missing declarations 0"
     );
 
     auto action = payload_action();
@@ -55,14 +55,14 @@ auto main() -> int {
     assert(unresolved_summary.blocked_cleanups == 1);
     assert(unresolved_summary.semantic_lowering_blockers.size() == 1);
     assert(unresolved_summary.semantic_unresolved_blockers.size() == 1);
-    assert(unresolved_summary.source_owned_cleanup_lowering_blockers.empty());
+    assert(unresolved_summary.semantic_owned_cleanup_lowering_blockers.empty());
     assert(unresolved_summary.missing_declarations.size() == 1);
     auto unresolved_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(unresolved_summary);
     assert(unresolved_report.size() == 4);
     assert(
         unresolved_report[0] ==
         "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 1 "
-        "source lowering blocked 0 missing declarations 1"
+        "semantic lowering blocked 0 missing declarations 1"
     );
     assert(
         unresolved_report[1] ==
@@ -80,30 +80,30 @@ auto main() -> int {
         "discovered at line 12"
     );
 
-    auto source_gated_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
+    auto semantic_gated_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
         .cleanup_authorizations = {
             cleanup_readiness(orison::lowering::OwnedCleanupAuthorizationReport {
                 .semantic_lowering_blockers = {action},
-                .source_owned_cleanup_lowering_blockers = {action},
+                .semantic_owned_cleanup_lowering_blockers = {action},
                 .missing_declarations = {action},
             }),
         },
     };
-    auto source_gated_summary = orison::lowering::summarize_owned_cleanup_readiness_blockers(source_gated_snapshot);
-    assert(source_gated_summary.blocked_cleanups == 1);
-    assert(source_gated_summary.semantic_lowering_blockers.size() == 1);
-    assert(source_gated_summary.semantic_unresolved_blockers.empty());
-    assert(source_gated_summary.source_owned_cleanup_lowering_blockers.size() == 1);
-    assert(source_gated_summary.missing_declarations.size() == 1);
-    auto source_gated_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(source_gated_summary);
-    assert(source_gated_report.size() == 4);
+    auto semantic_gated_summary = orison::lowering::summarize_owned_cleanup_readiness_blockers(semantic_gated_snapshot);
+    assert(semantic_gated_summary.blocked_cleanups == 1);
+    assert(semantic_gated_summary.semantic_lowering_blockers.size() == 1);
+    assert(semantic_gated_summary.semantic_unresolved_blockers.empty());
+    assert(semantic_gated_summary.semantic_owned_cleanup_lowering_blockers.size() == 1);
+    assert(semantic_gated_summary.missing_declarations.size() == 1);
+    auto semantic_gated_report = orison::lowering::format_owned_cleanup_readiness_blocker_report(semantic_gated_summary);
+    assert(semantic_gated_report.size() == 4);
     assert(
-        source_gated_report[0] ==
+        semantic_gated_report[0] ==
         "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0 "
-        "source lowering blocked 1 missing declarations 1"
+        "semantic lowering blocked 1 missing declarations 1"
     );
     assert(
-        source_gated_report[2] ==
+        semantic_gated_report[2] ==
         "drop readiness blocker source lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload "
         "field 0 discovered at line 12"
     );

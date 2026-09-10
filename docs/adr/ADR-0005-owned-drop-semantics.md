@@ -295,8 +295,9 @@ inventing semantics outside the spec/tour.
   generic CLI smoke coverage pin compiler-derived owned parameter, runtime-indexed nested, and runtime-indexed
   choice-payload cleanup emission without source-visible cleanup syntax.
 - Lowering now names generated cleanup definition symbols, local cleanup emitters, and fixed-array cleanup temporaries
-  as owned cleanup internals instead of source cleanup internals. The semantic authorization gate names remain a
-  separate compatibility cleanup.
+  as owned cleanup internals instead of source cleanup internals.
+- Semantic authorization gates now use semantic-owned-cleanup naming for options, readiness blockers, and reports.
+  Historical source-derived implementation collector names remain until user-defined finalization syntax is decided.
 
 ## Consequences
 

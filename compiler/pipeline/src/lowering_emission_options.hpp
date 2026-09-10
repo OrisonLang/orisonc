@@ -17,7 +17,7 @@ auto dynamic_array_length_lowering_enabled(CompilePipelineOptions const& options
 auto dynamic_array_for_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_append_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& options) -> bool;
-auto source_owned_cleanup_lowering_enabled(CompilePipelineOptions const& options) -> bool;
+auto semantic_owned_cleanup_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_descriptor_cleanup_planning_enabled(CompilePipelineOptions const& options) -> bool;
 
 auto build_lowering_emission_options(

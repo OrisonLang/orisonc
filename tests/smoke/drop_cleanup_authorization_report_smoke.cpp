@@ -63,17 +63,17 @@ auto main() -> int {
         "missing drop declaration __orison_owned_cleanup.Payload for Payload capture payload field 0 discovered at line 12"
     );
 
-    auto source_gated_report = orison::lowering::format_owned_cleanup_authorization_report(
+    auto semantic_gated_report = orison::lowering::format_owned_cleanup_authorization_report(
         cleanup_plan(),
         orison::lowering::OwnedCleanupAuthorizationReport {
             .semantic_lowering_blockers = {action},
-            .source_owned_cleanup_lowering_blockers = {action},
+            .semantic_owned_cleanup_lowering_blockers = {action},
         }
     );
-    assert(source_gated_report.size() == 3);
+    assert(semantic_gated_report.size() == 3);
     assert(
-        source_gated_report[2] ==
-        "source drop lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload field 0 "
+        semantic_gated_report[2] ==
+        "semantic owned cleanup lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
 

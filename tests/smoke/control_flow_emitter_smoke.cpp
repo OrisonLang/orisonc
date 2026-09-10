@@ -611,7 +611,7 @@ int main() {
                     .owner_name = "items.element",
                 },
                 .semantic_resolved = true,
-                .source_owned_cleanup_lowering_enabled = true,
+                .semantic_owned_cleanup_lowering_enabled = true,
                 .authorized = true,
             },
         },

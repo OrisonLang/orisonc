@@ -111,7 +111,7 @@ int main() {
                         .site_line = 1,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },

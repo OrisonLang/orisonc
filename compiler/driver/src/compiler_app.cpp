@@ -230,7 +230,7 @@ auto emit_llvm_report_with_failure_output(
 
 auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions {
     return pipeline::CompilePipelineOptions {
-        .source_owned_cleanup_lowering_enabled = true,
+        .semantic_owned_cleanup_lowering_enabled = true,
         .dynamic_array_descriptor_cleanup_planning_enabled = true,
         .dynamic_array_parameter_descriptor_audit_bindings_enabled = true,
         .collect_computed_dynamic_array_for_descriptor_renders = true,
@@ -269,10 +269,10 @@ auto runtime_indexed_cleanup_audit_options() -> pipeline::CompilePipelineOptions
 
 auto runtime_indexed_constructor_move_run_options() -> pipeline::CompilePipelineOptions {
     auto options = pipeline::CompilePipelineOptions {};
-    options.source_owned_cleanup_lowering_enabled = true;
+    options.semantic_owned_cleanup_lowering_enabled = true;
     options.collect_runtime_indexed_cleanup_audit = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
-    options.runtime_indexed_cleanup_source_owned_cleanup_emission_enabled = true;
+    options.runtime_indexed_cleanup_semantic_owned_cleanup_emission_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;
     return options;
 }

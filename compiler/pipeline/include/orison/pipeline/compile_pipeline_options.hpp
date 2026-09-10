@@ -26,8 +26,8 @@ struct CompilePipelineOptions {
     std::vector<semantics::OwnedCleanupImplementationCandidate> test_only_semantic_drop_implementation_candidates;
     std::vector<semantics::OwnedCleanupLoweringAuthorization> test_only_semantic_owned_cleanup_lowering_authorizations;
     std::vector<lowering::FixtureDynamicArrayConstructionRequest> fixture_dynamic_array_construction_requests;
-    bool test_only_enable_source_owned_cleanup_lowering = false;
-    bool source_owned_cleanup_lowering_enabled = false;
+    bool test_only_enable_semantic_owned_cleanup_lowering = false;
+    bool semantic_owned_cleanup_lowering_enabled = false;
     bool fixture_derive_dynamic_array_cleanup_from_semantics = false;
     bool dynamic_array_descriptor_cleanup_planning_enabled = false;
     bool fixture_enable_dynamic_array_parameter_descriptors = false;
@@ -54,7 +54,7 @@ struct CompilePipelineOptions {
     bool runtime_indexed_cleanup_module_ir_mutation_enabled = false;
     bool runtime_indexed_cleanup_function_ir_module_rewrite_enabled = false;
     bool runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = false;
-    bool runtime_indexed_cleanup_source_owned_cleanup_emission_enabled = false;
+    bool runtime_indexed_cleanup_semantic_owned_cleanup_emission_enabled = false;
     bool runtime_indexed_constructor_move_enabled = false;
     bool runtime_indexed_member_cleanup_ir_mutation_enabled = false;
     bool runtime_indexed_member_cleanup_production_gate_enabled = false;
@@ -81,7 +81,7 @@ struct CompilePipelineOptions {
 
 inline auto production_compile_pipeline_options() -> CompilePipelineOptions {
     auto options = CompilePipelineOptions {};
-    options.source_owned_cleanup_lowering_enabled = true;
+    options.semantic_owned_cleanup_lowering_enabled = true;
     options.runtime_indexed_cleanup_emission_enabled = true;
     options.runtime_indexed_cleanup_verified_function_ir_rewrite_enabled = true;
     options.runtime_indexed_constructor_move_enabled = true;

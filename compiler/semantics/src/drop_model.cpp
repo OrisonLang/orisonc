@@ -387,7 +387,7 @@ auto format_owned_cleanup_implementation_diagnostic_report(
 auto authorize_owned_cleanup_lowering(
     OwnedCleanupSite site,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceOwnedCleanupLoweringGate source_owned_cleanup_lowering_gate
+    SemanticOwnedCleanupLoweringGate semantic_owned_cleanup_lowering_gate
 ) -> OwnedCleanupLoweringAuthorization {
     auto matching_implementation = std::find_if(
         implementations.begin(),
@@ -401,14 +401,14 @@ auto authorize_owned_cleanup_lowering(
     auto semantic_resolved = matching_implementation != implementations.end();
     auto compiler_intrinsic_owned_cleanup =
         semantic_resolved && matching_implementation->origin == OwnedCleanupImplementationOrigin::compiler_intrinsic;
-    auto source_owned_cleanup_lowering_enabled =
-        source_owned_cleanup_lowering_gate == SourceOwnedCleanupLoweringGate::enabled;
+    auto semantic_owned_cleanup_lowering_enabled =
+        semantic_owned_cleanup_lowering_gate == SemanticOwnedCleanupLoweringGate::enabled;
     return OwnedCleanupLoweringAuthorization {
         .site = std::move(site),
         .semantic_resolved = semantic_resolved,
-        .source_owned_cleanup_lowering_enabled = source_owned_cleanup_lowering_enabled,
+        .semantic_owned_cleanup_lowering_enabled = semantic_owned_cleanup_lowering_enabled,
         .compiler_intrinsic_owned_cleanup = compiler_intrinsic_owned_cleanup,
-        .authorized = semantic_resolved && (compiler_intrinsic_owned_cleanup || source_owned_cleanup_lowering_enabled),
+        .authorized = semantic_resolved && (compiler_intrinsic_owned_cleanup || semantic_owned_cleanup_lowering_enabled),
     };
 }
 
@@ -421,10 +421,10 @@ auto format_owned_cleanup_lowering_authorization(
         if (authorization.compiler_intrinsic_owned_cleanup) {
             output << " semantic-resolved lowering-authorized compiler-owned cleanup accepted";
         } else {
-            output << " semantic-resolved lowering-authorized source drop lowering accepted";
+            output << " semantic-resolved lowering-authorized semantic owned cleanup lowering accepted";
         }
     } else if (authorization.semantic_resolved) {
-        output << " semantic-resolved lowering-blocked source drop lowering not accepted";
+        output << " semantic-resolved lowering-blocked semantic owned cleanup lowering not accepted";
     } else {
         output << " semantic-unresolved lowering-blocked semantic drop unresolved";
     }
@@ -434,12 +434,12 @@ auto format_owned_cleanup_lowering_authorization(
 auto authorize_owned_cleanup_lowerings(
     std::vector<OwnedCleanupSite> const& sites,
     std::vector<OwnedCleanupImplementation> const& implementations,
-    SourceOwnedCleanupLoweringGate source_owned_cleanup_lowering_gate
+    SemanticOwnedCleanupLoweringGate semantic_owned_cleanup_lowering_gate
 ) -> std::vector<OwnedCleanupLoweringAuthorization> {
     auto authorizations = std::vector<OwnedCleanupLoweringAuthorization> {};
     authorizations.reserve(sites.size());
     for (auto const& site : sites) {
-        authorizations.push_back(authorize_owned_cleanup_lowering(site, implementations, source_owned_cleanup_lowering_gate));
+        authorizations.push_back(authorize_owned_cleanup_lowering(site, implementations, semantic_owned_cleanup_lowering_gate));
     }
     return authorizations;
 }

@@ -1438,7 +1438,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
                         semantic_result.semantic_module
                     ).front(),
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3031,7 +3031,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
                 .site_line = 6,
             },
             .semantic_resolved = true,
-            .source_owned_cleanup_lowering_enabled = true,
+            .semantic_owned_cleanup_lowering_enabled = true,
             .authorized = true,
         },
     };
@@ -3137,7 +3137,7 @@ void test_emits_authorized_owned_local_dynamic_array_cleanup() {
                 .site_line = 7,
             },
             .semantic_resolved = true,
-            .source_owned_cleanup_lowering_enabled = true,
+            .semantic_owned_cleanup_lowering_enabled = true,
             .authorized = true,
         },
     };
@@ -3203,7 +3203,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failur
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3265,7 +3265,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_de
                         .site_line = 9,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3325,7 +3325,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_explicit_uni
                         .site_line = 6,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3390,7 +3390,7 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_switch_ca
                         .site_line = 9,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3760,7 +3760,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
                         .site_line = 0,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -3797,7 +3797,7 @@ void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
     auto authorization = orison::semantics::OwnedCleanupLoweringAuthorization {
         .site = site,
         .semantic_resolved = true,
-        .source_owned_cleanup_lowering_enabled = false,
+        .semantic_owned_cleanup_lowering_enabled = false,
         .authorized = false,
     };
     auto result = lower_source(
@@ -3815,7 +3815,7 @@ void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
     assert(result.semantic_owned_cleanup_lowering_authorizations.size() == 1);
     assert(result.semantic_owned_cleanup_lowering_authorizations.front().site.abi_symbol_name == "__orison_owned_cleanup.Payload");
     assert(result.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
-    assert(!result.semantic_owned_cleanup_lowering_authorizations.front().source_owned_cleanup_lowering_enabled);
+    assert(!result.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
     assert(!result.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert(result.ir_text.find("__orison_owned_cleanup.Payload") == std::string::npos);
 }
@@ -13045,7 +13045,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
                         .site_line = 13,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -13124,7 +13124,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
                         .site_line = 11,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
@@ -13237,7 +13237,7 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
                         .site_line = 18,
                     },
                     .semantic_resolved = true,
-                    .source_owned_cleanup_lowering_enabled = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
                     .authorized = true,
                 },
             },
