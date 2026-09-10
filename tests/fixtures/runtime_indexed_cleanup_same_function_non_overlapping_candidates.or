@@ -3,35 +3,16 @@ package tests.fixtures.runtime_indexed_cleanup_same_function_non_overlapping_can
 record Payload
     value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Inner
     values: DynamicArray<Payload>
     spare: DynamicArray<Payload>
 
-implements Drop for Inner
-    function drop(this: exclusive This) -> Unit
-        return
-
 record Holder
     items: Array<Inner, 2>
-
-implements Drop for Holder
-    function drop(this: exclusive This) -> Unit
-        return
 
 record Outer
     primary: Inner
     items: Array<Inner, 2>
-
-implements Drop for Outer
-    function drop(this: exclusive This) -> Unit
-        return
 
 record SelectedInner
     item: Inner

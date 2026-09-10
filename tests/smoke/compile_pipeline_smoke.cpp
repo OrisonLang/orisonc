@@ -19563,8 +19563,8 @@ auto main() -> int {
         same_function_first_candidate.splice_range.end_offset <=
         same_function_second_candidate.splice_range.end_offset
     );
-    assert(same_function_first_candidate.source_line == 46);
-    assert(same_function_second_candidate.source_line == 51);
+    assert(same_function_first_candidate.source_line == 31);
+    assert(same_function_second_candidate.source_line == 36);
     assert(
         runtime_indexed_same_function_cleanup
             .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
@@ -19733,8 +19733,8 @@ auto main() -> int {
     assert(non_overlap_first_candidate.splice_range_available);
     assert(non_overlap_second_candidate.splice_range_available);
     assert(non_overlap_first_candidate.splice_range.end_offset <= non_overlap_second_candidate.splice_range.start_offset);
-    assert(non_overlap_first_candidate.source_line == 55);
-    assert(non_overlap_second_candidate.source_line == 63);
+    assert(non_overlap_first_candidate.source_line == 36);
+    assert(non_overlap_second_candidate.source_line == 44);
     assert(
         runtime_indexed_same_function_non_overlap_cleanup
             .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state

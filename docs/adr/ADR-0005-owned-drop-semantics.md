@@ -231,6 +231,9 @@ inventing semantics outside the spec/tour.
   examples, generic CLI, canonical pipeline, and cleanup-audit smoke coverage pin compiler-derived cleanup for choice
   payloads, generic owned parameters, owned element projections, nested fixed-array projections, the complete contract,
   and the cleanup audit fixture.
+- The remaining non-rejected cleanup-stub fixtures no longer declare `interface Drop` or `implements Drop`. Generic
+  mismatch diagnostics and runtime-index cleanup candidate/composition fixtures now use compiler-derived cleanup while
+  preserving their existing smoke-test contracts.
 - Positive local final-control DynamicArray cleanup fixtures no longer declare `interface Drop` or `implements Drop`;
   pipeline smoke pins compiler-derived cleanup emission for final if/switch branch locals and consumed owners.
 - Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
