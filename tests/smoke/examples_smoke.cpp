@@ -921,36 +921,36 @@ auto main() -> int {
     assert(choice_distinct_switch_call < choice_distinct_switch_call_take);
     assert(choice_return_switch_payload < choice_return_switch_payload_phi);
 
-    auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
-        fixtures / "dynamic_array_owned_parameter_source_drop.or"
+    auto owned_dynamic_array_parameter_cleanup = pipeline.emit_llvm(
+        fixtures / "dynamic_array_owned_parameter_cleanup_run.or"
     );
-    assert(!owned_dynamic_array_parameter_source_drop.has_errors());
+    assert(!owned_dynamic_array_parameter_cleanup.has_errors());
     assert(
-        owned_dynamic_array_parameter_source_drop.ir_text.find(
+        owned_dynamic_array_parameter_cleanup.ir_text.find(
             "define i32 @use_items({ ptr, i64, i64 } %items)"
         ) != std::string::npos
     );
     assert(
-        owned_dynamic_array_parameter_source_drop.ir_text.find(
+        owned_dynamic_array_parameter_cleanup.ir_text.find(
             "define void @__orison_owned_cleanup.Payload(ptr %value)"
         ) != std::string::npos
     );
     assert(
-        owned_dynamic_array_parameter_source_drop.ir_text.find(
+        owned_dynamic_array_parameter_cleanup.ir_text.find(
             "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
     assert(
-        owned_dynamic_array_parameter_source_drop.ir_text.find(
+        owned_dynamic_array_parameter_cleanup.ir_text.find(
             "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
             "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
         ) != std::string::npos
     );
     auto owned_parameter_drop =
-        owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_owned_cleanup.Payload");
+        owned_dynamic_array_parameter_cleanup.ir_text.find("call void @__orison_owned_cleanup.Payload");
     auto owned_parameter_deallocate =
-        owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_dynamic_array_deallocate");
-    auto owned_parameter_return = owned_dynamic_array_parameter_source_drop.ir_text.find("ret i32 1");
+        owned_dynamic_array_parameter_cleanup.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto owned_parameter_return = owned_dynamic_array_parameter_cleanup.ir_text.find("ret i32 1");
     assert(owned_parameter_drop != std::string::npos);
     assert(owned_parameter_deallocate != std::string::npos);
     assert(owned_parameter_return != std::string::npos);

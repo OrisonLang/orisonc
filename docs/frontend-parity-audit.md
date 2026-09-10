@@ -49,6 +49,9 @@
   nested sibling fields without user-authored `Drop` syntax in positive run fixtures.
 - 2026-09-10: Runtime-index choice-payload computed-member boundary fixtures now avoid user-authored `Drop` syntax.
   Generic CLI smoke coverage pins direct and nested compiler-derived cleanup success plus post-move reuse diagnostics.
+- 2026-09-10: The last checked-in `.or` cleanup fixtures now avoid user-authored `Drop` syntax. Examples and generic
+  CLI smoke coverage pin compiler-derived owned parameter, runtime-indexed nested, and runtime-indexed choice-payload
+  cleanup emission.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned

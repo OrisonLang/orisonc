@@ -291,6 +291,9 @@ inventing semantics outside the spec/tour.
 - Runtime-indexed choice-payload computed-member boundary fixtures no longer declare `interface Drop` or
   `implements Drop`. Generic CLI smoke coverage pins compiler-derived cleanup while preserving direct and nested
   computed-member cleanup success plus post-move reuse diagnostics.
+- The last checked-in `.or` cleanup fixtures no longer declare `interface Drop` or `implements Drop`. Examples and
+  generic CLI smoke coverage pin compiler-derived owned parameter, runtime-indexed nested, and runtime-indexed
+  choice-payload cleanup emission without source-visible cleanup syntax.
 
 ## Consequences
 

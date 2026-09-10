@@ -534,7 +534,7 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
-void assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
+void assert_cli_runtime_indexed_nested_cleanup_emit_llvm_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -560,7 +560,7 @@ void assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
-void assert_cli_runtime_indexed_choice_payload_source_drop_emit_llvm_fixture_success(
+void assert_cli_runtime_indexed_choice_payload_cleanup_emit_llvm_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
 ) {
@@ -6317,23 +6317,23 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or",
         smoke_temp_root / "runtime_indexed_cleanup_non_overlapping"
     );
-    assert_cli_runtime_indexed_nested_source_drop_emit_llvm_fixture_success(
+    assert_cli_runtime_indexed_nested_cleanup_emit_llvm_fixture_success(
         executable,
-        fixtures / "runtime_indexed_cleanup_nested_source_drop.or"
+        fixtures / "runtime_indexed_cleanup_nested_run.or"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
-        fixtures / "runtime_indexed_cleanup_nested_source_drop.or",
-        smoke_temp_root / "runtime_indexed_cleanup_nested_source_drop"
+        fixtures / "runtime_indexed_cleanup_nested_run.or",
+        smoke_temp_root / "runtime_indexed_cleanup_nested_run"
     );
-    assert_cli_runtime_indexed_choice_payload_source_drop_emit_llvm_fixture_success(
+    assert_cli_runtime_indexed_choice_payload_cleanup_emit_llvm_fixture_success(
         executable,
-        fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or"
+        fixtures / "runtime_indexed_cleanup_choice_payload_run.or"
     );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
-        fixtures / "runtime_indexed_cleanup_choice_payload_source_drop.or",
-        smoke_temp_root / "runtime_indexed_cleanup_choice_payload_source_drop"
+        fixtures / "runtime_indexed_cleanup_choice_payload_run.or",
+        smoke_temp_root / "runtime_indexed_cleanup_choice_payload_run"
     );
     assert_cli_run_fixture_success(
         executable,
