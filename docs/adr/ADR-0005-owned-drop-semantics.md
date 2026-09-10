@@ -224,6 +224,9 @@ inventing semantics outside the spec/tour.
 - Positive direct owned DynamicArray receiver fixtures no longer declare `interface Drop` or `implements Drop`; generic
   CLI smoke coverage pins compiler-derived cleanup for direct, forwarded, ternary, append, replace, and count receiver
   calls.
+- Positive aggregate DynamicArray receiver fixtures no longer declare `interface Drop` or `implements Drop`; generic CLI
+  smoke coverage pins compiler-derived cleanup for returned, static-indexed, nested static-indexed, sibling-field, and
+  runtime-indexed aggregate receiver chains.
 - Positive local final-control DynamicArray cleanup fixtures no longer declare `interface Drop` or `implements Drop`;
   pipeline smoke pins compiler-derived cleanup emission for final if/switch branch locals and consumed owners.
 - Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline

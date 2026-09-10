@@ -3175,3 +3175,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-09: Positive direct owned DynamicArray receiver fixtures no longer declare `interface Drop` or
   `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup for direct, forwarded, ternary,
   append, replace, and count receiver calls.
+- 2026-09-09: Positive aggregate DynamicArray receiver fixtures no longer declare `interface Drop` or
+  `implements Drop`. Generic CLI smoke coverage verifies compiler-derived cleanup for returned, static-indexed, nested
+  static-indexed, sibling-field, and runtime-indexed aggregate receiver chains.
