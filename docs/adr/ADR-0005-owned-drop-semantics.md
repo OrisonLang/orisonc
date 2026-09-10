@@ -284,6 +284,10 @@ inventing semantics outside the spec/tour.
 - DynamicArray read/projection/push rejection fixtures no longer declare `interface Drop` or `implements Drop`.
   Generic CLI, array CLI, and pipeline smoke coverage pin compiler-derived cleanup while preserving owned-read,
   owned-projection, push-after-transfer, and indexed-assignment RHS reuse diagnostics.
+- Residual owned-result and choice-payload DynamicArray rejection fixtures no longer declare `interface Drop` or
+  `implements Drop`. Array CLI, generic CLI, and pipeline smoke coverage pin compiler-derived cleanup while preserving
+  branch/switch owner-mismatch, returned choice-payload reuse, final switch-binding reuse, helper-return reuse, and
+  multi-switch consumed-scratch reuse diagnostics.
 
 ## Consequences
 

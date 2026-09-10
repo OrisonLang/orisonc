@@ -3228,3 +3228,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-10: DynamicArray read/projection/push rejection fixtures no longer declare `interface Drop` or
   `implements Drop`. Generic CLI, array CLI, and pipeline smoke coverage verify compiler-derived cleanup preserves
   owned-read, owned-projection, push-after-transfer, and indexed-assignment RHS reuse diagnostics.
+- 2026-09-10: Residual owned-result and choice-payload DynamicArray rejection fixtures no longer declare
+  `interface Drop` or `implements Drop`. Array CLI, generic CLI, and pipeline smoke coverage verify compiler-derived
+  cleanup preserves branch/switch owner-mismatch, returned choice-payload reuse, final switch-binding reuse,
+  helper-return reuse, and multi-switch consumed-scratch reuse diagnostics.

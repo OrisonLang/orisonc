@@ -3,13 +3,6 @@ package fixtures.dynamicarrayswitchreturnedownedcomputedownermismatchrejected
 record Payload
     public value: UInt32
 
-interface Drop
-    function drop(this: exclusive This) -> Unit
-
-implements Drop for Payload
-    function drop(this: exclusive This) -> Unit
-        return
-
 function make_first() -> DynamicArray<Payload>
     var items: DynamicArray<Payload> = DynamicArray()
     items.push(Payload(3 as UInt32))
