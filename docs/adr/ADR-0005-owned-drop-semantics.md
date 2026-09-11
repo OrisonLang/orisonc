@@ -175,6 +175,8 @@ inventing semantics outside the spec/tour.
   report text, CLI flags, and test target names remain compatibility surfaces.
 - Concurrency cleanup plan fields now use owned-cleanup names for cleanup candidates and embedded cleanup state.
   Existing report text, CLI flags, test target names, and generated IR labels remain compatibility surfaces.
+- Concurrency cleanup call-emission eligibility now uses owned-cleanup typed-state names internally. Existing rendered
+  drop-call report text remains compatibility output.
 - Semantic cleanup implementation and lowering authorization types now use `OwnedCleanup*` names internally. Existing
   semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 - Semantic cleanup helper functions now use `owned_cleanup_*` names internally. Existing `drop` wording remains only in

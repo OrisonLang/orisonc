@@ -20,7 +20,7 @@ enum class ConcurrencyPlanKind {
     thread,
 };
 
-enum class DropCallEmissionEligibility {
+enum class OwnedCleanupCallEmissionEligibility {
     metadata_only,
     declared_drop_abi,
 };
@@ -58,7 +58,8 @@ struct ConcurrencyCleanupFieldPlan {
 struct ConcurrencyDropCleanupPlan {
     std::string cleanup_symbol_name;
     std::vector<OwnedCleanupAction> actions;
-    DropCallEmissionEligibility drop_call_emission = DropCallEmissionEligibility::metadata_only;
+    OwnedCleanupCallEmissionEligibility owned_cleanup_call_emission =
+        OwnedCleanupCallEmissionEligibility::metadata_only;
     bool requires_semantic_authorization = false;
     bool requires_descriptor_deallocation = false;
 };

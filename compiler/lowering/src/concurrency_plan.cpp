@@ -356,7 +356,8 @@ auto format_concurrency_drop_cleanup_plan(
 }
 
 auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool {
-    return plan.drop_call_emission == DropCallEmissionEligibility::declared_drop_abi;
+    return plan.owned_cleanup_call_emission ==
+        OwnedCleanupCallEmissionEligibility::declared_drop_abi;
 }
 
 auto matching_semantic_owned_cleanup_authorization(
@@ -780,9 +781,9 @@ auto authorize_drop_cleanup_calls_for_declared_abi(
     std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> bool {
     auto report = plan_owned_cleanup_authorization(plan, declarations);
-    plan.drop_call_emission = report.authorized
-        ? DropCallEmissionEligibility::declared_drop_abi
-        : DropCallEmissionEligibility::metadata_only;
+    plan.owned_cleanup_call_emission = report.authorized
+        ? OwnedCleanupCallEmissionEligibility::declared_drop_abi
+        : OwnedCleanupCallEmissionEligibility::metadata_only;
     return report.authorized;
 }
 

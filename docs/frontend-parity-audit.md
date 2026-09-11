@@ -69,6 +69,8 @@
   surfaces.
 - 2026-09-10: Concurrency cleanup plan fields now use owned-cleanup names for cleanup candidates and embedded cleanup
   state. Report text, CLI flags, test target names, and generated IR labels remain compatibility surfaces.
+- 2026-09-10: Concurrency cleanup call-emission eligibility now uses owned-cleanup typed-state names internally while
+  rendered drop-call report text remains compatibility output.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
