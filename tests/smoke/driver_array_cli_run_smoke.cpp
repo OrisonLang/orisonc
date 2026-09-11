@@ -53,6 +53,15 @@ void assert_cli_emit_llvm_existing_fixture_success(
 }
 
 void assert_contains(std::string const& text, std::string_view expected_fragment) {
+    if (text.find(expected_fragment) == std::string::npos) {
+        std::fprintf(
+            stderr,
+            "missing expected fragment:\n%.*s\n\nactual output:\n%s\n",
+            static_cast<int>(expected_fragment.size()),
+            expected_fragment.data(),
+            text.c_str()
+        );
+    }
     assert(text.find(expected_fragment) != std::string::npos);
 }
 
@@ -2695,6 +2704,9 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_local_alias_ternary_alternate_owner_read_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_local_alias_ternary_alternate_owner_read_rejected.or";
     auto forwarded_parameter_local_alias_reassigned_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_reassigned_owned_computed_rejected.or";
     auto forwarded_parameter_final_if_alias_harmless_local_owned_computed_dynamic_array_path =
@@ -2702,11 +2714,17 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_final_if_alias_ternary_alternate_owner_read_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_final_if_alias_ternary_alternate_owner_read_rejected.or";
     auto forwarded_parameter_final_switch_alias_harmless_local_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_switch_alias_harmless_local_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_rejected.or";
     auto forwarded_parameter_final_if_alias_reassigned_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_if_alias_reassigned_owned_computed_rejected.or";
     auto forwarded_parameter_final_switch_alias_reassigned_owned_computed_dynamic_array_path =
@@ -3598,6 +3616,27 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_local_alias_ternary_alternate_owner_read_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_ternary_alternate_owner_read.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_ternary_alternate_owner_read",
+        "use after move: items"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_if_alias_ternary_alternate_owner_read_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_alias_ternary_alternate_owner_read.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_alias_ternary_alternate_owner_read",
+        "use after move: items"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read",
+        "use after move: items"
     );
     assert_diagnostic_failure_matrix(
         executable,

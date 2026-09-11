@@ -3288,3 +3288,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Forwarded-parameter DynamicArray alias handoff coverage now includes multiple harmless local bindings
   across direct, final-if, and final-switch helper shapes. The proof scanner checks ternary alternate arms before
   accepting a harmless local.
+- 2026-09-11: Forwarded-parameter DynamicArray alias handoff rejection coverage now includes direct, final-if, and
+  final-switch helpers where a scalar local reads the transferred owner through a ternary alternate arm. Source-query
+  coverage keeps those helper shapes out of accepted alias handoffs, while Array CLI smoke coverage verifies
+  use-after-move rejection across `run`, `--emit-llvm`, `--emit-object`, and `--build`.

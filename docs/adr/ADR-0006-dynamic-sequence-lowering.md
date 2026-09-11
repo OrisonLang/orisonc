@@ -2845,6 +2845,9 @@ representation.
   reassignment rejected.
 - The harmless-local alias handoff proof now has multi-local coverage across direct, final-if, and final-switch helper
   shapes. Name-use scanning includes ternary alternate arms before a local binding can be treated as harmless.
+- The same scanner boundary now has negative coverage for direct, final-if, and final-switch alias helpers where a
+  scalar local reads the transferred owner through a ternary alternate arm. Source-query coverage keeps those helper
+  shapes out of accepted alias handoffs, while CLI fixtures verify the source is rejected as a use-after-move.
 
 ## Follow-up work
 
