@@ -206,7 +206,7 @@ int main() {
         .discovery_line = 64,
     };
     auto dynamic_array_invariants = orison::lowering::dynamic_array_lowering_invariants();
-    assert(dynamic_array_invariants.element_drop_walk_required);
+    assert(dynamic_array_invariants.element_owned_cleanup_walk_required);
     assert(!dynamic_array_invariants.lowered_signatures_enabled);
     assert(declared_owned_cleanup_declarations_for_allowed_source_types({dynamic_array_action}, {}).empty());
     assert(declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups({}).empty());

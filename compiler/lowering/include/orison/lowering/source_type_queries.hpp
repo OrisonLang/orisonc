@@ -38,7 +38,7 @@ struct DynamicArrayLoweringInvariants {
     bool unique_owner_required = true;
     bool allocator_required = true;
     bool length_capacity_invariant_required = true;
-    bool element_drop_walk_required = true;
+    bool element_owned_cleanup_walk_required = true;
     bool lowered_signatures_enabled = false;
 };
 

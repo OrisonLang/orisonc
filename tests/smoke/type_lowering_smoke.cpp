@@ -248,7 +248,7 @@ int main() {
         orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
     );
     assert(dynamic_array_bound_parameter_lifetime_plan->cleanup_responsibility == "callee-owned-parameter-cleanup");
-    assert(dynamic_array_bound_parameter_lifetime_plan->drop_proof_available);
+    assert(dynamic_array_bound_parameter_lifetime_plan->owned_cleanup_proof_available);
     assert(
         orison::lowering::format_dynamic_array_bound_parameter_lifetime_plan(
             *dynamic_array_bound_parameter_lifetime_plan

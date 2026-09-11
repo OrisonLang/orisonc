@@ -775,7 +775,7 @@ int main() {
     assert(dynamic_array_invariants.unique_owner_required);
     assert(dynamic_array_invariants.allocator_required);
     assert(dynamic_array_invariants.length_capacity_invariant_required);
-    assert(dynamic_array_invariants.element_drop_walk_required);
+    assert(dynamic_array_invariants.element_owned_cleanup_walk_required);
     assert(!dynamic_array_invariants.lowered_signatures_enabled);
 
     auto shared_view_sequence = orison::lowering::dynamic_sequence_source_type("shared.View<Byte>");

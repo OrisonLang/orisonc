@@ -2827,6 +2827,8 @@ representation.
 - DynamicArray element cleanup walk helpers, test-only render options, test-only emitted-result vectors, and element
   cleanup symbol helpers now use owned-cleanup wording internally. Existing `.drop.*` IR labels and compatibility
   report text remain unchanged.
+- DynamicArray bound-parameter cleanup proof fields and element cleanup invariant fields now use owned-cleanup wording
+  internally. Existing `drop-proof` report text remains compatibility output.
 
 ## Follow-up work
 

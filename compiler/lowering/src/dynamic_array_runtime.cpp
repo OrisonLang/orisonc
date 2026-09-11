@@ -244,11 +244,11 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     std::string_view parameter_name,
     std::string_view source_type_name,
     std::string_view descriptor_storage_name,
-    bool drop_proof_available,
+    bool owned_cleanup_proof_available,
     LoweringContext const& context,
     TargetLayout const& layout
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan> {
-    if (parameter_name.empty() || descriptor_storage_name.empty() || !drop_proof_available) {
+    if (parameter_name.empty() || descriptor_storage_name.empty() || !owned_cleanup_proof_available) {
         return std::nullopt;
     }
 
@@ -270,14 +270,14 @@ auto plan_dynamic_array_bound_parameter_lifetime(
         .cleanup_responsibility = dynamic_array_descriptor_lifetime_cleanup_responsibility(
             semantics::DynamicArrayDescriptorBindingKind::parameter_binding
         ),
-        .drop_proof_available = drop_proof_available,
+        .owned_cleanup_proof_available = owned_cleanup_proof_available,
     };
 }
 
 auto plan_dynamic_array_bound_parameter_lifetime(
     semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     std::string_view descriptor_storage_name,
-    bool drop_proof_available,
+    bool owned_cleanup_proof_available,
     LoweringContext const& context,
     TargetLayout const& layout
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan> {
@@ -288,7 +288,7 @@ auto plan_dynamic_array_bound_parameter_lifetime(
         descriptor.owner_name,
         descriptor.source_type_name,
         descriptor_storage_name,
-        drop_proof_available,
+        owned_cleanup_proof_available,
         context,
         layout
     );
@@ -524,7 +524,7 @@ auto format_dynamic_array_bound_parameter_lifetime_plan(
                   );
     }
     output << " cleanup " << plan.cleanup_responsibility;
-    output << " drop-proof " << (plan.drop_proof_available ? "available" : "missing");
+    output << " drop-proof " << (plan.owned_cleanup_proof_available ? "available" : "missing");
     output << " element_size " << plan.descriptor_cleanup.element_size_bytes;
     output << " (metadata only)";
     return output.str();

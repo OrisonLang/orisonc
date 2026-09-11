@@ -71,7 +71,7 @@ struct DynamicArrayDescriptorCleanupPlan {
 struct DynamicArrayBoundParameterLifetimePlan {
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
     std::string cleanup_responsibility;
-    bool drop_proof_available = false;
+    bool owned_cleanup_proof_available = false;
 };
 
 struct DynamicArrayReturnedDescriptorLifetimePlan {
@@ -117,7 +117,7 @@ auto plan_dynamic_array_bound_parameter_lifetime(
     std::string_view parameter_name,
     std::string_view source_type_name,
     std::string_view descriptor_storage_name,
-    bool drop_proof_available,
+    bool owned_cleanup_proof_available,
     LoweringContext const& context,
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;
@@ -125,7 +125,7 @@ auto plan_dynamic_array_bound_parameter_lifetime(
 auto plan_dynamic_array_bound_parameter_lifetime(
     semantics::SemanticDynamicArrayDescriptorSummary const& descriptor,
     std::string_view descriptor_storage_name,
-    bool drop_proof_available,
+    bool owned_cleanup_proof_available,
     LoweringContext const& context,
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayBoundParameterLifetimePlan>;

@@ -1092,7 +1092,7 @@ auto unsupported_dynamic_array_parameter_diagnostic(
         sequence->element_source_type_name + " requires ownership/drop proof before production lowering";
 }
 
-auto dynamic_array_owned_parameter_has_drop_proof(
+auto dynamic_array_owned_parameter_has_owned_cleanup_proof(
     syntax::ParameterSyntax const& parameter,
     LlvmIrEmissionOptions const& options
 ) -> bool {
@@ -1898,7 +1898,7 @@ void emit_function_body(
             return;
         }
         if (index < function.parameters.size() &&
-            !dynamic_array_owned_parameter_has_drop_proof(function.parameters[index], context.options)) {
+            !dynamic_array_owned_parameter_has_owned_cleanup_proof(function.parameters[index], context.options)) {
             if (auto diagnostic = unsupported_dynamic_array_parameter_diagnostic(function.parameters[index])) {
                 diagnostics.error(function.line, *diagnostic);
                 return;
