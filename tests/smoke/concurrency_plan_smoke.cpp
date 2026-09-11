@@ -96,12 +96,12 @@ int main() {
     assert(task_plan->environment_layout.fields.size() == 1);
     assert(task_plan->environment_layout.fields.front().name == "value");
     assert(task_plan->environment_layout.fields.front().field_index == 0);
-    assert(task_plan->cleanup.drop_candidates.empty());
-    assert(task_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
-    assert(task_plan->cleanup.drop_cleanup.actions.empty());
-    assert(!orison::lowering::drop_calls_enabled(task_plan->cleanup.drop_cleanup));
+    assert(task_plan->cleanup.owned_cleanup_candidates.empty());
+    assert(task_plan->cleanup.owned_cleanup.cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
+    assert(task_plan->cleanup.owned_cleanup.actions.empty());
+    assert(!orison::lowering::drop_calls_enabled(task_plan->cleanup.owned_cleanup));
     auto empty_drop_cleanup_report =
-        orison::lowering::format_concurrency_drop_cleanup_plan(task_plan->cleanup.drop_cleanup);
+        orison::lowering::format_concurrency_drop_cleanup_plan(task_plan->cleanup.owned_cleanup);
     assert(empty_drop_cleanup_report.size() == 1);
     assert(
         empty_drop_cleanup_report.front() ==
@@ -133,10 +133,10 @@ int main() {
     assert(thread_plan->environment_layout.llvm_type == "{ i64 }");
     assert(thread_plan->environment_layout.size_bytes == 8);
     assert(thread_plan->environment_layout.fields.size() == 1);
-    assert(thread_plan->cleanup.drop_candidates.empty());
-    assert(thread_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.on_thread.13.0");
-    assert(thread_plan->cleanup.drop_cleanup.actions.empty());
-    assert(!orison::lowering::drop_calls_enabled(thread_plan->cleanup.drop_cleanup));
+    assert(thread_plan->cleanup.owned_cleanup_candidates.empty());
+    assert(thread_plan->cleanup.owned_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.on_thread.13.0");
+    assert(thread_plan->cleanup.owned_cleanup.actions.empty());
+    assert(!orison::lowering::drop_calls_enabled(thread_plan->cleanup.owned_cleanup));
     assert(thread_plan->result_storage.llvm_type == "i64");
     assert(thread_plan->result_storage.size_bytes == 8);
 
@@ -175,25 +175,25 @@ int main() {
     assert(record_plan->captures.front().llvm_type == "%record.Payload");
     assert(record_plan->environment_layout.llvm_type == "{ %record.Payload }");
     assert(record_plan->environment_layout.size_bytes == 8);
-    assert(record_plan->cleanup.drop_candidates.size() == 1);
-    assert(record_plan->cleanup.drop_candidates.front().name == "payload");
-    assert(record_plan->cleanup.drop_candidates.front().source_type_name == "Payload");
-    assert(record_plan->cleanup.drop_candidates.front().llvm_type == "%record.Payload");
-    assert(record_plan->cleanup.drop_candidates.front().drop_symbol_name == "__orison_owned_cleanup.Payload");
-    assert(record_plan->cleanup.drop_candidates.front().field_index == 0);
+    assert(record_plan->cleanup.owned_cleanup_candidates.size() == 1);
+    assert(record_plan->cleanup.owned_cleanup_candidates.front().name == "payload");
+    assert(record_plan->cleanup.owned_cleanup_candidates.front().source_type_name == "Payload");
+    assert(record_plan->cleanup.owned_cleanup_candidates.front().llvm_type == "%record.Payload");
+    assert(record_plan->cleanup.owned_cleanup_candidates.front().drop_symbol_name == "__orison_owned_cleanup.Payload");
+    assert(record_plan->cleanup.owned_cleanup_candidates.front().field_index == 0);
     assert(
-        record_plan->cleanup.drop_candidates.front().capture_kind ==
+        record_plan->cleanup.owned_cleanup_candidates.front().capture_kind ==
         orison::semantics::ConcurrencyCaptureKind::immutable_outer_local
     );
-    assert(record_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.record_worker.20.2");
-    assert(record_plan->cleanup.drop_cleanup.actions.size() == 1);
-    assert(record_plan->cleanup.drop_cleanup.actions.front().capture_name == "payload");
-    assert(record_plan->cleanup.drop_cleanup.actions.front().source_type_name == "Payload");
-    assert(record_plan->cleanup.drop_cleanup.actions.front().symbol_name == "__orison_owned_cleanup.Payload");
-    assert(record_plan->cleanup.drop_cleanup.actions.front().field_index == 0);
-    assert(record_plan->cleanup.drop_cleanup.actions.front().discovery_line == 20);
-    assert(!orison::lowering::drop_calls_enabled(record_plan->cleanup.drop_cleanup));
-    auto authorized_plan = record_plan->cleanup.drop_cleanup;
+    assert(record_plan->cleanup.owned_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.record_worker.20.2");
+    assert(record_plan->cleanup.owned_cleanup.actions.size() == 1);
+    assert(record_plan->cleanup.owned_cleanup.actions.front().capture_name == "payload");
+    assert(record_plan->cleanup.owned_cleanup.actions.front().source_type_name == "Payload");
+    assert(record_plan->cleanup.owned_cleanup.actions.front().symbol_name == "__orison_owned_cleanup.Payload");
+    assert(record_plan->cleanup.owned_cleanup.actions.front().field_index == 0);
+    assert(record_plan->cleanup.owned_cleanup.actions.front().discovery_line == 20);
+    assert(!orison::lowering::drop_calls_enabled(record_plan->cleanup.owned_cleanup));
+    auto authorized_plan = record_plan->cleanup.owned_cleanup;
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(authorized_plan, {}));
     assert(!orison::lowering::drop_calls_enabled(authorized_plan));
     auto missing_authorization = orison::lowering::plan_owned_cleanup_authorization(authorized_plan, {});
@@ -411,7 +411,7 @@ int main() {
         "descriptor deallocation not-required drop calls enabled"
     );
     auto record_drop_cleanup_report =
-        orison::lowering::format_concurrency_drop_cleanup_plan(record_plan->cleanup.drop_cleanup);
+        orison::lowering::format_concurrency_drop_cleanup_plan(record_plan->cleanup.owned_cleanup);
     assert(record_drop_cleanup_report.size() == 2);
     assert(
         record_drop_cleanup_report[0] ==

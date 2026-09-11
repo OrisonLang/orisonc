@@ -220,7 +220,7 @@ auto cleanup_plan_for(
         if (capture.llvm_type.empty() || is_scalar_or_nonowning_source_type(capture.source_type_name)) {
             continue;
         }
-        cleanup.drop_candidates.push_back(ConcurrencyCleanupFieldPlan {
+        cleanup.owned_cleanup_candidates.push_back(ConcurrencyCleanupFieldPlan {
             .name = capture.name,
             .source_type_name = capture.source_type_name,
             .llvm_type = capture.llvm_type,
@@ -299,7 +299,7 @@ void collect_owned_cleanup_actions_from_expression(
                 ordinal
             ),
             expression.line,
-            cleanup.drop_candidates
+            cleanup.owned_cleanup_candidates
         );
         if (!drop_cleanup.actions.empty()) {
             drop_cleanups.push_back(std::move(drop_cleanup));
@@ -871,10 +871,10 @@ auto plan_concurrency_expression(
         .fields = plan.captures,
     };
     plan.cleanup = cleanup_plan_for(plan.captures);
-    plan.cleanup.drop_cleanup = drop_cleanup_plan_for(
+    plan.cleanup.owned_cleanup = drop_cleanup_plan_for(
         plan.cleanup_symbol_name,
         expression.line,
-        plan.cleanup.drop_candidates
+        plan.cleanup.owned_cleanup_candidates
     );
     plan.result_storage = ConcurrencyResultStorageLayout {
         .llvm_type = plan.result_type.type,

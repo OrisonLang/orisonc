@@ -801,7 +801,7 @@ auto lower_thread_let_statement(
         );
         return false;
     }
-    apply_drop_cleanup_authorization_options(plan->cleanup.drop_cleanup, context.options);
+    apply_drop_cleanup_authorization_options(plan->cleanup.owned_cleanup, context.options);
 
     auto thunk_definition = emit_concurrency_entry_thunk(
         *plan,

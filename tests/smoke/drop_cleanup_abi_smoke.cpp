@@ -14,7 +14,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
             .llvm_type = "{ %record.DropTestPayload }",
         },
         .cleanup = orison::lowering::ConcurrencyCleanupPlan {
-            .drop_candidates = {
+            .owned_cleanup_candidates = {
                 orison::lowering::ConcurrencyCleanupFieldPlan {
                     .name = "payload",
                     .source_type_name = "DropTestPayload",
@@ -23,7 +23,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
                     .field_index = 0,
                 },
             },
-            .drop_cleanup = orison::lowering::ConcurrencyDropCleanupPlan {
+            .owned_cleanup = orison::lowering::ConcurrencyDropCleanupPlan {
                 .cleanup_symbol_name = "__orison_thread_cleanup.allowed.1.0",
                 .actions = {
                     orison::lowering::OwnedCleanupAction {
@@ -45,7 +45,7 @@ int main() {
     auto plan = cleanup_plan();
 
     auto declarations = orison::lowering::declared_owned_cleanup_declarations_for_allowed_source_types(
-        plan.cleanup.drop_cleanup.actions,
+        plan.cleanup.owned_cleanup.actions,
         {"DropTestPayload"}
     );
     assert(declarations.size() == 1);
@@ -56,7 +56,7 @@ int main() {
     );
 
     assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
-        plan.cleanup.drop_cleanup,
+        plan.cleanup.owned_cleanup,
         declarations
     ));
     assert(
@@ -71,36 +71,36 @@ int main() {
     );
 
     auto denied = orison::lowering::declared_owned_cleanup_declarations_for_allowed_source_types(
-        plan.cleanup.drop_cleanup.actions,
+        plan.cleanup.owned_cleanup.actions,
         {"OtherPayload"}
     );
     assert(denied.empty());
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
-        plan.cleanup.drop_cleanup,
+        plan.cleanup.owned_cleanup,
         denied
     ));
 
     auto allowlist_plan = cleanup_plan();
     assert(orison::lowering::apply_drop_cleanup_authorization_options(
-        allowlist_plan.cleanup.drop_cleanup,
+        allowlist_plan.cleanup.owned_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
             .test_only_declared_owned_cleanup_source_type_allowlist = {"DropTestPayload"},
         }
     ));
-    assert(orison::lowering::drop_calls_enabled(allowlist_plan.cleanup.drop_cleanup));
+    assert(orison::lowering::drop_calls_enabled(allowlist_plan.cleanup.owned_cleanup));
 
     auto denied_allowlist_plan = cleanup_plan();
     assert(!orison::lowering::apply_drop_cleanup_authorization_options(
-        denied_allowlist_plan.cleanup.drop_cleanup,
+        denied_allowlist_plan.cleanup.owned_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
             .test_only_declared_owned_cleanup_source_type_allowlist = {"OtherPayload"},
         }
     ));
-    assert(!orison::lowering::drop_calls_enabled(denied_allowlist_plan.cleanup.drop_cleanup));
+    assert(!orison::lowering::drop_calls_enabled(denied_allowlist_plan.cleanup.owned_cleanup));
 
     auto semantic_plan = cleanup_plan();
     assert(orison::lowering::apply_drop_cleanup_authorization_options(
-        semantic_plan.cleanup.drop_cleanup,
+        semantic_plan.cleanup.owned_cleanup,
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
@@ -117,13 +117,13 @@ int main() {
             },
         }
     ));
-    assert(orison::lowering::drop_calls_enabled(semantic_plan.cleanup.drop_cleanup));
+    assert(orison::lowering::drop_calls_enabled(semantic_plan.cleanup.owned_cleanup));
 
     auto default_plan = cleanup_plan();
     assert(!orison::lowering::apply_drop_cleanup_authorization_options(
-        default_plan.cleanup.drop_cleanup,
+        default_plan.cleanup.owned_cleanup,
         orison::lowering::LlvmIrEmissionOptions {}
     ));
-    assert(!orison::lowering::drop_calls_enabled(default_plan.cleanup.drop_cleanup));
+    assert(!orison::lowering::drop_calls_enabled(default_plan.cleanup.owned_cleanup));
     return 0;
 }

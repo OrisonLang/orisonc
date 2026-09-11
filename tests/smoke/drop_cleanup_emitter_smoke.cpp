@@ -12,7 +12,7 @@ int main() {
             .llvm_type = "{ %record.Payload }",
         },
         .cleanup = orison::lowering::ConcurrencyCleanupPlan {
-            .drop_candidates = {
+            .owned_cleanup_candidates = {
                 orison::lowering::ConcurrencyCleanupFieldPlan {
                     .name = "payload",
                     .source_type_name = "Payload",
@@ -21,7 +21,7 @@ int main() {
                     .field_index = 0,
                 },
             },
-            .drop_cleanup = orison::lowering::ConcurrencyDropCleanupPlan {
+            .owned_cleanup = orison::lowering::ConcurrencyDropCleanupPlan {
                 .cleanup_symbol_name = "__orison_thread_cleanup.manual.1.0",
                 .actions = {
                     orison::lowering::OwnedCleanupAction {
@@ -37,7 +37,7 @@ int main() {
     };
 
     assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
-        plan.cleanup.drop_cleanup,
+        plan.cleanup.owned_cleanup,
         {
             orison::lowering::OwnedCleanupDeclaration {
                 .symbol_name = "__orison_owned_cleanup.Payload",
@@ -59,7 +59,7 @@ int main() {
         "}\n"
     );
 
-    assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(plan.cleanup.drop_cleanup, {}));
+    assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(plan.cleanup.owned_cleanup, {}));
     auto disabled = orison::lowering::emit_concurrency_cleanup_thunk(plan);
     assert(disabled.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
     assert(disabled.find("; cleanup candidate payload: Payload field 0 drop __orison_owned_cleanup.Payload") != std::string::npos);

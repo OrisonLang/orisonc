@@ -99,8 +99,8 @@ struct OwnedCleanupReadinessBlockerSummary {
 };
 
 struct ConcurrencyCleanupPlan {
-    std::vector<ConcurrencyCleanupFieldPlan> drop_candidates;
-    ConcurrencyDropCleanupPlan drop_cleanup;
+    std::vector<ConcurrencyCleanupFieldPlan> owned_cleanup_candidates;
+    ConcurrencyDropCleanupPlan owned_cleanup;
 };
 
 struct ConcurrencyExpressionPlan {

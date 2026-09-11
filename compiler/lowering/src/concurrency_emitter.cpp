@@ -308,15 +308,15 @@ auto emit_concurrency_cleanup_thunk(
     auto output = std::ostringstream {};
     output << "define private void @" << plan.cleanup_symbol_name << "(ptr %environment) {\n";
     output << "entry:\n";
-    for (auto index = std::size_t {0}; index < plan.cleanup.drop_candidates.size(); ++index) {
-        auto const& candidate = plan.cleanup.drop_candidates[index];
-        auto const& action = plan.cleanup.drop_cleanup.actions[index];
+    for (auto index = std::size_t {0}; index < plan.cleanup.owned_cleanup_candidates.size(); ++index) {
+        auto const& candidate = plan.cleanup.owned_cleanup_candidates[index];
+        auto const& action = plan.cleanup.owned_cleanup.actions[index];
         auto field_pointer = "%cleanup.field." + std::to_string(candidate.field_index);
         output << "  " << field_pointer << " = getelementptr " << plan.environment_layout.llvm_type
                << ", ptr %environment, i32 0, i32 " << candidate.field_index << "\n";
         output << "  ; cleanup candidate " << action.capture_name << ": " << action.source_type_name
                << " field " << action.field_index << " drop " << action.symbol_name << "\n";
-        if (drop_calls_enabled(plan.cleanup.drop_cleanup)) {
+        if (drop_calls_enabled(plan.cleanup.owned_cleanup)) {
             output << "  call void @" << action.symbol_name << "(ptr " << field_pointer << ")\n";
         }
     }
