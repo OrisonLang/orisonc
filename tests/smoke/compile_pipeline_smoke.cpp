@@ -1692,11 +1692,12 @@ auto main() -> int {
         "drop readiness source correlations actions 0 semantic sites 1"
     );
 
-    auto dynamic_array_drop_report_path =
+    auto dynamic_array_owned_cleanup_report_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_drop_report.or";
     {
-        auto dynamic_array_drop_report_source = std::ofstream(dynamic_array_drop_report_path);
-        dynamic_array_drop_report_source
+        auto dynamic_array_owned_cleanup_report_source =
+            std::ofstream(dynamic_array_owned_cleanup_report_path);
+        dynamic_array_owned_cleanup_report_source
             << "package demo.pipeline.dynamicarray\n"
             << "\n"
             << "record Payload\n"
@@ -1705,8 +1706,8 @@ auto main() -> int {
             << "function main() -> UInt32\n"
             << "    1 as UInt32\n";
     }
-    auto dynamic_array_drop_readiness = pipeline.emit_llvm(
-        dynamic_array_drop_report_path,
+    auto dynamic_array_owned_cleanup_readiness = pipeline.emit_llvm(
+        dynamic_array_owned_cleanup_report_path,
         orison::pipeline::CompilePipelineOptions {
             .fixture_dynamic_array_construction_requests = {
                 orison::lowering::FixtureDynamicArrayConstructionRequest {
@@ -1717,79 +1718,88 @@ auto main() -> int {
             .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
-    assert(!dynamic_array_drop_readiness.has_errors());
-    auto dynamic_array_drop_readiness_action_report =
-        owned_cleanup_action_report(dynamic_array_drop_readiness);
-    assert(dynamic_array_drop_readiness.owned_cleanup_action_state.actions.size() == 1);
+    assert(!dynamic_array_owned_cleanup_readiness.has_errors());
+    auto dynamic_array_owned_cleanup_action_report =
+        owned_cleanup_action_report(dynamic_array_owned_cleanup_readiness);
+    assert(dynamic_array_owned_cleanup_readiness.owned_cleanup_action_state.actions.size() == 1);
     assert_line_contains(
-        dynamic_array_drop_readiness_action_report,
+        dynamic_array_owned_cleanup_action_report,
         0,
         "dynamic_array0.element: Payload"
     );
-    auto dynamic_array_drop_readiness_authorization_report =
-        drop_cleanup_authorization_report(dynamic_array_drop_readiness);
-    assert(dynamic_array_drop_readiness_authorization_report.size() == 4);
+    auto dynamic_array_owned_cleanup_authorization_report =
+        drop_cleanup_authorization_report(dynamic_array_owned_cleanup_readiness);
+    assert(dynamic_array_owned_cleanup_authorization_report.size() == 4);
     assert_line_contains(
-        dynamic_array_drop_readiness_authorization_report,
+        dynamic_array_owned_cleanup_authorization_report,
         0,
         "drop cleanup authorization __orison_dynamic_array_cleanup.0 blocked"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_authorization_report,
+        dynamic_array_owned_cleanup_authorization_report,
         1,
         "semantic drop lowering blocked __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_authorization_report,
+        dynamic_array_owned_cleanup_authorization_report,
         2,
         "semantic drop unresolved __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_authorization_report,
+        dynamic_array_owned_cleanup_authorization_report,
         3,
         "missing drop declaration __orison_owned_cleanup.Payload"
     );
-    assert(dynamic_array_drop_readiness.owned_cleanup_readiness_snapshot.cleanup_authorizations.size() == 1);
-    assert(dynamic_array_drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 1);
-    assert(dynamic_array_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.size() == 1);
-    assert(dynamic_array_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.size() == 1);
-    assert(dynamic_array_drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.size() == 1);
-    auto dynamic_array_drop_readiness_relation_report =
-        drop_readiness_relation_report(dynamic_array_drop_readiness);
-    assert(dynamic_array_drop_readiness_relation_report.size() == 3);
+    assert(dynamic_array_owned_cleanup_readiness.owned_cleanup_readiness_snapshot.cleanup_authorizations.size() == 1);
+    assert(dynamic_array_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 1);
+    assert(
+        dynamic_array_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.size()
+        == 1
+    );
+    assert(
+        dynamic_array_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.size()
+        == 1
+    );
+    assert(dynamic_array_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.size() == 1);
+    auto dynamic_array_owned_cleanup_relation_report =
+        drop_readiness_relation_report(dynamic_array_owned_cleanup_readiness);
+    assert(dynamic_array_owned_cleanup_relation_report.size() == 3);
     assert_line_contains(
-        dynamic_array_drop_readiness_relation_report,
+        dynamic_array_owned_cleanup_relation_report,
         0,
         "__orison_dynamic_array_cleanup.0 blocked"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_relation_report,
+        dynamic_array_owned_cleanup_relation_report,
         1,
         "semantic blocker __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_relation_report,
+        dynamic_array_owned_cleanup_relation_report,
         2,
         "missing declaration __orison_owned_cleanup.Payload"
     );
-    auto dynamic_array_drop_readiness_source_correlation_report =
-        drop_readiness_source_correlation_report(dynamic_array_drop_readiness);
-    assert(dynamic_array_drop_readiness_source_correlation_report.size() == 2);
+    auto dynamic_array_owned_cleanup_source_correlation_report =
+        drop_readiness_source_correlation_report(dynamic_array_owned_cleanup_readiness);
+    assert(dynamic_array_owned_cleanup_source_correlation_report.size() == 2);
     assert(
-        dynamic_array_drop_readiness_source_correlation_report[0] ==
+        dynamic_array_owned_cleanup_source_correlation_report[0] ==
         "drop readiness source correlations actions 1 semantic sites 0"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_source_correlation_report,
+        dynamic_array_owned_cleanup_source_correlation_report,
         1,
         "__orison_dynamic_array_cleanup.0 __orison_owned_cleanup.Payload"
     );
     assert_line_contains(
-        dynamic_array_drop_readiness_source_correlation_report,
+        dynamic_array_owned_cleanup_source_correlation_report,
         1,
         "semantic absent source lowering absent declaration missing"
     );
-    assert(dynamic_array_drop_readiness.ir_text.find("call void @__orison_owned_cleanup.Payload") == std::string::npos);
+    assert(
+        dynamic_array_owned_cleanup_readiness.ir_text.find("call void @__orison_owned_cleanup.Payload") ==
+        std::string::npos
+    );
 
     auto dynamic_array_source_owner_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_source_owner.or";
@@ -1815,16 +1825,16 @@ auto main() -> int {
         "dynamic array descriptor summary DynamicArray<Payload> owner items element Payload at line 6 origin parameter "
         "(metadata only)"
     );
-    auto dynamic_array_source_owner_semantic_planned_drop_report =
+    auto dynamic_array_source_owner_semantic_owned_cleanup_report =
         semantic_planned_drop_report(dynamic_array_source_owner);
-    assert(dynamic_array_source_owner_semantic_planned_drop_report.size() == 2);
+    assert(dynamic_array_source_owner_semantic_owned_cleanup_report.size() == 2);
     assert_line_contains(
-        dynamic_array_source_owner_semantic_planned_drop_report,
+        dynamic_array_source_owner_semantic_owned_cleanup_report,
         0,
         "DynamicArray<Payload> owner items"
     );
     assert_line_contains(
-        dynamic_array_source_owner_semantic_planned_drop_report,
+        dynamic_array_source_owner_semantic_owned_cleanup_report,
         1,
         "Payload owner items.element"
     );
@@ -14347,7 +14357,7 @@ auto main() -> int {
     assert(dynamic_array_source_owner_drop_sites.size() == 2);
 
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
-        dynamic_array_drop_report_path,
+        dynamic_array_owned_cleanup_report_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {

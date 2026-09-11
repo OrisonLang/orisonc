@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-09-11: DynamicArray readiness smoke helpers, lowerer helper functions, and local report variables now use
+  owned-cleanup wording internally. Existing `.drop.*` IR labels, drop-readiness report helper APIs, report text, CLI
+  flags, and fixture names remain compatibility surfaces.
 - 2026-09-10: Runtime-index member cleanup helper-binding typed state now uses owned-cleanup binding names internally.
   Existing `helper-drop-bindings`, `member-helper-drop-bindings`, and `drop-definitions` report text remains
   compatibility output.

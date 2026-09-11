@@ -262,7 +262,7 @@ auto fixed_array_length_value(std::string_view source_type_name) -> std::optiona
     return length_text;
 }
 
-auto emit_dynamic_array_drop_field_sequence(
+auto emit_dynamic_array_owned_cleanup_field_sequence(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view field_pointer_name,
     std::string_view name_prefix,
@@ -379,7 +379,7 @@ auto emit_fixed_array_record_drop_field_sequence(
     return output.str();
 }
 
-auto emit_fixed_array_dynamic_array_drop_field_sequence(
+auto emit_fixed_array_dynamic_array_owned_cleanup_field_sequence(
     LoweredRecordLayout const& layout,
     LoweredRecordField const& field,
     DynamicArrayDescriptorCleanupPlan const& plan,
@@ -491,7 +491,7 @@ auto emit_record_owned_cleanup_body(
         auto prefix = "%" + cleanup_name + ".drop." + field.name;
         output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
                << ", ptr %value, i32 0, i32 " << field.index << "\n";
-        output << emit_dynamic_array_drop_field_sequence(
+        output << emit_dynamic_array_owned_cleanup_field_sequence(
             *plan,
             field_pointer_name,
             prefix,
@@ -527,7 +527,7 @@ auto emit_record_owned_cleanup_body(
             context
         );
         if (dynamic_array_element_plan.has_value()) {
-            output << emit_fixed_array_dynamic_array_drop_field_sequence(
+            output << emit_fixed_array_dynamic_array_owned_cleanup_field_sequence(
                 layout->second,
                 field,
                 *dynamic_array_element_plan,

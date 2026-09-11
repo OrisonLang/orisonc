@@ -2829,6 +2829,9 @@ representation.
   report text remain unchanged.
 - DynamicArray bound-parameter cleanup proof fields and element cleanup invariant fields now use owned-cleanup wording
   internally. Existing `drop-proof` report text remains compatibility output.
+- DynamicArray readiness smoke helpers, lowerer helper functions, and local report variables now use owned-cleanup
+  wording internally. Existing `.drop.*` IR labels, drop-readiness report helper APIs, report text, CLI flags, and
+  fixture names remain compatibility surfaces.
 
 ## Follow-up work
 

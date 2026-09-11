@@ -192,6 +192,9 @@ inventing semantics outside the spec/tour.
   output.
 - DynamicArray bound-parameter cleanup proof fields and invariant readiness fields now use owned-cleanup wording
   internally. Existing `drop-proof` report text remains compatibility output.
+- DynamicArray readiness smoke helpers, lowerer helper functions, and local report variables now use owned-cleanup
+  wording internally. Existing `.drop.*` IR labels, drop-readiness report helper APIs, report text, CLI flags, and
+  fixture names remain compatibility surfaces.
 - Semantic cleanup implementation and lowering authorization types now use `OwnedCleanup*` names internally. Existing
   semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 - Semantic cleanup helper functions now use `owned_cleanup_*` names internally. Existing `drop` wording remains only in

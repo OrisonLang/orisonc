@@ -1227,8 +1227,9 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
     );
 }
 
-void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
-    auto path = std::filesystem::temp_directory_path() / "orison_lowering_dynamic_array_drop_readiness_metadata.or";
+void test_collects_test_only_dynamic_array_element_owned_cleanup_readiness_metadata() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_dynamic_array_owned_cleanup_readiness_metadata.or";
     auto result = lower_source(
         path,
         "package demo.lowering\n"
@@ -3698,9 +3699,9 @@ void test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_continue() {
     assert(cleanup < return_instruction);
 }
 
-void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {
+void test_dynamic_array_element_owned_cleanup_readiness_requires_semantic_authorization() {
     auto path = std::filesystem::temp_directory_path() /
-        "orison_lowering_dynamic_array_drop_readiness_authorization.or";
+        "orison_lowering_dynamic_array_owned_cleanup_readiness_authorization.or";
     auto source =
         "package demo.lowering\n"
         "\n"
@@ -14434,7 +14435,7 @@ auto main() -> int {
     test_collects_aggregate_projection_access_plan_records();
     test_emit_constant_uint32_return();
     test_collects_fixture_dynamic_array_construction_metadata();
-    test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
+    test_collects_test_only_dynamic_array_element_owned_cleanup_readiness_metadata();
     test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();
     test_binds_test_only_dynamic_array_parameter_descriptor_origin();
@@ -14450,7 +14451,7 @@ auto main() -> int {
     test_emits_dynamic_array_parameter_cleanup_after_switch_case_defer_return();
     test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_break();
     test_defers_but_delays_dynamic_array_parameter_cleanup_on_loop_continue();
-    test_dynamic_array_element_drop_readiness_requires_semantic_authorization();
+    test_dynamic_array_element_owned_cleanup_readiness_requires_semantic_authorization();
     test_emit_carries_semantic_owned_cleanup_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
