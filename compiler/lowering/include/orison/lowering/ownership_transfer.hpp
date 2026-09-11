@@ -280,9 +280,9 @@ struct RuntimeIndexedMemberCleanupSiblingField {
     std::string field_name;
     std::string field_source_type_name;
     std::string field_llvm_type_name;
-    std::string drop_symbol_name;
+    std::string owned_cleanup_symbol_name;
     std::size_t field_index = 0;
-    bool drop_definition_available = false;
+    bool owned_cleanup_definition_available = false;
 
     auto operator==(RuntimeIndexedMemberCleanupSiblingField const&) const -> bool = default;
 };
@@ -295,7 +295,7 @@ struct RuntimeIndexedMemberCleanupHelperDropBindings {
     std::vector<std::string> moved_member_path;
     std::string helper_symbol_name;
     std::size_t sibling_binding_count = 0;
-    bool all_drop_definitions_available = false;
+    bool all_owned_cleanup_definitions_available = false;
     bool nested_member_path = false;
     bool helper_definition_ready = false;
     bool production_enabled = false;
@@ -532,7 +532,7 @@ struct RuntimeIndexedMemberCleanupProductionReadiness {
     std::vector<std::string> blockers;
     bool proof_ready = false;
     bool target_metadata_ready = false;
-    bool helper_drop_bindings_ready = false;
+    bool helper_owned_cleanup_bindings_ready = false;
     bool cfg_slice_ready = false;
     bool module_mutation_ready = false;
     bool production_member_cleanup_ready = false;

@@ -16309,7 +16309,7 @@ auto main() -> int {
             );
             assert(bindings != nullptr);
             assert(bindings->sibling_binding_count == 4);
-            assert(bindings->all_drop_definitions_available);
+            assert(bindings->all_owned_cleanup_definitions_available);
             assert(bindings->nested_member_path);
             assert(bindings->helper_definition_ready);
             assert(!bindings->production_enabled);
@@ -16809,7 +16809,7 @@ auto main() -> int {
             .blockers = {"member-cleanup-module-mutation", "production-member-cleanup"},
             .proof_ready = true,
             .target_metadata_ready = true,
-            .helper_drop_bindings_ready = true,
+            .helper_owned_cleanup_bindings_ready = true,
             .cfg_slice_ready = true,
             .module_mutation_ready = false,
             .production_member_cleanup_ready = false,
@@ -16826,7 +16826,7 @@ auto main() -> int {
             .blockers = {"member-cleanup-module-mutation", "production-member-cleanup"},
             .proof_ready = true,
             .target_metadata_ready = true,
-            .helper_drop_bindings_ready = true,
+            .helper_owned_cleanup_bindings_ready = true,
             .cfg_slice_ready = true,
             .module_mutation_ready = false,
             .production_member_cleanup_ready = false,
@@ -17270,9 +17270,9 @@ auto main() -> int {
     assert(prefix_member_cleanup_field.field_name == "prefix");
     assert(prefix_member_cleanup_field.field_source_type_name == "Sibling");
     assert(prefix_member_cleanup_field.field_llvm_type_name == "%record.Sibling");
-    assert(prefix_member_cleanup_field.drop_symbol_name == "__orison_owned_cleanup.Sibling");
+    assert(prefix_member_cleanup_field.owned_cleanup_symbol_name == "__orison_owned_cleanup.Sibling");
     assert(prefix_member_cleanup_field.field_index == 0);
-    assert(prefix_member_cleanup_field.drop_definition_available);
+    assert(prefix_member_cleanup_field.owned_cleanup_definition_available);
     auto const& tail_member_cleanup_field =
         runtime_indexed_sibling_member_transfer_apply_request
             .runtime_indexed_member_cleanup_sibling_fields[1];
@@ -17284,9 +17284,9 @@ auto main() -> int {
     assert(tail_member_cleanup_field.field_name == "tail");
     assert(tail_member_cleanup_field.field_source_type_name == "Tail");
     assert(tail_member_cleanup_field.field_llvm_type_name == "%record.Tail");
-    assert(tail_member_cleanup_field.drop_symbol_name == "__orison_owned_cleanup.Tail");
+    assert(tail_member_cleanup_field.owned_cleanup_symbol_name == "__orison_owned_cleanup.Tail");
     assert(tail_member_cleanup_field.field_index == 2);
-    assert(tail_member_cleanup_field.drop_definition_available);
+    assert(tail_member_cleanup_field.owned_cleanup_definition_available);
     assert(
         runtime_indexed_sibling_member_transfer_apply_request.ir_text.find(
             "items.member_cleanup.drop_siblings:\n"
@@ -17378,7 +17378,7 @@ auto main() -> int {
     assert(nested_helper_drop_bindings.moved_member_path == (std::vector<std::string> {"box", "item"}));
     assert(nested_helper_drop_bindings.helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
     assert(nested_helper_drop_bindings.sibling_binding_count == 4);
-    assert(nested_helper_drop_bindings.all_drop_definitions_available);
+    assert(nested_helper_drop_bindings.all_owned_cleanup_definitions_available);
     assert(nested_helper_drop_bindings.nested_member_path);
     assert(nested_helper_drop_bindings.helper_definition_ready);
     assert(!nested_helper_drop_bindings.production_enabled);
@@ -17411,12 +17411,15 @@ auto main() -> int {
             assert(field.field_name == field_name);
             assert(field.field_source_type_name == field_source_type_name);
             assert(field.field_llvm_type_name == "%record." + std::string {field_source_type_name});
-            assert(field.drop_symbol_name == "__orison_owned_cleanup." + std::string {field_source_type_name});
+            assert(
+                field.owned_cleanup_symbol_name ==
+                "__orison_owned_cleanup." + std::string {field_source_type_name}
+            );
             assert(field.field_path == field_path);
             assert(field.field_indices == field_indices);
             assert(field.container_llvm_type_names == container_llvm_type_names);
             assert(field.field_index == field_index);
-            assert(field.drop_definition_available);
+            assert(field.owned_cleanup_definition_available);
         };
     assert_nested_member_cleanup_field(
         0,
@@ -17534,7 +17537,7 @@ auto main() -> int {
     auto const& compiler_derived_sibling_cleanup_bindings =
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result
             .runtime_indexed_member_cleanup_helper_drop_bindings.front();
-    assert(compiler_derived_sibling_cleanup_bindings.all_drop_definitions_available);
+    assert(compiler_derived_sibling_cleanup_bindings.all_owned_cleanup_definitions_available);
     assert(compiler_derived_sibling_cleanup_bindings.helper_definition_ready);
     auto const compiler_derived_tail_field = std::ranges::find_if(
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result.runtime_indexed_member_cleanup_sibling_fields,
@@ -17547,8 +17550,8 @@ auto main() -> int {
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result.runtime_indexed_member_cleanup_sibling_fields.end()
     );
     assert(compiler_derived_tail_field->field_source_type_name == "Tail");
-    assert(compiler_derived_tail_field->drop_symbol_name == "__orison_owned_cleanup.Tail");
-    assert(compiler_derived_tail_field->drop_definition_available);
+    assert(compiler_derived_tail_field->owned_cleanup_symbol_name == "__orison_owned_cleanup.Tail");
+    assert(compiler_derived_tail_field->owned_cleanup_definition_available);
     assert(
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result.ir_text.find(
             "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"

@@ -1100,7 +1100,7 @@ int main() {
                 .moved_member_path = std::vector<std::string> {"item"},
                 .helper_symbol_name = "__orison_member_cleanup.Box.except.item",
                 .sibling_binding_count = 2,
-                .all_drop_definitions_available = true,
+                .all_owned_cleanup_definitions_available = true,
                 .nested_member_path = false,
                 .helper_definition_ready = true,
                 .production_enabled = false,
@@ -1111,7 +1111,7 @@ int main() {
     );
     assert(member_production_readiness.proof_ready);
     assert(member_production_readiness.target_metadata_ready);
-    assert(member_production_readiness.helper_drop_bindings_ready);
+    assert(member_production_readiness.helper_owned_cleanup_bindings_ready);
     assert(member_production_readiness.cfg_slice_ready);
     assert(!member_production_readiness.module_mutation_ready);
     assert(!member_production_readiness.production_member_cleanup_ready);

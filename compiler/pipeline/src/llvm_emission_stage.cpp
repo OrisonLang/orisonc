@@ -70,7 +70,7 @@ auto runtime_indexed_member_cleanup_binding_error_text(
     }
 
     for (auto const& bindings : result.runtime_indexed_member_cleanup_helper_drop_bindings) {
-        if (bindings.all_drop_definitions_available && bindings.helper_definition_ready) {
+        if (bindings.all_owned_cleanup_definitions_available && bindings.helper_definition_ready) {
             continue;
         }
         auto diagnostic = std::ostringstream {};

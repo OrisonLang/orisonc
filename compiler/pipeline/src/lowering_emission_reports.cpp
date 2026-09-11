@@ -2157,8 +2157,8 @@ auto member_cleanup_helper_definition(
     if (!sibling_fields.empty()) {
         auto emitted_address_names = std::unordered_set<std::string> {};
         for (auto const& field : sibling_fields) {
-            if (!field.drop_definition_available ||
-                field.drop_symbol_name.empty() ||
+            if (!field.owned_cleanup_definition_available ||
+                field.owned_cleanup_symbol_name.empty() ||
                 field.field_llvm_type_name.empty() ||
                 field.field_path.empty() ||
                 field.field_indices.size() != field.field_path.size() ||
@@ -2183,7 +2183,7 @@ auto member_cleanup_helper_definition(
                 }
                 source_pointer_name = field_address_name;
             }
-            output << "  call void @" << field.drop_symbol_name
+            output << "  call void @" << field.owned_cleanup_symbol_name
                    << "(ptr " << field_address_name << ")\n"
                    << "  store " << field.field_llvm_type_name << " zeroinitializer, ptr "
                    << field_address_name << "\n";

@@ -926,9 +926,9 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
                 if (field.name == selected_field_name || field.source_type_name.empty() || field.llvm_type.empty()) {
                     continue;
                 }
-                auto drop_symbol_name = semantics::owned_cleanup_abi_symbol_name(field.source_type_name);
-                auto const drop_definition_available =
-                    std::ranges::find(owned_cleanup_symbols, drop_symbol_name) !=
+                auto owned_cleanup_symbol_name = semantics::owned_cleanup_abi_symbol_name(field.source_type_name);
+                auto const owned_cleanup_definition_available =
+                    std::ranges::find(owned_cleanup_symbols, owned_cleanup_symbol_name) !=
                     owned_cleanup_symbols.end();
 
                 auto field_path = field_path_prefix;
@@ -947,9 +947,9 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
                     .field_name = field.name,
                     .field_source_type_name = field.source_type_name,
                     .field_llvm_type_name = field.llvm_type,
-                    .drop_symbol_name = std::move(drop_symbol_name),
+                    .owned_cleanup_symbol_name = std::move(owned_cleanup_symbol_name),
                     .field_index = field.index,
-                    .drop_definition_available = drop_definition_available,
+                    .owned_cleanup_definition_available = owned_cleanup_definition_available,
                 });
             }
 
@@ -1004,17 +1004,17 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
             }
         }
 
-        auto const all_drop_definitions_available = std::ranges::all_of(
+        auto const all_owned_cleanup_definitions_available = std::ranges::all_of(
             matching_fields,
             [](RuntimeIndexedMemberCleanupSiblingField const* field) {
                 return field != nullptr &&
-                    field->drop_definition_available &&
-                    !field->drop_symbol_name.empty() &&
+                    field->owned_cleanup_definition_available &&
+                    !field->owned_cleanup_symbol_name.empty() &&
                     !field->field_llvm_type_name.empty();
             }
         );
         auto const helper_definition_ready =
-            all_drop_definitions_available &&
+            all_owned_cleanup_definitions_available &&
             std::ranges::all_of(
                 matching_fields,
                 [](RuntimeIndexedMemberCleanupSiblingField const* field) {
@@ -1033,7 +1033,7 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
             .moved_member_path = plan.moved_member_path,
             .helper_symbol_name = plan.member_cleanup_target_symbol_name,
             .sibling_binding_count = matching_fields.size(),
-            .all_drop_definitions_available = all_drop_definitions_available,
+            .all_owned_cleanup_definitions_available = all_owned_cleanup_definitions_available,
             .nested_member_path = plan.moved_member_path.size() > 1,
             .helper_definition_ready = helper_definition_ready,
             .production_enabled = false,
@@ -1043,7 +1043,7 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
     return bindings;
 }
 
-auto helper_drop_bindings_ready_for(
+auto helper_owned_cleanup_bindings_ready_for(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) -> bool {
@@ -1063,7 +1063,7 @@ auto helper_drop_bindings_ready_for(
         matched = true;
         ready = ready &&
             bindings.helper_definition_ready &&
-            bindings.all_drop_definitions_available &&
+            bindings.all_owned_cleanup_definitions_available &&
             !bindings.helper_symbol_name.empty();
     }
     return matched && ready;
@@ -1095,11 +1095,11 @@ auto member_cleanup_site_fragment(Record const& record) -> std::string {
 }
 
 template <typename Record>
-auto helper_drop_bindings_ready_for(
+auto helper_owned_cleanup_bindings_ready_for(
     Record const& record,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) -> bool {
-    return helper_drop_bindings_ready_for(
+    return helper_owned_cleanup_bindings_ready_for(
         RuntimeIndexedMemberCleanupProductionReadiness {
             .owner_name = record.owner_name,
             .index_expression_text = record.index_expression_text,
@@ -1116,7 +1116,7 @@ auto remove_helper_drop_binding_blocker_if_ready(
     Record& record,
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) -> bool {
-    if (!helper_drop_bindings_ready_for(record, helper_drop_bindings)) {
+    if (!helper_owned_cleanup_bindings_ready_for(record, helper_drop_bindings)) {
         return false;
     }
     auto const old_size = record.blockers.size();
@@ -1170,10 +1170,11 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
     std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
 ) {
     for (auto& entry : readiness) {
-        entry.helper_drop_bindings_ready = helper_drop_bindings_ready_for(entry, helper_drop_bindings);
+        entry.helper_owned_cleanup_bindings_ready =
+            helper_owned_cleanup_bindings_ready_for(entry, helper_drop_bindings);
         auto const helper_blocker = std::string {"member-helper-drop-bindings"};
         auto const blocker_position = std::ranges::find(entry.blockers, helper_blocker);
-        if (entry.helper_drop_bindings_ready) {
+        if (entry.helper_owned_cleanup_bindings_ready) {
             if (blocker_position != entry.blockers.end()) {
                 entry.blockers.erase(blocker_position);
             }
@@ -1183,7 +1184,7 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
         entry.production_gate_ready =
             entry.proof_ready &&
             entry.target_metadata_ready &&
-            entry.helper_drop_bindings_ready &&
+            entry.helper_owned_cleanup_bindings_ready &&
             entry.cfg_slice_ready &&
             entry.module_mutation_ready &&
             entry.production_member_cleanup_ready;

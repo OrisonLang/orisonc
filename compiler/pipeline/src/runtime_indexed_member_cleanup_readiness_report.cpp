@@ -506,7 +506,7 @@ auto production_readiness_satisfied_for_promotion(
     return gate.production_enabled &&
         readiness.proof_ready &&
         readiness.target_metadata_ready &&
-        readiness.helper_drop_bindings_ready &&
+        readiness.helper_owned_cleanup_bindings_ready &&
         readiness.cfg_slice_ready &&
         has_only_stale_production_readiness_blockers(readiness);
 }

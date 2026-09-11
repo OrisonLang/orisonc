@@ -75,6 +75,9 @@
   cleanup symbol fields remain compatibility-sensitive until report and IR-shape seams move together.
 - 2026-09-10: Runtime-index cleanup IR-plan callee state now uses owned-cleanup naming internally while rendered
   `drop-callee` and drop-call IR-shape text remains compatibility output.
+- 2026-09-10: Runtime-index member sibling cleanup fields now use owned-cleanup symbol and definition-readiness names
+  internally. Helper-binding readiness now uses owned-cleanup wording; helper-binding type names and report text remain
+  compatibility seams.
 - 2026-08-30: Statement-emitter smoke coverage now directly pins non-void null-safe member calls used as statements,
   preserving the accepted discard-result lowering path.
 - 2026-08-30: Array CLI run smoke coverage now has targeted CTest modes for examples, core computed arrays, returned
