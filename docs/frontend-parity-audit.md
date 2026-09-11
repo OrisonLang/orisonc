@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-09-11: Nested final-control forwarded-parameter alias handoffs now have negative ternary alternate owner-read
+  coverage. Source-query coverage rejects the unsupported handoff shape, and Array CLI smoke coverage verifies
+  use-after-move diagnostics for both nested `if`/`switch` orderings.
 - 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now includes nested final-control alias positives for
   final `if` plus nested `switch` and final `switch` plus nested `if`. Source-query coverage verifies same-owner
   handoff proof, and Array CLI smoke coverage verifies `run`, `--emit-llvm`, `--emit-object`, and `--build`.

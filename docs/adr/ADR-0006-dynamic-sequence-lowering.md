@@ -2857,6 +2857,8 @@ representation.
   differing nested branch owners blocked across source-query and production diagnostics.
 - Nested final-control forwarded-parameter alias handoffs now cover both final `if` with nested final `switch` and
   final `switch` with nested final `if`, proving branch-local aliases can still resolve to the same cleanup owner.
+- The same nested final-control alias shapes now reject ternary alternate owner reads after alias binding, preserving
+  use-after-move safety across nested branch scanners.
 
 ## Follow-up work
 

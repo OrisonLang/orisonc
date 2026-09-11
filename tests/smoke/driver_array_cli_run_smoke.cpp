@@ -2733,6 +2733,12 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_path =
         fixtures /
         "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_rejected.or";
+    auto forwarded_parameter_final_if_switch_alias_ternary_alternate_owner_read_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_final_if_switch_alias_ternary_alternate_owner_read_rejected.or";
+    auto forwarded_parameter_final_switch_if_alias_ternary_alternate_owner_read_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_final_switch_if_alias_ternary_alternate_owner_read_rejected.or";
     auto forwarded_parameter_scalar_owner_read_paths = std::array<std::filesystem::path, 9> {
         fixtures / "dynamic_array_forwarded_parameter_local_alias_binary_owner_read_rejected.or",
         fixtures / "dynamic_array_forwarded_parameter_local_alias_cast_owner_read_rejected.or",
@@ -3711,6 +3717,20 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read",
+        "use after move: items"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_if_switch_alias_ternary_alternate_owner_read_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_alias_ternary_alternate_owner_read.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_alias_ternary_alternate_owner_read",
+        "use after move: items"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_switch_if_alias_ternary_alternate_owner_read_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_alias_ternary_alternate_owner_read.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_alias_ternary_alternate_owner_read",
         "use after move: items"
     );
     for (auto index = std::size_t {0}; index < forwarded_parameter_scalar_owner_read_paths.size(); ++index) {
