@@ -206,7 +206,7 @@ auto capture_llvm_types(
     return types;
 }
 
-auto drop_symbol_name_for(std::string_view source_type_name) -> std::string {
+auto owned_cleanup_symbol_name_for(std::string_view source_type_name) -> std::string {
     auto symbol = std::string {"__orison_owned_cleanup."};
     append_sanitized_symbol_part(symbol, source_type_name);
     return symbol;
@@ -224,7 +224,7 @@ auto cleanup_plan_for(
             .name = capture.name,
             .source_type_name = capture.source_type_name,
             .llvm_type = capture.llvm_type,
-            .drop_symbol_name = drop_symbol_name_for(capture.source_type_name),
+            .owned_cleanup_symbol_name = owned_cleanup_symbol_name_for(capture.source_type_name),
             .field_index = capture.field_index,
             .capture_kind = capture.capture_kind,
         });
@@ -239,7 +239,7 @@ auto owned_cleanup_action_for_candidate(
     return OwnedCleanupAction {
         .capture_name = candidate.name,
         .source_type_name = candidate.source_type_name,
-        .symbol_name = candidate.drop_symbol_name,
+        .symbol_name = candidate.owned_cleanup_symbol_name,
         .field_index = candidate.field_index,
         .discovery_line = discovery_line,
     };

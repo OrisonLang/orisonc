@@ -19,7 +19,7 @@ auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
                     .name = "payload",
                     .source_type_name = "DropTestPayload",
                     .llvm_type = "%record.DropTestPayload",
-                    .drop_symbol_name = "__orison_owned_cleanup.DropTestPayload",
+                    .owned_cleanup_symbol_name = "__orison_owned_cleanup.DropTestPayload",
                     .field_index = 0,
                 },
             },

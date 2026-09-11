@@ -179,7 +179,10 @@ int main() {
     assert(record_plan->cleanup.owned_cleanup_candidates.front().name == "payload");
     assert(record_plan->cleanup.owned_cleanup_candidates.front().source_type_name == "Payload");
     assert(record_plan->cleanup.owned_cleanup_candidates.front().llvm_type == "%record.Payload");
-    assert(record_plan->cleanup.owned_cleanup_candidates.front().drop_symbol_name == "__orison_owned_cleanup.Payload");
+    assert(
+        record_plan->cleanup.owned_cleanup_candidates.front().owned_cleanup_symbol_name ==
+        "__orison_owned_cleanup.Payload"
+    );
     assert(record_plan->cleanup.owned_cleanup_candidates.front().field_index == 0);
     assert(
         record_plan->cleanup.owned_cleanup_candidates.front().capture_kind ==

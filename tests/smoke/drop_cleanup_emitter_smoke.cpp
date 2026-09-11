@@ -17,7 +17,7 @@ int main() {
                     .name = "payload",
                     .source_type_name = "Payload",
                     .llvm_type = "%record.Payload",
-                    .drop_symbol_name = "__orison_owned_cleanup.Payload",
+                    .owned_cleanup_symbol_name = "__orison_owned_cleanup.Payload",
                     .field_index = 0,
                 },
             },
