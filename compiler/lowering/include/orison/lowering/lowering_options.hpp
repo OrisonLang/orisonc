@@ -47,7 +47,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_render_dynamic_array_append_with_grow_sequences = false;
     bool test_only_render_dynamic_array_cleanup_sequences = false;
     bool test_only_render_dynamic_array_descriptor_load_cleanup_sequences = false;
-    bool test_only_render_dynamic_array_element_drop_walks = false;
+    bool test_only_render_dynamic_array_element_owned_cleanup_walks = false;
     bool collect_computed_dynamic_array_for_descriptor_renders = false;
     bool collect_computed_dynamic_array_for_loop_control_renders = false;
     bool collect_computed_dynamic_array_for_element_address_renders = false;

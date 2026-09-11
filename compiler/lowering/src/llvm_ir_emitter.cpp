@@ -3250,7 +3250,7 @@ auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
     return output.str();
 }
 
-auto dynamic_array_element_drop_action(
+auto dynamic_array_element_owned_cleanup_action(
     DynamicArrayConstructionPlan const& plan,
     std::size_t ordinal,
     std::string_view owner_name
@@ -3266,7 +3266,7 @@ auto dynamic_array_element_drop_action(
     };
 }
 
-auto dynamic_array_element_drop_cleanup(
+auto dynamic_array_element_owned_cleanup(
     DynamicArrayConstructionPlan const& plan,
     std::size_t ordinal,
     std::string_view owner_name
@@ -3279,18 +3279,18 @@ auto dynamic_array_element_drop_cleanup(
         .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
         .requires_semantic_authorization = true,
     };
-    cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal, owner_name));
+    cleanup.actions.push_back(dynamic_array_element_owned_cleanup_action(plan, ordinal, owner_name));
     return cleanup;
 }
 
-auto collect_dynamic_array_element_drop_cleanups(
+auto collect_dynamic_array_element_owned_cleanups(
     std::vector<DynamicArrayConstructionPlan> const& plans,
     std::vector<FixtureDynamicArrayConstructionRequest> const& requests
 ) -> std::vector<ConcurrencyDropCleanupPlan> {
     auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
     for (auto index = std::size_t {0}; index < plans.size(); ++index) {
         auto owner_name = index < requests.size() ? requests[index].owner_name : std::string_view {};
-        auto cleanup = dynamic_array_element_drop_cleanup(plans[index], index, owner_name);
+        auto cleanup = dynamic_array_element_owned_cleanup(plans[index], index, owner_name);
         if (cleanup.has_value()) {
             cleanups.push_back(std::move(*cleanup));
         }
@@ -4329,26 +4329,26 @@ auto emit_module(
                 );
         }
     }
-    if (options.test_only_render_dynamic_array_element_drop_walks ||
+    if (options.test_only_render_dynamic_array_element_owned_cleanup_walks ||
         dynamic_array_cleanup_emission_enabled(options)) {
-        auto dynamic_array_drop_cleanups =
-            collect_dynamic_array_element_drop_cleanups(
+        auto dynamic_array_owned_cleanups =
+            collect_dynamic_array_element_owned_cleanups(
                 result.dynamic_array_construction_plans,
                 options.fixture_dynamic_array_construction_requests
             );
-        auto dynamic_array_descriptor_drop_cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
-        dynamic_array_descriptor_drop_cleanups.reserve(result.dynamic_array_cleanup_obligations.size());
+        auto dynamic_array_descriptor_owned_cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
+        dynamic_array_descriptor_owned_cleanups.reserve(result.dynamic_array_cleanup_obligations.size());
         for (auto const& obligation : result.dynamic_array_cleanup_obligations) {
-            dynamic_array_descriptor_drop_cleanups.push_back(
-                drop_cleanup_for_dynamic_array_cleanup_obligation(obligation)
+            dynamic_array_descriptor_owned_cleanups.push_back(
+                owned_cleanup_for_dynamic_array_cleanup_obligation(obligation)
             );
         }
-        dynamic_array_drop_cleanups.insert(
-            dynamic_array_drop_cleanups.end(),
-            std::make_move_iterator(dynamic_array_descriptor_drop_cleanups.begin()),
-            std::make_move_iterator(dynamic_array_descriptor_drop_cleanups.end())
+        dynamic_array_owned_cleanups.insert(
+            dynamic_array_owned_cleanups.end(),
+            std::make_move_iterator(dynamic_array_descriptor_owned_cleanups.begin()),
+            std::make_move_iterator(dynamic_array_descriptor_owned_cleanups.end())
         );
-        for (auto& cleanup : dynamic_array_drop_cleanups) {
+        for (auto& cleanup : dynamic_array_owned_cleanups) {
             result.owned_cleanup_actions.insert(
                 result.owned_cleanup_actions.end(),
                 cleanup.actions.begin(),
@@ -4607,11 +4607,11 @@ auto emit_module(
             );
         }
     }
-    if (options.test_only_render_dynamic_array_element_drop_walks) {
+    if (options.test_only_render_dynamic_array_element_owned_cleanup_walks) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_element_drop_walk_ir.push_back(
-                emit_dynamic_array_element_drop_walk(
+            result.test_only_dynamic_array_element_owned_cleanup_walk_ir.push_back(
+                emit_dynamic_array_element_owned_cleanup_walk(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".cleanup.data",
                     prefix + ".cleanup.length",
@@ -4623,8 +4623,8 @@ auto emit_module(
         for (auto index = std::size_t {0}; index < result.dynamic_array_descriptor_cleanup_plans.size(); ++index) {
             auto ordinal = offset + index;
             auto prefix = "%dynamic_array" + std::to_string(ordinal);
-            result.test_only_dynamic_array_element_drop_walk_ir.push_back(
-                emit_dynamic_array_element_drop_walk(
+            result.test_only_dynamic_array_element_owned_cleanup_walk_ir.push_back(
+                emit_dynamic_array_element_owned_cleanup_walk(
                     result.dynamic_array_descriptor_cleanup_plans[index],
                     prefix + ".cleanup.data",
                     prefix + ".cleanup.length",

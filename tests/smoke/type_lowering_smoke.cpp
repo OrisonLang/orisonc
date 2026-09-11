@@ -604,7 +604,7 @@ int main() {
         "  call void @__orison_dynamic_array_deallocate(ptr %array.cleanup.data, i64 16, i64 %array.cleanup.capacity)\n"
     );
     assert(
-        orison::lowering::emit_dynamic_array_element_drop_walk(
+        orison::lowering::emit_dynamic_array_element_owned_cleanup_walk(
             *dynamic_array_plan,
             "%array.data",
             "%array.length",

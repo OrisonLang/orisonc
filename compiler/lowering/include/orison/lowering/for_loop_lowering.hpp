@@ -223,7 +223,7 @@ inline void consume_computed_dynamic_array_local_cleanup_plan(
     }
 }
 
-inline auto computed_dynamic_array_element_drop_symbol_name(
+inline auto computed_dynamic_array_element_owned_cleanup_symbol_name(
     std::string_view cleanup_owner_name,
     std::string_view element_source_type_name,
     LlvmIrEmissionOptions const& options
@@ -249,7 +249,7 @@ inline auto computed_dynamic_array_element_drop_symbol_name(
     return std::nullopt;
 }
 
-inline auto computed_dynamic_array_drop_label_prefix(std::string_view name_prefix) -> std::string {
+inline auto computed_dynamic_array_owned_cleanup_label_prefix(std::string_view name_prefix) -> std::string {
     auto label_prefix = std::string {name_prefix};
     if (!label_prefix.empty() && label_prefix.front() == '%') {
         label_prefix.erase(label_prefix.begin());
@@ -257,17 +257,17 @@ inline auto computed_dynamic_array_drop_label_prefix(std::string_view name_prefi
     return label_prefix;
 }
 
-inline auto emit_computed_dynamic_array_element_drop_walk(
+inline auto emit_computed_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,
     std::string_view name_prefix,
     std::string_view entry_block_name,
-    std::string_view drop_symbol_name
+    std::string_view owned_cleanup_symbol_name
 ) -> std::string {
     auto output = std::ostringstream {};
     auto prefix = std::string {name_prefix};
-    auto label_prefix = computed_dynamic_array_drop_label_prefix(name_prefix);
+    auto label_prefix = computed_dynamic_array_owned_cleanup_label_prefix(name_prefix);
     output << "  br label %" << label_prefix << ".drop.walk\n";
     output << label_prefix << ".drop.walk:\n";
     output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << entry_block_name << " ],";
@@ -285,8 +285,8 @@ inline auto emit_computed_dynamic_array_element_drop_walk(
         prefix + ".drop.index"
     );
     output << "  ; drop element " << plan.element_source_type_name;
-    output << " at " << prefix << ".drop.element.addr using " << drop_symbol_name << "\n";
-    output << "  call void @" << drop_symbol_name << "(ptr " << prefix << ".drop.element.addr)\n";
+    output << " at " << prefix << ".drop.element.addr using " << owned_cleanup_symbol_name << "\n";
+    output << "  call void @" << owned_cleanup_symbol_name << "(ptr " << prefix << ".drop.element.addr)\n";
     output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
     output << "  br label %" << label_prefix << ".drop.walk\n";
     output << label_prefix << ".drop.done:\n";
@@ -500,13 +500,13 @@ auto lower_sequence_for_statement(
                         .element_size_bytes = *element_size_bytes,
                         .operation = DynamicArrayRuntimeOperation::deallocate,
                     };
-                    auto element_drop_symbol_name = computed_dynamic_array_element_drop_symbol_name(
+                    auto element_owned_cleanup_symbol_name = computed_dynamic_array_element_owned_cleanup_symbol_name(
                         cleanup_sequence_plan.cleanup_owner_name,
                         sequence->element_source_type_name,
                         context.options
                     );
                     if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name) &&
-                        !element_drop_symbol_name.has_value()) {
+                        !element_owned_cleanup_symbol_name.has_value()) {
                         diagnostics.error(
                             statement.line,
                             "lowering computed DynamicArray cleanup for owned element type " +
@@ -514,20 +514,20 @@ auto lower_sequence_for_statement(
                         );
                         return StatementFlow::failed;
                     }
-                    if (element_drop_symbol_name.has_value()) {
-                        auto drop_walk_prefix = "%" + cleanup_sequence_plan.cleanup_owner_name +
+                    if (element_owned_cleanup_symbol_name.has_value()) {
+                        auto owned_cleanup_walk_prefix = "%" + cleanup_sequence_plan.cleanup_owner_name +
                             ".computed_dynamic_array_cleanup" +
                             std::to_string(session.state.next_temporary_index++);
-                        output << emit_computed_dynamic_array_element_drop_walk(
+                        output << emit_computed_dynamic_array_element_owned_cleanup_walk(
                             cleanup_call_plan,
                             descriptor_plan.data_pointer_name,
                             descriptor_plan.length_name,
-                            drop_walk_prefix,
+                            owned_cleanup_walk_prefix,
                             loop_exit_plan.exit_block_name,
-                            *element_drop_symbol_name
+                            *element_owned_cleanup_symbol_name
                         );
                         cleanup_continuation_block =
-                            computed_dynamic_array_drop_label_prefix(drop_walk_prefix) + ".drop.done";
+                            computed_dynamic_array_owned_cleanup_label_prefix(owned_cleanup_walk_prefix) + ".drop.done";
                     }
                     output << emit_dynamic_array_deallocation_call(
                         cleanup_call_plan,

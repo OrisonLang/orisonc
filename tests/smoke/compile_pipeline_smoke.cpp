@@ -1714,7 +1714,7 @@ auto main() -> int {
                     .initial_capacity = 2,
                 },
             },
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
     assert(!dynamic_array_drop_readiness.has_errors());
@@ -1925,7 +1925,7 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .fixture_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
             .dynamic_array_parameter_lowering_enabled = false,
         }
     );
@@ -14364,7 +14364,7 @@ auto main() -> int {
                     .initial_capacity = 2,
                 },
             },
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
     assert(!dynamic_array_authorized_readiness.has_errors());

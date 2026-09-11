@@ -366,7 +366,7 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_grow_sequences = true,
             .test_only_render_dynamic_array_append_with_grow_sequences = true,
             .test_only_render_dynamic_array_cleanup_sequences = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -623,9 +623,9 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "(ptr %dynamic_array0.cleanup.data, i64 4, i64 %dynamic_array0.cleanup.capacity)\n"
     );
     assert(result.ir_text.find("%dynamic_array0.cleanup.data = extractvalue") == std::string::npos);
-    assert(result.test_only_dynamic_array_element_drop_walk_ir.size() == 1);
+    assert(result.test_only_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_drop_walk_ir.front() ==
+        result.test_only_dynamic_array_element_owned_cleanup_walk_ir.front() ==
         "  br label %dynamic_array0.drop.walk\n"
         "dynamic_array0.drop.walk:\n"
         "  %dynamic_array0.drop.index = phi i64 [ 0, %dynamic_array0.cleanup.entry ], "
@@ -1245,7 +1245,7 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
                     .initial_capacity = 2,
                 },
             },
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -1346,7 +1346,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         orison::lowering::LlvmIrEmissionOptions {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -1406,7 +1406,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         blocked_readiness[1] ==
         "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 1"
     );
-    assert(blocked.test_only_dynamic_array_element_drop_walk_ir.size() == 1);
+    assert(blocked.test_only_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
     assert(blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
     assert(
         blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
@@ -1420,7 +1420,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         ) != std::string::npos
     );
     assert(
-        blocked.test_only_dynamic_array_element_drop_walk_ir.front().find(
+        blocked.test_only_dynamic_array_element_owned_cleanup_walk_ir.front().find(
             "planned drop for Payload at %dynamic_array0.drop.element.addr remains disabled"
         ) != std::string::npos
     );
@@ -1431,7 +1431,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         semantic_result,
         orison::lowering::LlvmIrEmissionOptions {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
             .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::project_semantic_owned_cleanup_obligations(
@@ -1493,7 +1493,7 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         orison::lowering::LlvmIrEmissionOptions {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -1567,9 +1567,9 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         "drop readiness relation __orison_dynamic_array_cleanup.0 authorized semantic blockers 0 "
         "emitted declarations 0 missing declarations 0"
     );
-    assert(result.test_only_dynamic_array_element_drop_walk_ir.size() == 1);
+    assert(result.test_only_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_drop_walk_ir.front().find(
+        result.test_only_dynamic_array_element_owned_cleanup_walk_ir.front().find(
             "planned drop for UInt32 at %dynamic_array0.drop.element.addr remains disabled"
         ) != std::string::npos
     );
@@ -1655,7 +1655,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .fixture_enable_dynamic_array_parameter_descriptors = true,
             .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -1701,7 +1701,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             .enable_dynamic_array_parameter_descriptors = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -3721,7 +3721,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
                     .initial_capacity = 2,
                 },
             },
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
         }
     );
 
@@ -3750,7 +3750,7 @@ void test_dynamic_array_element_drop_readiness_requires_semantic_authorization()
                     .initial_capacity = 2,
                 },
             },
-            .test_only_render_dynamic_array_element_drop_walks = true,
+            .test_only_render_dynamic_array_element_owned_cleanup_walks = true,
             .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {
                     .site = orison::semantics::OwnedCleanupSite {

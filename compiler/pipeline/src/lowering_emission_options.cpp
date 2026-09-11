@@ -170,8 +170,8 @@ auto build_lowering_emission_options(
             dynamic_array_append_lowering_enabled(options);
         emission_options.fixture_emit_bound_dynamic_array_parameter_cleanups =
             options.fixture_emit_bound_dynamic_array_parameter_cleanups;
-        emission_options.test_only_render_dynamic_array_element_drop_walks =
-            options.test_only_render_dynamic_array_element_drop_walks;
+        emission_options.test_only_render_dynamic_array_element_owned_cleanup_walks =
+            options.test_only_render_dynamic_array_element_owned_cleanup_walks;
     }
 
     return emission_options;

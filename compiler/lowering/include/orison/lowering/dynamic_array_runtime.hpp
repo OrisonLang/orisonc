@@ -337,14 +337,14 @@ auto emit_dynamic_array_descriptor_load_cleanup_sequence(
     std::string_view name_prefix
 ) -> std::string;
 
-auto emit_dynamic_array_element_drop_walk(
+auto emit_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,
     std::string_view name_prefix
 ) -> std::string;
 
-auto emit_dynamic_array_element_drop_walk(
+auto emit_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,

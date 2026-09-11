@@ -99,13 +99,13 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(plans->size() == 2);
     assert((*plans)[0].descriptor_cleanup.owner_name == "a_items");
     assert((*plans)[0].descriptor_cleanup.descriptor_storage_name == "%a_items.addr");
-    assert(!(*plans)[0].element_drop_symbol_name.has_value());
+    assert(!(*plans)[0].element_owned_cleanup_symbol_name.has_value());
     assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
         (*plans)[0].sequence_verification
     ));
     assert((*plans)[1].descriptor_cleanup.owner_name == "z_items");
     assert((*plans)[1].descriptor_cleanup.descriptor_storage_name == "%z_items.addr");
-    assert(!(*plans)[1].element_drop_symbol_name.has_value());
+    assert(!(*plans)[1].element_owned_cleanup_symbol_name.has_value());
     assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
         (*plans)[1].sequence_verification
     ));
@@ -272,7 +272,7 @@ void test_authorizes_owned_element_cleanup() {
     assert(plans->size() == 1);
     assert(plans->front().descriptor_cleanup.owner_name == "items");
     assert(plans->front().descriptor_cleanup.element_source_type_name == "Payload");
-    assert(plans->front().element_drop_symbol_name == "__orison_owned_cleanup.Payload");
+    assert(plans->front().element_owned_cleanup_symbol_name == "__orison_owned_cleanup.Payload");
     assert(plans->front().sequence_plan.phases.size() == 3);
     assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
         plans->front().sequence_verification
@@ -481,7 +481,7 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(obligations[1].actions.front().symbol_name == "__orison_owned_cleanup.Payload");
     assert(obligations[1].actions.front().discovery_line == 22);
 
-    auto cleanup = orison::lowering::drop_cleanup_for_dynamic_array_cleanup_obligation(obligations[1]);
+    auto cleanup = orison::lowering::owned_cleanup_for_dynamic_array_cleanup_obligation(obligations[1]);
     assert(cleanup.cleanup_symbol_name == "__orison_dynamic_array_cleanup.4");
     assert(cleanup.actions.size() == 1);
     assert(cleanup.requires_semantic_authorization);

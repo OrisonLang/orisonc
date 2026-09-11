@@ -103,7 +103,7 @@ auto named_dynamic_array_element_receiver_owner_name(
     return owner_name;
 }
 
-auto direct_dynamic_array_receiver_element_drop_authorized(
+auto direct_dynamic_array_receiver_element_owned_cleanup_authorized(
     std::string_view element_source_type_name,
     LoweringEmissionContext const& context
 ) -> bool {
@@ -824,7 +824,7 @@ auto lower_direct_dynamic_array_receiver(
         );
     }
     if (!is_scalar_or_nonowning_source_type(*element_source_type) &&
-        !direct_dynamic_array_receiver_element_drop_authorized(*element_source_type, context)) {
+        !direct_dynamic_array_receiver_element_owned_cleanup_authorized(*element_source_type, context)) {
         return direct_receiver_failure(
             failures,
             record_expression_failures,

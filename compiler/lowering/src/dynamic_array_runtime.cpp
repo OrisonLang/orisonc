@@ -941,7 +941,7 @@ auto emit_dynamic_array_cleanup_sequence(
         descriptor_value_name,
         DynamicArrayDescriptorField::capacity
     );
-    output << emit_dynamic_array_element_drop_walk(
+    output << emit_dynamic_array_element_owned_cleanup_walk(
         plan,
         prefix + ".cleanup.data",
         prefix + ".cleanup.length",
@@ -988,7 +988,7 @@ auto emit_dynamic_array_descriptor_cleanup_sequence(
         DynamicArrayDescriptorField::capacity
     );
     if (!is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
-        output << emit_dynamic_array_element_drop_walk(
+        output << emit_dynamic_array_element_owned_cleanup_walk(
             plan,
             prefix + ".cleanup.data",
             prefix + ".cleanup.length",
@@ -1020,7 +1020,7 @@ auto emit_dynamic_array_descriptor_load_cleanup_sequence(
     return output.str();
 }
 
-auto emit_dynamic_array_element_drop_walk(
+auto emit_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,
@@ -1032,7 +1032,7 @@ auto emit_dynamic_array_element_drop_walk(
         .element_llvm_type = plan.element_llvm_type,
         .element_size_bytes = plan.element_size_bytes,
     };
-    return emit_dynamic_array_element_drop_walk(
+    return emit_dynamic_array_element_owned_cleanup_walk(
         descriptor_plan,
         data_pointer_name,
         length_name,
@@ -1040,7 +1040,7 @@ auto emit_dynamic_array_element_drop_walk(
     );
 }
 
-auto emit_dynamic_array_element_drop_walk(
+auto emit_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,

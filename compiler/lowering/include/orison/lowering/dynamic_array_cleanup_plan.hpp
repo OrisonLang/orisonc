@@ -24,7 +24,7 @@ auto plan_dynamic_array_descriptor_cleanup_obligations(
     std::size_t ordinal_offset = 0
 ) -> std::vector<DynamicArrayCleanupObligation>;
 
-auto drop_cleanup_for_dynamic_array_cleanup_obligation(
+auto owned_cleanup_for_dynamic_array_cleanup_obligation(
     DynamicArrayCleanupObligation const& obligation
 ) -> ConcurrencyDropCleanupPlan;
 

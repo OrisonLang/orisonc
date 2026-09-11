@@ -2824,6 +2824,9 @@ representation.
 - DynamicArray cleanup capability, availability, and production-readiness typed state now use owned-cleanup pair names
   for element cleanup authorization metadata. Existing `element-drop-pairs` and `missing-element-drop-pairs` report
   text remains compatibility output.
+- DynamicArray element cleanup walk helpers, test-only render options, test-only emitted-result vectors, and element
+  cleanup symbol helpers now use owned-cleanup wording internally. Existing `.drop.*` IR labels and compatibility
+  report text remain unchanged.
 
 ## Follow-up work
 

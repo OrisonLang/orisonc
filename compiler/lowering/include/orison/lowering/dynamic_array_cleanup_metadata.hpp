@@ -28,14 +28,14 @@ struct DynamicArrayCleanupSequenceVerification {
 
 struct BoundDynamicArrayParameterCleanupPlan {
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
-    std::optional<std::string> element_drop_symbol_name;
+    std::optional<std::string> element_owned_cleanup_symbol_name;
     DynamicArrayCleanupSequencePlan sequence_plan;
     DynamicArrayCleanupSequenceVerification sequence_verification;
 };
 
 struct LocalDynamicArrayCleanupPlan {
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
-    std::optional<std::string> element_drop_symbol_name;
+    std::optional<std::string> element_owned_cleanup_symbol_name;
     DynamicArrayCleanupSequencePlan sequence_plan;
     DynamicArrayCleanupSequenceVerification sequence_verification;
 };

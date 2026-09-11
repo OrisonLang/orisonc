@@ -62,7 +62,7 @@ auto dynamic_array_parameter_element_cleanup_proven(
         options.owned_cleanup_definition_symbols.end();
 }
 
-auto dynamic_array_descriptor_element_drop_action(
+auto dynamic_array_descriptor_element_owned_cleanup_action(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::size_t ordinal
 ) -> OwnedCleanupAction {
@@ -78,7 +78,7 @@ auto dynamic_array_descriptor_element_drop_action(
     };
 }
 
-auto dynamic_array_parameter_drop_action(
+auto dynamic_array_parameter_owned_cleanup_action(
     std::string_view name,
     DynamicArrayDescriptorCleanupPlan const& plan
 ) -> OwnedCleanupAction {
@@ -89,12 +89,12 @@ auto dynamic_array_parameter_drop_action(
     };
 }
 
-auto emit_dynamic_array_element_drop_walk_with_calls(
+auto emit_dynamic_array_element_owned_cleanup_walk_with_calls(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,
     std::string_view name_prefix,
-    std::string_view drop_symbol_name
+    std::string_view owned_cleanup_symbol_name
 ) -> std::string {
     auto output = std::ostringstream {};
     auto prefix = std::string {name_prefix};
@@ -119,19 +119,19 @@ auto emit_dynamic_array_element_drop_walk_with_calls(
         prefix + ".drop.index"
     );
     output << "  ; drop element " << plan.element_source_type_name;
-    output << " at " << prefix << ".drop.element.addr using " << drop_symbol_name << "\n";
-    output << "  call void @" << drop_symbol_name << "(ptr " << prefix << ".drop.element.addr)\n";
+    output << " at " << prefix << ".drop.element.addr using " << owned_cleanup_symbol_name << "\n";
+    output << "  call void @" << owned_cleanup_symbol_name << "(ptr " << prefix << ".drop.element.addr)\n";
     output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
     output << "  br label %" << label_prefix << ".drop.walk\n";
     output << label_prefix << ".drop.done:\n";
     return output.str();
 }
 
-auto emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+auto emit_dynamic_array_descriptor_cleanup_sequence_with_optional_owned_cleanup_calls(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view descriptor_value_name,
     std::string_view name_prefix,
-    std::optional<std::string> const& drop_symbol_name
+    std::optional<std::string> const& owned_cleanup_symbol_name
 ) -> std::string {
     auto output = std::ostringstream {};
     auto prefix = std::string {name_prefix};
@@ -150,13 +150,13 @@ auto emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
         descriptor_value_name,
         DynamicArrayDescriptorField::capacity
     );
-    if (drop_symbol_name.has_value()) {
-        output << emit_dynamic_array_element_drop_walk_with_calls(
+    if (owned_cleanup_symbol_name.has_value()) {
+        output << emit_dynamic_array_element_owned_cleanup_walk_with_calls(
             plan,
             prefix + ".cleanup.data",
             prefix + ".cleanup.length",
             prefix,
-            *drop_symbol_name
+            *owned_cleanup_symbol_name
         );
     }
     output << "  call void @__orison_dynamic_array_deallocate(ptr ";
@@ -177,12 +177,12 @@ auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::option
     return type.substr(7, type.size() - 9);
 }
 
-auto authorized_element_drop_symbol_name(
+auto authorized_element_owned_cleanup_symbol_name(
     std::string_view name,
     DynamicArrayDescriptorCleanupPlan const& plan,
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
-    auto action = dynamic_array_parameter_drop_action(name, plan);
+    auto action = dynamic_array_parameter_owned_cleanup_action(name, plan);
     auto cleanup = ConcurrencyDropCleanupPlan {
         .cleanup_symbol_name = "__orison_dynamic_array_cleanup",
         .actions = {action},
@@ -224,7 +224,7 @@ auto synthetic_dynamic_array_parameter_cleanup_authorizations(
 ) -> std::vector<semantics::OwnedCleanupLoweringAuthorization> {
     auto authorizations = std::vector<semantics::OwnedCleanupLoweringAuthorization> {};
     for (auto const& plan : plans) {
-        if (!plan.element_drop_symbol_name.has_value()) {
+        if (!plan.element_owned_cleanup_symbol_name.has_value()) {
             continue;
         }
         for (auto const& action : plan.sequence_plan.obligation.actions) {
@@ -254,14 +254,14 @@ auto descriptor_storage_finalized_by_computed_cleanup(
     });
 }
 
-auto authorized_descriptor_element_drop_symbol_name(
+auto authorized_descriptor_element_owned_cleanup_symbol_name(
     DynamicArrayCleanupObligation const& obligation,
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
     if (obligation.actions.empty()) {
         return std::nullopt;
     }
-    auto cleanup = drop_cleanup_for_dynamic_array_cleanup_obligation(obligation);
+    auto cleanup = owned_cleanup_for_dynamic_array_cleanup_obligation(obligation);
     auto declarations = declared_owned_cleanup_declarations_for_authorized_semantic_owned_cleanups(
         options.semantic_owned_cleanup_lowering_authorizations
     );
@@ -276,11 +276,11 @@ auto authorized_descriptor_element_drop_symbol_name(
     return obligation.actions.front().symbol_name;
 }
 
-auto authorized_choice_payload_element_drop_symbol_name(
+auto authorized_choice_payload_element_owned_cleanup_symbol_name(
     DynamicArrayCleanupObligation const& obligation,
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
-    auto authorized = authorized_descriptor_element_drop_symbol_name(obligation, options);
+    auto authorized = authorized_descriptor_element_owned_cleanup_symbol_name(obligation, options);
     if (authorized.has_value() || obligation.actions.empty()) {
         return authorized;
     }
@@ -457,7 +457,7 @@ auto plan_dynamic_array_descriptor_cleanup_obligation(
         .requires_descriptor_deallocation = true,
     };
     if (!is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
-        obligation.actions.push_back(dynamic_array_descriptor_element_drop_action(plan, ordinal));
+        obligation.actions.push_back(dynamic_array_descriptor_element_owned_cleanup_action(plan, ordinal));
     }
     return obligation;
 }
@@ -474,7 +474,7 @@ auto plan_dynamic_array_descriptor_cleanup_obligations(
     return obligations;
 }
 
-auto drop_cleanup_for_dynamic_array_cleanup_obligation(
+auto owned_cleanup_for_dynamic_array_cleanup_obligation(
     DynamicArrayCleanupObligation const& obligation
 ) -> ConcurrencyDropCleanupPlan {
     return ConcurrencyDropCleanupPlan {
@@ -746,14 +746,14 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         descriptor_cleanup->descriptor_storage_name = *storage;
         descriptor_cleanup->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
 
-        auto drop_symbol_name = std::optional<std::string> {};
+        auto owned_cleanup_symbol_name = std::optional<std::string> {};
         if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
-            drop_symbol_name = authorized_element_drop_symbol_name(
+            owned_cleanup_symbol_name = authorized_element_owned_cleanup_symbol_name(
                 name,
                 *descriptor_cleanup,
                 context.options
             );
-            if (!drop_symbol_name.has_value()) {
+            if (!owned_cleanup_symbol_name.has_value()) {
                 continue;
             }
         }
@@ -762,7 +762,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
             name,
             source_type_name,
             *storage,
-            is_scalar_or_nonowning_source_type(sequence->element_source_type_name) || drop_symbol_name.has_value(),
+            is_scalar_or_nonowning_source_type(sequence->element_source_type_name) || owned_cleanup_symbol_name.has_value(),
             context.lowering
         );
         if (!lifetime_plan.has_value()) {
@@ -771,8 +771,8 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         descriptor_cleanup = std::move(lifetime_plan->descriptor_cleanup);
 
         auto actions = std::vector<OwnedCleanupAction> {};
-        if (drop_symbol_name.has_value()) {
-            actions.push_back(dynamic_array_parameter_drop_action(name, *descriptor_cleanup));
+        if (owned_cleanup_symbol_name.has_value()) {
+            actions.push_back(dynamic_array_parameter_owned_cleanup_action(name, *descriptor_cleanup));
         }
         auto obligation = DynamicArrayCleanupObligation {
             .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(plans.size()),
@@ -784,7 +784,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
         plans.push_back(BoundDynamicArrayParameterCleanupPlan {
             .descriptor_cleanup = std::move(*descriptor_cleanup),
-            .element_drop_symbol_name = std::move(drop_symbol_name),
+            .element_owned_cleanup_symbol_name = std::move(owned_cleanup_symbol_name),
             .sequence_plan = std::move(sequence_plan),
             .sequence_verification = std::move(sequence_verification),
         });
@@ -905,13 +905,13 @@ auto plan_local_dynamic_array_cleanups(
             descriptor_cleanup,
             plans.size()
         );
-        auto drop_symbol_name = std::optional<std::string> {};
+        auto owned_cleanup_symbol_name = std::optional<std::string> {};
         if (!obligation.actions.empty()) {
-            drop_symbol_name = authorized_descriptor_element_drop_symbol_name(
+            owned_cleanup_symbol_name = authorized_descriptor_element_owned_cleanup_symbol_name(
                 obligation,
                 context.options
             );
-            if (!drop_symbol_name.has_value()) {
+            if (!owned_cleanup_symbol_name.has_value()) {
                 continue;
             }
         }
@@ -919,7 +919,7 @@ auto plan_local_dynamic_array_cleanups(
         auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
         plans.push_back(LocalDynamicArrayCleanupPlan {
             .descriptor_cleanup = descriptor_cleanup,
-            .element_drop_symbol_name = std::move(drop_symbol_name),
+            .element_owned_cleanup_symbol_name = std::move(owned_cleanup_symbol_name),
             .sequence_plan = std::move(sequence_plan),
             .sequence_verification = std::move(sequence_verification),
         });
@@ -1034,11 +1034,11 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
             prefix + ".descriptor",
             plan.descriptor_cleanup.descriptor_storage_name
         );
-        output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+        output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_owned_cleanup_calls(
             plan.descriptor_cleanup,
             prefix + ".descriptor",
             prefix,
-            plan.element_drop_symbol_name
+            plan.element_owned_cleanup_symbol_name
         );
         auto finalization_plan = plan_consumed_descriptor_finalization(
             plan.descriptor_cleanup.owner_name,
@@ -1150,13 +1150,13 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
                         descriptor_cleanup.descriptor_cleanup,
                         session.state.emitted_dynamic_array_cleanup_obligations.size()
                     );
-                    auto drop_symbol_name = std::optional<std::string> {};
+                    auto owned_cleanup_symbol_name = std::optional<std::string> {};
                     if (!obligation.actions.empty()) {
-                        drop_symbol_name = authorized_choice_payload_element_drop_symbol_name(
+                        owned_cleanup_symbol_name = authorized_choice_payload_element_owned_cleanup_symbol_name(
                             obligation,
                             context.options
                         );
-                        if (!drop_symbol_name.has_value()) {
+                        if (!owned_cleanup_symbol_name.has_value()) {
                             return false;
                         }
                     }
@@ -1217,11 +1217,11 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
                         output
                     );
                     auto cleanup_prefix = "%" + block_prefix;
-                    output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+                    output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_owned_cleanup_calls(
                         descriptor_cleanup.descriptor_cleanup,
                         descriptor_value,
                         cleanup_prefix,
-                        drop_symbol_name
+                        owned_cleanup_symbol_name
                     );
                     output << "  br label %" << after_block << "\n";
                     output << after_block << ":\n";
@@ -1263,11 +1263,11 @@ auto emit_local_dynamic_array_cleanups(
             prefix + ".descriptor",
             plan.descriptor_cleanup.descriptor_storage_name
         );
-        output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+        output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_owned_cleanup_calls(
             plan.descriptor_cleanup,
             prefix + ".descriptor",
             prefix,
-            plan.element_drop_symbol_name
+            plan.element_owned_cleanup_symbol_name
         );
         auto finalization_plan = plan_consumed_descriptor_finalization(
             plan.descriptor_cleanup.owner_name,

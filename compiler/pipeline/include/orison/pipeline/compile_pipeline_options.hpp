@@ -33,7 +33,7 @@ struct CompilePipelineOptions {
     bool fixture_enable_dynamic_array_parameter_descriptors = false;
     bool dynamic_array_parameter_descriptor_audit_bindings_enabled = false;
     bool fixture_emit_bound_dynamic_array_parameter_cleanups = false;
-    bool test_only_render_dynamic_array_element_drop_walks = false;
+    bool test_only_render_dynamic_array_element_owned_cleanup_walks = false;
     bool collect_computed_dynamic_array_for_descriptor_renders = false;
     bool collect_computed_dynamic_array_for_loop_control_renders = false;
     bool collect_computed_dynamic_array_for_element_address_renders = false;

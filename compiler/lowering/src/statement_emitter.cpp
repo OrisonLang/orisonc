@@ -256,7 +256,7 @@ auto normalize_fixed_array_element_owner_name(std::string_view owner_name) -> st
     return output;
 }
 
-auto authorized_dynamic_array_element_drop_symbol_name(
+auto authorized_dynamic_array_element_owned_cleanup_symbol_name(
     std::string_view owner_name,
     std::string_view element_source_type_name,
     LoweringEmissionContext const& context
@@ -278,7 +278,7 @@ auto authorized_dynamic_array_element_drop_symbol_name(
     return std::nullopt;
 }
 
-auto has_authorized_dynamic_array_element_drop_type(
+auto has_authorized_dynamic_array_element_owned_cleanup_type(
     std::string_view element_source_type_name,
     LoweringEmissionContext const& context
 ) -> bool {
@@ -1024,16 +1024,16 @@ auto lower_dynamic_array_index_assignment_target(
         !sequence->owns_storage) {
         return std::nullopt;
     }
-    auto element_drop_symbol_name = std::optional<std::string> {};
+    auto element_owned_cleanup_symbol_name = std::optional<std::string> {};
     auto const element_requires_ownership_transfer =
         is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering);
     if (element_requires_ownership_transfer) {
-        element_drop_symbol_name = authorized_dynamic_array_element_drop_symbol_name(
+        element_owned_cleanup_symbol_name = authorized_dynamic_array_element_owned_cleanup_symbol_name(
             owner_name,
             sequence->element_source_type_name,
             context
         );
-        if (!element_drop_symbol_name.has_value()) {
+        if (!element_owned_cleanup_symbol_name.has_value()) {
             diagnostics.error(
                 target.line,
                 "lowering DynamicArray assignment to owned element requires authorized replacement drop"
@@ -1104,8 +1104,8 @@ auto lower_dynamic_array_index_assignment_target(
     session.state.current_block = value_block;
     output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
     output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
-    if (element_drop_symbol_name.has_value()) {
-        output << "  call void @" << *element_drop_symbol_name << "(ptr ";
+    if (element_owned_cleanup_symbol_name.has_value()) {
+        output << "  call void @" << *element_owned_cleanup_symbol_name << "(ptr ";
         output << prefix << ".element.addr)\n";
     }
 
@@ -1433,14 +1433,14 @@ auto emit_dynamic_array_descriptor_assignment_storage_cleanup(
     cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
     cleanup_plan->source_line = source_line;
 
-    auto element_drop_symbol_name = std::optional<std::string> {};
+    auto element_owned_cleanup_symbol_name = std::optional<std::string> {};
     if (!is_scalar_or_nonowning_source_type(cleanup_plan->element_source_type_name)) {
-        element_drop_symbol_name = authorized_dynamic_array_element_drop_symbol_name(
+        element_owned_cleanup_symbol_name = authorized_dynamic_array_element_owned_cleanup_symbol_name(
             owner_name,
             cleanup_plan->element_source_type_name,
             context
         );
-        if (!element_drop_symbol_name.has_value()) {
+        if (!element_owned_cleanup_symbol_name.has_value()) {
             diagnostics.error(
                 source_line,
                 "lowering DynamicArray assignment target cleanup requires authorized element drop"
@@ -1470,7 +1470,7 @@ auto emit_dynamic_array_descriptor_assignment_storage_cleanup(
         prefix + ".descriptor",
         DynamicArrayDescriptorField::capacity
     );
-    if (element_drop_symbol_name.has_value()) {
+    if (element_owned_cleanup_symbol_name.has_value()) {
         output << "  br label %" << label_prefix << ".drop.walk\n";
         output << label_prefix << ".drop.walk:\n";
         output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix
@@ -1487,7 +1487,7 @@ auto emit_dynamic_array_descriptor_assignment_storage_cleanup(
             prefix + ".cleanup.data",
             prefix + ".drop.index"
         );
-        output << "  call void @" << *element_drop_symbol_name << "(ptr "
+        output << "  call void @" << *element_owned_cleanup_symbol_name << "(ptr "
                << prefix << ".drop.element.addr)\n";
         output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
         output << "  br label %" << label_prefix << ".drop.walk\n";
@@ -1496,7 +1496,7 @@ auto emit_dynamic_array_descriptor_assignment_storage_cleanup(
     output << "  call void @__orison_dynamic_array_deallocate(ptr ";
     output << prefix << ".cleanup.data, i64 " << cleanup_plan->element_size_bytes;
     output << ", i64 " << prefix << ".cleanup.capacity)\n";
-    session.state.current_block = element_drop_symbol_name.has_value()
+    session.state.current_block = element_owned_cleanup_symbol_name.has_value()
         ? label_prefix + ".drop.done"
         : label_prefix + ".cleanup.entry";
     return true;
@@ -2325,7 +2325,7 @@ auto lower_dynamic_array_push_statement(
     auto const element_requires_ownership_transfer =
         is_owned_transfer_source_type(*element_source_type, context.lowering);
     if (element_requires_ownership_transfer &&
-        !has_authorized_dynamic_array_element_drop_type(*element_source_type, context)) {
+        !has_authorized_dynamic_array_element_owned_cleanup_type(*element_source_type, context)) {
         diagnostics.error(
             statement.line,
             "lowering DynamicArray push to owned element requires authorized element drop: owner " +
