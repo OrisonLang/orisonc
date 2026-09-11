@@ -2839,6 +2839,10 @@ representation.
 - Computed DynamicArray same-owner cleanup-proof failures now include a short source-oriented summary before the
   detailed audit chain, and owned-element cleanup-authorization failures now append a short source-oriented summary to
   the existing diagnostic.
+- Computed DynamicArray forwarded-parameter planning now accepts finite direct and final-control alias handoffs with
+  intervening harmless local bindings that do not mention the source owner or alias. Production coverage pins `run`,
+  `--emit-llvm`, `--emit-object`, and `--build` for the accepted local-alias handoffs while keeping owner reads and
+  reassignment rejected.
 
 ## Follow-up work
 

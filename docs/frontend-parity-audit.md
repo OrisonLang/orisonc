@@ -3282,3 +3282,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `interface Drop` or `implements Drop`. Array CLI, generic CLI, and pipeline smoke coverage verify compiler-derived
   cleanup preserves branch/switch owner-mismatch, returned choice-payload reuse, final switch-binding reuse,
   helper-return reuse, and multi-switch consumed-scratch reuse diagnostics.
+- 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now accepts direct and final-control local alias
+  handoffs with intervening harmless local bindings. Array CLI smoke coverage verifies `run`, `--emit-llvm`,
+  `--emit-object`, and `--build` success while owner-read and alias-reassignment fixtures remain rejected.

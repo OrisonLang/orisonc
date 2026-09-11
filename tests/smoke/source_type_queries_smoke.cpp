@@ -374,6 +374,16 @@ auto dynamic_array_let_statement(std::string name, orison::syntax::ExpressionSyn
     return statement;
 }
 
+auto int64_var_statement(std::string name, orison::syntax::ExpressionSyntax expression)
+    -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::var_binding;
+    statement.name = std::move(name);
+    statement.annotated_type = orison::syntax::TypeSyntax {.name = "Int64"};
+    statement.expression = std::move(expression);
+    return statement;
+}
+
 auto assignment_statement(orison::syntax::ExpressionSyntax target, orison::syntax::ExpressionSyntax expression)
     -> orison::syntax::StatementSyntax {
     auto statement = orison::syntax::StatementSyntax {};
@@ -622,12 +632,15 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_alias_with_extra");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias_with_extra");
+    register_dynamic_array_forwarding_signature(context, "forward_final_if_alias_with_harmless_local");
+    register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias_with_harmless_local");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch_mismatch", 2);
+    register_dynamic_array_forwarding_signature(context, "forward_alias_with_harmless_local");
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_extra");
     register_dynamic_array_forwarding_signature(context, "forward_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_cycle_left");
@@ -1171,6 +1184,40 @@ int main() {
     context.source_functions["forward_final_switch_alias_with_extra"] =
         &forward_final_switch_alias_with_extra_function;
 
+    auto forward_final_if_alias_with_harmless_local_function = orison::syntax::FunctionSyntax {};
+    forward_final_if_alias_with_harmless_local_function.name = "forward_final_if_alias_with_harmless_local";
+    forward_final_if_alias_with_harmless_local_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_if_alias_with_harmless_local_function.body_statements.push_back(if_statement(
+        three_statement_block(
+            dynamic_array_let_statement("alias", name("items")),
+            int64_var_statement("marker", integer_literal("1")),
+            expression_statement(name("alias"))
+        ),
+        two_statement_block(
+            dynamic_array_let_statement("alias", name("items")),
+            expression_statement(name("alias"))
+        )
+    ));
+    context.source_functions["forward_final_if_alias_with_harmless_local"] =
+        &forward_final_if_alias_with_harmless_local_function;
+
+    auto forward_final_switch_alias_with_harmless_local_function = orison::syntax::FunctionSyntax {};
+    forward_final_switch_alias_with_harmless_local_function.name = "forward_final_switch_alias_with_harmless_local";
+    forward_final_switch_alias_with_harmless_local_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_switch_alias_with_harmless_local_function.body_statements.push_back(switch_statement(
+        three_statement_block(
+            dynamic_array_let_statement("alias", name("items")),
+            int64_var_statement("marker", integer_literal("1")),
+            expression_statement(name("alias"))
+        ),
+        two_statement_block(
+            dynamic_array_let_statement("alias", name("items")),
+            expression_statement(name("alias"))
+        )
+    ));
+    context.source_functions["forward_final_switch_alias_with_harmless_local"] =
+        &forward_final_switch_alias_with_harmless_local_function;
+
     auto forward_final_if_alias_reassigned_function = orison::syntax::FunctionSyntax {};
     forward_final_if_alias_reassigned_function.name = "forward_final_if_alias_reassigned";
     forward_final_if_alias_reassigned_function.parameters.push_back(dynamic_array_uint32_parameter());
@@ -1256,6 +1303,15 @@ int main() {
     forward_alias_with_extra_function.body_statements.push_back(expression_statement(name("items")));
     forward_alias_with_extra_function.body_statements.push_back(expression_statement(name("alias")));
     context.source_functions["forward_alias_with_extra"] = &forward_alias_with_extra_function;
+
+    auto forward_alias_with_harmless_local_function = orison::syntax::FunctionSyntax {};
+    forward_alias_with_harmless_local_function.name = "forward_alias_with_harmless_local";
+    forward_alias_with_harmless_local_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_alias_with_harmless_local_function.body_statements.push_back(dynamic_array_var_statement("alias", name("items")));
+    forward_alias_with_harmless_local_function.body_statements.push_back(int64_var_statement("marker", integer_literal("1")));
+    forward_alias_with_harmless_local_function.body_statements.push_back(expression_statement(name("alias")));
+    context.source_functions["forward_alias_with_harmless_local"] =
+        &forward_alias_with_harmless_local_function;
 
     auto forward_alias_reassigned_function = orison::syntax::FunctionSyntax {};
     forward_alias_reassigned_function.name = "forward_alias_reassigned";
@@ -1725,6 +1781,69 @@ int main() {
     assert(final_if_switch_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
     assert(final_if_switch_forwarded_parameter_plan.descriptor_storage_available);
     assert(final_if_switch_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto local_alias_with_harmless_local_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_alias_with_harmless_local", name("items")),
+                call("forward_alias_with_harmless_local", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        local_alias_with_harmless_local_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(local_alias_with_harmless_local_forwarded_parameter_plan.source_owner_name == "items");
+    assert(local_alias_with_harmless_local_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(local_alias_with_harmless_local_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(local_alias_with_harmless_local_forwarded_parameter_plan.descriptor_storage_available);
+    assert(local_alias_with_harmless_local_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto final_if_alias_with_harmless_local_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_if_alias_with_harmless_local", name("items")),
+                call("forward_final_if_alias_with_harmless_local", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_if_alias_with_harmless_local_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(final_if_alias_with_harmless_local_forwarded_parameter_plan.source_owner_name == "items");
+    assert(final_if_alias_with_harmless_local_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(final_if_alias_with_harmless_local_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(final_if_alias_with_harmless_local_forwarded_parameter_plan.descriptor_storage_available);
+    assert(final_if_alias_with_harmless_local_forwarded_parameter_plan.cleanup_owner_proven);
+
+    auto final_switch_alias_with_harmless_local_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_switch_alias_with_harmless_local", name("items")),
+                call("forward_final_switch_alias_with_harmless_local", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_switch_alias_with_harmless_local_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(final_switch_alias_with_harmless_local_forwarded_parameter_plan.source_owner_name == "items");
+    assert(final_switch_alias_with_harmless_local_forwarded_parameter_plan.handoff_owner_name == "items");
+    assert(final_switch_alias_with_harmless_local_forwarded_parameter_plan.descriptor_storage_name == "%items.addr");
+    assert(final_switch_alias_with_harmless_local_forwarded_parameter_plan.descriptor_storage_available);
+    assert(final_switch_alias_with_harmless_local_forwarded_parameter_plan.cleanup_owner_proven);
 
     auto final_if_forwarded_parameter_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

@@ -277,6 +277,127 @@ auto local_alias_parameter_index_for_pair(
     );
 }
 
+auto expression_mentions_name(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view name
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::name && expression.text == name) {
+        return true;
+    }
+    if (expression.left != nullptr && expression_mentions_name(*expression.left, name)) {
+        return true;
+    }
+    if (expression.right != nullptr && expression_mentions_name(*expression.right, name)) {
+        return true;
+    }
+    for (auto const& argument : expression.arguments) {
+        if (expression_mentions_name(argument, name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto harmless_alias_forwarding_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view alias_name,
+    std::string_view owner_name
+) -> bool {
+    if (statement.kind != syntax::StatementKind::let_binding &&
+        statement.kind != syntax::StatementKind::var_binding) {
+        return false;
+    }
+    if (statement.name == alias_name || statement.name == owner_name) {
+        return false;
+    }
+    switch (statement.expression.kind) {
+        case syntax::ExpressionKind::integer_literal:
+        case syntax::ExpressionKind::boolean_literal:
+            break;
+        case syntax::ExpressionKind::cast:
+        case syntax::ExpressionKind::unary:
+            if (statement.expression.left == nullptr) {
+                return false;
+            }
+            break;
+        case syntax::ExpressionKind::binary:
+        case syntax::ExpressionKind::ternary:
+            if (statement.expression.left == nullptr || statement.expression.right == nullptr) {
+                return false;
+            }
+            break;
+        default:
+            return false;
+    }
+    return !expression_mentions_name(statement.expression, alias_name) &&
+        !expression_mentions_name(statement.expression, owner_name);
+}
+
+auto local_alias_parameter_index_for_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::size_t> {
+    if (statements.size() < 2) {
+        return std::nullopt;
+    }
+
+    auto alias_index = local_alias_parameter_index_for_pair(
+        statements.front(),
+        statements.back(),
+        function,
+        signature,
+        source_type_name
+    );
+    if (!alias_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const& alias_name = statements.front().name;
+    auto const& owner_name = statements.front().expression.text;
+    for (auto index = std::size_t {1}; index + 1 < statements.size(); ++index) {
+        if (!harmless_alias_forwarding_statement(statements[index], alias_name, owner_name)) {
+            return std::nullopt;
+        }
+    }
+
+    return alias_index;
+}
+
+auto local_alias_parameter_index_for_pointer_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::size_t> {
+    if (statements.size() < 2 || statements.front() == nullptr || statements.back() == nullptr) {
+        return std::nullopt;
+    }
+
+    auto alias_index = local_alias_parameter_index_for_pair(
+        *statements.front(),
+        *statements.back(),
+        function,
+        signature,
+        source_type_name
+    );
+    if (!alias_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const& alias_name = statements.front()->name;
+    auto const& owner_name = statements.front()->expression.text;
+    for (auto index = std::size_t {1}; index + 1 < statements.size(); ++index) {
+        if (statements[index] == nullptr ||
+            !harmless_alias_forwarding_statement(*statements[index], alias_name, owner_name)) {
+            return std::nullopt;
+        }
+    }
+
+    return alias_index;
+}
+
 auto forwarded_dynamic_array_parameter_indexes(
     std::string_view function_name,
     std::string_view source_type_name,
@@ -310,18 +431,16 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
     if (statements.empty()) {
         return std::nullopt;
     }
-    if (statements.size() == 2) {
-        auto alias_index = local_alias_parameter_index_for_pair(
-            statements.front(),
-            statements.back(),
+    if (statements.size() >= 2) {
+        auto alias_index = local_alias_parameter_index_for_block(
+            statements,
             function,
             signature,
             source_type_name
         );
-        if (!alias_index.has_value()) {
-            return std::nullopt;
+        if (alias_index.has_value()) {
+            return single_forwarded_dynamic_array_parameter_index(*alias_index);
         }
-        return single_forwarded_dynamic_array_parameter_index(*alias_index);
     }
     if (statements.size() != 1) {
         return std::nullopt;
@@ -347,21 +466,16 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
     if (statements.empty()) {
         return std::nullopt;
     }
-    if (statements.size() == 2) {
-        if (statements.front() == nullptr || statements.back() == nullptr) {
-            return std::nullopt;
-        }
-        auto alias_index = local_alias_parameter_index_for_pair(
-            *statements.front(),
-            *statements.back(),
+    if (statements.size() >= 2) {
+        auto alias_index = local_alias_parameter_index_for_pointer_block(
+            statements,
             function,
             signature,
             source_type_name
         );
-        if (!alias_index.has_value()) {
-            return std::nullopt;
+        if (alias_index.has_value()) {
+            return single_forwarded_dynamic_array_parameter_index(*alias_index);
         }
-        return single_forwarded_dynamic_array_parameter_index(*alias_index);
     }
     if (statements.size() != 1 || statements.back() == nullptr) {
         return std::nullopt;
