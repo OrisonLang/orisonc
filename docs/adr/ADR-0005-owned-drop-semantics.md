@@ -181,9 +181,9 @@ inventing semantics outside the spec/tour.
   symbol fields remain compatibility-sensitive typed state until their report and IR-shape seams are migrated together.
 - Runtime-index cleanup IR-plan callee state now uses owned-cleanup naming internally. Rendered `drop-callee` and
   drop-call IR-shape text remains compatibility output.
-- Runtime-index member sibling cleanup fields now use owned-cleanup symbol and definition-readiness names internally.
-  Helper-binding readiness now uses owned-cleanup wording, while helper-binding type names and report text remain
-  compatibility seams.
+- Runtime-index member sibling cleanup fields and helper-binding typed state now use owned-cleanup symbol,
+  definition-readiness, and binding names internally. Existing `helper-drop-bindings`,
+  `member-helper-drop-bindings`, and `drop-definitions` report text remains compatibility output.
 - Semantic cleanup implementation and lowering authorization types now use `OwnedCleanup*` names internally. Existing
   semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 - Semantic cleanup helper functions now use `owned_cleanup_*` names internally. Existing `drop` wording remains only in

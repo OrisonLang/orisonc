@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-09-10: Runtime-index member cleanup helper-binding typed state now uses owned-cleanup binding names internally.
+  Existing `helper-drop-bindings`, `member-helper-drop-bindings`, and `drop-definitions` report text remains
+  compatibility output.
 - 2026-08-31: Scalar computed `DynamicArray<UInt32>` owner-mismatch fixtures now pin the same ownership-join
   diagnostic across ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - 2026-08-31: Branch-returned and switch-returned computed `DynamicArray<Payload>` owner-mismatch fixtures now pin the
@@ -244,7 +247,7 @@
 - 2026-08-15: Runtime-index member-cleanup apply authorization, apply preview, post-apply verification, and promotion
   summary now flow through typed pipeline records and the driver production-readiness report. Driver output no longer
   needs audit-line filtering to expose those mutation-stage readiness details.
-- 2026-08-15: Runtime-index member-cleanup helper Drop-binding refresh now updates the mutation readiness chain and
+- 2026-08-15: Runtime-index member-cleanup helper binding refresh now updates the mutation readiness chain and
   regenerated audit lines. Operation validation, conflict detection, apply authorization, apply preview, post-apply
   verification, promotion summary, production readiness, and verdict reports remove `member-helper-drop-bindings` when
   concrete helper binding evidence exists.
@@ -254,9 +257,9 @@
 - 2026-08-14: Runtime-index member-cleanup production readiness now requires concrete helper Drop-binding readiness
   for non-empty moved member paths. Whole-element paths treat helper bindings as not required, while member paths
   report `member-helper-drop-bindings` as an explicit blocker until concrete helper binding evidence is present.
-- 2026-08-14: Runtime-index member-cleanup helper Drop bindings now flow as typed LLVM/pipeline records. The
-  constructor-move production-readiness report shows concrete nested sibling Drop binding counts, Drop definition
-  readiness, helper-definition readiness, and production-disabled status without inspecting emitted helper IR.
+- 2026-08-14: Runtime-index member-cleanup helper bindings now flow as typed LLVM/pipeline records. The
+  constructor-move production-readiness report shows concrete nested sibling binding counts, definition readiness,
+  helper-definition readiness, and production-disabled status without inspecting emitted helper IR.
 - 2026-08-14: Runtime-index member-cleanup guarded-rewrite and rewrite-execution readiness now flow through typed
   lowering, LLVM emission, and pipeline result records. The constructor-move production-readiness report formats the
   mutation verdict, rewrite authorization, execution plan, execution verdict, and promotion status without audit-text

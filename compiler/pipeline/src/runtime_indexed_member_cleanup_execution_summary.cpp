@@ -140,7 +140,7 @@ auto runtime_indexed_member_cleanup_execution_summaries(
         );
         auto const* helper_bindings = find_runtime_indexed_member_cleanup_record(
             gate,
-            result.runtime_indexed_member_cleanup_helper_drop_bindings
+            result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings
         );
         summaries.push_back(RuntimeIndexedMemberCleanupExecutionSummary {
             .owner_name = gate.owner_name,
@@ -152,7 +152,7 @@ auto runtime_indexed_member_cleanup_execution_summaries(
             .helper_symbol_name = helper_bindings != nullptr ? helper_bindings->helper_symbol_name : std::string {},
             .helper_binding_count = count_runtime_indexed_member_cleanup_records(
                 gate,
-                result.runtime_indexed_member_cleanup_helper_drop_bindings
+                result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings
             ),
             .helper_sibling_binding_count =
                 helper_bindings != nullptr ? helper_bindings->sibling_binding_count : std::size_t {0},

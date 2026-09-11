@@ -981,11 +981,11 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
     return fields;
 }
 
-auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
+auto collect_runtime_indexed_member_cleanup_helper_owned_cleanup_bindings(
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan> const& edit_script_plans,
     std::vector<RuntimeIndexedMemberCleanupSiblingField> const& sibling_fields
-) -> std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> {
-    auto bindings = std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> {};
+) -> std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> {
+    auto bindings = std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> {};
     for (auto const& plan : edit_script_plans) {
         if (plan.member_cleanup_target_symbol_name.empty() ||
             plan.element_source_type_name.empty() ||
@@ -1025,7 +1025,7 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
                 }
             );
 
-        bindings.push_back(RuntimeIndexedMemberCleanupHelperDropBindings {
+        bindings.push_back(RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings {
             .owner_name = plan.owner_name,
             .index_expression_text = plan.index_expression_text,
             .element_source_type_name = plan.element_source_type_name,
@@ -1045,14 +1045,14 @@ auto collect_runtime_indexed_member_cleanup_helper_drop_bindings(
 
 auto helper_owned_cleanup_bindings_ready_for(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
 ) -> bool {
     if (readiness.moved_member_path.empty()) {
         return true;
     }
     auto matched = false;
     auto ready = true;
-    for (auto const& bindings : helper_drop_bindings) {
+    for (auto const& bindings : helper_owned_cleanup_bindings) {
         if (bindings.owner_name != readiness.owner_name ||
             bindings.index_expression_text != readiness.index_expression_text ||
             bindings.element_source_type_name != readiness.element_source_type_name ||
@@ -1097,7 +1097,7 @@ auto member_cleanup_site_fragment(Record const& record) -> std::string {
 template <typename Record>
 auto helper_owned_cleanup_bindings_ready_for(
     Record const& record,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
 ) -> bool {
     return helper_owned_cleanup_bindings_ready_for(
         RuntimeIndexedMemberCleanupProductionReadiness {
@@ -1107,16 +1107,16 @@ auto helper_owned_cleanup_bindings_ready_for(
             .moved_source_type_name = record.moved_source_type_name,
             .moved_member_path = record.moved_member_path,
         },
-        helper_drop_bindings
+        helper_owned_cleanup_bindings
     );
 }
 
 template <typename Record>
 auto remove_helper_drop_binding_blocker_if_ready(
     Record& record,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
 ) -> bool {
-    if (!helper_owned_cleanup_bindings_ready_for(record, helper_drop_bindings)) {
+    if (!helper_owned_cleanup_bindings_ready_for(record, helper_owned_cleanup_bindings)) {
         return false;
     }
     auto const old_size = record.blockers.size();
@@ -1148,12 +1148,12 @@ template <typename Record, typename Report>
 void refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
     std::vector<Record>& records,
     std::vector<std::string>& audit_lines,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings,
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings,
     std::string_view report_prefix,
     Report report
 ) {
     for (auto& record : records) {
-        if (remove_helper_drop_binding_blocker_if_ready(record, helper_drop_bindings)) {
+        if (remove_helper_drop_binding_blocker_if_ready(record, helper_owned_cleanup_bindings)) {
             replace_runtime_indexed_member_cleanup_audit_line(
                 audit_lines,
                 report_prefix,
@@ -1167,11 +1167,11 @@ void refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindin
 void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bindings(
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness>& readiness,
     std::vector<std::string>& audit_lines,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
 ) {
     for (auto& entry : readiness) {
         entry.helper_owned_cleanup_bindings_ready =
-            helper_owned_cleanup_bindings_ready_for(entry, helper_drop_bindings);
+            helper_owned_cleanup_bindings_ready_for(entry, helper_owned_cleanup_bindings);
         auto const helper_blocker = std::string {"member-helper-drop-bindings"};
         auto const blocker_position = std::ranges::find(entry.blockers, helper_blocker);
         if (entry.helper_owned_cleanup_bindings_ready) {
@@ -1243,59 +1243,59 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     std::vector<RuntimeIndexedMemberCleanupMutationRewriteExecutionVerdict>& rewrite_execution_verdicts,
     std::vector<RuntimeIndexedMemberCleanupMutationRewritePromotionStatus>& rewrite_promotion_statuses,
     std::vector<std::string>& audit_lines,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
 ) {
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         typed_promotion_gates,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup typed-promotion-gate",
         runtime_indexed_member_cleanup_typed_promotion_gate_report
     );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         operation_plans,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup mutation-operation-plan",
         runtime_indexed_member_cleanup_mutation_operation_plan_report
     );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         operation_validations,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup mutation-operation-validation",
         runtime_indexed_member_cleanup_mutation_operation_validation_report
     );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         conflict_detections,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup mutation-conflict-detection",
         runtime_indexed_member_cleanup_mutation_conflict_detection_report
     );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         apply_authorizations,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup mutation-apply-authorization",
         runtime_indexed_member_cleanup_mutation_apply_authorization_report
     );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         apply_previews,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup mutation-apply-preview",
         runtime_indexed_member_cleanup_mutation_apply_preview_report
     );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         post_apply_verifications,
         audit_lines,
-        helper_drop_bindings,
+        helper_owned_cleanup_bindings,
         "runtime-index member cleanup mutation-post-apply-verification",
         runtime_indexed_member_cleanup_mutation_post_apply_verification_report
     );
     for (auto& summary : promotion_summaries) {
-        if (remove_helper_drop_binding_blocker_if_ready(summary, helper_drop_bindings)) {
+        if (remove_helper_drop_binding_blocker_if_ready(summary, helper_owned_cleanup_bindings)) {
             summary.promotion_ready =
                 summary.operations_ready &&
                 summary.validation_ready &&
@@ -1315,7 +1315,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
         }
     }
     for (auto& entry : readiness) {
-        if (remove_helper_drop_binding_blocker_if_ready(entry, helper_drop_bindings)) {
+        if (remove_helper_drop_binding_blocker_if_ready(entry, helper_owned_cleanup_bindings)) {
             for (auto const& summary : promotion_summaries) {
                 if (!same_runtime_indexed_member_cleanup_refresh_key(summary, entry)) {
                     continue;
@@ -4659,15 +4659,15 @@ auto emit_module(
                 result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
                 owned_cleanup_symbols
             );
-        result.runtime_indexed_member_cleanup_helper_drop_bindings =
-            collect_runtime_indexed_member_cleanup_helper_drop_bindings(
+        result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings =
+            collect_runtime_indexed_member_cleanup_helper_owned_cleanup_bindings(
                 result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
                 result.runtime_indexed_member_cleanup_sibling_fields
             );
         refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bindings(
             result.runtime_indexed_member_cleanup_production_readiness,
             result.runtime_indexed_cleanup_audit_lines,
-            result.runtime_indexed_member_cleanup_helper_drop_bindings
+            result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings
         );
         refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
             result.runtime_indexed_member_cleanup_typed_promotion_gates,
@@ -4685,7 +4685,7 @@ auto emit_module(
             result.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts,
             result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses,
             result.runtime_indexed_cleanup_audit_lines,
-            result.runtime_indexed_member_cleanup_helper_drop_bindings
+            result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings
         );
     };
     auto concurrency_runtime_operations = collect_concurrency_runtime_operations(module);

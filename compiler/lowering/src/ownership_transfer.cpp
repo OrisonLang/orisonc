@@ -1855,7 +1855,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
 auto runtime_indexed_member_cleanup_production_readiness(
     RuntimeIndexedMemberCleanupProof const& proof,
     std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings,
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings,
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupModuleMutationGate const& gate
 ) -> RuntimeIndexedMemberCleanupProductionReadiness {
@@ -1863,11 +1863,11 @@ auto runtime_indexed_member_cleanup_production_readiness(
     for (auto const& target : targets) {
         target_metadata_ready = target_metadata_ready && target.metadata_ready;
     }
-    auto const helper_drop_bindings_required = !proof.moved_member_path.empty();
-    auto helper_owned_cleanup_bindings_ready = !helper_drop_bindings_required;
-    if (helper_drop_bindings_required) {
-        helper_owned_cleanup_bindings_ready = target_metadata_ready && !helper_drop_bindings.empty();
-        for (auto const& bindings : helper_drop_bindings) {
+    auto const helper_owned_cleanup_bindings_required = !proof.moved_member_path.empty();
+    auto helper_owned_cleanup_bindings_ready = !helper_owned_cleanup_bindings_required;
+    if (helper_owned_cleanup_bindings_required) {
+        helper_owned_cleanup_bindings_ready = target_metadata_ready && !helper_owned_cleanup_bindings.empty();
+        for (auto const& bindings : helper_owned_cleanup_bindings) {
             helper_owned_cleanup_bindings_ready = helper_owned_cleanup_bindings_ready &&
                 bindings.helper_definition_ready &&
                 bindings.all_owned_cleanup_definitions_available &&
@@ -1896,7 +1896,7 @@ auto runtime_indexed_member_cleanup_production_readiness(
     if (!target_metadata_ready) {
         blockers.push_back("member-drop-metadata");
     }
-    if (helper_drop_bindings_required && !helper_owned_cleanup_bindings_ready) {
+    if (helper_owned_cleanup_bindings_required && !helper_owned_cleanup_bindings_ready) {
         blockers.push_back("member-helper-drop-bindings");
     }
     if (!cfg_slice_ready) {
@@ -1991,8 +1991,8 @@ auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
     return diagnostics;
 }
 
-auto runtime_indexed_member_cleanup_helper_drop_bindings_report(
-    RuntimeIndexedMemberCleanupHelperDropBindings const& bindings
+auto runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report(
+    RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings const& bindings
 ) -> std::string {
     auto report = std::ostringstream {};
     report << "runtime-index member cleanup helper-drop-bindings owner " << bindings.owner_name

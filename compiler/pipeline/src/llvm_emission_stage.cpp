@@ -69,7 +69,7 @@ auto runtime_indexed_member_cleanup_binding_error_text(
         return {};
     }
 
-    for (auto const& bindings : result.runtime_indexed_member_cleanup_helper_drop_bindings) {
+    for (auto const& bindings : result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings) {
         if (bindings.all_owned_cleanup_definitions_available && bindings.helper_definition_ready) {
             continue;
         }

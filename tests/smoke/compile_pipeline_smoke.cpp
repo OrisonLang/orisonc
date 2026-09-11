@@ -16275,7 +16275,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_two_nested_member_transfers_apply_request
-            .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 2
+            .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings.size() == 2
     );
     assert(
         runtime_indexed_two_nested_member_transfers_apply_request
@@ -16305,7 +16305,7 @@ auto main() -> int {
             auto const* bindings = orison::pipeline::find_runtime_indexed_member_cleanup_record(
                 key,
                 runtime_indexed_two_nested_member_transfers_apply_request
-                    .runtime_indexed_member_cleanup_helper_drop_bindings
+                    .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings
             );
             assert(bindings != nullptr);
             assert(bindings->sibling_binding_count == 4);
@@ -16623,8 +16623,8 @@ auto main() -> int {
             .promotion_ready = true,
         },
     };
-    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_helper_drop_bindings = {
-        orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings {
+    synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings = {
+        orison::lowering::RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings {
             .owner_name = "rights",
             .index_expression_text = "j",
             .element_source_type_name = "RightBox",
@@ -16634,7 +16634,7 @@ auto main() -> int {
             .sibling_binding_count = 2,
             .helper_definition_ready = true,
         },
-        orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings {
+        orison::lowering::RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings {
             .owner_name = "lefts",
             .index_expression_text = "i",
             .element_source_type_name = "LeftBox",
@@ -16666,7 +16666,7 @@ auto main() -> int {
     );
     assert(
         orison::pipeline::runtime_indexed_member_cleanup_match_key(
-            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_helper_drop_bindings[0]
+            synthetic_member_cleanup_summary_result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings[0]
         ) == synthetic_right_key
     );
     assert(
@@ -17366,26 +17366,26 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_nested_sibling_member_transfer_apply_request
-            .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 1
+            .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings.size() == 1
     );
-    auto const& nested_helper_drop_bindings =
+    auto const& nested_helper_owned_cleanup_bindings =
         runtime_indexed_nested_sibling_member_transfer_apply_request
-            .runtime_indexed_member_cleanup_helper_drop_bindings.front();
-    assert(nested_helper_drop_bindings.owner_name == "items");
-    assert(nested_helper_drop_bindings.index_expression_text == "(index + zero)");
-    assert(nested_helper_drop_bindings.element_source_type_name == "Wrap");
-    assert(nested_helper_drop_bindings.moved_source_type_name == "Inner");
-    assert(nested_helper_drop_bindings.moved_member_path == (std::vector<std::string> {"box", "item"}));
-    assert(nested_helper_drop_bindings.helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
-    assert(nested_helper_drop_bindings.sibling_binding_count == 4);
-    assert(nested_helper_drop_bindings.all_owned_cleanup_definitions_available);
-    assert(nested_helper_drop_bindings.nested_member_path);
-    assert(nested_helper_drop_bindings.helper_definition_ready);
-    assert(!nested_helper_drop_bindings.production_enabled);
-    assert(nested_helper_drop_bindings.source_line == 37);
+            .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings.front();
+    assert(nested_helper_owned_cleanup_bindings.owner_name == "items");
+    assert(nested_helper_owned_cleanup_bindings.index_expression_text == "(index + zero)");
+    assert(nested_helper_owned_cleanup_bindings.element_source_type_name == "Wrap");
+    assert(nested_helper_owned_cleanup_bindings.moved_source_type_name == "Inner");
+    assert(nested_helper_owned_cleanup_bindings.moved_member_path == (std::vector<std::string> {"box", "item"}));
+    assert(nested_helper_owned_cleanup_bindings.helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
+    assert(nested_helper_owned_cleanup_bindings.sibling_binding_count == 4);
+    assert(nested_helper_owned_cleanup_bindings.all_owned_cleanup_definitions_available);
+    assert(nested_helper_owned_cleanup_bindings.nested_member_path);
+    assert(nested_helper_owned_cleanup_bindings.helper_definition_ready);
+    assert(!nested_helper_owned_cleanup_bindings.production_enabled);
+    assert(nested_helper_owned_cleanup_bindings.source_line == 37);
     assert(
-        orison::lowering::runtime_indexed_member_cleanup_helper_drop_bindings_report(
-            nested_helper_drop_bindings
+        orison::lowering::runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report(
+            nested_helper_owned_cleanup_bindings
         ) ==
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item source-line 37 "
@@ -17532,11 +17532,11 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result
-            .runtime_indexed_member_cleanup_helper_drop_bindings.size() == 1
+            .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings.size() == 1
     );
     auto const& compiler_derived_sibling_cleanup_bindings =
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result
-            .runtime_indexed_member_cleanup_helper_drop_bindings.front();
+            .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings.front();
     assert(compiler_derived_sibling_cleanup_bindings.all_owned_cleanup_definitions_available);
     assert(compiler_derived_sibling_cleanup_bindings.helper_definition_ready);
     auto const compiler_derived_tail_field = std::ranges::find_if(

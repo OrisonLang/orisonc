@@ -287,7 +287,7 @@ struct RuntimeIndexedMemberCleanupSiblingField {
     auto operator==(RuntimeIndexedMemberCleanupSiblingField const&) const -> bool = default;
 };
 
-struct RuntimeIndexedMemberCleanupHelperDropBindings {
+struct RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings {
     std::string owner_name;
     std::string index_expression_text;
     std::string element_source_type_name;
@@ -301,7 +301,7 @@ struct RuntimeIndexedMemberCleanupHelperDropBindings {
     bool production_enabled = false;
     std::size_t source_line = 0;
 
-    auto operator==(RuntimeIndexedMemberCleanupHelperDropBindings const&) const -> bool = default;
+    auto operator==(RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings const&) const -> bool = default;
 };
 
 struct RuntimeIndexedMemberCleanupEmissionGate {
@@ -1153,7 +1153,7 @@ auto runtime_indexed_member_cleanup_module_mutation_gate_diagnostics(
 auto runtime_indexed_member_cleanup_production_readiness(
     RuntimeIndexedMemberCleanupProof const& proof,
     std::vector<RuntimeIndexedMemberCleanupTarget> const& targets,
-    std::vector<RuntimeIndexedMemberCleanupHelperDropBindings> const& helper_drop_bindings,
+    std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings,
     RuntimeIndexedMemberCleanupCfgSlice const& slice,
     RuntimeIndexedMemberCleanupModuleMutationGate const& gate
 ) -> RuntimeIndexedMemberCleanupProductionReadiness;
@@ -1166,8 +1166,8 @@ auto runtime_indexed_member_cleanup_production_blocker_diagnostics(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness
 ) -> std::vector<std::string>;
 
-auto runtime_indexed_member_cleanup_helper_drop_bindings_report(
-    RuntimeIndexedMemberCleanupHelperDropBindings const& bindings
+auto runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report(
+    RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings const& bindings
 ) -> std::string;
 
 auto runtime_indexed_member_cleanup_promotion_checklist(

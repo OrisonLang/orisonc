@@ -1091,8 +1091,8 @@ int main() {
     auto member_production_readiness = orison::lowering::runtime_indexed_member_cleanup_production_readiness(
         member_cleanup_proof,
         member_cleanup_targets,
-        std::vector<orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings> {
-            orison::lowering::RuntimeIndexedMemberCleanupHelperDropBindings {
+        std::vector<orison::lowering::RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> {
+            orison::lowering::RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings {
                 .owner_name = "items",
                 .index_expression_text = "(index + zero)",
                 .element_source_type_name = "Box",

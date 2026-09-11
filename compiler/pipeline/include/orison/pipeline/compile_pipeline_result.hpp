@@ -136,8 +136,8 @@ struct CompilePipelineResult {
         runtime_indexed_cleanup_module_ir_production_readiness_state;
     std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField>
         runtime_indexed_member_cleanup_sibling_fields;
-    std::vector<lowering::RuntimeIndexedMemberCleanupHelperDropBindings>
-        runtime_indexed_member_cleanup_helper_drop_bindings;
+    std::vector<lowering::RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings>
+        runtime_indexed_member_cleanup_helper_owned_cleanup_bindings;
     std::vector<lowering::RuntimeIndexedMemberCleanupProductionReadiness>
         runtime_indexed_member_cleanup_production_readiness;
     std::vector<lowering::RuntimeIndexedMemberCleanupTypedPromotionGate>
