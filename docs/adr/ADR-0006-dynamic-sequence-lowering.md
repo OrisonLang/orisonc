@@ -2855,6 +2855,8 @@ representation.
   final `if` forwarding the same owner. This complements the existing final `if` with nested final `switch` coverage.
 - The mirrored final `switch` with nested final `if` shape also has owner-mismatch rejection coverage, keeping
   differing nested branch owners blocked across source-query and production diagnostics.
+- Nested final-control forwarded-parameter alias handoffs now cover both final `if` with nested final `switch` and
+  final `switch` with nested final `if`, proving branch-local aliases can still resolve to the same cleanup owner.
 
 ## Follow-up work
 

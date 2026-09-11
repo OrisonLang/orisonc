@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now includes nested final-control alias positives for
+  final `if` plus nested `switch` and final `switch` plus nested `if`. Source-query coverage verifies same-owner
+  handoff proof, and Array CLI smoke coverage verifies `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now includes mirrored owner-mismatch coverage for final
   `switch` with nested final `if`. Source-query coverage verifies ownership-join blocking, and Array CLI smoke coverage
   verifies the ownership diagnostic across `run`, `--emit-llvm`, `--emit-object`, and `--build`.
