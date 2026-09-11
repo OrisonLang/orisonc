@@ -2843,6 +2843,8 @@ representation.
   intervening harmless local bindings that do not mention the source owner or alias. Production coverage pins `run`,
   `--emit-llvm`, `--emit-object`, and `--build` for the accepted local-alias handoffs while keeping owner reads and
   reassignment rejected.
+- The harmless-local alias handoff proof now has multi-local coverage across direct, final-if, and final-switch helper
+  shapes. Name-use scanning includes ternary alternate arms before a local binding can be treated as harmless.
 
 ## Follow-up work
 

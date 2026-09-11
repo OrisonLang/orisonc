@@ -290,6 +290,9 @@ auto expression_mentions_name(
     if (expression.right != nullptr && expression_mentions_name(*expression.right, name)) {
         return true;
     }
+    if (expression.alternate != nullptr && expression_mentions_name(*expression.alternate, name)) {
+        return true;
+    }
     for (auto const& argument : expression.arguments) {
         if (expression_mentions_name(argument, name)) {
             return true;
@@ -321,8 +324,13 @@ auto harmless_alias_forwarding_statement(
             }
             break;
         case syntax::ExpressionKind::binary:
-        case syntax::ExpressionKind::ternary:
             if (statement.expression.left == nullptr || statement.expression.right == nullptr) {
+                return false;
+            }
+            break;
+        case syntax::ExpressionKind::ternary:
+            if (statement.expression.left == nullptr || statement.expression.right == nullptr ||
+                statement.expression.alternate == nullptr) {
                 return false;
             }
             break;

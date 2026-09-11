@@ -3285,3 +3285,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now accepts direct and final-control local alias
   handoffs with intervening harmless local bindings. Array CLI smoke coverage verifies `run`, `--emit-llvm`,
   `--emit-object`, and `--build` success while owner-read and alias-reassignment fixtures remain rejected.
+- 2026-09-11: Forwarded-parameter DynamicArray alias handoff coverage now includes multiple harmless local bindings
+  across direct, final-if, and final-switch helper shapes. The proof scanner checks ternary alternate arms before
+  accepting a harmless local.

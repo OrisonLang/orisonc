@@ -2692,12 +2692,21 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_parameter_local_alias_harmless_local_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_local_alias_reassigned_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_reassigned_owned_computed_rejected.or";
     auto forwarded_parameter_final_if_alias_harmless_local_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_if_alias_harmless_local_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_final_switch_alias_harmless_local_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_switch_alias_harmless_local_owned_computed_for_cleanup_run.or";
+    auto forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
+        fixtures /
+        "dynamic_array_forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_final_if_alias_reassigned_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_if_alias_reassigned_owned_computed_rejected.or";
     auto forwarded_parameter_final_switch_alias_reassigned_owned_computed_dynamic_array_path =
@@ -3495,6 +3504,21 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_local_alias_harmless_local_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed"
     );
+    assert_run_success(executable, forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path);
+    assert_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed"
+    );
     assert_diagnostic_failure_matrix(
         executable,
         forwarded_parameter_local_alias_reassigned_owned_computed_dynamic_array_path,
@@ -3522,6 +3546,24 @@ auto main(int argc, char** argv) -> int {
     );
     assert_run_success(
         executable,
+        forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_dynamic_array_path
+    );
+    assert_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed"
+    );
+    assert_run_success(
+        executable,
         forwarded_parameter_final_switch_alias_harmless_local_owned_computed_dynamic_array_path
     );
     assert_owned_computed_dynamic_array_emit_llvm_success(
@@ -3537,6 +3579,25 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_parameter_final_switch_alias_harmless_local_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_harmless_local_owned_computed"
+    );
+    assert_run_success(
+        executable,
+        forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path
+    );
+    assert_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed"
     );
     assert_diagnostic_failure_matrix(
         executable,
