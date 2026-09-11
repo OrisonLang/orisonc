@@ -510,7 +510,9 @@ auto lower_sequence_for_statement(
                         diagnostics.error(
                             statement.line,
                             "lowering computed DynamicArray cleanup for owned element type " +
-                                sequence->element_source_type_name + " requires authorized element drop"
+                                sequence->element_source_type_name + " requires authorized element drop; "
+                                "computed DynamicArray owned element cleanup authorization missing for " +
+                                sequence->element_source_type_name
                         );
                         return StatementFlow::failed;
                     }

@@ -2678,6 +2678,38 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_cleanup_resumption_position < computed_cleanup_call_position);
     assert(computed_cleanup_call_position < computed_descriptor_finalization_position);
 
+    auto computed_local_owned_element_missing_cleanup = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function sum_payloads(flag: Bool) -> UInt32\n"
+        "    let items: DynamicArray<Payload> = DynamicArray()\n"
+        "    var total = 0 as Int64\n"
+        "    for item in flag ? items : items\n"
+        "        total = total + item.value\n"
+        "    0 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+            .enable_computed_dynamic_array_local_cleanup_call_insertion = true,
+        }
+    );
+    assert(computed_local_owned_element_missing_cleanup.has_errors());
+    assert(
+        computed_local_owned_element_missing_cleanup.render(path.string()).find(
+            "computed DynamicArray owned element cleanup authorization missing for Payload"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_owned_element_missing_cleanup.render(path.string()).find(
+            "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
+        ) != std::string::npos
+    );
+
     auto computed_local_nested_same_owner_source =
         "package demo.dynamicarray\n"
         "\n"

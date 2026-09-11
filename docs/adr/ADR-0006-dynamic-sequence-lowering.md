@@ -2836,6 +2836,9 @@ representation.
   detailed audit chain, preserving the existing proof reports while making the immediate failure clearer.
 - Computed DynamicArray unsupported-shape diagnostics now include a short source-oriented summary before the detailed
   audit chain, while keeping the existing unsupported-shape proof report intact.
+- Computed DynamicArray same-owner cleanup-proof failures now include a short source-oriented summary before the
+  detailed audit chain, and owned-element cleanup-authorization failures now append a short source-oriented summary to
+  the existing diagnostic.
 
 ## Follow-up work
 

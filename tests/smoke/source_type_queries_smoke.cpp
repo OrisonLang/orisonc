@@ -3274,6 +3274,12 @@ int main() {
             unproven_computed_ownership_plan
         ).find("ternary single owner unproven") != std::string::npos
     );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
+            unproven_computed_ownership_plan
+        ) == "computed DynamicArray cleanup owner unproven: branches resolve to predicted_items predicted_items for "
+            "DynamicArray<UInt32>"
+    );
     auto unproven_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(name("flag"), name("predicted_items"), name("predicted_items")),

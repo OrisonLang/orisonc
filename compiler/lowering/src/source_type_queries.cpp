@@ -1156,6 +1156,20 @@ auto computed_dynamic_array_iterable_failure_summary_report(
         return output;
     }
 
+    if (plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven &&
+        !plan.branch_owner_names.empty()) {
+        auto output = std::string {"computed DynamicArray cleanup owner unproven: branches resolve to"};
+        for (auto const& owner : plan.branch_owner_names) {
+            output += ' ';
+            output += owner;
+        }
+        if (!plan.source_type_name.empty()) {
+            output += " for ";
+            output += plan.source_type_name;
+        }
+        return output;
+    }
+
     return {};
 }
 

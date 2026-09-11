@@ -1629,6 +1629,11 @@ void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
     );
     assert(
         output.find(
+            "computed DynamicArray owned element cleanup authorization missing for Payload"
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
             "lowering does not yet support this final control-flow statement"
         ) == std::string::npos
     );
