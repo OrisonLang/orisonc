@@ -495,7 +495,7 @@ int main() {
     assert(enabled_emission_plan.ir_plan.skip_block_name == "holder.items.runtime_cleanup.skip");
     assert(enabled_emission_plan.ir_plan.drop_block_name == "holder.items.runtime_cleanup.drop");
     assert(enabled_emission_plan.ir_plan.element_address_name == "%holder.items.runtime_cleanup.element.addr");
-    assert(enabled_emission_plan.ir_plan.drop_callee_name == "__orison_owned_cleanup.Inner");
+    assert(enabled_emission_plan.ir_plan.owned_cleanup_callee_name == "__orison_owned_cleanup.Inner");
     assert(enabled_emission_plan.ir_plan.continue_block_name == "holder.items.runtime_cleanup.continue");
     assert(enabled_emission_plan.ir_plan.exit_block_name == "holder.items.runtime_cleanup.exit");
     assert(enabled_emission_plan.ir_plan.deallocate_callee_name == "__orison_dynamic_array_deallocate");

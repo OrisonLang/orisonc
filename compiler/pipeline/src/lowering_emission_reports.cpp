@@ -315,7 +315,7 @@ auto apply_test_only_runtime_indexed_cleanup_ir_shape_fault(
             case RuntimeIndexedCleanupIrShapeFaultInjection::OmitDropCall:
                 removed = erase_first_runtime_indexed_cleanup_ir_line_containing(
                     plan,
-                    "  call void @" + plan.ir_plan.drop_callee_name + "(ptr "
+                    "  call void @" + plan.ir_plan.owned_cleanup_callee_name + "(ptr "
                 );
                 break;
             case RuntimeIndexedCleanupIrShapeFaultInjection::OmitConditionBlock:
@@ -2487,7 +2487,7 @@ auto runtime_indexed_constructor_move_plan_report(
          << " owner-llvm " << plan.owner_llvm_type_name
          << " static-length " << (plan.static_length_value.empty() ? "none" : plan.static_length_value)
          << " element-size " << (plan.element_size_value.empty() ? "unknown" : plan.element_size_value)
-         << " drop-callee " << plan.ir_plan.drop_callee_name
+         << " drop-callee " << plan.ir_plan.owned_cleanup_callee_name
          << " operation-count " << plan.operation_count
          << " descriptor-owner " << (plan.ir_plan.descriptor_owner_ready ? "ready" : "blocked")
          << " static-length-ready " << (plan.ir_plan.static_length_ready ? "true" : "false")
@@ -2517,7 +2517,8 @@ auto runtime_indexed_cleanup_plan_parity_summary(
         .element_source_type_matches = left.element_source_type_name == right.element_source_type_name,
         .element_llvm_type_matches = left.element_llvm_type_name == right.element_llvm_type_name,
         .element_size_matches = left.element_size_value == right.element_size_value,
-        .drop_callee_matches = left.ir_plan.drop_callee_name == right.ir_plan.drop_callee_name,
+        .drop_callee_matches =
+            left.ir_plan.owned_cleanup_callee_name == right.ir_plan.owned_cleanup_callee_name,
         .operation_sequence_matches = left.operation_names == right.operation_names,
         .owner_llvm_type_differs = left.owner_llvm_type_name != right.owner_llvm_type_name,
         .static_length_differs = left.static_length_value != right.static_length_value,
@@ -2582,7 +2583,7 @@ auto runtime_indexed_cleanup_ir_shape_summary(
         .branch_to_condition_found = has("  br label %" + plan.ir_plan.condition_block_name + "\n"),
         .bounds_check_found = has("  " + plan.ir_plan.bounds_check_name + " = icmp ult i64 "),
         .skip_check_found = has("  " + plan.ir_plan.skip_check_name + " = icmp eq i64 "),
-        .drop_call_found = has("  call void @" + plan.ir_plan.drop_callee_name + "(ptr "),
+        .drop_call_found = has("  call void @" + plan.ir_plan.owned_cleanup_callee_name + "(ptr "),
         .next_index_found = has("  " + plan.ir_plan.next_index_name + " = add i64 "),
         .descriptor_load_found = has(
             "  " + plan.ir_plan.descriptor_value_name + " = load " +
@@ -2656,7 +2657,7 @@ auto runtime_indexed_cleanup_ir_shape_parity_summary(
         .drop_call_shape_matches =
             left_shape.drop_call_found &&
             right_shape.drop_call_found &&
-            left.ir_plan.drop_callee_name == right.ir_plan.drop_callee_name,
+            left.ir_plan.owned_cleanup_callee_name == right.ir_plan.owned_cleanup_callee_name,
         .storage_ir_shape_differs =
             (left_shape.inline_storage_shape_ready && right_shape.descriptor_storage_shape_ready) ||
             (left_shape.descriptor_storage_shape_ready && right_shape.inline_storage_shape_ready),

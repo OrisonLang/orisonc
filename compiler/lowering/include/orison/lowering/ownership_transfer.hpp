@@ -142,7 +142,7 @@ struct RuntimeIndexedCleanupIrPlan {
     std::string skip_block_name;
     std::string drop_block_name;
     std::string element_address_name;
-    std::string drop_callee_name;
+    std::string owned_cleanup_callee_name;
     std::string continue_block_name;
     std::string next_index_name;
     std::string exit_block_name;

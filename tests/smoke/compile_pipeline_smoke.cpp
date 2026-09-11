@@ -1184,7 +1184,7 @@ auto inline_runtime_indexed_cleanup_ir_shape_plan()
             .skip_block_name = "items.runtime_cleanup.skip",
             .drop_block_name = "items.runtime_cleanup.drop",
             .element_address_name = "%items.runtime_cleanup.element.addr",
-            .drop_callee_name = "__orison_owned_cleanup.Inner",
+            .owned_cleanup_callee_name = "__orison_owned_cleanup.Inner",
             .continue_block_name = "items.runtime_cleanup.continue",
             .next_index_name = "%items.runtime_cleanup.next",
             .exit_block_name = "items.runtime_cleanup.exit",
@@ -1267,7 +1267,7 @@ auto descriptor_runtime_indexed_cleanup_ir_shape_plan()
             .skip_block_name = "items.runtime_cleanup.skip",
             .drop_block_name = "items.runtime_cleanup.drop",
             .element_address_name = "%items.runtime_cleanup.element.addr",
-            .drop_callee_name = "__orison_owned_cleanup.Inner",
+            .owned_cleanup_callee_name = "__orison_owned_cleanup.Inner",
             .continue_block_name = "items.runtime_cleanup.continue",
             .next_index_name = "%items.runtime_cleanup.next",
             .exit_block_name = "items.runtime_cleanup.exit",
@@ -18950,7 +18950,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
-            .ir_plan.drop_callee_name == "__orison_owned_cleanup.Inner"
+            .ir_plan.owned_cleanup_callee_name == "__orison_owned_cleanup.Inner"
     );
     assert(
         runtime_indexed_cleanup_gate_on.runtime_indexed_cleanup_emission_plan_state.plans.front()
@@ -20133,7 +20133,7 @@ auto main() -> int {
                     .skip_block_name = "items.runtime_cleanup.skip",
                     .drop_block_name = "items.runtime_cleanup.drop",
                     .element_address_name = "%items.runtime_cleanup.element.addr",
-                    .drop_callee_name = "__orison_owned_cleanup.Inner",
+                    .owned_cleanup_callee_name = "__orison_owned_cleanup.Inner",
                     .continue_block_name = "items.runtime_cleanup.continue",
                     .exit_block_name = "items.runtime_cleanup.exit",
                     .complete = true,

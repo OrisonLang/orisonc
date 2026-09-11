@@ -811,7 +811,7 @@ auto runtime_indexed_cleanup_emission_plan(
             .skip_block_name = plan.owner_name + ".runtime_cleanup.skip",
             .drop_block_name = plan.owner_name + ".runtime_cleanup.drop",
             .element_address_name = "%" + plan.owner_name + ".runtime_cleanup.element.addr",
-            .drop_callee_name = "__orison_owned_cleanup." + plan.element_source_type_name,
+            .owned_cleanup_callee_name = "__orison_owned_cleanup." + plan.element_source_type_name,
             .continue_block_name = plan.owner_name + ".runtime_cleanup.continue",
             .next_index_name = "%" + plan.owner_name + ".runtime_cleanup.next_index",
             .exit_block_name = plan.owner_name + ".runtime_cleanup.exit",
@@ -3370,7 +3370,7 @@ auto render_runtime_indexed_cleanup_ir_plan(
             : "  " + plan.element_address_name + " = getelementptr " +
                 plan.owner_llvm_type_name + ", ptr " + plan.owner_address_name +
                 ", i64 0, i64 " + plan.cleanup_index_name + "\n",
-        "  call void @" + plan.drop_callee_name + "(ptr " + plan.element_address_name + ")\n",
+        "  call void @" + plan.owned_cleanup_callee_name + "(ptr " + plan.element_address_name + ")\n",
     });
     if (!plan.descriptor_owner_ready) {
         lines.push_back(
