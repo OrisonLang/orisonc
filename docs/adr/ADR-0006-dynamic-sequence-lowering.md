@@ -2851,6 +2851,8 @@ representation.
 - Negative coverage now also spans binary, cast, and unary scalar locals that read the transferred owner after an alias
   binding. Direct, final-if, and final-switch helper shapes stay outside the accepted alias handoff proof, and CLI
   fixtures verify use-after-move rejection for each source shape.
+- Forwarded-parameter computed cleanup now pins the mirrored nested final-control shape: final `switch` with a nested
+  final `if` forwarding the same owner. This complements the existing final `if` with nested final `switch` coverage.
 
 ## Follow-up work
 

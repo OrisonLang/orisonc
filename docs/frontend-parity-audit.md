@@ -3295,3 +3295,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Forwarded-parameter DynamicArray alias handoff rejection coverage now also includes binary, cast, and
   unary scalar locals that read the transferred owner after alias binding. Direct, final-if, and final-switch source
   fixtures verify use-after-move rejection across `run`, `--emit-llvm`, `--emit-object`, and `--build`.
+- 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now includes production coverage for final `switch`
+  with nested final `if` forwarding the same owner. This mirrors the existing final `if` plus nested final `switch`
+  fixture and verifies `run`, `--emit-llvm`, `--emit-object`, and `--build`.
