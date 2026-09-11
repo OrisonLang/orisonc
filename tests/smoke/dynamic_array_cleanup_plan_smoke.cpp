@@ -127,7 +127,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(capability.cleanup_owner_names.size() == 2);
     assert(capability.cleanup_owner_names[0] == "a_items");
     assert(capability.cleanup_owner_names[1] == "z_items");
-    assert(capability.element_drop_pairs.empty());
+    assert(capability.element_owned_cleanup_pairs.empty());
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
@@ -185,7 +185,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(blocked_capability.cleanup_owner_names.size() == 2);
     assert(blocked_capability.cleanup_owner_names[0] == "a_items");
     assert(blocked_capability.cleanup_owner_names[1] == "z_items");
-    assert(blocked_capability.element_drop_pairs.empty());
+    assert(blocked_capability.element_owned_cleanup_pairs.empty());
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability) ==
@@ -282,8 +282,8 @@ void test_authorizes_owned_element_cleanup() {
         *plans
     );
     assert(capability.element_cleanup_authorized_or_not_required);
-    assert(capability.element_drop_pairs.size() == 1);
-    assert(capability.element_drop_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
+    assert(capability.element_owned_cleanup_pairs.size() == 1);
+    assert(capability.element_owned_cleanup_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
@@ -301,8 +301,8 @@ void test_authorizes_owned_element_cleanup() {
         context.options.semantic_owned_cleanup_lowering_authorizations
     );
     assert(shared_capability.element_cleanup_authorized_or_not_required);
-    assert(shared_capability.element_drop_pairs.size() == 1);
-    assert(shared_capability.element_drop_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
+    assert(shared_capability.element_owned_cleanup_pairs.size() == 1);
+    assert(shared_capability.element_owned_cleanup_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(shared_capability));
 
     auto output = std::ostringstream {};
@@ -557,9 +557,9 @@ void test_plans_descriptor_cleanup_obligations() {
         {}
     );
     assert(!blocked_capability.element_cleanup_authorized_or_not_required);
-    assert(blocked_capability.element_drop_pairs.empty());
-    assert(blocked_capability.missing_element_drop_pairs.size() == 1);
-    assert(blocked_capability.missing_element_drop_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
+    assert(blocked_capability.element_owned_cleanup_pairs.empty());
+    assert(blocked_capability.missing_element_owned_cleanup_pairs.size() == 1);
+    assert(blocked_capability.missing_element_owned_cleanup_pairs.front() == "items:items.element:__orison_owned_cleanup.Payload");
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     auto blocked_capability_report =
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability);

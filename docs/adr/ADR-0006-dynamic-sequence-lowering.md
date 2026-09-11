@@ -2821,6 +2821,9 @@ representation.
   and `implements Drop` stubs. Generic CLI smoke coverage preserves dynamic bounds guards, selected descriptor
   transfer setup, and nonzero runtime trap behavior for runtime-indexed constructor moves and DynamicArray receiver
   chains.
+- DynamicArray cleanup capability, availability, and production-readiness typed state now use owned-cleanup pair names
+  for element cleanup authorization metadata. Existing `element-drop-pairs` and `missing-element-drop-pairs` report
+  text remains compatibility output.
 
 ## Follow-up work
 

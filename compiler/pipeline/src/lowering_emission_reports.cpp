@@ -825,15 +825,15 @@ auto build_dynamic_array_cleanup_emission_capability_state(
                 capability.cleanup_owner_names.begin(),
                 capability.cleanup_owner_names.end()
             );
-            state.element_drop_pairs.insert(
-                state.element_drop_pairs.end(),
-                capability.element_drop_pairs.begin(),
-                capability.element_drop_pairs.end()
+            state.element_owned_cleanup_pairs.insert(
+                state.element_owned_cleanup_pairs.end(),
+                capability.element_owned_cleanup_pairs.begin(),
+                capability.element_owned_cleanup_pairs.end()
             );
-            state.missing_element_drop_pairs.insert(
-                state.missing_element_drop_pairs.end(),
-                capability.missing_element_drop_pairs.begin(),
-                capability.missing_element_drop_pairs.end()
+            state.missing_element_owned_cleanup_pairs.insert(
+                state.missing_element_owned_cleanup_pairs.end(),
+                capability.missing_element_owned_cleanup_pairs.begin(),
+                capability.missing_element_owned_cleanup_pairs.end()
             );
             state.proven = state.proven &&
                 lowering::dynamic_array_cleanup_emission_capability_proven(capability);
@@ -864,8 +864,8 @@ auto build_dynamic_array_cleanup_emission_capability_state(
         .cleanup_pairs = capability->cleanup_pairs,
         .cleanup_operation_names = capability->cleanup_operation_names,
         .cleanup_owner_names = capability->cleanup_owner_names,
-        .element_drop_pairs = capability->element_drop_pairs,
-        .missing_element_drop_pairs = capability->missing_element_drop_pairs,
+        .element_owned_cleanup_pairs = capability->element_owned_cleanup_pairs,
+        .missing_element_owned_cleanup_pairs = capability->missing_element_owned_cleanup_pairs,
         .capability_metadata_available = true,
         .proven = lowering::dynamic_array_cleanup_emission_capability_proven(*capability),
         .emission_enabled = capability->emission_enabled,
@@ -3875,8 +3875,8 @@ void populate_lowering_emission_reports(
     result.dynamic_array_cleanup_capability_proven =
         result.dynamic_array_cleanup_emission_capability_state.proven;
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
-        .missing_element_drop_pairs =
-            result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs,
+        .missing_element_owned_cleanup_pairs =
+            result.dynamic_array_cleanup_emission_capability_state.missing_element_owned_cleanup_pairs,
         .descriptor_summaries_available =
             !result.semantic_result.semantic_module.dynamic_array_descriptors.empty(),
         .descriptor_summary_blockers_absent =

@@ -184,6 +184,9 @@ inventing semantics outside the spec/tour.
 - Runtime-index member sibling cleanup fields and helper-binding typed state now use owned-cleanup symbol,
   definition-readiness, and binding names internally. Existing `helper-drop-bindings`,
   `member-helper-drop-bindings`, and `drop-definitions` report text remains compatibility output.
+- DynamicArray cleanup capability and readiness pair fields now use `element_owned_cleanup_pairs` and
+  `missing_element_owned_cleanup_pairs` internally. Existing `element-drop-pairs` and `missing-element-drop-pairs`
+  report text remains compatibility output.
 - Semantic cleanup implementation and lowering authorization types now use `OwnedCleanup*` names internally. Existing
   semantic report function names and report text remain unchanged compatibility seams for this migration stage.
 - Semantic cleanup helper functions now use `owned_cleanup_*` names internally. Existing `drop` wording remains only in

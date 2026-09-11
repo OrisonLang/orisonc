@@ -29,7 +29,7 @@ auto plan_dynamic_array_cleanup_production_readiness(
 ) -> DynamicArrayCleanupProductionReadiness {
     auto const& availability = result.dynamic_array_cleanup_availability;
     return DynamicArrayCleanupProductionReadiness {
-        .missing_element_drop_pairs = availability.missing_element_drop_pairs,
+        .missing_element_owned_cleanup_pairs = availability.missing_element_owned_cleanup_pairs,
         .descriptor_summary_blockers = result.dynamic_array_descriptor_lifetime_plan_state.summary_blockers,
         .descriptor_summaries_available = availability.descriptor_summaries_available,
         .descriptor_summary_blockers_absent = availability.descriptor_summary_blockers_absent,
@@ -81,10 +81,10 @@ auto format_dynamic_array_cleanup_production_readiness(
     output << " [sequence verification " << status(readiness.sequence_verification_available) << "]";
     output << " [sequence passed " << status(readiness.sequence_verification_passed) << "]";
     output << " [cleanup capability " << status(readiness.cleanup_capability_proven) << "]";
-    if (!readiness.missing_element_drop_pairs.empty()) {
+    if (!readiness.missing_element_owned_cleanup_pairs.empty()) {
         output << " missing-element-drop-pairs";
-        for (auto const& missing_element_drop_pair : readiness.missing_element_drop_pairs) {
-            output << " [" << missing_element_drop_pair << "]";
+        for (auto const& missing_element_owned_cleanup_pair : readiness.missing_element_owned_cleanup_pairs) {
+            output << " [" << missing_element_owned_cleanup_pair << "]";
         }
     }
     output << " [production signatures " << status(readiness.production_signature_lowering_enabled) << "]";

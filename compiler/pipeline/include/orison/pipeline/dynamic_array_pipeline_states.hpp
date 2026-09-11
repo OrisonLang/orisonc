@@ -11,7 +11,7 @@
 namespace orison::pipeline {
 
 struct DynamicArrayCleanupAvailability {
-    std::vector<std::string> missing_element_drop_pairs;
+    std::vector<std::string> missing_element_owned_cleanup_pairs;
     bool descriptor_summaries_available = false;
     bool descriptor_summary_blockers_absent = false;
     bool descriptor_cleanup_plans_available = false;
@@ -26,8 +26,8 @@ struct DynamicArrayCleanupEmissionCapabilityState {
     std::vector<std::string> cleanup_pairs;
     std::vector<std::string> cleanup_operation_names;
     std::vector<std::string> cleanup_owner_names;
-    std::vector<std::string> element_drop_pairs;
-    std::vector<std::string> missing_element_drop_pairs;
+    std::vector<std::string> element_owned_cleanup_pairs;
+    std::vector<std::string> missing_element_owned_cleanup_pairs;
     bool capability_metadata_available = false;
     bool proven = false;
     bool emission_enabled = false;
@@ -130,7 +130,7 @@ struct DynamicArrayCleanupSequenceVerificationState {
 };
 
 struct DynamicArrayCleanupProductionReadiness {
-    std::vector<std::string> missing_element_drop_pairs;
+    std::vector<std::string> missing_element_owned_cleanup_pairs;
     std::vector<DynamicArrayDescriptorSummaryBlocker> descriptor_summary_blockers;
     bool descriptor_summaries_available = false;
     bool descriptor_summary_blockers_absent = false;

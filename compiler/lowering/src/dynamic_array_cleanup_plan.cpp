@@ -802,8 +802,8 @@ auto prove_dynamic_array_cleanup_emission_capability(
     auto cleanup_pairs = std::vector<std::string> {};
     auto cleanup_operation_names = std::vector<std::string> {};
     auto cleanup_owner_names = std::vector<std::string> {};
-    auto element_drop_pairs = std::vector<std::string> {};
-    auto missing_element_drop_pairs = std::vector<std::string> {};
+    auto element_owned_cleanup_pairs = std::vector<std::string> {};
+    auto missing_element_owned_cleanup_pairs = std::vector<std::string> {};
     cleanup_pairs.reserve(obligations.size());
     cleanup_operation_names.reserve(obligations.size());
     cleanup_owner_names.reserve(obligations.size());
@@ -817,9 +817,9 @@ auto prove_dynamic_array_cleanup_emission_capability(
             auto const action_pair =
                 obligation.descriptor_cleanup.owner_name + ":" + action.capture_name + ":" + action.symbol_name;
             if (dynamic_array_cleanup_action_authorized(action, semantic_owned_cleanup_lowering_authorizations)) {
-                element_drop_pairs.push_back(action_pair);
+                element_owned_cleanup_pairs.push_back(action_pair);
             } else {
-                missing_element_drop_pairs.push_back(action_pair);
+                missing_element_owned_cleanup_pairs.push_back(action_pair);
             }
         }
     }
@@ -827,8 +827,8 @@ auto prove_dynamic_array_cleanup_emission_capability(
         .cleanup_pairs = std::move(cleanup_pairs),
         .cleanup_operation_names = std::move(cleanup_operation_names),
         .cleanup_owner_names = std::move(cleanup_owner_names),
-        .element_drop_pairs = std::move(element_drop_pairs),
-        .missing_element_drop_pairs = std::move(missing_element_drop_pairs),
+        .element_owned_cleanup_pairs = std::move(element_owned_cleanup_pairs),
+        .missing_element_owned_cleanup_pairs = std::move(missing_element_owned_cleanup_pairs),
         .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
         auto storage_status_bound =
@@ -992,16 +992,16 @@ auto format_dynamic_array_cleanup_emission_capability(
             output << " [" << cleanup_owner_name << "]";
         }
     }
-    if (!capability.element_drop_pairs.empty()) {
+    if (!capability.element_owned_cleanup_pairs.empty()) {
         output << " element-drop-pairs";
-        for (auto const& element_drop_pair : capability.element_drop_pairs) {
-            output << " [" << element_drop_pair << "]";
+        for (auto const& element_owned_cleanup_pair : capability.element_owned_cleanup_pairs) {
+            output << " [" << element_owned_cleanup_pair << "]";
         }
     }
-    if (!capability.missing_element_drop_pairs.empty()) {
+    if (!capability.missing_element_owned_cleanup_pairs.empty()) {
         output << " missing-element-drop-pairs";
-        for (auto const& missing_element_drop_pair : capability.missing_element_drop_pairs) {
-            output << " [" << missing_element_drop_pair << "]";
+        for (auto const& missing_element_owned_cleanup_pair : capability.missing_element_owned_cleanup_pairs) {
+            output << " [" << missing_element_owned_cleanup_pair << "]";
         }
     }
     output << " [emission " << status(capability.emission_enabled) << "]";

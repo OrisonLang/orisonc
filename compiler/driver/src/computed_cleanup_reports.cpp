@@ -1020,16 +1020,16 @@ auto dynamic_array_cleanup_emission_capability_state_report(
             details << " [" << cleanup_owner_name << "]";
         }
     }
-    if (!state.element_drop_pairs.empty()) {
+    if (!state.element_owned_cleanup_pairs.empty()) {
         details << " element-drop-pairs";
-        for (auto const& element_drop_pair : state.element_drop_pairs) {
-            details << " [" << element_drop_pair << "]";
+        for (auto const& element_owned_cleanup_pair : state.element_owned_cleanup_pairs) {
+            details << " [" << element_owned_cleanup_pair << "]";
         }
     }
-    if (!state.missing_element_drop_pairs.empty()) {
+    if (!state.missing_element_owned_cleanup_pairs.empty()) {
         details << " missing-element-drop-pairs";
-        for (auto const& missing_element_drop_pair : state.missing_element_drop_pairs) {
-            details << " [" << missing_element_drop_pair << "]";
+        for (auto const& missing_element_owned_cleanup_pair : state.missing_element_owned_cleanup_pairs) {
+            details << " [" << missing_element_owned_cleanup_pair << "]";
         }
     }
     details << " [emission " << status(state.emission_enabled) << "]";

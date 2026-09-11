@@ -5595,7 +5595,7 @@ auto main() -> int {
     );
     assert(
         dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state
-            .missing_element_drop_pairs.empty()
+            .missing_element_owned_cleanup_pairs.empty()
     );
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_summaries_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
@@ -5603,7 +5603,7 @@ auto main() -> int {
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_passed);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.cleanup_capability_proven);
-    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.missing_element_drop_pairs.empty());
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.missing_element_owned_cleanup_pairs.empty());
     assert(dynamic_array_blocked_owned_cleanup.owned_cleanup_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_blocked_owned_cleanup.owned_cleanup_readiness_summary.cleanup_blocked == 0);
     assert(
@@ -5678,9 +5678,9 @@ auto main() -> int {
         dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state
             .element_cleanup_authorized_or_not_required
     );
-    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.size() == 1);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_owned_cleanup_pairs.size() == 1);
     assert(
-        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.front() ==
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_owned_cleanup_pairs.front() ==
         "items:items.element:__orison_owned_cleanup.Payload"
     );
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_summaries_available);
@@ -5689,7 +5689,7 @@ auto main() -> int {
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_passed);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.cleanup_capability_proven);
-    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.missing_element_drop_pairs.empty());
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.missing_element_owned_cleanup_pairs.empty());
     assert(dynamic_array_owned_cleanup.owned_cleanup_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_owned_cleanup.owned_cleanup_readiness_summary.cleanup_blocked == 0);
     assert(

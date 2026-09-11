@@ -9,8 +9,8 @@ struct DynamicArrayCleanupEmissionCapability {
     std::vector<std::string> cleanup_pairs;
     std::vector<std::string> cleanup_operation_names;
     std::vector<std::string> cleanup_owner_names;
-    std::vector<std::string> element_drop_pairs;
-    std::vector<std::string> missing_element_drop_pairs;
+    std::vector<std::string> element_owned_cleanup_pairs;
+    std::vector<std::string> missing_element_owned_cleanup_pairs;
     bool emission_enabled = false;
     bool descriptor_storage_bound = false;
     bool sequence_verified = false;

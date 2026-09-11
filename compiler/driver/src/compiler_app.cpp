@@ -504,12 +504,12 @@ void prefer_emitted_dynamic_array_cleanup_reports(
             std::move(emitted_result.dynamic_array_cleanup_emission_capability_state);
         result.dynamic_array_cleanup_capability_proven =
             result.dynamic_array_cleanup_emission_capability_state.proven;
-        result.dynamic_array_cleanup_availability.missing_element_drop_pairs =
-            result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs;
+        result.dynamic_array_cleanup_availability.missing_element_owned_cleanup_pairs =
+            result.dynamic_array_cleanup_emission_capability_state.missing_element_owned_cleanup_pairs;
         result.dynamic_array_cleanup_availability.cleanup_capability_proven =
             result.dynamic_array_cleanup_emission_capability_state.proven;
-        result.dynamic_array_cleanup_production_readiness.missing_element_drop_pairs =
-            result.dynamic_array_cleanup_emission_capability_state.missing_element_drop_pairs;
+        result.dynamic_array_cleanup_production_readiness.missing_element_owned_cleanup_pairs =
+            result.dynamic_array_cleanup_emission_capability_state.missing_element_owned_cleanup_pairs;
         result.dynamic_array_cleanup_production_readiness.cleanup_capability_proven =
             result.dynamic_array_cleanup_emission_capability_state.proven;
     }

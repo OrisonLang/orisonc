@@ -40,7 +40,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
             .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
             .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
             .cleanup_owner_names = {"items"},
-            .element_drop_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
+            .element_owned_cleanup_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
             .capability_metadata_available = true,
             .proven = true,
             .emission_enabled = true,
@@ -70,7 +70,7 @@ void assert_dynamic_array_cleanup_emission_capability_reports() {
             .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
             .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
             .cleanup_owner_names = {"items"},
-            .missing_element_drop_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
+            .missing_element_owned_cleanup_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
             .capability_metadata_available = true,
             .proven = false,
             .emission_enabled = true,
@@ -924,7 +924,7 @@ void assert_computed_dynamic_array_production_reports() {
 
     auto blocked = driver::dynamic_array_cleanup_production_readiness_state_report(
         pipeline::DynamicArrayCleanupProductionReadiness {
-            .missing_element_drop_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
+            .missing_element_owned_cleanup_pairs = {"items:items.element:__orison_owned_cleanup.Payload"},
             .descriptor_summaries_available = true,
             .descriptor_summary_blockers_absent = true,
             .descriptor_cleanup_plans_available = true,

@@ -3,6 +3,8 @@
 - 2026-09-10: Runtime-index member cleanup helper-binding typed state now uses owned-cleanup binding names internally.
   Existing `helper-drop-bindings`, `member-helper-drop-bindings`, and `drop-definitions` report text remains
   compatibility output.
+- 2026-09-10: DynamicArray cleanup capability and readiness pair fields now use owned-cleanup pair names internally.
+  Existing `element-drop-pairs` and `missing-element-drop-pairs` report text remains compatibility output.
 - 2026-08-31: Scalar computed `DynamicArray<UInt32>` owner-mismatch fixtures now pin the same ownership-join
   diagnostic across ordinary `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - 2026-08-31: Branch-returned and switch-returned computed `DynamicArray<Payload>` owner-mismatch fixtures now pin the
