@@ -411,6 +411,10 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
     ComputedDynamicArrayIterableOwnershipPlan const& plan
 ) -> std::string;
 
+auto computed_dynamic_array_iterable_failure_summary_report(
+    ComputedDynamicArrayIterableOwnershipPlan const& plan
+) -> std::string;
+
 auto plan_computed_dynamic_array_iterable_descriptor_handoff(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,

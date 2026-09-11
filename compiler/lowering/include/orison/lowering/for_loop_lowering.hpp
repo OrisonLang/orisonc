@@ -617,6 +617,12 @@ auto lower_sequence_for_statement(
         );
         if (computed_ownership_plan.kind !=
             ComputedDynamicArrayIterableOwnershipPlanKind::not_computed_dynamic_array) {
+            auto computed_failure_summary =
+                computed_dynamic_array_iterable_failure_summary_report(computed_ownership_plan);
+            if (!computed_failure_summary.empty()) {
+                diagnostic_detail += "; ";
+                diagnostic_detail += computed_failure_summary;
+            }
             diagnostic_detail += "; ";
             diagnostic_detail += computed_dynamic_array_iterable_ownership_plan_report(
                 computed_ownership_plan

@@ -1957,6 +1957,11 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray owner mismatch: branches resolve to left right for DynamicArray<UInt32>"
+        ) != std::string::npos
+    );
+    assert(
+        computed_parameter_for.render(path.string()).find(
             "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
             "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
         ) != std::string::npos
@@ -2145,6 +2150,11 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
 
     assert(computed_nested_owner_mismatch_parameter_for.has_errors());
+    assert(
+        computed_nested_owner_mismatch_parameter_for.render(path.string()).find(
+            "computed DynamicArray owner mismatch: branches resolve to items items other for DynamicArray<UInt32>"
+        ) != std::string::npos
+    );
     assert(
         computed_nested_owner_mismatch_parameter_for.render(path.string()).find(
             "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "

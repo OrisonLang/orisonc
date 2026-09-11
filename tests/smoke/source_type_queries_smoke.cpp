@@ -2547,6 +2547,12 @@ int main() {
             mismatched_computed_ownership_plan
         ).find("ternary branch owner mismatch") != std::string::npos
     );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
+            mismatched_computed_ownership_plan
+        ) == "computed DynamicArray owner mismatch: branches resolve to computed_left computed_right for "
+            "DynamicArray<UInt32>"
+    );
     auto mismatched_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(name("flag"), name("computed_left"), name("computed_right")),

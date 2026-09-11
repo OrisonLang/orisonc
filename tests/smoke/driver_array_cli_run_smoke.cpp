@@ -1658,6 +1658,11 @@ void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failu
     auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(
         output.find(
+            "computed DynamicArray owner mismatch: branches resolve to left right for DynamicArray<Payload>"
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
             "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
             "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
         ) != std::string::npos
@@ -1678,32 +1683,25 @@ void assert_computed_dynamic_array_owner_mismatch_failure_matrix(
     std::string_view left_owner,
     std::string_view right_owner
 ) {
+    auto const expected_summary_fragment =
+        "computed DynamicArray owner mismatch: branches resolve to " +
+        std::string {left_owner} + " " + std::string {right_owner} + " for DynamicArray<Payload>";
     auto const expected_owner_fragment =
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
         "element Payload owners " +
         std::string {left_owner} + " " + std::string {right_owner} + " "
         "[ownership join blocked] [cleanup owner blocked] (metadata only)";
 
-    assert_contains(
-        read_failing_command_output(executable.string() + " run " + source_path.string()),
-        expected_owner_fragment
-    );
-    assert_contains(
-        read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string()),
-        expected_owner_fragment
-    );
-    assert_contains(
-        read_failing_command_output(
-            executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string()
-        ),
-        expected_owner_fragment
-    );
-    assert_contains(
-        read_failing_command_output(
-            executable.string() + " --build " + source_path.string() + " -o " + output_path.string()
-        ),
-        expected_owner_fragment
-    );
+    for (auto const& command : {
+             executable.string() + " run " + source_path.string(),
+             executable.string() + " --emit-llvm " + source_path.string(),
+             executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string(),
+             executable.string() + " --build " + source_path.string() + " -o " + output_path.string(),
+         }) {
+        auto output = read_failing_command_output(command);
+        assert_contains(output, expected_summary_fragment);
+        assert_contains(output, expected_owner_fragment);
+    }
 }
 
 void assert_computed_dynamic_array_unsupported_shape_failure_matrix(

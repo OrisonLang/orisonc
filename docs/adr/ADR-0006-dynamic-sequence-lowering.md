@@ -2832,6 +2832,8 @@ representation.
 - DynamicArray readiness smoke helpers, lowerer helper functions, and local report variables now use owned-cleanup
   wording internally. Existing `.drop.*` IR labels, drop-readiness report helper APIs, report text, CLI flags, and
   fixture names remain compatibility surfaces.
+- Computed DynamicArray owner-mismatch diagnostics now include a short source-oriented branch-owner summary before the
+  detailed audit chain, preserving the existing proof reports while making the immediate failure clearer.
 
 ## Follow-up work
 
