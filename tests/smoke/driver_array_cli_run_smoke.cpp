@@ -2701,6 +2701,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_final_switch_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_parameter_final_if_switch_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_owner_mismatch_rejected.or";
+    auto forwarded_parameter_final_switch_if_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_parameter_final_switch_if_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_parameter_local_alias_harmless_local_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed_for_cleanup_run.or";
     auto forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_dynamic_array_path =
@@ -3721,6 +3723,13 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_owner_mismatch.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_owner_mismatch",
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_switch_if_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_owned_computed_owner_mismatch",
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,

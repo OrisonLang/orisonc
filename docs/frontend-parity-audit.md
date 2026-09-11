@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now includes mirrored owner-mismatch coverage for final
+  `switch` with nested final `if`. Source-query coverage verifies ownership-join blocking, and Array CLI smoke coverage
+  verifies the ownership diagnostic across `run`, `--emit-llvm`, `--emit-object`, and `--build`.
 - 2026-09-11: Computed DynamicArray owner-mismatch diagnostics now include a short branch-owner summary ahead of the
   detailed audit chain. Existing detailed proof reports remain intact for parity checks.
 - 2026-09-11: Computed DynamicArray unsupported-shape diagnostics now include a short source-oriented summary ahead of

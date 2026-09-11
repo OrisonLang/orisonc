@@ -715,6 +715,7 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_if");
+    register_dynamic_array_forwarding_signature(context, "forward_final_switch_if_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_harmless_local");
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_multi_harmless_locals");
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_extra");
@@ -1525,6 +1526,19 @@ int main() {
         ))
     ));
     context.source_functions["forward_final_switch_if"] = &forward_final_switch_if_function;
+
+    auto forward_final_switch_if_mismatch_function = orison::syntax::FunctionSyntax {};
+    forward_final_switch_if_mismatch_function.name = "forward_final_switch_if_mismatch";
+    forward_final_switch_if_mismatch_function.parameters.push_back(dynamic_array_uint32_parameter("left"));
+    forward_final_switch_if_mismatch_function.parameters.push_back(dynamic_array_uint32_parameter("right"));
+    forward_final_switch_if_mismatch_function.body_statements.push_back(switch_statement(
+        one_statement_block(expression_statement(name("left"))),
+        one_statement_block(if_statement(
+            one_statement_block(expression_statement(call("forward_items", name("right")))),
+            one_statement_block(expression_statement(name("left")))
+        ))
+    ));
+    context.source_functions["forward_final_switch_if_mismatch"] = &forward_final_switch_if_mismatch_function;
 
     auto forward_alias_with_extra_function = orison::syntax::FunctionSyntax {};
     forward_alias_with_extra_function.name = "forward_alias_with_extra";
@@ -2371,6 +2385,31 @@ int main() {
     assert(!final_if_switch_forwarded_parameter_mismatch_plan.descriptor_storage_available);
     assert(!final_if_switch_forwarded_parameter_mismatch_plan.cleanup_owner_proven);
     assert(!final_if_switch_forwarded_parameter_mismatch_plan.lowering_enabled);
+
+    auto final_switch_if_forwarded_parameter_mismatch_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_switch_if_mismatch", name("left"), name("right")),
+                call("forward_final_switch_if_mismatch", name("left"), name("right"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_switch_if_forwarded_parameter_mismatch_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names.size() == 6);
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[0] == "left");
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[1] == "right");
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[2] == "left");
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[3] == "left");
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[4] == "right");
+    assert(final_switch_if_forwarded_parameter_mismatch_plan.ownership_plan.branch_owner_names[5] == "left");
+    assert(!final_switch_if_forwarded_parameter_mismatch_plan.descriptor_storage_available);
+    assert(!final_switch_if_forwarded_parameter_mismatch_plan.cleanup_owner_proven);
+    assert(!final_switch_if_forwarded_parameter_mismatch_plan.lowering_enabled);
 
     auto final_if_alias_extra_statement_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
