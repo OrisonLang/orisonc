@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-09-11: Nested final-control forwarded-parameter alias handoffs now have reassignment rejection coverage.
+  Source-query coverage rejects both nested orderings as unsupported handoff shapes, and Array CLI smoke coverage
+  verifies use-after-move diagnostics.
 - 2026-09-11: Nested final-control forwarded-parameter alias handoffs now have negative ternary alternate owner-read
   coverage. Source-query coverage rejects the unsupported handoff shape, and Array CLI smoke coverage verifies
   use-after-move diagnostics for both nested `if`/`switch` orderings.

@@ -710,6 +710,8 @@ int main() {
     }
     register_dynamic_array_forwarding_signature(context, "forward_final_if_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias_reassigned");
+    register_dynamic_array_forwarding_signature(context, "forward_final_if_switch_alias_reassigned");
+    register_dynamic_array_forwarding_signature(context, "forward_final_switch_if_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch_alias");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch_alias_with_owner_in_ternary_alternate");
@@ -1474,6 +1476,29 @@ int main() {
     context.source_functions["forward_final_switch_alias_reassigned"] =
         &forward_final_switch_alias_reassigned_function;
 
+    auto forward_final_if_switch_alias_reassigned_function = orison::syntax::FunctionSyntax {};
+    forward_final_if_switch_alias_reassigned_function.name = "forward_final_if_switch_alias_reassigned";
+    forward_final_if_switch_alias_reassigned_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_if_switch_alias_reassigned_function.body_statements.push_back(if_statement(
+        three_statement_block(
+            dynamic_array_var_statement("alias", name("items")),
+            assignment_statement(name("alias"), name("items")),
+            expression_statement(name("alias"))
+        ),
+        one_statement_block(switch_statement(
+            two_statement_block(
+                dynamic_array_var_statement("alias", name("items")),
+                expression_statement(name("alias"))
+            ),
+            two_statement_block(
+                dynamic_array_var_statement("alias", name("items")),
+                expression_statement(name("alias"))
+            )
+        ))
+    ));
+    context.source_functions["forward_final_if_switch_alias_reassigned"] =
+        &forward_final_if_switch_alias_reassigned_function;
+
     auto forward_final_if_switch_function = orison::syntax::FunctionSyntax {};
     forward_final_if_switch_function.name = "forward_final_if_switch";
     forward_final_if_switch_function.parameters.push_back(dynamic_array_uint32_parameter());
@@ -1634,6 +1659,29 @@ int main() {
     );
     context.source_functions["forward_final_switch_if_alias_with_owner_in_ternary_alternate"] =
         &forward_final_switch_if_alias_with_owner_in_ternary_alternate_function;
+
+    auto forward_final_switch_if_alias_reassigned_function = orison::syntax::FunctionSyntax {};
+    forward_final_switch_if_alias_reassigned_function.name = "forward_final_switch_if_alias_reassigned";
+    forward_final_switch_if_alias_reassigned_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_final_switch_if_alias_reassigned_function.body_statements.push_back(switch_statement(
+        three_statement_block(
+            dynamic_array_var_statement("alias", name("items")),
+            assignment_statement(name("alias"), name("items")),
+            expression_statement(name("alias"))
+        ),
+        one_statement_block(if_statement(
+            two_statement_block(
+                dynamic_array_var_statement("alias", name("items")),
+                expression_statement(name("alias"))
+            ),
+            two_statement_block(
+                dynamic_array_var_statement("alias", name("items")),
+                expression_statement(name("alias"))
+            )
+        ))
+    ));
+    context.source_functions["forward_final_switch_if_alias_reassigned"] =
+        &forward_final_switch_if_alias_reassigned_function;
 
     auto forward_final_switch_if_mismatch_function = orison::syntax::FunctionSyntax {};
     forward_final_switch_if_mismatch_function.name = "forward_final_switch_if_mismatch";
@@ -2704,6 +2752,52 @@ int main() {
     assert(!final_switch_alias_reassigned_forwarded_parameter_plan.descriptor_storage_available);
     assert(!final_switch_alias_reassigned_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!final_switch_alias_reassigned_forwarded_parameter_plan.lowering_enabled);
+
+    auto final_if_switch_alias_reassigned_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_if_switch_alias_reassigned", name("items")),
+                call("forward_final_if_switch_alias_reassigned", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_if_switch_alias_reassigned_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        final_if_switch_alias_reassigned_forwarded_parameter_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(final_if_switch_alias_reassigned_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
+    assert(!final_if_switch_alias_reassigned_forwarded_parameter_plan.descriptor_storage_available);
+    assert(!final_if_switch_alias_reassigned_forwarded_parameter_plan.cleanup_owner_proven);
+    assert(!final_if_switch_alias_reassigned_forwarded_parameter_plan.lowering_enabled);
+
+    auto final_switch_if_alias_reassigned_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_final_switch_if_alias_reassigned", name("items")),
+                call("forward_final_switch_if_alias_reassigned", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        final_switch_if_alias_reassigned_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+    );
+    assert(
+        final_switch_if_alias_reassigned_forwarded_parameter_plan.ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(final_switch_if_alias_reassigned_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
+    assert(!final_switch_if_alias_reassigned_forwarded_parameter_plan.descriptor_storage_available);
+    assert(!final_switch_if_alias_reassigned_forwarded_parameter_plan.cleanup_owner_proven);
+    assert(!final_switch_if_alias_reassigned_forwarded_parameter_plan.lowering_enabled);
 
     auto local_alias_extra_statement_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

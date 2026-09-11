@@ -2859,6 +2859,8 @@ representation.
   final `switch` with nested final `if`, proving branch-local aliases can still resolve to the same cleanup owner.
 - The same nested final-control alias shapes now reject ternary alternate owner reads after alias binding, preserving
   use-after-move safety across nested branch scanners.
+- Nested final-control forwarded-parameter alias handoffs also reject reassignment of the alias from the moved owner,
+  matching the direct final `if` and final `switch` alias reassignment boundary.
 
 ## Follow-up work
 

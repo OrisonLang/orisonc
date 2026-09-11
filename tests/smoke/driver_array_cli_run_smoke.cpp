@@ -2765,6 +2765,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_parameter_final_if_alias_reassigned_owned_computed_rejected.or";
     auto forwarded_parameter_final_switch_alias_reassigned_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_switch_alias_reassigned_owned_computed_rejected.or";
+    auto forwarded_parameter_final_if_switch_alias_reassigned_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_final_if_switch_alias_reassigned_owned_computed_rejected.or";
+    auto forwarded_parameter_final_switch_if_alias_reassigned_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_parameter_final_switch_if_alias_reassigned_owned_computed_rejected.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_nested_computed_dynamic_array_path =
@@ -3755,6 +3759,20 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_final_switch_alias_reassigned_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_reassigned_owned_computed.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_reassigned_owned_computed",
+        "use after move: items"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_if_switch_alias_reassigned_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_alias_reassigned_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_if_switch_alias_reassigned_owned_computed",
+        "use after move: items"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        forwarded_parameter_final_switch_if_alias_reassigned_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_alias_reassigned_owned_computed.o",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_alias_reassigned_owned_computed",
         "use after move: items"
     );
     assert_diagnostic_failure_matrix(
