@@ -9,6 +9,12 @@
 
 namespace {
 
+enum class OwnerReadScalarShape {
+    binary,
+    cast,
+    unary,
+};
+
 auto name(std::string text) -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::name;
@@ -81,11 +87,46 @@ auto cast(orison::syntax::ExpressionSyntax operand, std::string type_name) -> or
     return expression;
 }
 
+auto unary(std::string operator_text, orison::syntax::ExpressionSyntax operand) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::unary;
+    expression.text = std::move(operator_text);
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(operand));
+    return expression;
+}
+
+auto binary(
+    orison::syntax::ExpressionSyntax left,
+    std::string operator_text,
+    orison::syntax::ExpressionSyntax right
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::binary;
+    expression.text = std::move(operator_text);
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(left));
+    expression.right = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(right));
+    return expression;
+}
+
 auto integer_literal(std::string text) -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::integer_literal;
     expression.text = std::move(text);
     return expression;
+}
+
+auto owner_read_scalar_expression(OwnerReadScalarShape shape) -> orison::syntax::ExpressionSyntax {
+    auto owner_read = index(name("items"), integer_literal("0"));
+    switch (shape) {
+        case OwnerReadScalarShape::binary:
+            return binary(std::move(owner_read), "+", integer_literal("1"));
+        case OwnerReadScalarShape::cast:
+            return cast(std::move(owner_read), "Int64");
+        case OwnerReadScalarShape::unary:
+            return unary("-", std::move(owner_read));
+    }
+
+    return integer_literal("0");
 }
 
 auto record_constructor(std::string record_name) -> orison::syntax::ExpressionSyntax {
@@ -653,6 +694,20 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_alias_with_owner_in_ternary_alternate");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_alias_with_owner_in_ternary_alternate");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias_with_owner_in_ternary_alternate");
+    for (auto shape_name : {"binary", "cast", "unary"}) {
+        register_dynamic_array_forwarding_signature(
+            context,
+            std::string {"forward_alias_with_owner_in_"} + shape_name + "_local"
+        );
+        register_dynamic_array_forwarding_signature(
+            context,
+            std::string {"forward_final_if_alias_with_owner_in_"} + shape_name + "_local"
+        );
+        register_dynamic_array_forwarding_signature(
+            context,
+            std::string {"forward_final_switch_alias_with_owner_in_"} + shape_name + "_local"
+        );
+    }
     register_dynamic_array_forwarding_signature(context, "forward_final_if_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_final_switch_alias_reassigned");
     register_dynamic_array_forwarding_signature(context, "forward_final_if_switch");
@@ -1325,6 +1380,60 @@ int main() {
     ));
     context.source_functions["forward_final_switch_alias_with_owner_in_ternary_alternate"] =
         &forward_final_switch_alias_with_owner_in_ternary_alternate_function;
+
+    auto owner_read_scalar_functions = std::vector<orison::syntax::FunctionSyntax> {};
+    owner_read_scalar_functions.reserve(9);
+    auto add_owner_read_scalar_functions = [&](std::string shape_name, OwnerReadScalarShape shape) {
+        {
+            auto function = orison::syntax::FunctionSyntax {};
+            function.name = "forward_alias_with_owner_in_" + shape_name + "_local";
+            function.parameters.push_back(dynamic_array_uint32_parameter());
+            function.body_statements.push_back(dynamic_array_var_statement("alias", name("items")));
+            function.body_statements.push_back(int64_var_statement("marker", owner_read_scalar_expression(shape)));
+            function.body_statements.push_back(expression_statement(name("alias")));
+            owner_read_scalar_functions.push_back(std::move(function));
+            context.source_functions[owner_read_scalar_functions.back().name] = &owner_read_scalar_functions.back();
+        }
+        {
+            auto function = orison::syntax::FunctionSyntax {};
+            function.name = "forward_final_if_alias_with_owner_in_" + shape_name + "_local";
+            function.parameters.push_back(dynamic_array_uint32_parameter());
+            function.body_statements.push_back(if_statement(
+                three_statement_block(
+                    dynamic_array_let_statement("alias", name("items")),
+                    int64_var_statement("marker", owner_read_scalar_expression(shape)),
+                    expression_statement(name("alias"))
+                ),
+                two_statement_block(
+                    dynamic_array_let_statement("alias", name("items")),
+                    expression_statement(name("alias"))
+                )
+            ));
+            owner_read_scalar_functions.push_back(std::move(function));
+            context.source_functions[owner_read_scalar_functions.back().name] = &owner_read_scalar_functions.back();
+        }
+        {
+            auto function = orison::syntax::FunctionSyntax {};
+            function.name = "forward_final_switch_alias_with_owner_in_" + shape_name + "_local";
+            function.parameters.push_back(dynamic_array_uint32_parameter());
+            function.body_statements.push_back(switch_statement(
+                three_statement_block(
+                    dynamic_array_let_statement("alias", name("items")),
+                    int64_var_statement("marker", owner_read_scalar_expression(shape)),
+                    expression_statement(name("alias"))
+                ),
+                two_statement_block(
+                    dynamic_array_let_statement("alias", name("items")),
+                    expression_statement(name("alias"))
+                )
+            ));
+            owner_read_scalar_functions.push_back(std::move(function));
+            context.source_functions[owner_read_scalar_functions.back().name] = &owner_read_scalar_functions.back();
+        }
+    };
+    add_owner_read_scalar_functions("binary", OwnerReadScalarShape::binary);
+    add_owner_read_scalar_functions("cast", OwnerReadScalarShape::cast);
+    add_owner_read_scalar_functions("unary", OwnerReadScalarShape::unary);
 
     auto forward_final_if_alias_reassigned_function = orison::syntax::FunctionSyntax {};
     forward_final_if_alias_reassigned_function.name = "forward_final_if_alias_reassigned";
@@ -2126,6 +2235,37 @@ int main() {
     assert(!final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
     assert(!final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.lowering_enabled);
+
+    auto assert_owner_read_scalar_forwarded_parameter_plan = [&](std::string const& function_name) {
+        auto plan = orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(name("flag"), call(function_name, name("items")), call(function_name, name("items"))),
+            context,
+            state
+        );
+        assert(
+            plan.kind ==
+            orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        );
+        assert(
+            plan.ownership_plan.kind ==
+            orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+        );
+        assert(plan.ownership_plan.branch_owner_names.empty());
+        assert(!plan.descriptor_storage_available);
+        assert(!plan.cleanup_owner_proven);
+        assert(!plan.lowering_enabled);
+    };
+    for (auto shape_name : {"binary", "cast", "unary"}) {
+        assert_owner_read_scalar_forwarded_parameter_plan(
+            std::string {"forward_alias_with_owner_in_"} + shape_name + "_local"
+        );
+        assert_owner_read_scalar_forwarded_parameter_plan(
+            std::string {"forward_final_if_alias_with_owner_in_"} + shape_name + "_local"
+        );
+        assert_owner_read_scalar_forwarded_parameter_plan(
+            std::string {"forward_final_switch_alias_with_owner_in_"} + shape_name + "_local"
+        );
+    }
 
     auto final_if_forwarded_parameter_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

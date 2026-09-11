@@ -2725,6 +2725,28 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_path =
         fixtures /
         "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read_rejected.or";
+    auto forwarded_parameter_scalar_owner_read_paths = std::array<std::filesystem::path, 9> {
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_binary_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_cast_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_unary_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_final_if_alias_binary_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_final_if_alias_cast_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_final_if_alias_unary_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_final_switch_alias_binary_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_final_switch_alias_cast_owner_read_rejected.or",
+        fixtures / "dynamic_array_forwarded_parameter_final_switch_alias_unary_owner_read_rejected.or",
+    };
+    auto forwarded_parameter_scalar_owner_read_stems = std::array<std::string_view, 9> {
+        "dynamic_array_forwarded_parameter_local_alias_binary_owner_read",
+        "dynamic_array_forwarded_parameter_local_alias_cast_owner_read",
+        "dynamic_array_forwarded_parameter_local_alias_unary_owner_read",
+        "dynamic_array_forwarded_parameter_final_if_alias_binary_owner_read",
+        "dynamic_array_forwarded_parameter_final_if_alias_cast_owner_read",
+        "dynamic_array_forwarded_parameter_final_if_alias_unary_owner_read",
+        "dynamic_array_forwarded_parameter_final_switch_alias_binary_owner_read",
+        "dynamic_array_forwarded_parameter_final_switch_alias_cast_owner_read",
+        "dynamic_array_forwarded_parameter_final_switch_alias_unary_owner_read",
+    };
     auto forwarded_parameter_final_if_alias_reassigned_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_parameter_final_if_alias_reassigned_owned_computed_rejected.or";
     auto forwarded_parameter_final_switch_alias_reassigned_owned_computed_dynamic_array_path =
@@ -3638,6 +3660,16 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_alias_ternary_alternate_owner_read",
         "use after move: items"
     );
+    for (auto index = std::size_t {0}; index < forwarded_parameter_scalar_owner_read_paths.size(); ++index) {
+        auto stem = std::string {forwarded_parameter_scalar_owner_read_stems[index]};
+        assert_diagnostic_failure_matrix(
+            executable,
+            forwarded_parameter_scalar_owner_read_paths[index],
+            smoke_temp_root / (stem + ".o"),
+            smoke_temp_root / stem,
+            "use after move: items"
+        );
+    }
     assert_diagnostic_failure_matrix(
         executable,
         forwarded_parameter_final_if_alias_reassigned_owned_computed_dynamic_array_path,

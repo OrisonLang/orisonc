@@ -2848,6 +2848,9 @@ representation.
 - The same scanner boundary now has negative coverage for direct, final-if, and final-switch alias helpers where a
   scalar local reads the transferred owner through a ternary alternate arm. Source-query coverage keeps those helper
   shapes out of accepted alias handoffs, while CLI fixtures verify the source is rejected as a use-after-move.
+- Negative coverage now also spans binary, cast, and unary scalar locals that read the transferred owner after an alias
+  binding. Direct, final-if, and final-switch helper shapes stay outside the accepted alias handoff proof, and CLI
+  fixtures verify use-after-move rejection for each source shape.
 
 ## Follow-up work
 
