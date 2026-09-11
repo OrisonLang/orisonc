@@ -2,6 +2,8 @@
 
 - 2026-09-11: Computed DynamicArray owner-mismatch diagnostics now include a short branch-owner summary ahead of the
   detailed audit chain. Existing detailed proof reports remain intact for parity checks.
+- 2026-09-11: Computed DynamicArray unsupported-shape diagnostics now include a short source-oriented summary ahead of
+  the detailed audit chain. Existing unsupported-shape proof reports remain intact for parity checks.
 - 2026-09-11: DynamicArray readiness smoke helpers, lowerer helper functions, and local report variables now use
   owned-cleanup wording internally. Existing `.drop.*` IR labels, drop-readiness report helper APIs, report text, CLI
   flags, and fixture names remain compatibility surfaces.

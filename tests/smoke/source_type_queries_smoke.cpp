@@ -1550,6 +1550,11 @@ int main() {
     assert(!cyclic_forwarded_parameter_plan.descriptor_storage_available);
     assert(!cyclic_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!cyclic_forwarded_parameter_plan.lowering_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
+            cyclic_forwarded_parameter_plan.ownership_plan
+        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>"
+    );
 
     auto depth_overflow_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

@@ -1133,21 +1133,30 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
 auto computed_dynamic_array_iterable_failure_summary_report(
     ComputedDynamicArrayIterableOwnershipPlan const& plan
 ) -> std::string {
-    if (plan.kind != ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch ||
-        plan.branch_owner_names.empty()) {
-        return {};
+    if (plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape) {
+        auto output = std::string {"computed DynamicArray unsupported shape"};
+        if (!plan.source_type_name.empty()) {
+            output += ": cannot prove a single owner for ";
+            output += plan.source_type_name;
+        }
+        return output;
     }
 
-    auto output = std::string {"computed DynamicArray owner mismatch: branches resolve to"};
-    for (auto const& owner : plan.branch_owner_names) {
-        output += ' ';
-        output += owner;
+    if (plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch &&
+        !plan.branch_owner_names.empty()) {
+        auto output = std::string {"computed DynamicArray owner mismatch: branches resolve to"};
+        for (auto const& owner : plan.branch_owner_names) {
+            output += ' ';
+            output += owner;
+        }
+        if (!plan.source_type_name.empty()) {
+            output += " for ";
+            output += plan.source_type_name;
+        }
+        return output;
     }
-    if (!plan.source_type_name.empty()) {
-        output += " for ";
-        output += plan.source_type_name;
-    }
-    return output;
+
+    return {};
 }
 
 auto plan_computed_dynamic_array_iterable_descriptor_handoff(

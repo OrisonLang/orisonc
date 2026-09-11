@@ -1710,30 +1710,22 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     std::filesystem::path const& object_path,
     std::filesystem::path const& output_path
 ) {
+    auto const expected_summary_fragment =
+        "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>";
     auto const expected_shape_fragment =
         "computed DynamicArray ownership plan unsupported computed shape source DynamicArray<Payload> "
         "element Payload [ownership join blocked] [cleanup owner blocked] (metadata only)";
 
-    assert_contains(
-        read_failing_command_output(executable.string() + " run " + source_path.string()),
-        expected_shape_fragment
-    );
-    assert_contains(
-        read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string()),
-        expected_shape_fragment
-    );
-    assert_contains(
-        read_failing_command_output(
-            executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string()
-        ),
-        expected_shape_fragment
-    );
-    assert_contains(
-        read_failing_command_output(
-            executable.string() + " --build " + source_path.string() + " -o " + output_path.string()
-        ),
-        expected_shape_fragment
-    );
+    for (auto const& command : {
+             executable.string() + " run " + source_path.string(),
+             executable.string() + " --emit-llvm " + source_path.string(),
+             executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string(),
+             executable.string() + " --build " + source_path.string() + " -o " + output_path.string(),
+         }) {
+        auto output = read_failing_command_output(command);
+        assert_contains(output, expected_summary_fragment);
+        assert_contains(output, expected_shape_fragment);
+    }
 }
 
 void assert_diagnostic_failure_matrix(
