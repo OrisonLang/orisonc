@@ -6290,21 +6290,15 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_cleanup_run.or"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_cleanup_run.or",
+        smoke_temp_root / "runtime_indexed_choice_payload_computed_member_cleanup"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_cleanup_run.or"
-    );
-    assert_cli_emit_llvm_existing_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_cleanup_run.or"
-    );
-    assert_cli_emit_llvm_existing_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_cleanup_run.or"
+        fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_cleanup_run.or",
+        smoke_temp_root / "runtime_indexed_choice_payload_nested_computed_member_cleanup"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

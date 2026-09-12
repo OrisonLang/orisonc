@@ -3138,6 +3138,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-29: Runtime-index member-cleanup production coverage now includes an approved choice payload binding over a
   source-backed `DynamicArray<Box>` payload, pinned across ordinary `run`, `--emit-llvm`, object/link/run,
   `--emit-object`, and `--build`.
+- 2026-09-12: Runtime-index choice-payload computed member cleanup-run fixtures now use full production smoke coverage
+  instead of duplicate emit-only assertions, covering `run`, LLVM object emission/link/run, object emission, and
+  `--build` execution.
 - 2026-08-29: The approved choice-payload runtime-index member-cleanup shape now has negative smoke coverage for
   post-transfer payload reuse and missing owned-element Drop authorization.
 - 2026-08-29: Scoped local DynamicArray cleanup now suppresses runtime-index cleanup owners before switch/branch-arm
