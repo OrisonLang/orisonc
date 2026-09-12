@@ -1864,16 +1864,14 @@ representation.
 - Runtime-index member cleanup rewrite mutation now emits the source-backed `DynamicArray<T>` owner cleanup loop. The
   mutated CFG walks initialized elements, dispatches the member-preserving helper at the moved index, dispatches the
   full element Drop for other indexes, then deallocates and finalizes the consumed owner descriptor.
-- Runtime-index member cleanup now has a driver-level executable test seam:
-  `--test-only-runtime-indexed-member-cleanup-run`. The command enables the internal member-cleanup mutation,
-  production-gate, apply, and rewrite-execution requests, then object-compiles, host-links, and runs the fixture while
-  keeping the ordinary `--emit-llvm` path unchanged.
-- Driver smoke coverage now asserts both sides of that boundary for the nested member-transfer fixture: default
-  `--emit-llvm` remains rejected for the owned projection, and the test-only member-cleanup run seam executes the same
-  fixture successfully.
+- Runtime-index member cleanup previously had a driver-level executable test seam for internal member-cleanup mutation,
+  production-gate, apply, and rewrite-execution requests. That seam has been retired; production driver paths and
+  direct pipeline smoke assertions now own the coverage.
+- Driver smoke coverage now stays on ordinary production paths for member-transfer fixtures, while pipeline smoke
+  coverage asserts typed promotion and execution-summary details directly.
 - Runtime-index member cleanup mutation gates now use production-named pipeline options internally for IR mutation,
-  production gate, apply authorization, and rewrite execution. The driver seam name stays diagnostic/test-only, but the
-  compile pipeline no longer exposes those controls as test-only fields.
+  production gate, apply authorization, and rewrite execution. The retired driver seam no longer exposes those controls
+  through a test-only command.
 - Ordinary driver defaults now enable only the first member-cleanup mutation gate. Default production-readiness reports
   show IR mutation requested/enabled, while production-gate, apply authorization, and rewrite execution remain disabled
   so ordinary `--emit-llvm` continues to reject owned member projections.
@@ -1918,17 +1916,15 @@ representation.
   readiness, mutation production readiness, and rewrite promotion-status records. The headline reports
   `member-cleanup-promotion none|blocked|ready` and record counts without consulting audit text.
 - Member-cleanup promotion now has a typed internal gate between the promotion checklist and mutation seam. The gate
-  derives IR mutation and production-gate enablement from explicit test-only requests plus checklist readiness, and the
+  derives IR mutation and production-gate enablement from explicit internal requests plus checklist readiness, and the
   apply-authorization path consumes those derived fields instead of duplicating raw request decisions.
 - Member-cleanup typed promotion gates now cross the function-emission, LLVM-emission, pipeline, and driver
   boundaries as typed records. The constructor-move production-readiness headline reports `member-gate-records` and
   uses those records as part of the typed promotion decision.
-- The executable test-only member-cleanup run seam now prints the same typed promotion gate report after successful
-  host execution. This keeps gated run observability aligned with constructor-move production-readiness reporting while
-  leaving ordinary `--emit-llvm` behavior unchanged.
-- The executable test-only member-cleanup run seam now also appends a compact typed execution summary. The line reports
-  promotion gate readiness, apply authorization, guarded rewrite authorization, rewrite execution, rewrite promotion,
-  and helper Drop-binding target/counts from pipeline records after successful host execution.
+- The former executable member-cleanup run seam printed the same typed promotion gate report after successful host
+  execution. That compact observability now lives in direct pipeline smoke assertions.
+- The former executable member-cleanup run seam also appended a compact typed execution summary. The same promotion,
+  apply, guarded rewrite, helper-binding, and production fields are now covered through pipeline result records.
 - Member-cleanup execution-summary rendering now lives in the pipeline layer with direct pipeline smoke coverage. The
   driver consumes the shared helper rather than locally assembling execution state from result vectors.
 - Member-cleanup execution summaries now also cross the pipeline boundary as typed result records. Consumers can inspect
@@ -1962,7 +1958,7 @@ representation.
   binding, and CFG prerequisites are ready. Missing keyed records, non-stale upstream blockers, and downstream
   mutation/rewrite blockers still prevent a `ready` promotion state.
 - Member-cleanup helper Drop-binding refresh now also applies to typed promotion gate records and regenerated audit
-  lines. Once concrete helper metadata exists for a keyed member path, ready test-only gates no longer retain stale
+  lines. Once concrete helper metadata exists for a keyed member path, ready internal gates no longer retain stale
   `member-helper-drop-bindings` blockers.
 - The same helper Drop-binding refresh now recomputes mutation promotion-summary and mutation production-readiness
   booleans after blocker removal. Fully requested member-cleanup seams can report promotion and readiness as
@@ -1982,11 +1978,9 @@ representation.
   finalization, and one shared helper definition.
 - The two-owner source-backed member-cleanup fixture now also object-emits, host-links, and runs successfully through
   the fully requested internal gated path, extending the proof from typed readiness and IR shape to native execution.
-- Driver CLI smoke coverage now runs that two-owner source-backed fixture through
-  `--test-only-runtime-indexed-member-cleanup-run` and asserts both keyed typed-promotion-gate and execution-summary
-  lines appear in the internal test-seam output.
-- Driver CLI smoke coverage now also pins the same two-owner fixture on the ordinary `--emit-llvm` path, confirming
-  owned DynamicArray member transfers still require the internal test seam and remain rejected by default.
+- The two-owner source-backed fixture now keeps keyed typed-promotion-gate and execution-summary coverage in direct
+  pipeline smoke assertions, with production behavior covered through ordinary driver paths.
+- Driver CLI smoke coverage pins the same two-owner fixture on ordinary production paths.
 - Runtime-index constructor-move production-readiness now runs a conservative report-only pre-scan over annotated local
   bindings and constructor-call arguments. This records every keyed source-backed `DynamicArray<T>` member-cleanup
   candidate visible in the function before ordinary lowering stops at the first unsupported owned member transfer,
@@ -2866,6 +2860,9 @@ representation.
   combinations remain disabled.
 - The obsolete `--test-only-runtime-indexed-constructor-move-run` driver command has been removed. Its success and
   failure coverage now stays on ordinary production `run`, `--emit-llvm`, `--emit-object`, and `--build` paths.
+- The obsolete `--test-only-runtime-indexed-member-cleanup-run` driver command has been removed. Its typed
+  promotion-gate and execution-summary coverage now lives in direct pipeline smoke assertions, while production
+  behavior remains covered by ordinary driver paths.
 
 ## Follow-up work
 
@@ -2875,8 +2872,8 @@ representation.
   `DynamicArray<T>` sequences only after ownership, cleanup, and descriptor-storage rules for broader computed owned
   iterables are proven.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
-  paths. Use the diagnostic runtime-index member-cleanup run seam only for compact typed promotion and execution-summary
-  audit coverage.
+  paths. Keep compact typed promotion and execution-summary audit coverage in pipeline smoke tests rather than driver
+  test-only commands.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field and fixed-array descriptor sets only after a

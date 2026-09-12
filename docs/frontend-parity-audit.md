@@ -263,9 +263,8 @@
 - 2026-08-15: Runtime-index member-cleanup execution-summary rendering now lives in the pipeline layer with direct
   pipeline smoke coverage. The driver consumes the shared report helper instead of assembling typed execution state
   locally.
-- 2026-08-15: The executable test-only member-cleanup run seam now appends a compact typed execution summary after
-  successful host execution. The summary reports promotion gate state, apply authorization, guarded rewrite
-  authorization, rewrite execution, rewrite promotion, and helper Drop-binding target/counts from pipeline records.
+- 2026-08-15: The former executable member-cleanup run seam appended a compact typed execution summary after
+  successful host execution. The same summary fields are now asserted through pipeline records.
 - 2026-08-15: Runtime-index constructor-move production-readiness now reports typed member-cleanup promotion state
   from member production-readiness, mutation production-readiness, and rewrite promotion-status records. The headline
   reports `member-cleanup-promotion none|blocked|ready` plus typed record counts without consulting audit text.
@@ -302,12 +301,11 @@
   member-granular cleanup fixture reaches typed member readiness but remains blocked for default promotion. The report
   includes the blocked `member-cleanup-module-mutation` and `production-member-cleanup` details without enabling
   ordinary `--emit-llvm`.
-- 2026-08-14: Driver smoke coverage now pins the runtime-index member-cleanup promotion boundary directly: ordinary
-  `--emit-llvm` still rejects the nested owned member-transfer fixture, while
-  `--test-only-runtime-indexed-member-cleanup-run` accepts and executes the same source through the gated seam.
-- 2026-08-14: The driver now exposes `--test-only-runtime-indexed-member-cleanup-run` as a narrow executable seam for
-  the gated runtime-index member cleanup path. Driver smoke coverage runs the nested member-transfer fixture through
-  object emission, host linking, and execution without changing ordinary `--emit-llvm` behavior.
+- 2026-08-14: Driver smoke coverage originally pinned the runtime-index member-cleanup promotion boundary directly
+  through a diagnostic executable seam. That seam has since been retired; production driver paths and direct pipeline
+  smoke assertions now own the coverage.
+- 2026-08-14: The former narrow executable seam for gated runtime-index member cleanup has been retired. Driver smoke
+  coverage now stays on ordinary production paths, while pipeline smoke coverage owns compact typed-summary assertions.
 - 2026-08-14: Runtime-index member cleanup now has executable smoke coverage for the nested source-backed
   `DynamicArray<T>` member-transfer path. The pipeline emits the gated mutated IR, compiles it to an object, links a
   native executable, and runs the fixture successfully while ordinary surface syntax remains unchanged.
@@ -336,12 +334,11 @@
   index expression, moved path, sibling field names, field indexes, LLVM field types, and Drop symbols separately from
   helper-body IR rendering.
 - 2026-08-18: Runtime-index member cleanup mutation gates now use production-named pipeline options for IR mutation,
-  production gate, apply authorization, and rewrite execution. The external `--test-only-runtime-indexed-member-cleanup-run`
-  diagnostic seam remains unchanged, while the internal pipeline no longer depends on test-only option names for the
-  executable member-cleanup path.
+  production gate, apply authorization, and rewrite execution. The former external diagnostic seam has been retired,
+  while the internal pipeline no longer depends on test-only option names for member-cleanup execution.
 - 2026-08-18: Ordinary driver defaults now enable the first runtime-index member-cleanup mutation gate. Production
   readiness reports show IR mutation requested/enabled while keeping production-gate, apply authorization, and rewrite
-  execution disabled, so owned member projections remain rejected outside the executable diagnostic seam.
+  execution disabled, so owned member projections remain guarded until all promotion checks pass.
 - 2026-08-18: Ordinary driver defaults now also enable the runtime-index member-cleanup production gate. Default
   readiness reports show mutation planning, validation, conflict checks, apply authorization readiness, and previews
   clean while still leaving apply authorization and rewrite execution disabled.
@@ -2811,9 +2808,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-15: Runtime-index member cleanup typed promotion gates now flow through function emission, LLVM emission,
   pipeline results, and the driver production-readiness headline. The headline reports `member-gate-records` and
   evaluates promotion readiness from those gate records plus the existing downstream typed readiness records.
-- 2026-08-15: The executable `--test-only-runtime-indexed-member-cleanup-run` seam now emits the same typed promotion
-  gate report used by readiness reporting after successful host execution, keeping run-path observability aligned with
-  the production-readiness path.
+- 2026-08-15: The former executable member-cleanup seam emitted the same typed promotion gate report used by readiness
+  reporting after successful host execution. That compact assertion now lives in direct pipeline smoke coverage.
 - 2026-08-16: Runtime-index member cleanup helper Drop-binding refresh now uses a single LLVM-local refresh-key helper
   aligned with the shared owner/index/element/moved/member-path key fields when propagating typed readiness into
   mutation production, guarded rewrite authorization, execution, and promotion records. This removes repeated local
@@ -2828,12 +2824,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-08-16: The two-owner source-backed member-cleanup fixture now object-emits, host-links, and runs through the
   fully requested internal gated path. This extends the multiple owner/index cleanup proof from typed readiness and IR
   shape to native executable behavior.
-- 2026-08-16: Driver CLI smoke coverage now runs the same two-owner source-backed member-cleanup fixture through
-  `--test-only-runtime-indexed-member-cleanup-run` and asserts both owner/index typed promotion gates plus execution
-  summaries appear in the test-seam output.
+- 2026-08-16: The two-owner source-backed member-cleanup fixture now keeps typed promotion-gate and execution-summary
+  coverage in direct pipeline smoke assertions, with production behavior covered through ordinary driver paths.
 - 2026-08-16: Driver CLI smoke coverage now also pins the same two-owner member-cleanup fixture on the ordinary
-  `--emit-llvm` path, confirming the default compiler path still rejects owned DynamicArray member transfers without
-  the internal test seam.
+  `--emit-llvm` path, confirming the default compiler path preserves the guarded member-transfer boundary.
 - 2026-08-17: Pipeline smoke coverage now compares fixed-array and source-backed `DynamicArray<T>` runtime-index
   cleanup emission plans at the typed metadata layer. The plans share index, element source type, element LLVM type,
   Drop callee, and operation sequence, while keeping static array length, element size, and descriptor-owner metadata
@@ -3315,3 +3309,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   half-configured cleanup rewrites while preserving current syntax and production behavior.
 - 2026-09-11: The obsolete `--test-only-runtime-indexed-constructor-move-run` driver command has been removed.
   Runtime-indexed constructor-move success and reuse-rejection coverage remains on ordinary production driver paths.
+- 2026-09-11: The obsolete `--test-only-runtime-indexed-member-cleanup-run` driver command has been removed.
+  Typed promotion-gate and execution-summary coverage now lives in direct pipeline smoke assertions, while production
+  behavior remains covered by ordinary driver paths.
