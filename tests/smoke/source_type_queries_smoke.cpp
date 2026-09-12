@@ -4188,7 +4188,9 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
             unproven_computed_ownership_plan
         ) == "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
-            "predicted_items predicted_items for DynamicArray<UInt32>"
+            "predicted_items predicted_items for DynamicArray<UInt32>; branch cleanup proofs predicted_items "
+            "[cleanup owner predicted from semantic descriptor origin] predicted_items "
+            "[cleanup owner predicted from semantic descriptor origin]"
     );
     auto unproven_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

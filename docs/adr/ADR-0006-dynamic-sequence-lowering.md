@@ -2848,6 +2848,9 @@ representation.
 - Computed DynamicArray owner-mismatch and cleanup-owner-unproven summaries now state the expected owner condition
   before listing resolved branch owners, so production diagnostics explain the blocked proof without requiring readers
   to infer the invariant from the detailed audit chain.
+- Computed DynamicArray cleanup-owner-unproven summaries now include per-branch cleanup-owner proof statuses, allowing
+  diagnostics to distinguish predicted semantic origins, audit-only parameter descriptors, missing cleanup plans, and
+  proven lowered descriptors at the short-summary level.
 - Computed DynamicArray unsupported-shape diagnostics now include a short source-oriented summary before the detailed
   audit chain, while keeping the existing unsupported-shape proof report intact.
 - Computed DynamicArray same-owner cleanup-proof failures now include a short source-oriented summary before the

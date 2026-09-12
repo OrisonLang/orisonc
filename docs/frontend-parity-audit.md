@@ -3357,3 +3357,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   production-readiness line for the rejected computed iterable fixture.
 - 2026-09-12: Computed DynamicArray owner-mismatch diagnostics now state the expected single cleanup-owner condition
   before listing branch owners, with source-query, lowering, and CLI smoke coverage updated.
+- 2026-09-12: Computed DynamicArray cleanup-owner-unproven summaries now include per-branch cleanup-owner proof
+  statuses, with source-query smoke coverage pinning predicted semantic descriptor origins.

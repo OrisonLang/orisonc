@@ -1097,10 +1097,10 @@ auto plan_dynamic_array_iterable_descriptor(
     return plan;
 }
 
-auto dynamic_array_iterable_cleanup_owner_proof_report(
-    DynamicArrayIterableDescriptorPlan const& plan
+auto dynamic_array_iterable_cleanup_owner_proof_status_report(
+    DynamicArrayIterableCleanupOwnerProofStatus status
 ) -> std::string {
-    switch (plan.cleanup_owner_proof_status) {
+    switch (status) {
         case DynamicArrayIterableCleanupOwnerProofStatus::not_dynamic_array:
             return "cleanup owner proof not required";
         case DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan:
@@ -1115,6 +1115,12 @@ auto dynamic_array_iterable_cleanup_owner_proof_report(
             return "cleanup owner proven from lowered local descriptor";
     }
     return "cleanup owner proof unknown";
+}
+
+auto dynamic_array_iterable_cleanup_owner_proof_report(
+    DynamicArrayIterableDescriptorPlan const& plan
+) -> std::string {
+    return dynamic_array_iterable_cleanup_owner_proof_status_report(plan.cleanup_owner_proof_status);
 }
 
 auto dynamic_array_iterable_descriptor_plan_report(
@@ -1292,6 +1298,22 @@ auto computed_dynamic_array_iterable_failure_summary_report(
         if (!plan.source_type_name.empty()) {
             output += " for ";
             output += plan.source_type_name;
+        }
+        if (!plan.branch_cleanup_owner_proof_statuses.empty()) {
+            output += "; branch cleanup proofs";
+            for (auto index = std::size_t {0}; index < plan.branch_cleanup_owner_proof_statuses.size(); ++index) {
+                output += ' ';
+                if (index < plan.branch_owner_names.size()) {
+                    output += plan.branch_owner_names[index];
+                } else {
+                    output += "<unknown>";
+                }
+                output += " [";
+                output += dynamic_array_iterable_cleanup_owner_proof_status_report(
+                    plan.branch_cleanup_owner_proof_statuses[index]
+                );
+                output += "]";
+            }
         }
         return output;
     }
