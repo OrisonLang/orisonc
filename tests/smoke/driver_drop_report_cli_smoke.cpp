@@ -1192,6 +1192,22 @@ int main() {
         }
     );
 
+    auto dynamic_array_computed_rejected_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_computed_iterable_rejected.or";
+    auto dynamic_array_computed_rejected_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_computed_rejected_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_rejected_audit,
+        {
+            "computed DynamicArray production readiness blocked [gate blocked] [sequence blocked] "
+            "[cleanup transition blocked] [cleanup state blocked] [gate sequence counts mismatch] "
+            "[gate sequence snippets mismatch] [sequence transition counts mismatch] "
+            "[transition verification counts mismatch] [cleanup owners mismatch] [production emission enabled] "
+            "(metadata only)",
+        }
+    );
+
     auto dynamic_array_computed_later_owner_use_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_later_owner_use.or";
     std::filesystem::remove(dynamic_array_computed_later_owner_use_path, remove_error);

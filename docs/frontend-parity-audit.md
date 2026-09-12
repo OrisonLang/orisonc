@@ -3353,3 +3353,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   emission authorization predicates.
 - 2026-09-12: CLI cleanup-audit smoke coverage now verifies the combined computed DynamicArray `for`
   production-readiness line for the local same-owner computed iterable fixture.
+- 2026-09-12: CLI cleanup-audit smoke coverage now also verifies the blocked combined computed DynamicArray `for`
+  production-readiness line for the rejected computed iterable fixture.
