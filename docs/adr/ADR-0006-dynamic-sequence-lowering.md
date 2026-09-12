@@ -2851,6 +2851,8 @@ representation.
 - Computed DynamicArray cleanup-owner-unproven summaries now include per-branch cleanup-owner proof statuses, allowing
   diagnostics to distinguish predicted semantic origins, audit-only parameter descriptors, missing cleanup plans, and
   proven lowered descriptors at the short-summary level.
+- Computed DynamicArray cleanup-owner-unproven diagnostics are now treated as internal proof-suppression coverage.
+  Ordinary same-owner source paths are expected to prove descriptor ownership before production lowering.
 - Computed DynamicArray unsupported-shape diagnostics now include a short source-oriented summary before the detailed
   audit chain, while keeping the existing unsupported-shape proof report intact.
 - Computed DynamicArray same-owner cleanup-proof failures now include a short source-oriented summary before the

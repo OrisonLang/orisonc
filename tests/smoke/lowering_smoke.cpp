@@ -1588,7 +1588,7 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
     assert(result.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 }
 
-void test_rejects_computed_dynamic_array_predicted_owner_before_production_lowering() {
+void test_rejects_computed_dynamic_array_internal_cleanup_owner_proof_suppression() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_computed_dynamic_array_predicted_owner_rejected.or";
     auto source =
@@ -14532,7 +14532,7 @@ auto main() -> int {
     test_collects_test_only_dynamic_array_element_owned_cleanup_readiness_metadata();
     test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();
-    test_rejects_computed_dynamic_array_predicted_owner_before_production_lowering();
+    test_rejects_computed_dynamic_array_internal_cleanup_owner_proof_suppression();
     test_binds_test_only_dynamic_array_parameter_descriptor_origin();
     test_emits_authorized_owned_dynamic_array_parameter_cleanup();
     test_emits_authorized_owned_local_dynamic_array_cleanup();
