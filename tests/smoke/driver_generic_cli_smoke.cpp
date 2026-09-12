@@ -4684,25 +4684,30 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection_mismatch.or",
         "second_inner_item argument 1 has incompatible ternary arm source types: DynamicArray<Outer<UInt32>> and DynamicArray<Outer<UInt64>>"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection_missing_drop.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection_missing_drop.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_local_call_result_projection_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection_missing_drop.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection_missing_drop.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_call_result_projection_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_projection_missing_drop.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_projection_missing_drop.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_projection_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_owned_element_projection_missing_drop.or"
+        fixtures / "dynamic_array_generic_nested_owned_element_projection_missing_drop.or",
+        smoke_temp_root / "dynamic_array_generic_nested_owned_element_projection_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_owned_element_projection_missing_drop.or"
+        fixtures / "dynamic_array_generic_owned_element_projection_missing_drop.or",
+        smoke_temp_root / "dynamic_array_generic_owned_element_projection_missing_drop"
     );
     assert_cli_emit_llvm_existing_fixture_success(
         executable,

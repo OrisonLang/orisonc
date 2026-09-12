@@ -3144,6 +3144,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: DynamicArray receiver missing-Drop fixtures that already execute successfully now use full production
   smoke coverage instead of emit-only checks across `run`, LLVM object emission/link/run, `--emit-object`, and
   `--build`.
+- 2026-09-12: Runnable generic DynamicArray missing-Drop projection fixtures now use full production smoke coverage
+  instead of emit-only checks. The remaining owned-parameter missing-Drop fixture stays emit-only since its source-level
+  `main()` exits nonzero.
 - 2026-08-29: The approved choice-payload runtime-index member-cleanup shape now has negative smoke coverage for
   post-transfer payload reuse and missing owned-element Drop authorization.
 - 2026-08-29: Scoped local DynamicArray cleanup now suppresses runtime-index cleanup owners before switch/branch-arm
