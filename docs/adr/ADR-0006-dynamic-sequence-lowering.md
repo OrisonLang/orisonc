@@ -2894,6 +2894,8 @@ representation.
   the broader emit-failure-without helper as an internal delegate for named smoke boundaries.
 - The shared emit-LLVM diagnostic helper now uses delegate-oriented wording so fixture-family intent stays on named
   smoke helpers.
+- The shared production-path diagnostic helper now uses delegate-oriented wording so fixture-family intent stays on
+  named smoke helpers.
 
 ## Follow-up work
 

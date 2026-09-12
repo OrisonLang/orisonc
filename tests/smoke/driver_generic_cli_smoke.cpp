@@ -254,7 +254,7 @@ void assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
     }
 }
 
-void assert_cli_existing_fixture_production_failures_without(
+void assert_cli_production_failures_containing_without(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
     std::filesystem::path const& output_base,
@@ -279,7 +279,7 @@ void assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
     std::filesystem::path const& output_base,
     std::string_view expected_message
 ) {
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_production_failures_containing_without(
         executable,
         path,
         output_base,
@@ -295,7 +295,7 @@ void assert_cli_receiver_method_chain_reuse_production_failures(
     std::string_view expected_message,
     std::string_view rejected_message
 ) {
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_production_failures_containing_without(
         executable,
         path,
         output_base,
@@ -310,7 +310,7 @@ void assert_cli_runtime_indexed_fixed_constructor_reuse_production_failures(
     std::filesystem::path const& output_base,
     std::string_view expected_message
 ) {
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_production_failures_containing_without(
         executable,
         path,
         output_base,
