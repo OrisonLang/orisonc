@@ -4992,17 +4992,20 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_runtime_indexed_aggregate_field_method_chain_append_statement_out_of_bounds.or"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or"
+        fixtures / "dynamic_array_receiver_direct_owned_count_missing_drop.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_count_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_touch_statement_missing_drop.or"
+        fixtures / "dynamic_array_receiver_direct_owned_touch_statement_missing_drop.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_touch_statement_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop.or"
+        fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
@@ -5336,9 +5339,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_ternary_owned_methods.or"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_ternary_owned_methods_missing_drop.or"
+        fixtures / "dynamic_array_receiver_ternary_owned_methods_missing_drop.or",
+        smoke_temp_root / "dynamic_array_receiver_ternary_owned_methods_missing_drop"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6856,9 +6860,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "aggregate_owned_projection_return_rejected.or",
         "aggregate path read of owned projection requires an explicit ownership transfer"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_append_missing_drop.or"
+        fixtures / "dynamic_array_receiver_append_missing_drop.or",
+        smoke_temp_root / "dynamic_array_receiver_append_missing_drop"
     );
     }
 

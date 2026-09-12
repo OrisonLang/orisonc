@@ -1583,6 +1583,9 @@ representation.
 - Runtime-index choice-payload computed member cleanup-run fixtures now use full production smoke coverage instead of
   duplicate emit-only assertions. The covered paths are ordinary `run`, LLVM object emission/link/run,
   `--emit-object`, and `--build` execution.
+- DynamicArray receiver missing-Drop fixtures that already execute successfully now use full production smoke coverage
+  instead of emit-only checks. This pins direct receiver count, direct receiver statement, chained receiver statement,
+  ternary receiver method, and append receiver boundaries across ordinary run/build paths.
 - Runtime-index cleanup function IR mutation now receives predecessor, inserted branch, and CFG tail data through a
   structured insertion object before text mutation. This keeps the current splice implementation behavior intact while
   shrinking the raw string/vector API surface that still needs replacement by a fuller structured IR representation.
