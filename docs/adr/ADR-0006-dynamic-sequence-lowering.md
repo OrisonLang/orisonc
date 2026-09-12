@@ -2886,6 +2886,8 @@ representation.
   distinct from runtime-indexed member/sibling and fixed record/choice constructor reuse-rejection helpers.
 - Runtime-indexed fixed record/choice constructor reuse-rejection production coverage now uses a named helper, leaving
   the broader production-failure-without helper as an internal delegate for named smoke boundaries.
+- Receiver method-chain DynamicArray reuse-rejection emit-LLVM coverage now uses a named helper, matching the existing
+  production-path receiver helper boundary.
 
 ## Follow-up work
 

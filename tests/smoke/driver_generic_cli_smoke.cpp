@@ -176,6 +176,20 @@ void assert_cli_emit_llvm_existing_fixture_failure_without(
     assert(output.find(rejected_message) == std::string::npos);
 }
 
+void assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message,
+    std::string_view rejected_message
+) {
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        path,
+        expected_message,
+        rejected_message
+    );
+}
+
 void assert_cli_emit_llvm_existing_fixture_short_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -5088,7 +5102,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_count_out_of_bounds.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_reuse_rejected.or",
         "use after move: holder.items[index].values",
@@ -5110,7 +5124,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_count_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_reuse_rejected.or",
         "use after move: holder.items[(index + zero)].values",
@@ -5132,7 +5146,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_reuse_rejected.or",
         "use after move: holder.items[index].values",
@@ -5154,7 +5168,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_reuse_rejected.or",
         "use after move: holder.items[(index + zero)].values",
@@ -5184,7 +5198,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_reuse_rejected.or",
         "use after move: holder.items[(index + zero)].box.values",
@@ -5214,7 +5228,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_append_statement_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
         "use after move: holder.items[(index + zero)].box.values",
@@ -5244,7 +5258,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_count_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_reuse_rejected.or",
         "use after move: items[(index + zero)].box.values",
@@ -5274,7 +5288,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
         "use after move: items[(index + zero)].box.values",
@@ -5304,7 +5318,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_reuse_rejected.or",
         "use after move: items[(index + zero)].box.values",
@@ -5334,7 +5348,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_multi_variant_choice_computed_index_nested_field_method_chain_count_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_multi_variant_choice_computed_index_nested_field_method_chain_count_reuse_rejected.or",
         "use after move: items[(index + zero)].box.values",
@@ -5364,7 +5378,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
         executable,
         fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
         "use after move: items[(index + zero)].box.values",
