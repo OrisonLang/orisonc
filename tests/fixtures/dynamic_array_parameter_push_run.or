@@ -1,0 +1,9 @@
+package tests.dynamicarrayparameterpushrun
+
+function append(items: DynamicArray<UInt32>) -> UInt32
+    items.push(3 as UInt32)
+    items.length() == 1 ? items[0] : 9 as UInt32
+
+function main() -> UInt32
+    var items: DynamicArray<UInt32> = DynamicArray()
+    append(items) == 3 ? 0 as UInt32 : 1 as UInt32

@@ -2304,15 +2304,9 @@ auto lower_dynamic_array_push_statement(
     auto const owner_is_exclusive_receiver =
         owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
     if (!owner_is_mutable_local && !owner_is_exclusive_receiver) {
-        if (is_bound_dynamic_array_parameter(owner_name, session.state)) {
-            diagnostics.error(
-                statement.line,
-                "lowering DynamicArray parameter push is unsupported; pass an owned local DynamicArray<T> or use "
-                "exclusive.View<T> for mutable parameter element writes"
-            );
-            return true;
+        if (!is_bound_dynamic_array_parameter(owner_name, session.state)) {
+            return false;
         }
-        return false;
     }
     auto source_type = session.state.source_type_names.find(owner_name);
     if (source_type == session.state.source_type_names.end()) {

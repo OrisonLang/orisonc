@@ -1612,18 +1612,17 @@ void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
     );
 }
 
-void assert_dynamic_array_parameter_push_emit_llvm_failure(
+void assert_dynamic_array_parameter_push_run_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
 ) {
-    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(
-        output.find(
-            "lowering DynamicArray parameter push is unsupported; pass an owned local DynamicArray<T> or use "
-            "exclusive.View<T> for mutable parameter element writes"
-        ) !=
-        std::string::npos
-    );
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define i32 @append({ ptr, i64, i64 } %items)");
+    assert_contains(output, "call void @__orison_dynamic_array_allocate");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate");
+    assert_contains(output, "items.dynamic_array_append");
+    assert_contains(output, "store { ptr, i64, i64 } %items.dynamic_array_append");
+    assert_run_success(executable, source_path);
 }
 
 void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
@@ -3235,7 +3234,7 @@ auto main(int argc, char** argv) -> int {
     auto dynamic_array_parameter_index_assignment_path =
         fixtures / "dynamic_array_parameter_index_assignment_rejected.or";
     auto dynamic_array_parameter_push_path =
-        fixtures / "dynamic_array_parameter_push_rejected.or";
+        fixtures / "dynamic_array_parameter_push_run.or";
     auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
     auto dynamic_array_push_owned_payload_reuse_path =
         fixtures / "dynamic_array_push_owned_payload_reuse_rejected.or";
@@ -5785,7 +5784,7 @@ auto main(int argc, char** argv) -> int {
         executable,
         dynamic_array_parameter_index_assignment_path
     );
-    assert_dynamic_array_parameter_push_emit_llvm_failure(
+    assert_dynamic_array_parameter_push_run_success(
         executable,
         dynamic_array_parameter_push_path
     );

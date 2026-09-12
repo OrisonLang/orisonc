@@ -3368,3 +3368,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Computed DynamicArray same-owner pipeline coverage now verifies real source semantic summaries remain
   proven even when parameter lowering is disabled. The cleanup-owner-unproven diagnostic remains reachable through
   internal proof-suppression seams, not ordinary production source.
+- 2026-09-12: Scalar `DynamicArray<T>` parameter `push` now lowers on the production descriptor path. Array CLI smoke
+  coverage verifies descriptor grow/write-back IR and executable behavior for `DynamicArray<UInt32>` parameters while
+  indexed parameter assignment remains rejected.
