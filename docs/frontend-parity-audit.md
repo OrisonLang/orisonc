@@ -3362,3 +3362,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Computed DynamicArray owner-mismatch CLI coverage now verifies the descriptor-owner requirement,
   short owner-mismatch summary, production emission gate, and absence of cleanup-owner-unproven wording across `run`,
   `--emit-llvm`, `--emit-object`, and `--build`.
+- 2026-09-12: Computed DynamicArray cleanup-owner-unproven coverage now reaches the production lowering boundary with
+  a semantic-summary-backed fixture. The remaining CLI gap is a source-produced unproven-owner path rather than an
+  injected semantic-summary path.

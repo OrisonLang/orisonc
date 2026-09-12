@@ -1588,6 +1588,56 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
     assert(result.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 }
 
+void test_rejects_computed_dynamic_array_predicted_owner_before_production_lowering() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_computed_dynamic_array_predicted_owner_rejected.or";
+    auto source =
+        "package demo.lowering.computedpredictedowner\n"
+        "\n"
+        "function sum_words(flag: Bool, predicted_items: DynamicArray<UInt32>) -> UInt32\n"
+        "    var total = 0 as UInt32\n"
+        "    for word in flag ? predicted_items : predicted_items\n"
+        "        total = total + word\n"
+        "    total\n";
+    auto semantic_result = orison::semantics::SemanticAnalysisResult {};
+    semantic_result.semantic_module.dynamic_array_descriptors.push_back(
+        orison::semantics::SemanticDynamicArrayDescriptorSummary {
+            .line = 3,
+            .owner_name = "predicted_items",
+            .source_type_name = "DynamicArray<UInt32>",
+            .element_source_type_name = "UInt32",
+        }
+    );
+
+    auto result = lower_source_with_semantics(
+        path,
+        source,
+        semantic_result,
+        orison::lowering::LlvmIrEmissionOptions {
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_for_lowering = true,
+        }
+    );
+
+    assert(result.has_errors());
+    auto const rendered = result.render(path.string());
+    assert(
+        rendered.find(
+            "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
+            "predicted_items predicted_items for DynamicArray<UInt32>; branch cleanup proofs predicted_items "
+            "[cleanup owner proof missing] predicted_items [cleanup owner proof missing]"
+        ) != std::string::npos
+    );
+    assert(
+        rendered.find(
+            "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner predicted_items [ownership blocked] [loop render blocked] "
+            "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
+            "[production sequence blocked] [production emission disabled] (metadata only)"
+        ) != std::string::npos
+    );
+}
+
 void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_dynamic_array_parameter_descriptor_binding.or";
@@ -14482,6 +14532,7 @@ auto main() -> int {
     test_collects_test_only_dynamic_array_element_owned_cleanup_readiness_metadata();
     test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();
+    test_rejects_computed_dynamic_array_predicted_owner_before_production_lowering();
     test_binds_test_only_dynamic_array_parameter_descriptor_origin();
     test_emits_authorized_owned_dynamic_array_parameter_cleanup();
     test_emits_authorized_owned_local_dynamic_array_cleanup();
