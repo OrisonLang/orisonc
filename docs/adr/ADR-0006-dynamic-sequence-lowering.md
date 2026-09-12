@@ -209,6 +209,9 @@ representation.
 - Dynamic-array cleanup emission capability proofs now also retain owned-element drop pairs when element cleanup is
   required. Each pair identifies the cleanup owner, element capture, and authorized drop ABI symbol summarized by the
   aggregate capability gate.
+- Computed DynamicArray `for` production readiness is now reported as a combined audit line, joining the production
+  gate, sequence metadata, inserted cleanup transition, state verification, owner matching, and cleanup-emission
+  authorization predicates into one driver-visible status.
 - DynamicArray receiver `.push` lowering now rejects owned element appends unless semantic Drop lowering authorizes the
   element Drop ABI. Receiver bodies use type-level Drop proof so `this.push(value)` can lower for any proven
   `DynamicArray<T>` specialization while missing-Drop owned appends fail before LLVM IR validation.

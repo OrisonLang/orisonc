@@ -3348,3 +3348,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   responsible for fixture-family intent.
 - 2026-09-12: The shared production-path diagnostic helper now uses delegate-oriented wording. Named smoke helpers
   remain responsible for fixture-family intent across `run`, `--emit-llvm`, `--emit-object`, and `--build`.
+- 2026-09-12: Computed DynamicArray `for` production readiness now has a combined driver audit line covering the
+  production gate, sequence metadata, inserted cleanup transition, state verification, owner matching, and cleanup
+  emission authorization predicates.

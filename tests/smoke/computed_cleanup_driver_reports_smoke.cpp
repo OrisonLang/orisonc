@@ -899,6 +899,45 @@ void assert_computed_dynamic_array_production_reports() {
     );
     assert(sequence[1] == "computed DynamicArray production sequence detail owner items (metadata only)");
 
+    auto computed_ready = driver::computed_dynamic_array_for_production_readiness_report(
+        pipeline::ComputedDynamicArrayForProductionReadiness {
+            .gate_ready = true,
+            .sequence_ready = true,
+            .inserted_cleanup_transition_ready = true,
+            .inserted_cleanup_state_verification_ready = true,
+            .gate_sequence_counts_match = true,
+            .gate_sequence_snippets_match = true,
+            .sequence_transition_counts_match = true,
+            .transition_verification_counts_match = true,
+            .cleanup_owners_match = true,
+            .production_emission_enabled = true,
+        }
+    );
+    assert(computed_ready.size() == 1);
+    assert(
+        computed_ready.front() ==
+        "computed DynamicArray production readiness ready [gate ready] [sequence ready] "
+        "[cleanup transition ready] [cleanup state verified] [gate sequence counts match] "
+        "[gate sequence snippets match] [sequence transition counts match] "
+        "[transition verification counts match] [cleanup owners match] [production emission enabled] "
+        "(metadata only)"
+    );
+
+    auto computed_blocked = driver::computed_dynamic_array_for_production_readiness_report(
+        pipeline::ComputedDynamicArrayForProductionReadiness {
+            .sequence_ready = true,
+        }
+    );
+    assert(computed_blocked.size() == 1);
+    assert(
+        computed_blocked.front() ==
+        "computed DynamicArray production readiness blocked [gate blocked] [sequence ready] "
+        "[cleanup transition blocked] [cleanup state blocked] [gate sequence counts mismatch] "
+        "[gate sequence snippets mismatch] [sequence transition counts mismatch] "
+        "[transition verification counts mismatch] [cleanup owners mismatch] [production emission disabled] "
+        "(metadata only)"
+    );
+
     auto ready = driver::dynamic_array_cleanup_production_readiness_state_report(
         pipeline::DynamicArrayCleanupProductionReadiness {
             .descriptor_summaries_available = true,

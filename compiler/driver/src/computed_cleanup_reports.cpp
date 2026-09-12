@@ -981,6 +981,38 @@ auto computed_dynamic_array_for_production_sequence_state_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_production_readiness_report(
+    pipeline::ComputedDynamicArrayForProductionReadiness const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << (state.gate_ready ? "[gate ready]" : "[gate blocked]");
+    counts << (state.sequence_ready ? " [sequence ready]" : " [sequence blocked]");
+    counts << (state.inserted_cleanup_transition_ready ?
+        " [cleanup transition ready]" : " [cleanup transition blocked]");
+    counts << (state.inserted_cleanup_state_verification_ready ?
+        " [cleanup state verified]" : " [cleanup state blocked]");
+    counts << (state.gate_sequence_counts_match ?
+        " [gate sequence counts match]" : " [gate sequence counts mismatch]");
+    counts << (state.gate_sequence_snippets_match ?
+        " [gate sequence snippets match]" : " [gate sequence snippets mismatch]");
+    counts << (state.sequence_transition_counts_match ?
+        " [sequence transition counts match]" : " [sequence transition counts mismatch]");
+    counts << (state.transition_verification_counts_match ?
+        " [transition verification counts match]" : " [transition verification counts mismatch]");
+    counts << (state.cleanup_owners_match ? " [cleanup owners match]" : " [cleanup owners mismatch]");
+    counts << (state.production_emission_enabled ?
+        " [production emission enabled]" : " [production emission disabled]");
+    append_computed_cleanup_summary(
+        lines,
+        "production readiness",
+        pipeline::computed_dynamic_array_for_production_ready(state) ? "ready" : "blocked",
+        counts.str(),
+        "(metadata only)"
+    );
+    return lines;
+}
+
 auto dynamic_array_cleanup_production_readiness_state_report(
     pipeline::DynamicArrayCleanupProductionReadiness const& state
 ) -> std::vector<std::string> {
