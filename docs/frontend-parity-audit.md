@@ -555,8 +555,8 @@
 - 2026-07-30: aggregate projection access collection now uses an internal metadata-named option and typed access-plan
   records through lowering/pipeline boundaries; only the explicit CLI report command renders text.
 - 2026-07-30: computed owned `DynamicArray<T>` `for` audit collectors now reserve production audit naming for result
-  metadata and helper functions. The remaining broad `test_only_dynamic_array_*` snippet fields are classified as
-  fixture-only renderers, while fixture construction requests use intent-named fields.
+  metadata and helper functions. DynamicArray snippet capture vectors now use fixture-named result fields, while the
+  explicit `test_only_render_dynamic_array_*` options remain the opt-in rendering gates.
 - 2026-08-02: DynamicArray fixture construction request fields now use fixture-named internal API surface instead of
   the prior broad test-only construction-request naming.
 - 2026-08-02: DynamicArray cleanup derivation, fixture parameter descriptors, and fixture bound-parameter cleanup

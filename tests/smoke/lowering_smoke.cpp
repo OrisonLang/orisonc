@@ -412,17 +412,17 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_allocate") == std::string::npos);
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_grow") == std::string::npos);
     assert(result.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
-    assert(result.test_only_dynamic_array_allocation_call_ir.size() == 1);
+    assert(result.fixture_dynamic_array_allocation_call_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_allocation_call_ir.front() ==
+        result.fixture_dynamic_array_allocation_call_ir.front() ==
         "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
         "  call void @__orison_dynamic_array_allocate("
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 4)\n"
         "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
-    assert(result.test_only_dynamic_array_grow_call_ir.size() == 1);
+    assert(result.fixture_dynamic_array_grow_call_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_grow_call_ir.front() ==
+        result.fixture_dynamic_array_grow_call_ir.front() ==
         "  %dynamic_array0.grown.input = alloca { ptr, i64, i64 }\n"
         "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.grown.input\n"
         "  %dynamic_array0.grown.addr = alloca { ptr, i64, i64 }\n"
@@ -432,14 +432,14 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
         "  %dynamic_array0.grown = load { ptr, i64, i64 }, ptr %dynamic_array0.grown.addr\n"
     );
-    assert(result.test_only_dynamic_array_deallocation_call_ir.size() == 1);
+    assert(result.fixture_dynamic_array_deallocation_call_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_deallocation_call_ir.front() ==
+        result.fixture_dynamic_array_deallocation_call_ir.front() ==
         "  call void @__orison_dynamic_array_deallocate(ptr %dynamic_array0.data, i64 4, i64 %dynamic_array0.capacity)\n"
     );
-    assert(result.test_only_dynamic_array_descriptor_binding_ir.size() == 1);
+    assert(result.fixture_dynamic_array_descriptor_binding_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_descriptor_binding_ir.front() ==
+        result.fixture_dynamic_array_descriptor_binding_ir.front() ==
         "  %dynamic_array0.addr = alloca { ptr, i64, i64 }\n"
         "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.addr\n"
     );
@@ -478,69 +478,69 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "[descriptor finalization blocked] (metadata only)"
     );
     assert(result.ir_text.find("%dynamic_array0.addr = alloca { ptr, i64, i64 }") == std::string::npos);
-    assert(result.test_only_dynamic_array_descriptor_projection_ir.size() == 3);
+    assert(result.fixture_dynamic_array_descriptor_projection_ir.size() == 3);
     assert(
-        result.test_only_dynamic_array_descriptor_projection_ir[0] ==
+        result.fixture_dynamic_array_descriptor_projection_ir[0] ==
         "  %dynamic_array0.data = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 0\n"
     );
     assert(
-        result.test_only_dynamic_array_descriptor_projection_ir[1] ==
+        result.fixture_dynamic_array_descriptor_projection_ir[1] ==
         "  %dynamic_array0.length = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 1\n"
     );
     assert(
-        result.test_only_dynamic_array_descriptor_projection_ir[2] ==
+        result.fixture_dynamic_array_descriptor_projection_ir[2] ==
         "  %dynamic_array0.capacity = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 2\n"
     );
     assert(result.ir_text.find("%dynamic_array0.length = extractvalue") == std::string::npos);
-    assert(result.test_only_dynamic_array_bounds_check_ir.size() == 3);
+    assert(result.fixture_dynamic_array_bounds_check_ir.size() == 3);
     assert(
-        result.test_only_dynamic_array_bounds_check_ir[0] ==
+        result.fixture_dynamic_array_bounds_check_ir[0] ==
         "  %dynamic_array0.index.in_bounds = icmp ult i64 %dynamic_array0.index, %dynamic_array0.length\n"
     );
     assert(
-        result.test_only_dynamic_array_bounds_check_ir[1] ==
+        result.fixture_dynamic_array_bounds_check_ir[1] ==
         "  %dynamic_array0.append.has_capacity = icmp ult i64 %dynamic_array0.length, %dynamic_array0.capacity\n"
     );
     assert(
-        result.test_only_dynamic_array_bounds_check_ir[2] ==
+        result.fixture_dynamic_array_bounds_check_ir[2] ==
         "  %dynamic_array0.length.within_capacity = icmp ule i64 %dynamic_array0.length, %dynamic_array0.capacity\n"
     );
     assert(result.ir_text.find("%dynamic_array0.index.in_bounds = icmp") == std::string::npos);
-    assert(result.test_only_dynamic_array_element_address_ir.size() == 1);
+    assert(result.fixture_dynamic_array_element_address_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_address_ir.front() ==
+        result.fixture_dynamic_array_element_address_ir.front() ==
         "  %dynamic_array0.element.addr = getelementptr i32, ptr %dynamic_array0.data, i64 %dynamic_array0.index\n"
     );
     assert(result.ir_text.find("%dynamic_array0.element.addr = getelementptr") == std::string::npos);
-    assert(result.test_only_dynamic_array_element_load_ir.size() == 1);
+    assert(result.fixture_dynamic_array_element_load_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_load_ir.front() ==
+        result.fixture_dynamic_array_element_load_ir.front() ==
         "  %dynamic_array0.element = load i32, ptr %dynamic_array0.element.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.element = load") == std::string::npos);
-    assert(result.test_only_dynamic_array_element_store_ir.size() == 1);
+    assert(result.fixture_dynamic_array_element_store_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_store_ir.front() ==
+        result.fixture_dynamic_array_element_store_ir.front() ==
         "  store i32 %dynamic_array0.value, ptr %dynamic_array0.element.addr\n"
     );
     assert(result.ir_text.find("store i32 %dynamic_array0.value") == std::string::npos);
-    assert(result.test_only_dynamic_array_descriptor_length_update_ir.size() == 1);
+    assert(result.fixture_dynamic_array_descriptor_length_update_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_descriptor_length_update_ir.front() ==
+        result.fixture_dynamic_array_descriptor_length_update_ir.front() ==
         "  %dynamic_array0.next.length = add i64 %dynamic_array0.length, 1\n"
         "  %dynamic_array0.updated = insertvalue { ptr, i64, i64 } %dynamic_array_alloc0, "
         "i64 %dynamic_array0.next.length, 1\n"
     );
     assert(result.ir_text.find("%dynamic_array0.updated = insertvalue") == std::string::npos);
-    assert(result.test_only_dynamic_array_descriptor_write_back_ir.size() == 1);
+    assert(result.fixture_dynamic_array_descriptor_write_back_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_descriptor_write_back_ir.front() ==
+        result.fixture_dynamic_array_descriptor_write_back_ir.front() ==
         "  store { ptr, i64, i64 } %dynamic_array0.updated, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("store { ptr, i64, i64 } %dynamic_array0.updated") == std::string::npos);
-    assert(result.test_only_dynamic_array_append_sequence_ir.size() == 1);
+    assert(result.fixture_dynamic_array_append_sequence_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_append_sequence_ir.front() ==
+        result.fixture_dynamic_array_append_sequence_ir.front() ==
         "  %dynamic_array0.append.has_capacity = icmp ult i64 %dynamic_array0.length, %dynamic_array0.capacity\n"
         "  %dynamic_array0.append.element.addr = getelementptr i32, ptr %dynamic_array0.data, "
         "i64 %dynamic_array0.length\n"
@@ -551,9 +551,9 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array0.append.updated, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.append.has_capacity = icmp") == std::string::npos);
-    assert(result.test_only_dynamic_array_grow_sequence_ir.size() == 1);
+    assert(result.fixture_dynamic_array_grow_sequence_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_grow_sequence_ir.front() ==
+        result.fixture_dynamic_array_grow_sequence_ir.front() ==
         "  %dynamic_array0.grow.next.capacity = mul i64 %dynamic_array0.capacity, 2\n"
         "  %dynamic_array0.grown.input = alloca { ptr, i64, i64 }\n"
         "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.grown.input\n"
@@ -566,9 +566,9 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array0.grown, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.grown = call") == std::string::npos);
-    assert(result.test_only_dynamic_array_append_with_grow_sequence_ir.size() == 1);
+    assert(result.fixture_dynamic_array_append_with_grow_sequence_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_append_with_grow_sequence_ir.front() ==
+        result.fixture_dynamic_array_append_with_grow_sequence_ir.front() ==
         "dynamic_array0.append.entry:\n"
         "  %dynamic_array0.append.has_capacity = icmp ult i64 %dynamic_array0.length, %dynamic_array0.capacity\n"
         "  br i1 %dynamic_array0.append.has_capacity, label %dynamic_array0.append.ready, "
@@ -599,9 +599,9 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array0.active.append.updated, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("dynamic_array0.append.entry") == std::string::npos);
-    assert(result.test_only_dynamic_array_cleanup_sequence_ir.size() == 1);
+    assert(result.fixture_dynamic_array_cleanup_sequence_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_cleanup_sequence_ir.front() ==
+        result.fixture_dynamic_array_cleanup_sequence_ir.front() ==
         "  %dynamic_array0.cleanup.data = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 0\n"
         "  %dynamic_array0.cleanup.length = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 1\n"
         "  %dynamic_array0.cleanup.capacity = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 2\n"
@@ -623,9 +623,9 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "(ptr %dynamic_array0.cleanup.data, i64 4, i64 %dynamic_array0.cleanup.capacity)\n"
     );
     assert(result.ir_text.find("%dynamic_array0.cleanup.data = extractvalue") == std::string::npos);
-    assert(result.test_only_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
+    assert(result.fixture_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_owned_cleanup_walk_ir.front() ==
+        result.fixture_dynamic_array_element_owned_cleanup_walk_ir.front() ==
         "  br label %dynamic_array0.drop.walk\n"
         "dynamic_array0.drop.walk:\n"
         "  %dynamic_array0.drop.index = phi i64 [ 0, %dynamic_array0.cleanup.entry ], "
@@ -686,7 +686,7 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 4)\n"
         "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
-    assert(production_construction.test_only_dynamic_array_allocation_call_ir.empty());
+    assert(production_construction.fixture_dynamic_array_allocation_call_ir.empty());
     assert(
         production_construction.ir_text.find(
             "call void @__orison_dynamic_array_allocate"
@@ -733,7 +733,7 @@ void test_collects_fixture_dynamic_array_construction_metadata() {
         "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 0)\n"
         "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
-    assert(source_construction.test_only_dynamic_array_allocation_call_ir.empty());
+    assert(source_construction.fixture_dynamic_array_allocation_call_ir.empty());
     assert_ir_contains(
         source_construction,
         "declare void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }), i64, i64)"
@@ -1407,21 +1407,21 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         blocked_readiness[1] ==
         "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 1"
     );
-    assert(blocked.test_only_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
-    assert(blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
+    assert(blocked.fixture_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
+    assert(blocked.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
     assert(
-        blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
+        blocked.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
             "  %dynamic_array0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
         ) != std::string::npos
     );
     assert(
-        blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
+        blocked.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
             "  call void @__orison_dynamic_array_deallocate(ptr %dynamic_array0.cleanup.data, i64 8, "
             "i64 %dynamic_array0.cleanup.capacity)\n"
         ) != std::string::npos
     );
     assert(
-        blocked.test_only_dynamic_array_element_owned_cleanup_walk_ir.front().find(
+        blocked.fixture_dynamic_array_element_owned_cleanup_walk_ir.front().find(
             "planned drop for Payload at %dynamic_array0.drop.element.addr remains disabled"
         ) != std::string::npos
     );
@@ -1568,15 +1568,15 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         "drop readiness relation __orison_dynamic_array_cleanup.0 authorized semantic blockers 0 "
         "emitted declarations 0 missing declarations 0"
     );
-    assert(result.test_only_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
+    assert(result.fixture_dynamic_array_element_owned_cleanup_walk_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_element_owned_cleanup_walk_ir.front().find(
+        result.fixture_dynamic_array_element_owned_cleanup_walk_ir.front().find(
             "planned drop for UInt32 at %dynamic_array0.drop.element.addr remains disabled"
         ) != std::string::npos
     );
-    assert(result.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
+    assert(result.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
     assert(
-        result.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front() ==
+        result.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.front() ==
         "  %dynamic_array0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
         "  %dynamic_array0.cleanup.data = extractvalue { ptr, i64, i64 } %dynamic_array0.descriptor, 0\n"
         "  %dynamic_array0.cleanup.length = extractvalue { ptr, i64, i64 } %dynamic_array0.descriptor, 1\n"
@@ -1687,9 +1687,9 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     auto summary = bound.owned_cleanup_readiness_summary();
     assert(summary.cleanup_authorized == 1);
     assert(summary.cleanup_blocked == 0);
-    assert(bound.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
+    assert(bound.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
     assert(
-        bound.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
+        bound.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
             "  %dynamic_array0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
         ) != std::string::npos
     );

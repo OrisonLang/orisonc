@@ -4377,14 +4377,14 @@ auto emit_module(
                 result.dynamic_array_allocation_call_ir.push_back(call_ir);
             }
             if (options.test_only_render_dynamic_array_allocation_calls) {
-                result.test_only_dynamic_array_allocation_call_ir.push_back(std::move(call_ir));
+                result.fixture_dynamic_array_allocation_call_ir.push_back(std::move(call_ir));
             }
         }
     }
     if (options.test_only_render_dynamic_array_grow_calls) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_grow_call_ir.push_back(
+            result.fixture_dynamic_array_grow_call_ir.push_back(
                 emit_dynamic_array_grow_call(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".grown",
@@ -4397,7 +4397,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_deallocation_calls) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_deallocation_call_ir.push_back(
+            result.fixture_dynamic_array_deallocation_call_ir.push_back(
                 emit_dynamic_array_deallocation_call(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".data",
@@ -4408,7 +4408,7 @@ auto emit_module(
     }
     if (options.test_only_render_dynamic_array_descriptor_bindings) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
-            result.test_only_dynamic_array_descriptor_binding_ir.push_back(
+            result.fixture_dynamic_array_descriptor_binding_ir.push_back(
                 emit_dynamic_array_descriptor_binding(
                     result.dynamic_array_construction_plans[index],
                     "%dynamic_array" + std::to_string(index) + ".addr",
@@ -4420,21 +4420,21 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_descriptor_projections) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto descriptor_name = "%dynamic_array_alloc" + std::to_string(index);
-            result.test_only_dynamic_array_descriptor_projection_ir.push_back(
+            result.fixture_dynamic_array_descriptor_projection_ir.push_back(
                 emit_dynamic_array_descriptor_field_projection(
                     "%dynamic_array" + std::to_string(index) + ".data",
                     descriptor_name,
                     DynamicArrayDescriptorField::data
                 )
             );
-            result.test_only_dynamic_array_descriptor_projection_ir.push_back(
+            result.fixture_dynamic_array_descriptor_projection_ir.push_back(
                 emit_dynamic_array_descriptor_field_projection(
                     "%dynamic_array" + std::to_string(index) + ".length",
                     descriptor_name,
                     DynamicArrayDescriptorField::length
                 )
             );
-            result.test_only_dynamic_array_descriptor_projection_ir.push_back(
+            result.fixture_dynamic_array_descriptor_projection_ir.push_back(
                 emit_dynamic_array_descriptor_field_projection(
                     "%dynamic_array" + std::to_string(index) + ".capacity",
                     descriptor_name,
@@ -4446,7 +4446,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_bounds_checks) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_bounds_check_ir.push_back(
+            result.fixture_dynamic_array_bounds_check_ir.push_back(
                 emit_dynamic_array_bounds_check(
                     prefix + ".index.in_bounds",
                     prefix + ".index",
@@ -4454,7 +4454,7 @@ auto emit_module(
                     DynamicArrayBoundsCheckKind::index_within_length
                 )
             );
-            result.test_only_dynamic_array_bounds_check_ir.push_back(
+            result.fixture_dynamic_array_bounds_check_ir.push_back(
                 emit_dynamic_array_bounds_check(
                     prefix + ".append.has_capacity",
                     prefix + ".length",
@@ -4462,7 +4462,7 @@ auto emit_module(
                     DynamicArrayBoundsCheckKind::append_has_capacity
                 )
             );
-            result.test_only_dynamic_array_bounds_check_ir.push_back(
+            result.fixture_dynamic_array_bounds_check_ir.push_back(
                 emit_dynamic_array_bounds_check(
                     prefix + ".length.within_capacity",
                     prefix + ".length",
@@ -4475,7 +4475,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_element_addresses) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_element_address_ir.push_back(
+            result.fixture_dynamic_array_element_address_ir.push_back(
                 emit_dynamic_array_element_address(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".element.addr",
@@ -4488,7 +4488,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_element_loads) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_element_load_ir.push_back(
+            result.fixture_dynamic_array_element_load_ir.push_back(
                 emit_dynamic_array_element_load(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".element",
@@ -4500,7 +4500,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_element_stores) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_element_store_ir.push_back(
+            result.fixture_dynamic_array_element_store_ir.push_back(
                 emit_dynamic_array_element_store(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".value",
@@ -4512,7 +4512,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_descriptor_length_updates) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_descriptor_length_update_ir.push_back(
+            result.fixture_dynamic_array_descriptor_length_update_ir.push_back(
                 emit_dynamic_array_descriptor_length_update(
                     prefix + ".updated",
                     prefix + ".next.length",
@@ -4525,7 +4525,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_descriptor_write_backs) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_descriptor_write_back_ir.push_back(
+            result.fixture_dynamic_array_descriptor_write_back_ir.push_back(
                 emit_dynamic_array_descriptor_write_back(
                     prefix + ".updated",
                     prefix + ".addr"
@@ -4536,7 +4536,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_append_sequences) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_append_sequence_ir.push_back(
+            result.fixture_dynamic_array_append_sequence_ir.push_back(
                 emit_dynamic_array_append_sequence(
                     result.dynamic_array_construction_plans[index],
                     "%dynamic_array_alloc" + std::to_string(index),
@@ -4553,7 +4553,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_grow_sequences) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_grow_sequence_ir.push_back(
+            result.fixture_dynamic_array_grow_sequence_ir.push_back(
                 emit_dynamic_array_grow_sequence(
                     result.dynamic_array_construction_plans[index],
                     "%dynamic_array_alloc" + std::to_string(index),
@@ -4567,7 +4567,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_append_with_grow_sequences) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_append_with_grow_sequence_ir.push_back(
+            result.fixture_dynamic_array_append_with_grow_sequence_ir.push_back(
                 emit_dynamic_array_append_with_grow_sequence(
                     result.dynamic_array_construction_plans[index],
                     "%dynamic_array_alloc" + std::to_string(index),
@@ -4584,7 +4584,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_cleanup_sequences) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_cleanup_sequence_ir.push_back(
+            result.fixture_dynamic_array_cleanup_sequence_ir.push_back(
                 emit_dynamic_array_cleanup_sequence(
                     result.dynamic_array_construction_plans[index],
                     "%dynamic_array_alloc" + std::to_string(index),
@@ -4598,7 +4598,7 @@ auto emit_module(
         for (auto index = std::size_t {0}; index < result.dynamic_array_descriptor_cleanup_plans.size(); ++index) {
             auto ordinal = offset + index;
             auto prefix = "%dynamic_array" + std::to_string(ordinal);
-            result.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.push_back(
+            result.fixture_dynamic_array_descriptor_load_cleanup_sequence_ir.push_back(
                 emit_dynamic_array_descriptor_load_cleanup_sequence(
                     result.dynamic_array_descriptor_cleanup_plans[index],
                     prefix + ".descriptor",
@@ -4610,7 +4610,7 @@ auto emit_module(
     if (options.test_only_render_dynamic_array_element_owned_cleanup_walks) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);
-            result.test_only_dynamic_array_element_owned_cleanup_walk_ir.push_back(
+            result.fixture_dynamic_array_element_owned_cleanup_walk_ir.push_back(
                 emit_dynamic_array_element_owned_cleanup_walk(
                     result.dynamic_array_construction_plans[index],
                     prefix + ".cleanup.data",
@@ -4623,7 +4623,7 @@ auto emit_module(
         for (auto index = std::size_t {0}; index < result.dynamic_array_descriptor_cleanup_plans.size(); ++index) {
             auto ordinal = offset + index;
             auto prefix = "%dynamic_array" + std::to_string(ordinal);
-            result.test_only_dynamic_array_element_owned_cleanup_walk_ir.push_back(
+            result.fixture_dynamic_array_element_owned_cleanup_walk_ir.push_back(
                 emit_dynamic_array_element_owned_cleanup_walk(
                     result.dynamic_array_descriptor_cleanup_plans[index],
                     prefix + ".cleanup.data",

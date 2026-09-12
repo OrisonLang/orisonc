@@ -1343,8 +1343,10 @@ representation.
 - DynamicArray temp-fixture audit now classifies the remaining `compile_pipeline_smoke.cpp` generated source files.
   User-facing scalar/local/owned/computed paths are covered by checked-in examples or fixtures; pipeline-only temp
   files remain appropriate for metadata, runtime request, descriptor-finalization, and test-only cleanup insertion
-  seams. The remaining implementation gaps stay parameter mutation policy, broader generic coverage, computed-cleanup
-  productionization, and runtime/allocator expansion.
+  seams. DynamicArray snippet capture vectors now use fixture-named result fields while explicit
+  `test_only_render_dynamic_array_*` options remain the opt-in rendering gates. The remaining implementation gaps stay
+  parameter mutation policy, broader generic coverage, computed-cleanup productionization, and runtime/allocator
+  expansion.
 - Bound `DynamicArray<T>` parameter mutation is intentionally rejected on the current production path.
   `DynamicArray<T>` parameters support descriptor reads, iteration, transfer, and cleanup; they do not support
   `items[index] = value` or `items.push(value)` as parameter descriptor mutation. Parameter-style mutable element
