@@ -190,6 +190,19 @@ void assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
     );
 }
 
+void assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message
+) {
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        path,
+        expected_message,
+        "lowering does not yet support this return expression"
+    );
+}
+
 void assert_cli_emit_llvm_existing_fixture_short_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -6341,11 +6354,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
-        "use after move: items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: items[(index + zero)]"
     );
     assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
@@ -6353,11 +6365,10 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "runtime_indexed_choice_payload_member_reuse_rejected",
         "use after move: items[(index + zero)]"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
-        "use after move: holder.items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: holder.items[(index + zero)]"
     );
     assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
@@ -6671,11 +6682,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_direct_sibling"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
-        "use after move: items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: items[index]"
     );
     assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
@@ -6696,11 +6706,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_computed_sibling"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
-        "use after move: items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: items[(index + zero)]"
     );
     assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
@@ -6721,11 +6730,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_run.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_nested_sibling_path"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
-        "use after move: items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: items[(index + zero)]"
     );
     assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,

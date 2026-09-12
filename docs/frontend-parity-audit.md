@@ -3340,3 +3340,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Receiver method-chain DynamicArray reuse-rejection emit-LLVM coverage now uses a named helper. The
   fixtures continue to verify receiver/member-chain use-after-move diagnostics while rejecting stale fallback
   diagnostics.
+- 2026-09-12: Runtime-indexed DynamicArray member/sibling reuse-rejection emit-LLVM coverage now uses a named helper.
+  The fixtures continue to verify indexed member use-after-move diagnostics while rejecting stale fallback diagnostics.
