@@ -248,6 +248,22 @@ void assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
     );
 }
 
+void assert_cli_receiver_method_chain_reuse_production_failures(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_base,
+    std::string_view expected_message,
+    std::string_view rejected_message
+) {
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        path,
+        output_base,
+        expected_message,
+        rejected_message
+    );
+}
+
 void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5063,7 +5079,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[index].values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_reuse_rejected",
@@ -5085,7 +5101,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)].values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_reuse_rejected",
@@ -5107,7 +5123,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[index].values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_append_statement_reuse_rejected",
@@ -5129,7 +5145,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)].values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_reuse_rejected",
@@ -5159,7 +5175,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)].box.values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_reuse_rejected",
@@ -5189,7 +5205,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)].box.values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_append_statement_reuse_rejected",
@@ -5219,7 +5235,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)].box.values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_reuse_rejected",
@@ -5249,7 +5265,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)].box.values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_reuse_rejected",
@@ -5279,7 +5295,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)].box.values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_reuse_rejected",
@@ -5309,7 +5325,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)].box.values",
         "switch case ownership mismatch"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_multi_variant_choice_computed_index_nested_field_method_chain_count_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_multi_variant_choice_computed_index_nested_field_method_chain_count_reuse_rejected",
@@ -5339,7 +5355,7 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)].box.values",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_receiver_method_chain_reuse_production_failures(
         executable,
         fixtures / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_reuse_rejected.or",
         smoke_temp_root / "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_reuse_rejected",

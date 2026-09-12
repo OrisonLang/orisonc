@@ -3331,3 +3331,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Runtime-indexed DynamicArray member/sibling reuse-rejection production coverage now uses a named helper.
   The fixtures continue to verify use-after-move diagnostics across `run`, `--emit-llvm`, `--emit-object`, and
   `--build`, while rejecting stale unsupported-return fallback diagnostics.
+- 2026-09-12: Receiver method-chain DynamicArray reuse-rejection production coverage now uses a named helper. The
+  fixtures continue to verify receiver/member-chain use-after-move diagnostics across `run`, `--emit-llvm`,
+  `--emit-object`, and `--build`.

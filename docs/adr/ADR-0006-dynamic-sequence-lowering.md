@@ -2882,6 +2882,8 @@ representation.
   keeping that rejection boundary distinct from unrelated reuse-rejection helpers.
 - Runtime-indexed DynamicArray member/sibling reuse-rejection production coverage now uses a named helper, keeping that
   boundary distinct from receiver method-chain and fixed record/choice constructor reuse-rejection helpers.
+- Receiver method-chain DynamicArray reuse-rejection production coverage now uses a named helper, keeping that boundary
+  distinct from runtime-indexed member/sibling and fixed record/choice constructor reuse-rejection helpers.
 
 ## Follow-up work
 
