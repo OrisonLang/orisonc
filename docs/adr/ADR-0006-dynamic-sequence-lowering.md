@@ -2878,6 +2878,8 @@ representation.
 - The obsolete `--test-only-runtime-indexed-member-cleanup-run` driver command has been removed. Its typed
   promotion-gate and execution-summary coverage now lives in direct pipeline smoke assertions, while production
   behavior remains covered by ordinary driver paths.
+- Generic driver smoke coverage now names the computed DynamicArray owner-mismatch production-failure helper directly,
+  keeping that rejection boundary distinct from unrelated reuse-rejection helpers.
 
 ## Follow-up work
 

@@ -3325,3 +3325,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: The obsolete `--test-only-runtime-indexed-member-cleanup-run` driver command has been removed.
   Typed promotion-gate and execution-summary coverage now lives in direct pipeline smoke assertions, while production
   behavior remains covered by ordinary driver paths.
+- 2026-09-11: Generic driver smoke coverage now names the computed DynamicArray owner-mismatch production-failure
+  helper directly. The covered fixtures still verify rejection across `run`, `--emit-llvm`, `--emit-object`, and
+  `--build`.
