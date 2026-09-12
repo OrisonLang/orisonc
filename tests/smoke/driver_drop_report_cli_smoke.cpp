@@ -1183,6 +1183,11 @@ int main() {
             "[production emission enabled] (metadata only)",
             "computed DynamicArray production sequence planned sequences 1 snippets 17 module-comments 0 "
             "[metadata available] [module comments absent] (metadata only)",
+            "computed DynamicArray production readiness ready [gate ready] [sequence ready] "
+            "[cleanup transition ready] [cleanup state verified] [gate sequence counts match] "
+            "[gate sequence snippets match] [sequence transition counts match] "
+            "[transition verification counts match] [cleanup owners match] [production emission enabled] "
+            "(metadata only)",
             "dynamic array cleanup production readiness ready",
         }
     );

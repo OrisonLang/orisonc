@@ -3351,3 +3351,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Computed DynamicArray `for` production readiness now has a combined driver audit line covering the
   production gate, sequence metadata, inserted cleanup transition, state verification, owner matching, and cleanup
   emission authorization predicates.
+- 2026-09-12: CLI cleanup-audit smoke coverage now verifies the combined computed DynamicArray `for`
+  production-readiness line for the local same-owner computed iterable fixture.

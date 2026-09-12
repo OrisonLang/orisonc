@@ -560,6 +560,12 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_production_sequence_state =
             std::move(emitted_result.computed_dynamic_array_for_production_sequence_state);
     }
+    if (pipeline::computed_dynamic_array_for_production_ready(
+            emitted_result.computed_dynamic_array_for_production_readiness
+        )) {
+        result.computed_dynamic_array_for_production_readiness =
+            emitted_result.computed_dynamic_array_for_production_readiness;
+    }
 }
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
