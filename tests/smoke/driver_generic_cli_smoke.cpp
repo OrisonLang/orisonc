@@ -156,6 +156,23 @@ void assert_cli_emit_llvm_existing_fixture_success(
     assert(output.find("define ") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_owned_parameter_missing_drop_boundary(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto emit_command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(emit_command);
+    assert(output.find("define i64 @count_items__Payload({ ptr, i64, i64 } %values)") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate") != std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+
+    auto run_command = executable.string() + " run " + path.string();
+    auto status = std::system(run_command.c_str());
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == 1);
+}
+
 void assert_cli_emit_llvm_existing_fixture_failure_without(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -4709,7 +4726,7 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_generic_owned_element_projection_missing_drop.or",
         smoke_temp_root / "dynamic_array_generic_owned_element_projection_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_cli_emit_llvm_owned_parameter_missing_drop_boundary(
         executable,
         fixtures / "dynamic_array_generic_owned_parameter_missing_drop.or"
     );

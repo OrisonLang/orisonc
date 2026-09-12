@@ -1589,6 +1589,8 @@ representation.
 - Runnable generic DynamicArray missing-Drop projection fixtures now use full production smoke coverage instead of
   emit-only checks. The owned-parameter missing-Drop fixture remains emit-only while its source-level `main()` exits
   nonzero.
+- The remaining generic owned-parameter missing-Drop boundary now uses a named smoke helper that verifies specialized
+  LLVM emission, owned-element cleanup/deallocation IR, and the expected source-level runtime exit status.
 - Runtime-index cleanup function IR mutation now receives predecessor, inserted branch, and CFG tail data through a
   structured insertion object before text mutation. This keeps the current splice implementation behavior intact while
   shrinking the raw string/vector API surface that still needs replacement by a fuller structured IR representation.
