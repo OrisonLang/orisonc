@@ -1672,7 +1672,8 @@ void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failu
     auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert(
         output.find(
-            "computed DynamicArray owner mismatch: branches resolve to left right for DynamicArray<Payload>"
+            "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to left right for "
+            "DynamicArray<Payload>"
         ) != std::string::npos
     );
     assert(
@@ -1698,7 +1699,7 @@ void assert_computed_dynamic_array_owner_mismatch_failure_matrix(
     std::string_view right_owner
 ) {
     auto const expected_summary_fragment =
-        "computed DynamicArray owner mismatch: branches resolve to " +
+        "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to " +
         std::string {left_owner} + " " + std::string {right_owner} + " for DynamicArray<Payload>";
     auto const expected_owner_fragment =
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "

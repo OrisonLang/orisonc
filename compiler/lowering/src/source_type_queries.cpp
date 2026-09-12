@@ -1266,7 +1266,9 @@ auto computed_dynamic_array_iterable_failure_summary_report(
 
     if (plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch &&
         !plan.branch_owner_names.empty()) {
-        auto output = std::string {"computed DynamicArray owner mismatch: branches resolve to"};
+        auto output = std::string {
+            "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to"
+        };
         for (auto const& owner : plan.branch_owner_names) {
             output += ' ';
             output += owner;
@@ -1280,7 +1282,9 @@ auto computed_dynamic_array_iterable_failure_summary_report(
 
     if (plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven &&
         !plan.branch_owner_names.empty()) {
-        auto output = std::string {"computed DynamicArray cleanup owner unproven: branches resolve to"};
+        auto output = std::string {
+            "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to"
+        };
         for (auto const& owner : plan.branch_owner_names) {
             output += ' ';
             output += owner;

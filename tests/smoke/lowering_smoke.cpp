@@ -1957,7 +1957,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_parameter_for.render(path.string()).find(
-            "computed DynamicArray owner mismatch: branches resolve to left right for DynamicArray<UInt32>"
+            "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to left right for "
+            "DynamicArray<UInt32>"
         ) != std::string::npos
     );
     assert(
@@ -2152,7 +2153,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_nested_owner_mismatch_parameter_for.has_errors());
     assert(
         computed_nested_owner_mismatch_parameter_for.render(path.string()).find(
-            "computed DynamicArray owner mismatch: branches resolve to items items other for DynamicArray<UInt32>"
+            "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to items items other "
+            "for DynamicArray<UInt32>"
         ) != std::string::npos
     );
     assert(

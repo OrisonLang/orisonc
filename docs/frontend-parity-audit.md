@@ -3355,3 +3355,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   production-readiness line for the local same-owner computed iterable fixture.
 - 2026-09-12: CLI cleanup-audit smoke coverage now also verifies the blocked combined computed DynamicArray `for`
   production-readiness line for the rejected computed iterable fixture.
+- 2026-09-12: Computed DynamicArray owner-mismatch diagnostics now state the expected single cleanup-owner condition
+  before listing branch owners, with source-query, lowering, and CLI smoke coverage updated.

@@ -2845,6 +2845,9 @@ representation.
   fixture names remain compatibility surfaces.
 - Computed DynamicArray owner-mismatch diagnostics now include a short source-oriented branch-owner summary before the
   detailed audit chain, preserving the existing proof reports while making the immediate failure clearer.
+- Computed DynamicArray owner-mismatch and cleanup-owner-unproven summaries now state the expected owner condition
+  before listing resolved branch owners, so production diagnostics explain the blocked proof without requiring readers
+  to infer the invariant from the detailed audit chain.
 - Computed DynamicArray unsupported-shape diagnostics now include a short source-oriented summary before the detailed
   audit chain, while keeping the existing unsupported-shape proof report intact.
 - Computed DynamicArray same-owner cleanup-proof failures now include a short source-oriented summary before the

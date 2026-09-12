@@ -3465,8 +3465,8 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
             mismatched_computed_ownership_plan
-        ) == "computed DynamicArray owner mismatch: branches resolve to computed_left computed_right for "
-            "DynamicArray<UInt32>"
+        ) == "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to computed_left "
+            "computed_right for DynamicArray<UInt32>"
     );
     auto mismatched_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -4187,8 +4187,8 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
             unproven_computed_ownership_plan
-        ) == "computed DynamicArray cleanup owner unproven: branches resolve to predicted_items predicted_items for "
-            "DynamicArray<UInt32>"
+        ) == "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
+            "predicted_items predicted_items for DynamicArray<UInt32>"
     );
     auto unproven_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
