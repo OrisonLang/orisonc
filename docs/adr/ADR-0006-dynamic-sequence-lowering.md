@@ -2880,6 +2880,8 @@ representation.
   behavior remains covered by ordinary driver paths.
 - Generic driver smoke coverage now names the computed DynamicArray owner-mismatch production-failure helper directly,
   keeping that rejection boundary distinct from unrelated reuse-rejection helpers.
+- Runtime-indexed DynamicArray member/sibling reuse-rejection production coverage now uses a named helper, keeping that
+  boundary distinct from receiver method-chain and fixed record/choice constructor reuse-rejection helpers.
 
 ## Follow-up work
 

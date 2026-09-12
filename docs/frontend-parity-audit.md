@@ -3328,3 +3328,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Generic driver smoke coverage now names the computed DynamicArray owner-mismatch production-failure
   helper directly. The covered fixtures still verify rejection across `run`, `--emit-llvm`, `--emit-object`, and
   `--build`.
+- 2026-09-11: Runtime-indexed DynamicArray member/sibling reuse-rejection production coverage now uses a named helper.
+  The fixtures continue to verify use-after-move diagnostics across `run`, `--emit-llvm`, `--emit-object`, and
+  `--build`, while rejecting stale unsupported-return fallback diagnostics.

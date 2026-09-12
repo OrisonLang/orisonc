@@ -233,6 +233,21 @@ void assert_cli_existing_fixture_production_failures_without(
     }
 }
 
+void assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_base,
+    std::string_view expected_message
+) {
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        path,
+        output_base,
+        expected_message,
+        "lowering does not yet support this return expression"
+    );
+}
+
 void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -6287,12 +6302,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_computed_member_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_payload_member_reuse_rejected",
-        "use after move: items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: items[(index + zero)]"
     );
     assert_cli_emit_llvm_existing_fixture_failure_without(
         executable,
@@ -6300,12 +6314,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[(index + zero)]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_payload_nested_member_reuse_rejected",
-        "use after move: holder.items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: holder.items[(index + zero)]"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
@@ -6621,12 +6634,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[index]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_then_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_direct_sibling_reuse_rejected",
-        "use after move: items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: items[index]"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6647,12 +6659,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_member_path_sibling_then_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_computed_sibling_reuse_rejected",
-        "use after move: items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: items[(index + zero)]"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6673,12 +6684,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: items[(index + zero)]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_sibling_path_then_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_nested_sibling_reuse_rejected",
-        "use after move: items[(index + zero)]",
-        "lowering does not yet support this return expression"
+        "use after move: items[(index + zero)]"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
@@ -6720,12 +6730,11 @@ auto main(int argc, char** argv) -> int {
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
         "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_dynamic_array_member_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_direct_member_reuse_rejected",
-        "use after move: items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: items[index]"
     );
     }
 
