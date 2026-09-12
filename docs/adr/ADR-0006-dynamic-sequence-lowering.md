@@ -2884,6 +2884,8 @@ representation.
   boundary distinct from receiver method-chain and fixed record/choice constructor reuse-rejection helpers.
 - Receiver method-chain DynamicArray reuse-rejection production coverage now uses a named helper, keeping that boundary
   distinct from runtime-indexed member/sibling and fixed record/choice constructor reuse-rejection helpers.
+- Runtime-indexed fixed record/choice constructor reuse-rejection production coverage now uses a named helper, leaving
+  the broader production-failure-without helper as an internal delegate for named smoke boundaries.
 
 ## Follow-up work
 

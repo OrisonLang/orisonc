@@ -264,6 +264,21 @@ void assert_cli_receiver_method_chain_reuse_production_failures(
     );
 }
 
+void assert_cli_runtime_indexed_fixed_constructor_reuse_production_failures(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::filesystem::path const& output_base,
+    std::string_view expected_message
+) {
+    assert_cli_existing_fixture_production_failures_without(
+        executable,
+        path,
+        output_base,
+        expected_message,
+        "lowering does not yet support this return expression"
+    );
+}
+
 void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -6483,12 +6498,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[index]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_fixed_constructor_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_record_constructor_reuse_rejected",
-        "use after move: holder.items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: holder.items[index]"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -6513,12 +6527,11 @@ auto main(int argc, char** argv) -> int {
         "use after move: holder.items[index]",
         "lowering does not yet support this return expression"
     );
-    assert_cli_existing_fixture_production_failures_without(
+    assert_cli_runtime_indexed_fixed_constructor_reuse_production_failures(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_reuse_rejected.or",
         smoke_temp_root / "runtime_indexed_choice_constructor_reuse_rejected",
-        "use after move: holder.items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: holder.items[index]"
     );
     assert_cli_run_fixture_success(
         executable,
