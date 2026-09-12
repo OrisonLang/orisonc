@@ -164,7 +164,7 @@ void assert_cli_emit_llvm_owned_parameter_missing_drop_boundary(
     assert(WEXITSTATUS(status) == 1);
 }
 
-void assert_cli_emit_llvm_existing_fixture_failure_without(
+void assert_cli_emit_llvm_failure_containing_without(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
     std::string_view expected_message,
@@ -182,7 +182,7 @@ void assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
     std::string_view expected_message,
     std::string_view rejected_message
 ) {
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_failure_containing_without(
         executable,
         path,
         expected_message,
@@ -195,7 +195,7 @@ void assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
     std::filesystem::path const& path,
     std::string_view expected_message
 ) {
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_failure_containing_without(
         executable,
         path,
         expected_message,
@@ -208,7 +208,7 @@ void assert_cli_emit_llvm_runtime_indexed_fixed_constructor_reuse_failure(
     std::filesystem::path const& path,
     std::string_view expected_message
 ) {
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_failure_containing_without(
         executable,
         path,
         expected_message,

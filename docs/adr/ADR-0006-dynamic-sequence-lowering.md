@@ -2892,6 +2892,8 @@ representation.
   existing production-path runtime-indexed member helper boundary.
 - Runtime-indexed fixed record/choice constructor reuse-rejection emit-LLVM coverage now uses a named helper, leaving
   the broader emit-failure-without helper as an internal delegate for named smoke boundaries.
+- The shared emit-LLVM diagnostic helper now uses delegate-oriented wording so fixture-family intent stays on named
+  smoke helpers.
 
 ## Follow-up work
 
