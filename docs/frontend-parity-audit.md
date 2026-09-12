@@ -3342,3 +3342,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   diagnostics.
 - 2026-09-12: Runtime-indexed DynamicArray member/sibling reuse-rejection emit-LLVM coverage now uses a named helper.
   The fixtures continue to verify indexed member use-after-move diagnostics while rejecting stale fallback diagnostics.
+- 2026-09-12: Runtime-indexed fixed record/choice constructor reuse-rejection emit-LLVM coverage now uses a named
+  helper. The broader emit-failure helper is now only an internal delegate for named smoke boundaries.

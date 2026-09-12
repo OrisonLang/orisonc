@@ -203,6 +203,19 @@ void assert_cli_emit_llvm_runtime_indexed_dynamic_array_member_reuse_failure(
     );
 }
 
+void assert_cli_emit_llvm_runtime_indexed_fixed_constructor_reuse_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message
+) {
+    assert_cli_emit_llvm_existing_fixture_failure_without(
+        executable,
+        path,
+        expected_message,
+        "lowering does not yet support this return expression"
+    );
+}
+
 void assert_cli_emit_llvm_existing_fixture_short_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -6517,11 +6530,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_fixed_constructor_reuse_failure(
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_reuse_rejected.or",
-        "use after move: holder.items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: holder.items[index]"
     );
     assert_cli_runtime_indexed_fixed_constructor_reuse_production_failures(
         executable,
@@ -6546,11 +6558,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_sibling_run.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure_without(
+    assert_cli_emit_llvm_runtime_indexed_fixed_constructor_reuse_failure(
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_reuse_rejected.or",
-        "use after move: holder.items[index]",
-        "lowering does not yet support this return expression"
+        "use after move: holder.items[index]"
     );
     assert_cli_runtime_indexed_fixed_constructor_reuse_production_failures(
         executable,

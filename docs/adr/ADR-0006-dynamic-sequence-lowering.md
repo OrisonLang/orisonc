@@ -2890,6 +2890,8 @@ representation.
   production-path receiver helper boundary.
 - Runtime-indexed DynamicArray member/sibling reuse-rejection emit-LLVM coverage now uses a named helper, matching the
   existing production-path runtime-indexed member helper boundary.
+- Runtime-indexed fixed record/choice constructor reuse-rejection emit-LLVM coverage now uses a named helper, leaving
+  the broader emit-failure-without helper as an internal delegate for named smoke boundaries.
 
 ## Follow-up work
 
