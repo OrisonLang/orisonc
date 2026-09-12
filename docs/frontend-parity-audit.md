@@ -3310,3 +3310,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Forwarded-parameter DynamicArray computed cleanup now includes production coverage for final `switch`
   with nested final `if` forwarding the same owner. This mirrors the existing final `if` plus nested final `switch`
   fixture and verifies `run`, `--emit-llvm`, `--emit-object`, and `--build`.
+- 2026-09-11: Runtime-indexed member-cleanup rewrite enablement now uses a single internal lowering-options helper.
+  Smoke coverage pins incomplete gate combinations as disabled and the complete gate as enabled, reducing accidental
+  half-configured cleanup rewrites while preserving current syntax and production behavior.

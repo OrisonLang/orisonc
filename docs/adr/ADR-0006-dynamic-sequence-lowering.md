@@ -2861,6 +2861,10 @@ representation.
   use-after-move safety across nested branch scanners.
 - Nested final-control forwarded-parameter alias handoffs also reject reassignment of the alias from the moved owner,
   matching the direct final `if` and final `switch` alias reassignment boundary.
+- Runtime-indexed member-cleanup rewrite enablement is centralized behind
+  `runtime_indexed_member_cleanup_rewrite_enabled(...)`. The helper requires mutation request, production-gate request,
+  apply authorization, and rewrite execution before the internal rewrite path is considered enabled; partial gate
+  combinations remain disabled.
 
 ## Follow-up work
 

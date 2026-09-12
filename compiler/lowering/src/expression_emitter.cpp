@@ -3112,15 +3112,12 @@ auto lower_dynamic_array_element_path_read(
         }
         projected_source_type = std::move(*element);
     }
-    auto const runtime_index_member_cleanup_rewrite_enabled =
+    auto const runtime_index_member_cleanup_rewrite_ready =
         runtime_index_constructor_move_recorded &&
-        context.options.enable_runtime_indexed_member_cleanup_ir_mutation_request &&
-        context.options.enable_runtime_indexed_member_cleanup_production_gate_request &&
-        context.options.enable_runtime_indexed_member_cleanup_apply_authorization_request &&
-        context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request;
+        runtime_indexed_member_cleanup_rewrite_enabled(context.options);
     if (projected_source_type.has_value() &&
         is_owned_transfer_source_type(*projected_source_type, context.lowering) &&
-        !runtime_index_member_cleanup_rewrite_enabled) {
+        !runtime_index_member_cleanup_rewrite_ready) {
         record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,

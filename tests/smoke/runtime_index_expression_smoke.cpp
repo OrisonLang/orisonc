@@ -1,4 +1,5 @@
 #include "orison/lowering/runtime_index_expression.hpp"
+#include "orison/lowering/lowering_options.hpp"
 
 #include <cassert>
 #include <memory>
@@ -102,7 +103,9 @@ int main() {
     using orison::lowering::contains_runtime_indexed_projection;
     using orison::lowering::decimal_integer_literal_text;
     using orison::lowering::is_runtime_index_expression;
+    using orison::lowering::LlvmIrEmissionOptions;
     using orison::lowering::runtime_index_expression_key;
+    using orison::lowering::runtime_indexed_member_cleanup_rewrite_enabled;
 
     assert(runtime_index_expression_key(name("index")) == "index");
     assert(runtime_index_expression_key(integer_literal("7")) == "7");
@@ -131,4 +134,13 @@ int main() {
     assert(!contains_runtime_indexed_projection(index(name("items"), integer_literal("0"))));
     assert(contains_runtime_indexed_projection(index(name("items"), name("index"))));
     assert(contains_runtime_indexed_projection(member(index(name("items"), name("index")), "value")));
+
+    auto partial_options = LlvmIrEmissionOptions {};
+    partial_options.enable_runtime_indexed_member_cleanup_ir_mutation_request = true;
+    partial_options.enable_runtime_indexed_member_cleanup_production_gate_request = true;
+    partial_options.enable_runtime_indexed_member_cleanup_apply_authorization_request = true;
+    assert(!runtime_indexed_member_cleanup_rewrite_enabled(partial_options));
+
+    partial_options.enable_runtime_indexed_member_cleanup_rewrite_execution_request = true;
+    assert(runtime_indexed_member_cleanup_rewrite_enabled(partial_options));
 }

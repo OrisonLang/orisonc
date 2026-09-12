@@ -386,7 +386,7 @@ void prescan_runtime_indexed_member_cleanup_readiness(
 ) {
     if (!context.options.enable_runtime_indexed_cleanup_emission ||
         !context.options.enable_runtime_indexed_constructor_move ||
-        context.options.enable_runtime_indexed_member_cleanup_rewrite_execution_request) {
+        runtime_indexed_member_cleanup_rewrite_enabled(context.options)) {
         return;
     }
 

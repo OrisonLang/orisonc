@@ -136,4 +136,13 @@ inline auto dynamic_array_cleanup_emission_enabled(
         options.fixture_emit_bound_dynamic_array_parameter_cleanups;
 }
 
+inline auto runtime_indexed_member_cleanup_rewrite_enabled(
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.enable_runtime_indexed_member_cleanup_ir_mutation_request &&
+        options.enable_runtime_indexed_member_cleanup_production_gate_request &&
+        options.enable_runtime_indexed_member_cleanup_apply_authorization_request &&
+        options.enable_runtime_indexed_member_cleanup_rewrite_execution_request;
+}
+
 }  // namespace orison::lowering
