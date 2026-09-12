@@ -3359,3 +3359,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   before listing branch owners, with source-query, lowering, and CLI smoke coverage updated.
 - 2026-09-12: Computed DynamicArray cleanup-owner-unproven summaries now include per-branch cleanup-owner proof
   statuses, with source-query smoke coverage pinning predicted semantic descriptor origins.
+- 2026-09-12: Computed DynamicArray owner-mismatch CLI coverage now verifies the descriptor-owner requirement,
+  short owner-mismatch summary, production emission gate, and absence of cleanup-owner-unproven wording across `run`,
+  `--emit-llvm`, `--emit-object`, and `--build`.

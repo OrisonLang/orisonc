@@ -248,9 +248,28 @@ void assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
              executable.string() + " --emit-llvm " + path.string(),
              executable.string() + " --emit-object " + path.string() + " -o " + output_base.string() + ".o",
              executable.string() + " --build " + path.string() + " -o " + output_base.string() + "_build",
-         }) {
+        }) {
         auto output = read_failing_command_output(command);
+        assert(
+            output.find(
+                "computed DynamicArray iterable of type 'DynamicArray"
+            ) != std::string::npos
+        );
+        assert(
+            output.find("requires a proven single descriptor owner") != std::string::npos
+        );
+        assert(
+            output.find(
+                "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to"
+            ) != std::string::npos
+        );
         assert(output.find(expected_message) != std::string::npos);
+        assert(
+            output.find(
+                "computed DynamicArray production emission gate plan ownership join blocked"
+            ) != std::string::npos
+        );
+        assert(output.find("computed DynamicArray cleanup owner unproven") == std::string::npos);
     }
 }
 
