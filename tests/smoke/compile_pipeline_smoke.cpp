@@ -2389,6 +2389,26 @@ auto main() -> int {
             "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_same_owner_for_with_parameter_gate_disabled = pipeline.emit_llvm(
+        computed_dynamic_array_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .fixture_derive_dynamic_array_cleanup_from_semantics = true,
+            .dynamic_array_local_lowering_enabled = false,
+            .dynamic_array_parameter_lowering_enabled = false,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_same_owner_for_with_parameter_gate_disabled.has_errors());
+    assert(
+        computed_dynamic_array_same_owner_for_with_parameter_gate_disabled.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_same_owner_for_with_parameter_gate_disabled.ir_text.find(
+            "computed DynamicArray cleanup owner unproven"
+        ) == std::string::npos
+    );
 
     auto computed_dynamic_array_nested_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_nested_same_owner_for.or";
