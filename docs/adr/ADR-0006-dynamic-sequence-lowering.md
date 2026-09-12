@@ -937,15 +937,14 @@ representation.
   structured-plan completion, and the gated IR line count.
 - Runtime-index cleanup module mutation now has an explicit disabled-by-default pipeline gate. When enabled after
   candidate verification, it copies the verified candidate into module `ir_text` and marks production readiness ready.
-- Runtime-index computed constructor moves now have an explicit disabled-by-default acceptance gate. Ordinary emission
-  still rejects the move, while the audit workflow can enable constructor-move acceptance only alongside cleanup
-  emission, module insertion, and module mutation.
-- A gated executable smoke fixture now exercises the accepted multi-variant computed-index constructor move path through
-  `--test-only-runtime-indexed-constructor-move-run`; the command remains a compiler test seam rather than user syntax
-  and does not enable the pseudo module-mutation artifact.
+- Runtime-index computed constructor moves originally used an explicit disabled-by-default acceptance gate. Ordinary
+  production emission now accepts the proven constructor-move slices covered by the driver smoke suite.
+- The former gated executable smoke fixture for accepted multi-variant computed-index constructor moves has been
+  retired from the driver. Ordinary production `run` now covers the accepted runtime-indexed constructor-move path, and
+  production failure assertions cover the matching post-move reuse diagnostic.
 - Runtime-index partial-owner reuse now reports `use after move: holder.items[index]` when the accepted move path later
-  reads the same owner/index pair under the gated constructor-move workflow.
-- Runtime-index partial-owner sibling access now has a gated run fixture proving `holder.items[1]` remains readable
+  reads the same owner/index pair.
+- Runtime-index partial-owner sibling access now has production run coverage proving `holder.items[1]` remains readable
   after moving `holder.items[index]` when `index` is `0`.
 - Runtime-index gated constructor-move smoke coverage now spans record constructors, single-payload choice
   constructors, and multi-variant choice constructors, including accepted moves, sibling reads, and same-index reuse
@@ -2865,6 +2864,8 @@ representation.
   `runtime_indexed_member_cleanup_rewrite_enabled(...)`. The helper requires mutation request, production-gate request,
   apply authorization, and rewrite execution before the internal rewrite path is considered enabled; partial gate
   combinations remain disabled.
+- The obsolete `--test-only-runtime-indexed-constructor-move-run` driver command has been removed. Its success and
+  failure coverage now stays on ordinary production `run`, `--emit-llvm`, `--emit-object`, and `--build` paths.
 
 ## Follow-up work
 

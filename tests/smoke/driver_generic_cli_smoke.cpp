@@ -1614,15 +1614,6 @@ void assert_cli_run_fixture_success(
     assert(output.empty());
 }
 
-void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& path
-) {
-    auto command = executable.string() + " --test-only-runtime-indexed-constructor-move-run " + path.string();
-    auto output = read_command_output(command);
-    assert(output.empty());
-}
-
 void assert_cli_runtime_indexed_member_cleanup_summary_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -1745,28 +1736,6 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_summary_fixture_succes
         44,
         "var right_outer: Outer = Outer(right_items[right_index + right_zero].box.item)"
     );
-}
-
-void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& path,
-    std::string_view expected_message
-) {
-    auto command = executable.string() + " --test-only-runtime-indexed-constructor-move-run " + path.string();
-    auto output = read_failing_command_output(command);
-    assert(output.find(expected_message) != std::string::npos);
-}
-
-void assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure_without(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& path,
-    std::string_view expected_message,
-    std::string_view rejected_message
-) {
-    auto command = executable.string() + " --test-only-runtime-indexed-constructor-move-run " + path.string();
-    auto output = read_failing_command_output(command);
-    assert(output.find(expected_message) != std::string::npos);
-    assert(output.find(rejected_message) == std::string::npos);
 }
 
 void assert_cli_emit_llvm_fixture_success(
@@ -6762,10 +6731,6 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
     );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_success(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
-    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or"
@@ -6883,12 +6848,6 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_computed_local_nested_owner_mismatch_iterable_rejected",
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
         "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
-    );
-    assert_cli_test_only_runtime_indexed_constructor_move_run_fixture_failure_without(
-        executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_reuse_rejected.or",
-        "use after move: items[index]",
-        "lowering does not yet support this return expression"
     );
     assert_cli_existing_fixture_production_failures_without(
         executable,

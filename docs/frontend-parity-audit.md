@@ -3313,3 +3313,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-11: Runtime-indexed member-cleanup rewrite enablement now uses a single internal lowering-options helper.
   Smoke coverage pins incomplete gate combinations as disabled and the complete gate as enabled, reducing accidental
   half-configured cleanup rewrites while preserving current syntax and production behavior.
+- 2026-09-11: The obsolete `--test-only-runtime-indexed-constructor-move-run` driver command has been removed.
+  Runtime-indexed constructor-move success and reuse-rejection coverage remains on ordinary production driver paths.
