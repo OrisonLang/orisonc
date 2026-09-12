@@ -3149,6 +3149,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `main()` exits nonzero.
 - 2026-09-12: The remaining generic owned-parameter missing-Drop boundary now has a named smoke helper that verifies
   specialized LLVM emission, owned-element cleanup/deallocation IR, and the expected source-level runtime exit status.
+- 2026-09-12: The generic driver smoke no longer keeps a broad emit-only success helper. Remaining compile-only
+  boundaries use named helpers that state their expected runtime behavior.
 - 2026-08-29: The approved choice-payload runtime-index member-cleanup shape now has negative smoke coverage for
   post-transfer payload reuse and missing owned-element Drop authorization.
 - 2026-08-29: Scoped local DynamicArray cleanup now suppresses runtime-index cleanup owners before switch/branch-arm

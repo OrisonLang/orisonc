@@ -1591,6 +1591,8 @@ representation.
   nonzero.
 - The remaining generic owned-parameter missing-Drop boundary now uses a named smoke helper that verifies specialized
   LLVM emission, owned-element cleanup/deallocation IR, and the expected source-level runtime exit status.
+- The generic driver smoke no longer keeps a broad emit-only success helper. Remaining compile-only boundaries use
+  named helpers that state their expected runtime behavior.
 - Runtime-index cleanup function IR mutation now receives predecessor, inserted branch, and CFG tail data through a
   structured insertion object before text mutation. This keeps the current splice implementation behavior intact while
   shrinking the raw string/vector API surface that still needs replacement by a fuller structured IR representation.

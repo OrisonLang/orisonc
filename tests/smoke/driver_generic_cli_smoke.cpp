@@ -147,15 +147,6 @@ void assert_cli_emit_llvm_existing_fixture_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
-void assert_cli_emit_llvm_existing_fixture_success(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& path
-) {
-    auto command = executable.string() + " --emit-llvm " + path.string();
-    auto output = read_command_output(command);
-    assert(output.find("define ") != std::string::npos);
-}
-
 void assert_cli_emit_llvm_owned_parameter_missing_drop_boundary(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
