@@ -240,6 +240,9 @@ representation.
 - Loop-body owned transfers are preserved after loop exit for parameter cleanup safety. Production CLI coverage now
   rejects reading an owned `DynamicArray<T>` parameter after it is moved into a helper inside a finite `while` or
   `repeat` loop body.
+- Loop-control paths preserve the same owned-parameter replacement and move-safety rules. Production CLI coverage now
+  verifies owned-element replacement before terminal `break` and `continue`, and rejects post-loop reads after moving
+  an owned `DynamicArray<T>` parameter before either loop-control transfer.
 - DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
   owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
   receiver descriptor remains non-cleanup-owned by the method body.
