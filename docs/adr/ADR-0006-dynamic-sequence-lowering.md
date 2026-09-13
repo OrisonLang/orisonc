@@ -2952,6 +2952,8 @@ representation.
   and repeated move rejection through `holder.groups[group_index].items[item_index].values` projections.
 - Nested runtime-indexed fixed-array aggregate-path out-of-bounds coverage verifies guard ordering and runtime trap
   behavior for the first selected fixed-array projection.
+- Nested runtime-indexed fixed-array aggregate-path out-of-bounds coverage also verifies the second selected
+  fixed-array projection traps before reaching the DynamicArray element guard.
 
 ## Follow-up work
 
