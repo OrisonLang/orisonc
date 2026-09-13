@@ -3369,5 +3369,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   proven even when parameter lowering is disabled. The cleanup-owner-unproven diagnostic remains reachable through
   internal proof-suppression seams, not ordinary production source.
 - 2026-09-12: Scalar `DynamicArray<T>` parameter `push` now lowers on the production descriptor path. Array CLI smoke
-  coverage verifies descriptor grow/write-back IR and executable behavior for `DynamicArray<UInt32>` parameters while
-  indexed parameter assignment remains rejected.
+  coverage verifies descriptor grow/write-back IR and executable behavior for `DynamicArray<UInt32>` parameters.
+- 2026-09-12: Scalar `DynamicArray<T>` parameter indexed assignment now lowers on the production descriptor path.
+  Array CLI smoke coverage verifies bounds-checking IR, scalar element store, cleanup, and executable behavior for
+  `DynamicArray<UInt32>` parameters.

@@ -219,8 +219,10 @@ representation.
   value`. Owned element replacement emits the old-element Drop call under the same receiver type-level Drop proof used
   by receiver append.
 - Scalar `DynamicArray<T>` parameter `.push(value)` lowers through the same descriptor load, grow, element store, and
-  descriptor write-back path used for local dynamic arrays. Parameter indexed assignment remains blocked until mutable
-  parameter element writes have a proven source-level ownership model.
+  descriptor write-back path used for local dynamic arrays.
+- Scalar `DynamicArray<T>` parameter indexed assignment lowers through the same descriptor load, bounds check, element
+  address, and scalar store path used for local dynamic arrays. Owned-element parameter replacement still requires
+  proven element cleanup authorization before production lowering.
 - DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
   owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
   receiver descriptor remains non-cleanup-owned by the method body.

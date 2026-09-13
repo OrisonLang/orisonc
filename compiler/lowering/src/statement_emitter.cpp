@@ -1012,7 +1012,9 @@ auto lower_dynamic_array_index_assignment_target(
     auto const owner_is_exclusive_receiver =
         owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
     if (!owner_is_mutable_local && !owner_is_exclusive_receiver) {
-        return std::nullopt;
+        if (!is_bound_dynamic_array_parameter(owner_name, session.state)) {
+            return std::nullopt;
+        }
     }
 
     auto source_type = session.state.source_type_names.find(owner_name);
@@ -1163,18 +1165,6 @@ auto lower_assignment_target(
         )) {
         return dynamic_array_target;
     }
-    if (target.kind == syntax::ExpressionKind::index_access &&
-        target.left != nullptr &&
-        target.left->kind == syntax::ExpressionKind::name &&
-        is_bound_dynamic_array_parameter(target.left->text, session.state)) {
-        diagnostics.error(
-            target.line,
-            "lowering DynamicArray parameter indexed assignment is unsupported; use exclusive.View<T> for mutable "
-            "parameter element writes"
-        );
-        return std::nullopt;
-    }
-
     auto path = collect_aggregate_path(target);
     if (path.steps.empty() || path.base_expression == nullptr ||
         path.base_expression->kind != syntax::ExpressionKind::name) {
