@@ -1,0 +1,17 @@
+package fixtures.dynamicarrayownedparameterrepeatindexassignmentrun
+
+record Payload
+    public value: Int64
+
+function replace(items: DynamicArray<Payload>) -> UInt32
+    var index = 0 as UInt64
+    repeat
+        items[index] = Payload(8)
+        index = index + 1 as UInt64
+    while index < 1 as UInt64
+    0 as UInt32
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7))
+    replace(items)

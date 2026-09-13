@@ -3385,6 +3385,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Owned-element `DynamicArray<T>` parameter indexed assignment inside a finite `while` loop now has
   production CLI coverage. The fixture verifies replacement cleanup/store ordering inside the loop and final parameter
   cleanup after loop exit.
+- 2026-09-12: Owned-element `DynamicArray<T>` parameter indexed assignment inside a finite `repeat` loop now has
+  production CLI coverage. The fixture verifies replacement cleanup/store ordering inside the repeat body and final
+  parameter cleanup after repeat exit.
 - 2026-09-12: Owned `DynamicArray<T>` parameter moves inside finite loop bodies now preserve ownership-transfer state
   after loop exit. Production CLI coverage rejects a post-loop `items.length()` read after `items` is moved into a
   helper call inside a finite `while` or `repeat` loop body.

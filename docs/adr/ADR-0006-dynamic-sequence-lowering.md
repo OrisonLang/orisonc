@@ -234,6 +234,9 @@ representation.
 - Owned-element parameter replacement remains valid inside finite loop control flow when the owner remains live after
   loop exit. Production CLI coverage verifies loop-local replacement cleanup/store ordering and final parameter cleanup
   after the loop exit block.
+- Owned-element parameter replacement also remains valid inside finite `repeat` loop control flow under the same
+  ownership rule. Production CLI coverage verifies repeat-body replacement cleanup/store ordering and final parameter
+  cleanup after the repeat exit block.
 - Loop-body owned transfers are preserved after loop exit for parameter cleanup safety. Production CLI coverage now
   rejects reading an owned `DynamicArray<T>` parameter after it is moved into a helper inside a finite `while` or
   `repeat` loop body.
