@@ -2950,6 +2950,8 @@ representation.
   repeated move rejection through `holder.items[index].values` projections.
 - Nested runtime-indexed fixed-array aggregate-path coverage verifies the same replacement cleanup, bounds guarding,
   and repeated move rejection through `holder.groups[group_index].items[item_index].values` projections.
+- Nested runtime-indexed fixed-array aggregate-path out-of-bounds coverage verifies guard ordering and runtime trap
+  behavior for the first selected fixed-array projection.
 
 ## Follow-up work
 

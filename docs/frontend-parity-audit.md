@@ -3416,3 +3416,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-13: Nested runtime-indexed fixed-array aggregate-path owned-element `DynamicArray<T>` replacement now has
   production CLI coverage for `holder.groups[group_index].items[item_index].values[item] = value` cleanup/store
   ordering, repeated bounds guarding, and repeated nested runtime-indexed field move rejection.
+- 2026-09-13: Nested runtime-indexed fixed-array aggregate-path out-of-bounds coverage now verifies emitted guard
+  ordering and runtime trap behavior for `holder.groups[group_index].items[item_index].values[item] = value`.
