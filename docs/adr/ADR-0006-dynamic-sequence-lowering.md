@@ -2954,6 +2954,8 @@ representation.
   behavior for the first selected fixed-array projection.
 - Nested runtime-indexed fixed-array aggregate-path out-of-bounds coverage also verifies the second selected
   fixed-array projection traps before reaching the DynamicArray element guard.
+- Nested runtime-indexed aggregate-path DynamicArray out-of-bounds coverage verifies both fixed-array guards pass
+  before the DynamicArray element guard traps.
 
 ## Follow-up work
 

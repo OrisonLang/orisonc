@@ -3420,3 +3420,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   ordering and runtime trap behavior for `holder.groups[group_index].items[item_index].values[item] = value`.
 - 2026-09-13: Nested runtime-indexed fixed-array aggregate-path item-index out-of-bounds coverage now verifies the
   second fixed-array guard traps before DynamicArray element access.
+- 2026-09-13: Nested runtime-indexed aggregate-path DynamicArray index out-of-bounds coverage now verifies both
+  fixed-array guards pass before the DynamicArray element guard traps.
