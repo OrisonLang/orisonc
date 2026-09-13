@@ -2938,6 +2938,8 @@ representation.
   smoke helpers.
 - The shared production-path diagnostic helper now uses delegate-oriented wording so fixture-family intent stays on
   named smoke helpers.
+- Nested loop-control coverage now spans inner `while` `break`/`continue` and inner `repeat` `break`/`continue`
+  paths for owned `DynamicArray<T>` parameter replacement plus stale-read rejection after inner moves.
 
 ## Follow-up work
 
