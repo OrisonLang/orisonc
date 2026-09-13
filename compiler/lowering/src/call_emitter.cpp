@@ -7,6 +7,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
 #include <algorithm>
@@ -190,18 +191,13 @@ auto consumed_owned_aggregate_projection_argument_name(
     return plan.binding_name;
 }
 
-auto static_index_owner_segment(
+auto aggregate_index_owner_segment(
     syntax::ExpressionSyntax const& expression
-) -> std::optional<std::string> {
-    if (expression.kind != syntax::ExpressionKind::integer_literal || expression.text.empty()) {
-        return std::nullopt;
+) -> std::string {
+    if (auto literal_text = decimal_integer_literal_text(expression)) {
+        return "element" + std::string {*literal_text};
     }
-    if (!std::ranges::all_of(expression.text, [](char character) {
-            return std::isdigit(static_cast<unsigned char>(character)) != 0;
-        })) {
-        return std::nullopt;
-    }
-    return "element" + expression.text;
+    return "element[" + runtime_index_expression_key(expression) + "]";
 }
 
 auto consumed_static_indexed_aggregate_projection_argument_name(
@@ -211,7 +207,8 @@ auto consumed_static_indexed_aggregate_projection_argument_name(
     FunctionLoweringSession const& session
 ) -> std::optional<std::string> {
     if (!expected_source_type.has_value() ||
-        !is_owned_transfer_source_type(*expected_source_type, context.lowering)) {
+        !is_owned_transfer_source_type(*expected_source_type, context.lowering) ||
+        !dynamic_array_element_source_type_name(*expected_source_type).has_value()) {
         return std::nullopt;
     }
 
@@ -248,13 +245,13 @@ auto consumed_static_indexed_aggregate_projection_argument_name(
         if (step.index_expression == nullptr) {
             return std::nullopt;
         }
-        auto owner_segment = static_index_owner_segment(*step.index_expression);
+        auto owner_segment = aggregate_index_owner_segment(*step.index_expression);
         auto element_source_type = array_element_source_type_name(current_source_type);
-        if (!owner_segment.has_value() || !element_source_type.has_value()) {
+        if (!element_source_type.has_value()) {
             return std::nullopt;
         }
         binding_name += ".";
-        binding_name += *owner_segment;
+        binding_name += owner_segment;
         current_source_type = std::move(*element_source_type);
     }
 

@@ -2946,6 +2946,8 @@ representation.
   `holder.inner.items` field projections.
 - Static-indexed aggregate-path coverage verifies replacement cleanup and repeated move rejection through
   `holder.items[0].values` projections.
+- Runtime-indexed fixed-array aggregate-path coverage verifies replacement cleanup, fixed-array bounds guarding, and
+  repeated move rejection through `holder.items[index].values` projections.
 
 ## Follow-up work
 

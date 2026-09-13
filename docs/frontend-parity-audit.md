@@ -3410,3 +3410,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-13: Static-indexed aggregate-path owned-element `DynamicArray<T>` replacement now has production CLI
   coverage for `holder.items[0].values[index] = value` cleanup/store ordering and repeated static-indexed field move
   rejection.
+- 2026-09-13: Runtime-indexed fixed-array aggregate-path owned-element `DynamicArray<T>` replacement now has production
+  CLI coverage for `holder.items[index].values[item] = value` cleanup/store ordering, fixed-array bounds guarding, and
+  repeated runtime-indexed field move rejection.
