@@ -1,0 +1,24 @@
+package fixtures.dynamicarrayownedparameternestedloopbreakcleanupreuserejected
+
+record Payload
+    public value: Int64
+
+function use_items(items: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function consume(items: DynamicArray<Payload>) -> IntSize
+    var outer = 0 as UInt64
+    while outer < 1 as UInt64
+        var inner = 0 as UInt64
+        while inner < 1 as UInt64
+            use_items(items)
+            if inner == 0 as UInt64
+                break
+            inner = inner + 1 as UInt64
+        outer = outer + 1 as UInt64
+    items.length()
+
+function main() -> IntSize
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7))
+    consume(items)

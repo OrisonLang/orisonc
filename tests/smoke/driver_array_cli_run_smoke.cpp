@@ -3337,6 +3337,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_parameter_repeat_break_index_assignment_run.or";
     auto owned_dynamic_array_parameter_repeat_continue_index_assignment_path =
         fixtures / "dynamic_array_owned_parameter_repeat_continue_index_assignment_run.or";
+    auto owned_dynamic_array_parameter_nested_loop_break_index_assignment_path =
+        fixtures / "dynamic_array_owned_parameter_nested_loop_break_index_assignment_run.or";
+    auto owned_dynamic_array_parameter_nested_repeat_continue_index_assignment_path =
+        fixtures / "dynamic_array_owned_parameter_nested_repeat_continue_index_assignment_run.or";
     auto owned_dynamic_array_parameter_loop_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_loop_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_loop_break_cleanup_reuse_path =
@@ -3349,6 +3353,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_parameter_repeat_break_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_repeat_continue_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_repeat_continue_cleanup_reuse_rejected.or";
+    auto owned_dynamic_array_parameter_nested_loop_break_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_nested_loop_break_cleanup_reuse_rejected.or";
+    auto owned_dynamic_array_parameter_nested_repeat_continue_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_nested_repeat_continue_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_switch_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_switch_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_statement_branch_mismatch_path =
@@ -6104,6 +6112,34 @@ auto main(int argc, char** argv) -> int {
         owned_dynamic_array_parameter_repeat_continue_index_assignment_path,
         smoke_temp_root / "dynamic_array_owned_parameter_repeat_continue_index_assignment"
     );
+    assert_owned_dynamic_array_parameter_loop_break_index_assignment_run_success(
+        executable,
+        owned_dynamic_array_parameter_nested_loop_break_index_assignment_path
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_nested_loop_break_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_nested_loop_break_index_assignment.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_nested_loop_break_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_nested_loop_break_index_assignment"
+    );
+    assert_owned_dynamic_array_parameter_repeat_continue_index_assignment_run_success(
+        executable,
+        owned_dynamic_array_parameter_nested_repeat_continue_index_assignment_path
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_nested_repeat_continue_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_nested_repeat_continue_index_assignment.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_nested_repeat_continue_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_nested_repeat_continue_index_assignment"
+    );
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_switch_cleanup_reuse_path
@@ -6131,6 +6167,14 @@ auto main(int argc, char** argv) -> int {
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_repeat_continue_cleanup_reuse_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_nested_loop_break_cleanup_reuse_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_nested_repeat_continue_cleanup_reuse_path
     );
     assert_owned_dynamic_array_parameter_statement_branch_mismatch_emit_llvm_failure(
         executable,

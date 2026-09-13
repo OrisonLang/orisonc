@@ -246,6 +246,9 @@ representation.
 - Repeat loop-control paths preserve the same owned-parameter replacement and move-safety rules. Production CLI
   coverage verifies owned-element replacement before terminal `break` and `continue` in a `repeat` body, and rejects
   post-repeat reads after moving an owned `DynamicArray<T>` parameter before either loop-control transfer.
+- Nested loop-control paths preserve owned-parameter replacement and move-safety state across inner loop exits.
+  Production CLI coverage verifies owned-element replacement inside nested loop bodies and rejects post-outer-loop
+  reads after inner loop-control paths move an owned `DynamicArray<T>` parameter.
 - DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
   owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
   receiver descriptor remains non-cleanup-owned by the method body.

@@ -1,0 +1,21 @@
+package fixtures.dynamicarrayownedparameternestedloopbreakindexassignmentrun
+
+record Payload
+    public value: Int64
+
+function replace(items: DynamicArray<Payload>) -> UInt32
+    var outer = 0 as UInt64
+    while outer < 1 as UInt64
+        var inner = 0 as UInt64
+        while inner < 1 as UInt64
+            items[inner] = Payload(8)
+            if inner == 0 as UInt64
+                break
+            inner = inner + 1 as UInt64
+        outer = outer + 1 as UInt64
+    0 as UInt32
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7))
+    replace(items)
