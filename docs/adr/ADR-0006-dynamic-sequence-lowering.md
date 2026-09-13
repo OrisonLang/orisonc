@@ -223,6 +223,9 @@ representation.
 - Scalar `DynamicArray<T>` parameter indexed assignment lowers through the same descriptor load, bounds check, element
   address, and scalar store path used for local dynamic arrays. Owned-element parameter replacement still requires
   proven element cleanup authorization before production lowering.
+- Owned-element `DynamicArray<T>` parameter indexed assignment reuses the same authorized old-element cleanup and
+  store-ordering path as local replacement. Production CLI coverage verifies `DynamicArray<Payload>` parameters lower
+  and run without source-visible cleanup syntax.
 - DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
   owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
   receiver descriptor remains non-cleanup-owned by the method body.

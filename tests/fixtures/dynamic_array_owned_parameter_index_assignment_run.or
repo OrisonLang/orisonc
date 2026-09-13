@@ -1,0 +1,13 @@
+package tests.dynamicarrayownedparameterindexassignmentrun
+
+record Payload
+    public value: Int64
+
+function replace(items: DynamicArray<Payload>) -> Int64
+    items[0] = Payload(8)
+    items[0].value
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7))
+    replace(items) == 8 ? 0 as UInt32 : 1 as UInt32

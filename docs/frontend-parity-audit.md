@@ -3373,3 +3373,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Scalar `DynamicArray<T>` parameter indexed assignment now lowers on the production descriptor path.
   Array CLI smoke coverage verifies bounds-checking IR, scalar element store, cleanup, and executable behavior for
   `DynamicArray<UInt32>` parameters.
+- 2026-09-12: Owned-element `DynamicArray<T>` parameter indexed assignment now has production CLI coverage. The
+  checked-in fixture verifies old-element cleanup, replacement store ordering, final parameter cleanup, and executable
+  behavior for `DynamicArray<Payload>` parameters without source-visible cleanup syntax.
