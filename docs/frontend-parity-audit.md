@@ -3394,3 +3394,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-13: Owned-element `DynamicArray<T>` parameter indexed assignment before terminal loop-control transfers now
   has production CLI coverage. The fixtures verify replacement cleanup/store ordering before `break` and `continue`,
   and reject post-loop reads after moving an owned parameter before either loop-control transfer.
+- 2026-09-13: Owned-element `DynamicArray<T>` parameter indexed assignment before terminal `repeat` loop-control
+  transfers now has production CLI coverage. The fixtures verify replacement cleanup/store ordering before `break`
+  and `continue`, and reject post-repeat reads after moving an owned parameter before either transfer.
