@@ -3422,3 +3422,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   second fixed-array guard traps before DynamicArray element access.
 - 2026-09-13: Nested runtime-indexed aggregate-path DynamicArray index out-of-bounds coverage now verifies both
   fixed-array guards pass before the DynamicArray element guard traps.
+- 2026-09-13: Nested runtime-indexed aggregate-path DynamicArray index success coverage now verifies fixed-array
+  guards, DynamicArray guard, old-element cleanup, replacement store, object emission, build, and run behavior.

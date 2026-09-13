@@ -1730,6 +1730,38 @@ void assert_owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field
     read_failing_command_output(executable.string() + " run " + source_path.string());
 }
 
+void assert_owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_run_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "%record.Payload = type { i64 }");
+    assert_contains(output, "%record.Holder = type { [2 x %record.Group] }");
+    assert_contains(
+        output,
+        "define i32 @replace(%record.Holder %holder, i64 %group_index, i64 %item_index, i64 %value_index)"
+    );
+    auto const group_bounds = output.find(".in_bounds = icmp ult i64 %group_index, 2");
+    auto const item_bounds = output.find(".in_bounds = icmp ult i64 %item_index, 2", group_bounds);
+    auto const dynamic_bounds = output.find("dynamic_array.aggregate_index.in_bounds", item_bounds);
+    auto const replacement_drop =
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %current.groups.element.items.element.values");
+    auto const replacement_store = output.find("store %record.Payload ", replacement_drop);
+    auto const holder_cleanup = output.find("call void @__orison_owned_cleanup.Holder(ptr %current.addr)");
+    assert(group_bounds != std::string::npos);
+    assert(item_bounds != std::string::npos);
+    assert(dynamic_bounds != std::string::npos);
+    assert(replacement_drop != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(holder_cleanup != std::string::npos);
+    assert(group_bounds < item_bounds);
+    assert(item_bounds < dynamic_bounds);
+    assert(dynamic_bounds < replacement_drop);
+    assert(replacement_drop < replacement_store);
+    assert(replacement_store < holder_cleanup);
+    assert_run_success(executable, source_path);
+}
+
 void assert_owned_dynamic_array_parameter_branch_index_assignment_run_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -3451,6 +3483,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_item_out_of_bounds.or";
     auto owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_out_of_bounds_path =
         fixtures / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_out_of_bounds.or";
+    auto owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_path =
+        fixtures / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_run.or";
     auto owned_dynamic_array_parameter_nested_loop_break_index_assignment_path =
         fixtures / "dynamic_array_owned_parameter_nested_loop_break_index_assignment_run.or";
     auto owned_dynamic_array_parameter_nested_loop_continue_index_assignment_path =
@@ -6360,6 +6394,20 @@ auto main(int argc, char** argv) -> int {
         executable,
         owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_out_of_bounds_path,
         smoke_temp_root / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_out_of_bounds.o"
+    );
+    assert_owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_run_success(
+        executable,
+        owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_path
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_path,
+        smoke_temp_root / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_path,
+        smoke_temp_root / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic"
     );
     assert_owned_dynamic_array_parameter_loop_break_index_assignment_run_success(
         executable,

@@ -2956,6 +2956,8 @@ representation.
   fixed-array projection traps before reaching the DynamicArray element guard.
 - Nested runtime-indexed aggregate-path DynamicArray out-of-bounds coverage verifies both fixed-array guards pass
   before the DynamicArray element guard traps.
+- Nested runtime-indexed aggregate-path DynamicArray success coverage verifies both fixed-array guards and the
+  DynamicArray guard pass before old-element cleanup and replacement store.
 
 ## Follow-up work
 
