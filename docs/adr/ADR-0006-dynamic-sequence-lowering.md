@@ -2940,6 +2940,8 @@ representation.
   named smoke helpers.
 - Nested loop-control coverage now spans inner `while` `break`/`continue` and inner `repeat` `break`/`continue`
   paths for owned `DynamicArray<T>` parameter replacement plus stale-read rejection after inner moves.
+- Aggregate-path `DynamicArray<T>` element assignment now emits authorized old-element cleanup when the dynamic-array
+  index is the final assignment target, matching direct `items[index] = value` replacement semantics.
 
 ## Follow-up work
 

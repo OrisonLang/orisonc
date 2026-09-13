@@ -3402,3 +3402,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   post-outer-loop reads after moving the owned parameter inside the inner loop body.
 - 2026-09-13: Nested loop-control coverage now also covers inner `while` `continue` and inner `repeat` `break` for
   owned-element `DynamicArray<T>` parameter replacement and stale post-outer-loop reads after inner moves.
+- 2026-09-13: Aggregate-path owned-element `DynamicArray<T>` replacement now emits old-element cleanup before storing
+  a replacement through a record field path. Production CLI coverage also rejects repeated moves of the same aggregate
+  field projection.

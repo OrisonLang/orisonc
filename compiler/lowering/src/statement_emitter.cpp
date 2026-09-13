@@ -1228,7 +1228,9 @@ auto lower_assignment_target(
         return std::nullopt;
     }
 
-    for (auto const& step : path.steps) {
+    for (auto step_index = std::size_t {0}; step_index < path.steps.size(); ++step_index) {
+        auto const& step = path.steps[step_index];
+        auto const is_final_step = step_index + 1 == path.steps.size();
         if (step.kind == AggregatePathStepKind::member) {
             auto result = advance_aggregate_path_member_with_temporary(
                 *cursor,
@@ -1315,6 +1317,24 @@ auto lower_assignment_target(
             session.state.current_block = value_block;
             output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
             output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
+            auto element_requires_ownership_transfer =
+                is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering);
+            if (is_final_step && element_requires_ownership_transfer) {
+                auto element_owned_cleanup_symbol_name = authorized_dynamic_array_element_owned_cleanup_symbol_name(
+                    cleanup_owner_name,
+                    sequence->element_source_type_name,
+                    context
+                );
+                if (!element_owned_cleanup_symbol_name.has_value()) {
+                    diagnostics.error(
+                        target.line,
+                        "lowering aggregate DynamicArray assignment to owned element requires authorized replacement drop"
+                    );
+                    return std::nullopt;
+                }
+                output << "  call void @" << *element_owned_cleanup_symbol_name << "(ptr ";
+                output << prefix << ".element.addr)\n";
+            }
 
             auto next_cursor = initialize_aggregate_path_cursor(
                 prefix + ".element.addr",
@@ -1386,6 +1406,7 @@ auto lower_assignment_target(
         .pointer = std::move(cursor->pointer),
         .source_type_name = cursor->source_type_name,
         .owner_name = std::move(cleanup_owner_name),
+        .consumes_owned_value_on_store = is_owned_transfer_source_type(cursor->source_type_name, context.lowering),
     };
 }
 
