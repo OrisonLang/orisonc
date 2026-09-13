@@ -3405,3 +3405,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-13: Aggregate-path owned-element `DynamicArray<T>` replacement now emits old-element cleanup before storing
   a replacement through a record field path. Production CLI coverage also rejects repeated moves of the same aggregate
   field projection.
+- 2026-09-13: Nested aggregate-path owned-element `DynamicArray<T>` replacement now has production CLI coverage for
+  `holder.inner.items[index] = value` cleanup/store ordering and repeated nested field move rejection.

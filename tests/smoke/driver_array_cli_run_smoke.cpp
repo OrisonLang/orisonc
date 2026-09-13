@@ -1634,19 +1634,23 @@ void assert_owned_dynamic_array_parameter_index_assignment_run_success(
 
 void assert_owned_dynamic_array_aggregate_parameter_field_index_assignment_run_success(
     std::filesystem::path const& executable,
-    std::filesystem::path const& source_path
+    std::filesystem::path const& source_path,
+    std::string_view holder_type,
+    std::string_view replace_signature,
+    std::string_view owner_prefix,
+    std::string_view cleanup_callee
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "%record.Payload = type { i64 }");
-    assert_contains(output, "%record.Holder = type { { ptr, i64, i64 } }");
-    assert_contains(output, "define i32 @replace(%record.Holder %holder)");
+    assert_contains(output, holder_type);
+    assert_contains(output, replace_signature);
     assert_contains(output, "dynamic_array.aggregate_index.in_bounds");
     auto const replacement_drop =
-        output.find("call void @__orison_owned_cleanup.Payload(ptr %current.items.dynamic_array_index");
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %" + std::string {owner_prefix});
     assert(replacement_drop != std::string::npos);
     auto const replacement_store = output.find("store %record.Payload ", replacement_drop);
     assert(replacement_store != std::string::npos);
-    auto const holder_cleanup = output.find("call void @__orison_owned_cleanup.Holder(ptr %current.addr)");
+    auto const holder_cleanup = output.find(cleanup_callee);
     assert(holder_cleanup != std::string::npos);
     assert(replacement_drop < replacement_store);
     assert(replacement_store < holder_cleanup);
@@ -3360,6 +3364,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_parameter_repeat_continue_index_assignment_run.or";
     auto owned_dynamic_array_aggregate_parameter_field_index_assignment_path =
         fixtures / "dynamic_array_owned_aggregate_parameter_field_index_assignment_run.or";
+    auto owned_dynamic_array_nested_aggregate_parameter_field_index_assignment_path =
+        fixtures / "dynamic_array_owned_nested_aggregate_parameter_field_index_assignment_run.or";
     auto owned_dynamic_array_parameter_nested_loop_break_index_assignment_path =
         fixtures / "dynamic_array_owned_parameter_nested_loop_break_index_assignment_run.or";
     auto owned_dynamic_array_parameter_nested_loop_continue_index_assignment_path =
@@ -3382,6 +3388,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_parameter_repeat_continue_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_aggregate_parameter_field_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_aggregate_parameter_field_cleanup_reuse_rejected.or";
+    auto owned_dynamic_array_nested_aggregate_parameter_field_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_nested_aggregate_parameter_field_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_nested_loop_break_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_nested_loop_break_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_nested_loop_continue_cleanup_reuse_path =
@@ -6147,7 +6155,11 @@ auto main(int argc, char** argv) -> int {
     );
     assert_owned_dynamic_array_aggregate_parameter_field_index_assignment_run_success(
         executable,
-        owned_dynamic_array_aggregate_parameter_field_index_assignment_path
+        owned_dynamic_array_aggregate_parameter_field_index_assignment_path,
+        "%record.Holder = type { { ptr, i64, i64 } }",
+        "define i32 @replace(%record.Holder %holder)",
+        "current.items.dynamic_array_index",
+        "call void @__orison_owned_cleanup.Holder(ptr %current.addr)"
     );
     assert_emit_object_success(
         executable,
@@ -6158,6 +6170,24 @@ auto main(int argc, char** argv) -> int {
         executable,
         owned_dynamic_array_aggregate_parameter_field_index_assignment_path,
         smoke_temp_root / "dynamic_array_owned_aggregate_parameter_field_index_assignment"
+    );
+    assert_owned_dynamic_array_aggregate_parameter_field_index_assignment_run_success(
+        executable,
+        owned_dynamic_array_nested_aggregate_parameter_field_index_assignment_path,
+        "%record.Holder = type { %record.Inner }",
+        "define i32 @replace(%record.Holder %holder)",
+        "current.inner.items.dynamic_array_index",
+        "call void @__orison_owned_cleanup.Holder(ptr %current.addr)"
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_nested_aggregate_parameter_field_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_nested_aggregate_parameter_field_index_assignment.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_nested_aggregate_parameter_field_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_nested_aggregate_parameter_field_index_assignment"
     );
     assert_owned_dynamic_array_parameter_loop_break_index_assignment_run_success(
         executable,
@@ -6247,6 +6277,11 @@ auto main(int argc, char** argv) -> int {
         executable,
         owned_dynamic_array_aggregate_parameter_field_cleanup_reuse_path,
         "holder.items"
+    );
+    assert_dynamic_array_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_nested_aggregate_parameter_field_cleanup_reuse_path,
+        "holder.inner.items"
     );
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,

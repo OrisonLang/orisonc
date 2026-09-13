@@ -2942,6 +2942,8 @@ representation.
   paths for owned `DynamicArray<T>` parameter replacement plus stale-read rejection after inner moves.
 - Aggregate-path `DynamicArray<T>` element assignment now emits authorized old-element cleanup when the dynamic-array
   index is the final assignment target, matching direct `items[index] = value` replacement semantics.
+- Nested aggregate-path coverage verifies the same replacement cleanup and repeated move rejection through
+  `holder.inner.items` field projections.
 
 ## Follow-up work
 
