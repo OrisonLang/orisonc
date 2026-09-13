@@ -1676,6 +1676,29 @@ void assert_owned_dynamic_array_parameter_switch_index_assignment_run_success(
     assert_run_success(executable, source_path);
 }
 
+void assert_owned_dynamic_array_parameter_loop_index_assignment_run_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define i32 @replace({ ptr, i64, i64 } %items)");
+    assert_contains(output, "while.cond");
+    assert_contains(output, "while.exit");
+    auto const replacement_drop =
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_assign");
+    assert(replacement_drop != std::string::npos);
+    auto const replacement_store = output.find("store %record.Payload ", replacement_drop);
+    assert(replacement_store != std::string::npos);
+    auto const loop_exit = output.find("while.exit", replacement_store);
+    assert(loop_exit != std::string::npos);
+    auto const cleanup_drop =
+        output.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup", loop_exit);
+    assert(cleanup_drop != std::string::npos);
+    assert(replacement_drop < replacement_store);
+    assert(replacement_store < cleanup_drop);
+    assert_run_success(executable, source_path);
+}
+
 void assert_dynamic_array_parameter_push_run_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -3183,6 +3206,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_parameter_switch_cleanup_run.or";
     auto owned_dynamic_array_parameter_switch_index_assignment_path =
         fixtures / "dynamic_array_owned_parameter_switch_index_assignment_run.or";
+    auto owned_dynamic_array_parameter_loop_index_assignment_path =
+        fixtures / "dynamic_array_owned_parameter_loop_index_assignment_run.or";
     auto owned_dynamic_array_parameter_switch_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_switch_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_statement_branch_mismatch_path =
@@ -5853,6 +5878,20 @@ auto main(int argc, char** argv) -> int {
         executable,
         owned_dynamic_array_parameter_switch_index_assignment_path,
         smoke_temp_root / "dynamic_array_owned_parameter_switch_index_assignment"
+    );
+    assert_owned_dynamic_array_parameter_loop_index_assignment_run_success(
+        executable,
+        owned_dynamic_array_parameter_loop_index_assignment_path
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_loop_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_loop_index_assignment.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_loop_index_assignment_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_loop_index_assignment"
     );
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,

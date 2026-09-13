@@ -3382,3 +3382,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-09-12: Owned-element `DynamicArray<T>` parameter indexed assignment inside a `switch` case now has production
   CLI coverage. The fixture verifies replacement cleanup/store ordering inside the selected case and final parameter
   cleanup after the switch merge.
+- 2026-09-12: Owned-element `DynamicArray<T>` parameter indexed assignment inside a finite `while` loop now has
+  production CLI coverage. The fixture verifies replacement cleanup/store ordering inside the loop and final parameter
+  cleanup after loop exit.
