@@ -1,0 +1,22 @@
+package fixtures.dynamicarrayownedindexedaggregateparameterfieldindexassignmentrun
+
+record Payload
+    public value: Int64
+
+record Item
+    public values: DynamicArray<Payload>
+
+record Holder
+    public items: Array<Item, 2>
+
+function replace(holder: Holder) -> UInt32
+    var current: Holder = holder
+    current.items[0].values[0] = Payload(8)
+    0 as UInt32
+
+function main() -> UInt32
+    var left: DynamicArray<Payload> = DynamicArray()
+    left.push(Payload(7))
+    var right: DynamicArray<Payload> = DynamicArray()
+    right.push(Payload(9))
+    replace(Holder([Item(left), Item(right)]))

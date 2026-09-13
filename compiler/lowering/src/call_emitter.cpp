@@ -5,6 +5,7 @@
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
@@ -189,6 +190,80 @@ auto consumed_owned_aggregate_projection_argument_name(
     return plan.binding_name;
 }
 
+auto static_index_owner_segment(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::integer_literal || expression.text.empty()) {
+        return std::nullopt;
+    }
+    if (!std::ranges::all_of(expression.text, [](char character) {
+            return std::isdigit(static_cast<unsigned char>(character)) != 0;
+        })) {
+        return std::nullopt;
+    }
+    return "element" + expression.text;
+}
+
+auto consumed_static_indexed_aggregate_projection_argument_name(
+    syntax::ExpressionSyntax const& argument,
+    std::optional<std::string_view> expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (!expected_source_type.has_value() ||
+        !is_owned_transfer_source_type(*expected_source_type, context.lowering)) {
+        return std::nullopt;
+    }
+
+    auto path = collect_aggregate_path(argument);
+    if (path.steps.empty() ||
+        path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto source_type = session.state.source_type_names.find(path.base_expression->text);
+    if (source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto current_source_type = source_type->second;
+    auto binding_name = path.base_expression->text;
+    for (auto const& step : path.steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto record = context.lowering.records.find(current_source_type);
+            if (record == context.lowering.records.end()) {
+                return std::nullopt;
+            }
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr) {
+                return std::nullopt;
+            }
+            binding_name += ".";
+            binding_name += field->name;
+            current_source_type = field->source_type_name;
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+        auto owner_segment = static_index_owner_segment(*step.index_expression);
+        auto element_source_type = array_element_source_type_name(current_source_type);
+        if (!owner_segment.has_value() || !element_source_type.has_value()) {
+            return std::nullopt;
+        }
+        binding_name += ".";
+        binding_name += *owner_segment;
+        current_source_type = std::move(*element_source_type);
+    }
+
+    if (current_source_type != *expected_source_type) {
+        return std::nullopt;
+    }
+    return binding_name;
+}
+
 auto lower_call_arguments_impl(
     syntax::ExpressionSyntax const* receiver_expression,
     LoweredExpression const* lowered_receiver_expression,
@@ -261,6 +336,21 @@ auto lower_call_arguments_impl(
     for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
         auto const actual_parameter_index = index + parameter_index;
         auto const expected_source_type = expected_source_type_for_parameter(actual_parameter_index);
+        auto static_indexed_consumed_name = consumed_static_indexed_aggregate_projection_argument_name(
+            arguments[index],
+            expected_source_type,
+            context,
+            session
+        );
+        if (static_indexed_consumed_name.has_value() &&
+            is_owned_binding_consumed(session.state.ownership_transfers, *static_indexed_consumed_name)) {
+            record_expression_lowering_failure(
+                session.failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "use after move: " + *static_indexed_consumed_name
+            );
+            return std::nullopt;
+        }
         auto argument = lower_expression(
             arguments[index],
             function.parameter_types[actual_parameter_index],
@@ -323,6 +413,9 @@ auto lower_call_arguments_impl(
                 session
             )) {
             mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
+        }
+        if (static_indexed_consumed_name.has_value()) {
+            mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*static_indexed_consumed_name));
         }
         lowered_arguments.push_back(std::move(*argument));
     }

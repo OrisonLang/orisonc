@@ -2944,6 +2944,8 @@ representation.
   index is the final assignment target, matching direct `items[index] = value` replacement semantics.
 - Nested aggregate-path coverage verifies the same replacement cleanup and repeated move rejection through
   `holder.inner.items` field projections.
+- Static-indexed aggregate-path coverage verifies replacement cleanup and repeated move rejection through
+  `holder.items[0].values` projections.
 
 ## Follow-up work
 

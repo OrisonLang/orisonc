@@ -2080,13 +2080,13 @@ auto has_dynamic_array_index_read(
     LoweringContext const& context
 ) -> bool {
     auto owner_names = std::unordered_set<std::string> {};
-    auto source_type_names = std::unordered_map<std::string, std::string> {};
+    auto state = FunctionLoweringState {};
     for (auto const& parameter : function.parameters) {
         if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
             owner_names.insert(parameter.name);
         }
         if (!parameter.name.empty() && !parameter.type.name.empty()) {
-            source_type_names[parameter.name] = render_source_type_name(parameter.type);
+            state.source_type_names[parameter.name] = render_source_type_name(parameter.type);
         }
         if (parameter.name == "this" &&
             (parameter.type.name == "This" ||
@@ -2097,10 +2097,10 @@ auto has_dynamic_array_index_read(
     }
     for (auto const& statement : function.body_statements) {
         collect_dynamic_array_owner_names(statement, choices, owner_names);
-        collect_source_type_names(statement, choices, context, source_type_names);
+        collect_source_type_names(statement, choices, context, state.source_type_names);
     }
     auto found = false;
-    walk_function_expressions(function, [&owner_names, &source_type_names, &found, &context](syntax::ExpressionSyntax const& expression) {
+    walk_function_expressions(function, [&owner_names, &state, &found, &context](syntax::ExpressionSyntax const& expression) {
         if (found ||
             expression.kind != syntax::ExpressionKind::index_access ||
             expression.left == nullptr) {
@@ -2110,7 +2110,7 @@ auto has_dynamic_array_index_read(
             found = owner_names.contains(expression.left->text);
             return;
         }
-        auto source_type = source_type_for_member_path(*expression.left, context, source_type_names);
+        auto source_type = source_type_name_for_expression(*expression.left, context, state);
         found = source_type.has_value() &&
             dynamic_array_element_source_type_name(*source_type).has_value();
     });

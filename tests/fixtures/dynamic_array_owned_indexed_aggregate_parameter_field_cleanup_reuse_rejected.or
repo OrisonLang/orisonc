@@ -1,0 +1,25 @@
+package fixtures.dynamicarrayownedindexedaggregateparameterfieldcleanupreuserejected
+
+record Payload
+    public value: Int64
+
+record Item
+    public values: DynamicArray<Payload>
+
+record Holder
+    public items: Array<Item, 2>
+
+function use_items(items: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function consume(holder: Holder) -> IntSize
+    use_items(holder.items[0].values)
+    use_items(holder.items[0].values)
+    0 as IntSize
+
+function main() -> IntSize
+    var left: DynamicArray<Payload> = DynamicArray()
+    left.push(Payload(7))
+    var right: DynamicArray<Payload> = DynamicArray()
+    right.push(Payload(9))
+    consume(Holder([Item(left), Item(right)]))

@@ -3407,3 +3407,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   field projection.
 - 2026-09-13: Nested aggregate-path owned-element `DynamicArray<T>` replacement now has production CLI coverage for
   `holder.inner.items[index] = value` cleanup/store ordering and repeated nested field move rejection.
+- 2026-09-13: Static-indexed aggregate-path owned-element `DynamicArray<T>` replacement now has production CLI
+  coverage for `holder.items[0].values[index] = value` cleanup/store ordering and repeated static-indexed field move
+  rejection.
