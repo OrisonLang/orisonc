@@ -2948,6 +2948,8 @@ representation.
   `holder.items[0].values` projections.
 - Runtime-indexed fixed-array aggregate-path coverage verifies replacement cleanup, fixed-array bounds guarding, and
   repeated move rejection through `holder.items[index].values` projections.
+- Nested runtime-indexed fixed-array aggregate-path coverage verifies the same replacement cleanup, bounds guarding,
+  and repeated move rejection through `holder.groups[group_index].items[item_index].values` projections.
 
 ## Follow-up work
 
