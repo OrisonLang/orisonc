@@ -1,0 +1,17 @@
+package fixtures.dynamicarrayownedparameterswitchindexassignmentrun
+
+record Payload
+    public value: Int64
+
+function replace(flag: Bool, items: DynamicArray<Payload>) -> UInt32
+    switch flag
+        true =>
+            items[0] = Payload(8)
+        false =>
+            items[0] = Payload(9)
+    0 as UInt32
+
+function main() -> UInt32
+    var items: DynamicArray<Payload> = DynamicArray()
+    items.push(Payload(7))
+    replace(true, items)

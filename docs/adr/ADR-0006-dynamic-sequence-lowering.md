@@ -229,6 +229,8 @@ representation.
 - Owned-element parameter replacement remains valid inside branch control flow when the owner is still live after the
   branch merge. Production CLI coverage verifies branch-local replacement cleanup/store ordering and final parameter
   cleanup after the merge.
+- Owned-element parameter replacement remains valid inside switch control flow under the same rule. Production CLI
+  coverage verifies case-local replacement cleanup/store ordering and final parameter cleanup after the switch merge.
 - DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
   owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
   receiver descriptor remains non-cleanup-owned by the method body.
