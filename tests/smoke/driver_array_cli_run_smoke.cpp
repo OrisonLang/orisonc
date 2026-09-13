@@ -3208,6 +3208,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_parameter_switch_index_assignment_run.or";
     auto owned_dynamic_array_parameter_loop_index_assignment_path =
         fixtures / "dynamic_array_owned_parameter_loop_index_assignment_run.or";
+    auto owned_dynamic_array_parameter_loop_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_loop_cleanup_reuse_rejected.or";
+    auto owned_dynamic_array_parameter_repeat_cleanup_reuse_path =
+        fixtures / "dynamic_array_owned_parameter_repeat_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_switch_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_switch_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_statement_branch_mismatch_path =
@@ -5896,6 +5900,14 @@ auto main(int argc, char** argv) -> int {
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_switch_cleanup_reuse_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_loop_cleanup_reuse_path
+    );
+    assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_repeat_cleanup_reuse_path
     );
     assert_owned_dynamic_array_parameter_statement_branch_mismatch_emit_llvm_failure(
         executable,

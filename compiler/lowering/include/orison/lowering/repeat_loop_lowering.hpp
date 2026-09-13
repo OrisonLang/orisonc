@@ -60,6 +60,7 @@ auto lower_repeat_statement(
     if (body_flow == StatementFlow::falls_through) {
         emit_llvm_branch(output, block_plan.condition_block);
     }
+    body_scope.commit_ownership_transfers(session.state.ownership_transfers);
 
     emit_llvm_block_label(output, block_plan.condition_block);
     session.state.current_block = block_plan.condition_block;
