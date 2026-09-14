@@ -2966,6 +2966,9 @@ representation.
   by cleaning the returned root descriptor while transferring the selected nested descriptor into the receiver owner.
 - Returned-temporary DynamicArray element receiver out-of-bounds coverage verifies the dynamic index guard traps
   before selected descriptor transfer for both read-only and Unit-tail mutation chains.
+- Returned-temporary DynamicArray element receiver smoke coverage verifies returned-owner transfer lowering stays
+  separate from named-owner reuse tracking; source-level post-transfer reuse is not expressible for an unnamed
+  returned aggregate.
 
 ## Follow-up work
 
