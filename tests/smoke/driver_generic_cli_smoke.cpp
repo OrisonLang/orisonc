@@ -2457,6 +2457,39 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
     }
 }
 
+void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_descriptor_assignment_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp");
+    auto items_projection = output.find(".items.addr", root_storage);
+    auto first_bounds_check = output.find(".items.dynamic_array_index", items_projection);
+    auto second_bounds_check = output.find(".box.primary.dynamic_array_index", first_bounds_check);
+    auto old_element_cleanup = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        second_bounds_check
+    );
+    auto replacement_store = output.find("store %record.Payload", old_element_cleanup);
+    auto root_cleanup = output.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp", replacement_store);
+    assert(root_storage != std::string::npos);
+    assert(items_projection != std::string::npos);
+    assert(first_bounds_check != std::string::npos);
+    assert(second_bounds_check != std::string::npos);
+    assert(old_element_cleanup != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(root_cleanup != std::string::npos);
+    assert(root_storage < items_projection);
+    assert(items_projection < first_bounds_check);
+    assert(first_bounds_check < second_bounds_check);
+    assert(second_bounds_check < old_element_cleanup);
+    assert(old_element_cleanup < replacement_store);
+    assert(replacement_store < root_cleanup);
+    assert(output.find("returned_aggregate_receiver_descriptor") == std::string::npos);
+    assert(output.find("ret i32 0") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_out_of_bounds_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5418,10 +5451,14 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_out_of_bounds.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_rejected.or",
-        "lowering does not yet support this statement"
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or",
+        smoke_temp_root / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_descriptor_assignment_success(
+        executable,
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

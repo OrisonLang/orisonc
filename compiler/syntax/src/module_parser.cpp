@@ -1152,6 +1152,23 @@ private:
                 }
                 continue;
             }
+            if (kind == TokenKind::left_paren) {
+                auto paren_depth = std::size_t {1};
+                ++lookahead;
+                while (lookahead < tokens_.size() && paren_depth > 0) {
+                    auto paren_kind = tokens_[lookahead].kind;
+                    if (paren_kind == TokenKind::left_paren) {
+                        ++paren_depth;
+                    } else if (paren_kind == TokenKind::right_paren) {
+                        --paren_depth;
+                    }
+                    ++lookahead;
+                }
+                if (paren_depth != 0) {
+                    return false;
+                }
+                continue;
+            }
 
             return is_assignment_operator(kind);
         }

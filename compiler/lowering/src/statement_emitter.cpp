@@ -271,6 +271,8 @@ auto authorized_dynamic_array_element_owned_cleanup_symbol_name(
             authorization.site.abi_symbol_name == symbol_name &&
             (authorization.site.owner_name == element_owner_name ||
              normalize_fixed_array_element_owner_name(authorization.site.owner_name) == normalized_element_owner_name ||
+             (owner_name.starts_with("dynamic_array_receiver_aggregate_tmp") &&
+              element_owner_name.ends_with(".element")) ||
              owner_name == "this")) {
             return symbol_name;
         }
@@ -1119,6 +1121,314 @@ auto lower_dynamic_array_index_assignment_target(
     };
 }
 
+auto lower_aggregate_assignment_target_path(
+    AggregatePath const& path,
+    std::string current_pointer,
+    std::string current_source_type_name,
+    std::string cleanup_owner_name,
+    std::string ownership_owner_name,
+    std::size_t target_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredAssignmentTarget> {
+    auto cursor = initialize_aggregate_path_cursor(
+        std::move(current_pointer),
+        std::move(current_source_type_name),
+        context.lowering
+    );
+    if (!cursor.has_value()) {
+        diagnostics.error(target_line, "lowering aggregate assignment target type is unsupported");
+        return std::nullopt;
+    }
+
+    for (auto step_index = std::size_t {0}; step_index < path.steps.size(); ++step_index) {
+        auto const& step = path.steps[step_index];
+        auto const is_final_step = step_index + 1 == path.steps.size();
+        if (step.kind == AggregatePathStepKind::member) {
+            auto result = advance_aggregate_path_member_with_temporary(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                session.state.next_temporary_index,
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                diagnostics.error(
+                    target_line,
+                    aggregate_assignment_target_failure("member target", result.error)
+                );
+                return std::nullopt;
+            }
+            cleanup_owner_name += ".";
+            cleanup_owner_name += step.field_name;
+            ownership_owner_name += ".";
+            ownership_owner_name += step.field_name;
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            diagnostics.error(target_line, "lowering aggregate assignment index target is unsupported");
+            return std::nullopt;
+        }
+
+        auto lowered_index = lower_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_index.has_value()) {
+            diagnostics.error(
+                target_line,
+                append_expression_lowering_failure(
+                    "lowering aggregate assignment index failed",
+                    session.failures.expression
+                )
+            );
+            return std::nullopt;
+        }
+
+        auto sequence = dynamic_sequence_source_type(cursor->source_type_name);
+        if (sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array &&
+            sequence->owns_storage) {
+            if (auto consumed_owner = consumed_owned_binding_or_descendant_name(
+                    session.state.ownership_transfers,
+                    ownership_owner_name
+                )) {
+                diagnostics.error(target_line, "use after move: " + *consumed_owner);
+                return std::nullopt;
+            }
+            auto element_type = lowered_type_for_source_type_name(
+                sequence->element_source_type_name,
+                context.lowering
+            );
+            if (!element_type.has_value()) {
+                diagnostics.error(target_line, "lowering aggregate DynamicArray index target element type is unsupported");
+                return std::nullopt;
+            }
+
+            auto prefix = "%" + cleanup_owner_name + ".dynamic_array_index" +
+                std::to_string(session.state.next_temporary_index++);
+            output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", cursor->pointer);
+            output << emit_dynamic_array_descriptor_field_projection(
+                prefix + ".data",
+                prefix + ".descriptor",
+                DynamicArrayDescriptorField::data
+            );
+            output << emit_dynamic_array_descriptor_field_projection(
+                prefix + ".length",
+                prefix + ".descriptor",
+                DynamicArrayDescriptorField::length
+            );
+            output << emit_dynamic_array_bounds_check(
+                prefix + ".in_bounds",
+                lowered_index->value,
+                prefix + ".length",
+                DynamicArrayBoundsCheckKind::index_within_length
+            );
+            auto block_index = next_llvm_block_index(session.state.next_block_index);
+            auto value_block = llvm_block_name("dynamic_array.aggregate_index.in_bounds", block_index);
+            auto failure_block = llvm_block_name("dynamic_array.aggregate_index.out_of_bounds", block_index);
+            emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+            emit_llvm_block_label(output, failure_block);
+            output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+            emit_llvm_unreachable(output);
+            emit_llvm_block_label(output, value_block);
+            session.state.current_block = value_block;
+            output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
+            output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
+            auto element_requires_ownership_transfer =
+                is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering);
+            if (is_final_step && element_requires_ownership_transfer) {
+                auto element_owned_cleanup_symbol_name = authorized_dynamic_array_element_owned_cleanup_symbol_name(
+                    cleanup_owner_name,
+                    sequence->element_source_type_name,
+                    context
+                );
+                if (!element_owned_cleanup_symbol_name.has_value()) {
+                    diagnostics.error(
+                        target_line,
+                        "lowering aggregate DynamicArray assignment to owned element requires authorized replacement drop"
+                    );
+                    return std::nullopt;
+                }
+                output << "  call void @" << *element_owned_cleanup_symbol_name << "(ptr ";
+                output << prefix << ".element.addr)\n";
+            }
+
+            auto next_cursor = initialize_aggregate_path_cursor(
+                prefix + ".element.addr",
+                sequence->element_source_type_name,
+                context.lowering
+            );
+            if (!next_cursor.has_value()) {
+                diagnostics.error(target_line, "lowering aggregate DynamicArray index target type is unsupported");
+                return std::nullopt;
+            }
+            cursor = std::move(*next_cursor);
+            cleanup_owner_name += ".element";
+            ownership_owner_name += aggregate_index_owner_suffix(*step.index_expression);
+            continue;
+        }
+
+        if (is_runtime_index_expression(*step.index_expression)) {
+            auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
+            if (!array_type.has_value()) {
+                diagnostics.error(
+                    target_line,
+                    aggregate_assignment_target_failure("index target", AggregatePathError::expected_array)
+                );
+                return std::nullopt;
+            }
+            emit_fixed_array_runtime_index_bounds_check(
+                "aggregate_path_index",
+                lowered_index->value,
+                array_type->length,
+                session,
+                output
+            );
+        }
+
+        auto result = advance_aggregate_path_index_with_temporary(
+            *cursor,
+            lowered_index->value,
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error == AggregatePathError::unsupported_element_source_type) {
+            diagnostics.error(
+                target_line,
+                aggregate_assignment_target_failure("index target", result.error)
+            );
+            return std::nullopt;
+        }
+        if (result.error != AggregatePathError::none) {
+            diagnostics.error(
+                target_line,
+                aggregate_assignment_target_failure("index target", result.error)
+            );
+            return std::nullopt;
+        }
+        cleanup_owner_name += ".element";
+        if (step.index_expression->kind == syntax::ExpressionKind::integer_literal) {
+            cleanup_owner_name += step.index_expression->text;
+        }
+        ownership_owner_name += aggregate_index_owner_suffix(*step.index_expression);
+    }
+
+    auto lowered_type = lowered_type_for_source_type_name(cursor->source_type_name, context.lowering);
+    if (!lowered_type.has_value()) {
+        diagnostics.error(target_line, "lowering aggregate assignment target type is unsupported");
+        return std::nullopt;
+    }
+
+    return LoweredAssignmentTarget {
+        .type = std::move(*lowered_type),
+        .pointer = std::move(cursor->pointer),
+        .source_type_name = cursor->source_type_name,
+        .owner_name = std::move(cleanup_owner_name),
+        .consumes_owned_value_on_store = is_owned_transfer_source_type(cursor->source_type_name, context.lowering),
+    };
+}
+
+auto lower_returned_aggregate_assignment_target(
+    syntax::ExpressionSyntax const& target,
+    AggregatePath const& path,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredAssignmentTarget> {
+    if (path.base_expression == nullptr || path.base_expression->kind == syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_expression(
+        *path.base_expression,
+        context.lowering,
+        session.state
+    );
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
+    if (!base_llvm_type.has_value() || *base_llvm_type == "void") {
+        return std::nullopt;
+    }
+
+    auto lowered_base = lower_expression(
+        *path.base_expression,
+        *base_llvm_type,
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output,
+        *base_source_type
+    );
+    if (!lowered_base.has_value()) {
+        diagnostics.error(
+            target.line,
+            append_expression_lowering_failure(
+                "lowering returned aggregate assignment target failed",
+                session.failures.expression
+            )
+        );
+        return std::nullopt;
+    }
+
+    auto aggregate_owner_name = std::string {"dynamic_array_receiver_aggregate_tmp"};
+    aggregate_owner_name += std::to_string(session.state.next_temporary_index++);
+    auto aggregate_storage = "%" + aggregate_owner_name + ".addr";
+    output << "  " << aggregate_storage << " = alloca " << *base_llvm_type << "\n";
+    output << "  store " << *base_llvm_type << " " << lowered_base->value;
+    output << ", ptr " << aggregate_storage << "\n";
+
+    if (is_dynamic_array_source_type(*base_source_type)) {
+        if (!seed_dynamic_array_cleanup_plan_for_storage(
+                aggregate_owner_name,
+                *base_source_type,
+                aggregate_storage,
+                target.line,
+                context,
+                session,
+                diagnostics
+            )) {
+            return std::nullopt;
+        }
+    }
+    if (!seed_record_type_dynamic_array_local_cleanup_plans(
+            aggregate_owner_name,
+            *base_source_type,
+            aggregate_storage,
+            target.line,
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return std::nullopt;
+    }
+
+    return lower_aggregate_assignment_target_path(
+        path,
+        std::move(aggregate_storage),
+        std::move(*base_source_type),
+        aggregate_owner_name,
+        aggregate_owner_name,
+        target.line,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+}
+
 auto lower_assignment_target(
     syntax::ExpressionSyntax const& target,
     LoweringEmissionContext const& context,
@@ -1166,8 +1476,26 @@ auto lower_assignment_target(
         return dynamic_array_target;
     }
     auto path = collect_aggregate_path(target);
-    if (path.steps.empty() || path.base_expression == nullptr ||
-        path.base_expression->kind != syntax::ExpressionKind::name) {
+    if (path.steps.empty() || path.base_expression == nullptr) {
+        diagnostics.error(
+            target.line,
+            "lowering only supports assignment to mutable local names and aggregate paths"
+        );
+        return std::nullopt;
+    }
+
+    if (path.base_expression->kind != syntax::ExpressionKind::name) {
+        auto returned_target = lower_returned_aggregate_assignment_target(
+            target,
+            path,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (returned_target.has_value()) {
+            return returned_target;
+        }
         diagnostics.error(
             target.line,
             "lowering only supports assignment to mutable local names and aggregate paths"
@@ -1219,207 +1547,18 @@ auto lower_assignment_target(
         current_pointer = binding->second.storage;
     }
 
-    auto cursor = initialize_aggregate_path_cursor(
+    return lower_aggregate_assignment_target_path(
+        path,
         std::move(current_pointer),
         std::move(current_source_type_name),
-        context.lowering
+        std::move(cleanup_owner_name),
+        std::move(ownership_owner_name),
+        target.line,
+        context,
+        session,
+        diagnostics,
+        output
     );
-    if (!cursor.has_value()) {
-        diagnostics.error(target.line, "lowering aggregate assignment target type is unsupported");
-        return std::nullopt;
-    }
-
-    for (auto step_index = std::size_t {0}; step_index < path.steps.size(); ++step_index) {
-        auto const& step = path.steps[step_index];
-        auto const is_final_step = step_index + 1 == path.steps.size();
-        if (step.kind == AggregatePathStepKind::member) {
-            auto result = advance_aggregate_path_member_with_temporary(
-                *cursor,
-                step.field_name,
-                context.lowering,
-                session.state.next_temporary_index,
-                output
-            );
-            if (result.error != AggregatePathError::none) {
-                diagnostics.error(
-                    target.line,
-                    aggregate_assignment_target_failure("member target", result.error)
-                );
-                return std::nullopt;
-            }
-            cleanup_owner_name += ".";
-            cleanup_owner_name += step.field_name;
-            ownership_owner_name += ".";
-            ownership_owner_name += step.field_name;
-            continue;
-        }
-
-        if (step.index_expression == nullptr) {
-            diagnostics.error(target.line, "lowering aggregate assignment index target is unsupported");
-            return std::nullopt;
-        }
-
-        auto lowered_index = lower_expression(
-            *step.index_expression,
-            "i64",
-            IntegerSignedness::unsigned_integer,
-            context,
-            session,
-            output
-        );
-        if (!lowered_index.has_value()) {
-            diagnostics.error(
-                target.line,
-                append_expression_lowering_failure(
-                    "lowering aggregate assignment index failed",
-                    session.failures.expression
-                )
-            );
-            return std::nullopt;
-        }
-
-        auto sequence = dynamic_sequence_source_type(cursor->source_type_name);
-        if (sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array &&
-            sequence->owns_storage) {
-            if (auto consumed_owner = consumed_owned_binding_or_descendant_name(
-                    session.state.ownership_transfers,
-                    ownership_owner_name
-                )) {
-                diagnostics.error(target.line, "use after move: " + *consumed_owner);
-                return std::nullopt;
-            }
-            auto element_type = lowered_type_for_source_type_name(
-                sequence->element_source_type_name,
-                context.lowering
-            );
-            if (!element_type.has_value()) {
-                diagnostics.error(target.line, "lowering aggregate DynamicArray index target element type is unsupported");
-                return std::nullopt;
-            }
-
-            auto prefix = "%" + cleanup_owner_name + ".dynamic_array_index" +
-                std::to_string(session.state.next_temporary_index++);
-            output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", cursor->pointer);
-            output << emit_dynamic_array_descriptor_field_projection(
-                prefix + ".data",
-                prefix + ".descriptor",
-                DynamicArrayDescriptorField::data
-            );
-            output << emit_dynamic_array_descriptor_field_projection(
-                prefix + ".length",
-                prefix + ".descriptor",
-                DynamicArrayDescriptorField::length
-            );
-            output << emit_dynamic_array_bounds_check(
-                prefix + ".in_bounds",
-                lowered_index->value,
-                prefix + ".length",
-                DynamicArrayBoundsCheckKind::index_within_length
-            );
-            auto block_index = next_llvm_block_index(session.state.next_block_index);
-            auto value_block = llvm_block_name("dynamic_array.aggregate_index.in_bounds", block_index);
-            auto failure_block = llvm_block_name("dynamic_array.aggregate_index.out_of_bounds", block_index);
-            emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
-            emit_llvm_block_label(output, failure_block);
-            output << "  call void @__orison_dynamic_array_bounds_failed()\n";
-            emit_llvm_unreachable(output);
-            emit_llvm_block_label(output, value_block);
-            session.state.current_block = value_block;
-            output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
-            output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
-            auto element_requires_ownership_transfer =
-                is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering);
-            if (is_final_step && element_requires_ownership_transfer) {
-                auto element_owned_cleanup_symbol_name = authorized_dynamic_array_element_owned_cleanup_symbol_name(
-                    cleanup_owner_name,
-                    sequence->element_source_type_name,
-                    context
-                );
-                if (!element_owned_cleanup_symbol_name.has_value()) {
-                    diagnostics.error(
-                        target.line,
-                        "lowering aggregate DynamicArray assignment to owned element requires authorized replacement drop"
-                    );
-                    return std::nullopt;
-                }
-                output << "  call void @" << *element_owned_cleanup_symbol_name << "(ptr ";
-                output << prefix << ".element.addr)\n";
-            }
-
-            auto next_cursor = initialize_aggregate_path_cursor(
-                prefix + ".element.addr",
-                sequence->element_source_type_name,
-                context.lowering
-            );
-            if (!next_cursor.has_value()) {
-                diagnostics.error(target.line, "lowering aggregate DynamicArray index target type is unsupported");
-                return std::nullopt;
-            }
-            cursor = std::move(*next_cursor);
-            cleanup_owner_name += ".element";
-            ownership_owner_name += aggregate_index_owner_suffix(*step.index_expression);
-            continue;
-        }
-
-        if (is_runtime_index_expression(*step.index_expression)) {
-            auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
-            if (!array_type.has_value()) {
-                diagnostics.error(
-                    target.line,
-                    aggregate_assignment_target_failure("index target", AggregatePathError::expected_array)
-                );
-                return std::nullopt;
-            }
-            emit_fixed_array_runtime_index_bounds_check(
-                "aggregate_path_index",
-                lowered_index->value,
-                array_type->length,
-                session,
-                output
-            );
-        }
-
-        auto result = advance_aggregate_path_index_with_temporary(
-            *cursor,
-            lowered_index->value,
-            context.lowering,
-            session.state.next_temporary_index,
-            output
-        );
-        if (result.error == AggregatePathError::unsupported_element_source_type) {
-            diagnostics.error(
-                target.line,
-                aggregate_assignment_target_failure("index target", result.error)
-            );
-            return std::nullopt;
-        }
-        if (result.error != AggregatePathError::none) {
-            diagnostics.error(
-                target.line,
-                aggregate_assignment_target_failure("index target", result.error)
-            );
-            return std::nullopt;
-        }
-        cleanup_owner_name += ".element";
-        if (step.index_expression->kind == syntax::ExpressionKind::integer_literal) {
-            cleanup_owner_name += step.index_expression->text;
-        }
-        ownership_owner_name += aggregate_index_owner_suffix(*step.index_expression);
-    }
-
-    auto lowered_type = lowered_type_for_source_type_name(cursor->source_type_name, context.lowering);
-    if (!lowered_type.has_value()) {
-        diagnostics.error(target.line, "lowering aggregate assignment target type is unsupported");
-        return std::nullopt;
-    }
-
-    return LoweredAssignmentTarget {
-        .type = std::move(*lowered_type),
-        .pointer = std::move(cursor->pointer),
-        .source_type_name = cursor->source_type_name,
-        .owner_name = std::move(cleanup_owner_name),
-        .consumes_owned_value_on_store = is_owned_transfer_source_type(cursor->source_type_name, context.lowering),
-    };
 }
 
 auto emit_dynamic_array_assignment_storage_cleanup(

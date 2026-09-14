@@ -1,4 +1,4 @@
-package fixtures.dynamicarray.returneddynamicarrayelementsiblingdescriptorfieldindexassignmentrejected
+package fixtures.dynamicarray.returneddynamicarrayelementsiblingdescriptorfieldindexassignmentrun
 
 record Nested
     value: UInt32
