@@ -2990,6 +2990,8 @@ representation.
   descriptor and regular cleanup for an unconsumed nested sibling descriptor.
 - Forwarded returned-root nested sibling-cleanup coverage now includes final `switch` and mixed branch-join shapes,
   keeping selected computed cleanup and sibling descriptor cleanup aligned across control-flow exits.
+- Forwarded returned-root nested sibling reuse-rejection coverage now verifies direct, final `switch`, and mixed
+  branch-join attempts to reuse the consumed selected descriptor fail with `use after move`.
 
 ## Follow-up work
 
