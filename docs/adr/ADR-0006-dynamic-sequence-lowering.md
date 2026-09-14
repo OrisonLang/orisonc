@@ -2971,6 +2971,8 @@ representation.
   returned aggregate.
 - Returned-temporary nested DynamicArray element receiver coverage verifies `make_holder().items[index].box.values`
   paths lower for read-only, Unit-tail mutation, and out-of-bounds trap cases.
+- Returned-temporary sibling-descriptor receiver coverage verifies selecting one descriptor field from a dynamic
+  element still leaves sibling descriptor fields to returned-root cleanup.
 
 ## Follow-up work
 

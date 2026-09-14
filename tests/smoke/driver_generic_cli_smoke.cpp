@@ -2423,6 +2423,40 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    bool expect_append
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto selected_descriptor = output.find("returned_aggregate_receiver_descriptor");
+    auto selected_zero = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp", selected_descriptor);
+    auto receiver_cleanup = output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp");
+    auto root_cleanup = output.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp");
+    assert(selected_descriptor != std::string::npos);
+    assert(selected_zero != std::string::npos);
+    assert(receiver_cleanup != std::string::npos);
+    assert(root_cleanup != std::string::npos);
+    assert(selected_descriptor < selected_zero);
+    assert(selected_zero < receiver_cleanup);
+    assert(receiver_cleanup < root_cleanup);
+    assert(output.find("getelementptr %record.BoxedValues, ptr %tmp") != std::string::npos);
+    assert(output.find("BoxedValues.drop.primary.addr") != std::string::npos);
+    assert(output.find("BoxedValues.drop.secondary.addr") != std::string::npos);
+    assert(output.find("BoxedValues.drop.secondary.drop.element.addr") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.BoxedValues(ptr %Bucket.drop.box.addr)") !=
+        std::string::npos);
+    assert(output.find("named_dynamic_array_receiver_descriptor") == std::string::npos);
+    if (expect_append) {
+        assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
+        assert(output.find("ret i32 0") != std::string::npos);
+    } else {
+        assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
+        assert(output.find("ret i32") != std::string::npos);
+    }
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_out_of_bounds_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5317,6 +5351,26 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_returned_dynamic_array_element_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_count_run.or",
+        smoke_temp_root / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_count"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_count_run.or",
+        false
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_run.or",
+        smoke_temp_root / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_run.or",
+        true
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
