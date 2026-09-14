@@ -191,13 +191,13 @@ auto consumed_owned_aggregate_projection_argument_name(
     return plan.binding_name;
 }
 
-auto aggregate_index_owner_segment(
+auto aggregate_index_owner_suffix(
     syntax::ExpressionSyntax const& expression
 ) -> std::string {
     if (auto literal_text = decimal_integer_literal_text(expression)) {
-        return "element" + std::string {*literal_text};
+        return ".element" + std::string {*literal_text};
     }
-    return "element[" + runtime_index_expression_key(expression) + "]";
+    return "[" + runtime_index_expression_key(expression) + "]";
 }
 
 auto consumed_static_indexed_aggregate_projection_argument_name(
@@ -245,13 +245,12 @@ auto consumed_static_indexed_aggregate_projection_argument_name(
         if (step.index_expression == nullptr) {
             return std::nullopt;
         }
-        auto owner_segment = aggregate_index_owner_segment(*step.index_expression);
+        auto owner_suffix = aggregate_index_owner_suffix(*step.index_expression);
         auto element_source_type = array_element_source_type_name(current_source_type);
         if (!element_source_type.has_value()) {
             return std::nullopt;
         }
-        binding_name += ".";
-        binding_name += owner_segment;
+        binding_name += owner_suffix;
         current_source_type = std::move(*element_source_type);
     }
 

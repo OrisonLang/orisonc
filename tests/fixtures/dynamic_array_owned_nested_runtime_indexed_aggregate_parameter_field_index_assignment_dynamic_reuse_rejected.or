@@ -1,0 +1,33 @@
+package fixtures.dynamicarrayownednestedruntimeindexedaggregateparameterfieldindexassignmentdynamicreuserejected
+
+record Payload
+    public value: Int64
+
+record Item
+    public values: DynamicArray<Payload>
+
+record Group
+    public items: Array<Item, 2>
+
+record Holder
+    public groups: Array<Group, 2>
+
+function use_items(items: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function replace(holder: Holder, group_index: UInt64, item_index: UInt64, value_index: UInt64) -> UInt32
+    var current: Holder = holder
+    use_items(current.groups[group_index].items[item_index].values)
+    current.groups[group_index].items[item_index].values[value_index] = Payload(8)
+    0 as UInt32
+
+function main() -> UInt32
+    var first: DynamicArray<Payload> = DynamicArray()
+    first.push(Payload(7))
+    var second: DynamicArray<Payload> = DynamicArray()
+    second.push(Payload(9))
+    var third: DynamicArray<Payload> = DynamicArray()
+    third.push(Payload(11))
+    var fourth: DynamicArray<Payload> = DynamicArray()
+    fourth.push(Payload(13))
+    replace(Holder([Group([Item(first), Item(second)]), Group([Item(third), Item(fourth)])]), 1 as UInt64, 1 as UInt64, 0 as UInt64)

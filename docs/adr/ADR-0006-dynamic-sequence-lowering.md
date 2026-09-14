@@ -2958,6 +2958,8 @@ representation.
   before the DynamicArray element guard traps.
 - Nested runtime-indexed aggregate-path DynamicArray success coverage verifies both fixed-array guards and the
   DynamicArray guard pass before old-element cleanup and replacement store.
+- Nested runtime-indexed aggregate-path DynamicArray reuse-rejection coverage rejects dynamic-index element replacement
+  after the same runtime-indexed descriptor projection has been moved.
 
 ## Follow-up work
 

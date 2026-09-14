@@ -3485,6 +3485,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_out_of_bounds.or";
     auto owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_path =
         fixtures / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_run.or";
+    auto owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_reuse_path =
+        fixtures /
+        "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_reuse_rejected.or";
     auto owned_dynamic_array_parameter_nested_loop_break_index_assignment_path =
         fixtures / "dynamic_array_owned_parameter_nested_loop_break_index_assignment_run.or";
     auto owned_dynamic_array_parameter_nested_loop_continue_index_assignment_path =
@@ -6409,6 +6412,15 @@ auto main(int argc, char** argv) -> int {
         owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_path,
         smoke_temp_root / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic"
     );
+    assert_diagnostic_failure_matrix(
+        executable,
+        owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_reuse_path,
+        smoke_temp_root /
+            "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_reuse.o",
+        smoke_temp_root /
+            "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_index_assignment_dynamic_reuse",
+        "use after move: current.groups[group_index].items[item_index].values"
+    );
     assert_owned_dynamic_array_parameter_loop_break_index_assignment_run_success(
         executable,
         owned_dynamic_array_parameter_nested_loop_break_index_assignment_path
@@ -6511,12 +6523,12 @@ auto main(int argc, char** argv) -> int {
     assert_dynamic_array_use_after_move_emit_llvm_failure(
         executable,
         owned_dynamic_array_runtime_indexed_aggregate_parameter_field_cleanup_reuse_path,
-        "holder.items.element[index].values"
+        "holder.items[index].values"
     );
     assert_dynamic_array_use_after_move_emit_llvm_failure(
         executable,
         owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_cleanup_reuse_path,
-        "holder.groups.element[group_index].items.element[item_index].values"
+        "holder.groups[group_index].items[item_index].values"
     );
     assert_owned_dynamic_array_parameter_use_after_move_emit_llvm_failure(
         executable,
