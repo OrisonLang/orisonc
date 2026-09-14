@@ -2490,6 +2490,56 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_d
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_outer_out_of_bounds_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto index_value = output.find("%index = add i64 0, 2");
+    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp", index_value);
+    auto outer_bounds_check = output.find(".items.dynamic_array_index", root_storage);
+    auto trap = output.find("call void @__orison_dynamic_array_bounds_failed()", outer_bounds_check);
+    assert(index_value != std::string::npos);
+    assert(root_storage != std::string::npos);
+    assert(outer_bounds_check != std::string::npos);
+    assert(trap != std::string::npos);
+    assert(index_value < root_storage);
+    assert(root_storage < outer_bounds_check);
+    assert(outer_bounds_check < trap);
+    auto inner_bounds_check = output.find(".box.primary.dynamic_array_index", trap);
+    auto replacement_store = output.find("store %record.Payload", trap);
+    assert(inner_bounds_check != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(trap < inner_bounds_check);
+    assert(inner_bounds_check < replacement_store);
+}
+
+void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_inner_out_of_bounds_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto item_value = output.find("%item = add i64 0, 1");
+    auto outer_bounds_check = output.find(".items.dynamic_array_index", item_value);
+    auto inner_bounds_check = output.find(".box.primary.dynamic_array_index", outer_bounds_check);
+    auto trap = output.find("call void @__orison_dynamic_array_bounds_failed()", inner_bounds_check);
+    auto old_element_cleanup = output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp", trap);
+    auto replacement_store = output.find("store %record.Payload", trap);
+    assert(item_value != std::string::npos);
+    assert(outer_bounds_check != std::string::npos);
+    assert(inner_bounds_check != std::string::npos);
+    assert(trap != std::string::npos);
+    assert(item_value < outer_bounds_check);
+    assert(outer_bounds_check < inner_bounds_check);
+    assert(inner_bounds_check < trap);
+    assert(old_element_cleanup != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(trap < old_element_cleanup);
+    assert(old_element_cleanup < replacement_store);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_out_of_bounds_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5459,6 +5509,22 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_descriptor_assignment_success(
         executable,
         fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_outer_out_of_bounds_success(
+        executable,
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_outer_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_outer_out_of_bounds.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_inner_out_of_bounds_success(
+        executable,
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_inner_out_of_bounds.or"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_inner_out_of_bounds.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

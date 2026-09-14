@@ -2978,6 +2978,8 @@ representation.
 - Returned-temporary DynamicArray element indexed replacement now materializes the returned aggregate into an internal
   temporary root, reuses aggregate assignment-target traversal, emits old-element cleanup before the replacement store,
   and emits returned-root cleanup before the function return.
+- Returned-temporary indexed replacement out-of-bounds coverage verifies both the outer returned-root dynamic index
+  guard and the inner selected-descriptor dynamic index guard trap before old-element cleanup or replacement stores.
 
 ## Follow-up work
 
