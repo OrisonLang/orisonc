@@ -2505,13 +2505,21 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
         dynamic_bounds_check
     );
     auto replacement_store = output.find("store %record.Payload", old_element_cleanup);
-    auto first_root_cleanup = output.find(
+    auto sibling_cleanup_00 = output.find(
         ".groups.element0.items.element0.values.dynamic_array_cleanup",
         replacement_store
     );
-    auto final_root_cleanup = output.find(
+    auto sibling_cleanup_01 = output.find(
+        ".groups.element0.items.element1.values.dynamic_array_cleanup",
+        sibling_cleanup_00
+    );
+    auto sibling_cleanup_10 = output.find(
+        ".groups.element1.items.element0.values.dynamic_array_cleanup",
+        sibling_cleanup_01
+    );
+    auto selected_cleanup_11 = output.find(
         ".groups.element1.items.element1.values.dynamic_array_cleanup",
-        first_root_cleanup
+        sibling_cleanup_10
     );
     assert(root_storage != std::string::npos);
     assert(group_bounds_check != std::string::npos);
@@ -2519,15 +2527,19 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
     assert(dynamic_bounds_check != std::string::npos);
     assert(old_element_cleanup != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(first_root_cleanup != std::string::npos);
-    assert(final_root_cleanup != std::string::npos);
+    assert(sibling_cleanup_00 != std::string::npos);
+    assert(sibling_cleanup_01 != std::string::npos);
+    assert(sibling_cleanup_10 != std::string::npos);
+    assert(selected_cleanup_11 != std::string::npos);
     assert(root_storage < group_bounds_check);
     assert(group_bounds_check < item_bounds_check);
     assert(item_bounds_check < dynamic_bounds_check);
     assert(dynamic_bounds_check < old_element_cleanup);
     assert(old_element_cleanup < replacement_store);
-    assert(replacement_store < first_root_cleanup);
-    assert(first_root_cleanup < final_root_cleanup);
+    assert(replacement_store < sibling_cleanup_00);
+    assert(sibling_cleanup_00 < sibling_cleanup_01);
+    assert(sibling_cleanup_01 < sibling_cleanup_10);
+    assert(sibling_cleanup_10 < selected_cleanup_11);
     assert(output.find("ret i32 0") != std::string::npos);
 }
 

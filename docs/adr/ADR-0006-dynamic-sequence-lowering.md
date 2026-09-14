@@ -2984,6 +2984,8 @@ representation.
   guard ordering, old-element cleanup before replacement, and returned-root cleanup across all nested descriptor slots.
 - Returned-temporary nested runtime-indexed replacement out-of-bounds coverage now verifies group-index, item-index,
   and value-index traps before the later replacement/cleanup path.
+- Returned-temporary nested runtime-indexed replacement sibling-cleanup coverage now verifies the selected descriptor
+  cleanup and each unselected sibling descriptor cleanup remain scheduled after the replacement store.
 
 ## Follow-up work
 
