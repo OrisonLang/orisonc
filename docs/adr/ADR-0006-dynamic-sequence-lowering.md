@@ -2964,6 +2964,8 @@ representation.
   keeping call-argument move recording aligned with assignment-target reuse checks.
 - Returned-temporary DynamicArray element receiver chains now lower for both read-only and Unit-tail mutation chains
   by cleaning the returned root descriptor while transferring the selected nested descriptor into the receiver owner.
+- Returned-temporary DynamicArray element receiver out-of-bounds coverage verifies the dynamic index guard traps
+  before selected descriptor transfer for both read-only and Unit-tail mutation chains.
 
 ## Follow-up work
 
