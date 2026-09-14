@@ -1,0 +1,37 @@
+package fixtures.dynamicarray.returneddynamicarrayelementsiblingdescriptorfieldindexassignmentrejected
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+record BoxedValues
+    primary: DynamicArray<Payload>
+    secondary: DynamicArray<Payload>
+
+record Bucket
+    box: BoxedValues
+
+record Holder
+    items: DynamicArray<Bucket>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(seed)))
+    values
+
+function make_items() -> DynamicArray<Bucket>
+    var items: DynamicArray<Bucket> = DynamicArray()
+    items.push(Bucket(BoxedValues(make_values(7 as UInt32), make_values(17 as UInt32))))
+    items.push(Bucket(BoxedValues(make_values(11 as UInt32), make_values(19 as UInt32))))
+    items
+
+function make_holder() -> Holder
+    Holder(make_items())
+
+function main() -> UInt32
+    let index: UInt64 = 0 as UInt64
+    let item: UInt64 = 0 as UInt64
+    make_holder().items[index].box.primary[item] = Payload(Nested(23 as UInt32))
+    0 as UInt32

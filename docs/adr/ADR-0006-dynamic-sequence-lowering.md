@@ -2975,6 +2975,9 @@ representation.
   element still leaves sibling descriptor fields to returned-root cleanup.
 - Returned-temporary sibling-descriptor out-of-bounds coverage verifies the dynamic index guard traps before selected
   descriptor transfer while keeping sibling cleanup metadata present in emitted IR.
+- Returned-temporary DynamicArray element indexed replacement remains diagnostic-only: assignment-target lowering
+  currently requires a mutable local aggregate root so old-value cleanup, descriptor zeroing, and returned-root cleanup
+  can be proven before the replacement store.
 
 ## Follow-up work
 
@@ -2990,3 +2993,5 @@ representation.
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field and fixed-array descriptor sets only after a
   broader dynamic descriptor-discovery model is proven.
+- Extend indexed replacement on returned-temporary aggregate roots after assignment lowering can model a selected
+  descriptor transfer plus returned-root cleanup with no mutable source binding.

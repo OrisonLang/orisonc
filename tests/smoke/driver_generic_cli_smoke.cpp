@@ -5418,6 +5418,11 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_out_of_bounds.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_rejected.or",
+        "lowering does not yet support this statement"
+    );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_count_run.or",
