@@ -5130,6 +5130,11 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_count_rejected.or",
         "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_append_statement_rejected.or",
+        "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
+    );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_receiver_named_dynamic_array_element_field_method_chain_count_run.or",

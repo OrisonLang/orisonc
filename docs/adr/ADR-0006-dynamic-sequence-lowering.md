@@ -2962,6 +2962,8 @@ representation.
   after the same runtime-indexed descriptor projection has been moved.
 - Runtime-indexed aggregate owner-key suffix formatting now has focused smoke coverage and a shared lowering helper,
   keeping call-argument move recording aligned with assignment-target reuse checks.
+- Returned-temporary DynamicArray element receiver chains now pin the descriptor-enumeration boundary for both
+  read-only and Unit-tail mutation chains.
 
 ## Follow-up work
 

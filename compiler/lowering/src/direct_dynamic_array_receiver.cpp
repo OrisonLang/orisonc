@@ -7,6 +7,7 @@
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/fixed_array_bounds.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
@@ -880,7 +881,10 @@ auto lower_direct_dynamic_array_receiver(
                 if (requires_named_dynamic_array_element_transfer) {
                     return "DynamicArray receiver named aggregate cleanup could not transfer descriptors through DynamicArray element projection";
                 }
-                return "DynamicArray receiver expression failed";
+                return append_expression_lowering_failure(
+                    "DynamicArray receiver expression failed",
+                    failures.expression
+                );
             }(),
         };
     }
