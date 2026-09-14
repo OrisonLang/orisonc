@@ -2969,6 +2969,8 @@ representation.
 - Returned-temporary DynamicArray element receiver smoke coverage verifies returned-owner transfer lowering stays
   separate from named-owner reuse tracking; source-level post-transfer reuse is not expressible for an unnamed
   returned aggregate.
+- Returned-temporary nested DynamicArray element receiver coverage verifies `make_holder().items[index].box.values`
+  paths lower for read-only, Unit-tail mutation, and out-of-bounds trap cases.
 
 ## Follow-up work
 
