@@ -14,6 +14,8 @@ auto decimal_integer_literal_text(
     syntax::ExpressionSyntax const& expression
 ) -> std::optional<std::string_view>;
 
+auto aggregate_index_owner_suffix(syntax::ExpressionSyntax const& expression) -> std::string;
+
 auto is_runtime_index_expression(syntax::ExpressionSyntax const& expression) -> bool;
 
 auto contains_runtime_indexed_projection(syntax::ExpressionSyntax const& expression) -> bool;

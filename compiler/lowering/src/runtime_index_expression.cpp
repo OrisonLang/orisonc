@@ -36,6 +36,15 @@ auto is_runtime_index_expression(
     return !decimal_integer_literal_text(expression).has_value();
 }
 
+auto aggregate_index_owner_suffix(
+    syntax::ExpressionSyntax const& expression
+) -> std::string {
+    if (auto literal_text = decimal_integer_literal_text(expression)) {
+        return ".element" + std::string {*literal_text};
+    }
+    return "[" + runtime_index_expression_key(expression) + "]";
+}
+
 auto contains_runtime_indexed_projection(
     syntax::ExpressionSyntax const& expression
 ) -> bool {

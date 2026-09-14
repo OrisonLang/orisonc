@@ -2960,6 +2960,8 @@ representation.
   DynamicArray guard pass before old-element cleanup and replacement store.
 - Nested runtime-indexed aggregate-path DynamicArray reuse-rejection coverage rejects dynamic-index element replacement
   after the same runtime-indexed descriptor projection has been moved.
+- Runtime-indexed aggregate owner-key suffix formatting now has focused smoke coverage and a shared lowering helper,
+  keeping call-argument move recording aligned with assignment-target reuse checks.
 
 ## Follow-up work
 

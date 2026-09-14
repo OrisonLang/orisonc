@@ -100,6 +100,7 @@ auto ternary(
 }  // namespace
 
 int main() {
+    using orison::lowering::aggregate_index_owner_suffix;
     using orison::lowering::contains_runtime_indexed_projection;
     using orison::lowering::decimal_integer_literal_text;
     using orison::lowering::is_runtime_index_expression;
@@ -112,6 +113,10 @@ int main() {
     assert(decimal_integer_literal_text(integer_literal("7")).value_or("") == "7");
     assert(decimal_integer_literal_text(cast(integer_literal("7"), "UInt64")).value_or("") == "7");
     assert(!decimal_integer_literal_text(name("index")).has_value());
+    assert(aggregate_index_owner_suffix(integer_literal("7")) == ".element7");
+    assert(aggregate_index_owner_suffix(cast(integer_literal("7"), "UInt64")) == ".element7");
+    assert(aggregate_index_owner_suffix(name("index")) == "[index]");
+    assert(aggregate_index_owner_suffix(binary(name("index"), "+", name("zero"))) == "[(index + zero)]");
     assert(!is_runtime_index_expression(integer_literal("7")));
     assert(is_runtime_index_expression(name("index")));
     assert(runtime_index_expression_key(binary(name("index"), "+", name("zero"))) == "(index + zero)");

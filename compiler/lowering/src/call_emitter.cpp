@@ -191,15 +191,6 @@ auto consumed_owned_aggregate_projection_argument_name(
     return plan.binding_name;
 }
 
-auto aggregate_index_owner_suffix(
-    syntax::ExpressionSyntax const& expression
-) -> std::string {
-    if (auto literal_text = decimal_integer_literal_text(expression)) {
-        return ".element" + std::string {*literal_text};
-    }
-    return "[" + runtime_index_expression_key(expression) + "]";
-}
-
 auto consumed_static_indexed_aggregate_projection_argument_name(
     syntax::ExpressionSyntax const& argument,
     std::optional<std::string_view> expected_source_type,

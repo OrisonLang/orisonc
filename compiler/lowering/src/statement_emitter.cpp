@@ -177,18 +177,6 @@ auto is_bound_dynamic_array_parameter(
         is_dynamic_array_source_type(source_type->second);
 }
 
-auto aggregate_assignment_index_owner_suffix(
-    syntax::ExpressionSyntax const& expression
-) -> std::string {
-    if (expression.kind == syntax::ExpressionKind::integer_literal && !expression.text.empty() &&
-        std::ranges::all_of(expression.text, [](char character) {
-            return std::isdigit(static_cast<unsigned char>(character)) != 0;
-        })) {
-        return ".element" + expression.text;
-    }
-    return "[" + runtime_index_expression_key(expression) + "]";
-}
-
 auto consumed_owned_push_argument_name(
     syntax::ExpressionSyntax const& argument,
     std::string_view expected_source_type,
@@ -1369,7 +1357,7 @@ auto lower_assignment_target(
             }
             cursor = std::move(*next_cursor);
             cleanup_owner_name += ".element";
-            ownership_owner_name += aggregate_assignment_index_owner_suffix(*step.index_expression);
+            ownership_owner_name += aggregate_index_owner_suffix(*step.index_expression);
             continue;
         }
 
@@ -1416,7 +1404,7 @@ auto lower_assignment_target(
         if (step.index_expression->kind == syntax::ExpressionKind::integer_literal) {
             cleanup_owner_name += step.index_expression->text;
         }
-        ownership_owner_name += aggregate_assignment_index_owner_suffix(*step.index_expression);
+        ownership_owner_name += aggregate_index_owner_suffix(*step.index_expression);
     }
 
     auto lowered_type = lowered_type_for_source_type_name(cursor->source_type_name, context.lowering);
