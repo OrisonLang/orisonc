@@ -2323,6 +2323,58 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_fix
     assert(output.find("ret i32") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("returned_aggregate_receiver_dynamic_index") != std::string::npos);
+    assert(output.find(".in_bounds = icmp ult i64 %index") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("returned_aggregate_receiver_descriptor") != std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
+        std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_aggregate_tmp") !=
+        std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
+void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_append_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("returned_aggregate_receiver_dynamic_index") != std::string::npos);
+    assert(output.find(".in_bounds = icmp ult i64 %index") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
+    assert(output.find("returned_aggregate_receiver_descriptor") != std::string::npos);
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
+    assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_aggregate_tmp") !=
+        std::string::npos);
+    assert(output.find("ret i32 0") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_out_of_bounds_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5125,15 +5177,23 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop.or",
         smoke_temp_root / "dynamic_array_receiver_direct_owned_method_chain_append_statement_missing_drop"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_count_rejected.or",
-        "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_count_run.or",
+        smoke_temp_root / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_count"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_fixture_success(
         executable,
-        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_append_statement_rejected.or",
-        "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_count_run.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_append_statement_run.or",
+        smoke_temp_root / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_append_statement"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_append_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_returned_dynamic_array_element_field_method_chain_append_statement_run.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

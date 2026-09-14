@@ -1,4 +1,4 @@
-package fixtures.dynamicarray.receiverreturneddynamicarrayelementfieldmethodchainappendstatementrejected
+package fixtures.dynamicarray.receiverreturneddynamicarrayelementfieldmethodchainappendstatementrun
 
 record Nested
     value: UInt32

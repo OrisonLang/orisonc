@@ -563,6 +563,75 @@ auto lower_selected_descriptor_projection_path(
         if (step.index_expression == nullptr) {
             return std::nullopt;
         }
+        if (auto dynamic_element_source_type = dynamic_array_element_source_type_name(cursor->source_type_name)) {
+            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+                "returned_aggregate_receiver_dynamic_array",
+                cursor->source_type_name,
+                context.lowering
+            );
+            if (!cleanup_plan.has_value()) {
+                return std::nullopt;
+            }
+            auto lowered_index = lower_expression(
+                *step.index_expression,
+                "i64",
+                IntegerSignedness::unsigned_integer,
+                context,
+                session,
+                output
+            );
+            if (!lowered_index.has_value()) {
+                return std::nullopt;
+            }
+            auto prefix = "%returned_aggregate_receiver_dynamic_index" +
+                std::to_string(session.state.next_temporary_index++);
+            output << emit_dynamic_array_descriptor_load(
+                prefix + ".descriptor",
+                cursor->pointer
+            );
+            output << emit_dynamic_array_descriptor_field_projection(
+                prefix + ".length",
+                prefix + ".descriptor",
+                DynamicArrayDescriptorField::length
+            );
+            output << emit_dynamic_array_bounds_check(
+                prefix + ".in_bounds",
+                lowered_index->value,
+                prefix + ".length",
+                DynamicArrayBoundsCheckKind::index_within_length
+            );
+            auto block_index = next_llvm_block_index(session.state.next_block_index);
+            auto value_block = llvm_block_name("returned_aggregate_receiver.dynamic_index.in_bounds", block_index);
+            auto failure_block = llvm_block_name("returned_aggregate_receiver.dynamic_index.out_of_bounds", block_index);
+            emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+            emit_llvm_block_label(output, failure_block);
+            output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+            emit_llvm_unreachable(output);
+            emit_llvm_block_label(output, value_block);
+            session.state.current_block = value_block;
+            output << emit_dynamic_array_descriptor_field_projection(
+                prefix + ".data",
+                prefix + ".descriptor",
+                DynamicArrayDescriptorField::data
+            );
+            output << emit_dynamic_array_element_address(
+                *cleanup_plan,
+                prefix + ".element.addr",
+                prefix + ".data",
+                lowered_index->value
+            );
+
+            auto next_cursor = initialize_aggregate_path_cursor(
+                prefix + ".element.addr",
+                *dynamic_element_source_type,
+                context.lowering
+            );
+            if (!next_cursor.has_value()) {
+                return std::nullopt;
+            }
+            cursor = std::move(*next_cursor);
+            continue;
+        }
         auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
         if (!array_type.has_value()) {
             return std::nullopt;
@@ -791,6 +860,10 @@ auto lower_direct_dynamic_array_receiver(
         returned_aggregate_projection_has_sibling_descriptors(receiver_expression, context.lowering);
     auto const receiver_is_temporary_aggregate_projection =
         collect_temporary_aggregate_path(receiver_expression).has_value();
+    auto const requires_returned_aggregate_projection_cleanup =
+        requires_returned_aggregate_sibling_cleanup ||
+        (receiver_is_temporary_aggregate_projection &&
+            temporary_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state));
     auto const requires_named_dynamic_array_element_transfer =
         named_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state);
     auto const named_dynamic_array_element_owner_name = named_dynamic_array_element_receiver_owner_name(
@@ -807,17 +880,9 @@ auto lower_direct_dynamic_array_receiver(
             ExpressionLoweringFailureReason::use_after_move
         );
     }
-    if (receiver_is_temporary_aggregate_projection &&
-        temporary_aggregate_path_crosses_dynamic_array_element(receiver_expression, context.lowering, session.state)) {
-        return direct_receiver_failure(
-            failures,
-            record_expression_failures,
-            "DynamicArray receiver returned aggregate cleanup cannot enumerate descriptors through DynamicArray element projection"
-        );
-    }
     if (contains_runtime_indexed_projection(receiver_expression) &&
         receiver_is_temporary_aggregate_projection &&
-        !requires_returned_aggregate_sibling_cleanup) {
+        !requires_returned_aggregate_projection_cleanup) {
         return direct_receiver_failure(
             failures,
             record_expression_failures,
@@ -843,7 +908,7 @@ auto lower_direct_dynamic_array_receiver(
     }
 
     auto lowered_receiver = [&]() -> std::optional<LoweredExpression> {
-        if (requires_returned_aggregate_sibling_cleanup) {
+        if (requires_returned_aggregate_projection_cleanup) {
             return lower_returned_aggregate_projection_receiver(
                 receiver_expression,
                 receiver_type_name,
