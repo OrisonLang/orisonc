@@ -1,0 +1,31 @@
+package fixtures.dynamicarray.returnednestedruntimeindexedaggregatefieldindexassignmentitemoutofbounds
+
+record Payload
+    public value: Int64
+
+record Item
+    public values: DynamicArray<Payload>
+
+record Group
+    public items: Array<Item, 2>
+
+record Holder
+    public groups: Array<Group, 2>
+
+function make_holder() -> Holder
+    var first: DynamicArray<Payload> = DynamicArray()
+    first.push(Payload(7))
+    var second: DynamicArray<Payload> = DynamicArray()
+    second.push(Payload(9))
+    var third: DynamicArray<Payload> = DynamicArray()
+    third.push(Payload(11))
+    var fourth: DynamicArray<Payload> = DynamicArray()
+    fourth.push(Payload(13))
+    Holder([Group([Item(first), Item(second)]), Group([Item(third), Item(fourth)])])
+
+function main() -> UInt32
+    let group_index: UInt64 = 1 as UInt64
+    let item_index: UInt64 = 2 as UInt64
+    let value_index: UInt64 = 0 as UInt64
+    make_holder().groups[group_index].items[item_index].values[value_index] = Payload(8)
+    0 as UInt32

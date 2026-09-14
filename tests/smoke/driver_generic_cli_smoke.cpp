@@ -2531,6 +2531,64 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_out_of_bounds_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view out_of_bounds_name,
+    std::string_view out_of_bounds_value
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto out_of_bounds_binding =
+        output.find("%" + std::string {out_of_bounds_name} + " = add i64 0, " + std::string {out_of_bounds_value});
+    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp", out_of_bounds_binding);
+    auto group_bounds_check = output.find("%aggregate_path_index", root_storage);
+    auto item_bounds_check = output.find("%aggregate_path_index", group_bounds_check + 1);
+    auto dynamic_bounds_check = output.find(".groups.element.items.element.values.dynamic_array_index", item_bounds_check);
+    auto trap = std::string::npos;
+    if (out_of_bounds_name == "group_index") {
+        auto failure_label = output.find("fixed_array.index.out_of_bounds.0:", group_bounds_check);
+        auto success_label = output.find("fixed_array.index.in_bounds.0:", failure_label);
+        trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+        assert(failure_label != std::string::npos);
+        assert(success_label != std::string::npos);
+        assert(failure_label < trap);
+        assert(trap < success_label);
+    } else if (out_of_bounds_name == "item_index") {
+        auto failure_label = output.find("fixed_array.index.out_of_bounds.1:", item_bounds_check);
+        auto success_label = output.find("fixed_array.index.in_bounds.1:", failure_label);
+        trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+        assert(failure_label != std::string::npos);
+        assert(success_label != std::string::npos);
+        assert(failure_label < trap);
+        assert(trap < success_label);
+    } else {
+        auto failure_label = output.find("dynamic_array.aggregate_index.out_of_bounds.2:", dynamic_bounds_check);
+        auto success_label = output.find("dynamic_array.aggregate_index.in_bounds.2:", failure_label);
+        trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+        auto old_element_cleanup = output.find(
+            "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+            trap
+        );
+        assert(failure_label != std::string::npos);
+        assert(success_label != std::string::npos);
+        assert(failure_label < trap);
+        assert(trap < success_label);
+        assert(old_element_cleanup != std::string::npos);
+        assert(trap < old_element_cleanup);
+    }
+    assert(out_of_bounds_binding != std::string::npos);
+    assert(root_storage != std::string::npos);
+    assert(group_bounds_check != std::string::npos);
+    assert(item_bounds_check != std::string::npos);
+    assert(dynamic_bounds_check != std::string::npos);
+    assert(trap != std::string::npos);
+    assert(out_of_bounds_binding < root_storage);
+    assert(root_storage < group_bounds_check);
+    assert(group_bounds_check < item_bounds_check);
+    assert(item_bounds_check < dynamic_bounds_check);
+}
+
 void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_outer_out_of_bounds_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5575,6 +5633,36 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_success(
         executable,
         fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_dynamic_run.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_out_of_bounds_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_group_out_of_bounds.or",
+        "group_index",
+        "2"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_group_out_of_bounds.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_out_of_bounds_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_item_out_of_bounds.or",
+        "item_index",
+        "2"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_item_out_of_bounds.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_out_of_bounds_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_value_out_of_bounds.or",
+        "value_index",
+        "1"
+    );
+    assert_cli_run_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_value_out_of_bounds.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
