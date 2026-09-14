@@ -2490,6 +2490,47 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_d
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp");
+    auto group_bounds_check = output.find("%aggregate_path_index", root_storage);
+    auto item_bounds_check = output.find("%aggregate_path_index", group_bounds_check + 1);
+    auto dynamic_bounds_check = output.find(".groups.element.items.element.values.dynamic_array_index", item_bounds_check);
+    auto old_element_cleanup = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        dynamic_bounds_check
+    );
+    auto replacement_store = output.find("store %record.Payload", old_element_cleanup);
+    auto first_root_cleanup = output.find(
+        ".groups.element0.items.element0.values.dynamic_array_cleanup",
+        replacement_store
+    );
+    auto final_root_cleanup = output.find(
+        ".groups.element1.items.element1.values.dynamic_array_cleanup",
+        first_root_cleanup
+    );
+    assert(root_storage != std::string::npos);
+    assert(group_bounds_check != std::string::npos);
+    assert(item_bounds_check != std::string::npos);
+    assert(dynamic_bounds_check != std::string::npos);
+    assert(old_element_cleanup != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(first_root_cleanup != std::string::npos);
+    assert(final_root_cleanup != std::string::npos);
+    assert(root_storage < group_bounds_check);
+    assert(group_bounds_check < item_bounds_check);
+    assert(item_bounds_check < dynamic_bounds_check);
+    assert(dynamic_bounds_check < old_element_cleanup);
+    assert(old_element_cleanup < replacement_store);
+    assert(replacement_store < first_root_cleanup);
+    assert(first_root_cleanup < final_root_cleanup);
+    assert(output.find("ret i32 0") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_outer_out_of_bounds_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5525,6 +5566,15 @@ auto main(int argc, char** argv) -> int {
     assert_cli_run_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_inner_out_of_bounds.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_dynamic_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_dynamic"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_dynamic_run.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,

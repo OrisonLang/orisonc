@@ -2980,6 +2980,8 @@ representation.
   and emits returned-root cleanup before the function return.
 - Returned-temporary indexed replacement out-of-bounds coverage verifies both the outer returned-root dynamic index
   guard and the inner selected-descriptor dynamic index guard trap before old-element cleanup or replacement stores.
+- Returned-temporary nested runtime-indexed replacement coverage now verifies fixed-array guard ordering, DynamicArray
+  guard ordering, old-element cleanup before replacement, and returned-root cleanup across all nested descriptor slots.
 
 ## Follow-up work
 
