@@ -2973,6 +2973,8 @@ representation.
   paths lower for read-only, Unit-tail mutation, and out-of-bounds trap cases.
 - Returned-temporary sibling-descriptor receiver coverage verifies selecting one descriptor field from a dynamic
   element still leaves sibling descriptor fields to returned-root cleanup.
+- Returned-temporary sibling-descriptor out-of-bounds coverage verifies the dynamic index guard traps before selected
+  descriptor transfer while keeping sibling cleanup metadata present in emitted IR.
 
 ## Follow-up work
 
