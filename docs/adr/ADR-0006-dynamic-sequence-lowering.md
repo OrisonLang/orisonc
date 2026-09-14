@@ -2986,6 +2986,8 @@ representation.
   and value-index traps before the later replacement/cleanup path.
 - Returned-temporary nested runtime-indexed replacement sibling-cleanup coverage now verifies the selected descriptor
   cleanup and each unselected sibling descriptor cleanup remain scheduled after the replacement store.
+- Forwarded returned-root nested sibling-cleanup coverage now verifies computed cleanup for the consumed nested
+  descriptor and regular cleanup for an unconsumed nested sibling descriptor.
 
 ## Follow-up work
 
