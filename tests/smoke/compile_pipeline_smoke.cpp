@@ -294,6 +294,33 @@ void assert_mixed_switch_nested_returned_field_final_control_cleanup_ir(
     assert_ir_excludes(result.ir_text, "%returned.inner.values.dynamic_array_cleanup");
 }
 
+void assert_forwarded_returned_nested_sibling_cleanup_ir(
+    orison::pipeline::CompilePipelineResult const& result
+) {
+    assert_dynamic_array_payload_returned_lifetime_owner(result, "returned.inner.primary");
+    assert_dynamic_array_payload_cleanup_ready(result);
+    assert_ir_contains(
+        result.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.primary.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        result.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.inner.primary.computed_for."
+    );
+    assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %returned.inner.primary.addr");
+    assert_ir_contains(
+        result.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.sibling.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        result.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.inner.sibling.dynamic_array_cleanup"
+    );
+    assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %returned.inner.sibling.addr");
+    assert_ir_excludes(result.ir_text, "%box.inner.primary.dynamic_array_cleanup");
+    assert_ir_excludes(result.ir_text, "%box.inner.sibling.dynamic_array_cleanup");
+}
+
 void assert_branch_local_named_dynamic_array_cleanup_ir(
     std::string const& ir_text,
     std::string_view left_owner,
@@ -8125,6 +8152,67 @@ auto main() -> int {
         pipeline,
         dynamic_array_forwarded_returned_nested_aggregate_field_sibling_cleanup_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_cleanup_run"
+    );
+    auto dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_run.or";
+    auto dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_ir =
+        pipeline.emit_llvm(
+            dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_path,
+            orison::pipeline::CompilePipelineOptions {
+                .semantic_owned_cleanup_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(!dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_ir.has_errors());
+    assert_forwarded_returned_nested_sibling_cleanup_ir(
+        dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_ir.ir_text,
+        "switch i1 %flag"
+    );
+    assert_ir_contains(
+        dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_ir.ir_text,
+        "switch.merge.0:\n"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_cleanup_run"
+    );
+    auto dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_run.or";
+    auto dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_ir =
+        pipeline.emit_llvm(
+            dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_path,
+            orison::pipeline::CompilePipelineOptions {
+                .semantic_owned_cleanup_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(!dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_ir.has_errors());
+    assert_forwarded_returned_nested_sibling_cleanup_ir(
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_ir
+    );
+    assert_ir_contains(
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_ir.ir_text,
+        "define %record.OuterBox @choose_outer(i1 %flag)"
+    );
+    assert_ir_contains(
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_ir.ir_text,
+        "call %record.OuterBox @forward_outer(%record.OuterBox %tmp"
+    );
+    assert_ir_contains(
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_ir.ir_text,
+        "phi %record.OuterBox"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_path,
+        smoke_temp_root /
+            "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_final_if_cleanup_run"
     );
     auto dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

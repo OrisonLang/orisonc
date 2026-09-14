@@ -1,0 +1,71 @@
+package fixtures.dynamicarraybranchmixedforwardedreturnednestedaggregatefieldsiblingfinalifcleanuprun
+
+record Payload
+    public value: UInt32
+
+record PairBox
+    public primary: DynamicArray<Payload>
+    public sibling: DynamicArray<Payload>
+
+record OuterBox
+    public inner: PairBox
+
+function make_left_primary() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(41 as UInt32))
+    values.push(Payload(43 as UInt32))
+    values
+
+function make_left_sibling() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(47 as UInt32))
+    values.push(Payload(53 as UInt32))
+    values
+
+function make_right_primary() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(59 as UInt32))
+    values.push(Payload(61 as UInt32))
+    values
+
+function make_right_sibling() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(67 as UInt32))
+    values.push(Payload(71 as UInt32))
+    values
+
+function make_left_pair_box() -> PairBox
+    PairBox(make_left_primary(), make_left_sibling())
+
+function make_right_pair_box() -> PairBox
+    PairBox(make_right_primary(), make_right_sibling())
+
+function make_left_outer_box() -> OuterBox
+    var inner: PairBox = make_left_pair_box()
+    OuterBox(inner)
+
+function make_right_outer_box() -> OuterBox
+    var inner: PairBox = make_right_pair_box()
+    OuterBox(inner)
+
+function forward_outer(box: OuterBox) -> OuterBox
+    box
+
+function choose_outer(flag: Bool) -> OuterBox
+    if flag
+        make_left_outer_box()
+    else
+        forward_outer(make_right_outer_box())
+
+function consume(flag: Bool) -> UInt32
+    if flag
+        var returned: OuterBox = choose_outer(false)
+        var total = 0 as UInt32
+        for item in true ? returned.inner.primary : false ? returned.inner.primary : returned.inner.primary
+            total = total + item.value
+        total - 120 as UInt32
+    else
+        0 as UInt32
+
+function main() -> UInt32
+    consume(true)

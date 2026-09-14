@@ -2988,6 +2988,8 @@ representation.
   cleanup and each unselected sibling descriptor cleanup remain scheduled after the replacement store.
 - Forwarded returned-root nested sibling-cleanup coverage now verifies computed cleanup for the consumed nested
   descriptor and regular cleanup for an unconsumed nested sibling descriptor.
+- Forwarded returned-root nested sibling-cleanup coverage now includes final `switch` and mixed branch-join shapes,
+  keeping selected computed cleanup and sibling descriptor cleanup aligned across control-flow exits.
 
 ## Follow-up work
 
