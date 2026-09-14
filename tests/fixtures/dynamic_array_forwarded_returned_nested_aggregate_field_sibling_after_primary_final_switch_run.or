@@ -1,0 +1,54 @@
+package fixtures.dynamicarrayforwardedreturnednestedaggregatefieldsiblingafterprimaryfinalswitchrun
+
+record Payload
+    public value: UInt32
+
+record PairBox
+    public primary: DynamicArray<Payload>
+    public sibling: DynamicArray<Payload>
+
+record OuterBox
+    public inner: PairBox
+
+function make_primary() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(23 as UInt32))
+    values.push(Payload(29 as UInt32))
+    values
+
+function make_sibling() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(31 as UInt32))
+    values.push(Payload(37 as UInt32))
+    values
+
+function make_pair_box() -> PairBox
+    PairBox(make_primary(), make_sibling())
+
+function make_outer_box() -> OuterBox
+    var inner: PairBox = make_pair_box()
+    OuterBox(inner)
+
+function forward_outer(box: OuterBox) -> OuterBox
+    box
+
+function consume_values(values: DynamicArray<Payload>) -> UInt32
+    var total = 0 as UInt32
+    for item in values
+        total = total + item.value
+    total
+
+function consume(flag: Bool) -> UInt32
+    switch flag
+        true =>
+            var returned: OuterBox = forward_outer(make_outer_box())
+            var total = 0 as UInt32
+            for item in true ? returned.inner.primary : false ? returned.inner.primary : returned.inner.primary
+                total = total + item.value
+            total = total + consume_values(returned.inner.sibling)
+            total - 120 as UInt32
+        false =>
+            0 as UInt32
+
+function main() -> UInt32
+    consume(true)

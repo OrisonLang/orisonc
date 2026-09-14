@@ -2992,6 +2992,9 @@ representation.
   keeping selected computed cleanup and sibling descriptor cleanup aligned across control-flow exits.
 - Forwarded returned-root nested sibling reuse-rejection coverage now verifies direct, final `switch`, and mixed
   branch-join attempts to reuse the consumed selected descriptor fail with `use after move`.
+- Forwarded returned-root nested sibling-after-primary coverage now verifies the sibling descriptor may still be moved
+  after computed cleanup consumes the selected `primary` field, across direct, final `switch`, and mixed branch-join
+  exits.
 
 ## Follow-up work
 
