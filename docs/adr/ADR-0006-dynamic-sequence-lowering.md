@@ -3037,6 +3037,8 @@ representation.
 - Returned aggregate receiver cleanup now registers `Maybe<T>` sibling fields with DynamicArray descendants as
   internal addressable cleanup owners. Function return cleanup emits an `i1` guarded payload cleanup for active
   `Some` payloads.
+- Returned aggregate receiver coverage now includes `Maybe<RecordWithDynamicArray>` sibling payloads, proving Maybe
+  cleanup can extract nested record-field descriptors before returning the selected aggregate field.
 
 ## Follow-up work
 
@@ -3051,5 +3053,5 @@ representation.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, fixed-array
-  choice-sibling, nested fixed-array choice-sibling, and `Maybe` payload descriptor sets only after a broader dynamic
-  descriptor-discovery model is proven.
+  choice-sibling, nested fixed-array choice-sibling, direct `Maybe` payload, and record-wrapped `Maybe` payload
+  descriptor sets only after a broader dynamic descriptor-discovery model is proven.
