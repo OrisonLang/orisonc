@@ -6577,6 +6577,21 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup"
+    );
     }
 
     if (run_any_mode({"dynamic_array_cleanup_forwarded", "dynamic_array_cleanup_forwarded_final"})) {

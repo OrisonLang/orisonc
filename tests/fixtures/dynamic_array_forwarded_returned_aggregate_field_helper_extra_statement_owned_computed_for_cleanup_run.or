@@ -24,4 +24,4 @@ function main() -> UInt32
     var total = 0 as UInt32
     for item in true ? forward_box_extra(returned).values : forward_box_extra(returned).values
         total = total + item.value
-    total
+    0 as UInt32

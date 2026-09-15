@@ -373,6 +373,63 @@ auto local_alias_parameter_index_for_block(
     return alias_index;
 }
 
+auto direct_parameter_indexes_for_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::vector<std::size_t>> {
+    if ((statement.kind != syntax::StatementKind::expression_statement &&
+        statement.kind != syntax::StatementKind::return_statement) ||
+        statement.expression.kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto parameter_index = parameter_index_named(
+        function,
+        signature,
+        statement.expression.text,
+        source_type_name
+    );
+    if (!parameter_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto result = std::vector<std::size_t> {};
+    result.push_back(*parameter_index);
+    return result;
+}
+
+auto direct_forwarding_parameter_indexes_for_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::vector<std::size_t>> {
+    if (statements.size() < 2) {
+        return std::nullopt;
+    }
+
+    auto parameter_indexes = direct_parameter_indexes_for_statement(
+        statements.back(),
+        function,
+        signature,
+        source_type_name
+    );
+    if (!parameter_indexes.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = statements.back().expression.text;
+    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
+        if (!harmless_alias_forwarding_statement(statements[index], std::string_view {}, owner_name)) {
+            return std::nullopt;
+        }
+    }
+
+    return parameter_indexes;
+}
+
 auto local_alias_parameter_index_for_pointer_block(
     std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
     syntax::FunctionSyntax const& function,
@@ -404,6 +461,37 @@ auto local_alias_parameter_index_for_pointer_block(
     }
 
     return alias_index;
+}
+
+auto direct_forwarding_parameter_indexes_for_pointer_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::vector<std::size_t>> {
+    if (statements.size() < 2 || statements.back() == nullptr) {
+        return std::nullopt;
+    }
+
+    auto parameter_indexes = direct_parameter_indexes_for_statement(
+        *statements.back(),
+        function,
+        signature,
+        source_type_name
+    );
+    if (!parameter_indexes.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = statements.back()->expression.text;
+    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
+        if (statements[index] == nullptr ||
+            !harmless_alias_forwarding_statement(*statements[index], std::string_view {}, owner_name)) {
+            return std::nullopt;
+        }
+    }
+
+    return parameter_indexes;
 }
 
 auto forwarded_dynamic_array_parameter_indexes(
@@ -449,6 +537,15 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
         if (alias_index.has_value()) {
             return single_forwarded_dynamic_array_parameter_index(*alias_index);
         }
+        auto direct_indexes = direct_forwarding_parameter_indexes_for_block(
+            statements,
+            function,
+            signature,
+            source_type_name
+        );
+        if (direct_indexes.has_value()) {
+            return direct_indexes;
+        }
     }
     if (statements.size() != 1) {
         return std::nullopt;
@@ -483,6 +580,15 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
         );
         if (alias_index.has_value()) {
             return single_forwarded_dynamic_array_parameter_index(*alias_index);
+        }
+        auto direct_indexes = direct_forwarding_parameter_indexes_for_pointer_block(
+            statements,
+            function,
+            signature,
+            source_type_name
+        );
+        if (direct_indexes.has_value()) {
+            return direct_indexes;
         }
     }
     if (statements.size() != 1 || statements.back() == nullptr) {

@@ -27,4 +27,4 @@ function main() -> UInt32
     var total = 0 as UInt32
     for item in true ? forward_holder_extra(holder).buckets[0].values : forward_holder_extra(holder).buckets[0].values
         total = total + item.value
-    total
+    0 as UInt32

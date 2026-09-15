@@ -6717,13 +6717,27 @@ auto main() -> int {
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
     }
 
-    auto const migrated_static_indexed_aggregate_owned_computed_fixtures = std::array<std::string_view, 4> {
+    auto const migrated_static_indexed_aggregate_owned_computed_fixtures = std::array<std::string_view, 5> {
         "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or",
     };
     for (auto fixture_name : migrated_static_indexed_aggregate_owned_computed_fixtures) {
+        auto migrated = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+        assert(!migrated.has_errors());
+        assert_ir_contains(migrated.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
+        assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
+    }
+
+    auto const migrated_returned_aggregate_owned_computed_fixtures = std::array<std::string_view, 2> {
+        "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
+    };
+    for (auto fixture_name : migrated_returned_aggregate_owned_computed_fixtures) {
         auto migrated = pipeline.emit_llvm(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );

@@ -3007,14 +3007,17 @@ representation.
   of adding the generic return-expression wrapper text.
 - CLI receiver/member reuse coverage now rejects both return-expression wrappers and lower-level
   `unsupported expression: use after move` wrapper text.
+- Computed `DynamicArray<T>` owner proof now accepts direct aggregate helper forwarding with harmless local scalar
+  bindings before the final returned owner. Returned aggregate-field, nested returned aggregate-field, and
+  static-indexed aggregate-field fixtures cover the shape across pipeline and full CLI production paths.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering beyond proven local, bound-parameter, and static-indexed aggregate same-owner
-  `DynamicArray<T>` sequences only after ownership, cleanup, and descriptor-storage rules for broader computed owned
-  iterables are proven.
+- Extend `for ... in` lowering beyond proven local, bound-parameter, forwarded-parameter, returned aggregate-field,
+  choice-payload, and static-indexed aggregate same-owner `DynamicArray<T>` sequences only after ownership, cleanup,
+  and descriptor-storage rules for broader computed owned iterables are proven.
 - Keep production behavior checks on ordinary `run`, `--emit-llvm`, `--emit-object`, `--build`, object, and host-link
   paths. Keep compact typed promotion and execution-summary audit coverage in pipeline smoke tests rather than driver
   test-only commands.

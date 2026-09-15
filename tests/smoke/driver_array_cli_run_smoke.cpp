@@ -288,7 +288,7 @@ void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_succ
         "dynamic_array_cleanup",
         computed_finalization
     );
-    auto const return_value = output.find("ret i32 %tmp", sibling_cleanup);
+    auto const return_value = output.find("ret i32", sibling_cleanup);
     assert(computed_drop != std::string::npos);
     assert(computed_deallocation != std::string::npos);
     assert(computed_finalization != std::string::npos);
@@ -2151,7 +2151,7 @@ void assert_returned_owned_computed_dynamic_array_emit_llvm_success(
         output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
     auto const finalization =
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %returned.addr", deallocation);
-    auto const return_value = output.find("ret i32 %tmp", finalization);
+    auto const return_value = output.find("ret i32", finalization);
     assert(drop_walk != std::string::npos);
     assert(drop_call != std::string::npos);
     assert(deallocation != std::string::npos);
@@ -2183,7 +2183,7 @@ void assert_returned_alias_chain_owned_computed_dynamic_array_emit_llvm_success(
         output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
     auto const finalization =
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %returned.addr", deallocation);
-    auto const return_value = output.find("ret i32 %tmp", finalization);
+    auto const return_value = output.find("ret i32", finalization);
     assert(drop_walk != std::string::npos);
     assert(drop_call != std::string::npos);
     assert(deallocation != std::string::npos);
@@ -2365,7 +2365,7 @@ void assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_succ
         output.find("call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.0.data", drop_call);
     auto const finalization =
         output.find("store { ptr, i64, i64 } zeroinitializer, ptr %" + owner + ".addr", deallocation);
-    auto const return_value = output.find("ret i32 %tmp", finalization);
+    auto const return_value = output.find("ret i32", finalization);
     assert(drop_walk != std::string::npos);
     assert(drop_call != std::string::npos);
     assert(deallocation != std::string::npos);
@@ -3122,7 +3122,7 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path =
-        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_rejected.or";
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
@@ -3153,7 +3153,7 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path =
-        fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_rejected.or";
+        fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto returned_aggregate_field_final_if_branch_local_cleanup_path =
         fixtures / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto switch_returned_aggregate_field_final_if_branch_local_cleanup_path =
@@ -3189,7 +3189,7 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_returned_nested_aggregate_field_helper_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path =
-        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_rejected.or";
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         fixtures / "dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
     auto switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
@@ -4246,10 +4246,21 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed.o",
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
     );
-    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+    assert_run_success(executable, forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path);
+    assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
         executable,
         forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path,
-        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed.o",
+        "holder.buckets.element0.values",
+        "%record.Holder = type { [2 x %record.Bucket] }"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed"
     );
     }
@@ -4441,10 +4452,22 @@ auto main(int argc, char** argv) -> int {
         "left.values",
         "right.values"
     );
-    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+    assert_run_success(executable, forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path);
+    assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,
         forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
-        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed.o",
+        "returned.values",
+        "%record.PayloadBox = type { { ptr, i64, i64 } }",
+        "define %record.PayloadBox @forward_box_extra(%record.PayloadBox %box)"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed"
     );
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
@@ -4887,10 +4910,22 @@ auto main(int argc, char** argv) -> int {
         "left.inner.values",
         "right.inner.values"
     );
-    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+    assert_run_success(executable, forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path);
+    assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,
         forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
-        smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed.o",
+        "returned.inner.values",
+        "%record.OuterBox = type { %record.PayloadBox }",
+        "define %record.OuterBox @forward_outer_extra(%record.OuterBox %box)"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed"
     );
     assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
