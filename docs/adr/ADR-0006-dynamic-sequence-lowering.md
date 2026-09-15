@@ -3039,6 +3039,8 @@ representation.
   `Some` payloads.
 - Returned aggregate receiver coverage now includes fixed arrays of `Maybe<DynamicArray<T>>` sibling payloads,
   proving finite array traversal composes with Maybe tag-guarded descriptor cleanup.
+- Returned aggregate receiver coverage now includes nested fixed arrays of `Maybe<DynamicArray<T>>` sibling payloads,
+  proving multidimensional finite traversal composes with Maybe tag-guarded descriptor cleanup.
 - Returned aggregate receiver coverage now includes `Maybe<RecordWithDynamicArray>` sibling payloads, proving Maybe
   cleanup can extract nested record-field descriptors before returning the selected aggregate field.
 
@@ -3056,4 +3058,5 @@ representation.
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, fixed-array
   choice-sibling, nested fixed-array choice-sibling, direct `Maybe` payload, fixed-array `Maybe` payload, and
-  record-wrapped `Maybe` payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
+  nested fixed-array `Maybe` payload, and record-wrapped `Maybe` payload descriptor sets only after a broader dynamic
+  descriptor-discovery model is proven.
