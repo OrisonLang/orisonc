@@ -3016,6 +3016,8 @@ representation.
   pipeline, emit-object, build, and run smoke paths.
 - Forwarded choice-payload final `if` and final `switch` branch-local alias helpers now have harmless-local positive
   production coverage. Owner-touching `extra` and reassignment fixtures remain rejected.
+- Forwarded choice-payload nested final-control branch-local alias helpers now have harmless-local positive
+  production coverage for `if`-then-`switch` and `switch`-then-`if` shapes.
 
 ## Follow-up work
 

@@ -1,0 +1,41 @@
+package fixtures.dynamicarrayforwardedchoicepayloadnestedfinalswitchifbranchlocalaliasharmlesslocalswitchbindingownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(139 as UInt32))
+    values.push(Payload(149 as UInt32))
+    values
+
+function forward_packet(packet: Packet) -> Packet
+    packet
+
+function forward_packet_nested_alias_harmless_local(flag: Bool, packet: Packet) -> Packet
+    switch flag
+        true =>
+            let selected: Packet = packet
+            selected
+        false =>
+            if flag
+                let selected: Packet = packet
+                selected
+            else
+                var selected: Packet = forward_packet(packet)
+                var marker = 1 as Int64
+                selected
+
+function consume_packet(packet: Packet) -> UInt32
+    var total = 0 as UInt32
+    switch forward_packet_nested_alias_harmless_local(false, packet)
+        Primary(values) =>
+            for item in true ? values : false ? values : values
+                total = total + item.value
+    total - 288 as UInt32
+
+function main() -> UInt32
+    consume_packet(Primary(make_values()))
