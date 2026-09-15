@@ -2295,17 +2295,23 @@ void emit_function_body(
                 context,
                 session.state
             ); !diagnostic.empty()) {
+            auto const is_use_after_move = diagnostic.starts_with("use after move");
+            auto rendered_diagnostic = diagnostic;
             record_expression_lowering_failure(
                 failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
+                is_use_after_move
+                    ? ExpressionLoweringFailureReason::use_after_move
+                    : ExpressionLoweringFailureReason::unsupported_expression,
                 std::move(diagnostic)
             );
             diagnostics.error(
                 expression->line,
-                append_expression_lowering_failure(
-                    "lowering does not yet support this return expression",
-                    failures.expression
-                )
+                is_use_after_move
+                    ? rendered_diagnostic
+                    : append_expression_lowering_failure(
+                        "lowering does not yet support this return expression",
+                        failures.expression
+                    )
             );
             preserve_function_emission_metadata(
                 state,

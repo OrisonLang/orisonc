@@ -3003,6 +3003,8 @@ representation.
   branch-join attempts to reuse the moved sibling descriptor fail with `use after move`.
 - Final-control ownership reuse diagnostics now preserve direct `use after move` messages from failing `if` and
   `switch` arms instead of adding final-control wrapper text.
+- Return-expression aggregate-projection ownership diagnostics now preserve direct `use after move` messages instead
+  of adding the generic return-expression wrapper text.
 
 ## Follow-up work
 

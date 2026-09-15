@@ -105,6 +105,23 @@ int main() {
             "value"
         ) == "unknown lowered name: value"
     );
+    assert(
+        orison::lowering::render_expression_lowering_failure(
+            ExpressionLoweringFailure {
+                .reason = ExpressionLoweringFailureReason::unsupported_expression,
+                .detail = "use after move: returned.inner.sibling",
+            }
+        ) == "use after move: returned.inner.sibling"
+    );
+    assert(
+        orison::lowering::append_expression_lowering_failure(
+            "lowering does not yet support this return expression",
+            ExpressionLoweringFailure {
+                .reason = ExpressionLoweringFailureReason::unsupported_expression,
+                .detail = "use after move: returned.inner.sibling",
+            }
+        ) == "use after move: returned.inner.sibling"
+    );
 
     auto control_flow_cases = std::array {
         std::pair {ControlFlowLoweringFailureReason::invalid_if_shape, "invalid final if shape"},

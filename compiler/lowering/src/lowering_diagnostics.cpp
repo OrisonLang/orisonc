@@ -26,7 +26,11 @@ auto append_expression_lowering_failure(
     std::string prefix,
     ExpressionLoweringFailure const& failure
 ) -> std::string {
-    return append_lowering_detail(std::move(prefix), render_expression_lowering_failure(failure));
+    auto rendered = render_expression_lowering_failure(failure);
+    if (auto direct = direct_use_after_move_detail(rendered); direct.has_value()) {
+        return *direct;
+    }
+    return append_lowering_detail(std::move(prefix), rendered);
 }
 
 auto append_expression_lowering_failure(
@@ -124,6 +128,12 @@ auto unsupported_choice_abi_diagnostic(
 auto render_expression_lowering_failure(
     ExpressionLoweringFailure const& failure
 ) -> std::string {
+    if (failure.reason == ExpressionLoweringFailureReason::unsupported_expression) {
+        if (auto direct = direct_use_after_move_detail(failure.detail); direct.has_value()) {
+            return *direct;
+        }
+    }
+
     auto prefix = std::string {};
     switch (failure.reason) {
     case ExpressionLoweringFailureReason::none:

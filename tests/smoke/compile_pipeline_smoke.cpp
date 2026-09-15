@@ -9703,6 +9703,11 @@ auto main() -> int {
             "lowering does not yet support this final control-flow statement"
         ) == std::string::npos
     );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_ir.error_text.find(
+            "lowering does not yet support this return expression"
+        ) == std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";

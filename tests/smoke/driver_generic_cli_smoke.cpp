@@ -224,6 +224,7 @@ void assert_cli_emit_llvm_existing_fixture_short_failure(
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_failing_command_output(command);
     assert(output.find(expected_message) != std::string::npos);
+    assert(output.find("lowering does not yet support this return expression") == std::string::npos);
     assert(output.find("lowering does not yet support this final control-flow statement") == std::string::npos);
     assert(output.find("if then arm lowering failed") == std::string::npos);
     assert(output.find("switch case lowering failed") == std::string::npos);
