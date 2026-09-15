@@ -3014,6 +3014,8 @@ representation.
   statements, keeping accepted proof cases and rejected owner-read cases pinned independently.
 - Forwarded choice-payload computed cleanup now has direct helper harmless-local coverage across source-query,
   pipeline, emit-object, build, and run smoke paths.
+- Forwarded choice-payload final `if` and final `switch` branch-local alias helpers now have harmless-local positive
+  production coverage. Owner-touching `extra` and reassignment fixtures remain rejected.
 
 ## Follow-up work
 

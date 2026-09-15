@@ -9514,7 +9514,7 @@ auto main() -> int {
         dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run"
     );
-    auto const migrated_choice_payload_owned_computed_fixtures = std::array<std::string_view, 9> {
+    auto const migrated_choice_payload_owned_computed_fixtures = std::array<std::string_view, 11> {
         "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
@@ -9522,7 +9522,9 @@ auto main() -> int {
         "dynamic_array_forwarded_choice_payload_final_if_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_final_switch_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
     };
     for (auto fixture_name : migrated_choice_payload_owned_computed_fixtures) {

@@ -3230,9 +3230,15 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_choice_payload_final_if_branch_local_alias_switch_binding_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or";
+    auto forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path =
+        fixtures /
+        "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or";
     auto forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or";
+    auto forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path =
+        fixtures /
+        "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or";
     auto forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path =
         fixtures /
         "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or";
@@ -5054,6 +5060,26 @@ auto main(int argc, char** argv) -> int {
     );
     assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
         executable,
+        forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed"
+    );
+    assert_run_success(
+        executable,
+        forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
         forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path
     );
     assert_emit_object_success(
@@ -5071,6 +5097,26 @@ auto main(int argc, char** argv) -> int {
     assert_run_success(
         executable,
         forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed"
+    );
+    assert_run_success(
+        executable,
+        forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_dynamic_array_path
     );
     assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
         executable,
