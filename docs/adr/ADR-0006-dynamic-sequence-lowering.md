@@ -2995,6 +2995,8 @@ representation.
 - Forwarded returned-root nested sibling-after-primary coverage now verifies the sibling descriptor may still be moved
   after computed cleanup consumes the selected `primary` field, across direct, final `switch`, and mixed branch-join
   exits.
+- Forwarded returned-root nested sibling-after-primary coverage now also verifies primary computed cleanup completes
+  before the sibling handoff and the sibling descriptor cleanup is owned by the callee.
 
 ## Follow-up work
 

@@ -326,16 +326,44 @@ void assert_forwarded_returned_nested_sibling_after_primary_cleanup_ir(
 ) {
     assert_dynamic_array_payload_returned_lifetime_owner(result, "returned.inner.primary");
     assert_dynamic_array_payload_cleanup_ready(result);
-    assert_ir_contains(
-        result.ir_text,
+    auto const primary_element_cleanup = result.ir_text.find(
         "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.primary.computed_dynamic_array_cleanup"
     );
-    assert_ir_contains(
-        result.ir_text,
-        "call void @__orison_dynamic_array_deallocate(ptr %returned.inner.primary.computed_for."
+    auto const primary_deallocate = result.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.inner.primary.computed_for.",
+        primary_element_cleanup
     );
-    assert_ir_contains(result.ir_text, "store { ptr, i64, i64 } zeroinitializer, ptr %returned.inner.primary.addr");
-    assert_ir_contains(result.ir_text, "call i32 @consume_values({ ptr, i64, i64 } %tmp");
+    auto const primary_zero = result.ir_text.find(
+        "store { ptr, i64, i64 } zeroinitializer, ptr %returned.inner.primary.addr",
+        primary_deallocate
+    );
+    auto const sibling_handoff = result.ir_text.find(
+        "call i32 @consume_values({ ptr, i64, i64 } %tmp",
+        primary_zero
+    );
+    assert(primary_element_cleanup != std::string::npos);
+    assert(primary_deallocate != std::string::npos);
+    assert(primary_zero != std::string::npos);
+    assert(sibling_handoff != std::string::npos);
+    assert(primary_element_cleanup < primary_deallocate);
+    assert(primary_deallocate < primary_zero);
+    assert(primary_zero < sibling_handoff);
+    auto const consume_values_start = result.ir_text.find("define i32 @consume_values");
+    auto const main_start = result.ir_text.find("define i32 @main", consume_values_start);
+    auto const callee_sibling_cleanup = result.ir_text.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup",
+        consume_values_start
+    );
+    auto const callee_sibling_deallocate = result.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup",
+        callee_sibling_cleanup
+    );
+    assert(consume_values_start != std::string::npos);
+    assert(main_start != std::string::npos);
+    assert(callee_sibling_cleanup != std::string::npos);
+    assert(callee_sibling_deallocate != std::string::npos);
+    assert(callee_sibling_cleanup < main_start);
+    assert(callee_sibling_deallocate < main_start);
     assert_ir_contains(result.ir_text, "call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup");
     assert_ir_contains(result.ir_text, "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup");
     assert_ir_excludes(result.ir_text, "%returned.inner.sibling.dynamic_array_cleanup");
