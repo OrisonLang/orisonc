@@ -3021,6 +3021,9 @@ representation.
 - Returned aggregate receiver cleanup now excludes the exact selected descriptor when the projection path is fully
   static. Runtime-indexed selections keep conservative returned-root cleanup over finite descriptor candidates, while
   the selected descriptor slot is zeroed before cleanup reaches it.
+- Returned aggregate indexed replacement keeps selected-descriptor cleanup even when the selected aggregate path is
+  fully static. Element replacement updates one element inside the descriptor; it does not transfer descriptor
+  ownership out of the returned root.
 
 ## Follow-up work
 

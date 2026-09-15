@@ -1,0 +1,22 @@
+package fixtures.dynamicarray.returnedstaticindexedaggregatefieldindexassignment
+
+record Payload
+    value: UInt32
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values
+
+function make_holder() -> Holder
+    Holder([Bucket(make_values(7 as UInt32)), Bucket(make_values(11 as UInt32))])
+
+function main() -> UInt32
+    make_holder().buckets[0].values[0] = Payload(99 as UInt32)
+    0 as UInt32

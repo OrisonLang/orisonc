@@ -2498,6 +2498,42 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_d
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_returned_static_indexed_assignment_keeps_selected_cleanup(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp");
+    auto selected_index = output.find(".buckets.element0.values.dynamic_array_index", root_storage);
+    auto old_element_cleanup = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        selected_index
+    );
+    auto replacement_store = output.find("store %record.Payload", old_element_cleanup);
+    auto selected_cleanup = output.find(
+        ".buckets.element0.values.dynamic_array_cleanup",
+        replacement_store
+    );
+    auto sibling_cleanup = output.find(
+        ".buckets.element1.values.dynamic_array_cleanup",
+        selected_cleanup
+    );
+    assert(root_storage != std::string::npos);
+    assert(selected_index != std::string::npos);
+    assert(old_element_cleanup != std::string::npos);
+    assert(replacement_store != std::string::npos);
+    assert(selected_cleanup != std::string::npos);
+    assert(sibling_cleanup != std::string::npos);
+    assert(root_storage < selected_index);
+    assert(selected_index < old_element_cleanup);
+    assert(old_element_cleanup < replacement_store);
+    assert(replacement_store < selected_cleanup);
+    assert(selected_cleanup < sibling_cleanup);
+    assert(output.find("returned_aggregate_receiver_descriptor") == std::string::npos);
+    assert(output.find("ret i32 0") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -5634,6 +5670,15 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_descriptor_assignment_success(
         executable,
         fixtures / "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_static_indexed_aggregate_field_index_assignment_run.or",
+        smoke_temp_root / "dynamic_array_returned_static_indexed_aggregate_field_index_assignment"
+    );
+    assert_cli_emit_llvm_dynamic_array_returned_static_indexed_assignment_keeps_selected_cleanup(
+        executable,
+        fixtures / "dynamic_array_returned_static_indexed_aggregate_field_index_assignment_run.or"
     );
     assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_outer_out_of_bounds_success(
         executable,
