@@ -2999,6 +2999,8 @@ representation.
   before the sibling handoff and the sibling descriptor cleanup is owned by the callee.
 - Returned-root nested sibling-after-primary coverage now mirrors the forwarded path with order-sensitive checks for
   direct, final `switch`, and branch-join exits.
+- Returned-root nested sibling-after-primary reuse-rejection coverage now verifies direct, final `switch`, and
+  branch-join attempts to reuse the moved sibling descriptor fail with `use after move`.
 
 ## Follow-up work
 

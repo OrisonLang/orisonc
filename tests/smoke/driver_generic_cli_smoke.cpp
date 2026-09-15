@@ -6700,6 +6700,21 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_run.or",
         smoke_temp_root / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_rejected.or",
+        "use after move: returned.inner.sibling"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_rejected.or",
+        "use after move: returned.inner.sibling"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_rejected.or",
+        "use after move: returned.inner.sibling"
+    );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or",

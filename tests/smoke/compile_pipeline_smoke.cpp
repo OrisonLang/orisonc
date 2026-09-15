@@ -9681,6 +9681,23 @@ auto main() -> int {
             "use after move: returned.inner.primary"
         ) != std::string::npos
     );
+    auto dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_rejected.or";
+    auto dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .semantic_owned_cleanup_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_ir.has_errors());
+    assert(
+        dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_ir.error_text.find(
+            "use after move: returned.inner.sibling"
+        ) != std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";
@@ -9887,6 +9904,23 @@ auto main() -> int {
             "use after move: returned.inner.primary"
         ) != std::string::npos
     );
+    auto dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_rejected.or";
+    auto dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .semantic_owned_cleanup_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_ir.has_errors());
+    assert(
+        dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_ir.error_text.find(
+            "use after move: returned.inner.sibling"
+        ) != std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_rejected.or";
@@ -10091,6 +10125,23 @@ auto main() -> int {
     assert(
         dynamic_array_forwarded_returned_nested_aggregate_field_sibling_final_switch_reuse_ir.error_text.find(
             "use after move: returned.inner.primary"
+        ) != std::string::npos
+    );
+    auto dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_rejected.or";
+    auto dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_ir =
+        pipeline.emit_llvm(
+            dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_path,
+            orison::pipeline::CompilePipelineOptions {
+                .semantic_owned_cleanup_lowering_enabled = true,
+                .dynamic_array_descriptor_cleanup_planning_enabled = true,
+            }
+        );
+    assert(dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_ir.has_errors());
+    assert(
+        dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_ir.error_text.find(
+            "use after move: returned.inner.sibling"
         ) != std::string::npos
     );
     auto dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_path =
