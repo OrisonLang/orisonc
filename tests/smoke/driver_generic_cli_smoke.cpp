@@ -174,6 +174,7 @@ void assert_cli_emit_llvm_failure_containing_without(
     auto output = read_failing_command_output(command);
     assert(output.find(expected_message) != std::string::npos);
     assert(output.find(rejected_message) == std::string::npos);
+    assert(output.find("unsupported expression: use after move") == std::string::npos);
 }
 
 void assert_cli_emit_llvm_receiver_method_chain_reuse_failure(
@@ -291,6 +292,7 @@ void assert_cli_production_failures_containing_without(
         auto output = read_failing_command_output(command);
         assert(output.find(expected_message) != std::string::npos);
         assert(output.find(rejected_message) == std::string::npos);
+        assert(output.find("unsupported expression: use after move") == std::string::npos);
     }
 }
 

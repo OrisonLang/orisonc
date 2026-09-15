@@ -3005,6 +3005,8 @@ representation.
   `switch` arms instead of adding final-control wrapper text.
 - Return-expression aggregate-projection ownership diagnostics now preserve direct `use after move` messages instead
   of adding the generic return-expression wrapper text.
+- CLI receiver/member reuse coverage now rejects both return-expression wrappers and lower-level
+  `unsupported expression: use after move` wrapper text.
 
 ## Follow-up work
 
