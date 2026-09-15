@@ -3024,6 +3024,9 @@ representation.
 - Returned aggregate indexed replacement keeps selected-descriptor cleanup even when the selected aggregate path is
   fully static. Element replacement updates one element inside the descriptor; it does not transfer descriptor
   ownership out of the returned root.
+- Forwarded returned-root sibling-after-primary handoff now has production driver emit-LLVM coverage matching the
+  pipeline assertions: primary cleanup completes first, sibling cleanup is emitted in the callee, and caller-side
+  returned sibling cleanup is absent.
 
 ## Follow-up work
 

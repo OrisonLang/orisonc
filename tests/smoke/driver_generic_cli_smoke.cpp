@@ -2534,6 +2534,56 @@ void assert_cli_emit_llvm_dynamic_array_returned_static_indexed_assignment_keeps
     assert(output.find("ret i32 0") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_returned_nested_sibling_after_primary_cleanup_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    auto primary_element_cleanup = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.inner.primary.computed_dynamic_array_cleanup"
+    );
+    auto primary_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.inner.primary.computed_for.",
+        primary_element_cleanup
+    );
+    auto primary_zero = output.find(
+        "store { ptr, i64, i64 } zeroinitializer, ptr %returned.inner.primary.addr",
+        primary_deallocate
+    );
+    auto sibling_handoff = output.find(
+        "call i32 @consume_values({ ptr, i64, i64 } %tmp",
+        primary_zero
+    );
+    auto consume_values_start = output.find("define i32 @consume_values");
+    auto main_start = output.find("define i32 @main", consume_values_start);
+    auto callee_sibling_cleanup = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup",
+        consume_values_start
+    );
+    auto callee_sibling_deallocate = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup",
+        callee_sibling_cleanup
+    );
+    assert(primary_element_cleanup != std::string::npos);
+    assert(primary_deallocate != std::string::npos);
+    assert(primary_zero != std::string::npos);
+    assert(sibling_handoff != std::string::npos);
+    assert(consume_values_start != std::string::npos);
+    assert(main_start != std::string::npos);
+    assert(callee_sibling_cleanup != std::string::npos);
+    assert(callee_sibling_deallocate != std::string::npos);
+    assert(primary_element_cleanup < primary_deallocate);
+    assert(primary_deallocate < primary_zero);
+    assert(primary_zero < sibling_handoff);
+    assert(callee_sibling_cleanup < main_start);
+    assert(callee_sibling_deallocate < main_start);
+    assert(output.find("%returned.inner.sibling.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("%box.inner.primary.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("%box.inner.sibling.dynamic_array_cleanup") == std::string::npos);
+    assert(output.find("ret i32") != std::string::npos);
+}
+
 void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -6749,15 +6799,27 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or",
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_cleanup"
     );
+    assert_cli_emit_llvm_returned_nested_sibling_after_primary_cleanup_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or"
+    );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_final_switch_run.or",
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_final_switch"
     );
+    assert_cli_emit_llvm_returned_nested_sibling_after_primary_cleanup_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_final_switch_run.or"
+    );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_after_primary_final_if_run.or",
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_after_primary_final_if"
+    );
+    assert_cli_emit_llvm_returned_nested_sibling_after_primary_cleanup_success(
+        executable,
+        fixtures / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_sibling_after_primary_final_if_run.or"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
