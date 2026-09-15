@@ -160,6 +160,15 @@ auto expression_statement(orison::syntax::ExpressionSyntax expression) -> orison
     return statement;
 }
 
+auto harmless_int64_marker_statement() -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::var_binding;
+    statement.name = "marker";
+    statement.annotated_type = orison::syntax::TypeSyntax {.name = "Int64"};
+    statement.expression = integer_literal("1");
+    return statement;
+}
+
 auto dynamic_array_uint32_parameter(std::string parameter_name = "items") -> orison::syntax::ParameterSyntax {
     return orison::syntax::ParameterSyntax {
         .name = std::move(parameter_name),
@@ -362,6 +371,16 @@ auto direct_payload_box_forwarding_function(std::string function_name) -> orison
     return function;
 }
 
+auto direct_payload_box_forwarding_function_with_harmless_local(std::string function_name)
+    -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(payload_box_parameter());
+    function.body_statements.push_back(harmless_int64_marker_statement());
+    function.body_statements.push_back(expression_statement(name("box")));
+    return function;
+}
+
 auto direct_outer_payload_box_forwarding_function(std::string function_name) -> orison::syntax::FunctionSyntax {
     auto function = orison::syntax::FunctionSyntax {};
     function.name = std::move(function_name);
@@ -370,10 +389,30 @@ auto direct_outer_payload_box_forwarding_function(std::string function_name) -> 
     return function;
 }
 
+auto direct_outer_payload_box_forwarding_function_with_harmless_local(std::string function_name)
+    -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(outer_payload_box_parameter());
+    function.body_statements.push_back(harmless_int64_marker_statement());
+    function.body_statements.push_back(expression_statement(name("box")));
+    return function;
+}
+
 auto direct_holder_forwarding_function(std::string function_name) -> orison::syntax::FunctionSyntax {
     auto function = orison::syntax::FunctionSyntax {};
     function.name = std::move(function_name);
     function.parameters.push_back(holder_parameter());
+    function.body_statements.push_back(expression_statement(name("holder")));
+    return function;
+}
+
+auto direct_holder_forwarding_function_with_harmless_local(std::string function_name)
+    -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(holder_parameter());
+    function.body_statements.push_back(harmless_int64_marker_statement());
     function.body_statements.push_back(expression_statement(name("holder")));
     return function;
 }
@@ -667,12 +706,15 @@ int main() {
     });
     register_payload_box_forwarding_signature(context, "forward_payload_box");
     register_payload_box_forwarding_signature(context, "forward_payload_box_extra");
+    register_payload_box_forwarding_signature(context, "forward_payload_box_with_harmless_local");
     register_payload_box_forwarding_signature(context, "forward_payload_box_mismatch", 2);
     register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box");
     register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box_extra");
+    register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box_with_harmless_local");
     register_outer_payload_box_forwarding_signature(context, "forward_outer_payload_box_mismatch", 2);
     register_holder_forwarding_signature(context, "forward_holder");
     register_holder_forwarding_signature(context, "forward_holder_extra");
+    register_holder_forwarding_signature(context, "forward_holder_with_harmless_local");
     register_holder_forwarding_signature(context, "forward_holder_mismatch", 2);
     register_packet_forwarding_signature(context, "forward_packet");
     register_packet_forwarding_signature(context, "forward_packet_extra");
@@ -1090,12 +1132,29 @@ int main() {
     auto forward_payload_box_function = direct_payload_box_forwarding_function("forward_payload_box");
     context.source_functions["forward_payload_box"] = &forward_payload_box_function;
 
+    auto forward_payload_box_with_harmless_local_function =
+        direct_payload_box_forwarding_function_with_harmless_local("forward_payload_box_with_harmless_local");
+    context.source_functions["forward_payload_box_with_harmless_local"] =
+        &forward_payload_box_with_harmless_local_function;
+
     auto forward_outer_payload_box_function =
         direct_outer_payload_box_forwarding_function("forward_outer_payload_box");
     context.source_functions["forward_outer_payload_box"] = &forward_outer_payload_box_function;
 
+    auto forward_outer_payload_box_with_harmless_local_function =
+        direct_outer_payload_box_forwarding_function_with_harmless_local(
+            "forward_outer_payload_box_with_harmless_local"
+        );
+    context.source_functions["forward_outer_payload_box_with_harmless_local"] =
+        &forward_outer_payload_box_with_harmless_local_function;
+
     auto forward_holder_function = direct_holder_forwarding_function("forward_holder");
     context.source_functions["forward_holder"] = &forward_holder_function;
+
+    auto forward_holder_with_harmless_local_function =
+        direct_holder_forwarding_function_with_harmless_local("forward_holder_with_harmless_local");
+    context.source_functions["forward_holder_with_harmless_local"] =
+        &forward_holder_with_harmless_local_function;
 
     auto forward_packet_function = direct_packet_forwarding_function("forward_packet");
     context.source_functions["forward_packet"] = &forward_packet_function;
@@ -2899,6 +2958,27 @@ int main() {
     assert(forwarded_aggregate_field_computed_handoff_plan.descriptor_storage_available);
     assert(forwarded_aggregate_field_computed_handoff_plan.cleanup_owner_proven);
 
+    auto forwarded_aggregate_field_harmless_local_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(call("forward_payload_box_with_harmless_local", name("returned")), "values"),
+                member(call("forward_payload_box_with_harmless_local", name("returned")), "values")
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_aggregate_field_harmless_local_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(forwarded_aggregate_field_harmless_local_plan.source_owner_name == "returned.values");
+    assert(forwarded_aggregate_field_harmless_local_plan.handoff_owner_name == "returned.values");
+    assert(forwarded_aggregate_field_harmless_local_plan.descriptor_storage_name == "%returned.values.addr0");
+    assert(forwarded_aggregate_field_harmless_local_plan.descriptor_storage_available);
+    assert(forwarded_aggregate_field_harmless_local_plan.cleanup_owner_proven);
+
     auto forwarded_aggregate_field_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(
@@ -3034,6 +3114,36 @@ int main() {
     assert(forwarded_nested_aggregate_field_computed_handoff_plan.descriptor_storage_available);
     assert(forwarded_nested_aggregate_field_computed_handoff_plan.cleanup_owner_proven);
 
+    auto forwarded_nested_aggregate_field_harmless_local_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(
+                    member(call("forward_outer_payload_box_with_harmless_local", name("returned_outer")), "inner"),
+                    "values"
+                ),
+                member(
+                    member(call("forward_outer_payload_box_with_harmless_local", name("returned_outer")), "inner"),
+                    "values"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_nested_aggregate_field_harmless_local_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(forwarded_nested_aggregate_field_harmless_local_plan.source_owner_name ==
+        "returned_outer.inner.values");
+    assert(forwarded_nested_aggregate_field_harmless_local_plan.handoff_owner_name ==
+        "returned_outer.inner.values");
+    assert(forwarded_nested_aggregate_field_harmless_local_plan.descriptor_storage_name ==
+        "%returned_outer.inner.values.addr0");
+    assert(forwarded_nested_aggregate_field_harmless_local_plan.descriptor_storage_available);
+    assert(forwarded_nested_aggregate_field_harmless_local_plan.cleanup_owner_proven);
+
     auto forwarded_nested_aggregate_field_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(
@@ -3148,6 +3258,36 @@ int main() {
         "%holder.buckets.element0.items.addr0");
     assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.descriptor_storage_available);
     assert(forwarded_static_indexed_aggregate_field_computed_handoff_plan.cleanup_owner_proven);
+
+    auto forwarded_static_indexed_aggregate_field_harmless_local_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(index(member(call("forward_holder_with_harmless_local", name("holder")), "buckets")), "items"),
+                member(
+                    index(
+                        member(call("forward_holder_with_harmless_local", name("holder")), "buckets"),
+                        cast(integer_literal("0"), "UInt64")
+                    ),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_harmless_local_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(forwarded_static_indexed_aggregate_field_harmless_local_plan.source_owner_name ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_harmless_local_plan.handoff_owner_name ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_harmless_local_plan.descriptor_storage_name ==
+        "%holder.buckets.element0.items.addr0");
+    assert(forwarded_static_indexed_aggregate_field_harmless_local_plan.descriptor_storage_available);
+    assert(forwarded_static_indexed_aggregate_field_harmless_local_plan.cleanup_owner_proven);
 
     auto forwarded_static_indexed_aggregate_field_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

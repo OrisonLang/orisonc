@@ -3010,6 +3010,8 @@ representation.
 - Computed `DynamicArray<T>` owner proof now accepts direct aggregate helper forwarding with harmless local scalar
   bindings before the final returned owner. Returned aggregate-field, nested returned aggregate-field, and
   static-indexed aggregate-field fixtures cover the shape across pipeline and full CLI production paths.
+- Source-query smoke coverage now separates harmless aggregate helper scalar locals from owner-touching extra
+  statements, keeping accepted proof cases and rejected owner-read cases pinned independently.
 
 ## Follow-up work
 
