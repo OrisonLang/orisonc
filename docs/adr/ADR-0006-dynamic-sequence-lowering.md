@@ -3018,6 +3018,9 @@ representation.
   production coverage. Owner-touching `extra` and reassignment fixtures remain rejected.
 - Forwarded choice-payload nested final-control branch-local alias helpers now have harmless-local positive
   production coverage for `if`-then-`switch` and `switch`-then-`if` shapes.
+- Returned aggregate receiver cleanup now excludes the exact selected descriptor when the projection path is fully
+  static. Runtime-indexed selections keep conservative returned-root cleanup over finite descriptor candidates, while
+  the selected descriptor slot is zeroed before cleanup reaches it.
 
 ## Follow-up work
 

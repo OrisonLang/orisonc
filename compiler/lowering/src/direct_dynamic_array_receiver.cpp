@@ -44,7 +44,26 @@ struct DescriptorProjectionPath {
 struct LoweredSelectedDescriptorProjection {
     std::string pointer;
     std::string source_type_name;
+    std::vector<DescriptorProjectionStep> static_descriptor_steps;
+    bool complete_static_descriptor_path = true;
 };
+
+auto same_descriptor_projection_step(
+    DescriptorProjectionStep const& left,
+    DescriptorProjectionStep const& right
+) -> bool {
+    return left.kind == right.kind &&
+        left.aggregate_llvm_type == right.aggregate_llvm_type &&
+        left.index_value == right.index_value;
+}
+
+auto same_descriptor_projection_path(
+    std::vector<DescriptorProjectionStep> const& left,
+    std::vector<DescriptorProjectionStep> const& right
+) -> bool {
+    return left.size() == right.size() &&
+        std::equal(left.begin(), left.end(), right.begin(), same_descriptor_projection_step);
+}
 
 auto named_dynamic_array_element_receiver_owner_name(
     syntax::ExpressionSyntax const& receiver_expression,
@@ -545,8 +564,11 @@ auto lower_selected_descriptor_projection_path(
         return std::nullopt;
     }
 
+    auto selected_steps = std::vector<DescriptorProjectionStep> {};
+    auto complete_static_descriptor_path = true;
     for (auto const& step : aggregate_path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
+            auto step_cursor = *cursor;
             auto result = advance_aggregate_path_member_with_temporary(
                 *cursor,
                 step.field_name,
@@ -557,6 +579,19 @@ auto lower_selected_descriptor_projection_path(
             if (result.error != AggregatePathError::none) {
                 return std::nullopt;
             }
+            auto record = context.lowering.records.find(step_cursor.source_type_name);
+            if (record == context.lowering.records.end()) {
+                return std::nullopt;
+            }
+            auto const* field = find_record_field(record->second, step.field_name);
+            if (field == nullptr) {
+                return std::nullopt;
+            }
+            selected_steps.push_back(DescriptorProjectionStep {
+                .kind = DescriptorProjectionStepKind::field,
+                .aggregate_llvm_type = std::move(step_cursor.llvm_type_name),
+                .index_value = std::to_string(field->index),
+            });
             continue;
         }
 
@@ -564,6 +599,7 @@ auto lower_selected_descriptor_projection_path(
             return std::nullopt;
         }
         if (auto dynamic_element_source_type = dynamic_array_element_source_type_name(cursor->source_type_name)) {
+            complete_static_descriptor_path = false;
             auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
                 "returned_aggregate_receiver_dynamic_array",
                 cursor->source_type_name,
@@ -636,6 +672,7 @@ auto lower_selected_descriptor_projection_path(
         if (!array_type.has_value()) {
             return std::nullopt;
         }
+        auto index_cursor = *cursor;
         auto index_text = decimal_integer_literal_text(*step.index_expression);
         auto lowered_index_value = std::string {};
         if (index_text.has_value()) {
@@ -648,6 +685,7 @@ auto lower_selected_descriptor_projection_path(
             }
             lowered_index_value = std::string {*index_text};
         } else {
+            complete_static_descriptor_path = false;
             auto lowered_index = lower_expression(
                 *step.index_expression,
                 "i64",
@@ -669,6 +707,7 @@ auto lower_selected_descriptor_projection_path(
             );
         }
 
+        auto selected_index_value = lowered_index_value;
         auto result = advance_aggregate_path_index_with_temporary(
             *cursor,
             std::move(lowered_index_value),
@@ -679,6 +718,11 @@ auto lower_selected_descriptor_projection_path(
         if (result.error != AggregatePathError::none) {
             return std::nullopt;
         }
+        selected_steps.push_back(DescriptorProjectionStep {
+            .kind = DescriptorProjectionStepKind::array_element,
+            .aggregate_llvm_type = std::move(index_cursor.llvm_type_name),
+            .index_value = std::move(selected_index_value),
+        });
     }
 
     if (!dynamic_array_element_source_type_name(cursor->source_type_name).has_value()) {
@@ -687,6 +731,8 @@ auto lower_selected_descriptor_projection_path(
     return LoweredSelectedDescriptorProjection {
         .pointer = std::move(cursor->pointer),
         .source_type_name = std::move(cursor->source_type_name),
+        .static_descriptor_steps = std::move(selected_steps),
+        .complete_static_descriptor_path = complete_static_descriptor_path,
     };
 }
 
@@ -789,6 +835,10 @@ auto lower_returned_aggregate_projection_receiver(
            << " zeroinitializer, ptr " << selected_path->pointer << "\n";
 
     for (auto const& descriptor_path : *all_descriptor_paths) {
+        if (selected_path->complete_static_descriptor_path &&
+            same_descriptor_projection_path(descriptor_path.steps, selected_path->static_descriptor_steps)) {
+            continue;
+        }
         auto sibling_pointer = emit_descriptor_projection_pointer(
             aggregate_storage,
             descriptor_path,

@@ -2276,13 +2276,17 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_field_method
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
-    std::string_view sibling_owner
+    std::string_view sibling_owner,
+    std::string_view excluded_selected_owner = {}
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("call") != std::string::npos);
     assert(output.find("dynamic_array_receiver_aggregate_tmp") != std::string::npos);
     assert(output.find(sibling_owner) != std::string::npos);
+    if (!excluded_selected_owner.empty()) {
+        assert(output.find(excluded_selected_owner) == std::string::npos);
+    }
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_aggregate_tmp") !=
@@ -5408,7 +5412,8 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_count.or",
-        "dynamic_array_receiver_aggregate_tmp0.buckets.element1.values.dynamic_array_cleanup"
+        "dynamic_array_receiver_aggregate_tmp0.buckets.element1.values.dynamic_array_cleanup",
+        "dynamic_array_receiver_aggregate_tmp0.buckets.element0.values.dynamic_array_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -5417,7 +5422,8 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_static_indexed_aggregate_field_method_chain_append_statement.or",
-        "dynamic_array_receiver_aggregate_tmp0.buckets.element1.values.dynamic_array_cleanup"
+        "dynamic_array_receiver_aggregate_tmp0.buckets.element1.values.dynamic_array_cleanup",
+        "dynamic_array_receiver_aggregate_tmp0.buckets.element0.values.dynamic_array_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -5426,7 +5432,8 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_count.or",
-        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup",
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element0.values.dynamic_array_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -5435,7 +5442,8 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_nested_static_indexed_aggregate_field_method_chain_append_statement.or",
-        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup"
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup",
+        "dynamic_array_receiver_aggregate_tmp0.grid.element1.element0.values.dynamic_array_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -5444,7 +5452,8 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_count.or",
-        "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup"
+        "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup",
+        "dynamic_array_receiver_aggregate_tmp0.left.dynamic_array_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,
@@ -5453,7 +5462,8 @@ auto main(int argc, char** argv) -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_method_chain_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_returned_aggregate_sibling_field_method_chain_append_statement.or",
-        "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup"
+        "dynamic_array_receiver_aggregate_tmp0.right.dynamic_array_cleanup",
+        "dynamic_array_receiver_aggregate_tmp0.left.dynamic_array_cleanup"
     );
     assert_cli_run_fixture_success(
         executable,
