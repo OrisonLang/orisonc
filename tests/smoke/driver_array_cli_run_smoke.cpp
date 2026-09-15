@@ -3220,6 +3220,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or";
     auto forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup_run.or";
+    auto forwarded_choice_payload_harmless_local_switch_binding_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_choice_payload_harmless_local_switch_binding_owned_computed_for_cleanup_run.or";
     auto forwarded_choice_payload_final_if_switch_binding_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_choice_payload_final_if_switch_binding_owned_computed_for_cleanup_run.or";
     auto forwarded_choice_payload_final_switch_switch_binding_owned_computed_dynamic_array_path =
@@ -4973,6 +4975,26 @@ auto main(int argc, char** argv) -> int {
     assert_run_success(
         executable,
         forwarded_choice_payload_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_choice_payload_harmless_local_switch_binding_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_choice_payload_harmless_local_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_harmless_local_switch_binding_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_choice_payload_harmless_local_switch_binding_owned_computed_dynamic_array_path,
+        smoke_temp_root /
+            "dynamic_array_forwarded_choice_payload_harmless_local_switch_binding_owned_computed_for_cleanup"
+    );
+    assert_run_success(
+        executable,
+        forwarded_choice_payload_harmless_local_switch_binding_owned_computed_dynamic_array_path
     );
     assert_choice_payload_switch_binding_owned_computed_dynamic_array_emit_llvm_success(
         executable,

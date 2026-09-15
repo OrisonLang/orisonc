@@ -425,6 +425,16 @@ auto direct_packet_forwarding_function(std::string function_name) -> orison::syn
     return function;
 }
 
+auto direct_packet_forwarding_function_with_harmless_local(std::string function_name)
+    -> orison::syntax::FunctionSyntax {
+    auto function = orison::syntax::FunctionSyntax {};
+    function.name = std::move(function_name);
+    function.parameters.push_back(packet_parameter());
+    function.body_statements.push_back(harmless_int64_marker_statement());
+    function.body_statements.push_back(expression_statement(name("packet")));
+    return function;
+}
+
 auto let_statement(std::string name, orison::syntax::ExpressionSyntax expression)
     -> orison::syntax::StatementSyntax {
     auto statement = orison::syntax::StatementSyntax {};
@@ -718,6 +728,7 @@ int main() {
     register_holder_forwarding_signature(context, "forward_holder_mismatch", 2);
     register_packet_forwarding_signature(context, "forward_packet");
     register_packet_forwarding_signature(context, "forward_packet_extra");
+    register_packet_forwarding_signature(context, "forward_packet_with_harmless_local");
     register_packet_forwarding_signature(context, "forward_packet_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_items");
     register_dynamic_array_forwarding_signature(context, "forward_again");
@@ -1158,6 +1169,11 @@ int main() {
 
     auto forward_packet_function = direct_packet_forwarding_function("forward_packet");
     context.source_functions["forward_packet"] = &forward_packet_function;
+
+    auto forward_packet_with_harmless_local_function =
+        direct_packet_forwarding_function_with_harmless_local("forward_packet_with_harmless_local");
+    context.source_functions["forward_packet_with_harmless_local"] =
+        &forward_packet_with_harmless_local_function;
 
     auto forward_payload_box_extra_function = orison::syntax::FunctionSyntax {};
     forward_payload_box_extra_function.name = "forward_payload_box_extra";
@@ -3460,6 +3476,27 @@ int main() {
         "%packet.Primary.values.addr0");
     assert(forwarded_choice_payload_computed_handoff_plan.descriptor_storage_available);
     assert(forwarded_choice_payload_computed_handoff_plan.cleanup_owner_proven);
+
+    auto forwarded_choice_payload_harmless_local_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                member(member(call("forward_packet_with_harmless_local", name("packet")), "Primary"), "values"),
+                member(member(call("forward_packet_with_harmless_local", name("packet")), "Primary"), "values")
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_choice_payload_harmless_local_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(forwarded_choice_payload_harmless_local_plan.source_owner_name == "packet.Primary.values");
+    assert(forwarded_choice_payload_harmless_local_plan.handoff_owner_name == "packet.Primary.values");
+    assert(forwarded_choice_payload_harmless_local_plan.descriptor_storage_name == "%packet.Primary.values.addr0");
+    assert(forwarded_choice_payload_harmless_local_plan.descriptor_storage_available);
+    assert(forwarded_choice_payload_harmless_local_plan.cleanup_owner_proven);
 
     auto forwarded_choice_payload_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

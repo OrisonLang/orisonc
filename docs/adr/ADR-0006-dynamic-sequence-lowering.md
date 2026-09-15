@@ -3012,6 +3012,8 @@ representation.
   static-indexed aggregate-field fixtures cover the shape across pipeline and full CLI production paths.
 - Source-query smoke coverage now separates harmless aggregate helper scalar locals from owner-touching extra
   statements, keeping accepted proof cases and rejected owner-read cases pinned independently.
+- Forwarded choice-payload computed cleanup now has direct helper harmless-local coverage across source-query,
+  pipeline, emit-object, build, and run smoke paths.
 
 ## Follow-up work
 

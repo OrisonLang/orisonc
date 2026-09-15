@@ -1,0 +1,28 @@
+package fixtures.dynamicarrayforwardedchoicepayloadharmlesslocalswitchbindingownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(79 as UInt32))
+    values.push(Payload(83 as UInt32))
+    values
+
+function forward_packet_with_harmless_local(packet: Packet) -> Packet
+    var marker = 1 as Int64
+    packet
+
+function consume_packet(packet: Packet) -> UInt32
+    var total = 0 as UInt32
+    switch forward_packet_with_harmless_local(packet)
+        Primary(values) =>
+            for item in true ? values : false ? values : values
+                total = total + item.value
+    total - 162 as UInt32
+
+function main() -> UInt32
+    consume_packet(Primary(make_values()))
