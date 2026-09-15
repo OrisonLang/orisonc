@@ -154,6 +154,21 @@ int main() {
     );
     assert(
         orison::lowering::render_control_flow_lowering_failure(
+            ControlFlowLoweringFailureReason::if_then_arm_failure,
+            "unsupported expression: use after move: returned.inner.sibling"
+        ) == "use after move: returned.inner.sibling"
+    );
+    assert(
+        orison::lowering::append_control_flow_lowering_failure(
+            "lowering does not yet support this final control-flow statement",
+            ControlFlowLoweringFailure {
+                .reason = ControlFlowLoweringFailureReason::switch_case_failure,
+                .detail = "unsupported expression: use after move: returned.inner.sibling",
+            }
+        ) == "use after move: returned.inner.sibling"
+    );
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(
             ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
             "owned transfers must match across all continuing cases"
         ) == "switch case ownership mismatch: owned transfers must match across all continuing cases"

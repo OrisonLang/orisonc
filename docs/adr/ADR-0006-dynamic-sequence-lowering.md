@@ -3001,6 +3001,8 @@ representation.
   direct, final `switch`, and branch-join exits.
 - Returned-root nested sibling-after-primary reuse-rejection coverage now verifies direct, final `switch`, and
   branch-join attempts to reuse the moved sibling descriptor fail with `use after move`.
+- Final-control ownership reuse diagnostics now preserve direct `use after move` messages from failing `if` and
+  `switch` arms instead of adding final-control wrapper text.
 
 ## Follow-up work
 

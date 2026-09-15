@@ -225,6 +225,7 @@ void assert_cli_emit_llvm_existing_fixture_short_failure(
     auto output = read_failing_command_output(command);
     assert(output.find(expected_message) != std::string::npos);
     assert(output.find("lowering does not yet support this final control-flow statement") == std::string::npos);
+    assert(output.find("if then arm lowering failed") == std::string::npos);
     assert(output.find("switch case lowering failed") == std::string::npos);
 }
 
@@ -6700,17 +6701,17 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_run.or",
         smoke_temp_root / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_short_failure(
         executable,
         fixtures / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_rejected.or",
         "use after move: returned.inner.sibling"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_short_failure(
         executable,
         fixtures / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_rejected.or",
         "use after move: returned.inner.sibling"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_emit_llvm_existing_fixture_short_failure(
         executable,
         fixtures / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_rejected.or",
         "use after move: returned.inner.sibling"

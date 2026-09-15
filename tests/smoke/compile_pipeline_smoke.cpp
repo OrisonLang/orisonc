@@ -9698,6 +9698,11 @@ auto main() -> int {
             "use after move: returned.inner.sibling"
         ) != std::string::npos
     );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_sibling_after_primary_reuse_ir.error_text.find(
+            "lowering does not yet support this final control-flow statement"
+        ) == std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_if_branch_local_reuse_rejected.or";
@@ -9921,6 +9926,16 @@ auto main() -> int {
             "use after move: returned.inner.sibling"
         ) != std::string::npos
     );
+    assert(
+        dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_ir.error_text.find(
+            "lowering does not yet support this final control-flow statement"
+        ) == std::string::npos
+    );
+    assert(
+        dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_reuse_ir.error_text.find(
+            "if then arm lowering failed"
+        ) == std::string::npos
+    );
     auto dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_switch_branch_local_reuse_rejected.or";
@@ -10143,6 +10158,16 @@ auto main() -> int {
         dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_ir.error_text.find(
             "use after move: returned.inner.sibling"
         ) != std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_ir.error_text.find(
+            "lowering does not yet support this final control-flow statement"
+        ) == std::string::npos
+    );
+    assert(
+        dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_reuse_ir.error_text.find(
+            "switch case lowering failed"
+        ) == std::string::npos
     );
     auto dynamic_array_choice_payload_switch_binding_owned_computed_cleanup_missing_drop_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

@@ -2,10 +2,22 @@
 #include "orison/lowering/lowering_failure_rendering.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 
+#include <optional>
 #include <string>
 #include <utility>
 
 namespace orison::lowering {
+namespace {
+auto direct_use_after_move_detail(std::string const& detail) -> std::optional<std::string> {
+    auto const marker = std::string {"use after move"};
+    auto const marker_position = detail.find(marker);
+    if (marker_position == std::string::npos) {
+        return std::nullopt;
+    }
+    return detail.substr(marker_position);
+}
+}  // namespace
+
 auto append_lowering_detail(std::string prefix, std::string const& detail) -> std::string {
     return detail.empty() ? prefix : prefix + ": " + detail;
 }
@@ -35,7 +47,11 @@ auto append_control_flow_lowering_failure(
     std::string prefix,
     ControlFlowLoweringFailure const& failure
 ) -> std::string {
-    return append_lowering_detail(std::move(prefix), render_control_flow_lowering_failure(failure));
+    auto rendered = render_control_flow_lowering_failure(failure);
+    if (rendered.starts_with("use after move")) {
+        return rendered;
+    }
+    return append_lowering_detail(std::move(prefix), rendered);
 }
 
 auto append_control_flow_lowering_failure(
@@ -195,6 +211,10 @@ auto render_expression_lowering_failure(
 auto render_control_flow_lowering_failure(
     ControlFlowLoweringFailure const& failure
 ) -> std::string {
+    if (auto direct = direct_use_after_move_detail(failure.detail); direct.has_value()) {
+        return *direct;
+    }
+
     auto prefix = std::string {};
     switch (failure.reason) {
     case ControlFlowLoweringFailureReason::none:
