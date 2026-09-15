@@ -3027,6 +3027,9 @@ representation.
 - Forwarded returned-root sibling-after-primary handoff now has production driver emit-LLVM coverage matching the
   pipeline assertions: primary cleanup completes first, sibling cleanup is emitted in the callee, and caller-side
   returned sibling cleanup is absent.
+- Returned aggregate receiver cleanup now registers choice-typed sibling fields as internal addressable cleanup
+  owners, allowing the existing tag-guarded choice payload cleanup path to clean unselected sibling payload
+  descriptors without exposing cleanup syntax in user source.
 
 ## Follow-up work
 
@@ -3040,5 +3043,5 @@ representation.
   test-only commands.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
-- Extend returned aggregate sibling cleanup beyond finite record-field and fixed-array descriptor sets only after a
-  broader dynamic descriptor-discovery model is proven.
+- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, and choice-sibling descriptor
+  sets only after a broader dynamic descriptor-discovery model is proven.
