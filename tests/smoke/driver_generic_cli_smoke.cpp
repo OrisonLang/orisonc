@@ -6687,6 +6687,21 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch_run.or",
+        smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_final_switch"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_run.or",
+        smoke_temp_root / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or",
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );

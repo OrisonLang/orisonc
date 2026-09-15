@@ -2997,6 +2997,8 @@ representation.
   exits.
 - Forwarded returned-root nested sibling-after-primary coverage now also verifies primary computed cleanup completes
   before the sibling handoff and the sibling descriptor cleanup is owned by the callee.
+- Returned-root nested sibling-after-primary coverage now mirrors the forwarded path with order-sensitive checks for
+  direct, final `switch`, and branch-join exits.
 
 ## Follow-up work
 
