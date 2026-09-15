@@ -3030,6 +3030,8 @@ representation.
 - Returned aggregate receiver cleanup now registers choice-typed sibling fields as internal addressable cleanup
   owners, allowing the existing tag-guarded choice payload cleanup path to clean unselected sibling payload
   descriptors without exposing cleanup syntax in user source.
+- Returned aggregate receiver coverage now includes fixed arrays of records that contain choice payload DynamicArray
+  siblings, proving finite array element choice owners reach the same tag-guarded cleanup path.
 
 ## Follow-up work
 
@@ -3043,5 +3045,5 @@ representation.
   test-only commands.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
-- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, and choice-sibling descriptor
-  sets only after a broader dynamic descriptor-discovery model is proven.
+- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, and
+  fixed-array choice-sibling descriptor sets only after a broader dynamic descriptor-discovery model is proven.

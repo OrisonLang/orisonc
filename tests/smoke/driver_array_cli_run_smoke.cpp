@@ -2783,6 +2783,36 @@ void assert_returned_dynamic_array_aggregate_field_choice_sibling_cleanup_emit_l
     assert(choice_cleanup < return_value);
 }
 
+void assert_returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(
+        output,
+        "%record.Bundle = type { { ptr, i64, i64 }, [2 x %record.PacketBox] }"
+    );
+    assert_contains(output, "%record.PacketBox = type { { i32, { ptr, i64, i64 } } }");
+    assert_contains(output, "define %record.Bundle @make_bundle()");
+    assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
+    assert_contains(output, ".packets.element0.packet.Primary.values.choice_dynamic_array_cleanup");
+    assert_contains(output, ".packets.element1.packet.Primary.values.choice_dynamic_array_cleanup");
+    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
+    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    auto const main_start = output.find("define i32 @main");
+    auto const element0_cleanup =
+        output.find(".packets.element0.packet.Primary.values.choice_dynamic_array_cleanup", main_start);
+    auto const element1_cleanup =
+        output.find(".packets.element1.packet.Primary.values.choice_dynamic_array_cleanup", main_start);
+    auto const return_value = output.find("ret i32 %tmp", main_start);
+    assert(main_start != std::string::npos);
+    assert(element0_cleanup != std::string::npos);
+    assert(element1_cleanup != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(element0_cleanup < return_value);
+    assert(element1_cleanup < return_value);
+}
+
 void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -3288,6 +3318,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_returned_aggregate_field_choice_payload_forwarding_run.or";
     auto returned_dynamic_array_aggregate_field_choice_sibling_cleanup_path =
         fixtures / "dynamic_array_returned_aggregate_field_choice_sibling_cleanup_run.or";
+    auto returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_path =
+        fixtures / "dynamic_array_returned_aggregate_field_fixed_array_choice_sibling_cleanup_run.or";
     auto returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_path =
         fixtures / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_run.or";
     auto returned_dynamic_array_aggregate_field_stored_choice_payload_branch_forwarding_path =
@@ -5374,6 +5406,20 @@ auto main(int argc, char** argv) -> int {
         executable,
         returned_dynamic_array_aggregate_field_choice_sibling_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_choice_sibling_cleanup"
+    );
+    assert_returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_emit_llvm_success(
+        executable,
+        returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_fixed_array_choice_sibling_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_fixed_array_choice_sibling_cleanup"
     );
     assert_returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_emit_llvm_success(
         executable,
