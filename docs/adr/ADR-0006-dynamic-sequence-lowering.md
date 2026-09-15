@@ -3034,6 +3034,9 @@ representation.
   siblings, proving finite array element choice owners reach the same tag-guarded cleanup path.
 - Returned aggregate receiver coverage now includes nested fixed arrays of records that contain choice payload
   DynamicArray siblings, proving multidimensional finite choice-owner discovery reaches tag-guarded cleanup.
+- Returned aggregate receiver cleanup now registers `Maybe<T>` sibling fields with DynamicArray descendants as
+  internal addressable cleanup owners. Function return cleanup emits an `i1` guarded payload cleanup for active
+  `Some` payloads.
 
 ## Follow-up work
 
@@ -3048,5 +3051,5 @@ representation.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, fixed-array
-  choice-sibling, and nested fixed-array choice-sibling descriptor sets only after a broader dynamic
+  choice-sibling, nested fixed-array choice-sibling, and `Maybe` payload descriptor sets only after a broader dynamic
   descriptor-discovery model is proven.

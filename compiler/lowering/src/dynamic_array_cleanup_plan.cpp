@@ -342,6 +342,11 @@ struct ChoicePayloadDescriptorCleanup {
     std::vector<AggregateExtractionStep> extraction_steps;
 };
 
+struct MaybePayloadDescriptorCleanup {
+    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
+    std::vector<AggregateExtractionStep> extraction_steps;
+};
+
 auto collect_choice_payload_descriptor_cleanups(
     std::string_view owner_name,
     std::string_view source_type_name,
@@ -407,6 +412,91 @@ auto collect_choice_payload_descriptor_cleanups(
             });
             auto field_owner = std::string {owner_name} + "." + field.name;
             auto nested = collect_choice_payload_descriptor_cleanups(
+                field_owner,
+                field.source_type_name,
+                field.llvm_type,
+                context,
+                std::move(field_steps)
+            );
+            if (!nested.has_value()) {
+                return std::nullopt;
+            }
+            cleanups.insert(
+                cleanups.end(),
+                std::make_move_iterator(nested->begin()),
+                std::make_move_iterator(nested->end())
+            );
+        }
+    }
+
+    return cleanups;
+}
+
+auto collect_maybe_payload_descriptor_cleanups(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    std::vector<AggregateExtractionStep> extraction_steps = {}
+) -> std::optional<std::vector<MaybePayloadDescriptorCleanup>> {
+    auto cleanups = std::vector<MaybePayloadDescriptorCleanup> {};
+
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(owner_name, source_type_name, context);
+        if (!cleanup_plan.has_value()) {
+            return std::nullopt;
+        }
+        cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        cleanups.push_back(MaybePayloadDescriptorCleanup {
+            .descriptor_cleanup = std::move(*cleanup_plan),
+            .extraction_steps = std::move(extraction_steps),
+        });
+        return cleanups;
+    }
+
+    if (auto element_source_type = array_element_source_type_name(source_type_name)) {
+        auto array_type = parse_llvm_array_type(llvm_type);
+        if (!array_type.has_value()) {
+            return std::nullopt;
+        }
+        for (auto index = std::size_t {0}; index < array_type->length; ++index) {
+            auto element_steps = extraction_steps;
+            element_steps.push_back(AggregateExtractionStep {
+                .aggregate_llvm_type = std::string {llvm_type},
+                .extracted_llvm_type = array_type->element_type,
+                .index = index,
+            });
+            auto element_owner = std::string {owner_name} + ".element" + std::to_string(index);
+            auto nested = collect_maybe_payload_descriptor_cleanups(
+                element_owner,
+                *element_source_type,
+                array_type->element_type,
+                context,
+                std::move(element_steps)
+            );
+            if (!nested.has_value()) {
+                return std::nullopt;
+            }
+            cleanups.insert(
+                cleanups.end(),
+                std::make_move_iterator(nested->begin()),
+                std::make_move_iterator(nested->end())
+            );
+        }
+        return cleanups;
+    }
+
+    auto record = context.records.find(std::string {source_type_name});
+    if (record != context.records.end()) {
+        for (auto const& field : record->second.fields) {
+            auto field_steps = extraction_steps;
+            field_steps.push_back(AggregateExtractionStep {
+                .aggregate_llvm_type = std::string {llvm_type},
+                .extracted_llvm_type = field.llvm_type,
+                .index = field.index,
+            });
+            auto field_owner = std::string {owner_name} + "." + field.name;
+            auto nested = collect_maybe_payload_descriptor_cleanups(
                 field_owner,
                 field.source_type_name,
                 field.llvm_type,
@@ -1352,6 +1442,129 @@ auto emit_choice_dynamic_array_payload_cleanups(
         output,
         nullptr
     );
+}
+
+auto emit_maybe_dynamic_array_payload_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool {
+    if (!context.options.enable_dynamic_array_construction_lowering ||
+        !dynamic_array_cleanup_emission_enabled(context.options)) {
+        return true;
+    }
+
+    auto names = std::vector<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        if (maybe_payload_source_type_name(source_type_name).has_value()) {
+            names.push_back(name);
+        }
+    }
+    std::ranges::sort(names);
+
+    for (auto const& name : names) {
+        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
+            continue;
+        }
+        auto const source_type = session.state.source_type_names.find(name);
+        if (source_type == session.state.source_type_names.end()) {
+            continue;
+        }
+        auto payload_source_type = maybe_payload_source_type_name(source_type->second);
+        auto maybe_type = llvm_type_for_source_type_name(source_type->second, context.lowering);
+        auto payload_type = payload_source_type.has_value()
+            ? llvm_type_for_source_type_name(*payload_source_type, context.lowering)
+            : std::optional<std::string> {};
+        if (!payload_source_type.has_value() || !maybe_type.has_value() || !payload_type.has_value() ||
+            *maybe_type == "void" || *payload_type == "void") {
+            continue;
+        }
+        auto storage = aggregate_storage_for_name(name, session.state);
+        if (!storage.has_value()) {
+            continue;
+        }
+        auto descriptor_cleanups = collect_maybe_payload_descriptor_cleanups(
+            name + ".Some.value",
+            *payload_source_type,
+            *payload_type,
+            context.lowering
+        );
+        if (!descriptor_cleanups.has_value()) {
+            return false;
+        }
+        if (descriptor_cleanups->empty()) {
+            continue;
+        }
+
+        auto maybe_value = "%" + name + ".maybe_dynamic_array_cleanup" +
+            std::to_string(session.state.next_temporary_index++);
+        output << "  " << maybe_value << " = load " << *maybe_type << ", ptr " << *storage << "\n";
+        auto tag_value = "%" + name + ".maybe_dynamic_array_cleanup" +
+            std::to_string(session.state.next_temporary_index++) + ".is_some";
+        output << "  " << tag_value << " = extractvalue " << *maybe_type << " " << maybe_value << ", 0\n";
+        auto payload_value = "%" + name + ".maybe_dynamic_array_cleanup.payload";
+        output << "  " << payload_value << " = extractvalue " << *maybe_type << " " << maybe_value << ", 1\n";
+
+        for (auto& descriptor_cleanup : *descriptor_cleanups) {
+            auto const descriptor_owner_name = descriptor_cleanup.descriptor_cleanup.owner_name;
+            if (is_owned_binding_consumed(session.state.ownership_transfers, descriptor_owner_name)) {
+                continue;
+            }
+            descriptor_cleanup.descriptor_cleanup.descriptor_storage_name = *storage;
+            auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+                descriptor_cleanup.descriptor_cleanup,
+                session.state.emitted_dynamic_array_cleanup_obligations.size()
+            );
+            auto owned_cleanup_symbol_name = std::optional<std::string> {};
+            if (!obligation.actions.empty()) {
+                owned_cleanup_symbol_name = authorized_choice_payload_element_owned_cleanup_symbol_name(
+                    obligation,
+                    context.options
+                );
+                if (!owned_cleanup_symbol_name.has_value()) {
+                    return false;
+                }
+            }
+
+            auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
+            auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
+            if (!dynamic_array_cleanup_sequence_verification_passed(sequence_verification)) {
+                return false;
+            }
+
+            session.state.emitted_dynamic_array_cleanup_obligations.push_back(obligation);
+            session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(sequence_plan);
+            session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(sequence_verification);
+
+            auto block_prefix = descriptor_owner_name + ".maybe_dynamic_array_cleanup" +
+                std::to_string(next_llvm_block_index(session.state.next_block_index));
+            auto cleanup_block = block_prefix + ".cleanup.entry";
+            auto after_block = block_prefix + ".after";
+            output << "  br i1 " << tag_value << ", label %" << cleanup_block
+                   << ", label %" << after_block << "\n";
+            output << cleanup_block << ":\n";
+            auto descriptor_value = emit_aggregate_extraction_chain(
+                payload_value,
+                descriptor_cleanup.extraction_steps,
+                "%" + descriptor_owner_name + ".maybe_dynamic_array_cleanup.descriptor",
+                session,
+                output
+            );
+            auto cleanup_prefix = "%" + block_prefix;
+            output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_owned_cleanup_calls(
+                descriptor_cleanup.descriptor_cleanup,
+                descriptor_value,
+                cleanup_prefix,
+                owned_cleanup_symbol_name
+            );
+            output << "  br label %" << after_block << "\n";
+            output << after_block << ":\n";
+            session.state.current_block = after_block;
+        }
+        mark_owned_binding_consumed(session.state.ownership_transfers, name);
+    }
+    return true;
 }
 
 auto emit_choice_dynamic_array_payload_cleanups_for_names(

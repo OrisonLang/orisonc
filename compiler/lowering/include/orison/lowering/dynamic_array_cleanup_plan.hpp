@@ -152,6 +152,12 @@ auto emit_choice_dynamic_array_payload_cleanups(
     std::ostream& output
 ) -> bool;
 
+auto emit_maybe_dynamic_array_payload_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool;
+
 auto emit_choice_dynamic_array_payload_cleanups_for_names(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
