@@ -278,6 +278,8 @@ inventing semantics outside the spec/tour.
 - Compile-pipeline and driver parsed-cleanup diagnostic/readiness smoke sources no longer declare `interface Drop` or
   `implements Drop`; the retained report names remain compatibility output while the fixture sources use
   compiler-derived cleanup metadata.
+- Parsed-cleanup smoke fixture local identifiers, temp filenames, and package names now use owned-cleanup wording; the
+  retained report helper names and rendered output remain compatibility surfaces.
 - Current-facing gap and name-hygiene documentation now uses owned-cleanup wording for compiler-owned symbols and
   cleanup obligations. Historic audit records, CLI flags, test target names, and report text may retain drop wording as
   compatibility output.

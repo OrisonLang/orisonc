@@ -604,13 +604,13 @@ int main() {
         }
     );
 
-    auto parsed_drop_candidate_path =
-        std::filesystem::temp_directory_path() / "orison_driver_drop_report_parsed_drop_candidate.or";
+    auto parsed_owned_cleanup_candidate_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_parsed_owned_cleanup_candidate.or";
     auto remove_error = std::error_code {};
-    std::filesystem::remove(parsed_drop_candidate_path, remove_error);
+    std::filesystem::remove(parsed_owned_cleanup_candidate_path, remove_error);
     write_fixture(
-        parsed_drop_candidate_path,
-        "demo.parseddrop",
+        parsed_owned_cleanup_candidate_path,
+        "demo.parsedownedcleanup",
         {
             "record Payload",
             "    public value: Int64",
@@ -618,31 +618,35 @@ int main() {
             "    input.value",
         }
     );
-    auto parsed_drop_candidate_diagnostics = run_semantic_drop_diagnostics(app, parsed_drop_candidate_path);
+    auto parsed_owned_cleanup_candidate_diagnostics =
+        run_semantic_drop_diagnostics(app, parsed_owned_cleanup_candidate_path);
     assert_success_with_stdout_contains(
-        parsed_drop_candidate_diagnostics,
+        parsed_owned_cleanup_candidate_diagnostics,
         {"drop diagnostic drop site __orison_owned_cleanup.Payload", "resolved"}
     );
-    auto parsed_drop_candidate_lowering_authorization =
-        run_semantic_drop_lowering_authorization(app, parsed_drop_candidate_path);
+    auto parsed_owned_cleanup_candidate_lowering_authorization =
+        run_semantic_drop_lowering_authorization(app, parsed_owned_cleanup_candidate_path);
     assert_success_with_stdout_contains(
-        parsed_drop_candidate_lowering_authorization,
+        parsed_owned_cleanup_candidate_lowering_authorization,
         {
             "drop lowering authorization drop site __orison_owned_cleanup.Payload",
             "semantic-resolved lowering-authorized compiler-owned cleanup accepted",
         }
     );
-    auto parsed_drop_candidate_emit = run_emit_llvm(app, parsed_drop_candidate_path);
-    assert(parsed_drop_candidate_emit.exit_code == 0);
-    assert(parsed_drop_candidate_emit.stderr_text.empty());
-    assert(parsed_drop_candidate_emit.stdout_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
+    auto parsed_owned_cleanup_candidate_emit = run_emit_llvm(app, parsed_owned_cleanup_candidate_path);
+    assert(parsed_owned_cleanup_candidate_emit.exit_code == 0);
+    assert(parsed_owned_cleanup_candidate_emit.stderr_text.empty());
+    assert(
+        parsed_owned_cleanup_candidate_emit.stdout_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
+        std::string::npos
+    );
 
-    auto parsed_drop_readiness_path =
-        std::filesystem::temp_directory_path() / "orison_driver_drop_report_parsed_drop_readiness.or";
-    std::filesystem::remove(parsed_drop_readiness_path, remove_error);
+    auto parsed_owned_cleanup_readiness_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_parsed_owned_cleanup_readiness.or";
+    std::filesystem::remove(parsed_owned_cleanup_readiness_path, remove_error);
     write_fixture(
-        parsed_drop_readiness_path,
-        "demo.parseddropreadiness",
+        parsed_owned_cleanup_readiness_path,
+        "demo.parsedownedcleanupreadiness",
         {
             "record Payload",
             "    public value: Int64",
@@ -657,18 +661,19 @@ int main() {
             "    worker.join()",
         }
     );
-    auto parsed_drop_readiness_blockers = run_drop_readiness_blockers(app, parsed_drop_readiness_path);
+    auto parsed_owned_cleanup_readiness_blockers =
+        run_drop_readiness_blockers(app, parsed_owned_cleanup_readiness_path);
     assert_success_with_stdout_contains(
-        parsed_drop_readiness_blockers,
+        parsed_owned_cleanup_readiness_blockers,
         {
             "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
             "semantic lowering blocked 0 missing declarations 0",
         }
     );
-    auto parsed_drop_readiness_source =
-        run_drop_readiness_source_correlations(app, parsed_drop_readiness_path);
+    auto parsed_owned_cleanup_readiness_source =
+        run_drop_readiness_source_correlations(app, parsed_owned_cleanup_readiness_path);
     assert_success_with_stdout_contains(
-        parsed_drop_readiness_source,
+        parsed_owned_cleanup_readiness_source,
         {
             "drop readiness source correlations actions 0 semantic sites 1",
         }

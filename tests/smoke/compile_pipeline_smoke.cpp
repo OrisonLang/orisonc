@@ -15090,63 +15090,71 @@ auto main() -> int {
     assert(semantic_drops_summary_report.size() == 1);
     assert_line_contains(semantic_drops_summary_report, 0, "resolved 2 missing 0");
 
-    auto parsed_drop_path = std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_candidate.or";
+    auto parsed_owned_cleanup_path =
+        std::filesystem::temp_directory_path() / "orison_pipeline_parsed_owned_cleanup_candidate.or";
     {
-        std::ofstream source(parsed_drop_path);
-        source << "package demo.parseddrop\n";
+        std::ofstream source(parsed_owned_cleanup_path);
+        source << "package demo.parsedownedcleanup\n";
         source << "record Payload\n";
         source << "    public value: Int64\n";
         source << "function read(input: Payload) -> Int64\n";
         source << "    input.value\n";
     }
-    auto parsed_drop = pipeline.analyze(parsed_drop_path);
-    assert(!parsed_drop.has_errors());
-    auto parsed_drop_planned_report = semantic_planned_drop_report(parsed_drop);
-    auto parsed_drop_implementation_report =
-        semantic_owned_cleanup_implementation_discovery_report(parsed_drop.semantic_owned_cleanup_state);
-    auto parsed_drop_resolution_report = semantic_drop_resolution_report(parsed_drop);
-    auto parsed_drop_diagnostic_report = semantic_drop_diagnostic_report(parsed_drop);
-    auto parsed_drop_authorization_report = semantic_drop_lowering_authorization_report(parsed_drop);
-    assert(parsed_drop_planned_report.size() == 1);
-    assert_line_contains(parsed_drop_planned_report, 0, "owner input");
-    assert(parsed_drop_implementation_report.size() == 1);
-    assert_line_contains(parsed_drop_implementation_report, 0, "compiler-owned-cleanup");
-    assert_line_contains(parsed_drop_implementation_report, 0, "origin compiler-intrinsic");
-    assert(parsed_drop_resolution_report.size() == 1);
-    assert_line_contains(parsed_drop_resolution_report, 0, "resolved drop site");
-    assert(parsed_drop_diagnostic_report.size() == 1);
-    assert_line_contains(parsed_drop_diagnostic_report, 0, "resolved");
-    assert(parsed_drop_authorization_report.size() == 1);
-    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.size() == 1);
-    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
-    assert(!parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
-    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
-    assert(parsed_drop.semantic_owned_cleanup_lowering_authorizations.front().authorized);
+    auto parsed_owned_cleanup = pipeline.analyze(parsed_owned_cleanup_path);
+    assert(!parsed_owned_cleanup.has_errors());
+    auto parsed_owned_cleanup_planned_report = semantic_planned_drop_report(parsed_owned_cleanup);
+    auto parsed_owned_cleanup_implementation_report =
+        semantic_owned_cleanup_implementation_discovery_report(parsed_owned_cleanup.semantic_owned_cleanup_state);
+    auto parsed_owned_cleanup_resolution_report = semantic_drop_resolution_report(parsed_owned_cleanup);
+    auto parsed_owned_cleanup_diagnostic_report = semantic_drop_diagnostic_report(parsed_owned_cleanup);
+    auto parsed_owned_cleanup_authorization_report =
+        semantic_drop_lowering_authorization_report(parsed_owned_cleanup);
+    assert(parsed_owned_cleanup_planned_report.size() == 1);
+    assert_line_contains(parsed_owned_cleanup_planned_report, 0, "owner input");
+    assert(parsed_owned_cleanup_implementation_report.size() == 1);
+    assert_line_contains(parsed_owned_cleanup_implementation_report, 0, "compiler-owned-cleanup");
+    assert_line_contains(parsed_owned_cleanup_implementation_report, 0, "origin compiler-intrinsic");
+    assert(parsed_owned_cleanup_resolution_report.size() == 1);
+    assert_line_contains(parsed_owned_cleanup_resolution_report, 0, "resolved drop site");
+    assert(parsed_owned_cleanup_diagnostic_report.size() == 1);
+    assert_line_contains(parsed_owned_cleanup_diagnostic_report, 0, "resolved");
+    assert(parsed_owned_cleanup_authorization_report.size() == 1);
+    assert(parsed_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(!parsed_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
+    assert(parsed_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
+    assert(parsed_owned_cleanup.semantic_owned_cleanup_lowering_authorizations.front().authorized);
     assert_line_contains(
-        parsed_drop_authorization_report,
+        parsed_owned_cleanup_authorization_report,
         0,
         "semantic-resolved lowering-authorized compiler-owned cleanup accepted"
     );
-    auto parsed_drop_ir = pipeline.emit_llvm(parsed_drop_path);
-    assert(!parsed_drop_ir.has_errors());
-    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.size() == 1);
-    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
-    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
-    assert(parsed_drop_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
-    assert(parsed_drop_ir.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
-    auto parsed_drop_semantic_lowering_ir = pipeline.emit_llvm(
-        parsed_drop_path,
+    auto parsed_owned_cleanup_ir = pipeline.emit_llvm(parsed_owned_cleanup_path);
+    assert(!parsed_owned_cleanup_ir.has_errors());
+    assert(parsed_owned_cleanup_ir.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_owned_cleanup_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
+    assert(parsed_owned_cleanup_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
+    assert(parsed_owned_cleanup_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
+    assert(
+        parsed_owned_cleanup_ir.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
+        std::string::npos
+    );
+    auto parsed_owned_cleanup_semantic_lowering_ir = pipeline.emit_llvm(
+        parsed_owned_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
             .semantic_owned_cleanup_lowering_enabled = true,
         }
     );
-    assert(!parsed_drop_semantic_lowering_ir.has_errors());
-    assert(parsed_drop_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.size() == 1);
-    assert(parsed_drop_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
-    assert(parsed_drop_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
-    assert(parsed_drop_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
+    assert(!parsed_owned_cleanup_semantic_lowering_ir.has_errors());
+    assert(parsed_owned_cleanup_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_owned_cleanup_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
     assert(
-        parsed_drop_semantic_lowering_ir.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
+        parsed_owned_cleanup_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front()
+            .semantic_owned_cleanup_lowering_enabled
+    );
+    assert(parsed_owned_cleanup_semantic_lowering_ir.semantic_owned_cleanup_lowering_authorizations.front().authorized);
+    assert(
+        parsed_owned_cleanup_semantic_lowering_ir.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
         std::string::npos
     );
 
@@ -20625,11 +20633,11 @@ auto main() -> int {
         descriptor_missing_zero_store_readiness
     );
 
-    auto parsed_drop_readiness_path =
-        std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
+    auto parsed_owned_cleanup_readiness_path =
+        std::filesystem::temp_directory_path() / "orison_pipeline_parsed_owned_cleanup_readiness.or";
     {
-        std::ofstream source(parsed_drop_readiness_path);
-        source << "package demo.parseddropreadiness\n";
+        std::ofstream source(parsed_owned_cleanup_readiness_path);
+        source << "package demo.parsedownedcleanupreadiness\n";
         source << "record Payload\n";
         source << "    public value: Int64\n";
         source << "implements Transferable for Payload\n";
@@ -20642,33 +20650,42 @@ auto main() -> int {
         source << "\n";
         source << "    worker.join()\n";
     }
-    auto parsed_drop_readiness = pipeline.emit_llvm(parsed_drop_readiness_path);
-    assert(!parsed_drop_readiness.has_errors());
-    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.size() == 1);
-    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
-    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().semantic_owned_cleanup_lowering_enabled);
-    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
-    assert(parsed_drop_readiness.semantic_owned_cleanup_lowering_authorizations.front().authorized);
-    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
-    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
-    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
-    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_owned_cleanup_lowering_blockers.empty());
-    assert(parsed_drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
-    auto parsed_drop_readiness_blocker_report = drop_readiness_blocker_report(parsed_drop_readiness);
-    assert(parsed_drop_readiness_blocker_report.size() == 1);
+    auto parsed_owned_cleanup_readiness = pipeline.emit_llvm(parsed_owned_cleanup_readiness_path);
+    assert(!parsed_owned_cleanup_readiness.has_errors());
+    assert(parsed_owned_cleanup_readiness.semantic_owned_cleanup_lowering_authorizations.size() == 1);
+    assert(parsed_owned_cleanup_readiness.semantic_owned_cleanup_lowering_authorizations.front().semantic_resolved);
     assert(
-        parsed_drop_readiness_blocker_report[0] ==
+        parsed_owned_cleanup_readiness.semantic_owned_cleanup_lowering_authorizations.front()
+            .semantic_owned_cleanup_lowering_enabled
+    );
+    assert(parsed_owned_cleanup_readiness.semantic_owned_cleanup_lowering_authorizations.front().compiler_intrinsic_owned_cleanup);
+    assert(parsed_owned_cleanup_readiness.semantic_owned_cleanup_lowering_authorizations.front().authorized);
+    assert(parsed_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
+    assert(parsed_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
+    assert(parsed_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
+    assert(
+        parsed_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.semantic_owned_cleanup_lowering_blockers.empty()
+    );
+    assert(parsed_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
+    auto parsed_owned_cleanup_readiness_blocker_report =
+        drop_readiness_blocker_report(parsed_owned_cleanup_readiness);
+    assert(parsed_owned_cleanup_readiness_blocker_report.size() == 1);
+    assert(
+        parsed_owned_cleanup_readiness_blocker_report[0] ==
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "semantic lowering blocked 0 missing declarations 0"
     );
-    auto parsed_drop_readiness_source_correlation_report =
-        drop_readiness_source_correlation_report(parsed_drop_readiness);
-    assert(parsed_drop_readiness_source_correlation_report.size() == 1);
+    auto parsed_owned_cleanup_readiness_source_correlation_report =
+        drop_readiness_source_correlation_report(parsed_owned_cleanup_readiness);
+    assert(parsed_owned_cleanup_readiness_source_correlation_report.size() == 1);
     assert(
-        parsed_drop_readiness_source_correlation_report[0] ==
+        parsed_owned_cleanup_readiness_source_correlation_report[0] ==
         "drop readiness source correlations actions 0 semantic sites 1"
     );
-    assert(parsed_drop_readiness.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
+    assert(
+        parsed_owned_cleanup_readiness.ir_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
+        std::string::npos
+    );
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
