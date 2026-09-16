@@ -80,6 +80,27 @@ void assert_no_main_dynamic_array_deallocate(std::string const& output) {
     assert(output.find("__orison_dynamic_array_deallocate", main_start) == std::string::npos);
 }
 
+void assert_main_cleanup_fragments_before_return(
+    std::string const& output,
+    std::initializer_list<std::string_view> cleanup_fragments
+) {
+    auto const main_start = output.find("define i32 @main");
+    auto const return_value = output.find("ret i32 %tmp", main_start);
+    assert(main_start != std::string::npos);
+    assert(return_value != std::string::npos);
+    for (auto const cleanup_fragment : cleanup_fragments) {
+        assert_contains(output, cleanup_fragment);
+        auto const cleanup = output.find(cleanup_fragment, main_start);
+        assert(cleanup != std::string::npos);
+        assert(cleanup < return_value);
+    }
+}
+
+void assert_returned_dynamic_array_field_forwarding_calls(std::string const& output) {
+    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
+    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+}
+
 void assert_run_success(std::filesystem::path const& executable, std::filesystem::path const& source_path) {
     auto status = std::system((executable.string() + " run " + source_path.string()).c_str());
     assert(WIFEXITED(status));
@@ -2852,17 +2873,8 @@ void assert_returned_dynamic_array_aggregate_field_maybe_sibling_cleanup_emit_ll
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i1, { ptr, i64, i64 } } }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    assert_contains(output, ".maybe_values.Some.value.maybe_dynamic_array_cleanup");
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
-    auto const main_start = output.find("define i32 @main");
-    auto const maybe_cleanup =
-        output.find(".maybe_values.Some.value.maybe_dynamic_array_cleanup", main_start);
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(maybe_cleanup != std::string::npos);
-    assert(return_value != std::string::npos);
-    assert(maybe_cleanup < return_value);
+    assert_main_cleanup_fragments_before_return(output, {".maybe_values.Some.value.maybe_dynamic_array_cleanup"});
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_fixed_array_maybe_sibling_cleanup_emit_llvm_success(
@@ -2873,21 +2885,14 @@ void assert_returned_dynamic_array_aggregate_field_fixed_array_maybe_sibling_cle
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, [2 x { i1, { ptr, i64, i64 } }] }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    auto const main_start = output.find("define i32 @main");
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(return_value != std::string::npos);
-    for (auto const* owner_fragment : {
-             ".maybe_values.element0.Some.value.maybe_dynamic_array_cleanup",
-             ".maybe_values.element1.Some.value.maybe_dynamic_array_cleanup",
-         }) {
-        assert_contains(output, owner_fragment);
-        auto const cleanup = output.find(owner_fragment, main_start);
-        assert(cleanup != std::string::npos);
-        assert(cleanup < return_value);
-    }
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".maybe_values.element0.Some.value.maybe_dynamic_array_cleanup",
+            ".maybe_values.element1.Some.value.maybe_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_nested_fixed_array_maybe_sibling_cleanup_emit_llvm_success(
@@ -2898,23 +2903,16 @@ void assert_returned_dynamic_array_aggregate_field_nested_fixed_array_maybe_sibl
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, [2 x [2 x { i1, { ptr, i64, i64 } }]] }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    auto const main_start = output.find("define i32 @main");
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(return_value != std::string::npos);
-    for (auto const* owner_fragment : {
-             ".maybe_values.element0.element0.Some.value.maybe_dynamic_array_cleanup",
-             ".maybe_values.element0.element1.Some.value.maybe_dynamic_array_cleanup",
-             ".maybe_values.element1.element0.Some.value.maybe_dynamic_array_cleanup",
-             ".maybe_values.element1.element1.Some.value.maybe_dynamic_array_cleanup",
-         }) {
-        assert_contains(output, owner_fragment);
-        auto const cleanup = output.find(owner_fragment, main_start);
-        assert(cleanup != std::string::npos);
-        assert(cleanup < return_value);
-    }
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".maybe_values.element0.element0.Some.value.maybe_dynamic_array_cleanup",
+            ".maybe_values.element0.element1.Some.value.maybe_dynamic_array_cleanup",
+            ".maybe_values.element1.element0.Some.value.maybe_dynamic_array_cleanup",
+            ".maybe_values.element1.element1.Some.value.maybe_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_maybe_record_sibling_cleanup_emit_llvm_success(
@@ -2926,17 +2924,8 @@ void assert_returned_dynamic_array_aggregate_field_maybe_record_sibling_cleanup_
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i1, %record.Box } }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    assert_contains(output, ".maybe_box.Some.value.values.maybe_dynamic_array_cleanup");
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
-    auto const main_start = output.find("define i32 @main");
-    auto const maybe_cleanup =
-        output.find(".maybe_box.Some.value.values.maybe_dynamic_array_cleanup", main_start);
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(maybe_cleanup != std::string::npos);
-    assert(return_value != std::string::npos);
-    assert(maybe_cleanup < return_value);
+    assert_main_cleanup_fragments_before_return(output, {".maybe_box.Some.value.values.maybe_dynamic_array_cleanup"});
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_maybe_fixed_array_payload_sibling_cleanup_emit_llvm_success(
@@ -2947,21 +2936,14 @@ void assert_returned_dynamic_array_aggregate_field_maybe_fixed_array_payload_sib
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i1, [2 x { ptr, i64, i64 }] } }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    auto const main_start = output.find("define i32 @main");
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(return_value != std::string::npos);
-    for (auto const* owner_fragment : {
-             ".maybe_values.Some.value.element0.maybe_dynamic_array_cleanup",
-             ".maybe_values.Some.value.element1.maybe_dynamic_array_cleanup",
-         }) {
-        assert_contains(output, owner_fragment);
-        auto const cleanup = output.find(owner_fragment, main_start);
-        assert(cleanup != std::string::npos);
-        assert(cleanup < return_value);
-    }
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".maybe_values.Some.value.element0.maybe_dynamic_array_cleanup",
+            ".maybe_values.Some.value.element1.maybe_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_maybe_nested_fixed_array_payload_sibling_cleanup_emit_llvm_success(
@@ -2972,23 +2954,16 @@ void assert_returned_dynamic_array_aggregate_field_maybe_nested_fixed_array_payl
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i1, [2 x [2 x { ptr, i64, i64 }]] } }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    auto const main_start = output.find("define i32 @main");
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(return_value != std::string::npos);
-    for (auto const* owner_fragment : {
-             ".maybe_values.Some.value.element0.element0.maybe_dynamic_array_cleanup",
-             ".maybe_values.Some.value.element0.element1.maybe_dynamic_array_cleanup",
-             ".maybe_values.Some.value.element1.element0.maybe_dynamic_array_cleanup",
-             ".maybe_values.Some.value.element1.element1.maybe_dynamic_array_cleanup",
-         }) {
-        assert_contains(output, owner_fragment);
-        auto const cleanup = output.find(owner_fragment, main_start);
-        assert(cleanup != std::string::npos);
-        assert(cleanup < return_value);
-    }
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".maybe_values.Some.value.element0.element0.maybe_dynamic_array_cleanup",
+            ".maybe_values.Some.value.element0.element1.maybe_dynamic_array_cleanup",
+            ".maybe_values.Some.value.element1.element0.maybe_dynamic_array_cleanup",
+            ".maybe_values.Some.value.element1.element1.maybe_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_maybe_fixed_array_record_payload_sibling_cleanup_emit_llvm_success(
@@ -3000,21 +2975,14 @@ void assert_returned_dynamic_array_aggregate_field_maybe_fixed_array_record_payl
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i1, [2 x %record.Box] } }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    auto const main_start = output.find("define i32 @main");
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(return_value != std::string::npos);
-    for (auto const* owner_fragment : {
-             ".maybe_boxes.Some.value.element0.values.maybe_dynamic_array_cleanup",
-             ".maybe_boxes.Some.value.element1.values.maybe_dynamic_array_cleanup",
-         }) {
-        assert_contains(output, owner_fragment);
-        auto const cleanup = output.find(owner_fragment, main_start);
-        assert(cleanup != std::string::npos);
-        assert(cleanup < return_value);
-    }
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".maybe_boxes.Some.value.element0.values.maybe_dynamic_array_cleanup",
+            ".maybe_boxes.Some.value.element1.values.maybe_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_maybe_nested_fixed_array_record_payload_sibling_cleanup_emit_llvm_success(
@@ -3026,23 +2994,16 @@ void assert_returned_dynamic_array_aggregate_field_maybe_nested_fixed_array_reco
     assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i1, [2 x [2 x %record.Box]] } }");
     assert_contains(output, "define %record.Bundle @make_bundle()");
     assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
-    auto const main_start = output.find("define i32 @main");
-    auto const return_value = output.find("ret i32 %tmp", main_start);
-    assert(main_start != std::string::npos);
-    assert(return_value != std::string::npos);
-    for (auto const* owner_fragment : {
-             ".maybe_boxes.Some.value.element0.element0.values.maybe_dynamic_array_cleanup",
-             ".maybe_boxes.Some.value.element0.element1.values.maybe_dynamic_array_cleanup",
-             ".maybe_boxes.Some.value.element1.element0.values.maybe_dynamic_array_cleanup",
-             ".maybe_boxes.Some.value.element1.element1.values.maybe_dynamic_array_cleanup",
-         }) {
-        assert_contains(output, owner_fragment);
-        auto const cleanup = output.find(owner_fragment, main_start);
-        assert(cleanup != std::string::npos);
-        assert(cleanup < return_value);
-    }
-    assert_contains(output, "call { ptr, i64, i64 } @method.DynamicArray_UInt32_.forward__UInt32");
-    assert_contains(output, "call i64 @method.DynamicArray_UInt32_.count__UInt32");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".maybe_boxes.Some.value.element0.element0.values.maybe_dynamic_array_cleanup",
+            ".maybe_boxes.Some.value.element0.element1.values.maybe_dynamic_array_cleanup",
+            ".maybe_boxes.Some.value.element1.element0.values.maybe_dynamic_array_cleanup",
+            ".maybe_boxes.Some.value.element1.element1.values.maybe_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
 void assert_returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_emit_llvm_success(
