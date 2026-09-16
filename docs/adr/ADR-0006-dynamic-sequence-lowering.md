@@ -3049,6 +3049,9 @@ representation.
   proving Maybe payload cleanup can descend through multidimensional finite arrays of descriptors.
 - Returned aggregate receiver coverage now includes `Maybe<Array<RecordWithDynamicArray, N>>` sibling payloads,
   proving Maybe payload cleanup composes finite array traversal with nested record-field descriptor extraction.
+- Returned aggregate receiver coverage now includes `Maybe<Array<Array<RecordWithDynamicArray, N>, M>>` sibling
+  payloads, proving multidimensional finite arrays compose with nested record-field descriptor extraction under a
+  Maybe tag guard.
 
 ## Follow-up work
 
@@ -3065,5 +3068,5 @@ representation.
 - Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, fixed-array
   choice-sibling, nested fixed-array choice-sibling, direct `Maybe` payload, fixed-array `Maybe` payload, and
   nested fixed-array `Maybe` payload, record-wrapped `Maybe` payload, Maybe-wrapped fixed-array payload,
-  Maybe-wrapped nested fixed-array payload, and Maybe-wrapped fixed-array record payload descriptor sets only after a
-  broader dynamic descriptor-discovery model is proven.
+  Maybe-wrapped nested fixed-array payload, Maybe-wrapped fixed-array record payload, and Maybe-wrapped nested
+  fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
