@@ -3084,6 +3084,8 @@ representation.
   sibling descriptors and receiver temporaries, preserving source-line propagation and descriptor-storage status.
 - Statement lowering now shares lowered-local DynamicArray cleanup plan construction for source declarations,
   aggregate-descendant seeding, and assignment-target cleanup while preserving call-site diagnostics.
+- Switch payload DynamicArray cleanup seeding now records the matched pattern source line on lowered-local cleanup
+  plans, aligning payload-bound cleanup metadata with statement and direct receiver cleanup metadata.
 
 ## Follow-up work
 

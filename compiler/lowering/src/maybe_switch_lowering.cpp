@@ -149,6 +149,7 @@ auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::option
 void seed_switch_payload_dynamic_array_cleanup(
     std::string const& binding_name,
     std::string const& source_type_name,
+    std::size_t source_line,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) {
@@ -173,6 +174,7 @@ void seed_switch_payload_dynamic_array_cleanup(
     }
     cleanup_plan->descriptor_storage_name = std::move(*storage);
     cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
     session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
 }
 
@@ -181,6 +183,7 @@ void bind_switch_payload_value(
     std::string const& payload_type,
     std::string_view payload_field_type,
     std::optional<std::string> source_type_name,
+    std::size_t source_line,
     LoweredExpression const& subject,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
@@ -213,13 +216,14 @@ void bind_switch_payload_value(
     session.state.immutable_bindings[binding_name] = lowered_payload;
     bind_addressable_aggregate_value(binding_name, lowered_payload, session, output);
     if (source_type_name.has_value()) {
-        seed_switch_payload_dynamic_array_cleanup(binding_name, *source_type_name, context, session);
+        seed_switch_payload_dynamic_array_cleanup(binding_name, *source_type_name, source_line, context, session);
     }
 }
 
 void bind_switch_payload_field_value(
     ChoicePayloadFieldBinding const& binding,
     std::string payload_value,
+    std::size_t source_line,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostream& output
@@ -240,6 +244,7 @@ void bind_switch_payload_field_value(
     seed_switch_payload_dynamic_array_cleanup(
         binding.binding_name,
         binding.source_type_name,
+        source_line,
         context,
         session
     );
@@ -249,6 +254,7 @@ void bind_choice_switch_payload_values(
     ChoicePayloadBinding const& binding,
     std::string_view payload_field_type,
     LoweredExpression const& subject,
+    std::size_t source_line,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostream& output
@@ -271,7 +277,14 @@ void bind_choice_switch_payload_values(
     }
 
     if (binding.payloads.size() == 1) {
-        bind_switch_payload_field_value(binding.payloads.front(), std::move(payload_value), context, session, output);
+        bind_switch_payload_field_value(
+            binding.payloads.front(),
+            std::move(payload_value),
+            source_line,
+            context,
+            session,
+            output
+        );
         return;
     }
 
@@ -279,7 +292,14 @@ void bind_choice_switch_payload_values(
         auto payload_field_value = next_llvm_temporary_name(session.state.next_temporary_index);
         output << "  " << payload_field_value << " = extractvalue " << binding.variant_payload_type
                << " " << payload_value << ", " << payload_binding.payload_index << "\n";
-        bind_switch_payload_field_value(payload_binding, std::move(payload_field_value), context, session, output);
+        bind_switch_payload_field_value(
+            payload_binding,
+            std::move(payload_field_value),
+            source_line,
+            context,
+            session,
+            output
+        );
     }
 }
 
@@ -384,6 +404,7 @@ void bind_switch_payload(
             *payload_type,
             *payload_type,
             std::move(source_type_name),
+            planned_case.syntax->pattern.line,
             subject,
             context,
             session,
@@ -420,7 +441,15 @@ void bind_switch_payload(
     if (!payload_field_type.has_value()) {
         return;
     }
-    bind_choice_switch_payload_values(*choice_binding, *payload_field_type, subject, context, session, output);
+    bind_choice_switch_payload_values(
+        *choice_binding,
+        *payload_field_type,
+        subject,
+        planned_case.syntax->pattern.line,
+        context,
+        session,
+        output
+    );
 }
 
 }  // namespace orison::lowering
