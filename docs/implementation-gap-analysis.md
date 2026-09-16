@@ -8,7 +8,7 @@ Date: 2026-09-03
   linking, and direct `run`.
 - `DynamicArray<T>` production lowering is strong for local values, owned parameters, returned values, aggregate
   fields, nested fields, branch/switch joins, forwarded helpers, choice payload bindings, final control flow, computed
-  same-owner iteration, element Drop walks, deallocation, and post-move diagnostics.
+  same-owner iteration, owned-element cleanup walks, deallocation, and post-move diagnostics.
 - Remaining `DynamicArray<T>` work is less about the base descriptor and more about broadening proof coverage:
   generalized computed owners, runtime-index cleanup edge cases, generic descriptor instantiation, moved-field
   finalization, and automatic cleanup from semantic facts.
@@ -32,7 +32,7 @@ This note is an implementation snapshot. It does not define language syntax or s
 - The examples suite marks the tour slices as backend-validated, including FFI, aggregate access, choices, pointers,
   views, dynamic arrays, unsafe operations, and scalar concurrency demos.
 - `DynamicArray<T>` has strong coverage for descriptor ABI, append/grow, checked indexing, iteration, owned-element
-  Drop cleanup, returned aggregate fields, nested fields, branch joins, switch joins, and final-control-flow cleanup
+  owned-element cleanup, returned aggregate fields, nested fields, branch joins, switch joins, and final-control-flow cleanup
   composition.
 - Runtime-index member cleanup has extensive proof, reporting, mutation-gate, and smoke coverage, including selected
   production-path promotion. Ordinary production `--emit-llvm` smoke coverage now pins generated member-cleanup helpers,
@@ -45,40 +45,40 @@ This note is an implementation snapshot. It does not define language syntax or s
   expression lowering and discard `Maybe<T>` results; void calls branch on the receiver tag and merge without
   materializing `Maybe<Unit>`.
 - Name hygiene has a reusable lowering symbol registry for source functions, foreign declarations, generated helpers,
-  runtime prelude declarations, Drop symbols, and record type identifiers.
+  runtime prelude declarations, owned-cleanup symbols, and record type identifiers.
 
 ## Remaining Gaps
 
 - Lowering is broad but still fixture-driven; unsupported diagnostics remain the safe boundary for unproven source
   shapes.
-- Cleanup should move toward automatic lowering from checked ownership/type facts for ordinary writers. `Drop` remains
-  internal or future-gated unless the language surface explicitly accepts a destructor protocol.
+- Cleanup should move toward automatic lowering from checked ownership/type facts for ordinary writers. Owned cleanup
+  remains internal or future-gated unless the language surface explicitly accepts a destructor protocol.
 - Value-level `Maybe<Unit>` remains gated; current void null-safe member-call support is statement-only.
 - The semantic representation now exposes checked module-level facts, visited expression types, callable targets,
-  ownership facts, drop obligations, aggregate paths, and DynamicArray descriptor facts. Semantic planned-drop reports,
-  drop authorization reports, DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI
+  ownership facts, owned-cleanup obligations, aggregate paths, and DynamicArray descriptor facts. Semantic planned-drop reports,
+  owned-cleanup authorization reports, DynamicArray descriptor cleanup, lifetime planning, readiness reporting, and CLI
   descriptor reports consume summary-backed facts. `SemanticAnalysisResult` no longer exposes compatibility
-  planned-drop or descriptor-origin vectors. The descriptor projection helper has been removed. Internal DynamicArray
+  planned-cleanup or descriptor-origin vectors. The descriptor projection helper has been removed. Internal DynamicArray
   descriptor lifetime/readiness state now uses summary binding terminology.
 - DynamicArray production readiness is strongest for proven local, parameter, returned, branch, switch, and aggregate
   field paths; shared production defaults now cover construction, index, append, cleanup, computed `for`, and
-  runtime-index member cleanup. Production defaults now explicitly enable descriptor cleanup planning. Source Drop now
+  runtime-index member cleanup. Production defaults now explicitly enable descriptor cleanup planning. Owned cleanup now
   joins shared production defaults for audited aggregate cleanup paths, including runtime-index constructor move
   shape-fault coverage, module-rewrite audit paths, and staged member-cleanup gate checks. Abstract generic descriptors
   remain readiness metadata until concrete instantiation proves element layout and cleanup. Concrete generic
-  owned-parameter cleanup can seed bound cleanup from generated and direct source Drop definitions after function
+  owned-parameter cleanup can seed bound cleanup from generated owned-cleanup definitions after function
   emission resolves abstract descriptor parameter types from specialization suffixes; cleanup planning accepts the same
-  concrete Drop-symbol proof when no concrete parameter summary exists. Returned descriptor lifetime plans now carry
+  concrete owned-cleanup-symbol proof when no concrete parameter summary exists. Returned descriptor lifetime plans now carry
   exact cleanup-owner proof, so return cleanup release consumes typed provenance directly. Computed ownership planning
   now unwraps source-proven descriptor-forwarding helper calls for returned descriptor iteration, and returned
   descriptors moved through local alias chains are covered by the same computed final-use cleanup path. Returned
   choices carrying DynamicArray payloads now bind caller-side switch payloads into that same cleanup path and reject
   later payload reuse after final-use cleanup. The returned/computed cleanup matrix is now pinned for direct returns,
   branch and switch joins, aggregate and nested aggregate fields, source-proven helper forwarding, local alias chains,
-  returned choice payloads, missing-Drop boundaries, owner mismatch boundaries, and post-cleanup reuse diagnostics.
+  returned choice payloads, missing-owned-cleanup boundaries, owner mismatch boundaries, and post-cleanup reuse diagnostics.
   Multi-candidate runtime-index cleanup fixtures now share the same production-default audit/module-rewrite helper.
   Single-candidate module-mutation and module-rewrite checks now use named option helpers. Runtime-index emission,
-  insertion, mutation, Drop-surface, source-drop audit-only, and rewrite-execution-only staged checks now use named
+  insertion, mutation, owned-cleanup surface, cleanup-audit-only, and rewrite-execution-only staged checks now use named
   option helpers. Production `--emit-llvm` coverage now directly asserts the promoted member-cleanup IR shape for
   source-backed nested-member and two-owner fixtures, and production object/link/run, `--emit-object`, and `--build`
   coverage now covers the source-backed nested-member, two-owner, and two nested-owner fixtures. The remaining
@@ -87,11 +87,11 @@ This note is an implementation snapshot. It does not define language syntax or s
   top-level proof/production fields and hides superseded old keyed production blocker and whole-element detail lines.
   Source-backed branch-derived indexes, switch-derived indexes, and approved choice payload bindings are now covered
   by ordinary production `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build` paths. The approved
-  choice-payload shape also has negative coverage for post-transfer reuse and missing Drop authorization. Scoped
+  choice-payload shape also has negative coverage for post-transfer reuse and missing owned-cleanup authorization. Scoped
   cleanup now keeps promoted runtime-index member cleanup as the single owner cleanup path for direct payload bindings,
   and nested choice-payload aggregate owners such as `holder.items[index + zero].box.item` now preserve the projected
   descriptor pointer while suppressing duplicate stored choice-payload cleanup. The nested shape also has negative
-  coverage for post-transfer member reuse and missing owned-element Drop authorization. Three-case owned-result
+  coverage for post-transfer member reuse and missing owned-element cleanup authorization. Three-case owned-result
   switch, nested-switch, and mixed switch/if cleanup fixtures now run through the generic CLI production matrix across
   ordinary `run`, `--emit-llvm`, object/link/run, `--emit-object`, and `--build`. Ternary helper-call, named
   helper-call, named chained helper-call, and branch-consumer scratch cleanup owned-result fixtures now run through the
@@ -138,7 +138,7 @@ This note is an implementation snapshot. It does not define language syntax or s
   production-readiness blocker reports now include the primary source line text, and member-cleanup mutation-stage
   audit/readiness reports now include source-line plus source-text metadata. Final switch/if ownership reuse failures
   now report direct `use after move` diagnostics while retaining precise runtime-index owner paths. DynamicArray
-  owned-element push Drop-authorization diagnostics now include source owner and element type. Runtime-index
+  owned-element push cleanup-authorization diagnostics now include source owner and element type. Runtime-index
   member-cleanup plan, proof, sketch, target, emission gate, insertion, composition, CFG-slice, helper binding,
   production-readiness, function-rewrite, and production blocker diagnostics now include source-line and source-text
   metadata when the originating constructor move is known. Promotion blocker diagnostics now carry source-line/source-

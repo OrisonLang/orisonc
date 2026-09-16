@@ -21,11 +21,11 @@ gap analysis only; it does not define new language syntax.
 - The registry now also rejects generated generic function specialization symbols that collide with source function
   symbols, and foreign export aliases that collide with generated method symbols.
 - The module symbol registry is now a reusable lowering component with constructed-state smoke coverage for generated
-  concurrency thunk symbols, generated concurrency cleanup symbols, and planned drop declaration symbols colliding with
-  already registered LLVM symbols.
+  concurrency thunk symbols, generated concurrency cleanup symbols, and planned owned-cleanup declaration symbols
+  colliding with already registered LLVM symbols.
 - Production module emission now uses the shared registry to validate source functions, foreign declarations, runtime
-  prelude declarations, source drop definitions, planned drop declarations, generated concurrency thunks/cleanups, and
-  generated DynamicArray cleanup helpers before generated LLVM IR is accepted.
+  prelude declarations, owned-cleanup definitions, planned owned-cleanup declarations, generated concurrency
+  thunks/cleanups, and generated DynamicArray cleanup helpers before generated LLVM IR is accepted.
 - Production module emission now also validates emitted record LLVM type identifiers in a separate type-symbol
   namespace, so `%record.*` names cannot collide with other lowered type identifiers while remaining independent from
   global `@` symbols.
@@ -41,9 +41,9 @@ gap analysis only; it does not define new language syntax.
 - DynamicArray cleanup helper symbols such as `__orison_dynamic_array_cleanup.0` are generated in lowering. The reserved
   prefix semantic guard blocks user source aliases from occupying that space, but direct lowerer tests can still create
   constructed collision states.
-- Planned drop ABI symbols such as `__orison_drop.Payload` intentionally use compiler-owned names. Source-level
-  conflicts are blocked through the broader `__orison_` guard, and lowerer-only constructed fixtures now validate that
-  conflicting metadata is rejected by the shared registry.
+- Planned owned-cleanup ABI symbols such as `__orison_owned_cleanup.Payload` intentionally use compiler-owned names.
+  Source-level conflicts are blocked through the broader `__orison_` guard, and lowerer-only constructed fixtures now
+  validate that conflicting metadata is rejected by the shared registry.
 
 ## Next Implementation Slice
 
