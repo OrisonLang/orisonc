@@ -3062,6 +3062,9 @@ representation.
   exclusion and descriptor cleanup-plan setup.
 - Returned aggregate receiver selected DynamicArray descriptor cleanup registration now uses one helper that preserves
   selected-path exclusion, lowered-local descriptor status, and source-line propagation.
+- Choice and Maybe payload cleanup emission now share descriptor cleanup preparation for obligation planning,
+  owned-element authorization, sequence verification, and emitted cleanup report registration. Their tag-guard branch
+  emission remains separate.
 
 ## Follow-up work
 

@@ -347,6 +347,10 @@ struct MaybePayloadDescriptorCleanup {
     std::vector<AggregateExtractionStep> extraction_steps;
 };
 
+struct PreparedPayloadDescriptorCleanup {
+    std::optional<std::string> owned_cleanup_symbol_name;
+};
+
 template <typename DescriptorCleanup>
 auto collect_payload_descriptor_cleanups(
     std::string_view owner_name,
@@ -481,6 +485,42 @@ auto emit_aggregate_extraction_chain(
         current_value = std::move(next_value);
     }
     return current_value;
+}
+
+auto prepare_payload_descriptor_cleanup_emission(
+    DynamicArrayDescriptorCleanupPlan& descriptor_cleanup,
+    std::string_view descriptor_storage_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) -> std::optional<PreparedPayloadDescriptorCleanup> {
+    descriptor_cleanup.descriptor_storage_name = std::string {descriptor_storage_name};
+    auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+        descriptor_cleanup,
+        session.state.emitted_dynamic_array_cleanup_obligations.size()
+    );
+    auto owned_cleanup_symbol_name = std::optional<std::string> {};
+    if (!obligation.actions.empty()) {
+        owned_cleanup_symbol_name = authorized_choice_payload_element_owned_cleanup_symbol_name(
+            obligation,
+            context.options
+        );
+        if (!owned_cleanup_symbol_name.has_value()) {
+            return std::nullopt;
+        }
+    }
+
+    auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
+    auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
+    if (!dynamic_array_cleanup_sequence_verification_passed(sequence_verification)) {
+        return std::nullopt;
+    }
+
+    session.state.emitted_dynamic_array_cleanup_obligations.push_back(std::move(obligation));
+    session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(std::move(sequence_plan));
+    session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(std::move(sequence_verification));
+    return PreparedPayloadDescriptorCleanup {
+        .owned_cleanup_symbol_name = std::move(owned_cleanup_symbol_name),
+    };
 }
 
 }  // namespace
@@ -1183,31 +1223,15 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
                         )) {
                         continue;
                     }
-                    descriptor_cleanup.descriptor_cleanup.descriptor_storage_name = *storage;
-                    auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+                    auto prepared_cleanup = prepare_payload_descriptor_cleanup_emission(
                         descriptor_cleanup.descriptor_cleanup,
-                        session.state.emitted_dynamic_array_cleanup_obligations.size()
+                        *storage,
+                        context,
+                        session
                     );
-                    auto owned_cleanup_symbol_name = std::optional<std::string> {};
-                    if (!obligation.actions.empty()) {
-                        owned_cleanup_symbol_name = authorized_choice_payload_element_owned_cleanup_symbol_name(
-                            obligation,
-                            context.options
-                        );
-                        if (!owned_cleanup_symbol_name.has_value()) {
-                            return false;
-                        }
-                    }
-
-                    auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
-                    auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
-                    if (!dynamic_array_cleanup_sequence_verification_passed(sequence_verification)) {
+                    if (!prepared_cleanup.has_value()) {
                         return false;
                     }
-
-                    session.state.emitted_dynamic_array_cleanup_obligations.push_back(obligation);
-                    session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(sequence_plan);
-                    session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(sequence_verification);
 
                     auto tag_check = "%" + descriptor_owner_name + ".choice_dynamic_array_cleanup" +
                         std::to_string(session.state.next_temporary_index++) + ".is_active";
@@ -1259,7 +1283,7 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
                         descriptor_cleanup.descriptor_cleanup,
                         descriptor_value,
                         cleanup_prefix,
-                        owned_cleanup_symbol_name
+                        prepared_cleanup->owned_cleanup_symbol_name
                     );
                     output << "  br label %" << after_block << "\n";
                     output << after_block << ":\n";
@@ -1459,31 +1483,15 @@ auto emit_maybe_dynamic_array_payload_cleanups(
             if (is_owned_binding_consumed(session.state.ownership_transfers, descriptor_owner_name)) {
                 continue;
             }
-            descriptor_cleanup.descriptor_cleanup.descriptor_storage_name = *storage;
-            auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+            auto prepared_cleanup = prepare_payload_descriptor_cleanup_emission(
                 descriptor_cleanup.descriptor_cleanup,
-                session.state.emitted_dynamic_array_cleanup_obligations.size()
+                *storage,
+                context,
+                session
             );
-            auto owned_cleanup_symbol_name = std::optional<std::string> {};
-            if (!obligation.actions.empty()) {
-                owned_cleanup_symbol_name = authorized_choice_payload_element_owned_cleanup_symbol_name(
-                    obligation,
-                    context.options
-                );
-                if (!owned_cleanup_symbol_name.has_value()) {
-                    return false;
-                }
-            }
-
-            auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
-            auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
-            if (!dynamic_array_cleanup_sequence_verification_passed(sequence_verification)) {
+            if (!prepared_cleanup.has_value()) {
                 return false;
             }
-
-            session.state.emitted_dynamic_array_cleanup_obligations.push_back(obligation);
-            session.state.emitted_dynamic_array_cleanup_sequence_plans.push_back(sequence_plan);
-            session.state.emitted_dynamic_array_cleanup_sequence_verifications.push_back(sequence_verification);
 
             auto block_prefix = descriptor_owner_name + ".maybe_dynamic_array_cleanup" +
                 std::to_string(next_llvm_block_index(session.state.next_block_index));
@@ -1504,7 +1512,7 @@ auto emit_maybe_dynamic_array_payload_cleanups(
                 descriptor_cleanup.descriptor_cleanup,
                 descriptor_value,
                 cleanup_prefix,
-                owned_cleanup_symbol_name
+                prepared_cleanup->owned_cleanup_symbol_name
             );
             output << "  br label %" << after_block << "\n";
             output << after_block << ":\n";
