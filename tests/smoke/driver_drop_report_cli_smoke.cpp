@@ -614,11 +614,6 @@ int main() {
         {
             "record Payload",
             "    public value: Int64",
-            "interface Drop",
-            "    function drop(this: exclusive This) -> Unit",
-            "implements Drop for Payload",
-            "    function drop(this: exclusive This) -> Unit",
-            "        return",
             "function read(input: Payload) -> Int64",
             "    input.value",
         }
@@ -651,13 +646,8 @@ int main() {
         {
             "record Payload",
             "    public value: Int64",
-            "interface Drop",
-            "    function drop(this: exclusive This) -> Unit",
             "implements Transferable for Payload",
             "    function placeholder(this: shared This) -> Unit",
-            "        return",
-            "implements Drop for Payload",
-            "    function drop(this: exclusive This) -> Unit",
             "        return",
             "function launch(value: Int64) -> Int64",
             "    let payload: Payload = Payload(value)",

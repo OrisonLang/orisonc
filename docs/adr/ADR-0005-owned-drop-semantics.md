@@ -275,6 +275,9 @@ inventing semantics outside the spec/tour.
 - Compile-pipeline owned-parameter rejection, owned-payload push reuse, owned-field push reuse, owned indexed
   assignment, and indexed assignment RHS-reuse smoke sources no longer declare `interface Drop` or `implements Drop`;
   they rely on compiler-derived cleanup metadata.
+- Compile-pipeline and driver parsed-cleanup diagnostic/readiness smoke sources no longer declare `interface Drop` or
+  `implements Drop`; the retained report names remain compatibility output while the fixture sources use
+  compiler-derived cleanup metadata.
 - Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
   smoke pins compiler-derived cleanup emission for direct fields, nested fields, indexed fields, and direct indexed
   DynamicArray elements.

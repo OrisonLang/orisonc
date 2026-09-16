@@ -15096,11 +15096,6 @@ auto main() -> int {
         source << "package demo.parseddrop\n";
         source << "record Payload\n";
         source << "    public value: Int64\n";
-        source << "interface Drop\n";
-        source << "    function drop(this: exclusive This) -> Unit\n";
-        source << "implements Drop for Payload\n";
-        source << "    function drop(this: exclusive This) -> Unit\n";
-        source << "        return\n";
         source << "function read(input: Payload) -> Int64\n";
         source << "    input.value\n";
     }
@@ -20637,13 +20632,8 @@ auto main() -> int {
         source << "package demo.parseddropreadiness\n";
         source << "record Payload\n";
         source << "    public value: Int64\n";
-        source << "interface Drop\n";
-        source << "    function drop(this: exclusive This) -> Unit\n";
         source << "implements Transferable for Payload\n";
         source << "    function placeholder(this: shared This) -> Unit\n";
-        source << "        return\n";
-        source << "implements Drop for Payload\n";
-        source << "    function drop(this: exclusive This) -> Unit\n";
         source << "        return\n";
         source << "function launch(value: Int64) -> Int64\n";
         source << "    let payload: Payload = Payload(value)\n";
