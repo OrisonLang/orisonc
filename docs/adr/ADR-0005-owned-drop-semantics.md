@@ -269,6 +269,9 @@ inventing semantics outside the spec/tour.
   pipeline smoke pins compiler-derived cleanup emission for final if/switch branch locals and consumed owners.
 - Local final-control DynamicArray cleanup smoke sources embedded in C++ no longer declare `interface Drop` or
   `implements Drop`; the tests rely on internal semantic cleanup authorization metadata.
+- Compile-pipeline production DynamicArray cleanup smoke sources for same-owner iteration, local cleanup, initialized
+  owned-parameter cleanup, forwarding, forwarding-reuse rejection, and branch joins no longer declare `interface Drop`
+  or `implements Drop`; they rely on compiler-derived cleanup metadata.
 - Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
   smoke pins compiler-derived cleanup emission for direct fields, nested fields, indexed fields, and direct indexed
   DynamicArray elements.
