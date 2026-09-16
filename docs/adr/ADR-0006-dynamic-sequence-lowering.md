@@ -3057,6 +3057,9 @@ representation.
 - Returned aggregate receiver projection discovery now shares the same array/record traversal for selected
   DynamicArray descriptors, Maybe owners, and Choice owners. Each collection mode still keeps its own boundary rule,
   so registration and tag-guard emission remain distinct.
+- Returned aggregate receiver Maybe-owner and Choice-owner projection registration now share one addressable-binding
+  helper after discovery. Selected DynamicArray descriptor cleanup still remains separate to preserve selected-path
+  exclusion and descriptor cleanup-plan setup.
 
 ## Follow-up work
 
@@ -3075,5 +3078,5 @@ representation.
   nested fixed-array `Maybe` payload, record-wrapped `Maybe` payload, Maybe-wrapped fixed-array payload,
   Maybe-wrapped nested fixed-array payload, Maybe-wrapped fixed-array record payload, and Maybe-wrapped nested
   fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
-- Continue migrating returned aggregate sibling registration and cleanup emission toward shared helpers, while
-  preserving distinct selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
+- Continue migrating returned aggregate sibling cleanup emission toward shared helpers, while preserving distinct
+  selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.

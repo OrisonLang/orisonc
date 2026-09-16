@@ -855,6 +855,37 @@ auto emit_descriptor_projection_pointer(
     return pointer;
 }
 
+auto register_returned_aggregate_owner_bindings(
+    std::string_view aggregate_storage,
+    std::vector<DescriptorProjectionPath> const& paths,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    for (auto const& path : paths) {
+        auto pointer = emit_descriptor_projection_pointer(
+            aggregate_storage,
+            path,
+            "%" + path.owner_name,
+            session,
+            output
+        );
+        auto lowered_type = llvm_type_for_source_type_name(path.source_type_name, context.lowering);
+        if (!lowered_type.has_value() || *lowered_type == "void") {
+            return false;
+        }
+        session.state.source_type_names[path.owner_name] = path.source_type_name;
+        session.state.addressable_bindings[path.owner_name] = AddressableBinding {
+            .type = LoweredType {
+                .type = *lowered_type,
+                .signedness = IntegerSignedness::not_integer,
+            },
+            .storage = std::move(pointer),
+        };
+    }
+    return true;
+}
+
 auto lower_returned_aggregate_projection_receiver(
     syntax::ExpressionSyntax const& receiver_expression,
     std::string_view receiver_type_name,
@@ -975,48 +1006,22 @@ auto lower_returned_aggregate_projection_receiver(
         session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     }
 
-    for (auto const& maybe_path : *all_maybe_paths) {
-        auto maybe_pointer = emit_descriptor_projection_pointer(
+    if (!register_returned_aggregate_owner_bindings(
             aggregate_storage,
-            maybe_path,
-            "%" + maybe_path.owner_name,
+            *all_maybe_paths,
+            context,
             session,
-            output
-        );
-        auto maybe_type = llvm_type_for_source_type_name(maybe_path.source_type_name, context.lowering);
-        if (!maybe_type.has_value() || *maybe_type == "void") {
-            return std::nullopt;
-        }
-        session.state.source_type_names[maybe_path.owner_name] = maybe_path.source_type_name;
-        session.state.addressable_bindings[maybe_path.owner_name] = AddressableBinding {
-            .type = LoweredType {
-                .type = *maybe_type,
-                .signedness = IntegerSignedness::not_integer,
-            },
-            .storage = std::move(maybe_pointer),
-        };
+            output)) {
+        return std::nullopt;
     }
 
-    for (auto const& choice_path : *all_choice_paths) {
-        auto choice_pointer = emit_descriptor_projection_pointer(
+    if (!register_returned_aggregate_owner_bindings(
             aggregate_storage,
-            choice_path,
-            "%" + choice_path.owner_name,
+            *all_choice_paths,
+            context,
             session,
-            output
-        );
-        auto choice_type = llvm_type_for_source_type_name(choice_path.source_type_name, context.lowering);
-        if (!choice_type.has_value() || *choice_type == "void") {
-            return std::nullopt;
-        }
-        session.state.source_type_names[choice_path.owner_name] = choice_path.source_type_name;
-        session.state.addressable_bindings[choice_path.owner_name] = AddressableBinding {
-            .type = LoweredType {
-                .type = *choice_type,
-                .signedness = IntegerSignedness::not_integer,
-            },
-            .storage = std::move(choice_pointer),
-        };
+            output)) {
+        return std::nullopt;
     }
 
     return LoweredExpression {
