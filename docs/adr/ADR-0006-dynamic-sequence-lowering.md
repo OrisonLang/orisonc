@@ -3060,6 +3060,8 @@ representation.
 - Returned aggregate receiver Maybe-owner and Choice-owner projection registration now share one addressable-binding
   helper after discovery. Selected DynamicArray descriptor cleanup still remains separate to preserve selected-path
   exclusion and descriptor cleanup-plan setup.
+- Returned aggregate receiver selected DynamicArray descriptor cleanup registration now uses one helper that preserves
+  selected-path exclusion, lowered-local descriptor status, and source-line propagation.
 
 ## Follow-up work
 

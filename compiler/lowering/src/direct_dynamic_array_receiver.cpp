@@ -886,6 +886,44 @@ auto register_returned_aggregate_owner_bindings(
     return true;
 }
 
+auto register_returned_aggregate_descriptor_cleanups(
+    std::string_view aggregate_storage,
+    std::vector<DescriptorProjectionPath> const& descriptor_paths,
+    LoweredSelectedDescriptorProjection const& selected_path,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    for (auto const& descriptor_path : descriptor_paths) {
+        if (selected_path.complete_static_descriptor_path &&
+            same_descriptor_projection_path(descriptor_path.steps, selected_path.static_descriptor_steps)) {
+            continue;
+        }
+        auto sibling_pointer = emit_descriptor_projection_pointer(
+            aggregate_storage,
+            descriptor_path,
+            "%" + descriptor_path.owner_name,
+            session,
+            output
+        );
+        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+            descriptor_path.owner_name,
+            descriptor_path.source_type_name,
+            context.lowering
+        );
+        if (!cleanup_plan.has_value()) {
+            return false;
+        }
+        cleanup_plan->descriptor_storage_name = std::move(sibling_pointer);
+        cleanup_plan->descriptor_storage_status =
+            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        cleanup_plan->source_line = source_line;
+        session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    }
+    return true;
+}
+
 auto lower_returned_aggregate_projection_receiver(
     syntax::ExpressionSyntax const& receiver_expression,
     std::string_view receiver_type_name,
@@ -979,31 +1017,15 @@ auto lower_returned_aggregate_projection_receiver(
     output << "  store " << dynamic_array_descriptor_llvm_type()
            << " zeroinitializer, ptr " << selected_path->pointer << "\n";
 
-    for (auto const& descriptor_path : *all_descriptor_paths) {
-        if (selected_path->complete_static_descriptor_path &&
-            same_descriptor_projection_path(descriptor_path.steps, selected_path->static_descriptor_steps)) {
-            continue;
-        }
-        auto sibling_pointer = emit_descriptor_projection_pointer(
+    if (!register_returned_aggregate_descriptor_cleanups(
             aggregate_storage,
-            descriptor_path,
-            "%" + descriptor_path.owner_name,
+            *all_descriptor_paths,
+            *selected_path,
+            receiver_expression.line,
+            context,
             session,
-            output
-        );
-        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-            descriptor_path.owner_name,
-            descriptor_path.source_type_name,
-            context.lowering
-        );
-        if (!cleanup_plan.has_value()) {
-            return std::nullopt;
-        }
-        cleanup_plan->descriptor_storage_name = std::move(sibling_pointer);
-        cleanup_plan->descriptor_storage_status =
-            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        cleanup_plan->source_line = receiver_expression.line;
-        session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+            output)) {
+        return std::nullopt;
     }
 
     if (!register_returned_aggregate_owner_bindings(
