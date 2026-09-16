@@ -272,6 +272,9 @@ inventing semantics outside the spec/tour.
 - Compile-pipeline production DynamicArray cleanup smoke sources for same-owner iteration, local cleanup, initialized
   owned-parameter cleanup, forwarding, forwarding-reuse rejection, and branch joins no longer declare `interface Drop`
   or `implements Drop`; they rely on compiler-derived cleanup metadata.
+- Compile-pipeline owned-parameter rejection, owned-payload push reuse, owned-field push reuse, owned indexed
+  assignment, and indexed assignment RHS-reuse smoke sources no longer declare `interface Drop` or `implements Drop`;
+  they rely on compiler-derived cleanup metadata.
 - Positive owned scope-cleanup DynamicArray fixtures no longer declare `interface Drop` or `implements Drop`; pipeline
   smoke pins compiler-derived cleanup emission for direct fields, nested fields, indexed fields, and direct indexed
   DynamicArray elements.
