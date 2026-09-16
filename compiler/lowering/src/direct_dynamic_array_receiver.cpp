@@ -886,6 +886,30 @@ auto register_returned_aggregate_owner_bindings(
     return true;
 }
 
+auto register_lowered_local_dynamic_array_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string descriptor_storage_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) -> bool {
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        std::string {owner_name},
+        source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        return false;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(descriptor_storage_name);
+    cleanup_plan->descriptor_storage_status =
+        DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    return true;
+}
+
 auto register_returned_aggregate_descriptor_cleanups(
     std::string_view aggregate_storage,
     std::vector<DescriptorProjectionPath> const& descriptor_paths,
@@ -907,19 +931,16 @@ auto register_returned_aggregate_descriptor_cleanups(
             session,
             output
         );
-        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        if (!register_lowered_local_dynamic_array_cleanup(
             descriptor_path.owner_name,
             descriptor_path.source_type_name,
-            context.lowering
-        );
-        if (!cleanup_plan.has_value()) {
+            std::move(sibling_pointer),
+            source_line,
+            context,
+            session
+        )) {
             return false;
         }
-        cleanup_plan->descriptor_storage_name = std::move(sibling_pointer);
-        cleanup_plan->descriptor_storage_status =
-            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        cleanup_plan->source_line = source_line;
-        session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     }
     return true;
 }
@@ -1196,22 +1217,20 @@ auto lower_direct_dynamic_array_receiver(
     output << "  store " << receiver_type->type << " " << lowered_receiver->value;
     output << ", ptr " << descriptor_storage << "\n";
 
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+    if (!register_lowered_local_dynamic_array_cleanup(
         cleanup_owner_name,
         receiver_type_name,
-        context.lowering
-    );
-    if (!cleanup_plan.has_value()) {
+        std::string {descriptor_storage},
+        receiver_expression.line,
+        context,
+        session
+    )) {
         return direct_receiver_failure(
             failures,
             record_expression_failures,
             "DynamicArray receiver cleanup could not be planned: " + std::string {receiver_type_name}
         );
     }
-    cleanup_plan->descriptor_storage_name = descriptor_storage;
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-    cleanup_plan->source_line = receiver_expression.line;
-    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
 
     auto receiver_argument = LoweredExpression {
         .type = receiver_type->type,

@@ -3080,6 +3080,8 @@ representation.
   nested record-field descriptor extraction.
 - Choice payload cleanup emission now uses a shared helper for descriptor-owner skip decisions, keeping
   runtime-indexed cleanup ownership and consumed-owner filtering together before tag-guarded descriptor cleanup emits.
+- Direct DynamicArray receiver lowering now shares lowered-local cleanup plan registration for returned aggregate
+  sibling descriptors and receiver temporaries, preserving source-line propagation and descriptor-storage status.
 
 ## Follow-up work
 
