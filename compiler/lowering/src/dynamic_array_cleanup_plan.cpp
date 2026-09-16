@@ -347,14 +347,15 @@ struct MaybePayloadDescriptorCleanup {
     std::vector<AggregateExtractionStep> extraction_steps;
 };
 
-auto collect_choice_payload_descriptor_cleanups(
+template <typename DescriptorCleanup>
+auto collect_payload_descriptor_cleanups(
     std::string_view owner_name,
     std::string_view source_type_name,
     std::string_view llvm_type,
     LoweringContext const& context,
     std::vector<AggregateExtractionStep> extraction_steps = {}
-) -> std::optional<std::vector<ChoicePayloadDescriptorCleanup>> {
-    auto cleanups = std::vector<ChoicePayloadDescriptorCleanup> {};
+) -> std::optional<std::vector<DescriptorCleanup>> {
+    auto cleanups = std::vector<DescriptorCleanup> {};
 
     if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
         auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(owner_name, source_type_name, context);
@@ -362,7 +363,7 @@ auto collect_choice_payload_descriptor_cleanups(
             return std::nullopt;
         }
         cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        cleanups.push_back(ChoicePayloadDescriptorCleanup {
+        cleanups.push_back(DescriptorCleanup {
             .descriptor_cleanup = std::move(*cleanup_plan),
             .extraction_steps = std::move(extraction_steps),
         });
@@ -382,7 +383,7 @@ auto collect_choice_payload_descriptor_cleanups(
                 .index = index,
             });
             auto element_owner = std::string {owner_name} + ".element" + std::to_string(index);
-            auto nested = collect_choice_payload_descriptor_cleanups(
+            auto nested = collect_payload_descriptor_cleanups<DescriptorCleanup>(
                 element_owner,
                 *element_source_type,
                 array_type->element_type,
@@ -411,7 +412,7 @@ auto collect_choice_payload_descriptor_cleanups(
                 .index = field.index,
             });
             auto field_owner = std::string {owner_name} + "." + field.name;
-            auto nested = collect_choice_payload_descriptor_cleanups(
+            auto nested = collect_payload_descriptor_cleanups<DescriptorCleanup>(
                 field_owner,
                 field.source_type_name,
                 field.llvm_type,
@@ -432,6 +433,22 @@ auto collect_choice_payload_descriptor_cleanups(
     return cleanups;
 }
 
+auto collect_choice_payload_descriptor_cleanups(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    std::vector<AggregateExtractionStep> extraction_steps = {}
+) -> std::optional<std::vector<ChoicePayloadDescriptorCleanup>> {
+    return collect_payload_descriptor_cleanups<ChoicePayloadDescriptorCleanup>(
+        owner_name,
+        source_type_name,
+        llvm_type,
+        context,
+        std::move(extraction_steps)
+    );
+}
+
 auto collect_maybe_payload_descriptor_cleanups(
     std::string_view owner_name,
     std::string_view source_type_name,
@@ -439,82 +456,13 @@ auto collect_maybe_payload_descriptor_cleanups(
     LoweringContext const& context,
     std::vector<AggregateExtractionStep> extraction_steps = {}
 ) -> std::optional<std::vector<MaybePayloadDescriptorCleanup>> {
-    auto cleanups = std::vector<MaybePayloadDescriptorCleanup> {};
-
-    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
-        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(owner_name, source_type_name, context);
-        if (!cleanup_plan.has_value()) {
-            return std::nullopt;
-        }
-        cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-        cleanups.push_back(MaybePayloadDescriptorCleanup {
-            .descriptor_cleanup = std::move(*cleanup_plan),
-            .extraction_steps = std::move(extraction_steps),
-        });
-        return cleanups;
-    }
-
-    if (auto element_source_type = array_element_source_type_name(source_type_name)) {
-        auto array_type = parse_llvm_array_type(llvm_type);
-        if (!array_type.has_value()) {
-            return std::nullopt;
-        }
-        for (auto index = std::size_t {0}; index < array_type->length; ++index) {
-            auto element_steps = extraction_steps;
-            element_steps.push_back(AggregateExtractionStep {
-                .aggregate_llvm_type = std::string {llvm_type},
-                .extracted_llvm_type = array_type->element_type,
-                .index = index,
-            });
-            auto element_owner = std::string {owner_name} + ".element" + std::to_string(index);
-            auto nested = collect_maybe_payload_descriptor_cleanups(
-                element_owner,
-                *element_source_type,
-                array_type->element_type,
-                context,
-                std::move(element_steps)
-            );
-            if (!nested.has_value()) {
-                return std::nullopt;
-            }
-            cleanups.insert(
-                cleanups.end(),
-                std::make_move_iterator(nested->begin()),
-                std::make_move_iterator(nested->end())
-            );
-        }
-        return cleanups;
-    }
-
-    auto record = context.records.find(std::string {source_type_name});
-    if (record != context.records.end()) {
-        for (auto const& field : record->second.fields) {
-            auto field_steps = extraction_steps;
-            field_steps.push_back(AggregateExtractionStep {
-                .aggregate_llvm_type = std::string {llvm_type},
-                .extracted_llvm_type = field.llvm_type,
-                .index = field.index,
-            });
-            auto field_owner = std::string {owner_name} + "." + field.name;
-            auto nested = collect_maybe_payload_descriptor_cleanups(
-                field_owner,
-                field.source_type_name,
-                field.llvm_type,
-                context,
-                std::move(field_steps)
-            );
-            if (!nested.has_value()) {
-                return std::nullopt;
-            }
-            cleanups.insert(
-                cleanups.end(),
-                std::make_move_iterator(nested->begin()),
-                std::make_move_iterator(nested->end())
-            );
-        }
-    }
-
-    return cleanups;
+    return collect_payload_descriptor_cleanups<MaybePayloadDescriptorCleanup>(
+        owner_name,
+        source_type_name,
+        llvm_type,
+        context,
+        std::move(extraction_steps)
+    );
 }
 
 auto emit_aggregate_extraction_chain(

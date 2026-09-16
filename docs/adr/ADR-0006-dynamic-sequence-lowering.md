@@ -3052,6 +3052,8 @@ representation.
 - Returned aggregate receiver coverage now includes `Maybe<Array<Array<RecordWithDynamicArray, N>, M>>` sibling
   payloads, proving multidimensional finite arrays compose with nested record-field descriptor extraction under a
   Maybe tag guard.
+- Choice and Maybe payload descriptor cleanup discovery now share one internal traversal for DynamicArray leaves,
+  finite arrays, and record fields. Choice and Maybe handling still differ only at the tag-guard emission layer.
 
 ## Follow-up work
 
@@ -3070,3 +3072,5 @@ representation.
   nested fixed-array `Maybe` payload, record-wrapped `Maybe` payload, Maybe-wrapped fixed-array payload,
   Maybe-wrapped nested fixed-array payload, Maybe-wrapped fixed-array record payload, and Maybe-wrapped nested
   fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
+- Continue migrating returned aggregate sibling discovery toward shared traversal helpers, while preserving distinct
+  tag-guard emission rules for choice and Maybe owners.
