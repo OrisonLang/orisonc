@@ -3078,6 +3078,8 @@ representation.
 - Returned aggregate receiver coverage now includes Choice payload nested fixed arrays of records containing
   `DynamicArray<T>` descriptors, proving Choice tag-guarded cleanup composes multidimensional finite traversal with
   nested record-field descriptor extraction.
+- Choice payload cleanup emission now uses a shared helper for descriptor-owner skip decisions, keeping
+  runtime-indexed cleanup ownership and consumed-owner filtering together before tag-guarded descriptor cleanup emits.
 
 ## Follow-up work
 

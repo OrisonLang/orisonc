@@ -523,6 +523,28 @@ auto prepare_payload_descriptor_cleanup_emission(
     };
 }
 
+auto runtime_indexed_cleanup_handles_descriptor_owner(
+    std::string_view descriptor_owner_name,
+    OwnershipTransferState const& ownership_transfers
+) -> bool {
+    return std::ranges::any_of(
+        ownership_transfers.runtime_indexed_cleanup_emission_plans,
+        [&](RuntimeIndexedCleanupEmissionPlan const& plan) {
+            auto const scoped_owner_suffix = "." + plan.owner_name;
+            return descriptor_owner_name == plan.owner_name ||
+                descriptor_owner_name.ends_with(scoped_owner_suffix);
+        }
+    );
+}
+
+auto should_skip_choice_payload_descriptor_cleanup(
+    std::string_view descriptor_owner_name,
+    OwnershipTransferState const& ownership_transfers
+) -> bool {
+    return runtime_indexed_cleanup_handles_descriptor_owner(descriptor_owner_name, ownership_transfers) ||
+        is_owned_binding_consumed(ownership_transfers, descriptor_owner_name);
+}
+
 }  // namespace
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
@@ -1206,20 +1228,9 @@ auto emit_choice_dynamic_array_payload_cleanups_for_owner_filter(
 
                 for (auto& descriptor_cleanup : *descriptor_cleanups) {
                     auto const descriptor_owner_name = descriptor_cleanup.descriptor_cleanup.owner_name;
-                    auto const runtime_indexed_cleanup_owner = std::ranges::any_of(
-                        session.state.ownership_transfers.runtime_indexed_cleanup_emission_plans,
-                        [&](RuntimeIndexedCleanupEmissionPlan const& plan) {
-                            auto const scoped_owner_suffix = "." + plan.owner_name;
-                            return descriptor_owner_name == plan.owner_name ||
-                                descriptor_owner_name.ends_with(scoped_owner_suffix);
-                        }
-                    );
-                    if (runtime_indexed_cleanup_owner) {
-                        continue;
-                    }
-                    if (is_owned_binding_consumed(
-                            session.state.ownership_transfers,
-                            descriptor_owner_name
+                    if (should_skip_choice_payload_descriptor_cleanup(
+                            descriptor_owner_name,
+                            session.state.ownership_transfers
                         )) {
                         continue;
                     }
