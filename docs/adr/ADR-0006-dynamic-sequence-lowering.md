@@ -3065,6 +3065,8 @@ representation.
 - Choice and Maybe payload cleanup emission now share descriptor cleanup preparation for obligation planning,
   owned-element authorization, sequence verification, and emitted cleanup report registration. Their tag-guard branch
   emission remains separate.
+- Returned aggregate receiver coverage now includes Choice payload records containing `DynamicArray<T>` descriptors,
+  proving Choice tag-guarded cleanup can extract nested record-field descriptors before returning the selected field.
 
 ## Follow-up work
 
@@ -3078,8 +3080,9 @@ representation.
   test-only commands.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
-- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, fixed-array
-  choice-sibling, nested fixed-array choice-sibling, direct `Maybe` payload, fixed-array `Maybe` payload, and
+- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, choice record
+  payload, fixed-array choice-sibling, nested fixed-array choice-sibling, direct `Maybe` payload, fixed-array
+  `Maybe` payload, and
   nested fixed-array `Maybe` payload, record-wrapped `Maybe` payload, Maybe-wrapped fixed-array payload,
   Maybe-wrapped nested fixed-array payload, Maybe-wrapped fixed-array record payload, and Maybe-wrapped nested
   fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
