@@ -3082,6 +3082,8 @@ representation.
   runtime-indexed cleanup ownership and consumed-owner filtering together before tag-guarded descriptor cleanup emits.
 - Direct DynamicArray receiver lowering now shares lowered-local cleanup plan registration for returned aggregate
   sibling descriptors and receiver temporaries, preserving source-line propagation and descriptor-storage status.
+- Statement lowering now shares lowered-local DynamicArray cleanup plan construction for source declarations,
+  aggregate-descendant seeding, and assignment-target cleanup while preserving call-site diagnostics.
 
 ## Follow-up work
 

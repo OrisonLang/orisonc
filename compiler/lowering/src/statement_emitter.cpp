@@ -57,6 +57,27 @@ auto lower_prefix_statement(
     std::ostringstream& output
 ) -> bool;
 
+auto plan_lowered_local_dynamic_array_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    std::string descriptor_storage_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context
+) -> std::optional<DynamicArrayDescriptorCleanupPlan> {
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        return std::nullopt;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(descriptor_storage_name);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+    return cleanup_plan;
+}
+
 auto lower_prefix_statement_block(
     std::span<syntax::StatementSyntax const* const> statements,
     std::string_view expected_llvm_type,
@@ -375,18 +396,17 @@ auto lower_dynamic_array_default_construction(
         };
     }
     session.state.source_type_names[statement.name] = std::move(source_type_name);
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+    auto cleanup_plan = plan_lowered_local_dynamic_array_cleanup(
         statement.name,
         session.state.source_type_names[statement.name],
-        context.lowering
+        std::move(storage_name),
+        statement.line,
+        context
     );
     if (!cleanup_plan.has_value()) {
         diagnostics.error(statement.line, "source dynamic array cleanup could not be planned");
         return true;
     }
-    cleanup_plan->descriptor_storage_name = std::move(storage_name);
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-    cleanup_plan->source_line = statement.line;
     session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     return true;
 }
@@ -421,18 +441,17 @@ auto seed_dynamic_array_local_cleanup_plan(
         return true;
     }
 
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+    auto cleanup_plan = plan_lowered_local_dynamic_array_cleanup(
         owner_name,
         source_type->second,
-        context.lowering
+        std::move(*storage),
+        source_line,
+        context
     );
     if (!cleanup_plan.has_value()) {
         diagnostics.error(source_line, "source dynamic array cleanup could not be planned");
         return false;
     }
-    cleanup_plan->descriptor_storage_name = std::move(*storage);
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-    cleanup_plan->source_line = source_line;
     session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     return true;
 }
@@ -503,18 +522,17 @@ auto seed_dynamic_array_cleanup_plan_for_storage(
         return true;
     }
 
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+    auto cleanup_plan = plan_lowered_local_dynamic_array_cleanup(
         owner_name,
         source_type_name,
-        context.lowering
+        std::move(descriptor_storage_name),
+        source_line,
+        context
     );
     if (!cleanup_plan.has_value()) {
         diagnostics.error(source_line, "source nested dynamic array cleanup could not be planned");
         return false;
     }
-    cleanup_plan->descriptor_storage_name = std::move(descriptor_storage_name);
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-    cleanup_plan->source_line = source_line;
     session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     return true;
 }
@@ -1582,18 +1600,17 @@ auto emit_dynamic_array_descriptor_assignment_storage_cleanup(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+    auto cleanup_plan = plan_lowered_local_dynamic_array_cleanup(
         owner_name,
         source_type_name,
-        context.lowering
+        std::string {descriptor_storage_name},
+        source_line,
+        context
     );
     if (!cleanup_plan.has_value()) {
         diagnostics.error(source_line, "source dynamic array cleanup could not be planned");
         return false;
     }
-    cleanup_plan->descriptor_storage_name = std::string {descriptor_storage_name};
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-    cleanup_plan->source_line = source_line;
 
     auto element_owned_cleanup_symbol_name = std::optional<std::string> {};
     if (!is_scalar_or_nonowning_source_type(cleanup_plan->element_source_type_name)) {
