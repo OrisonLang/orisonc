@@ -2836,6 +2836,27 @@ void assert_returned_dynamic_array_aggregate_field_choice_fixed_array_record_pay
     assert_returned_dynamic_array_field_forwarding_calls(output);
 }
 
+void assert_returned_dynamic_array_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "%record.PacketBox = type { { ptr, i64, i64 } }");
+    assert_contains(output, "%record.Bundle = type { { ptr, i64, i64 }, { i32, [2 x [2 x %record.PacketBox]] } }");
+    assert_contains(output, "define %record.Bundle @make_bundle()");
+    assert_contains(output, "%dynamic_array_receiver_aggregate_tmp");
+    assert_main_cleanup_fragments_before_return(
+        output,
+        {
+            ".packet.Primary.boxes.element0.element0.values.choice_dynamic_array_cleanup",
+            ".packet.Primary.boxes.element0.element1.values.choice_dynamic_array_cleanup",
+            ".packet.Primary.boxes.element1.element0.values.choice_dynamic_array_cleanup",
+            ".packet.Primary.boxes.element1.element1.values.choice_dynamic_array_cleanup",
+        }
+    );
+    assert_returned_dynamic_array_field_forwarding_calls(output);
+}
+
 void assert_returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -3547,6 +3568,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_returned_aggregate_field_choice_record_sibling_cleanup_run.or";
     auto returned_dynamic_array_aggregate_field_choice_fixed_array_record_payload_sibling_cleanup_path =
         fixtures / "dynamic_array_returned_aggregate_field_choice_fixed_array_record_payload_sibling_cleanup_run.or";
+    auto returned_dynamic_array_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_path =
+        fixtures / "dynamic_array_returned_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_run.or";
     auto returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_path =
         fixtures / "dynamic_array_returned_aggregate_field_fixed_array_choice_sibling_cleanup_run.or";
     auto returned_dynamic_array_aggregate_field_nested_fixed_array_choice_sibling_cleanup_path =
@@ -5681,6 +5704,20 @@ auto main(int argc, char** argv) -> int {
         executable,
         returned_dynamic_array_aggregate_field_choice_fixed_array_record_payload_sibling_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_choice_fixed_array_record_payload_sibling_cleanup"
+    );
+    assert_returned_dynamic_array_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_emit_llvm_success(
+        executable,
+        returned_dynamic_array_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        returned_dynamic_array_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        returned_dynamic_array_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup_path,
+        smoke_temp_root / "dynamic_array_returned_aggregate_field_choice_nested_fixed_array_record_payload_sibling_cleanup"
     );
     assert_returned_dynamic_array_aggregate_field_fixed_array_choice_sibling_cleanup_emit_llvm_success(
         executable,

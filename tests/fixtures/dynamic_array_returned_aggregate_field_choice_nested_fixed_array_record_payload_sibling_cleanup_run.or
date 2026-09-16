@@ -1,0 +1,34 @@
+package fixtures.dynamicarrayreturnedaggregatefieldchoicenestedfixedarrayrecordpayloadsiblingcleanuprun
+
+record PacketBox
+    public values: DynamicArray<UInt32>
+
+record Bundle
+    public selected: DynamicArray<UInt32>
+    public packet: Packet
+
+choice Packet
+    Primary(boxes: Array<Array<PacketBox, 2>, 2>)
+    Empty
+
+function make_values(seed: UInt32) -> DynamicArray<UInt32>
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(seed)
+    values.push(seed + 1 as UInt32)
+    values
+
+function make_box(seed: UInt32) -> PacketBox
+    PacketBox(make_values(seed))
+
+function make_bundle() -> Bundle
+    Bundle(make_values(7 as UInt32), Primary([[make_box(11 as UInt32), make_box(17 as UInt32)], [make_box(23 as UInt32), make_box(29 as UInt32)]]))
+
+extend DynamicArray<T>
+    function forward(this: exclusive This) -> DynamicArray<T>
+        this
+
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function main() -> UInt32
+    make_bundle().selected.forward().count() == 2 as IntSize ? 0 as UInt32 : 1 as UInt32

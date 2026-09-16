@@ -3070,6 +3070,9 @@ representation.
 - Returned aggregate receiver coverage now includes Choice payload fixed arrays of records containing
   `DynamicArray<T>` descriptors, proving Choice tag-guarded cleanup composes finite array traversal with nested
   record-field descriptor extraction.
+- Returned aggregate receiver coverage now includes Choice payload nested fixed arrays of records containing
+  `DynamicArray<T>` descriptors, proving Choice tag-guarded cleanup composes multidimensional finite traversal with
+  nested record-field descriptor extraction.
 
 ## Follow-up work
 
@@ -3084,8 +3087,8 @@ representation.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, choice record
-  payload, choice fixed-array record payload, fixed-array choice-sibling, nested fixed-array choice-sibling, direct
-  `Maybe` payload, fixed-array `Maybe` payload, and
+  payload, choice fixed-array record payload, choice nested fixed-array record payload, fixed-array choice-sibling,
+  nested fixed-array choice-sibling, direct `Maybe` payload, fixed-array `Maybe` payload, and
   nested fixed-array `Maybe` payload, record-wrapped `Maybe` payload, Maybe-wrapped fixed-array payload,
   Maybe-wrapped nested fixed-array payload, Maybe-wrapped fixed-array record payload, and Maybe-wrapped nested
   fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
