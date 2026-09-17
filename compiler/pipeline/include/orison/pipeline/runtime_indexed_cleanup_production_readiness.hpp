@@ -53,7 +53,9 @@ struct RuntimeIndexedCleanupModuleIrProductionReadinessState {
     bool function_integration_ready = false;
     bool function_splice_conflict_free = false;
     bool ir_shape_ready = true;
+    bool member_cleanup_promotion_integrated = false;
     bool production_ready = false;
+    std::size_t member_cleanup_promotion_count = 0;
     RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind diagnostic_blocker_kind =
         RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
     std::vector<RuntimeIndexedCleanupModuleIrProductionReadinessBlocker> blockers;

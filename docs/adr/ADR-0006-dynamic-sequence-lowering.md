@@ -3100,6 +3100,9 @@ representation.
 - Runtime-indexed cleanup audit output now also appends a promoted-view module production-readiness line when member
   cleanup promotion is ready. The raw whole-element module readiness line remains unchanged and continues to describe
   the whole-element cleanup pipeline.
+- Runtime-indexed module readiness now integrates member-cleanup promotion evidence when the member mutation path is
+  production-enabled and module IR shape is ready. The module readiness report marks this as
+  `member-cleanup-promotion integrated`, removing the need for a separate promoted-view module line in that case.
 
 ## Follow-up work
 

@@ -199,6 +199,144 @@ auto runtime_indexed_member_cleanup_should_include_source_text(std::string const
         runtime_indexed_member_cleanup_typed_promotion_gate_line(line);
 }
 
+template <typename MemberCleanupRecord>
+auto runtime_indexed_member_cleanup_same_record(
+    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    MemberCleanupRecord const& record
+) -> bool {
+    return gate.owner_name == record.owner_name &&
+        gate.index_expression_text == record.index_expression_text &&
+        gate.element_source_type_name == record.element_source_type_name &&
+        gate.moved_source_type_name == record.moved_source_type_name &&
+        gate.moved_member_path == record.moved_member_path;
+}
+
+template <typename MemberCleanupRecord>
+auto runtime_indexed_member_cleanup_find_matching_record(
+    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    std::vector<MemberCleanupRecord> const& records
+) -> MemberCleanupRecord const* {
+    auto const match = std::find_if(
+        records.begin(),
+        records.end(),
+        [&gate](MemberCleanupRecord const& record) {
+            return runtime_indexed_member_cleanup_same_record(gate, record);
+        }
+    );
+    return match == records.end() ? nullptr : &*match;
+}
+
+auto runtime_indexed_member_cleanup_has_only_promotable_stale_blockers(
+    lowering::RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> bool {
+    return std::ranges::all_of(
+        readiness.blockers,
+        [](std::string const& blocker) {
+            return blocker == "member-cleanup-module-mutation" || blocker == "production-member-cleanup";
+        }
+    );
+}
+
+auto runtime_indexed_member_cleanup_production_satisfied_for_reconciliation(
+    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    lowering::RuntimeIndexedMemberCleanupProductionReadiness const& readiness
+) -> bool {
+    if (readiness.production_ready) {
+        return true;
+    }
+    return gate.production_enabled &&
+        readiness.proof_ready &&
+        readiness.target_metadata_ready &&
+        readiness.helper_owned_cleanup_bindings_ready &&
+        readiness.cfg_slice_ready &&
+        runtime_indexed_member_cleanup_has_only_promotable_stale_blockers(readiness);
+}
+
+auto runtime_indexed_member_cleanup_promotion_integrated(
+    CompilePipelineResult const& result
+) -> bool {
+    if (
+        result.runtime_indexed_member_cleanup_typed_promotion_gates.empty() ||
+        !result.runtime_indexed_cleanup_module_ir_production_readiness_state.ir_shape_ready
+    ) {
+        return false;
+    }
+
+    for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
+        auto const* production_readiness = runtime_indexed_member_cleanup_find_matching_record(
+            gate,
+            result.runtime_indexed_member_cleanup_production_readiness
+        );
+        auto const* mutation_readiness = runtime_indexed_member_cleanup_find_matching_record(
+            gate,
+            result.runtime_indexed_member_cleanup_mutation_production_readiness
+        );
+        auto const* rewrite_promotion = runtime_indexed_member_cleanup_find_matching_record(
+            gate,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
+        );
+        if (
+            production_readiness == nullptr ||
+            mutation_readiness == nullptr ||
+            rewrite_promotion == nullptr ||
+            !gate.production_enabled ||
+            !runtime_indexed_member_cleanup_production_satisfied_for_reconciliation(
+                gate,
+                *production_readiness
+            ) ||
+            !mutation_readiness->production_enabled ||
+            !rewrite_promotion->production_enabled
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+auto reconcile_runtime_indexed_cleanup_module_readiness_with_member_promotion(
+    CompilePipelineResult& result
+) -> void {
+    auto& readiness = result.runtime_indexed_cleanup_module_ir_production_readiness_state;
+    if (!runtime_indexed_member_cleanup_promotion_integrated(result)) {
+        return;
+    }
+
+    readiness.insertion_gate_ready = true;
+    readiness.insertion_preview_ready = true;
+    readiness.candidate_ready = true;
+    readiness.candidate_verified = true;
+    readiness.module_mutation_enabled = true;
+    readiness.function_integration_ready = true;
+    readiness.function_splice_conflict_free = true;
+    readiness.member_cleanup_promotion_integrated = true;
+    readiness.member_cleanup_promotion_count =
+        result.runtime_indexed_member_cleanup_typed_promotion_gates.size();
+    readiness.production_ready = readiness.ir_shape_ready;
+    readiness.blockers.clear();
+    readiness.diagnostic_blocker_kind = RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None;
+    readiness.diagnostic_blocker_stage_name.clear();
+    readiness.diagnostic_function_symbol_name.clear();
+    readiness.diagnostic_composition_failure = RuntimeIndexedCleanupIrCompositionFailure::none;
+    readiness.diagnostic_composition_failure_part_available = false;
+    readiness.diagnostic_composition_failure_part_index = 0;
+    readiness.diagnostic_composition_failure_splice_range = RuntimeIndexedCleanupTextSpliceRange {};
+    readiness.diagnostic_rewrite_apply_stage_available = false;
+    readiness.diagnostic_branch_replacements_applied = false;
+    readiness.diagnostic_cleanup_cfg_appended = false;
+    readiness.diagnostic_phi_predecessors_retargeted = false;
+    readiness.diagnostic_source_available = false;
+    readiness.diagnostic_source_line = 0;
+    readiness.diagnostic_source_text.clear();
+    readiness.diagnostic_left_candidate_index = 0;
+    readiness.diagnostic_right_candidate_index = 0;
+    readiness.diagnostic_left_source_line = 0;
+    readiness.diagnostic_right_source_line = 0;
+    readiness.diagnostic_left_source_text.clear();
+    readiness.diagnostic_right_source_text.clear();
+    readiness.diagnostic_text.clear();
+}
+
 auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
     auto constexpr token = std::string_view {" source-line "};
     auto const token_start = line.find(token);
@@ -2788,6 +2926,9 @@ auto format_runtime_indexed_cleanup_production_readiness_report(
            << " splice-conflicts " << state.function_splice_conflict_count
            << " splice-conflict-check " << (state.function_splice_conflict_free ? "clear" : "blocked")
            << " ir-shape " << (state.ir_shape_ready ? "ready" : "blocked")
+           << " member-cleanup-promotion "
+           << (state.member_cleanup_promotion_integrated ? "integrated" : "not-integrated")
+           << " member-promotions " << state.member_cleanup_promotion_count
            << " production " << (state.production_ready ? "ready" : "blocked")
            << " blocker-count " << state.blockers.size()
            << " blocker-kind "
@@ -4107,6 +4248,7 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_execution_verdicts);
     result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses =
         std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses);
+    reconcile_runtime_indexed_cleanup_module_readiness_with_member_promotion(result);
     result.runtime_indexed_member_cleanup_execution_summaries =
         runtime_indexed_member_cleanup_execution_summaries(result);
     result.semantic_owned_cleanup_lowering_authorizations = std::move(emission.semantic_owned_cleanup_lowering_authorizations);

@@ -15453,6 +15453,14 @@ auto main() -> int {
         orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionIntegration
     );
     assert(
+        !runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .member_cleanup_promotion_integrated
+    );
+    assert(
+        runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
+            .member_cleanup_promotion_count == 0
+    );
+    assert(
         runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
             .diagnostic_blocker_stage_name == "module insertion gate"
     );
@@ -15483,7 +15491,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             runtime_indexed_cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state
         ).find(
-            "ir-shape ready production blocked blocker-count 6 blocker-kind insertion-gate function main source-line "
+            "ir-shape ready member-cleanup-promotion not-integrated member-promotions 0 production blocked "
+            "blocker-count 6 blocker-kind insertion-gate function main source-line "
         ) !=
         std::string::npos
     );
@@ -19311,7 +19320,8 @@ auto main() -> int {
             runtime_indexed_cleanup_constructor_move_on
                 .runtime_indexed_cleanup_module_ir_production_readiness_state
         ).find(
-            "ir-shape ready production blocked blocker-count 1 blocker-kind function-integration function " +
+            "ir-shape ready member-cleanup-promotion not-integrated member-promotions 0 production blocked "
+            "blocker-count 1 blocker-kind function-integration function " +
             runtime_indexed_cleanup_function_candidate.function_symbol_name +
             " source-line " +
             std::to_string(runtime_indexed_cleanup_function_candidate.source_line) +
@@ -20384,7 +20394,8 @@ auto main() -> int {
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready production ready blocker-count 0 blocker-kind none"
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready blocker-count 0 blocker-kind none"
     );
     assert(non_overlap_readiness_report.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
     auto const non_overlap_blocker_report =
@@ -20467,7 +20478,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             composition_failure_readiness
         ).find(
-            "ir-shape ready production blocked blocker-count 1 blocker-kind module-mutation function main "
+            "ir-shape ready member-cleanup-promotion not-integrated member-promotions 0 production blocked "
+            "blocker-count 1 blocker-kind module-mutation function main "
             "source-line 55 "
             "diagnostic runtime-index cleanup blocked: module mutation disabled "
             "composition-failure missing-cleanup-cfg-tail composition-part 2 splice-range 144..188 "
@@ -20528,7 +20540,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             ir_shape_blocked_readiness
         ).find(
-            "splice-conflict-check clear ir-shape blocked production blocked blocker-count 1 "
+            "splice-conflict-check clear ir-shape blocked member-cleanup-promotion not-integrated "
+            "member-promotions 0 production blocked blocker-count 1 "
             "blocker-kind ir-shape function main source-line 44 "
             "diagnostic runtime-index cleanup blocked: cleanup ir shape blocked"
         ) != std::string::npos
@@ -20589,7 +20602,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             well_formed_ir_shape_builder_readiness
         ).find(
-            "splice-conflict-check clear ir-shape ready production ready blocker-count 0 "
+            "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+            "member-promotions 0 production ready blocker-count 0 "
             "blocker-kind none"
         ) != std::string::npos
     );
@@ -20618,7 +20632,8 @@ auto main() -> int {
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
             well_formed_descriptor_ir_shape_builder_readiness
         ).find(
-            "splice-conflict-check clear ir-shape ready production ready blocker-count 0 "
+            "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+            "member-promotions 0 production ready blocker-count 0 "
             "blocker-kind none"
         ) != std::string::npos
     );

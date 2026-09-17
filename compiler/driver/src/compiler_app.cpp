@@ -362,6 +362,9 @@ auto runtime_indexed_promoted_member_cleanup_production_readiness_report_lines(
 auto runtime_indexed_promoted_member_cleanup_module_readiness_report_lines(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
+    if (result.runtime_indexed_cleanup_module_ir_production_readiness_state.member_cleanup_promotion_integrated) {
+        return {};
+    }
     auto const promotion = pipeline::runtime_indexed_member_cleanup_promotion_state(result);
     if (promotion.state != "ready") {
         return {};

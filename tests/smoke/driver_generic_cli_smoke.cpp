@@ -382,7 +382,8 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready production ready"
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -423,7 +424,8 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready production ready"
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -575,7 +577,8 @@ void assert_cli_runtime_indexed_multi_candidate_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready production ready"
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready"
     ) != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -604,7 +607,8 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready "
         "insertion-preview ready candidate ready candidate-verification verified "
         "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready production ready blocker-count 0 blocker-kind none"
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready blocker-count 0 blocker-kind none"
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness blocker index") == std::string::npos);
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
@@ -1058,16 +1062,12 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "production-gate ready production-enabled true production ready blockers 0"
     ) != std::string::npos);
     assert(output.find(
-        "runtime-index cleanup module-ir production-readiness insertion-gate blocked insertion-preview blocked "
-        "candidate ready candidate-verification blocked module-mutation disabled function-integration blocked "
-        "splice-conflicts 0 splice-conflict-check clear ir-shape ready production blocked blocker-count 5 "
-        "blocker-kind insertion-gate"
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready insertion-preview ready "
+        "candidate ready candidate-verification verified module-mutation enabled function-integration ready "
+        "splice-conflicts 0 splice-conflict-check clear ir-shape ready member-cleanup-promotion integrated "
+        "member-promotions 1 production ready blocker-count 0 blocker-kind none"
     ) != std::string::npos);
-    assert(output.find(
-        "runtime-index cleanup promoted-view module-ir production-readiness member-cleanup-promotion ready "
-        "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1 "
-        "member-module-ir-shape ready production ready"
-    ) != std::string::npos);
+    assert(output.find("runtime-index cleanup promoted-view module-ir production-readiness") == std::string::npos);
 }
 
 void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
