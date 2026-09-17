@@ -434,9 +434,9 @@ int main() {
         dynamic_array_cleanup_production_readiness_failure,
         {"dynamic array cleanup production readiness blocked"}
     );
-    auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
+    auto owned_cleanup_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        drop_readiness_relations_failure,
+        owned_cleanup_readiness_relations_failure,
         "lowering does not yet support this return expression: unsupported operator: <"
     );
 
@@ -461,10 +461,10 @@ int main() {
         unary_emitted_drops_failure,
         "lowering does not yet support this return expression: unsupported operator: -"
     );
-    auto unary_drop_readiness_relations_failure =
+    auto unary_owned_cleanup_readiness_relations_failure =
         run_drop_readiness_relations(app, unary_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        unary_drop_readiness_relations_failure,
+        unary_owned_cleanup_readiness_relations_failure,
         "lowering does not yet support this return expression: unsupported operator: -"
     );
 
@@ -489,10 +489,10 @@ int main() {
         cast_emitted_drops_failure,
         "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
     );
-    auto cast_drop_readiness_relations_failure =
+    auto cast_owned_cleanup_readiness_relations_failure =
         run_drop_readiness_relations(app, cast_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        cast_drop_readiness_relations_failure,
+        cast_owned_cleanup_readiness_relations_failure,
         "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
     );
 
@@ -522,10 +522,10 @@ int main() {
         "lowering does not yet support this final control-flow statement: "
         "if then arm lowering failed: unsupported operator: <"
     );
-    auto final_if_drop_readiness_relations_failure =
+    auto final_if_owned_cleanup_readiness_relations_failure =
         run_drop_readiness_relations(app, final_if_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        final_if_drop_readiness_relations_failure,
+        final_if_owned_cleanup_readiness_relations_failure,
         "lowering does not yet support this final control-flow statement: "
         "if then arm lowering failed: unsupported operator: <"
     );
@@ -556,10 +556,10 @@ int main() {
         "lowering does not yet support this final control-flow statement: "
         "switch case lowering failed: unsupported operator: <"
     );
-    auto final_switch_drop_readiness_relations_failure =
+    auto final_switch_owned_cleanup_readiness_relations_failure =
         run_drop_readiness_relations(app, final_switch_emit_failure_path);
     assert_failure_with_no_stdout_contains(
-        final_switch_drop_readiness_relations_failure,
+        final_switch_owned_cleanup_readiness_relations_failure,
         "lowering does not yet support this final control-flow statement: "
         "switch case lowering failed: unsupported operator: <"
     );
@@ -690,9 +690,9 @@ int main() {
     );
     auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
     assert_success_with_empty_stdout(drop_cleanup_authorization);
-    auto drop_readiness = run_drop_readiness(app, planned_drop_report_path);
+    auto owned_cleanup_readiness = run_drop_readiness(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
-        drop_readiness,
+        owned_cleanup_readiness,
         {
             "drop readiness snapshot semantic authorizations 1",
             "semantic readiness __orison_owned_cleanup.Payload",
@@ -704,44 +704,44 @@ int main() {
         owned_cleanup_readiness_summary,
         {"drop readiness summary semantic authorized 1 blocked 0"}
     );
-    auto drop_readiness_relations = run_drop_readiness_relations(app, planned_drop_report_path);
+    auto owned_cleanup_readiness_relations = run_drop_readiness_relations(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
-        drop_readiness_relations,
+        owned_cleanup_readiness_relations,
         {
             "drop readiness relation __orison_thread_cleanup.launch.12.0 authorized",
             "semantic blockers 0 emitted declarations 1 missing declarations 0",
         }
     );
-    auto drop_readiness_blockers = run_drop_readiness_blockers(app, planned_drop_report_path);
+    auto owned_cleanup_readiness_blockers = run_drop_readiness_blockers(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
-        drop_readiness_blockers,
+        owned_cleanup_readiness_blockers,
         {
             "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
             "semantic lowering blocked 0 missing declarations 0",
         }
     );
-    auto drop_readiness_source = run_drop_readiness_source_correlations(app, planned_drop_report_path);
+    auto owned_cleanup_readiness_source = run_drop_readiness_source_correlations(app, planned_drop_report_path);
     assert_success_with_stdout_contains(
-        drop_readiness_source,
+        owned_cleanup_readiness_source,
         {
             "drop readiness source correlations actions 0 semantic sites 1",
         }
     );
-    auto multi_drop_readiness_fixture_path =
+    auto multi_owned_cleanup_readiness_fixture_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
-    auto multi_fixture_drop_readiness_relations =
-        run_drop_readiness_relations(app, multi_drop_readiness_fixture_path);
+    auto multi_fixture_owned_cleanup_readiness_relations =
+        run_drop_readiness_relations(app, multi_owned_cleanup_readiness_fixture_path);
     assert_success_with_stdout_contains(
-        multi_fixture_drop_readiness_relations,
+        multi_fixture_owned_cleanup_readiness_relations,
         {
             "drop readiness relation __orison_thread_cleanup.launch.20.0 authorized",
             "semantic blockers 0 emitted declarations 2 missing declarations 0",
         }
     );
-    auto multi_fixture_drop_readiness_blockers =
-        run_drop_readiness_blockers(app, multi_drop_readiness_fixture_path);
+    auto multi_fixture_owned_cleanup_readiness_blockers =
+        run_drop_readiness_blockers(app, multi_owned_cleanup_readiness_fixture_path);
     assert_success_with_stdout_contains(
-        multi_fixture_drop_readiness_blockers,
+        multi_fixture_owned_cleanup_readiness_blockers,
         {
             "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0",
             "semantic lowering blocked 0 missing declarations 0",
@@ -770,9 +770,9 @@ int main() {
     assert_success_with_empty_stdout(empty_emitted_drops);
     auto empty_drop_cleanup_authorization = run_drop_cleanup_authorization(app, clean_emit_path);
     assert_success_with_empty_stdout(empty_drop_cleanup_authorization);
-    auto empty_drop_readiness = run_drop_readiness(app, clean_emit_path);
+    auto empty_owned_cleanup_readiness = run_drop_readiness(app, clean_emit_path);
     assert_success_with_stdout_contains(
-        empty_drop_readiness,
+        empty_owned_cleanup_readiness,
         {"drop readiness snapshot semantic authorizations 0"}
     );
     auto empty_owned_cleanup_readiness_summary = run_owned_cleanup_readiness_summary(app, clean_emit_path);
@@ -780,16 +780,16 @@ int main() {
         empty_owned_cleanup_readiness_summary,
         {"drop readiness summary semantic authorized 0 blocked 0"}
     );
-    auto empty_drop_readiness_relations = run_drop_readiness_relations(app, clean_emit_path);
-    assert_success_with_empty_stdout(empty_drop_readiness_relations);
-    auto empty_drop_readiness_blockers = run_drop_readiness_blockers(app, clean_emit_path);
+    auto empty_owned_cleanup_readiness_relations = run_drop_readiness_relations(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_owned_cleanup_readiness_relations);
+    auto empty_owned_cleanup_readiness_blockers = run_drop_readiness_blockers(app, clean_emit_path);
     assert_success_with_stdout_contains(
-        empty_drop_readiness_blockers,
+        empty_owned_cleanup_readiness_blockers,
         {"drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0"}
     );
-    auto empty_drop_readiness_source = run_drop_readiness_source_correlations(app, clean_emit_path);
+    auto empty_owned_cleanup_readiness_source = run_drop_readiness_source_correlations(app, clean_emit_path);
     assert_success_with_stdout_contains(
-        empty_drop_readiness_source,
+        empty_owned_cleanup_readiness_source,
         {"drop readiness source correlations actions 0 semantic sites 0"}
     );
     auto empty_dynamic_array_descriptor_cleanup_plan =
@@ -1470,19 +1470,19 @@ int main() {
         }
     );
 
-    auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
+    auto multi_owned_cleanup_planned_report = run_planned_drops(app, multi_owned_cleanup_readiness_fixture_path);
     assert_success_with_stdout_contains(
-        multi_planned_drop_report,
+        multi_owned_cleanup_planned_report,
         {"planned drop __orison_owned_cleanup.Payload", "planned drop __orison_owned_cleanup.OtherPayload"}
     );
-    auto multi_owned_cleanup_actions = run_owned_cleanup_actions(app, multi_drop_readiness_fixture_path);
+    auto multi_owned_cleanup_actions = run_owned_cleanup_actions(app, multi_owned_cleanup_readiness_fixture_path);
     assert_success_with_stdout_contains(
         multi_owned_cleanup_actions,
         {"capture payload: Payload", "capture other: OtherPayload"}
     );
-    auto multi_drop_cleanup_authorization =
-        run_drop_cleanup_authorization(app, multi_drop_readiness_fixture_path);
-    assert_success_with_empty_stdout(multi_drop_cleanup_authorization);
+    auto multi_owned_cleanup_authorization =
+        run_drop_cleanup_authorization(app, multi_owned_cleanup_readiness_fixture_path);
+    assert_success_with_empty_stdout(multi_owned_cleanup_authorization);
 
     auto deduped_planned_drop_report_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_deduped.or";

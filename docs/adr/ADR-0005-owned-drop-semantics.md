@@ -286,6 +286,8 @@ inventing semantics outside the spec/tour.
   remains stable compatibility output.
 - Compile-pipeline single and multi readiness fixture local result names now use owned-cleanup wording; fixture
   filenames remain unchanged compatibility inputs.
+- Driver readiness report smoke local result/path names now use owned-cleanup wording where they are not CLI helper
+  names, fixture filenames, or rendered output contracts.
 - Current-facing gap and name-hygiene documentation now uses owned-cleanup wording for compiler-owned symbols and
   cleanup obligations. Historic audit records, CLI flags, test target names, and report text may retain drop wording as
   compatibility output.
