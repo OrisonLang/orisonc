@@ -3094,6 +3094,9 @@ representation.
 - Runtime-indexed member cleanup readiness reports now render a promoted production-readiness view when typed
   promotion, mutation readiness, rewrite promotion, and module IR shape are all ready, so the member-specific report
   remains complete instead of suppressing the original stale production record.
+- Runtime-indexed cleanup audit output now appends promoted-view member production-readiness lines beside raw
+  report-only records. This preserves raw audit evidence while making the effective promoted readiness visible in the
+  CLI audit stream.
 
 ## Follow-up work
 

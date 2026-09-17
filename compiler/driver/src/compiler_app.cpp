@@ -340,6 +340,25 @@ auto runtime_indexed_constructor_move_production_readiness_report(
     return report.str();
 }
 
+auto runtime_indexed_promoted_member_cleanup_production_readiness_report_lines(
+    pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto constexpr raw_prefix = std::string_view {"runtime-index member cleanup production-readiness"};
+    auto constexpr promoted_prefix = std::string_view {
+        "runtime-index member cleanup promoted-view production-readiness"
+    };
+    for (auto const& line : pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result)) {
+        if (!line.starts_with(raw_prefix)) {
+            continue;
+        }
+        auto promoted_line = std::string {promoted_prefix};
+        promoted_line += line.substr(raw_prefix.size());
+        lines.push_back(std::move(promoted_line));
+    }
+    return lines;
+}
+
 auto runtime_indexed_cleanup_function_module_verification_report(
     pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteCandidateVerificationState const& state
 ) -> std::string {
@@ -784,6 +803,9 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
     if (lines.empty()) {
         lines.push_back("runtime-index cleanup audit: no runtime-index cleanup metadata");
     } else {
+        auto promoted_member_readiness_lines =
+            runtime_indexed_promoted_member_cleanup_production_readiness_report_lines(result);
+        lines.insert(lines.end(), promoted_member_readiness_lines.begin(), promoted_member_readiness_lines.end());
         lines.push_back(runtime_indexed_cleanup_function_module_verification_report(
             result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
         ));

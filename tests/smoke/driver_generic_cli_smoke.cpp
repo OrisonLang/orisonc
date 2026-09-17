@@ -1036,6 +1036,29 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
     assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_readiness(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index member cleanup production-readiness owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item) proof ready target-metadata ready "
+        "helper-drop-bindings ready cfg-slice ready module-mutation blocked production-member-cleanup blocked "
+        "production-gate blocked production-enabled false production blocked blockers 2 "
+        "blocker member-cleanup-module-mutation blocker production-member-cleanup"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup promoted-view production-readiness owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item) proof ready target-metadata ready "
+        "helper-drop-bindings ready cfg-slice ready module-mutation ready production-member-cleanup ready "
+        "production-gate ready production-enabled true production ready blockers 0"
+    ) != std::string::npos);
+}
+
 void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -7101,6 +7124,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_choice_payload_nested_computed_member_transfer.or"
     );
     assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
+        executable,
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
+    );
+    assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_readiness(
         executable,
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or"
     );
