@@ -4,6 +4,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 #include "orison/semantics/drop_model.hpp"
@@ -199,28 +200,28 @@ auto runtime_indexed_member_cleanup_should_include_source_text(std::string const
         runtime_indexed_member_cleanup_typed_promotion_gate_line(line);
 }
 
-template <typename MemberCleanupRecord>
+template <typename LeftMemberCleanupRecord, typename RightMemberCleanupRecord>
 auto runtime_indexed_member_cleanup_same_record(
-    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
-    MemberCleanupRecord const& record
+    LeftMemberCleanupRecord const& left,
+    RightMemberCleanupRecord const& right
 ) -> bool {
-    return gate.owner_name == record.owner_name &&
-        gate.index_expression_text == record.index_expression_text &&
-        gate.element_source_type_name == record.element_source_type_name &&
-        gate.moved_source_type_name == record.moved_source_type_name &&
-        gate.moved_member_path == record.moved_member_path;
+    return left.owner_name == right.owner_name &&
+        left.index_expression_text == right.index_expression_text &&
+        left.element_source_type_name == right.element_source_type_name &&
+        left.moved_source_type_name == right.moved_source_type_name &&
+        left.moved_member_path == right.moved_member_path;
 }
 
-template <typename MemberCleanupRecord>
+template <typename MemberCleanupKeyRecord, typename MemberCleanupRecord>
 auto runtime_indexed_member_cleanup_find_matching_record(
-    lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate,
+    MemberCleanupKeyRecord const& key,
     std::vector<MemberCleanupRecord> const& records
 ) -> MemberCleanupRecord const* {
     auto const match = std::find_if(
         records.begin(),
         records.end(),
-        [&gate](MemberCleanupRecord const& record) {
-            return runtime_indexed_member_cleanup_same_record(gate, record);
+        [&key](MemberCleanupRecord const& record) {
+            return runtime_indexed_member_cleanup_same_record(key, record);
         }
     );
     return match == records.end() ? nullptr : &*match;
@@ -235,6 +236,58 @@ auto runtime_indexed_member_cleanup_has_only_promotable_stale_blockers(
             return blocker == "member-cleanup-module-mutation" || blocker == "production-member-cleanup";
         }
     );
+}
+
+auto enrich_runtime_indexed_member_cleanup_source_text_audit_line(
+    std::string line,
+    std::string const& source_text
+) -> std::string;
+
+auto runtime_indexed_member_cleanup_path_text(std::vector<std::string> const& path) -> std::string {
+    if (path.empty()) {
+        return "none";
+    }
+    auto text = std::ostringstream {};
+    for (auto index = std::size_t {0}; index < path.size(); ++index) {
+        if (index != 0) {
+            text << '.';
+        }
+        text << path[index];
+    }
+    return text.str();
+}
+
+template <typename MemberCleanupRecord>
+auto runtime_indexed_member_cleanup_site_fragment(MemberCleanupRecord const& record) -> std::string {
+    auto text = std::ostringstream {};
+    text << "owner " << record.owner_name
+         << " index " << record.index_expression_text
+         << " element " << record.element_source_type_name
+         << " moved " << record.moved_source_type_name
+         << " member-path " << runtime_indexed_member_cleanup_path_text(record.moved_member_path);
+    return text.str();
+}
+
+template <typename MemberCleanupRecord>
+auto replace_runtime_indexed_member_cleanup_audit_line(
+    std::vector<std::string>& audit_lines,
+    std::string_view report_prefix,
+    MemberCleanupRecord const& record,
+    std::string replacement,
+    std::string const& source_text
+) -> void {
+    auto const site_fragment = runtime_indexed_member_cleanup_site_fragment(record);
+    auto const found = std::ranges::find_if(
+        audit_lines,
+        [&](std::string const& candidate) {
+            return candidate.starts_with(report_prefix) &&
+                candidate.find(site_fragment) != std::string::npos;
+        }
+    );
+    if (found == audit_lines.end()) {
+        return;
+    }
+    *found = enrich_runtime_indexed_member_cleanup_source_text_audit_line(std::move(replacement), source_text);
 }
 
 auto runtime_indexed_member_cleanup_production_satisfied_for_reconciliation(
@@ -335,6 +388,55 @@ auto reconcile_runtime_indexed_cleanup_module_readiness_with_member_promotion(
     readiness.diagnostic_left_source_text.clear();
     readiness.diagnostic_right_source_text.clear();
     readiness.diagnostic_text.clear();
+}
+
+auto reconcile_runtime_indexed_member_cleanup_production_readiness(
+    CompilePipelineResult& result,
+    std::string const& source_text
+) -> void {
+    if (!result.runtime_indexed_cleanup_module_ir_production_readiness_state.member_cleanup_promotion_integrated) {
+        return;
+    }
+
+    for (auto& readiness : result.runtime_indexed_member_cleanup_production_readiness) {
+        auto const* gate = runtime_indexed_member_cleanup_find_matching_record(
+            readiness,
+            result.runtime_indexed_member_cleanup_typed_promotion_gates
+        );
+        auto const* mutation_readiness = runtime_indexed_member_cleanup_find_matching_record(
+            readiness,
+            result.runtime_indexed_member_cleanup_mutation_production_readiness
+        );
+        auto const* rewrite_promotion = runtime_indexed_member_cleanup_find_matching_record(
+            readiness,
+            result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses
+        );
+        if (
+            gate == nullptr ||
+            mutation_readiness == nullptr ||
+            rewrite_promotion == nullptr ||
+            !runtime_indexed_member_cleanup_production_satisfied_for_reconciliation(*gate, readiness) ||
+            !mutation_readiness->production_enabled ||
+            !rewrite_promotion->production_enabled
+        ) {
+            continue;
+        }
+
+        readiness.module_mutation_ready = true;
+        readiness.production_member_cleanup_ready = true;
+        readiness.production_gate_ready = true;
+        readiness.production_enabled = true;
+        readiness.production_ready = true;
+        std::erase(readiness.blockers, "member-cleanup-module-mutation");
+        std::erase(readiness.blockers, "production-member-cleanup");
+        replace_runtime_indexed_member_cleanup_audit_line(
+            result.runtime_indexed_cleanup_audit_lines,
+            "runtime-index member cleanup production-readiness",
+            readiness,
+            lowering::runtime_indexed_member_cleanup_production_readiness_report(readiness),
+            source_text
+        );
+    }
 }
 
 auto source_line_token_value(std::string const& line) -> std::optional<std::pair<std::size_t, std::size_t>> {
@@ -4249,6 +4351,10 @@ void populate_lowering_emission_reports(
     result.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses =
         std::move(emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses);
     reconcile_runtime_indexed_cleanup_module_readiness_with_member_promotion(result);
+    reconcile_runtime_indexed_member_cleanup_production_readiness(
+        result,
+        result.source_file ? result.source_file->content() : std::string {}
+    );
     result.runtime_indexed_member_cleanup_execution_summaries =
         runtime_indexed_member_cleanup_execution_summaries(result);
     result.semantic_owned_cleanup_lowering_authorizations = std::move(emission.semantic_owned_cleanup_lowering_authorizations);

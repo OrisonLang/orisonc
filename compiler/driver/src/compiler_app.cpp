@@ -343,6 +343,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
 auto runtime_indexed_promoted_member_cleanup_production_readiness_report_lines(
     pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
+    if (result.runtime_indexed_cleanup_module_ir_production_readiness_state.member_cleanup_promotion_integrated) {
+        return {};
+    }
     auto lines = std::vector<std::string> {};
     auto constexpr raw_prefix = std::string_view {"runtime-index member cleanup production-readiness"};
     auto constexpr promoted_prefix = std::string_view {

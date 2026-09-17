@@ -3103,6 +3103,9 @@ representation.
 - Runtime-indexed module readiness now integrates member-cleanup promotion evidence when the member mutation path is
   production-enabled and module IR shape is ready. The module readiness report marks this as
   `member-cleanup-promotion integrated`, removing the need for a separate promoted-view module line in that case.
+- Runtime-indexed member cleanup production-readiness now converges after module readiness integration. Proven member
+  cleanup records remove stale module-mutation blockers and render as production-ready in the final audit stream,
+  removing the need for a promoted-view member production line in that case.
 
 ## Follow-up work
 
