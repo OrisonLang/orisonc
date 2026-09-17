@@ -292,6 +292,8 @@ inventing semantics outside the spec/tour.
   compatibility include filename and rendered output remain unchanged.
 - Source-correlation readiness reporting now has an owned-cleanup-named forwarding header used by current internal
   includes; the previous header remains as a compatibility include path.
+- A dedicated compatibility smoke test now includes the previous source-correlation readiness header directly and calls
+  the previous formatter name to keep that compatibility surface intentional.
 - Current-facing gap and name-hygiene documentation now uses owned-cleanup wording for compiler-owned symbols and
   cleanup obligations. Historic audit records, CLI flags, test target names, and report text may retain drop wording as
   compatibility output.
