@@ -827,7 +827,9 @@ auto drop_readiness_source_correlation_report(
     if (result.has_errors()) {
         return {};
     }
-    return orison::pipeline::format_drop_readiness_source_correlation_report(result.owned_cleanup_readiness_snapshot);
+    return orison::pipeline::format_owned_cleanup_readiness_source_correlation_report(
+        result.owned_cleanup_readiness_snapshot
+    );
 }
 
 void assert_computed_cleanup_proof_model_reusable_without_reports() {

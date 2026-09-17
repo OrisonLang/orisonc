@@ -280,6 +280,8 @@ inventing semantics outside the spec/tour.
   compiler-derived cleanup metadata.
 - Parsed-cleanup smoke fixture local identifiers, temp filenames, and package names now use owned-cleanup wording; the
   retained report helper names and rendered output remain compatibility surfaces.
+- The source-correlation readiness formatter now has an owned-cleanup-named API while the previous drop-readiness
+  formatter name remains as a compatibility delegate.
 - Current-facing gap and name-hygiene documentation now uses owned-cleanup wording for compiler-owned symbols and
   cleanup obligations. Historic audit records, CLI flags, test target names, and report text may retain drop wording as
   compatibility output.

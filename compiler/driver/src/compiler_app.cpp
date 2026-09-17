@@ -102,7 +102,7 @@ auto owned_cleanup_readiness_blocker_state_report(
 auto owned_cleanup_readiness_source_correlation_state_report(
     lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
-    return pipeline::format_drop_readiness_source_correlation_report(snapshot);
+    return pipeline::format_owned_cleanup_readiness_source_correlation_report(snapshot);
 }
 
 auto semantic_dynamic_array_descriptor_summary_state_report(

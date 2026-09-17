@@ -37,9 +37,10 @@ auto payload_authorization(
 }  // namespace
 
 auto main() -> int {
-    auto empty_report = orison::pipeline::format_drop_readiness_source_correlation_report({});
+    auto empty_report = orison::pipeline::format_owned_cleanup_readiness_source_correlation_report({});
     assert(empty_report.size() == 1);
     assert(empty_report.front() == "drop readiness source correlations actions 0 semantic sites 0");
+    assert(orison::pipeline::format_drop_readiness_source_correlation_report({}) == empty_report);
 
     auto action = payload_action();
     auto unresolved_snapshot = orison::lowering::OwnedCleanupReadinessSnapshot {
@@ -56,7 +57,7 @@ auto main() -> int {
         },
     };
     auto unresolved_report =
-        orison::pipeline::format_drop_readiness_source_correlation_report(unresolved_snapshot);
+        orison::pipeline::format_owned_cleanup_readiness_source_correlation_report(unresolved_snapshot);
     assert(unresolved_report.size() == 2);
     assert(unresolved_report[0] == "drop readiness source correlations actions 1 semantic sites 1");
     assert(
@@ -71,7 +72,7 @@ auto main() -> int {
     resolved_snapshot.cleanup_authorizations.front().authorization.semantic_unresolved_blockers.clear();
     resolved_snapshot.cleanup_authorizations.front().authorization.semantic_owned_cleanup_lowering_blockers = {action};
     auto resolved_report =
-        orison::pipeline::format_drop_readiness_source_correlation_report(resolved_snapshot);
+        orison::pipeline::format_owned_cleanup_readiness_source_correlation_report(resolved_snapshot);
     assert(resolved_report.size() == 2);
     assert(
         resolved_report[1] ==
@@ -91,7 +92,7 @@ auto main() -> int {
         },
     };
     auto fallback_report =
-        orison::pipeline::format_drop_readiness_source_correlation_report(fallback_snapshot);
+        orison::pipeline::format_owned_cleanup_readiness_source_correlation_report(fallback_snapshot);
     assert(fallback_report.size() == 2);
     assert(
         fallback_report[1] ==
@@ -104,7 +105,7 @@ auto main() -> int {
     duplicate_snapshot.cleanup_authorizations.front().authorization.semantic_lowering_blockers.push_back(action);
     duplicate_snapshot.cleanup_authorizations.front().authorization.missing_declarations.push_back(action);
     auto duplicate_report =
-        orison::pipeline::format_drop_readiness_source_correlation_report(duplicate_snapshot);
+        orison::pipeline::format_owned_cleanup_readiness_source_correlation_report(duplicate_snapshot);
     assert(duplicate_report.size() == 2);
     assert(duplicate_report[0] == "drop readiness source correlations actions 1 semantic sites 1");
 

@@ -11,4 +11,8 @@ auto format_drop_readiness_source_correlation_report(
     lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string>;
 
+auto format_owned_cleanup_readiness_source_correlation_report(
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
+) -> std::vector<std::string>;
+
 }  // namespace orison::pipeline

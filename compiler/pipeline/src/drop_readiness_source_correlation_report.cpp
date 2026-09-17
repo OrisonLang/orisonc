@@ -6,7 +6,7 @@
 namespace orison::pipeline {
 namespace {
 
-auto same_planned_drop_action(
+auto same_owned_cleanup_action(
     lowering::OwnedCleanupAction const& left,
     lowering::OwnedCleanupAction const& right
 ) -> bool {
@@ -25,7 +25,7 @@ void append_unique_action(
         actions.begin(),
         actions.end(),
         [&action](lowering::OwnedCleanupAction const& candidate) {
-            return same_planned_drop_action(candidate, action);
+            return same_owned_cleanup_action(candidate, action);
         }
     );
     if (existing == actions.end()) {
@@ -79,6 +79,12 @@ auto has_emitted_declaration(
 }  // namespace
 
 auto format_drop_readiness_source_correlation_report(
+    lowering::OwnedCleanupReadinessSnapshot const& snapshot
+) -> std::vector<std::string> {
+    return format_owned_cleanup_readiness_source_correlation_report(snapshot);
+}
+
+auto format_owned_cleanup_readiness_source_correlation_report(
     lowering::OwnedCleanupReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
