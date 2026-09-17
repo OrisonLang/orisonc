@@ -803,7 +803,7 @@ auto owned_cleanup_readiness_snapshot_report(
     return orison::lowering::format_owned_cleanup_readiness_snapshot_report(result.owned_cleanup_readiness_snapshot);
 }
 
-auto drop_readiness_relation_report(
+auto owned_cleanup_readiness_relation_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     if (result.has_errors()) {
@@ -812,7 +812,7 @@ auto drop_readiness_relation_report(
     return orison::lowering::format_owned_cleanup_readiness_relation_report(result.owned_cleanup_readiness_snapshot);
 }
 
-auto drop_readiness_blocker_report(
+auto owned_cleanup_readiness_blocker_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     if (result.has_errors()) {
@@ -1661,16 +1661,16 @@ auto main() -> int {
     assert(
         ir_owned_cleanup_readiness_summary_report.front().find("semantic authorized 0 blocked 0") != std::string::npos
     );
-    assert(drop_readiness_relation_report(ir).empty());
+    assert(owned_cleanup_readiness_relation_report(ir).empty());
     assert(ir.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
     assert(ir.owned_cleanup_readiness_blocker_summary.semantic_lowering_blockers.empty());
     assert(ir.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
     assert(ir.owned_cleanup_readiness_blocker_summary.semantic_owned_cleanup_lowering_blockers.empty());
     assert(ir.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
-    auto ir_drop_readiness_blocker_report = drop_readiness_blocker_report(ir);
-    assert(ir_drop_readiness_blocker_report.size() == 1);
+    auto ir_owned_cleanup_readiness_blocker_report = owned_cleanup_readiness_blocker_report(ir);
+    assert(ir_owned_cleanup_readiness_blocker_report.size() == 1);
     assert(
-        ir_drop_readiness_blocker_report.front() ==
+        ir_owned_cleanup_readiness_blocker_report.front() ==
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "semantic lowering blocked 0 missing declarations 0"
     );
@@ -1740,15 +1740,16 @@ auto main() -> int {
         owned_cleanup_readiness_summary_report_lines.front().find("semantic authorized 1 blocked 0") !=
         std::string::npos
     );
-    auto drop_readiness_relation_report_lines = drop_readiness_relation_report(drop_readiness);
-    assert(drop_readiness_relation_report_lines.size() == 1);
+    auto owned_cleanup_readiness_relation_report_lines =
+        owned_cleanup_readiness_relation_report(drop_readiness);
+    assert(owned_cleanup_readiness_relation_report_lines.size() == 1);
     assert(
-        drop_readiness_relation_report_lines[0].find(
+        owned_cleanup_readiness_relation_report_lines[0].find(
             "__orison_thread_cleanup.launch.12.0 authorized"
         ) != std::string::npos
     );
     assert(
-        drop_readiness_relation_report_lines[0].find("emitted declarations 1") !=
+        owned_cleanup_readiness_relation_report_lines[0].find("emitted declarations 1") !=
         std::string::npos
     );
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
@@ -1756,10 +1757,11 @@ auto main() -> int {
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_owned_cleanup_lowering_blockers.empty());
     assert(drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
-    auto drop_readiness_blocker_report_lines = drop_readiness_blocker_report(drop_readiness);
-    assert(drop_readiness_blocker_report_lines.size() == 1);
+    auto owned_cleanup_readiness_blocker_report_lines =
+        owned_cleanup_readiness_blocker_report(drop_readiness);
+    assert(owned_cleanup_readiness_blocker_report_lines.size() == 1);
     assert(
-        drop_readiness_blocker_report_lines[0] ==
+        owned_cleanup_readiness_blocker_report_lines[0] ==
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "semantic lowering blocked 0 missing declarations 0"
     );
@@ -1841,7 +1843,7 @@ auto main() -> int {
     );
     assert(dynamic_array_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.size() == 1);
     auto dynamic_array_owned_cleanup_relation_report =
-        drop_readiness_relation_report(dynamic_array_owned_cleanup_readiness);
+        owned_cleanup_readiness_relation_report(dynamic_array_owned_cleanup_readiness);
     assert(dynamic_array_owned_cleanup_relation_report.size() == 3);
     assert_line_contains(
         dynamic_array_owned_cleanup_relation_report,
@@ -14819,7 +14821,7 @@ auto main() -> int {
         "__orison_dynamic_array_cleanup.0 authorized"
     );
     auto dynamic_array_authorized_readiness_relation_report =
-        drop_readiness_relation_report(dynamic_array_authorized_readiness);
+        owned_cleanup_readiness_relation_report(dynamic_array_authorized_readiness);
     assert(dynamic_array_authorized_readiness_relation_report.size() == 1);
     assert_line_contains(
         dynamic_array_authorized_readiness_relation_report,
@@ -14900,10 +14902,11 @@ auto main() -> int {
         multi_owned_cleanup_readiness_summary_report.front().find("semantic authorized 2 blocked 0") !=
         std::string::npos
     );
-    auto multi_drop_readiness_relation_report = drop_readiness_relation_report(multi_drop_readiness);
-    assert(multi_drop_readiness_relation_report.size() == 1);
+    auto multi_owned_cleanup_readiness_relation_report =
+        owned_cleanup_readiness_relation_report(multi_drop_readiness);
+    assert(multi_owned_cleanup_readiness_relation_report.size() == 1);
     assert(
-        multi_drop_readiness_relation_report[0].find(
+        multi_owned_cleanup_readiness_relation_report[0].find(
             "__orison_thread_cleanup.launch.20.0 authorized"
         ) != std::string::npos
     );
@@ -14912,10 +14915,11 @@ auto main() -> int {
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_unresolved_blockers.empty());
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.semantic_owned_cleanup_lowering_blockers.empty());
     assert(multi_drop_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
-    auto multi_drop_readiness_blocker_report = drop_readiness_blocker_report(multi_drop_readiness);
-    assert(multi_drop_readiness_blocker_report.size() == 1);
+    auto multi_owned_cleanup_readiness_blocker_report =
+        owned_cleanup_readiness_blocker_report(multi_drop_readiness);
+    assert(multi_owned_cleanup_readiness_blocker_report.size() == 1);
     assert(
-        multi_drop_readiness_blocker_report[0] ==
+        multi_owned_cleanup_readiness_blocker_report[0] ==
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "semantic lowering blocked 0 missing declarations 0"
     );
@@ -14937,8 +14941,8 @@ auto main() -> int {
     );
     assert(owned_cleanup_readiness_snapshot_report(failed_lowering).empty());
     assert(owned_cleanup_readiness_summary_report(failed_lowering).empty());
-    assert(drop_readiness_relation_report(failed_lowering).empty());
-    assert(drop_readiness_blocker_report(failed_lowering).empty());
+    assert(owned_cleanup_readiness_relation_report(failed_lowering).empty());
+    assert(owned_cleanup_readiness_blocker_report(failed_lowering).empty());
 
     auto failed_unary_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_unary_failure.or";
@@ -14957,8 +14961,8 @@ auto main() -> int {
     );
     assert(owned_cleanup_readiness_snapshot_report(failed_unary_lowering).empty());
     assert(owned_cleanup_readiness_summary_report(failed_unary_lowering).empty());
-    assert(drop_readiness_relation_report(failed_unary_lowering).empty());
-    assert(drop_readiness_blocker_report(failed_unary_lowering).empty());
+    assert(owned_cleanup_readiness_relation_report(failed_unary_lowering).empty());
+    assert(owned_cleanup_readiness_blocker_report(failed_unary_lowering).empty());
 
     auto failed_cast_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_cast_failure.or";
@@ -14977,8 +14981,8 @@ auto main() -> int {
     );
     assert(owned_cleanup_readiness_snapshot_report(failed_cast_lowering).empty());
     assert(owned_cleanup_readiness_summary_report(failed_cast_lowering).empty());
-    assert(drop_readiness_relation_report(failed_cast_lowering).empty());
-    assert(drop_readiness_blocker_report(failed_cast_lowering).empty());
+    assert(owned_cleanup_readiness_relation_report(failed_cast_lowering).empty());
+    assert(owned_cleanup_readiness_blocker_report(failed_cast_lowering).empty());
 
     auto failed_final_if_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_final_if_failure.or";
@@ -15001,8 +15005,8 @@ auto main() -> int {
     );
     assert(owned_cleanup_readiness_snapshot_report(failed_final_if_lowering).empty());
     assert(owned_cleanup_readiness_summary_report(failed_final_if_lowering).empty());
-    assert(drop_readiness_relation_report(failed_final_if_lowering).empty());
-    assert(drop_readiness_blocker_report(failed_final_if_lowering).empty());
+    assert(owned_cleanup_readiness_relation_report(failed_final_if_lowering).empty());
+    assert(owned_cleanup_readiness_blocker_report(failed_final_if_lowering).empty());
 
     auto failed_final_switch_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_final_switch_failure.or";
@@ -15024,8 +15028,8 @@ auto main() -> int {
     );
     assert(owned_cleanup_readiness_snapshot_report(failed_final_switch_lowering).empty());
     assert(owned_cleanup_readiness_summary_report(failed_final_switch_lowering).empty());
-    assert(drop_readiness_relation_report(failed_final_switch_lowering).empty());
-    assert(drop_readiness_blocker_report(failed_final_switch_lowering).empty());
+    assert(owned_cleanup_readiness_relation_report(failed_final_switch_lowering).empty());
+    assert(owned_cleanup_readiness_blocker_report(failed_final_switch_lowering).empty());
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());
@@ -20670,7 +20674,7 @@ auto main() -> int {
     );
     assert(parsed_owned_cleanup_readiness.owned_cleanup_readiness_blocker_summary.missing_declarations.empty());
     auto parsed_owned_cleanup_readiness_blocker_report =
-        drop_readiness_blocker_report(parsed_owned_cleanup_readiness);
+        owned_cleanup_readiness_blocker_report(parsed_owned_cleanup_readiness);
     assert(parsed_owned_cleanup_readiness_blocker_report.size() == 1);
     assert(
         parsed_owned_cleanup_readiness_blocker_report[0] ==
