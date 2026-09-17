@@ -3086,6 +3086,9 @@ representation.
   aggregate-descendant seeding, and assignment-target cleanup while preserving call-site diagnostics.
 - Switch payload DynamicArray cleanup seeding now records the matched pattern source line on lowered-local cleanup
   plans, aligning payload-bound cleanup metadata with statement and direct receiver cleanup metadata.
+- Runtime-indexed constructor-move coverage now pins the whole-element boundary: moving `items[index]` into a
+  constructor is cleanup-production ready through the constructor-move path, while member-cleanup promotion remains
+  blocked with `member-path none`.
 
 ## Follow-up work
 

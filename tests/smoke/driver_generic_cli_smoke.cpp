@@ -840,6 +840,16 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
+    assert(output.find("runtime-index member cleanup promotion blocker owner ") != std::string::npos);
+    assert(output.find("member-path none") != std::string::npos);
+    assert(output.find("blocker blocked-production-readiness") != std::string::npos);
+    assert(output.find("runtime-index member cleanup production-readiness owner ") != std::string::npos);
+    assert(output.find(
+        "proof missing target-metadata missing helper-drop-bindings ready cfg-slice missing "
+        "module-mutation blocked production-member-cleanup blocked production-gate blocked "
+        "production-enabled false production blocked"
+    ) != std::string::npos);
+    assert(output.find("member-cleanup-promotion ready") == std::string::npos);
 }
 
 void assert_cli_runtime_indexed_constructor_move_plan_metadata(
