@@ -1036,7 +1036,7 @@ auto collect_runtime_indexed_member_cleanup_helper_owned_cleanup_bindings(
             .all_owned_cleanup_definitions_available = all_owned_cleanup_definitions_available,
             .nested_member_path = plan.moved_member_path.size() > 1,
             .helper_definition_ready = helper_definition_ready,
-            .production_enabled = false,
+            .production_enabled = helper_definition_ready,
             .source_line = plan.source_line,
         });
     }

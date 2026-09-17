@@ -16738,7 +16738,7 @@ auto main() -> int {
             assert(bindings->all_owned_cleanup_definitions_available);
             assert(bindings->nested_member_path);
             assert(bindings->helper_definition_ready);
-            assert(!bindings->production_enabled);
+            assert(bindings->production_enabled);
         };
     assert_ready_nested_member_cleanup_binding("left_items", "(left_index + left_zero)");
     assert_ready_nested_member_cleanup_binding("right_items", "(right_index + right_zero)");
@@ -17807,7 +17807,7 @@ auto main() -> int {
     assert(nested_helper_owned_cleanup_bindings.all_owned_cleanup_definitions_available);
     assert(nested_helper_owned_cleanup_bindings.nested_member_path);
     assert(nested_helper_owned_cleanup_bindings.helper_definition_ready);
-    assert(!nested_helper_owned_cleanup_bindings.production_enabled);
+    assert(nested_helper_owned_cleanup_bindings.production_enabled);
     assert(nested_helper_owned_cleanup_bindings.source_line == 37);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report(
@@ -17816,7 +17816,7 @@ auto main() -> int {
         "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item source-line 37 "
         "helper __orison_member_cleanup.Wrap.except.box.item "
-        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
+        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production enabled"
     );
     auto assert_nested_member_cleanup_field =
         [&](std::size_t index,

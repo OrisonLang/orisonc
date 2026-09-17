@@ -3089,6 +3089,8 @@ representation.
 - Runtime-indexed constructor-move coverage now pins the whole-element boundary: moving `items[index]` into a
   constructor is cleanup-production ready through the constructor-move path, while member-cleanup promotion remains
   blocked with `member-path none`.
+- Runtime-indexed member cleanup helper binding reports now mark production enabled when the concrete helper
+  definition is ready, aligning helper metadata with the already-promoted mutation path.
 
 ## Follow-up work
 

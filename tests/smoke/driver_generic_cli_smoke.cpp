@@ -939,7 +939,7 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
         "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) "
         "helper __orison_member_cleanup.Wrap.except.box.item "
-        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
+        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production enabled"
     ) != std::string::npos);
     assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
     assert(output.find("blocker production-member-cleanup") == std::string::npos);
@@ -1062,7 +1062,7 @@ void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
         assert(output.find(
             "runtime-index member cleanup helper-drop-bindings owner " + owner + " index " + index + " "
             "element Box moved Inner member-path item" + source + " helper __orison_member_cleanup.Box.except.item "
-            "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
+            "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production enabled"
         ) != std::string::npos);
         assert(output.find(
             "runtime-index member cleanup production-readiness owner " + owner + " index " + index + " "
@@ -1130,7 +1130,7 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_readiness_fixture
         "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(true)].item) "
         "helper __orison_member_cleanup.Box.except.item "
-        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
+        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup production-readiness owner items index choose_index(true) "
@@ -1176,7 +1176,7 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_readiness_fixture
         "element Box moved Inner member-path item source-line 16 source-text "
         "var outer: Outer = Outer(items[choose_index(1 as UInt32)].item) "
         "helper __orison_member_cleanup.Box.except.item "
-        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
+        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup production-readiness owner items index choose_index(1 as UInt32) "
@@ -1223,7 +1223,7 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness
         "element Box moved Inner member-path item source-line 26 source-text "
         "var outer: Outer = Outer(items[index + zero].item) "
         "helper __orison_member_cleanup.Box.except.item "
-        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production disabled"
+        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
@@ -1266,7 +1266,7 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_re
         "element Wrap moved Inner member-path box.item source-line 51 source-text "
         "var outer: Outer = Outer(holder.items[index + zero].box.item) "
         "helper __orison_member_cleanup.Wrap.except.box.item "
-        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production disabled"
+        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production enabled"
     ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup mutation-production-readiness owner holder.items index (index + zero) "
