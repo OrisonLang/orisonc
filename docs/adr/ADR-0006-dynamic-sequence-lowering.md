@@ -1936,6 +1936,8 @@ representation.
 - Runtime-index cleanup audit no longer emits driver-only promoted-view readiness lines. Promotion evidence now
   converges into the raw member and module readiness records when it is integrated, while blocked/non-integrated states
   remain visible through the ordinary promotion and blocker reports.
+- Driver smoke coverage now pins nested member-cleanup helper bodies for `Wrap.except.box.item`, including chained GEP
+  cleanup for nested `box.left` and `box.right` siblings on the ordinary CLI LLVM emission path.
 - Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
   `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
   instead of filtering audit text by prefix.

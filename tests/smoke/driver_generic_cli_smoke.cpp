@@ -1350,6 +1350,29 @@ void assert_cli_runtime_indexed_member_cleanup_emit_llvm_fixture_success(
         "call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)"
     ) != std::string::npos);
     assert(output.find(
+        "%Wrap.member_cleanup.box.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 1"
+    ) != std::string::npos);
+    assert(output.find(
+        "%Wrap.member_cleanup.box.left.addr = getelementptr %record.Box, ptr "
+        "%Wrap.member_cleanup.box.addr, i32 0, i32 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_owned_cleanup.Left(ptr %Wrap.member_cleanup.box.left.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "store %record.Left zeroinitializer, ptr %Wrap.member_cleanup.box.left.addr"
+    ) != std::string::npos);
+    assert(output.find(
+        "%Wrap.member_cleanup.box.right.addr = getelementptr %record.Box, ptr "
+        "%Wrap.member_cleanup.box.addr, i32 0, i32 2"
+    ) != std::string::npos);
+    assert(output.find(
+        "call void @__orison_owned_cleanup.Right(ptr %Wrap.member_cleanup.box.right.addr)"
+    ) != std::string::npos);
+    assert(output.find(
+        "store %record.Right zeroinitializer, ptr %Wrap.member_cleanup.box.right.addr"
+    ) != std::string::npos);
+    assert(output.find(
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %items.member_cleanup.moved.addr)"
     ) != std::string::npos);
     assert(output.find(
