@@ -294,6 +294,8 @@ inventing semantics outside the spec/tour.
   includes; the previous header remains as a compatibility include path.
 - A dedicated compatibility smoke test now includes the previous source-correlation readiness header directly and calls
   the previous formatter name to keep that compatibility surface intentional.
+- Remaining current `drop_readiness` code occurrences are compatibility surfaces: fixture filenames, temp filenames,
+  CLI helper names/flags, compatibility header/API names, or calls that intentionally exercise those surfaces.
 - Current-facing gap and name-hygiene documentation now uses owned-cleanup wording for compiler-owned symbols and
   cleanup obligations. Historic audit records, CLI flags, test target names, and report text may retain drop wording as
   compatibility output.
