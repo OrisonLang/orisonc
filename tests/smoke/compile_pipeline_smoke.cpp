@@ -9,7 +9,7 @@
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
-#include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
+#include "orison/pipeline/owned_cleanup_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"

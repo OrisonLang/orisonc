@@ -290,6 +290,8 @@ inventing semantics outside the spec/tour.
   names, fixture filenames, or rendered output contracts.
 - Compile-pipeline source-correlation smoke helper/local names now use owned-cleanup readiness wording while the
   compatibility include filename and rendered output remain unchanged.
+- Source-correlation readiness reporting now has an owned-cleanup-named forwarding header used by current internal
+  includes; the previous header remains as a compatibility include path.
 - Current-facing gap and name-hygiene documentation now uses owned-cleanup wording for compiler-owned symbols and
   cleanup obligations. Historic audit records, CLI flags, test target names, and report text may retain drop wording as
   compatibility output.

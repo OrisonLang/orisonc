@@ -8,7 +8,7 @@
 #include "orison/link/host_linker.hpp"
 #include "orison/link/host_runner.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
-#include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
+#include "orison/pipeline/owned_cleanup_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_readiness_report.hpp"
 
 #include <cstddef>
