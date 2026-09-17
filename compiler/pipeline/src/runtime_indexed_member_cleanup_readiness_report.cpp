@@ -269,7 +269,25 @@ void append_keyed_member_cleanup_chain(
         result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings,
         lowering::runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report
     );
-    if (!runtime_indexed_member_cleanup_promoted(result, key)) {
+    auto const promoted = runtime_indexed_member_cleanup_promoted(result, key);
+    if (promoted) {
+        auto const* production_readiness = find_runtime_indexed_member_cleanup_record(
+            key,
+            result.runtime_indexed_member_cleanup_production_readiness
+        );
+        if (production_readiness != nullptr) {
+            auto promoted_readiness = *production_readiness;
+            promoted_readiness.module_mutation_ready = true;
+            promoted_readiness.production_member_cleanup_ready = true;
+            promoted_readiness.production_gate_ready = true;
+            promoted_readiness.production_enabled = true;
+            promoted_readiness.production_ready = true;
+            promoted_readiness.blockers.clear();
+            lines.push_back(lowering::runtime_indexed_member_cleanup_production_readiness_report(
+                promoted_readiness
+            ));
+        }
+    } else {
         append_runtime_indexed_member_cleanup_record_line_with_diagnostics(
             lines,
             key,

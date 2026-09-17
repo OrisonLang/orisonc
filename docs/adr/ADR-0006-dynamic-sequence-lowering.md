@@ -3091,6 +3091,9 @@ representation.
   blocked with `member-path none`.
 - Runtime-indexed member cleanup helper binding reports now mark production enabled when the concrete helper
   definition is ready, aligning helper metadata with the already-promoted mutation path.
+- Runtime-indexed member cleanup readiness reports now render a promoted production-readiness view when typed
+  promotion, mutation readiness, rewrite promotion, and module IR shape are all ready, so the member-specific report
+  remains complete instead of suppressing the original stale production record.
 
 ## Follow-up work
 
