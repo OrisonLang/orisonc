@@ -821,7 +821,7 @@ auto owned_cleanup_readiness_blocker_report(
     return orison::lowering::format_owned_cleanup_readiness_blocker_report(result.owned_cleanup_readiness_blocker_summary);
 }
 
-auto drop_readiness_source_correlation_report(
+auto owned_cleanup_readiness_source_correlation_report(
     orison::pipeline::CompilePipelineResult const& result
 ) -> std::vector<std::string> {
     if (result.has_errors()) {
@@ -1674,10 +1674,10 @@ auto main() -> int {
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "semantic lowering blocked 0 missing declarations 0"
     );
-    auto ir_drop_readiness_source_correlation_report = drop_readiness_source_correlation_report(ir);
-    assert(ir_drop_readiness_source_correlation_report.size() == 1);
+    auto ir_owned_cleanup_readiness_source_correlation_report = owned_cleanup_readiness_source_correlation_report(ir);
+    assert(ir_owned_cleanup_readiness_source_correlation_report.size() == 1);
     assert(
-        ir_drop_readiness_source_correlation_report.front() ==
+        ir_owned_cleanup_readiness_source_correlation_report.front() ==
         "drop readiness source correlations actions 0 semantic sites 0"
     );
     assert(ir.dynamic_array_descriptor_cleanup_plan_state.plans.empty());
@@ -1765,11 +1765,11 @@ auto main() -> int {
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "semantic lowering blocked 0 missing declarations 0"
     );
-    auto drop_readiness_source_correlation_report_lines =
-        drop_readiness_source_correlation_report(owned_cleanup_readiness_fixture);
-    assert(drop_readiness_source_correlation_report_lines.size() == 1);
+    auto owned_cleanup_readiness_source_correlation_report_lines =
+        owned_cleanup_readiness_source_correlation_report(owned_cleanup_readiness_fixture);
+    assert(owned_cleanup_readiness_source_correlation_report_lines.size() == 1);
     assert(
-        drop_readiness_source_correlation_report_lines[0] ==
+        owned_cleanup_readiness_source_correlation_report_lines[0] ==
         "drop readiness source correlations actions 0 semantic sites 1"
     );
 
@@ -1861,7 +1861,7 @@ auto main() -> int {
         "missing declaration __orison_owned_cleanup.Payload"
     );
     auto dynamic_array_owned_cleanup_source_correlation_report =
-        drop_readiness_source_correlation_report(dynamic_array_owned_cleanup_readiness);
+        owned_cleanup_readiness_source_correlation_report(dynamic_array_owned_cleanup_readiness);
     assert(dynamic_array_owned_cleanup_source_correlation_report.size() == 2);
     assert(
         dynamic_array_owned_cleanup_source_correlation_report[0] ==
@@ -2022,7 +2022,7 @@ auto main() -> int {
     );
     assert(!dynamic_array_source_correlated_cleanup.has_errors());
     auto dynamic_array_source_correlated_cleanup_source_correlation_report =
-        drop_readiness_source_correlation_report(dynamic_array_source_correlated_cleanup);
+        owned_cleanup_readiness_source_correlation_report(dynamic_array_source_correlated_cleanup);
     assert(dynamic_array_source_correlated_cleanup_source_correlation_report.size() == 1);
     assert_line_contains(
         dynamic_array_source_correlated_cleanup_source_correlation_report,
@@ -14830,7 +14830,7 @@ auto main() -> int {
     );
     assert(dynamic_array_authorized_readiness.owned_cleanup_readiness_blocker_summary.blocked_cleanups == 0);
     auto dynamic_array_authorized_readiness_source_correlation_report =
-        drop_readiness_source_correlation_report(dynamic_array_authorized_readiness);
+        owned_cleanup_readiness_source_correlation_report(dynamic_array_authorized_readiness);
     assert(dynamic_array_authorized_readiness_source_correlation_report.size() == 1);
     assert(
         dynamic_array_authorized_readiness_source_correlation_report.front() ==
@@ -20682,7 +20682,7 @@ auto main() -> int {
         "semantic lowering blocked 0 missing declarations 0"
     );
     auto parsed_owned_cleanup_readiness_source_correlation_report =
-        drop_readiness_source_correlation_report(parsed_owned_cleanup_readiness);
+        owned_cleanup_readiness_source_correlation_report(parsed_owned_cleanup_readiness);
     assert(parsed_owned_cleanup_readiness_source_correlation_report.size() == 1);
     assert(
         parsed_owned_cleanup_readiness_source_correlation_report[0] ==
