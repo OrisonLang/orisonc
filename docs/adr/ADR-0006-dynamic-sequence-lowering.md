@@ -3097,6 +3097,9 @@ representation.
 - Runtime-indexed cleanup audit output now appends promoted-view member production-readiness lines beside raw
   report-only records. This preserves raw audit evidence while making the effective promoted readiness visible in the
   CLI audit stream.
+- Runtime-indexed cleanup audit output now also appends a promoted-view module production-readiness line when member
+  cleanup promotion is ready. The raw whole-element module readiness line remains unchanged and continues to describe
+  the whole-element cleanup pipeline.
 
 ## Follow-up work
 

@@ -1057,6 +1057,17 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "helper-drop-bindings ready cfg-slice ready module-mutation ready production-member-cleanup ready "
         "production-gate ready production-enabled true production ready blockers 0"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness insertion-gate blocked insertion-preview blocked "
+        "candidate ready candidate-verification blocked module-mutation disabled function-integration blocked "
+        "splice-conflicts 0 splice-conflict-check clear ir-shape ready production blocked blocker-count 5 "
+        "blocker-kind insertion-gate"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup promoted-view module-ir production-readiness member-cleanup-promotion ready "
+        "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1 "
+        "member-module-ir-shape ready production ready"
+    ) != std::string::npos);
 }
 
 void assert_cli_runtime_indexed_two_member_cleanup_readiness_fixture_ready(
