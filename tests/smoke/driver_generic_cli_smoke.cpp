@@ -385,6 +385,7 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
         "member-promotions 0 production ready"
     ) != std::string::npos);
+    assert(output.find("promoted-view") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
@@ -612,6 +613,7 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
     ) != std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness blocker index") == std::string::npos);
     assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
+    assert(output.find("promoted-view") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
