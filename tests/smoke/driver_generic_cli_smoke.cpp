@@ -358,6 +358,20 @@ void assert_cli_runtime_indexed_cleanup_audit_fixture_success(
         "proof-ready true sketch-ready true prerequisites ready production enabled"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index member cleanup owner holder.items index index element Inner moved Inner "
+        "member-path none source-line 31 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) owner-known true index-known true "
+        "element-type-known true moved-type-known true member-path-known false cleanup-element-matches-move true "
+        "member-granular-required false prerequisites missing production disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup proof owner holder.items index index element Inner moved Inner "
+        "member-path none source-line 31 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) plan-ready false "
+        "whole-element-cleanup-matches-move true member-cleanup-required false member-scope-proven false "
+        "whole-element-cleanup-blocked false prerequisites missing production disabled"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index cleanup emission-plan owner holder.items index index element Inner "
         "operations 5 prerequisites ready production-gate requested production enabled "
         "length-load planned length-load-slice lowerable loop planned loop-block-slice lowerable "
