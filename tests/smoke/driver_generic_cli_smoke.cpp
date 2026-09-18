@@ -684,6 +684,45 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_scalar_cleanup_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --runtime-indexed-cleanup-emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i32 @select_both(i1 %skip_first, i1 %skip_second)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Inner(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.Holder(ptr %value)") != std::string::npos);
+    assert(output.find("define void @__orison_owned_cleanup.SelectedInner(ptr %value)") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
+    assert(output.find("  br label %first_holder.items.runtime_cleanup.entry\n") != std::string::npos);
+    assert(output.find("  br label %second_holder.items.runtime_cleanup.entry\n") != std::string::npos);
+    assert(output.find("first_holder.items.runtime_cleanup.condition:\n") != std::string::npos);
+    assert(output.find("second_holder.items.runtime_cleanup.condition:\n") != std::string::npos);
+    assert(output.find(
+        "  %first_holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
+        "%first_holder.items.runtime_cleanup.index, %first_index\n"
+    ) != std::string::npos);
+    assert(output.find(
+        "  %second_holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
+        "%second_holder.items.runtime_cleanup.index, %second_index\n"
+    ) != std::string::npos);
+    assert(output.find(
+        "  call void @__orison_owned_cleanup.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)\n"
+    ) != std::string::npos);
+    assert(output.find(
+        "  call void @__orison_owned_cleanup.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)\n"
+    ) != std::string::npos);
+    assert(output.find(
+        "  store %record.Inner zeroinitializer, ptr %first_holder.items.runtime_cleanup.element.addr\n"
+    ) != std::string::npos);
+    assert(output.find(
+        "  store %record.Inner zeroinitializer, ptr %second_holder.items.runtime_cleanup.element.addr\n"
+    ) != std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
+    assert(output.find("lowering does not yet support") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_nested_cleanup_emit_llvm_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -7335,6 +7374,10 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "runtime_indexed_member_cleanup_sibling_member"
     );
     assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates.or"
+    );
+    assert_cli_runtime_indexed_scalar_cleanup_emit_llvm_fixture_success(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates.or"
     );
