@@ -16532,6 +16532,21 @@ auto main() -> int {
         "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
         "helper-definition ready production enabled"
     );
+    auto const runtime_indexed_member_transfer_execution_summary_lines =
+        orison::pipeline::runtime_indexed_member_cleanup_execution_summary_report_lines(
+            runtime_indexed_member_transfer_apply_request
+        );
+    assert(runtime_indexed_member_transfer_execution_summary_lines.size() == 1);
+    assert(
+        runtime_indexed_member_transfer_execution_summary_lines.front() ==
+        "runtime-index member cleanup execution-summary owner items index (index + zero) "
+        "element Box moved Inner member-path item source-line 18 source-text "
+        "var outer: Outer = Outer(items[index + zero].item) typed-gate ready apply authorized "
+        "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
+        "rewrite-promotion ready helper-bindings 1 helper-target "
+        "__orison_member_cleanup.Box.except.item helper-sibling-bindings 0 "
+        "helper-definition ready production enabled"
+    );
 
     auto runtime_indexed_two_member_transfers_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
