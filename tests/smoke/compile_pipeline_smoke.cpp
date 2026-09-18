@@ -20247,6 +20247,131 @@ auto main() -> int {
             .production_ready
     );
 
+    auto assert_same_function_non_overlap_cleanup_ready =
+        [](auto const& cleanup, std::size_t first_source_line, std::size_t second_source_line) {
+            assert(!cleanup.has_errors());
+            assert(cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 2);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.candidate_count == 2);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.all_splice_ranges_available);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.same_function_splice_ranges_ordered);
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
+                    .same_function_splice_ranges_non_overlapping
+            );
+            assert(cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.composition_failure_count == 0);
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.first_composition_failure ==
+                orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+            );
+            auto const& first_candidate =
+                cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.candidates[0];
+            auto const& second_candidate =
+                cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state.candidates[1];
+            assert(first_candidate.function_symbol_name == second_candidate.function_symbol_name);
+            assert(first_candidate.splice_range_available);
+            assert(second_candidate.splice_range_available);
+            assert(first_candidate.splice_range.end_offset <= second_candidate.splice_range.start_offset);
+            assert(first_candidate.source_line == first_source_line);
+            assert(second_candidate.source_line == second_source_line);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state.all_verified);
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+                    .composition_failure_count == 0
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
+                    .first_composition_failure ==
+                orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state.candidate_count == 2
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state.available_candidate_count == 2
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .all_replacement_targets_unique
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .same_function_splice_ranges_non_overlapping
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .splice_conflict_count == 0
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .splice_conflicts.empty()
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .composition_failure_count == 0
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .first_composition_failure ==
+                orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+            );
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state.all_verified);
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+                    .llvm_verified_count == 2
+            );
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.candidate_verified);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.replacement_targets_unique);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.mutation_applied);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.module_matches_candidate);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.llvm_verifier_passed);
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.composition_failure ==
+                orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+            );
+            assert(
+                cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+                    .rewrite_apply_stage_available
+            );
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.branch_replacements_applied);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.cleanup_cfg_appended);
+            assert(cleanup.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state.phi_predecessors_retargeted);
+            auto const& readiness = cleanup.runtime_indexed_cleanup_module_ir_production_readiness_state;
+            assert(readiness.function_integration_ready);
+            assert(readiness.function_splice_conflict_free);
+            assert(readiness.function_splice_conflict_count == 0);
+            assert(
+                readiness.diagnostic_blocker_kind ==
+                orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None
+            );
+            assert(readiness.blockers.empty());
+            assert(readiness.diagnostic_blocker_stage_name.empty());
+            assert(
+                orison::pipeline::runtime_indexed_cleanup_production_readiness_blocker_kind_name(
+                    readiness.diagnostic_blocker_kind
+                ) == "none"
+            );
+            assert(readiness.diagnostic_function_symbol_name.empty());
+            assert(readiness.diagnostic_left_candidate_index == 0);
+            assert(readiness.diagnostic_right_candidate_index == 0);
+            assert(readiness.diagnostic_left_source_line == 0);
+            assert(readiness.diagnostic_right_source_line == 0);
+            assert(readiness.diagnostic_text.empty());
+            assert(orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(readiness).empty());
+            auto const readiness_report =
+                orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(readiness);
+            assert(
+                readiness_report ==
+                "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+                "insertion-preview ready candidate ready candidate-verification verified "
+                "module-mutation enabled function-integration ready splice-conflicts 0 "
+                "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+                "member-promotions 0 production ready blocker-count 0 blocker-kind none"
+            );
+            assert(readiness_report.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
+            assert(orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(readiness).empty());
+            assert(readiness.production_ready);
+        };
+
     auto runtime_indexed_same_function_non_overlap_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "runtime_indexed_cleanup_same_function_non_overlapping_candidates.or";
@@ -20254,151 +20379,7 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_cleanup_path,
         runtime_indexed_cleanup_audit_module_rewrite_options()
     );
-    assert(!runtime_indexed_same_function_non_overlap_cleanup.has_errors());
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .candidate_count == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .all_splice_ranges_available
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .same_function_splice_ranges_ordered
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .same_function_splice_ranges_non_overlapping
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .composition_failure_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .first_composition_failure ==
-        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
-    );
-    auto const& non_overlap_first_candidate =
-        runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .candidates[0];
-    auto const& non_overlap_second_candidate =
-        runtime_indexed_same_function_non_overlap_cleanup.runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .candidates[1];
-    assert(non_overlap_first_candidate.function_symbol_name == non_overlap_second_candidate.function_symbol_name);
-    assert(non_overlap_first_candidate.splice_range_available);
-    assert(non_overlap_second_candidate.splice_range_available);
-    assert(non_overlap_first_candidate.splice_range.end_offset <= non_overlap_second_candidate.splice_range.start_offset);
-    assert(non_overlap_first_candidate.source_line == 36);
-    assert(non_overlap_second_candidate.source_line == 44);
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
-            .all_verified
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
-            .composition_failure_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_verification_state
-            .first_composition_failure ==
-        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
-            .candidate_count == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_state
-            .available_candidate_count == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .all_replacement_targets_unique
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .same_function_splice_ranges_non_overlapping
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .splice_conflict_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .splice_conflicts.empty()
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .composition_failure_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .first_composition_failure ==
-        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .all_verified
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .llvm_verified_count == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .candidate_verified
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .replacement_targets_unique
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .mutation_applied
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .module_matches_candidate
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .llvm_verifier_passed
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .composition_failure ==
-        orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
-    );
+    assert_same_function_non_overlap_cleanup_ready(runtime_indexed_same_function_non_overlap_cleanup, 36, 44);
     assert(
         runtime_indexed_same_function_non_overlap_cleanup.ir_text.find(
             "  br label %first_holder.items.runtime_cleanup.entry\n"
@@ -20437,105 +20418,6 @@ auto main() -> int {
             "store %record.Inner zeroinitializer"
         ) >= 2
     );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_integration_ready
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_splice_conflict_free
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_splice_conflict_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_blocker_kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .blockers.empty()
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_blocker_stage_name.empty()
-    );
-    assert(
-        orison::pipeline::runtime_indexed_cleanup_production_readiness_blocker_kind_name(
-            runtime_indexed_same_function_non_overlap_cleanup
-                .runtime_indexed_cleanup_module_ir_production_readiness_state
-                .diagnostic_blocker_kind
-        ) == "none"
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_function_symbol_name.empty()
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_left_candidate_index == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_right_candidate_index == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_left_source_line == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_right_source_line == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_text.empty()
-    );
-    assert(
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(
-            runtime_indexed_same_function_non_overlap_cleanup
-                .runtime_indexed_cleanup_module_ir_production_readiness_state
-        ).empty()
-    );
-    auto const non_overlap_readiness_report =
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
-            runtime_indexed_same_function_non_overlap_cleanup
-                .runtime_indexed_cleanup_module_ir_production_readiness_state
-        );
-    assert(
-        non_overlap_readiness_report ==
-        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
-        "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
-        "member-promotions 0 production ready blocker-count 0 blocker-kind none"
-    );
-    assert(non_overlap_readiness_report.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
-    auto const non_overlap_blocker_report =
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
-            runtime_indexed_same_function_non_overlap_cleanup
-                .runtime_indexed_cleanup_module_ir_production_readiness_state
-        );
-    assert(non_overlap_blocker_report.empty());
-    assert(
-        runtime_indexed_same_function_non_overlap_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .production_ready
-    );
 
     auto runtime_indexed_same_function_non_overlap_scalar_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -20544,148 +20426,10 @@ auto main() -> int {
         runtime_indexed_same_function_non_overlap_scalar_cleanup_path,
         runtime_indexed_cleanup_audit_module_rewrite_options()
     );
-    assert(!runtime_indexed_same_function_non_overlap_scalar_cleanup.has_errors());
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_emission_plan_state.plans.size() == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .candidate_count == 2
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .all_splice_ranges_available
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .same_function_splice_ranges_ordered
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .same_function_splice_ranges_non_overlapping
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .composition_failure_count == 0
-    );
-    auto const& scalar_non_overlap_first_candidate =
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .candidates[0];
-    auto const& scalar_non_overlap_second_candidate =
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_rewrite_candidate_state
-            .candidates[1];
-    assert(scalar_non_overlap_first_candidate.function_symbol_name ==
-        scalar_non_overlap_second_candidate.function_symbol_name);
-    assert(scalar_non_overlap_first_candidate.splice_range_available);
-    assert(scalar_non_overlap_second_candidate.splice_range_available);
-    assert(
-        scalar_non_overlap_first_candidate.splice_range.end_offset <=
-        scalar_non_overlap_second_candidate.splice_range.start_offset
-    );
-    assert(scalar_non_overlap_first_candidate.source_line == 22);
-    assert(scalar_non_overlap_second_candidate.source_line == 30);
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .all_replacement_targets_unique
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .same_function_splice_ranges_non_overlapping
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .splice_conflict_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .splice_conflicts.empty()
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-            .all_verified
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .rewrite_apply_stage_available
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .branch_replacements_applied
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .cleanup_cfg_appended
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
-            .phi_predecessors_retargeted
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_integration_ready
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_splice_conflict_free
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .function_splice_conflict_count == 0
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .diagnostic_blocker_kind ==
-        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .blockers.empty()
-    );
-    assert(
-        runtime_indexed_same_function_non_overlap_scalar_cleanup
-            .runtime_indexed_cleanup_module_ir_production_readiness_state
-            .production_ready
-    );
-    auto const scalar_non_overlap_readiness_report =
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(
-            runtime_indexed_same_function_non_overlap_scalar_cleanup
-                .runtime_indexed_cleanup_module_ir_production_readiness_state
-        );
-    assert(
-        scalar_non_overlap_readiness_report ==
-        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
-        "insertion-preview ready candidate ready candidate-verification verified "
-        "module-mutation enabled function-integration ready splice-conflicts 0 "
-        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
-        "member-promotions 0 production ready blocker-count 0 blocker-kind none"
-    );
-    assert(
-        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(
-            runtime_indexed_same_function_non_overlap_scalar_cleanup
-                .runtime_indexed_cleanup_module_ir_production_readiness_state
-        ).empty()
+    assert_same_function_non_overlap_cleanup_ready(
+        runtime_indexed_same_function_non_overlap_scalar_cleanup,
+        22,
+        30
     );
 
     auto composition_failure_readiness =
