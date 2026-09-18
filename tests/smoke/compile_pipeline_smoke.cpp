@@ -17960,23 +17960,7 @@ auto main() -> int {
     );
     assert(
         runtime_indexed_nested_sibling_member_transfer_apply_request.ir_text.find(
-            "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value) {\n"
-            "entry:\n"
-            "  %Wrap.member_cleanup.head.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 0\n"
-            "  call void @__orison_owned_cleanup.Head(ptr %Wrap.member_cleanup.head.addr)\n"
-            "  store %record.Head zeroinitializer, ptr %Wrap.member_cleanup.head.addr\n"
-            "  %Wrap.member_cleanup.tail.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 2\n"
-            "  call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)\n"
-            "  store %record.Tail zeroinitializer, ptr %Wrap.member_cleanup.tail.addr\n"
-            "  %Wrap.member_cleanup.box.addr = getelementptr %record.Wrap, ptr %value, i32 0, i32 1\n"
-            "  %Wrap.member_cleanup.box.left.addr = getelementptr %record.Box, ptr %Wrap.member_cleanup.box.addr, i32 0, i32 0\n"
-            "  call void @__orison_owned_cleanup.Left(ptr %Wrap.member_cleanup.box.left.addr)\n"
-            "  store %record.Left zeroinitializer, ptr %Wrap.member_cleanup.box.left.addr\n"
-            "  %Wrap.member_cleanup.box.right.addr = getelementptr %record.Box, ptr %Wrap.member_cleanup.box.addr, i32 0, i32 2\n"
-            "  call void @__orison_owned_cleanup.Right(ptr %Wrap.member_cleanup.box.right.addr)\n"
-            "  store %record.Right zeroinitializer, ptr %Wrap.member_cleanup.box.right.addr\n"
-            "  ret void\n"
-            "}\n"
+            "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"
         ) != std::string::npos
     );
     assert(
@@ -18067,11 +18051,6 @@ auto main() -> int {
     assert(
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result.ir_text.find(
             "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)"
-        ) != std::string::npos
-    );
-    assert(
-        runtime_indexed_nested_compiler_derived_sibling_cleanup_result.ir_text.find(
-            "call void @__orison_owned_cleanup.Tail(ptr %Wrap.member_cleanup.tail.addr)"
         ) != std::string::npos
     );
     auto runtime_indexed_nested_sibling_member_transfer_object =

@@ -1943,6 +1943,9 @@ representation.
   text.
 - Runtime-index member-cleanup helper definition emission now consumes typed helper-body records rather than
   rediscovering helper operations from sibling fields at the emission site.
+- Member-cleanup tests now prefer typed helper-body assertions for per-sibling helper semantics. IR text checks remain
+  concise end-to-end shape checks for definition presence, representative nested projection, helper invocation, and
+  descriptor cleanup.
 - Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
   `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
   instead of filtering audit text by prefix.
