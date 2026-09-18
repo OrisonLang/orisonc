@@ -7334,6 +7334,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_sibling_member"
     );
+    assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
+        executable,
+        fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates.or"
+    );
     assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_links_and_runs(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates.or",
