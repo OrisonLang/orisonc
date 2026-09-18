@@ -1948,6 +1948,8 @@ representation.
   descriptor cleanup.
 - Runtime-index member-cleanup helper-body readiness is now driver-visible. Constructor-readiness and audit reports can
   show operation, address-projection, cleanup-call, and zero-store counts without requiring LLVM IR inspection.
+- Blocked helper-body operations now emit per-field diagnostics. Diagnostics identify the sibling field path and
+  whether address projection, cleanup call, or zero-store readiness is blocked.
 - Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
   `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
   instead of filtering audit text by prefix.

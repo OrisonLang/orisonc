@@ -2050,6 +2050,54 @@ auto runtime_indexed_member_cleanup_helper_body_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_helper_body_diagnostics(
+    RuntimeIndexedMemberCleanupHelperBody const& body
+) -> std::vector<std::string> {
+    auto diagnostics = std::vector<std::string> {};
+    for (auto const& operation : body.operations) {
+        if (operation.address_projection_ready &&
+            operation.owned_cleanup_call_ready &&
+            operation.zero_store_ready) {
+            continue;
+        }
+        auto diagnostic = std::ostringstream {};
+        diagnostic << "runtime-index member cleanup helper-body diagnostic owner " << body.owner_name
+                   << " index " << body.index_expression_text
+                   << " element " << body.element_source_type_name
+                   << " moved " << body.moved_source_type_name
+                   << " member-path " << dotted_path(body.moved_member_path);
+        append_source_line(diagnostic, body.source_line);
+        diagnostic << " helper " << (body.helper_symbol_name.empty() ? "missing" : body.helper_symbol_name)
+                   << " field-path " << dotted_path(operation.field_path)
+                   << " address-projection " << (operation.address_projection_ready ? "ready" : "blocked")
+                   << " cleanup-call " << (operation.owned_cleanup_call_ready ? "ready" : "blocked")
+                   << " zero-store " << (operation.zero_store_ready ? "ready" : "blocked")
+                   << " detail ";
+        auto detail_written = false;
+        auto append_detail = [&](std::string_view text) {
+            if (detail_written) {
+                diagnostic << ",";
+            }
+            diagnostic << text;
+            detail_written = true;
+        };
+        if (!operation.address_projection_ready) {
+            append_detail("address-projection-blocked");
+        }
+        if (!operation.owned_cleanup_call_ready) {
+            append_detail("cleanup-call-blocked");
+        }
+        if (!operation.zero_store_ready) {
+            append_detail("zero-store-blocked");
+        }
+        if (!detail_written) {
+            diagnostic << "none";
+        }
+        diagnostics.push_back(diagnostic.str());
+    }
+    return diagnostics;
+}
+
 auto runtime_indexed_member_cleanup_promotion_checklist(
     RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan,

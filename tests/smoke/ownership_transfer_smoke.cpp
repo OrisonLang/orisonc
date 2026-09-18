@@ -79,6 +79,41 @@ int main() {
         "runtime-index cleanup audit: no runtime-index cleanup metadata"
     );
 
+    auto blocked_helper_body = orison::lowering::RuntimeIndexedMemberCleanupHelperBody {
+        .owner_name = "items",
+        .index_expression_text = "index",
+        .element_source_type_name = "Wrap",
+        .moved_source_type_name = "Inner",
+        .moved_member_path = {"box", "item"},
+        .helper_symbol_name = "__orison_member_cleanup.Wrap.except.box.item",
+        .operations = {
+            orison::lowering::RuntimeIndexedMemberCleanupHelperBodyOperation {
+                .field_path = {"box", "left"},
+                .field_indices = {1, 0},
+                .container_llvm_type_names = {"%record.Wrap", "%record.Box"},
+                .field_llvm_type_name = "%record.Left",
+                .owned_cleanup_symbol_name = "__orison_owned_cleanup.Left",
+                .address_projection_ready = false,
+                .owned_cleanup_call_ready = true,
+                .zero_store_ready = false,
+            },
+        },
+        .nested_member_path = true,
+        .helper_definition_ready = false,
+        .production_enabled = false,
+        .source_line = 42,
+    };
+    auto blocked_helper_body_diagnostics =
+        orison::lowering::runtime_indexed_member_cleanup_helper_body_diagnostics(blocked_helper_body);
+    assert(blocked_helper_body_diagnostics.size() == 1);
+    assert(
+        blocked_helper_body_diagnostics.front() ==
+        "runtime-index member cleanup helper-body diagnostic owner items index index element Wrap moved Inner "
+        "member-path box.item source-line 42 helper __orison_member_cleanup.Wrap.except.box.item "
+        "field-path box.left address-projection blocked cleanup-call ready zero-store blocked "
+        "detail address-projection-blocked,zero-store-blocked"
+    );
+
     auto runtime_indexed = orison::lowering::OwnershipTransferState {};
     orison::lowering::record_runtime_indexed_partial_owner(
         runtime_indexed,

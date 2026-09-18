@@ -1203,6 +1203,10 @@ auto runtime_indexed_member_cleanup_helper_body_report(
     RuntimeIndexedMemberCleanupHelperBody const& body
 ) -> std::string;
 
+auto runtime_indexed_member_cleanup_helper_body_diagnostics(
+    RuntimeIndexedMemberCleanupHelperBody const& body
+) -> std::vector<std::string>;
+
 auto runtime_indexed_member_cleanup_promotion_checklist(
     RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan,
