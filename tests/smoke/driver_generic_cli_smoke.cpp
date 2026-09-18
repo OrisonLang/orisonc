@@ -644,6 +644,31 @@ void assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
+void assert_cli_runtime_indexed_scalar_same_function_cleanup_audit_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(executable, path);
+
+    auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find(
+        "runtime-index cleanup function-module mutation requested true candidate-verified true "
+        "replacement-targets unique mutation-applied true module-matches-candidate true "
+        "composition-failure none apply-stages available branch-replacements true "
+        "cleanup-cfg-appended true phi-retargeted true llvm-passed true diagnostics 0 final-lines 176"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+        "insertion-preview ready candidate ready candidate-verification verified "
+        "module-mutation enabled function-integration ready splice-conflicts 0 "
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready blocker-count 0 blocker-kind none"
+    ) != std::string::npos);
+    assert(output.find("runtime-index cleanup module-ir production-readiness blocker index") == std::string::npos);
+    assert(output.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
+}
+
 void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -7373,7 +7398,7 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_sibling_member_transfer_run.or",
         smoke_temp_root / "runtime_indexed_member_cleanup_sibling_member"
     );
-    assert_cli_runtime_indexed_same_function_cleanup_audit_fixture_success(
+    assert_cli_runtime_indexed_scalar_same_function_cleanup_audit_fixture_success(
         executable,
         fixtures / "runtime_indexed_cleanup_same_function_non_overlapping_scalar_candidates.or"
     );
