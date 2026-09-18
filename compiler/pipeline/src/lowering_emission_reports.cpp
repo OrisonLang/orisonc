@@ -2365,67 +2365,71 @@ auto member_cleanup_executable_cfg_append(
     return output.str();
 }
 
-auto member_cleanup_sibling_fields(
+auto member_cleanup_helper_body(
     lowering::LlvmIrEmissionResult const& emission,
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
-) -> std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField> {
-    auto fields = std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField> {};
-    for (auto const& field : emission.runtime_indexed_member_cleanup_sibling_fields) {
-        if (field.owner_name == plan.owner_name &&
-            field.index_expression_text == plan.index_expression_text &&
-            field.element_source_type_name == plan.element_source_type_name &&
-            field.moved_source_type_name == plan.moved_source_type_name &&
-            field.moved_member_path == plan.moved_member_path) {
-            fields.push_back(field);
+) -> lowering::RuntimeIndexedMemberCleanupHelperBody const* {
+    for (auto const& body : emission.runtime_indexed_member_cleanup_helper_bodies) {
+        if (body.owner_name == plan.owner_name &&
+            body.index_expression_text == plan.index_expression_text &&
+            body.element_source_type_name == plan.element_source_type_name &&
+            body.moved_source_type_name == plan.moved_source_type_name &&
+            body.moved_member_path == plan.moved_member_path &&
+            body.helper_symbol_name == plan.member_cleanup_target_symbol_name) {
+            return &body;
         }
     }
-    return fields;
+    return nullptr;
 }
 
 auto member_cleanup_helper_definition(
-    std::vector<lowering::RuntimeIndexedMemberCleanupSiblingField> const& sibling_fields,
+    lowering::RuntimeIndexedMemberCleanupHelperBody const& helper_body,
     lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
 ) -> std::string {
     if (plan.member_cleanup_target_symbol_name.empty() ||
         plan.element_source_type_name.empty() ||
-        plan.moved_member_path.empty()) {
+        plan.moved_member_path.empty() ||
+        !helper_body.helper_definition_ready ||
+        !helper_body.production_enabled) {
         return {};
     }
     auto output = std::ostringstream {};
     output << "define void @" << plan.member_cleanup_target_symbol_name << "(ptr %value) {\n"
            << "entry:\n";
-    if (!sibling_fields.empty()) {
+    if (!helper_body.operations.empty()) {
         auto emitted_address_names = std::unordered_set<std::string> {};
-        for (auto const& field : sibling_fields) {
-            if (!field.owned_cleanup_definition_available ||
-                field.owned_cleanup_symbol_name.empty() ||
-                field.field_llvm_type_name.empty() ||
-                field.field_path.empty() ||
-                field.field_indices.size() != field.field_path.size() ||
-                field.container_llvm_type_names.size() != field.field_path.size()) {
+        for (auto const& operation : helper_body.operations) {
+            if (!operation.address_projection_ready ||
+                !operation.owned_cleanup_call_ready ||
+                !operation.zero_store_ready ||
+                operation.owned_cleanup_symbol_name.empty() ||
+                operation.field_llvm_type_name.empty() ||
+                operation.field_path.empty() ||
+                operation.field_indices.size() != operation.field_path.size() ||
+                operation.container_llvm_type_names.size() != operation.field_path.size()) {
                 return {};
             }
             auto source_pointer_name = std::string {"%value"};
             auto field_address_name = std::string {};
             auto path_prefix = std::string {};
-            for (auto index = std::size_t {0}; index < field.field_path.size(); ++index) {
+            for (auto index = std::size_t {0}; index < operation.field_path.size(); ++index) {
                 if (!path_prefix.empty()) {
                     path_prefix += ".";
                 }
-                path_prefix += field.field_path[index];
+                path_prefix += operation.field_path[index];
                 field_address_name = "%" + plan.element_source_type_name +
                     ".member_cleanup." + path_prefix + ".addr";
                 if (emitted_address_names.insert(field_address_name).second) {
                     output << "  " << field_address_name << " = getelementptr "
-                           << field.container_llvm_type_names[index] << ", ptr "
+                           << operation.container_llvm_type_names[index] << ", ptr "
                            << source_pointer_name << ", i32 0, i32 "
-                           << field.field_indices[index] << "\n";
+                           << operation.field_indices[index] << "\n";
                 }
                 source_pointer_name = field_address_name;
             }
-            output << "  call void @" << field.owned_cleanup_symbol_name
+            output << "  call void @" << operation.owned_cleanup_symbol_name
                    << "(ptr " << field_address_name << ")\n"
-                   << "  store " << field.field_llvm_type_name << " zeroinitializer, ptr "
+                   << "  store " << operation.field_llvm_type_name << " zeroinitializer, ptr "
                    << field_address_name << "\n";
         }
     } else {
@@ -2448,8 +2452,11 @@ auto ensure_member_cleanup_helper_definition(
     if (ir_text.find("define void @" + plan.member_cleanup_target_symbol_name + "(") != std::string::npos) {
         return true;
     }
-    auto const sibling_fields = member_cleanup_sibling_fields(emission, plan);
-    auto const helper_definition = member_cleanup_helper_definition(sibling_fields, plan);
+    auto const* helper_body = member_cleanup_helper_body(emission, plan);
+    if (helper_body == nullptr) {
+        return false;
+    }
+    auto const helper_definition = member_cleanup_helper_definition(*helper_body, plan);
     if (helper_definition.empty()) {
         return false;
     }

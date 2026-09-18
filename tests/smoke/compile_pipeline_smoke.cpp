@@ -18040,6 +18040,17 @@ auto main() -> int {
             .runtime_indexed_member_cleanup_helper_owned_cleanup_bindings.front();
     assert(compiler_derived_sibling_cleanup_bindings.all_owned_cleanup_definitions_available);
     assert(compiler_derived_sibling_cleanup_bindings.helper_definition_ready);
+    assert(
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result
+            .runtime_indexed_member_cleanup_helper_bodies.size() == 1
+    );
+    auto const& compiler_derived_helper_body =
+        runtime_indexed_nested_compiler_derived_sibling_cleanup_result
+            .runtime_indexed_member_cleanup_helper_bodies.front();
+    assert(compiler_derived_helper_body.helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
+    assert(compiler_derived_helper_body.operations.size() == 4);
+    assert(compiler_derived_helper_body.helper_definition_ready);
+    assert(compiler_derived_helper_body.production_enabled);
     auto const compiler_derived_tail_field = std::ranges::find_if(
         runtime_indexed_nested_compiler_derived_sibling_cleanup_result.runtime_indexed_member_cleanup_sibling_fields,
         [](auto const& field) {

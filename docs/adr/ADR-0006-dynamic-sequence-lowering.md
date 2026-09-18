@@ -1941,6 +1941,8 @@ representation.
 - Runtime-index member-cleanup helper bodies now cross lowering and pipeline as typed records. The records summarize
   sibling cleanup operations, chained address projections, cleanup calls, and zero stores without parsing generated IR
   text.
+- Runtime-index member-cleanup helper definition emission now consumes typed helper-body records rather than
+  rediscovering helper operations from sibling fields at the emission site.
 - Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
   `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
   instead of filtering audit text by prefix.
