@@ -9,6 +9,7 @@
 #include "orison/link/host_runner.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/pipeline/owned_cleanup_readiness_source_correlation_report.hpp"
+#include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_readiness_report.hpp"
 
 #include <cstddef>
@@ -335,6 +336,9 @@ auto runtime_indexed_constructor_move_production_readiness_report(
         report << '\n' << line;
     }
     for (auto const& line : pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result)) {
+        report << '\n' << line;
+    }
+    for (auto const& line : pipeline::runtime_indexed_member_cleanup_execution_summary_report_lines(result)) {
         report << '\n' << line;
     }
     return report.str();

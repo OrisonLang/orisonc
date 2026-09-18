@@ -1046,6 +1046,15 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
         "var outer: Outer = Outer(items[index + zero].box.item) authorization ready execution-plan ready "
         "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup execution-summary owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item) typed-gate ready apply authorized "
+        "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
+        "rewrite-promotion ready helper-bindings 1 helper-target "
+        "__orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4 "
+        "helper-definition ready production enabled"
+    ) != std::string::npos);
     assert(output.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
 }
 
