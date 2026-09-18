@@ -106,6 +106,11 @@ auto runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_line(std::stri
     return line.starts_with(prefix);
 }
 
+auto runtime_indexed_member_cleanup_helper_body_line(std::string const& line) -> bool {
+    auto constexpr prefix = std::string_view {"runtime-index member cleanup helper-body"};
+    return line.starts_with(prefix);
+}
+
 auto runtime_indexed_member_cleanup_production_readiness_line(std::string const& line) -> bool {
     auto constexpr prefix = std::string_view {"runtime-index member cleanup production-readiness"};
     return line.starts_with(prefix);
@@ -169,6 +174,7 @@ auto runtime_indexed_member_cleanup_should_include_source_text(std::string const
         runtime_indexed_member_cleanup_ir_composition_line(line) ||
         runtime_indexed_member_cleanup_cfg_slice_line(line) ||
         runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_line(line) ||
+        runtime_indexed_member_cleanup_helper_body_line(line) ||
         runtime_indexed_member_cleanup_production_readiness_line(line) ||
         runtime_indexed_member_cleanup_function_rewrite_line(line) ||
         runtime_indexed_member_cleanup_edit_script_validation_diagnostic_line(line) ||
@@ -268,6 +274,12 @@ void append_keyed_member_cleanup_chain(
         key,
         result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings,
         lowering::runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report
+    );
+    append_runtime_indexed_member_cleanup_record_line(
+        lines,
+        key,
+        result.runtime_indexed_member_cleanup_helper_bodies,
+        lowering::runtime_indexed_member_cleanup_helper_body_report
     );
     auto const promoted = runtime_indexed_member_cleanup_promoted(result, key);
     if (promoted) {
@@ -393,6 +405,11 @@ void append_ungated_member_cleanup_lines(
         lines,
         result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings,
         lowering::runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report
+    );
+    append_runtime_indexed_member_cleanup_record_lines(
+        lines,
+        result.runtime_indexed_member_cleanup_helper_bodies,
+        lowering::runtime_indexed_member_cleanup_helper_body_report
     );
     append_runtime_indexed_member_cleanup_record_lines_with_diagnostics(
         lines,

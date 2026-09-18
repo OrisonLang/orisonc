@@ -2010,6 +2010,46 @@ auto runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report(
     return report.str();
 }
 
+auto runtime_indexed_member_cleanup_helper_body_report(
+    RuntimeIndexedMemberCleanupHelperBody const& body
+) -> std::string {
+    auto const address_projection_count = std::ranges::count_if(
+        body.operations,
+        [](RuntimeIndexedMemberCleanupHelperBodyOperation const& operation) {
+            return operation.address_projection_ready;
+        }
+    );
+    auto const owned_cleanup_call_count = std::ranges::count_if(
+        body.operations,
+        [](RuntimeIndexedMemberCleanupHelperBodyOperation const& operation) {
+            return operation.owned_cleanup_call_ready;
+        }
+    );
+    auto const zero_store_count = std::ranges::count_if(
+        body.operations,
+        [](RuntimeIndexedMemberCleanupHelperBodyOperation const& operation) {
+            return operation.zero_store_ready;
+        }
+    );
+
+    auto report = std::ostringstream {};
+    report << "runtime-index member cleanup helper-body owner " << body.owner_name
+           << " index " << body.index_expression_text
+           << " element " << body.element_source_type_name
+           << " moved " << body.moved_source_type_name
+           << " member-path " << dotted_path(body.moved_member_path);
+    append_source_line(report, body.source_line);
+    report << " helper " << (body.helper_symbol_name.empty() ? "missing" : body.helper_symbol_name)
+           << " operations " << body.operations.size()
+           << " address-projections " << address_projection_count
+           << " cleanup-calls " << owned_cleanup_call_count
+           << " zero-stores " << zero_store_count
+           << " nested-path " << (body.nested_member_path ? "true" : "false")
+           << " helper-definition " << (body.helper_definition_ready ? "ready" : "blocked")
+           << " production " << (body.production_enabled ? "enabled" : "disabled");
+    return report.str();
+}
+
 auto runtime_indexed_member_cleanup_promotion_checklist(
     RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate,
     RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& edit_script_plan,

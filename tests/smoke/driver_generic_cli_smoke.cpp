@@ -954,6 +954,13 @@ void assert_cli_runtime_indexed_member_cleanup_readiness_fixture_ready(
         "helper __orison_member_cleanup.Wrap.except.box.item "
         "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production enabled"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup helper-body owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item source-line 37 source-text "
+        "var outer: Outer = Outer(items[index + zero].box.item) "
+        "helper __orison_member_cleanup.Wrap.except.box.item operations 4 address-projections 4 "
+        "cleanup-calls 4 zero-stores 4 nested-path true helper-definition ready production enabled"
+    ) != std::string::npos);
     assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
     assert(output.find("blocker production-member-cleanup") == std::string::npos);
     assert(output.find(

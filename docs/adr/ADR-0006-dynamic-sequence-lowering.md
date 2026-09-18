@@ -1946,6 +1946,8 @@ representation.
 - Member-cleanup tests now prefer typed helper-body assertions for per-sibling helper semantics. IR text checks remain
   concise end-to-end shape checks for definition presence, representative nested projection, helper invocation, and
   descriptor cleanup.
+- Runtime-index member-cleanup helper-body readiness is now driver-visible. Constructor-readiness and audit reports can
+  show operation, address-projection, cleanup-call, and zero-store counts without requiring LLVM IR inspection.
 - Member-cleanup production readiness now crosses the lowering-to-pipeline boundary as typed
   `RuntimeIndexedMemberCleanupProductionReadiness` records. Driver reporting formats those typed records directly
   instead of filtering audit text by prefix.
