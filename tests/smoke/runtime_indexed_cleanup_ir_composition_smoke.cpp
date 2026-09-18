@@ -87,6 +87,56 @@ auto candidate_with_cleanup_tail(
     return candidate;
 }
 
+auto scalar_non_overlap_cleanup_candidate(
+    std::string const& predecessor_name,
+    std::string const& replaced_target_name,
+    std::string const& owner_name,
+    std::string const& index_name
+) -> orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteCandidate {
+    auto const insertion_name = owner_name + ".runtime_cleanup.entry";
+    auto const continuation_name = owner_name + ".runtime_cleanup.exit";
+    return orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteCandidate {
+        .function_symbol_name = "select_both",
+        .predecessor_block_name = predecessor_name,
+        .insertion_block_name = insertion_name,
+        .continuation_block_name = continuation_name,
+        .replaced_terminator_text = "br label %" + replaced_target_name,
+        .inserted_branch_text = "br label %" + insertion_name,
+        .candidate_function_ir_text = std::string {
+            "define i32 @select_both(i1 %skip_first, i1 %skip_second) {\n"
+            "entry:\n"
+            "  br label %" + predecessor_name + "\n"
+            "\n" +
+            predecessor_name + ":\n"
+            "  br label %" + insertion_name + "\n"
+            "\n" +
+            replaced_target_name + ":\n"
+            "  ret i32 0\n"
+            "\n" +
+            insertion_name + ":\n"
+            "  %" + owner_name + ".runtime_cleanup.skip_moved = icmp eq i64 %" + owner_name +
+            ".runtime_cleanup.index, %" + index_name + "\n"
+            "  br i1 %" + owner_name + ".runtime_cleanup.skip_moved, label %" + owner_name +
+            ".runtime_cleanup.skip, label %" + owner_name + ".runtime_cleanup.drop\n"
+            + owner_name + ".runtime_cleanup.skip:\n"
+            "  br label %" + owner_name + ".runtime_cleanup.continue\n"
+            + owner_name + ".runtime_cleanup.drop:\n"
+            "  call void @__orison_owned_cleanup.Inner(ptr %" + owner_name +
+            ".runtime_cleanup.element.addr)\n"
+            "  store %record.Inner zeroinitializer, ptr %" + owner_name + ".runtime_cleanup.element.addr\n"
+            "  br label %" + owner_name + ".runtime_cleanup.continue\n"
+            + owner_name + ".runtime_cleanup.continue:\n"
+            "  br label %" + continuation_name + "\n"
+            "\n" +
+            continuation_name + ":\n"
+            "  br label %" + replaced_target_name + "\n"
+            "}\n"
+        },
+        .candidate_available = true,
+        .splice_range_available = true,
+    };
+}
+
 void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
     auto const original_function_ir =
         std::string {
@@ -275,6 +325,134 @@ void assert_runtime_indexed_cleanup_ir_composition_parts_are_structured() {
         composed.find("%x = phi i32 [ 1, %left.runtime_cleanup.exit ], [ 2, %right.runtime_cleanup.exit ]") !=
         std::string::npos
     );
+}
+
+void assert_runtime_indexed_cleanup_ir_composes_scalar_non_overlapping_candidates() {
+    auto const original_function_ir =
+        std::string {
+            "define i32 @select_both(i1 %skip_first, i1 %skip_second) {\n"
+            "entry:\n"
+            "  br i1 %skip_first, label %early_first, label %first_ready\n"
+            "\n"
+            "early_first:\n"
+            "  br label %join\n"
+            "\n"
+            "first_ready:\n"
+            "  br label %second_check\n"
+            "\n"
+            "second_check:\n"
+            "  br i1 %skip_second, label %early_second, label %second_ready\n"
+            "\n"
+            "early_second:\n"
+            "  br label %join\n"
+            "\n"
+            "second_ready:\n"
+            "  br label %join\n"
+            "\n"
+            "join:\n"
+            "  %result = phi i32 [ 1, %early_first ], [ 2, %early_second ], [ 0, %second_ready ]\n"
+            "  ret i32 %result\n"
+            "}\n"
+        };
+
+    auto first_candidate = scalar_non_overlap_cleanup_candidate(
+        "first_ready",
+        "second_check",
+        "first_holder.items",
+        "first_index"
+    );
+    auto second_candidate = scalar_non_overlap_cleanup_candidate(
+        "second_ready",
+        "join",
+        "second_holder.items",
+        "second_index"
+    );
+    auto const first_branch = std::string {"  br label %second_check\n"};
+    auto const second_branch = std::string {"  br label %join\n"};
+    auto const first_branch_position = branch_position_in_block(original_function_ir, "first_ready", first_branch);
+    auto const second_branch_position = branch_position_in_block(original_function_ir, "second_ready", second_branch);
+    first_candidate.splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+        .start_offset = first_branch_position,
+        .end_offset = first_branch_position + first_branch.size(),
+    };
+    second_candidate.splice_range = orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+        .start_offset = second_branch_position,
+        .end_offset = second_branch_position + second_branch.size(),
+    };
+
+    auto const candidates =
+        std::vector<orison::pipeline::RuntimeIndexedCleanupFunctionIrRewriteCandidate const*> {
+            &first_candidate,
+            &second_candidate,
+        };
+    auto const operation_result =
+        orison::pipeline::build_runtime_indexed_cleanup_function_ir_rewrite_operation_result(
+            original_function_ir,
+            candidates
+        );
+    assert(operation_result.succeeded());
+    assert(operation_result.operation.parts.size() == 2);
+    assert(operation_result.operation.parts[0].predecessor_block_name == "second_ready");
+    assert(operation_result.operation.parts[1].predecessor_block_name == "first_ready");
+    assert(
+        operation_result.operation.appended_cleanup_cfg.find("first_holder.items.runtime_cleanup.entry:\n") !=
+        std::string::npos
+    );
+    assert(
+        operation_result.operation.appended_cleanup_cfg.find("second_holder.items.runtime_cleanup.entry:\n") !=
+        std::string::npos
+    );
+    assert(
+        operation_result.operation.appended_cleanup_cfg.find("first_holder.items.runtime_cleanup.entry:\n") <
+        operation_result.operation.appended_cleanup_cfg.find("second_holder.items.runtime_cleanup.entry:\n")
+    );
+    assert(operation_result.operation.appended_cleanup_cfg.find("__orison_dynamic_array_deallocate") ==
+        std::string::npos);
+
+    auto const stage_result =
+        orison::pipeline::apply_runtime_indexed_cleanup_function_ir_rewrite_operation_stages(
+            original_function_ir,
+            operation_result.operation
+        );
+    assert(stage_result.succeeded());
+    assert(stage_result.branch_replacements_applied);
+    assert(stage_result.cleanup_cfg_appended);
+    assert(stage_result.phi_predecessors_retargeted);
+    assert(stage_result.staged_function_ir.find("first_ready:\n  br label %first_holder.items.runtime_cleanup.entry\n") !=
+        std::string::npos);
+    assert(
+        stage_result.staged_function_ir.find("second_ready:\n  br label %second_holder.items.runtime_cleanup.entry\n") !=
+        std::string::npos
+    );
+    assert(
+        stage_result.staged_function_ir.find(
+            "%first_holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
+            "%first_holder.items.runtime_cleanup.index, %first_index"
+        ) != std::string::npos
+    );
+    assert(
+        stage_result.staged_function_ir.find(
+            "%second_holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
+            "%second_holder.items.runtime_cleanup.index, %second_index"
+        ) != std::string::npos
+    );
+    assert(
+        stage_result.staged_function_ir.find(
+            "store %record.Inner zeroinitializer, ptr %first_holder.items.runtime_cleanup.element.addr"
+        ) != std::string::npos
+    );
+    assert(
+        stage_result.staged_function_ir.find(
+            "store %record.Inner zeroinitializer, ptr %second_holder.items.runtime_cleanup.element.addr"
+        ) != std::string::npos
+    );
+    assert(
+        stage_result.staged_function_ir.find(
+            "%result = phi i32 [ 1, %early_first ], [ 2, %early_second ], "
+            "[ 0, %second_holder.items.runtime_cleanup.exit ]"
+        ) != std::string::npos
+    );
+    assert(stage_result.staged_function_ir.find("__orison_dynamic_array_deallocate") == std::string::npos);
 }
 
 void assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured() {
@@ -749,6 +927,7 @@ void assert_runtime_indexed_cleanup_ir_failures_are_structured() {
 auto main() -> int {
     assert_runtime_indexed_cleanup_ir_text_helpers_are_shared();
     assert_runtime_indexed_cleanup_ir_composition_parts_are_structured();
+    assert_runtime_indexed_cleanup_ir_composes_scalar_non_overlapping_candidates();
     assert_runtime_indexed_cleanup_ir_single_candidate_insertion_is_structured();
     assert_runtime_indexed_cleanup_ir_failures_are_structured();
     return 0;
