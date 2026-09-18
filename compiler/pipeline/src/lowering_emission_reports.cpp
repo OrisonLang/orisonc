@@ -4320,6 +4320,8 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_sibling_fields);
     result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings =
         std::move(emission.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings);
+    result.runtime_indexed_member_cleanup_helper_bodies =
+        std::move(emission.runtime_indexed_member_cleanup_helper_bodies);
     result.runtime_indexed_member_cleanup_production_readiness =
         std::move(emission.runtime_indexed_member_cleanup_production_readiness);
     result.runtime_indexed_member_cleanup_typed_promotion_gates =

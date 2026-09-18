@@ -1043,6 +1043,71 @@ auto collect_runtime_indexed_member_cleanup_helper_owned_cleanup_bindings(
     return bindings;
 }
 
+auto collect_runtime_indexed_member_cleanup_helper_bodies(
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan> const& edit_script_plans,
+    std::vector<RuntimeIndexedMemberCleanupSiblingField> const& sibling_fields
+) -> std::vector<RuntimeIndexedMemberCleanupHelperBody> {
+    auto bodies = std::vector<RuntimeIndexedMemberCleanupHelperBody> {};
+    for (auto const& plan : edit_script_plans) {
+        if (plan.member_cleanup_target_symbol_name.empty() ||
+            plan.element_source_type_name.empty() ||
+            plan.moved_member_path.empty()) {
+            continue;
+        }
+
+        auto operations = std::vector<RuntimeIndexedMemberCleanupHelperBodyOperation> {};
+        for (auto const& field : sibling_fields) {
+            if (field.owner_name != plan.owner_name ||
+                field.index_expression_text != plan.index_expression_text ||
+                field.element_source_type_name != plan.element_source_type_name ||
+                field.moved_source_type_name != plan.moved_source_type_name ||
+                field.moved_member_path != plan.moved_member_path) {
+                continue;
+            }
+            auto const address_projection_ready =
+                !field.field_path.empty() &&
+                field.field_indices.size() == field.field_path.size() &&
+                field.container_llvm_type_names.size() == field.field_path.size();
+            auto const owned_cleanup_call_ready =
+                field.owned_cleanup_definition_available &&
+                !field.owned_cleanup_symbol_name.empty();
+            operations.push_back(RuntimeIndexedMemberCleanupHelperBodyOperation {
+                .field_path = field.field_path,
+                .field_indices = field.field_indices,
+                .container_llvm_type_names = field.container_llvm_type_names,
+                .field_llvm_type_name = field.field_llvm_type_name,
+                .owned_cleanup_symbol_name = field.owned_cleanup_symbol_name,
+                .address_projection_ready = address_projection_ready,
+                .owned_cleanup_call_ready = owned_cleanup_call_ready,
+                .zero_store_ready = !field.field_llvm_type_name.empty(),
+            });
+        }
+
+        auto const helper_definition_ready = std::ranges::all_of(
+            operations,
+            [](RuntimeIndexedMemberCleanupHelperBodyOperation const& operation) {
+                return operation.address_projection_ready &&
+                    operation.owned_cleanup_call_ready &&
+                    operation.zero_store_ready;
+            }
+        );
+        bodies.push_back(RuntimeIndexedMemberCleanupHelperBody {
+            .owner_name = plan.owner_name,
+            .index_expression_text = plan.index_expression_text,
+            .element_source_type_name = plan.element_source_type_name,
+            .moved_source_type_name = plan.moved_source_type_name,
+            .moved_member_path = plan.moved_member_path,
+            .helper_symbol_name = plan.member_cleanup_target_symbol_name,
+            .operations = std::move(operations),
+            .nested_member_path = plan.moved_member_path.size() > 1,
+            .helper_definition_ready = helper_definition_ready,
+            .production_enabled = helper_definition_ready,
+            .source_line = plan.source_line,
+        });
+    }
+    return bodies;
+}
+
 auto helper_owned_cleanup_bindings_ready_for(
     RuntimeIndexedMemberCleanupProductionReadiness const& readiness,
     std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
@@ -4661,6 +4726,11 @@ auto emit_module(
             );
         result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings =
             collect_runtime_indexed_member_cleanup_helper_owned_cleanup_bindings(
+                result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
+                result.runtime_indexed_member_cleanup_sibling_fields
+            );
+        result.runtime_indexed_member_cleanup_helper_bodies =
+            collect_runtime_indexed_member_cleanup_helper_bodies(
                 result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
                 result.runtime_indexed_member_cleanup_sibling_fields
             );

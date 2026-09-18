@@ -304,6 +304,35 @@ struct RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings {
     auto operator==(RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings const&) const -> bool = default;
 };
 
+struct RuntimeIndexedMemberCleanupHelperBodyOperation {
+    std::vector<std::string> field_path;
+    std::vector<std::size_t> field_indices;
+    std::vector<std::string> container_llvm_type_names;
+    std::string field_llvm_type_name;
+    std::string owned_cleanup_symbol_name;
+    bool address_projection_ready = false;
+    bool owned_cleanup_call_ready = false;
+    bool zero_store_ready = false;
+
+    auto operator==(RuntimeIndexedMemberCleanupHelperBodyOperation const&) const -> bool = default;
+};
+
+struct RuntimeIndexedMemberCleanupHelperBody {
+    std::string owner_name;
+    std::string index_expression_text;
+    std::string element_source_type_name;
+    std::string moved_source_type_name;
+    std::vector<std::string> moved_member_path;
+    std::string helper_symbol_name;
+    std::vector<RuntimeIndexedMemberCleanupHelperBodyOperation> operations;
+    bool nested_member_path = false;
+    bool helper_definition_ready = false;
+    bool production_enabled = false;
+    std::size_t source_line = 0;
+
+    auto operator==(RuntimeIndexedMemberCleanupHelperBody const&) const -> bool = default;
+};
+
 struct RuntimeIndexedMemberCleanupEmissionGate {
     std::string owner_name;
     std::string index_expression_text;

@@ -17819,6 +17819,72 @@ auto main() -> int {
     assert(nested_helper_owned_cleanup_bindings.production_enabled);
     assert(nested_helper_owned_cleanup_bindings.source_line == 37);
     assert(
+        runtime_indexed_nested_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_helper_bodies.size() == 1
+    );
+    auto const& nested_helper_body =
+        runtime_indexed_nested_sibling_member_transfer_apply_request
+            .runtime_indexed_member_cleanup_helper_bodies.front();
+    assert(nested_helper_body.owner_name == "items");
+    assert(nested_helper_body.index_expression_text == "(index + zero)");
+    assert(nested_helper_body.element_source_type_name == "Wrap");
+    assert(nested_helper_body.moved_source_type_name == "Inner");
+    assert(nested_helper_body.moved_member_path == (std::vector<std::string> {"box", "item"}));
+    assert(nested_helper_body.helper_symbol_name == "__orison_member_cleanup.Wrap.except.box.item");
+    assert(nested_helper_body.operations.size() == 4);
+    assert(nested_helper_body.nested_member_path);
+    assert(nested_helper_body.helper_definition_ready);
+    assert(nested_helper_body.production_enabled);
+    auto assert_nested_helper_body_operation =
+        [&](std::vector<std::string> const& field_path,
+            std::vector<std::size_t> const& field_indices,
+            std::vector<std::string> const& container_llvm_type_names,
+            std::string_view field_llvm_type_name,
+            std::string_view owned_cleanup_symbol_name) {
+            auto const operation = std::ranges::find_if(
+                nested_helper_body.operations,
+                [&](auto const& candidate) {
+                    return candidate.field_path == field_path;
+                }
+            );
+            assert(operation != nested_helper_body.operations.end());
+            assert(operation->field_indices == field_indices);
+            assert(operation->container_llvm_type_names == container_llvm_type_names);
+            assert(operation->field_llvm_type_name == field_llvm_type_name);
+            assert(operation->owned_cleanup_symbol_name == owned_cleanup_symbol_name);
+            assert(operation->address_projection_ready);
+            assert(operation->owned_cleanup_call_ready);
+            assert(operation->zero_store_ready);
+        };
+    assert_nested_helper_body_operation(
+        std::vector<std::string> {"head"},
+        std::vector<std::size_t> {0},
+        std::vector<std::string> {"%record.Wrap"},
+        "%record.Head",
+        "__orison_owned_cleanup.Head"
+    );
+    assert_nested_helper_body_operation(
+        std::vector<std::string> {"tail"},
+        std::vector<std::size_t> {2},
+        std::vector<std::string> {"%record.Wrap"},
+        "%record.Tail",
+        "__orison_owned_cleanup.Tail"
+    );
+    assert_nested_helper_body_operation(
+        std::vector<std::string> {"box", "left"},
+        std::vector<std::size_t> {1, 0},
+        std::vector<std::string> {"%record.Wrap", "%record.Box"},
+        "%record.Left",
+        "__orison_owned_cleanup.Left"
+    );
+    assert_nested_helper_body_operation(
+        std::vector<std::string> {"box", "right"},
+        std::vector<std::size_t> {1, 2},
+        std::vector<std::string> {"%record.Wrap", "%record.Box"},
+        "%record.Right",
+        "__orison_owned_cleanup.Right"
+    );
+    assert(
         orison::lowering::runtime_indexed_member_cleanup_helper_owned_cleanup_bindings_report(
             nested_helper_owned_cleanup_bindings
         ) ==
