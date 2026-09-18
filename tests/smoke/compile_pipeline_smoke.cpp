@@ -115,6 +115,61 @@ void test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_tex
     );
 }
 
+void test_runtime_indexed_member_cleanup_helper_body_diagnostic_source_text() {
+    auto result = orison::pipeline::CompilePipelineResult {};
+    result.source_file.emplace(
+        "helper_body_diagnostic_source_text.or",
+        "public function demo() -> Unit\n"
+        "    var outer: Outer = Outer(items[index].box.item)\n"
+        "    outer\n"
+    );
+    result.runtime_indexed_member_cleanup_helper_bodies.push_back(
+        orison::lowering::RuntimeIndexedMemberCleanupHelperBody {
+            .owner_name = "items",
+            .index_expression_text = "index",
+            .element_source_type_name = "Wrap",
+            .moved_source_type_name = "Inner",
+            .moved_member_path = {"box", "item"},
+            .helper_symbol_name = "__orison_member_cleanup.Wrap.except.box.item",
+            .operations = {
+                orison::lowering::RuntimeIndexedMemberCleanupHelperBodyOperation {
+                    .field_path = {"box", "left"},
+                    .field_indices = {1, 0},
+                    .container_llvm_type_names = {"%record.Wrap"},
+                    .field_llvm_type_name = "%record.Left",
+                    .owned_cleanup_symbol_name = "",
+                    .address_projection_ready = false,
+                    .owned_cleanup_call_ready = false,
+                    .zero_store_ready = true,
+                },
+            },
+            .nested_member_path = true,
+            .helper_definition_ready = false,
+            .production_enabled = false,
+            .source_line = 2,
+        }
+    );
+
+    auto const lines = orison::pipeline::runtime_indexed_member_cleanup_readiness_report_lines(result);
+    assert(lines.size() == 2);
+    assert(
+        lines[0] ==
+        "runtime-index member cleanup helper-body owner items index index element Wrap moved Inner "
+        "member-path box.item source-line 2 source-text "
+        "var outer: Outer = Outer(items[index].box.item) "
+        "helper __orison_member_cleanup.Wrap.except.box.item operations 1 address-projections 0 "
+        "cleanup-calls 0 zero-stores 1 nested-path true helper-definition blocked production disabled"
+    );
+    assert(
+        lines[1] ==
+        "runtime-index member cleanup helper-body diagnostic owner items index index element Wrap moved Inner "
+        "member-path box.item source-line 2 source-text "
+        "var outer: Outer = Outer(items[index].box.item) "
+        "helper __orison_member_cleanup.Wrap.except.box.item field-path box.left address-projection blocked "
+        "cleanup-call blocked zero-store ready detail address-projection-blocked,cleanup-call-blocked"
+    );
+}
+
 auto logical_line_count(std::string const& text) -> std::size_t {
     if (text.empty()) {
         return 0;
@@ -1579,6 +1634,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 auto main() -> int {
     test_production_compile_pipeline_options_gate_promotions();
     test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text();
+    test_runtime_indexed_member_cleanup_helper_body_diagnostic_source_text();
     test_runtime_indexed_cleanup_option_helpers();
     assert_computed_cleanup_proof_model_reusable_without_reports();
     assert_consumed_descriptor_finalization_readiness_typed();
