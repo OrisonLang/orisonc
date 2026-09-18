@@ -846,9 +846,33 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
-    assert(output.find("runtime-index member cleanup promotion blocker owner ") != std::string::npos);
-    assert(output.find("member-path none") != std::string::npos);
-    assert(output.find("blocker blocked-production-readiness") != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 31 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker blocked-production-readiness "
+        "detail matching member cleanup production-readiness record is blocked"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 31 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker typed-promotion-disabled detail typed promotion gate production is disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 31 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker blocked-mutation-readiness "
+        "detail matching member cleanup mutation-readiness record production is disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup promotion blocker owner holder.items index index "
+        "element Inner moved Inner member-path none source-line 31 source-text "
+        "var selected: TaggedInner = Secondary(holder.items[index]) "
+        "blocker blocked-rewrite-promotion "
+        "detail matching member cleanup rewrite-promotion record production is disabled"
+    ) != std::string::npos);
     assert(output.find("runtime-index member cleanup production-readiness owner ") != std::string::npos);
     assert(output.find(
         "proof missing target-metadata missing helper-drop-bindings ready cfg-slice missing "
