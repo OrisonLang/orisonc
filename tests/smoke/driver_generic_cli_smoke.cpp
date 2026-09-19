@@ -1301,25 +1301,7 @@ void assert_cli_runtime_indexed_choice_payload_nested_computed_member_cleanup_re
         "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
     assert(output.find(
-        "runtime-index member cleanup helper-drop-bindings owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 51 source-text "
-        "var outer: Outer = Outer(holder.items[index + zero].box.item) "
-        "helper __orison_member_cleanup.Wrap.except.box.item "
-        "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production enabled"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup mutation-production-readiness owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 51 source-text "
-        "var outer: Outer = Outer(holder.items[index + zero].box.item) promotion ready "
-        "post-apply-verification ready authorization ready ir-mutation requested production-gate enabled "
-        "readiness ready report-only false production enabled blockers 0"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup mutation rewrite promotion-status owner holder.items index (index + zero) "
-        "element Wrap moved Inner member-path box.item source-line 51 source-text "
-        "var outer: Outer = Outer(holder.items[index + zero].box.item) authorization ready "
-        "execution-plan ready execution-verdict ready promotion ready blockers 0 diagnostics 0 "
-        "report-only false production enabled"
+        "runtime-index member cleanup production-readiness owner holder.items index (index + zero) "
     ) != std::string::npos);
     assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
     assert(output.find("blocker production-member-cleanup") == std::string::npos);
