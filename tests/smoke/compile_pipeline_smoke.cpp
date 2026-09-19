@@ -83,8 +83,9 @@ void test_no_option_pipeline_emission_uses_production_defaults(
     assert(no_option_object.object_bytes == production_object.object_bytes);
 }
 
-void test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success() {
-    auto const state = orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+auto ready_runtime_indexed_cleanup_formatter_state()
+    -> orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+    return orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
         .insertion_gate_ready = true,
         .insertion_preview_ready = true,
         .candidate_ready = true,
@@ -98,7 +99,73 @@ void test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success(
             orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None,
         .function_splice_conflict_count = 0,
     };
+}
 
+auto scalar_splice_conflict_formatter_state()
+    -> orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+    auto constexpr first_source =
+        "var first_selected: SelectedInner = SelectedInner(first_holder.items[first_index])";
+    auto constexpr second_source =
+        "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])";
+
+    auto state = ready_runtime_indexed_cleanup_formatter_state();
+    state.function_integration_ready = false;
+    state.function_splice_conflict_free = false;
+    state.production_ready = false;
+    state.diagnostic_blocker_kind =
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict;
+    state.blockers = {
+        orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+            .kind =
+                orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
+            .stage_name = "function splice conflict",
+            .function_symbol_name = "select_both",
+            .composition_failure = orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+            .composition_failure_part_available = true,
+            .composition_failure_part_index = 1,
+            .composition_failure_splice_range =
+                orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+                    .start_offset = 72,
+                    .end_offset = 96,
+                },
+            .rewrite_apply_stage_available = true,
+            .branch_replacements_applied = false,
+            .cleanup_cfg_appended = false,
+            .phi_predecessors_retargeted = false,
+            .source_available = true,
+            .source_line = 30,
+            .source_text = second_source,
+        },
+    };
+    state.function_splice_conflict_count = 1;
+    state.diagnostic_blocker_stage_name = "function splice conflict";
+    state.diagnostic_function_symbol_name = "select_both";
+    state.diagnostic_composition_failure = orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate;
+    state.diagnostic_composition_failure_part_available = true;
+    state.diagnostic_composition_failure_part_index = 1;
+    state.diagnostic_composition_failure_splice_range =
+        orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+            .start_offset = 72,
+            .end_offset = 96,
+        };
+    state.diagnostic_rewrite_apply_stage_available = true;
+    state.diagnostic_branch_replacements_applied = false;
+    state.diagnostic_cleanup_cfg_appended = false;
+    state.diagnostic_phi_predecessors_retargeted = false;
+    state.diagnostic_source_available = true;
+    state.diagnostic_source_line = 30;
+    state.diagnostic_source_text = second_source;
+    state.diagnostic_left_candidate_index = 0;
+    state.diagnostic_right_candidate_index = 1;
+    state.diagnostic_left_source_line = 22;
+    state.diagnostic_right_source_line = 30;
+    state.diagnostic_left_source_text = first_source;
+    state.diagnostic_right_source_text = second_source;
+    return state;
+}
+
+void test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success() {
+    auto const state = ready_runtime_indexed_cleanup_formatter_state();
     auto const report =
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
     assert(
@@ -115,69 +182,7 @@ void test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success(
 }
 
 void test_runtime_indexed_cleanup_production_readiness_formatter_splice_conflict() {
-    auto state = orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
-        .insertion_gate_ready = true,
-        .insertion_preview_ready = true,
-        .candidate_ready = true,
-        .candidate_verified = true,
-        .module_mutation_enabled = true,
-        .function_integration_ready = false,
-        .function_splice_conflict_free = false,
-        .ir_shape_ready = true,
-        .production_ready = false,
-        .diagnostic_blocker_kind =
-            orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
-        .blockers = {
-            orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
-                .kind =
-                    orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
-                .stage_name = "function splice conflict",
-                .function_symbol_name = "select_both",
-                .composition_failure = orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
-                .composition_failure_part_available = true,
-                .composition_failure_part_index = 1,
-                .composition_failure_splice_range =
-                    orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
-                        .start_offset = 72,
-                        .end_offset = 96,
-                    },
-                .rewrite_apply_stage_available = true,
-                .branch_replacements_applied = false,
-                .cleanup_cfg_appended = false,
-                .phi_predecessors_retargeted = false,
-                .source_available = true,
-                .source_line = 30,
-                .source_text = "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])",
-            },
-        },
-        .function_splice_conflict_count = 1,
-        .diagnostic_blocker_stage_name = "function splice conflict",
-        .diagnostic_function_symbol_name = "select_both",
-        .diagnostic_composition_failure = orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
-        .diagnostic_composition_failure_part_available = true,
-        .diagnostic_composition_failure_part_index = 1,
-        .diagnostic_composition_failure_splice_range =
-            orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
-                .start_offset = 72,
-                .end_offset = 96,
-            },
-        .diagnostic_rewrite_apply_stage_available = true,
-        .diagnostic_branch_replacements_applied = false,
-        .diagnostic_cleanup_cfg_appended = false,
-        .diagnostic_phi_predecessors_retargeted = false,
-        .diagnostic_source_available = true,
-        .diagnostic_source_line = 30,
-        .diagnostic_source_text =
-            "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])",
-        .diagnostic_left_candidate_index = 0,
-        .diagnostic_right_candidate_index = 1,
-        .diagnostic_left_source_line = 22,
-        .diagnostic_right_source_line = 30,
-        .diagnostic_left_source_text =
-            "var first_selected: SelectedInner = SelectedInner(first_holder.items[first_index])",
-        .diagnostic_right_source_text =
-            "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])",
-    };
+    auto state = scalar_splice_conflict_formatter_state();
     state.diagnostic_text =
         orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
 
