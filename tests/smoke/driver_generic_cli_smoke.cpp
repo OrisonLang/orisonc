@@ -2975,8 +2975,6 @@ void assert_cli_emit_llvm_dynamic_array_field_reassignment_fixture_success(
     assert(cleanup != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(cleanup < deallocate);
-    assert(deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success(
@@ -2997,9 +2995,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_reassignment_fixture_success
     assert(drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_fixture_success(
