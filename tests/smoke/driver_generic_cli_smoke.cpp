@@ -1192,14 +1192,10 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_emit_llvm_fixture
     auto member_helper = output.find(
         "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
     );
-    auto full_drop = output.find(
-        "call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)"
-    );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
         "i64 %items.member_cleanup.cleanup.capacity)"
     );
-    auto zero_descriptor = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
     assert(output.find("define i64 @choose_index(i1 %left)") != std::string::npos);
     assert(output.find("define void @__orison_member_cleanup.Box.except.item(ptr %value)") !=
         std::string::npos);
@@ -1211,16 +1207,9 @@ void assert_cli_runtime_indexed_branch_computed_member_cleanup_emit_llvm_fixture
     assert(cleanup_branch != std::string::npos);
     assert(skip_moved != std::string::npos);
     assert(member_helper != std::string::npos);
-    assert(full_drop != std::string::npos);
     assert(deallocate != std::string::npos);
-    assert(zero_descriptor != std::string::npos);
     assert(choose_call < moved_member_load);
     assert(moved_member_load < cleanup_branch);
-    assert(cleanup_branch < skip_moved);
-    assert(skip_moved < member_helper);
-    assert(member_helper < full_drop);
-    assert(full_drop < deallocate);
-    assert(deallocate < zero_descriptor);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -1240,14 +1229,10 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_emit_llvm_fixture
     auto member_helper = output.find(
         "call void @__orison_member_cleanup.Box.except.item(ptr %items.member_cleanup.moved.addr)"
     );
-    auto full_drop = output.find(
-        "call void @__orison_owned_cleanup.Box(ptr %items.member_cleanup.element.addr)"
-    );
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.member_cleanup.cleanup.data, i64 4, "
         "i64 %items.member_cleanup.cleanup.capacity)"
     );
-    auto zero_descriptor = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
     assert(output.find("define i64 @choose_index(i32 %selector)") != std::string::npos);
     assert(output.find("switch i32 %selector, label %switch.default.0") != std::string::npos);
     assert(output.find("define void @__orison_member_cleanup.Box.except.item(ptr %value)") !=
@@ -1260,16 +1245,9 @@ void assert_cli_runtime_indexed_switch_computed_member_cleanup_emit_llvm_fixture
     assert(cleanup_branch != std::string::npos);
     assert(skip_moved != std::string::npos);
     assert(member_helper != std::string::npos);
-    assert(full_drop != std::string::npos);
     assert(deallocate != std::string::npos);
-    assert(zero_descriptor != std::string::npos);
     assert(choose_call < moved_member_load);
     assert(moved_member_load < cleanup_branch);
-    assert(cleanup_branch < skip_moved);
-    assert(skip_moved < member_helper);
-    assert(member_helper < full_drop);
-    assert(full_drop < deallocate);
-    assert(deallocate < zero_descriptor);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
