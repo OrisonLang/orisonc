@@ -114,6 +114,108 @@ void test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success(
     assert(orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(state).empty());
 }
 
+void test_runtime_indexed_cleanup_production_readiness_formatter_splice_conflict() {
+    auto state = orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+        .insertion_gate_ready = true,
+        .insertion_preview_ready = true,
+        .candidate_ready = true,
+        .candidate_verified = true,
+        .module_mutation_enabled = true,
+        .function_integration_ready = false,
+        .function_splice_conflict_free = false,
+        .ir_shape_ready = true,
+        .production_ready = false,
+        .diagnostic_blocker_kind =
+            orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
+        .blockers = {
+            orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlocker {
+                .kind =
+                    orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::FunctionSpliceConflict,
+                .stage_name = "function splice conflict",
+                .function_symbol_name = "select_both",
+                .composition_failure = orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+                .composition_failure_part_available = true,
+                .composition_failure_part_index = 1,
+                .composition_failure_splice_range =
+                    orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+                        .start_offset = 72,
+                        .end_offset = 96,
+                    },
+                .rewrite_apply_stage_available = true,
+                .branch_replacements_applied = false,
+                .cleanup_cfg_appended = false,
+                .phi_predecessors_retargeted = false,
+                .source_available = true,
+                .source_line = 30,
+                .source_text = "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])",
+            },
+        },
+        .function_splice_conflict_count = 1,
+        .diagnostic_blocker_stage_name = "function splice conflict",
+        .diagnostic_function_symbol_name = "select_both",
+        .diagnostic_composition_failure = orison::pipeline::RuntimeIndexedCleanupIrCompositionFailure::invalid_candidate,
+        .diagnostic_composition_failure_part_available = true,
+        .diagnostic_composition_failure_part_index = 1,
+        .diagnostic_composition_failure_splice_range =
+            orison::pipeline::RuntimeIndexedCleanupTextSpliceRange {
+                .start_offset = 72,
+                .end_offset = 96,
+            },
+        .diagnostic_rewrite_apply_stage_available = true,
+        .diagnostic_branch_replacements_applied = false,
+        .diagnostic_cleanup_cfg_appended = false,
+        .diagnostic_phi_predecessors_retargeted = false,
+        .diagnostic_source_available = true,
+        .diagnostic_source_line = 30,
+        .diagnostic_source_text =
+            "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])",
+        .diagnostic_left_candidate_index = 0,
+        .diagnostic_right_candidate_index = 1,
+        .diagnostic_left_source_line = 22,
+        .diagnostic_right_source_line = 30,
+        .diagnostic_left_source_text =
+            "var first_selected: SelectedInner = SelectedInner(first_holder.items[first_index])",
+        .diagnostic_right_source_text =
+            "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])",
+    };
+    state.diagnostic_text =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(state);
+
+    assert(
+        state.diagnostic_text ==
+        "runtime-index cleanup blocked: overlapping same-function splice ranges "
+        "left-line 22 right-line 30 "
+        "left-source var first_selected: SelectedInner = SelectedInner(first_holder.items[first_index]) "
+        "right-source var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index]) "
+        "composition-failure invalid-candidate composition-part 1 splice-range 72..96 "
+        "apply-stages available branch-replacements false cleanup-cfg-appended false phi-retargeted false"
+    );
+    auto const report =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
+    assert(
+        report.find(
+            "function-integration blocked splice-conflicts 1 splice-conflict-check blocked "
+            "ir-shape ready member-cleanup-promotion not-integrated member-promotions 0 "
+            "production blocked blocker-count 1 blocker-kind function-splice-conflict "
+            "function select_both source-line 30 source-text "
+            "var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index])"
+        ) != std::string::npos
+    );
+    assert(report.find("diagnostic runtime-index cleanup blocked: overlapping same-function splice ranges") !=
+        std::string::npos);
+    auto const blocker_report =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(state);
+    assert(blocker_report.size() == 1);
+    assert(
+        blocker_report.front() ==
+        "runtime-index cleanup module-ir production-readiness blocker index 0 "
+        "kind function-splice-conflict stage function splice conflict function select_both source-line 30 "
+        "source-text var second_selected: SelectedInner = SelectedInner(second_holder.items[second_index]) "
+        "composition-failure invalid-candidate composition-part 1 splice-range 72..96 "
+        "apply-stages available branch-replacements false cleanup-cfg-appended false phi-retargeted false"
+    );
+}
+
 void test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text() {
     auto result = orison::pipeline::CompilePipelineResult {};
     result.source_file.emplace(
@@ -1665,6 +1767,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 auto main() -> int {
     test_production_compile_pipeline_options_gate_promotions();
     test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success();
+    test_runtime_indexed_cleanup_production_readiness_formatter_splice_conflict();
     test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text();
     test_runtime_indexed_member_cleanup_helper_body_diagnostic_source_text();
     test_runtime_indexed_cleanup_option_helpers();
