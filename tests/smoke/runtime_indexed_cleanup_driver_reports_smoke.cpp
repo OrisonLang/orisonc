@@ -142,6 +142,16 @@ void assert_constructor_move_report_for_two_member_cleanup_ready() {
             "rewrite-authorized true report-only false production enabled blockers 0"
         ) != std::string::npos
     );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation rewrite authorization owner right_items "
+            "index (right_index + right_zero) element Box moved Inner member-path item "
+            "source-line 25 source-text "
+            "var right_outer: Outer = Outer(right_items[right_index + right_zero].item) "
+            "verdict ready guarded-rewrite ready authorization ready rewrite-requested true "
+            "rewrite-authorized true report-only false production enabled blockers 0"
+        ) != std::string::npos
+    );
 }
 
 }  // namespace
