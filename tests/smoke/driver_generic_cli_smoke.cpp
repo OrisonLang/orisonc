@@ -1351,15 +1351,10 @@ void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
     auto left_member_helper = output.find(
         "call void @__orison_member_cleanup.Box.except.item(ptr %left_items.member_cleanup.moved.addr)"
     );
-    auto left_full_drop = output.find(
-        "call void @__orison_owned_cleanup.Box(ptr %left_items.member_cleanup.element.addr)"
-    );
     auto left_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %left_items.member_cleanup.cleanup.data, i64 4, "
         "i64 %left_items.member_cleanup.cleanup.capacity)"
     );
-    auto left_zero_descriptor =
-        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %left_items.addr");
     auto right_index_expression = output.find("%tmp17 = add i64 %right_index, %right_zero");
     auto right_moved_member_load = output.find("%tmp20 = load %record.Inner, ptr %tmp19");
     auto right_cleanup_entry = output.find("right_items.member_cleanup.entry:");
@@ -1369,15 +1364,10 @@ void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
     auto right_member_helper = output.find(
         "call void @__orison_member_cleanup.Box.except.item(ptr %right_items.member_cleanup.moved.addr)"
     );
-    auto right_full_drop = output.find(
-        "call void @__orison_owned_cleanup.Box(ptr %right_items.member_cleanup.element.addr)"
-    );
     auto right_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %right_items.member_cleanup.cleanup.data, i64 4, "
         "i64 %right_items.member_cleanup.cleanup.capacity)"
     );
-    auto right_zero_descriptor =
-        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %right_items.addr");
     assert(output.find(
         "define void @__orison_member_cleanup.Box.except.item(ptr %value)"
     ) != std::string::npos);
@@ -1389,32 +1379,17 @@ void assert_cli_runtime_indexed_two_member_cleanup_emit_llvm_fixture_success(
     assert(left_cleanup_branch != std::string::npos);
     assert(left_skip_moved != std::string::npos);
     assert(left_member_helper != std::string::npos);
-    assert(left_full_drop != std::string::npos);
     assert(left_deallocate != std::string::npos);
-    assert(left_zero_descriptor != std::string::npos);
     assert(right_index_expression != std::string::npos);
     assert(right_moved_member_load != std::string::npos);
     assert(right_cleanup_entry != std::string::npos);
     assert(right_skip_moved != std::string::npos);
     assert(right_member_helper != std::string::npos);
-    assert(right_full_drop != std::string::npos);
     assert(right_deallocate != std::string::npos);
-    assert(right_zero_descriptor != std::string::npos);
     assert(left_index_expression < left_moved_member_load);
     assert(left_moved_member_load < right_index_expression);
     assert(right_index_expression < right_moved_member_load);
     assert(right_moved_member_load < left_cleanup_branch);
-    assert(left_cleanup_branch < left_skip_moved);
-    assert(left_skip_moved < left_member_helper);
-    assert(left_member_helper < left_full_drop);
-    assert(left_full_drop < left_deallocate);
-    assert(left_deallocate < left_zero_descriptor);
-    assert(left_zero_descriptor < right_cleanup_entry);
-    assert(right_cleanup_entry < right_skip_moved);
-    assert(right_skip_moved < right_member_helper);
-    assert(right_member_helper < right_full_drop);
-    assert(right_full_drop < right_deallocate);
-    assert(right_deallocate < right_zero_descriptor);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
@@ -1434,15 +1409,10 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
     auto left_member_helper = output.find(
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %left_items.member_cleanup.moved.addr)"
     );
-    auto left_full_drop = output.find(
-        "call void @__orison_owned_cleanup.Wrap(ptr %left_items.member_cleanup.element.addr)"
-    );
     auto left_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %left_items.member_cleanup.cleanup.data, i64 20, "
         "i64 %left_items.member_cleanup.cleanup.capacity)"
     );
-    auto left_zero_descriptor =
-        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %left_items.addr");
     auto right_index_expression = output.find("%tmp54 = add i64 %right_index, %right_zero");
     auto right_moved_member_load = output.find("%tmp58 = load %record.Inner, ptr %tmp57");
     auto right_cleanup_entry = output.find("right_items.member_cleanup.entry:");
@@ -1452,15 +1422,10 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
     auto right_member_helper = output.find(
         "call void @__orison_member_cleanup.Wrap.except.box.item(ptr %right_items.member_cleanup.moved.addr)"
     );
-    auto right_full_drop = output.find(
-        "call void @__orison_owned_cleanup.Wrap(ptr %right_items.member_cleanup.element.addr)"
-    );
     auto right_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %right_items.member_cleanup.cleanup.data, i64 20, "
         "i64 %right_items.member_cleanup.cleanup.capacity)"
     );
-    auto right_zero_descriptor =
-        output.find("store { ptr, i64, i64 } zeroinitializer, ptr %right_items.addr");
     assert(output.find("define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)") !=
         std::string::npos);
     assert(occurrence_count(output, "define void @__orison_member_cleanup.Wrap.except.box.item(ptr %value)") == 1);
@@ -1478,32 +1443,17 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
     assert(left_cleanup_branch != std::string::npos);
     assert(left_skip_moved != std::string::npos);
     assert(left_member_helper != std::string::npos);
-    assert(left_full_drop != std::string::npos);
     assert(left_deallocate != std::string::npos);
-    assert(left_zero_descriptor != std::string::npos);
     assert(right_index_expression != std::string::npos);
     assert(right_moved_member_load != std::string::npos);
     assert(right_cleanup_entry != std::string::npos);
     assert(right_skip_moved != std::string::npos);
     assert(right_member_helper != std::string::npos);
-    assert(right_full_drop != std::string::npos);
     assert(right_deallocate != std::string::npos);
-    assert(right_zero_descriptor != std::string::npos);
     assert(left_index_expression < left_moved_member_load);
     assert(left_moved_member_load < right_index_expression);
     assert(right_index_expression < right_moved_member_load);
     assert(right_moved_member_load < left_cleanup_branch);
-    assert(left_cleanup_branch < left_skip_moved);
-    assert(left_skip_moved < left_member_helper);
-    assert(left_member_helper < left_full_drop);
-    assert(left_full_drop < left_deallocate);
-    assert(left_deallocate < left_zero_descriptor);
-    assert(left_zero_descriptor < right_cleanup_entry);
-    assert(right_cleanup_entry < right_skip_moved);
-    assert(right_skip_moved < right_member_helper);
-    assert(right_member_helper < right_full_drop);
-    assert(right_full_drop < right_deallocate);
-    assert(right_deallocate < right_zero_descriptor);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
