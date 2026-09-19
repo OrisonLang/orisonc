@@ -190,6 +190,26 @@ void assert_constructor_move_report_for_two_member_cleanup_ready() {
             "execution-plan ready execution enabled blockers 0 diagnostics 0 report-only false production enabled"
         ) != std::string::npos
     );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation rewrite promotion-status owner left_items "
+            "index (left_index + left_zero) element Box moved Inner member-path item "
+            "source-line 18 source-text "
+            "var left_outer: Outer = Outer(left_items[left_index + left_zero].item) "
+            "authorization ready execution-plan ready execution-verdict ready promotion ready blockers 0 "
+            "diagnostics 0 report-only false production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation rewrite promotion-status owner right_items "
+            "index (right_index + right_zero) element Box moved Inner member-path item "
+            "source-line 25 source-text "
+            "var right_outer: Outer = Outer(right_items[right_index + right_zero].item) "
+            "authorization ready execution-plan ready execution-verdict ready promotion ready blockers 0 "
+            "diagnostics 0 report-only false production enabled"
+        ) != std::string::npos
+    );
 }
 
 }  // namespace
