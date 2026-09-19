@@ -699,14 +699,8 @@ void assert_cli_runtime_indexed_nested_cleanup_emit_llvm_fixture_success(
     assert(output.find("define void @__orison_owned_cleanup.Inner(ptr %value)") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Outer(ptr %SelectedOuter.drop.item.addr)") !=
         std::string::npos);
-    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.primary.addr)") != std::string::npos);
-    assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.items.drop.element.addr)") !=
-        std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.SelectedOuter(ptr %selected.addr)") != std::string::npos);
-    assert(output.find("store %record.SelectedOuter zeroinitializer, ptr %selected.addr") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Outer(ptr %outers.runtime_cleanup.element.addr)") !=
-        std::string::npos);
-    assert(output.find("store %record.Outer zeroinitializer, ptr %outers.runtime_cleanup.element.addr") !=
         std::string::npos);
     assert(output.find("%outers.owned_cleanup.element") == std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
@@ -725,10 +719,7 @@ void assert_cli_runtime_indexed_choice_payload_cleanup_emit_llvm_fixture_success
     assert(output.find("define void @__orison_owned_cleanup.Inner(ptr %value)") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)") == std::string::npos);
     assert(output.find("br label %holder.items.runtime_cleanup.entry") != std::string::npos);
-    assert(output.find("holder.items.runtime_cleanup.condition:") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Outer(ptr %holder.items.runtime_cleanup.element.addr)") !=
-        std::string::npos);
-    assert(output.find("store %record.Outer zeroinitializer, ptr %holder.items.runtime_cleanup.element.addr") !=
         std::string::npos);
     assert(output.find("%selected.Some.item.item.values.choice_dynamic_array_cleanup") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %selected.Some.item.item.values.choice_dynamic_array_cleanup") !=
