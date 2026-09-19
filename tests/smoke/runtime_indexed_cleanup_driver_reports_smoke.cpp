@@ -1,6 +1,8 @@
 #include "orison/driver/runtime_indexed_cleanup_reports.hpp"
+#include "orison/pipeline/compile_pipeline.hpp"
 
 #include <cassert>
+#include <filesystem>
 #include <string>
 
 namespace {
@@ -109,11 +111,35 @@ void assert_mutation_report_for_scalar_same_function_success() {
     assert(report.find("splice-range") == std::string::npos);
 }
 
+void assert_constructor_move_report_for_two_member_cleanup_ready() {
+    auto options = pipeline::production_compile_pipeline_options();
+    options.collect_runtime_indexed_cleanup_audit = true;
+    auto const result = pipeline::CompilePipeline {}.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "runtime_indexed_dynamic_array_constructor_two_computed_member_transfers.or",
+        options
+    );
+    auto const report = driver::runtime_indexed_constructor_move_production_readiness_report(result);
+
+    assert(
+        report.find(
+            "runtime-index cleanup constructor-move production-readiness "
+            "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
+            "capability-count 2 ordinary-emit accepted member-cleanup-promotion ready "
+            "member-production-records 2 member-gate-records 2 member-mutation-records 2 "
+            "member-rewrite-records 2 diagnostic none member-module-ir-shape ready"
+        ) != std::string::npos
+    );
+    assert(report.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
+    assert(report.find("member-module-ir-shape-detail") == std::string::npos);
+}
+
 }  // namespace
 
 auto main() -> int {
     assert_mutation_report_with_composition_detail();
     assert_mutation_report_without_composition_detail();
     assert_mutation_report_for_scalar_same_function_success();
+    assert_constructor_move_report_for_two_member_cleanup_ready();
     return 0;
 }

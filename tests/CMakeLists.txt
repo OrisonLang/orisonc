@@ -397,6 +397,11 @@ target_link_libraries(orison_runtime_indexed_cleanup_driver_reports_smoke
 
 target_compile_features(orison_runtime_indexed_cleanup_driver_reports_smoke PRIVATE cxx_std_23)
 
+target_compile_definitions(orison_runtime_indexed_cleanup_driver_reports_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 add_test(
     NAME orison_runtime_indexed_cleanup_driver_reports_smoke
     COMMAND orison_runtime_indexed_cleanup_driver_reports_smoke
