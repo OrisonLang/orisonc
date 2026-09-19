@@ -666,6 +666,20 @@ void assert_constructor_move_report_for_nested_member_sibling_cleanup_ready() {
     assert(report.find("blocker member-cleanup-ir-mutation ") == std::string::npos);
     assert(report.find("blocker production-member-cleanup-ir-mutation ") == std::string::npos);
     assert(report.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
+
+    auto const module_readiness =
+        pipeline::format_runtime_indexed_cleanup_production_readiness_report(
+            result.runtime_indexed_cleanup_module_ir_production_readiness_state
+        );
+    assert(result.runtime_indexed_cleanup_module_ir_production_readiness_state.member_cleanup_promotion_integrated);
+    assert(result.runtime_indexed_cleanup_module_ir_production_readiness_state.member_cleanup_promotion_count == 1);
+    assert(
+        module_readiness ==
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready insertion-preview ready "
+        "candidate ready candidate-verification verified module-mutation enabled function-integration ready "
+        "splice-conflicts 0 splice-conflict-check clear ir-shape ready member-cleanup-promotion integrated "
+        "member-promotions 1 production ready blocker-count 0 blocker-kind none"
+    );
 }
 
 }  // namespace
