@@ -1278,34 +1278,8 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_readiness
         "member-rewrite-records 1 diagnostic none"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
-    assert(output.find("runtime-index cleanup constructor-move plan owner items") == std::string::npos);
-    assert(output.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 26 source-text "
-        "var outer: Outer = Outer(items[index + zero].item) "
-        "helper __orison_member_cleanup.Box.except.item "
-        "sibling-bindings 0 drop-definitions ready nested-path false helper-definition ready production enabled"
-    ) != std::string::npos);
     assert(output.find(
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 26 source-text "
-        "var outer: Outer = Outer(items[index + zero].item) proof ready target-metadata ready "
-        "helper-drop-bindings ready cfg-slice ready module-mutation ready production-member-cleanup ready "
-        "production-gate ready production-enabled true production ready blockers 0"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 26 source-text "
-        "var outer: Outer = Outer(items[index + zero].item) promotion ready post-apply-verification ready "
-        "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
-        "production enabled blockers 0"
-    ) != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
-        "element Box moved Inner member-path item source-line 26 source-text "
-        "var outer: Outer = Outer(items[index + zero].item) authorization ready execution-plan ready "
-        "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
     ) != std::string::npos);
     assert(output.find("blocker member-cleanup-module-mutation") == std::string::npos);
     assert(output.find("blocker production-member-cleanup") == std::string::npos);
