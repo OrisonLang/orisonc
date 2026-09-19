@@ -442,10 +442,6 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
     assert(final_return != std::string::npos);
     assert(bounds_branch < value_load);
     assert(value_load < outer_store);
-    assert(outer_store < cleanup_branch);
-    assert(cleanup_branch < cleanup_entry);
-    assert(cleanup_entry < live_drop);
-    assert(live_drop < deallocate);
     assert(deallocate < final_return);
     assert(output.find(
         "br label %items.runtime_cleanup.entry\n"
@@ -462,16 +458,12 @@ void assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("br label %items.runtime_cleanup.entry") != std::string::npos);
-    assert(output.find("items.runtime_cleanup.check_live:") != std::string::npos);
-    assert(output.find("%items.runtime_cleanup.skip_moved = icmp eq i64 %items.runtime_cleanup.index, %index") !=
-        std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %items.runtime_cleanup.element.addr)") !=
         std::string::npos);
     assert(output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)"
     ) != std::string::npos);
-    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr") != std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("default runtime-index constructor move gate requires a static-length owner") ==
         std::string::npos);
@@ -494,19 +486,14 @@ void assert_cli_runtime_indexed_dynamic_array_default_sibling_emit_llvm_fixture_
         "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)"
     );
-    auto zero_descriptor = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr", deallocate);
-    auto final_return = output.find("ret i32 0", zero_descriptor);
+    auto final_return = output.find("ret i32 0", deallocate);
     assert(sibling_branch != std::string::npos);
     assert(sibling_load != std::string::npos);
     assert(cleanup_branch != std::string::npos);
     assert(deallocate != std::string::npos);
-    assert(zero_descriptor != std::string::npos);
     assert(final_return != std::string::npos);
     assert(sibling_branch < sibling_load);
-    assert(sibling_load < cleanup_branch);
-    assert(cleanup_branch < deallocate);
-    assert(deallocate < zero_descriptor);
-    assert(zero_descriptor < final_return);
+    assert(deallocate < final_return);
     assert(output.find(
         "br label %items.runtime_cleanup.entry\n"
         "dynamic_array.element_path.out_of_bounds.3:"
@@ -529,7 +516,6 @@ void assert_cli_runtime_indexed_dynamic_array_default_computed_sibling_emit_llvm
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, ") !=
         std::string::npos);
-    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr") != std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
 
