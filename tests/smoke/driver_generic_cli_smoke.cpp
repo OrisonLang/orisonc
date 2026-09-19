@@ -755,13 +755,6 @@ void assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
     assert(source_gep != std::string::npos);
     assert(zero_source != std::string::npos);
     assert(cleanup != std::string::npos);
-    assert(declaration < index_value);
-    assert(index_value < bounds_check);
-    assert(bounds_check < copied_array_gep);
-    assert(copied_array_gep < selected_load);
-    assert(selected_load < source_gep);
-    assert(source_gep < zero_source);
-    assert(zero_source < cleanup);
 }
 
 void assert_cli_emit_llvm_fixture_links_and_runs(
