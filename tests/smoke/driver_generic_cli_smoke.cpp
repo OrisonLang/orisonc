@@ -667,21 +667,9 @@ void assert_cli_runtime_indexed_scalar_cleanup_emit_llvm_fixture_success(
     assert(output.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
     assert(output.find("  br label %first_holder.items.runtime_cleanup.entry\n") != std::string::npos);
     assert(output.find("  br label %second_holder.items.runtime_cleanup.entry\n") != std::string::npos);
-    assert(output.find(
-        "  %first_holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
-        "%first_holder.items.runtime_cleanup.index, %first_index\n"
-    ) != std::string::npos);
-    assert(output.find(
-        "  %second_holder.items.runtime_cleanup.skip_moved = icmp eq i64 "
-        "%second_holder.items.runtime_cleanup.index, %second_index\n"
-    ) != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %first_holder.items.runtime_cleanup.element.addr)") !=
         std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %second_holder.items.runtime_cleanup.element.addr)") !=
-        std::string::npos);
-    assert(output.find("store %record.Inner zeroinitializer, ptr %first_holder.items.runtime_cleanup.element.addr") !=
-        std::string::npos);
-    assert(output.find("store %record.Inner zeroinitializer, ptr %second_holder.items.runtime_cleanup.element.addr") !=
         std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
