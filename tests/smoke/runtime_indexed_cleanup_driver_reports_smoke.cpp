@@ -278,6 +278,66 @@ void assert_constructor_move_report_for_two_member_cleanup_ready() {
     );
 }
 
+void assert_constructor_move_report_for_branch_computed_cleanup_ready() {
+    auto options = pipeline::production_compile_pipeline_options();
+    options.collect_runtime_indexed_cleanup_audit = true;
+    auto const result = pipeline::CompilePipeline {}.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "runtime_indexed_dynamic_array_constructor_branch_computed_member_transfer.or",
+        options
+    );
+    auto const report = driver::runtime_indexed_constructor_move_production_readiness_report(result);
+
+    assert(
+        report.find(
+            "runtime-index cleanup constructor-move production-readiness "
+            "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
+            "capability-count 1 ordinary-emit accepted member-cleanup-promotion ready "
+            "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
+            "member-rewrite-records 1 diagnostic none member-module-ir-shape ready"
+        ) != std::string::npos
+    );
+    assert(report.find("runtime-index cleanup constructor-move plan owner items") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
+    assert(
+        report.find(
+            "runtime-index member cleanup helper-drop-bindings owner items index choose_index(true) "
+            "element Box moved Inner member-path item source-line 16 source-text "
+            "var outer: Outer = Outer(items[choose_index(true)].item) "
+            "helper __orison_member_cleanup.Box.except.item sibling-bindings 0 "
+            "drop-definitions ready nested-path false helper-definition ready production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup production-readiness owner items index choose_index(true) "
+            "element Box moved Inner member-path item source-line 16 source-text "
+            "var outer: Outer = Outer(items[choose_index(true)].item) "
+            "proof ready target-metadata ready helper-drop-bindings ready cfg-slice ready "
+            "module-mutation ready production-member-cleanup ready production-gate ready "
+            "production-enabled true production ready blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation-production-readiness owner items index choose_index(true) "
+            "element Box moved Inner member-path item source-line 16 source-text "
+            "var outer: Outer = Outer(items[choose_index(true)].item) "
+            "promotion ready post-apply-verification ready authorization ready ir-mutation requested "
+            "production-gate enabled readiness ready report-only false production enabled blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation rewrite promotion-status owner items index choose_index(true) "
+            "element Box moved Inner member-path item source-line 16 source-text "
+            "var outer: Outer = Outer(items[choose_index(true)].item) "
+            "authorization ready execution-plan ready execution-verdict ready promotion ready blockers 0 "
+            "diagnostics 0 report-only false production enabled"
+        ) != std::string::npos
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -285,5 +345,6 @@ auto main() -> int {
     assert_mutation_report_without_composition_detail();
     assert_mutation_report_for_scalar_same_function_success();
     assert_constructor_move_report_for_two_member_cleanup_ready();
+    assert_constructor_move_report_for_branch_computed_cleanup_ready();
     return 0;
 }
