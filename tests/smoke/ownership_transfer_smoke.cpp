@@ -147,6 +147,23 @@ int main() {
         "runtime-index partial owner owner holder.items index index element Inner moved Inner "
         "cleanup skip-moved-element constructor-move disabled"
     );
+    auto same_function_first_owner = runtime_indexed.runtime_indexed_partial_owners.front();
+    same_function_first_owner.owner_name = "first_holder.items";
+    same_function_first_owner.index_expression_text = "first_index";
+    same_function_first_owner.constructor_move_enabled = true;
+    assert(
+        orison::lowering::runtime_indexed_partial_owner_report(same_function_first_owner) ==
+        "runtime-index partial owner owner first_holder.items index first_index element Inner moved Inner "
+        "cleanup skip-moved-element constructor-move enabled"
+    );
+    auto same_function_second_owner = same_function_first_owner;
+    same_function_second_owner.owner_name = "second_holder.items";
+    same_function_second_owner.index_expression_text = "second_index";
+    assert(
+        orison::lowering::runtime_indexed_partial_owner_report(same_function_second_owner) ==
+        "runtime-index partial owner owner second_holder.items index second_index element Inner moved Inner "
+        "cleanup skip-moved-element constructor-move enabled"
+    );
     assert(
         orison::lowering::runtime_indexed_cleanup_skip_plan_report(
             runtime_indexed.runtime_indexed_cleanup_skip_plans.front()
