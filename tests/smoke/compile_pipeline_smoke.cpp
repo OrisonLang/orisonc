@@ -14913,6 +14913,72 @@ auto main() -> int {
         assert(deallocate < replacement_store);
     }
 
+    {
+        auto const direct_indexed_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_direct_indexed_field_reassignment_run.or";
+        auto direct_indexed_field_reassignment = pipeline.emit_llvm(
+            direct_indexed_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!direct_indexed_field_reassignment.has_errors());
+        auto const values_address =
+            direct_indexed_field_reassignment.ir_text.find("%holder.values.addr");
+        auto const first_element_address =
+            direct_indexed_field_reassignment.ir_text.find("%holder.values.element0.reassign.addr");
+        auto const first_cleanup =
+            direct_indexed_field_reassignment.ir_text.find(
+                "%holder.values.element0.dynamic_array_reassign_cleanup"
+            );
+        auto const first_drop = direct_indexed_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.values.element0.dynamic_array_reassign_cleanup"
+        );
+        auto const first_deallocate = direct_indexed_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.values.element0.dynamic_array_reassign_cleanup"
+        );
+        auto const second_element_address =
+            direct_indexed_field_reassignment.ir_text.find("%holder.values.element1.reassign.addr");
+        auto const second_cleanup =
+            direct_indexed_field_reassignment.ir_text.find(
+                "%holder.values.element1.dynamic_array_reassign_cleanup"
+            );
+        auto const second_drop = direct_indexed_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.values.element1.dynamic_array_reassign_cleanup"
+        );
+        auto const second_deallocate = direct_indexed_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.values.element1.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            direct_indexed_field_reassignment.ir_text.find(
+                "store [2 x { ptr, i64, i64 }] %tmp",
+                second_deallocate
+            );
+        assert(values_address != std::string::npos);
+        assert(first_element_address != std::string::npos);
+        assert(first_cleanup != std::string::npos);
+        assert(first_drop != std::string::npos);
+        assert(first_deallocate != std::string::npos);
+        assert(second_element_address != std::string::npos);
+        assert(second_cleanup != std::string::npos);
+        assert(second_drop != std::string::npos);
+        assert(second_deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(values_address < first_element_address);
+        assert(first_element_address < first_cleanup);
+        assert(first_cleanup < first_drop);
+        assert(first_drop < first_deallocate);
+        assert(first_deallocate < second_element_address);
+        assert(second_element_address < second_cleanup);
+        assert(first_deallocate < second_cleanup);
+        assert(second_cleanup < second_drop);
+        assert(second_drop < second_deallocate);
+        assert(second_deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
