@@ -132,6 +132,72 @@ void assert_constructor_move_report_for_two_member_cleanup_ready() {
     );
     assert(report.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
     assert(report.find("member-module-ir-shape-detail") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move plan owner left_items") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move plan owner right_items") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move ir-shape owner left_items") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move ir-shape owner right_items") == std::string::npos);
+    assert(
+        report.find(
+            "runtime-index member cleanup helper-drop-bindings owner left_items "
+            "index (left_index + left_zero) element Box moved Inner member-path item "
+            "source-line 18 source-text "
+            "var left_outer: Outer = Outer(left_items[left_index + left_zero].item) "
+            "helper __orison_member_cleanup.Box.except.item sibling-bindings 0 "
+            "drop-definitions ready nested-path false helper-definition ready production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup helper-drop-bindings owner right_items "
+            "index (right_index + right_zero) element Box moved Inner member-path item "
+            "source-line 25 source-text "
+            "var right_outer: Outer = Outer(right_items[right_index + right_zero].item) "
+            "helper __orison_member_cleanup.Box.except.item sibling-bindings 0 "
+            "drop-definitions ready nested-path false helper-definition ready production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup production-readiness owner left_items "
+            "index (left_index + left_zero) element Box moved Inner member-path item "
+            "source-line 18 source-text "
+            "var left_outer: Outer = Outer(left_items[left_index + left_zero].item) "
+            "proof ready target-metadata ready helper-drop-bindings ready cfg-slice ready "
+            "module-mutation ready production-member-cleanup ready production-gate ready "
+            "production-enabled true production ready blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup production-readiness owner right_items "
+            "index (right_index + right_zero) element Box moved Inner member-path item "
+            "source-line 25 source-text "
+            "var right_outer: Outer = Outer(right_items[right_index + right_zero].item) "
+            "proof ready target-metadata ready helper-drop-bindings ready cfg-slice ready "
+            "module-mutation ready production-member-cleanup ready production-gate ready "
+            "production-enabled true production ready blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation-production-readiness owner left_items "
+            "index (left_index + left_zero) element Box moved Inner member-path item "
+            "source-line 18 source-text "
+            "var left_outer: Outer = Outer(left_items[left_index + left_zero].item) "
+            "promotion ready post-apply-verification ready authorization ready ir-mutation requested "
+            "production-gate enabled readiness ready report-only false production enabled blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation-production-readiness owner right_items "
+            "index (right_index + right_zero) element Box moved Inner member-path item "
+            "source-line 25 source-text "
+            "var right_outer: Outer = Outer(right_items[right_index + right_zero].item) "
+            "promotion ready post-apply-verification ready authorization ready ir-mutation requested "
+            "production-gate enabled readiness ready report-only false production enabled blockers 0"
+        ) != std::string::npos
+    );
     assert(
         report.find(
             "runtime-index member cleanup mutation rewrite authorization owner left_items "
