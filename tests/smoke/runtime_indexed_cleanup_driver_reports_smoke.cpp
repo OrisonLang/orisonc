@@ -132,6 +132,16 @@ void assert_constructor_move_report_for_two_member_cleanup_ready() {
     );
     assert(report.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
     assert(report.find("member-module-ir-shape-detail") == std::string::npos);
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation rewrite authorization owner left_items "
+            "index (left_index + left_zero) element Box moved Inner member-path item "
+            "source-line 18 source-text "
+            "var left_outer: Outer = Outer(left_items[left_index + left_zero].item) "
+            "verdict ready guarded-rewrite ready authorization ready rewrite-requested true "
+            "rewrite-authorized true report-only false production enabled blockers 0"
+        ) != std::string::npos
+    );
 }
 
 }  // namespace
