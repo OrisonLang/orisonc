@@ -83,6 +83,37 @@ void test_no_option_pipeline_emission_uses_production_defaults(
     assert(no_option_object.object_bytes == production_object.object_bytes);
 }
 
+void test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success() {
+    auto const state = orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessState {
+        .insertion_gate_ready = true,
+        .insertion_preview_ready = true,
+        .candidate_ready = true,
+        .candidate_verified = true,
+        .module_mutation_enabled = true,
+        .function_integration_ready = true,
+        .function_splice_conflict_free = true,
+        .ir_shape_ready = true,
+        .production_ready = true,
+        .diagnostic_blocker_kind =
+            orison::pipeline::RuntimeIndexedCleanupModuleIrProductionReadinessBlockerKind::None,
+        .function_splice_conflict_count = 0,
+    };
+
+    auto const report =
+        orison::pipeline::format_runtime_indexed_cleanup_production_readiness_report(state);
+    assert(
+        report ==
+        "runtime-index cleanup module-ir production-readiness insertion-gate ready "
+        "insertion-preview ready candidate ready candidate-verification verified "
+        "module-mutation enabled function-integration ready splice-conflicts 0 "
+        "splice-conflict-check clear ir-shape ready member-cleanup-promotion not-integrated "
+        "member-promotions 0 production ready blocker-count 0 blocker-kind none"
+    );
+    assert(report.find("diagnostic runtime-index cleanup blocked") == std::string::npos);
+    assert(orison::pipeline::format_runtime_indexed_cleanup_production_readiness_diagnostic(state).empty());
+    assert(orison::pipeline::format_runtime_indexed_cleanup_production_readiness_blocker_report(state).empty());
+}
+
 void test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text() {
     auto result = orison::pipeline::CompilePipelineResult {};
     result.source_file.emplace(
@@ -1633,6 +1664,7 @@ void assert_runtime_indexed_constructor_move_shape_faults(
 
 auto main() -> int {
     test_production_compile_pipeline_options_gate_promotions();
+    test_runtime_indexed_cleanup_production_readiness_formatter_scalar_success();
     test_runtime_indexed_member_cleanup_promotion_blocker_audit_line_source_text();
     test_runtime_indexed_member_cleanup_helper_body_diagnostic_source_text();
     test_runtime_indexed_cleanup_option_helpers();
