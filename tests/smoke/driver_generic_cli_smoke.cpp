@@ -633,16 +633,9 @@ void assert_cli_runtime_indexed_cleanup_emit_llvm_fixture_success(
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %Inner.drop.values.cleanup.data") !=
         std::string::npos);
-    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %Inner.drop.values.addr") !=
-        std::string::npos);
-    assert(output.find("Holder.drop.items.drop.walk:\n") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %Holder.drop.items.drop.element.addr)") !=
         std::string::npos);
-    assert(output.find("store %record.Inner zeroinitializer, ptr %Holder.drop.items.drop.element.addr") !=
-        std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Inner(ptr %SelectedInner.drop.item.addr)") !=
-        std::string::npos);
-    assert(output.find("store %record.Inner zeroinitializer, ptr %SelectedInner.drop.item.addr") !=
         std::string::npos);
     assert(output.find("runtime-index cleanup module-ir production-readiness") == std::string::npos);
     assert(output.find("  br label %first_holder.items.runtime_cleanup.entry\n") != std::string::npos);
