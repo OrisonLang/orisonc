@@ -14979,6 +14979,45 @@ auto main() -> int {
         assert(second_deallocate < replacement_store);
     }
 
+    {
+        auto const direct_indexed_element_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_direct_indexed_element_reassignment_run.or";
+        auto direct_indexed_element_reassignment = pipeline.emit_llvm(
+            direct_indexed_element_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!direct_indexed_element_reassignment.has_errors());
+        auto const element_address =
+            direct_indexed_element_reassignment.ir_text.find("%holder.values.element0.addr");
+        auto const cleanup =
+            direct_indexed_element_reassignment.ir_text.find(
+                "%holder.values.element0.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = direct_indexed_element_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.values.element0.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = direct_indexed_element_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.values.element0.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            direct_indexed_element_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(element_address != std::string::npos);
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(element_address < cleanup);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {

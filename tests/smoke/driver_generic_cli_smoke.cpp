@@ -3053,10 +3053,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_element_reassignmen
     assert(drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(element_address < cleanup);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_field_reassignment_fixture_success(
