@@ -506,6 +506,100 @@ void assert_constructor_move_report_for_choice_payload_nested_computed_cleanup_r
     );
 }
 
+void assert_constructor_move_report_for_nested_member_sibling_cleanup_ready() {
+    auto options = pipeline::production_compile_pipeline_options();
+    options.collect_runtime_indexed_cleanup_audit = true;
+    auto const result = pipeline::CompilePipeline {}.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_sibling_transfer.or",
+        options
+    );
+    auto const report = driver::runtime_indexed_constructor_move_production_readiness_report(result);
+
+    assert(
+        report.find(
+            "runtime-index cleanup constructor-move production-readiness "
+            "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
+            "capability-count 1 ordinary-emit accepted member-cleanup-promotion ready "
+            "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
+            "member-rewrite-records 1 diagnostic none member-module-ir-shape ready"
+        ) != std::string::npos
+    );
+    assert(report.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
+    assert(report.find("member-module-ir-shape-detail") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move plan owner items") == std::string::npos);
+    assert(report.find("runtime-index cleanup constructor-move ir-shape owner items") == std::string::npos);
+    assert(
+        report.find(
+            "runtime-index member cleanup helper-drop-bindings owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) "
+            "helper __orison_member_cleanup.Wrap.except.box.item "
+            "sibling-bindings 4 drop-definitions ready nested-path true helper-definition ready production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup helper-body owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) "
+            "helper __orison_member_cleanup.Wrap.except.box.item operations 4 address-projections 4 "
+            "cleanup-calls 4 zero-stores 4 nested-path true helper-definition ready production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup production-readiness owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) proof ready target-metadata ready "
+            "helper-drop-bindings ready cfg-slice ready module-mutation ready production-member-cleanup ready "
+            "production-gate ready production-enabled true production ready blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation-operation-validation owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) seam selected count valid order valid "
+            "branch-replacement-fields valid cfg-append-fields valid phi-retarget-fields valid operations-ready ready "
+            "no-operations-applied true validation ready report-only true production disabled blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) promotion ready post-apply-verification ready "
+            "authorization ready ir-mutation requested production-gate enabled readiness ready report-only false "
+            "production enabled blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup mutation rewrite promotion-status owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) authorization ready execution-plan ready "
+            "execution-verdict ready promotion ready blockers 0 diagnostics 0 report-only false production enabled"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
+            "runtime-index member cleanup execution-summary owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) typed-gate ready apply authorized "
+            "rewrite-authorization authorized rewrite-execution enabled rewrite-verdict enabled "
+            "rewrite-promotion ready helper-bindings 1 helper-target "
+            "__orison_member_cleanup.Wrap.except.box.item helper-sibling-bindings 4 "
+            "helper-definition ready production enabled"
+        ) != std::string::npos
+    );
+    assert(report.find("blocker member-cleanup-module-mutation") == std::string::npos);
+    assert(report.find("blocker production-member-cleanup") == std::string::npos);
+    assert(report.find("blocker member-cleanup-ir-mutation ") == std::string::npos);
+    assert(report.find("blocker production-member-cleanup-ir-mutation ") == std::string::npos);
+    assert(report.find("blocker member-cleanup-mutation-rewrite-not-authorized") == std::string::npos);
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -517,5 +611,6 @@ auto main() -> int {
     assert_constructor_move_report_for_switch_computed_cleanup_ready();
     assert_constructor_move_report_for_choice_payload_computed_cleanup_ready();
     assert_constructor_move_report_for_choice_payload_nested_computed_cleanup_ready();
+    assert_constructor_move_report_for_nested_member_sibling_cleanup_ready();
     return 0;
 }
