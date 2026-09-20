@@ -3376,9 +3376,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
     assert(final_outer_drop != std::string::npos);
-    assert(replacement_cleanup < replacement_drop);
-    assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_move_fixture_success(

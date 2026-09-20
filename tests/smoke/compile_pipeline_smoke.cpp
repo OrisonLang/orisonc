@@ -36,6 +36,14 @@ namespace {
 
 namespace smoke = orison::tests::smoke;
 
+auto find_final_outer_drop(
+    std::string const& output,
+    std::string_view owner_name,
+    std::size_t after
+) -> std::size_t {
+    return output.find("call void @__orison_owned_cleanup.Outer(ptr %" + std::string {owner_name} + ".addr)", after);
+}
+
 void test_production_compile_pipeline_options_gate_promotions() {
     auto const options = orison::pipeline::production_compile_pipeline_options();
     assert(options.semantic_owned_cleanup_lowering_enabled);
@@ -15605,6 +15613,55 @@ auto main() -> int {
         assert(spare_cleanup < spare_drop);
         assert(spare_drop < spare_deallocate);
         assert(spare_deallocate < replacement_store);
+    }
+
+    {
+        auto const returned_nested_record_field_move_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_returned_nested_record_field_move_run.or";
+        auto returned_nested_record_field_move = pipeline.emit_llvm(
+            returned_nested_record_field_move_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!returned_nested_record_field_move.has_errors());
+        auto const maker_start =
+            returned_nested_record_field_move.ir_text.find("define %record.Outer @make_outer");
+        auto const maker_end =
+            returned_nested_record_field_move.ir_text.find("define i32 @main", maker_start);
+        auto const stale_values_cleanup =
+            returned_nested_record_field_move.ir_text.find("%inner.values.dynamic_array_cleanup", maker_start);
+        auto const stale_spare_cleanup =
+            returned_nested_record_field_move.ir_text.find("%inner.spare.dynamic_array_cleanup", maker_start);
+        auto const replacement_cleanup =
+            returned_nested_record_field_move.ir_text.find(
+                "%outer.inner.values.dynamic_array_reassign_cleanup",
+                maker_end
+            );
+        auto const replacement_drop =
+            returned_nested_record_field_move.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr "
+                "%outer.inner.values.dynamic_array_reassign_cleanup",
+                replacement_cleanup
+            );
+        auto const replacement_deallocate =
+            returned_nested_record_field_move.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr "
+                "%outer.inner.values.dynamic_array_reassign_cleanup",
+                replacement_drop
+            );
+        auto const final_outer_drop =
+            find_final_outer_drop(returned_nested_record_field_move.ir_text, "outer", replacement_deallocate);
+        assert(maker_start != std::string::npos);
+        assert(maker_end != std::string::npos);
+        assert(stale_values_cleanup == std::string::npos || maker_end < stale_values_cleanup);
+        assert(stale_spare_cleanup == std::string::npos || maker_end < stale_spare_cleanup);
+        assert(replacement_cleanup != std::string::npos);
+        assert(replacement_drop != std::string::npos);
+        assert(replacement_deallocate != std::string::npos);
+        assert(final_outer_drop != std::string::npos);
+        assert(replacement_cleanup < replacement_drop);
+        assert(replacement_drop < replacement_deallocate);
+        assert(replacement_deallocate < final_outer_drop);
     }
 
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
