@@ -15193,6 +15193,63 @@ auto main() -> int {
     }
 
     {
+        auto const multi_field_nested_record_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_multi_field_nested_record_reassignment_run.or";
+        auto multi_field_nested_record_reassignment = pipeline.emit_llvm(
+            multi_field_nested_record_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!multi_field_nested_record_reassignment.has_errors());
+        auto const inner_address =
+            multi_field_nested_record_reassignment.ir_text.find("%outer.inner.addr");
+        auto const values_cleanup =
+            multi_field_nested_record_reassignment.ir_text.find(
+                "%outer.inner.values.dynamic_array_reassign_cleanup"
+            );
+        auto const values_drop = multi_field_nested_record_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%outer.inner.values.dynamic_array_reassign_cleanup"
+        );
+        auto const values_deallocate = multi_field_nested_record_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%outer.inner.values.dynamic_array_reassign_cleanup"
+        );
+        auto const spare_cleanup =
+            multi_field_nested_record_reassignment.ir_text.find(
+                "%outer.inner.spare.dynamic_array_reassign_cleanup"
+            );
+        auto const spare_drop = multi_field_nested_record_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%outer.inner.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const spare_deallocate = multi_field_nested_record_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%outer.inner.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            multi_field_nested_record_reassignment.ir_text.find(
+                "store %record.Inner %tmp",
+                spare_deallocate
+            );
+        assert(inner_address != std::string::npos);
+        assert(values_cleanup != std::string::npos);
+        assert(values_drop != std::string::npos);
+        assert(values_deallocate != std::string::npos);
+        assert(spare_cleanup != std::string::npos);
+        assert(spare_drop != std::string::npos);
+        assert(spare_deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(inner_address < values_cleanup);
+        assert(values_cleanup < values_drop);
+        assert(values_drop < values_deallocate);
+        assert(values_deallocate < spare_cleanup);
+        assert(spare_cleanup < spare_drop);
+        assert(spare_drop < spare_deallocate);
+        assert(spare_deallocate < replacement_store);
+    }
+
+    {
         auto const indexed_record_element_field_reassignment_path =
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_indexed_record_element_field_reassignment_run.or";

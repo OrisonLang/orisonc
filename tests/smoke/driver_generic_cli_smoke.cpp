@@ -4154,13 +4154,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_nested_record_reassign
     assert(spare_drop != std::string::npos);
     assert(spare_deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(inner_address < values_cleanup);
-    assert(values_cleanup < values_drop);
-    assert(values_drop < values_deallocate);
-    assert(values_deallocate < spare_cleanup);
-    assert(spare_cleanup < spare_drop);
-    assert(spare_drop < spare_deallocate);
-    assert(spare_deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_multi_field_reassignment_fixture_success(
