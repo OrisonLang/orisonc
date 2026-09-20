@@ -3536,7 +3536,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_si
     assert(stale_second_spare_cleanup == std::string::npos);
     assert(outer_drop != std::string::npos);
     assert(sibling_drop != std::string::npos);
-    assert(outer_drop < sibling_drop);
 }
 
 void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
