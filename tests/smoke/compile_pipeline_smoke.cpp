@@ -15480,6 +15480,99 @@ auto main() -> int {
     }
 
     {
+        auto const multidimensional_record_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_multidimensional_record_field_reassignment_run.or";
+        auto multidimensional_record_field_reassignment = pipeline.emit_llvm(
+            multidimensional_record_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!multidimensional_record_field_reassignment.has_errors());
+        auto const grid_address =
+            multidimensional_record_field_reassignment.ir_text.find("%holder.grid.addr");
+        auto const first_cleanup =
+            multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
+            );
+        auto const first_drop = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const first_deallocate = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const second_cleanup =
+            multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
+            );
+        auto const second_drop = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
+        );
+        auto const second_deallocate = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
+        );
+        auto const third_cleanup =
+            multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
+            );
+        auto const third_drop = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const third_deallocate = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const fourth_cleanup =
+            multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
+            );
+        auto const fourth_drop = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
+        );
+        auto const fourth_deallocate = multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            multidimensional_record_field_reassignment.ir_text.find(
+                "store [2 x [2 x %record.Item]] %tmp",
+                fourth_deallocate
+            );
+        assert(grid_address != std::string::npos);
+        assert(first_cleanup != std::string::npos);
+        assert(first_drop != std::string::npos);
+        assert(first_deallocate != std::string::npos);
+        assert(second_cleanup != std::string::npos);
+        assert(second_drop != std::string::npos);
+        assert(second_deallocate != std::string::npos);
+        assert(third_cleanup != std::string::npos);
+        assert(third_drop != std::string::npos);
+        assert(third_deallocate != std::string::npos);
+        assert(fourth_cleanup != std::string::npos);
+        assert(fourth_drop != std::string::npos);
+        assert(fourth_deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(grid_address < first_cleanup);
+        assert(first_cleanup < first_drop);
+        assert(first_drop < first_deallocate);
+        assert(first_deallocate < second_cleanup);
+        assert(second_cleanup < second_drop);
+        assert(second_drop < second_deallocate);
+        assert(second_deallocate < third_cleanup);
+        assert(third_cleanup < third_drop);
+        assert(third_drop < third_deallocate);
+        assert(third_deallocate < fourth_cleanup);
+        assert(fourth_cleanup < fourth_drop);
+        assert(fourth_drop < fourth_deallocate);
+        assert(fourth_deallocate < replacement_store);
+    }
+
+    {
         auto const computed_index_nested_sibling_field_reassignment_path =
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_computed_index_nested_record_sibling_field_reassignment_run.or";
