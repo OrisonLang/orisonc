@@ -15018,6 +15018,79 @@ auto main() -> int {
         assert(deallocate < replacement_store);
     }
 
+    {
+        auto const indexed_record_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_indexed_record_field_reassignment_run.or";
+        auto indexed_record_field_reassignment = pipeline.emit_llvm(
+            indexed_record_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!indexed_record_field_reassignment.has_errors());
+        auto const items_address =
+            indexed_record_field_reassignment.ir_text.find("%holder.items.addr");
+        auto const first_item_address =
+            indexed_record_field_reassignment.ir_text.find("%holder.items.element0.reassign.addr");
+        auto const first_field_address =
+            indexed_record_field_reassignment.ir_text.find("%holder.items.element0.values.reassign.addr");
+        auto const first_cleanup =
+            indexed_record_field_reassignment.ir_text.find(
+                "%holder.items.element0.values.dynamic_array_reassign_cleanup"
+            );
+        auto const first_drop = indexed_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.items.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const first_deallocate = indexed_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.items.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const second_item_address =
+            indexed_record_field_reassignment.ir_text.find("%holder.items.element1.reassign.addr");
+        auto const second_field_address =
+            indexed_record_field_reassignment.ir_text.find("%holder.items.element1.values.reassign.addr");
+        auto const second_cleanup =
+            indexed_record_field_reassignment.ir_text.find(
+                "%holder.items.element1.values.dynamic_array_reassign_cleanup"
+            );
+        auto const second_drop = indexed_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.items.element1.values.dynamic_array_reassign_cleanup"
+        );
+        auto const second_deallocate = indexed_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.items.element1.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            indexed_record_field_reassignment.ir_text.find(
+                "store [2 x %record.Item] %tmp",
+                second_deallocate
+            );
+        assert(items_address != std::string::npos);
+        assert(first_item_address != std::string::npos);
+        assert(first_field_address != std::string::npos);
+        assert(first_cleanup != std::string::npos);
+        assert(first_drop != std::string::npos);
+        assert(first_deallocate != std::string::npos);
+        assert(second_item_address != std::string::npos);
+        assert(second_field_address != std::string::npos);
+        assert(second_cleanup != std::string::npos);
+        assert(second_drop != std::string::npos);
+        assert(second_deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(items_address < first_item_address);
+        assert(first_item_address < first_field_address);
+        assert(first_field_address < first_cleanup);
+        assert(first_cleanup < first_drop);
+        assert(first_drop < first_deallocate);
+        assert(first_deallocate < second_item_address);
+        assert(second_item_address < second_field_address);
+        assert(second_field_address < second_cleanup);
+        assert(second_cleanup < second_drop);
+        assert(second_drop < second_deallocate);
+        assert(second_deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {

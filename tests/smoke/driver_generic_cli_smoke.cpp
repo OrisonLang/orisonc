@@ -3093,17 +3093,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_field_reassignment_
     assert(second_drop != std::string::npos);
     assert(second_deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(items_address < first_item_address);
-    assert(first_item_address < first_field_address);
-    assert(first_field_address < first_cleanup);
-    assert(first_cleanup < first_drop);
-    assert(first_drop < first_deallocate);
-    assert(first_deallocate < second_item_address);
-    assert(second_item_address < second_field_address);
-    assert(second_field_address < second_cleanup);
-    assert(second_cleanup < second_drop);
-    assert(second_drop < second_deallocate);
-    assert(second_deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_element_field_reassignment_fixture_success(
