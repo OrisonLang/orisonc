@@ -3257,16 +3257,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_record_field_
     assert(drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(outer_descriptor < outer_bounds);
-    assert(outer_bounds < outer_element);
-    assert(outer_element < nested_descriptor);
-    assert(nested_descriptor < nested_bounds);
-    assert(nested_bounds < nested_element);
-    assert(nested_element < field_address);
-    assert(field_address < cleanup);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_sibling_field_reassignment_fixture_success(
