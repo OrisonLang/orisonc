@@ -15501,6 +15501,112 @@ auto main() -> int {
         assert(deallocate < replacement_store);
     }
 
+    {
+        auto const nested_dynamic_index_multi_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_nested_dynamic_index_multi_field_record_reassignment_run.or";
+        auto nested_dynamic_index_multi_field_reassignment = pipeline.emit_llvm(
+            nested_dynamic_index_multi_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!nested_dynamic_index_multi_field_reassignment.has_errors());
+        auto const outer_descriptor =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find("%groups.dynamic_array_index");
+        auto const outer_bounds =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %group_index",
+                outer_descriptor
+            );
+        auto const outer_element =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                ".element.addr = getelementptr %record.Group",
+                outer_bounds
+            );
+        auto const nested_descriptor =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "%groups.element.items.dynamic_array_index",
+                outer_element
+            );
+        auto const nested_bounds =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %item_index",
+                nested_descriptor
+            );
+        auto const nested_element =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                ".element.addr = getelementptr %record.Item",
+                nested_bounds
+            );
+        auto const values_address =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "%groups.element.items.element.values.reassign.addr",
+                nested_element
+            );
+        auto const values_cleanup =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "%groups.element.items.element.values.dynamic_array_reassign_cleanup"
+            );
+        auto const values_drop = nested_dynamic_index_multi_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%groups.element.items.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const values_deallocate = nested_dynamic_index_multi_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%groups.element.items.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const spare_address =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "%groups.element.items.element.spare.reassign.addr",
+                values_deallocate
+            );
+        auto const spare_cleanup =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "%groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+            );
+        auto const spare_drop = nested_dynamic_index_multi_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const spare_deallocate = nested_dynamic_index_multi_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "store %record.Item %tmp",
+                spare_deallocate
+            );
+        assert(outer_descriptor != std::string::npos);
+        assert(outer_bounds != std::string::npos);
+        assert(outer_element != std::string::npos);
+        assert(nested_descriptor != std::string::npos);
+        assert(nested_bounds != std::string::npos);
+        assert(nested_element != std::string::npos);
+        assert(values_address != std::string::npos);
+        assert(values_cleanup != std::string::npos);
+        assert(values_drop != std::string::npos);
+        assert(values_deallocate != std::string::npos);
+        assert(spare_address != std::string::npos);
+        assert(spare_cleanup != std::string::npos);
+        assert(spare_drop != std::string::npos);
+        assert(spare_deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(outer_descriptor < outer_bounds);
+        assert(outer_bounds < outer_element);
+        assert(outer_element < nested_descriptor);
+        assert(nested_descriptor < nested_bounds);
+        assert(nested_bounds < nested_element);
+        assert(nested_element < values_address);
+        assert(values_address < values_cleanup);
+        assert(values_cleanup < values_drop);
+        assert(values_drop < values_deallocate);
+        assert(values_deallocate < spare_address);
+        assert(spare_address < spare_cleanup);
+        assert(spare_cleanup < spare_drop);
+        assert(spare_drop < spare_deallocate);
+        assert(spare_deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
