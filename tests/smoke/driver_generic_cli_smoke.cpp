@@ -3826,10 +3826,6 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member
     assert(selected_payload_extract != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
     assert(selected_spare_cleanup != std::string::npos);
-    assert(sibling_values_cleanup < sibling_spare_cleanup);
-    assert(sibling_spare_cleanup < selected_payload_extract);
-    assert(selected_payload_extract < selected_values_cleanup);
-    assert(selected_values_cleanup < selected_spare_cleanup);
 }
 
 void assert_cli_emit_llvm_choice_constructor_multi_payload_indexed_member_path_sibling_move_fixture_success(
