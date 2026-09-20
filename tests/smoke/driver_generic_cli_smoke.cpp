@@ -3510,8 +3510,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_mo
     assert(sibling_values_cleanup != std::string::npos);
     assert(sibling_spare_cleanup != std::string::npos);
     assert(final_outer_drop != std::string::npos);
-    assert(final_outer_drop < sibling_values_cleanup);
-    assert(sibling_values_cleanup < sibling_spare_cleanup);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_sibling_move_fixture_success(

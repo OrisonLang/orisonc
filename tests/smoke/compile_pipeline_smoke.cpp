@@ -15871,6 +15871,49 @@ auto main() -> int {
         assert(replacement_deallocate < final_outer_drop);
     }
 
+    {
+        auto const constructor_indexed_member_path_move_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_constructor_indexed_member_path_move_run.or";
+        auto constructor_indexed_member_path_move = pipeline.emit_llvm(
+            constructor_indexed_member_path_move_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!constructor_indexed_member_path_move.has_errors());
+        auto const main_start =
+            constructor_indexed_member_path_move.ir_text.find("define i32 @main");
+        auto const moved_source_values_cleanup =
+            constructor_indexed_member_path_move.ir_text.find(
+                "%holder.items.element0.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const moved_source_spare_cleanup =
+            constructor_indexed_member_path_move.ir_text.find(
+                "%holder.items.element0.spare.dynamic_array_cleanup",
+                main_start
+            );
+        auto const sibling_values_cleanup =
+            constructor_indexed_member_path_move.ir_text.find(
+                "%holder.items.element1.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const sibling_spare_cleanup =
+            constructor_indexed_member_path_move.ir_text.find(
+                "%holder.items.element1.spare.dynamic_array_cleanup",
+                sibling_values_cleanup
+            );
+        auto const final_outer_drop =
+            find_final_outer_drop(constructor_indexed_member_path_move.ir_text, "outer", main_start);
+        assert(main_start != std::string::npos);
+        assert(moved_source_values_cleanup == std::string::npos);
+        assert(moved_source_spare_cleanup == std::string::npos);
+        assert(sibling_values_cleanup != std::string::npos);
+        assert(sibling_spare_cleanup != std::string::npos);
+        assert(final_outer_drop != std::string::npos);
+        assert(final_outer_drop < sibling_values_cleanup);
+        assert(sibling_values_cleanup < sibling_spare_cleanup);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
