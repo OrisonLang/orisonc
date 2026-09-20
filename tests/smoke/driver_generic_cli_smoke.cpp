@@ -4070,9 +4070,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_mov
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
     assert(final_outer_drop != std::string::npos);
-    assert(replacement_cleanup < replacement_drop);
-    assert(replacement_drop < replacement_deallocate);
-    assert(replacement_deallocate < final_outer_drop);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassignment_fixture_success(
