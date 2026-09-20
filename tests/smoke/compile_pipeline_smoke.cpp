@@ -15573,6 +15573,102 @@ auto main() -> int {
     }
 
     {
+        auto const computed_multidimensional_record_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_computed_multidimensional_record_field_reassignment_run.or";
+        auto computed_multidimensional_record_field_reassignment = pipeline.emit_llvm(
+            computed_multidimensional_record_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!computed_multidimensional_record_field_reassignment.has_errors());
+        auto const bounds_declaration =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "declare void @__orison_dynamic_array_bounds_failed()"
+            );
+        auto const row_index =
+            computed_multidimensional_record_field_reassignment.ir_text.find("%row = add i64 0, 0");
+        auto const col_index =
+            computed_multidimensional_record_field_reassignment.ir_text.find("%col = add i64 0, 1");
+        auto const row_bounds =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %row, 2",
+                row_index
+            );
+        auto const row_trap =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "fixed_array.index.out_of_bounds.",
+                row_bounds
+            );
+        auto const row_address =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "getelementptr [2 x [2 x %record.Item]], ptr %tmp",
+                row_trap
+            );
+        auto const col_bounds =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %col, 2",
+                col_index
+            );
+        auto const col_trap =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "fixed_array.index.out_of_bounds.",
+                col_bounds
+            );
+        auto const col_address =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "getelementptr [2 x %record.Item], ptr %tmp",
+                col_trap
+            );
+        auto const field_address =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "getelementptr %record.Item, ptr %tmp"
+            );
+        auto const cleanup =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element.element.values.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = computed_multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = computed_multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            computed_multidimensional_record_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(bounds_declaration != std::string::npos);
+        assert(row_index != std::string::npos);
+        assert(col_index != std::string::npos);
+        assert(row_bounds != std::string::npos);
+        assert(row_trap != std::string::npos);
+        assert(row_address != std::string::npos);
+        assert(col_bounds != std::string::npos);
+        assert(col_trap != std::string::npos);
+        assert(col_address != std::string::npos);
+        assert(field_address != std::string::npos);
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(row_index < col_index);
+        assert(col_index < row_bounds);
+        assert(row_bounds < row_trap);
+        assert(row_trap < row_address);
+        assert(row_address < col_bounds);
+        assert(col_bounds < col_trap);
+        assert(col_trap < col_address);
+        assert(col_address < field_address);
+        assert(field_address < cleanup);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
+    {
         auto const computed_index_nested_sibling_field_reassignment_path =
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_computed_index_nested_record_sibling_field_reassignment_run.or";

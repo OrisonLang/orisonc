@@ -4297,18 +4297,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
     assert(drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(row_index < col_index);
-    assert(col_index < row_bounds);
-    assert(row_bounds < row_trap);
-    assert(row_trap < row_address);
-    assert(row_address < col_bounds);
-    assert(col_bounds < col_trap);
-    assert(col_trap < col_address);
-    assert(col_address < field_address);
-    assert(field_address < cleanup);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_mixed_multidimensional_record_field_reassignment_fixture_success(
