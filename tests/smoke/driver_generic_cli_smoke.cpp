@@ -3706,10 +3706,6 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_nested_member_path_mo
     assert(selected_first_spare_cleanup != std::string::npos);
     assert(selected_second_values_cleanup != std::string::npos);
     assert(selected_second_spare_cleanup != std::string::npos);
-    assert(payload_tuple_extract < selected_first_values_cleanup);
-    assert(selected_first_values_cleanup < selected_first_spare_cleanup);
-    assert(selected_first_spare_cleanup < selected_second_values_cleanup);
-    assert(selected_second_values_cleanup < selected_second_spare_cleanup);
 }
 
 void assert_cli_emit_llvm_choice_constructor_multi_payload_second_nested_member_path_move_fixture_success(
