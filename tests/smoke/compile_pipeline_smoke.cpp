@@ -15664,6 +15664,61 @@ auto main() -> int {
         assert(replacement_deallocate < final_outer_drop);
     }
 
+    {
+        auto const returned_fixed_array_record_field_move_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_returned_fixed_array_record_field_move_run.or";
+        auto returned_fixed_array_record_field_move = pipeline.emit_llvm(
+            returned_fixed_array_record_field_move_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!returned_fixed_array_record_field_move.has_errors());
+        auto const maker_start =
+            returned_fixed_array_record_field_move.ir_text.find("define %record.Outer @make_outer");
+        auto const maker_end =
+            returned_fixed_array_record_field_move.ir_text.find("define i32 @main", maker_start);
+        auto const stale_first_values_cleanup =
+            returned_fixed_array_record_field_move.ir_text.find("%items.element0.values.dynamic_array_cleanup", maker_start);
+        auto const stale_first_spare_cleanup =
+            returned_fixed_array_record_field_move.ir_text.find("%items.element0.spare.dynamic_array_cleanup", maker_start);
+        auto const stale_second_values_cleanup =
+            returned_fixed_array_record_field_move.ir_text.find("%items.element1.values.dynamic_array_cleanup", maker_start);
+        auto const stale_second_spare_cleanup =
+            returned_fixed_array_record_field_move.ir_text.find("%items.element1.spare.dynamic_array_cleanup", maker_start);
+        auto const replacement_cleanup =
+            returned_fixed_array_record_field_move.ir_text.find(
+                "%outer.items.element0.values.dynamic_array_reassign_cleanup",
+                maker_end
+            );
+        auto const replacement_drop =
+            returned_fixed_array_record_field_move.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr "
+                "%outer.items.element0.values.dynamic_array_reassign_cleanup",
+                replacement_cleanup
+            );
+        auto const replacement_deallocate =
+            returned_fixed_array_record_field_move.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr "
+                "%outer.items.element0.values.dynamic_array_reassign_cleanup",
+                replacement_drop
+            );
+        auto const final_outer_drop =
+            find_final_outer_drop(returned_fixed_array_record_field_move.ir_text, "outer", replacement_deallocate);
+        assert(maker_start != std::string::npos);
+        assert(maker_end != std::string::npos);
+        assert(stale_first_values_cleanup == std::string::npos || maker_end < stale_first_values_cleanup);
+        assert(stale_first_spare_cleanup == std::string::npos || maker_end < stale_first_spare_cleanup);
+        assert(stale_second_values_cleanup == std::string::npos || maker_end < stale_second_values_cleanup);
+        assert(stale_second_spare_cleanup == std::string::npos || maker_end < stale_second_spare_cleanup);
+        assert(replacement_cleanup != std::string::npos);
+        assert(replacement_drop != std::string::npos);
+        assert(replacement_deallocate != std::string::npos);
+        assert(final_outer_drop != std::string::npos);
+        assert(replacement_cleanup < replacement_drop);
+        assert(replacement_drop < replacement_deallocate);
+        assert(replacement_deallocate < final_outer_drop);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
