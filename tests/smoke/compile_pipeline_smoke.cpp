@@ -15228,6 +15228,57 @@ auto main() -> int {
         assert(deallocate < replacement_store);
     }
 
+    {
+        auto const computed_index_nested_sibling_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_computed_index_nested_record_sibling_field_reassignment_run.or";
+        auto computed_index_nested_sibling_field_reassignment = pipeline.emit_llvm(
+            computed_index_nested_sibling_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!computed_index_nested_sibling_field_reassignment.has_errors());
+        auto const index_value =
+            computed_index_nested_sibling_field_reassignment.ir_text.find("%index = add i64 0, 0");
+        auto const computed_element_address =
+            computed_index_nested_sibling_field_reassignment.ir_text.find(
+                "getelementptr [2 x %record.Item], ptr %tmp"
+            );
+        auto const field_address =
+            computed_index_nested_sibling_field_reassignment.ir_text.find(
+                "getelementptr %record.Inner, ptr %tmp"
+            );
+        auto const cleanup =
+            computed_index_nested_sibling_field_reassignment.ir_text.find(
+                "%holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = computed_index_nested_sibling_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = computed_index_nested_sibling_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            computed_index_nested_sibling_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(index_value != std::string::npos);
+        assert(computed_element_address != std::string::npos);
+        assert(field_address != std::string::npos);
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(index_value < computed_element_address);
+        assert(computed_element_address < field_address);
+        assert(field_address < cleanup);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {

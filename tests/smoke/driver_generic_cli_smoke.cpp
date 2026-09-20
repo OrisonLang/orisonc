@@ -3195,12 +3195,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_index_nested_record_sibli
     assert(drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(index_value < computed_element_address);
-    assert(computed_element_address < field_address);
-    assert(field_address < cleanup);
-    assert(cleanup < drop);
-    assert(drop < deallocate);
-    assert(deallocate < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_dynamic_index_record_field_reassignment_fixture_success(
