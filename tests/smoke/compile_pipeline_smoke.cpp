@@ -15279,6 +15279,66 @@ auto main() -> int {
         assert(deallocate < replacement_store);
     }
 
+    {
+        auto const dynamic_index_record_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_dynamic_index_record_field_reassignment_run.or";
+        auto dynamic_index_record_field_reassignment = pipeline.emit_llvm(
+            dynamic_index_record_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!dynamic_index_record_field_reassignment.has_errors());
+        auto const descriptor =
+            dynamic_index_record_field_reassignment.ir_text.find("%items.dynamic_array_index");
+        auto const bounds_check =
+            dynamic_index_record_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %index",
+                descriptor
+            );
+        auto const element_address =
+            dynamic_index_record_field_reassignment.ir_text.find(
+                ".element.addr = getelementptr %record.Item",
+                bounds_check
+            );
+        auto const field_address =
+            dynamic_index_record_field_reassignment.ir_text.find(
+                "getelementptr %record.Item, ptr %items.dynamic_array_index",
+                element_address
+            );
+        auto const cleanup =
+            dynamic_index_record_field_reassignment.ir_text.find(
+                "%items.element.values.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = dynamic_index_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%items.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = dynamic_index_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%items.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            dynamic_index_record_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(descriptor != std::string::npos);
+        assert(bounds_check != std::string::npos);
+        assert(element_address != std::string::npos);
+        assert(field_address != std::string::npos);
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(descriptor < bounds_check);
+        assert(bounds_check < element_address);
+        assert(element_address < field_address);
+        assert(field_address < cleanup);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
