@@ -15091,6 +15091,49 @@ auto main() -> int {
         assert(second_deallocate < replacement_store);
     }
 
+    {
+        auto const indexed_record_element_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_indexed_record_element_field_reassignment_run.or";
+        auto indexed_record_element_field_reassignment = pipeline.emit_llvm(
+            indexed_record_element_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!indexed_record_element_field_reassignment.has_errors());
+        auto const element_address =
+            indexed_record_element_field_reassignment.ir_text.find("%holder.items.element0.addr");
+        auto const field_address =
+            indexed_record_element_field_reassignment.ir_text.find("%holder.items.element0.values.addr");
+        auto const cleanup =
+            indexed_record_element_field_reassignment.ir_text.find(
+                "%holder.items.element0.values.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = indexed_record_element_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.items.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = indexed_record_element_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.items.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            indexed_record_element_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(element_address != std::string::npos);
+        assert(field_address != std::string::npos);
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(element_address < field_address);
+        assert(field_address < cleanup);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
