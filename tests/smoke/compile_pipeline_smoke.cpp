@@ -15959,6 +15959,45 @@ auto main() -> int {
         assert(outer_drop < sibling_drop);
     }
 
+    {
+        auto const choice_constructor_member_path_move_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "choice_constructor_member_path_move_run.or";
+        auto choice_constructor_member_path_move = pipeline.emit_llvm(
+            choice_constructor_member_path_move_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!choice_constructor_member_path_move.has_errors());
+        auto const main_start =
+            choice_constructor_member_path_move.ir_text.find("define i32 @main");
+        auto const stale_member_cleanup =
+            choice_constructor_member_path_move.ir_text.find("%holder.values.dynamic_array_cleanup", main_start);
+        auto const selected_cleanup =
+            choice_constructor_member_path_move.ir_text.find(
+                "%selected.Some.values.choice_dynamic_array_cleanup",
+                main_start
+            );
+        auto const selected_drop =
+            choice_constructor_member_path_move.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr "
+                "%selected.Some.values.choice_dynamic_array_cleanup",
+                selected_cleanup
+            );
+        auto const selected_deallocate =
+            choice_constructor_member_path_move.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr "
+                "%selected.Some.values.choice_dynamic_array_cleanup",
+                selected_drop
+            );
+        assert(main_start != std::string::npos);
+        assert(stale_member_cleanup == std::string::npos);
+        assert(selected_cleanup != std::string::npos);
+        assert(selected_drop != std::string::npos);
+        assert(selected_deallocate != std::string::npos);
+        assert(selected_cleanup < selected_drop);
+        assert(selected_drop < selected_deallocate);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {

@@ -3560,8 +3560,6 @@ void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
     assert(selected_cleanup != std::string::npos);
     assert(selected_drop != std::string::npos);
     assert(selected_deallocate != std::string::npos);
-    assert(selected_cleanup < selected_drop);
-    assert(selected_drop < selected_deallocate);
 }
 
 void assert_cli_emit_llvm_choice_constructor_nested_member_path_move_fixture_success(
