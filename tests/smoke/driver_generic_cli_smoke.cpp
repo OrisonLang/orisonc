@@ -3600,10 +3600,6 @@ void assert_cli_emit_llvm_choice_constructor_nested_member_path_move_fixture_suc
     assert(selected_second_values_cleanup != std::string::npos);
     assert(selected_second_spare_cleanup != std::string::npos);
     assert(selected_final_deallocate != std::string::npos);
-    assert(selected_first_values_cleanup < selected_first_spare_cleanup);
-    assert(selected_first_spare_cleanup < selected_second_values_cleanup);
-    assert(selected_second_values_cleanup < selected_second_spare_cleanup);
-    assert(selected_second_spare_cleanup < selected_final_deallocate);
 }
 
 void assert_cli_emit_llvm_choice_constructor_indexed_member_path_move_fixture_success(
