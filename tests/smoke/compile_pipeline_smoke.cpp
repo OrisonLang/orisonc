@@ -15719,6 +15719,94 @@ auto main() -> int {
         assert(replacement_deallocate < final_outer_drop);
     }
 
+    {
+        auto const constructor_fixed_array_record_field_move_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_constructor_fixed_array_record_field_move_run.or";
+        auto constructor_fixed_array_record_field_move = pipeline.emit_llvm(
+            constructor_fixed_array_record_field_move_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!constructor_fixed_array_record_field_move.has_errors());
+        auto const main_start =
+            constructor_fixed_array_record_field_move.ir_text.find("define i32 @main");
+        auto const stale_initial_first_values_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%items.element0.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_initial_first_spare_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%items.element0.spare.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_initial_second_values_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%items.element1.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_initial_second_spare_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%items.element1.spare.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_replacement_first_values_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%replacement_items.element0.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_replacement_first_spare_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%replacement_items.element0.spare.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_replacement_second_values_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%replacement_items.element1.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const stale_replacement_second_spare_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%replacement_items.element1.spare.dynamic_array_cleanup",
+                main_start
+            );
+        auto const replacement_cleanup =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "%outer.items.element0.values.dynamic_array_reassign_cleanup",
+                main_start
+            );
+        auto const replacement_drop =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr "
+                "%outer.items.element0.values.dynamic_array_reassign_cleanup",
+                replacement_cleanup
+            );
+        auto const replacement_deallocate =
+            constructor_fixed_array_record_field_move.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr "
+                "%outer.items.element0.values.dynamic_array_reassign_cleanup",
+                replacement_drop
+            );
+        auto const final_outer_drop =
+            find_final_outer_drop(constructor_fixed_array_record_field_move.ir_text, "outer", replacement_deallocate);
+        assert(main_start != std::string::npos);
+        assert(stale_initial_first_values_cleanup == std::string::npos);
+        assert(stale_initial_first_spare_cleanup == std::string::npos);
+        assert(stale_initial_second_values_cleanup == std::string::npos);
+        assert(stale_initial_second_spare_cleanup == std::string::npos);
+        assert(stale_replacement_first_values_cleanup == std::string::npos);
+        assert(stale_replacement_first_spare_cleanup == std::string::npos);
+        assert(stale_replacement_second_values_cleanup == std::string::npos);
+        assert(stale_replacement_second_spare_cleanup == std::string::npos);
+        assert(replacement_cleanup != std::string::npos);
+        assert(replacement_drop != std::string::npos);
+        assert(replacement_deallocate != std::string::npos);
+        assert(final_outer_drop != std::string::npos);
+        assert(replacement_cleanup < replacement_drop);
+        assert(replacement_drop < replacement_deallocate);
+        assert(replacement_deallocate < final_outer_drop);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
