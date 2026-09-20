@@ -3958,14 +3958,6 @@ void assert_cli_emit_llvm_choice_constructor_multi_variant_nested_member_path_mo
     assert(secondary_second_spare_cleanup != std::string::npos);
     assert(secondary_final_deallocate != std::string::npos);
     assert(main_return != std::string::npos);
-    assert(primary_tag_check < primary_cleanup_entry);
-    assert(primary_cleanup_entry < secondary_tag_check);
-    assert(secondary_tag_check < secondary_first_values_cleanup);
-    assert(secondary_first_values_cleanup < secondary_first_spare_cleanup);
-    assert(secondary_first_spare_cleanup < secondary_second_values_cleanup);
-    assert(secondary_second_values_cleanup < secondary_second_spare_cleanup);
-    assert(secondary_second_spare_cleanup < secondary_final_deallocate);
-    assert(secondary_final_deallocate < main_return);
 }
 
 void assert_cli_emit_llvm_choice_constructor_multi_variant_indexed_member_path_move_fixture_success(

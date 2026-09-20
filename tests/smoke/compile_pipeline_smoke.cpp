@@ -16583,6 +16583,113 @@ auto main() -> int {
         assert(sibling_values_cleanup < sibling_spare_cleanup);
     }
 
+    {
+        auto const choice_constructor_multi_variant_nested_member_path_move_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "choice_constructor_multi_variant_nested_member_path_move_run.or";
+        auto choice_constructor_multi_variant_nested_member_path_move = pipeline.emit_llvm(
+            choice_constructor_multi_variant_nested_member_path_move_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!choice_constructor_multi_variant_nested_member_path_move.has_errors());
+        auto const main_start =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find("define i32 @main");
+        auto const secondary_constructor_tag =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "insertvalue { i32, [2 x %record.Inner] } undef, i32 2, 0",
+                main_start
+            );
+        auto const stale_first_values_cleanup =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%holder.items.element0.values.dynamic_array_cleanup",
+                main_start
+            );
+        auto const primary_tag_check =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%selected.Primary.items.element0.values.choice_dynamic_array_cleanup",
+                main_start
+            );
+        auto const primary_active_check =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "icmp eq i32 %selected.choice_dynamic_array_cleanup",
+                primary_tag_check
+            );
+        auto const primary_expected_tag =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(", 1", primary_active_check);
+        auto const primary_cleanup_entry =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "selected.Primary.items.element0.values.choice_dynamic_array_cleanup0.cleanup.entry",
+                primary_tag_check
+            );
+        auto const secondary_tag_check =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup",
+                primary_cleanup_entry
+            );
+        auto const secondary_active_check =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "icmp eq i32 %selected.choice_dynamic_array_cleanup",
+                secondary_tag_check
+            );
+        auto const secondary_expected_tag =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(", 2", secondary_active_check);
+        auto const secondary_first_values_cleanup =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract",
+                secondary_tag_check
+            );
+        auto const secondary_first_spare_cleanup =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%selected.Secondary.items.element0.spare.choice_dynamic_array_cleanup",
+                secondary_first_values_cleanup
+            );
+        auto const secondary_second_values_cleanup =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%selected.Secondary.items.element1.values.choice_dynamic_array_cleanup",
+                secondary_first_spare_cleanup
+            );
+        auto const secondary_second_spare_cleanup =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup",
+                secondary_second_values_cleanup
+            );
+        auto const secondary_final_deallocate =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr "
+                "%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup7.cleanup.data",
+                secondary_second_spare_cleanup
+            );
+        auto const main_return =
+            choice_constructor_multi_variant_nested_member_path_move.ir_text.find(
+                "ret i32 0",
+                secondary_final_deallocate
+            );
+        assert(main_start != std::string::npos);
+        assert(secondary_constructor_tag != std::string::npos);
+        assert(stale_first_values_cleanup == std::string::npos);
+        assert(primary_tag_check != std::string::npos);
+        assert(primary_active_check != std::string::npos);
+        assert(primary_expected_tag != std::string::npos);
+        assert(primary_cleanup_entry != std::string::npos);
+        assert(secondary_tag_check != std::string::npos);
+        assert(secondary_active_check != std::string::npos);
+        assert(secondary_expected_tag != std::string::npos);
+        assert(secondary_first_values_cleanup != std::string::npos);
+        assert(secondary_first_spare_cleanup != std::string::npos);
+        assert(secondary_second_values_cleanup != std::string::npos);
+        assert(secondary_second_spare_cleanup != std::string::npos);
+        assert(secondary_final_deallocate != std::string::npos);
+        assert(main_return != std::string::npos);
+        assert(primary_tag_check < primary_cleanup_entry);
+        assert(primary_cleanup_entry < secondary_tag_check);
+        assert(secondary_tag_check < secondary_first_values_cleanup);
+        assert(secondary_first_values_cleanup < secondary_first_spare_cleanup);
+        assert(secondary_first_spare_cleanup < secondary_second_values_cleanup);
+        assert(secondary_second_values_cleanup < secondary_second_spare_cleanup);
+        assert(secondary_second_spare_cleanup < secondary_final_deallocate);
+        assert(secondary_final_deallocate < main_return);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
