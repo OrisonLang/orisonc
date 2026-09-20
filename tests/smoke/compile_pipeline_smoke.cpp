@@ -15420,6 +15420,87 @@ auto main() -> int {
         assert(deallocate < replacement_store);
     }
 
+    {
+        auto const nested_dynamic_index_sibling_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_nested_dynamic_index_sibling_field_reassignment_run.or";
+        auto nested_dynamic_index_sibling_field_reassignment = pipeline.emit_llvm(
+            nested_dynamic_index_sibling_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!nested_dynamic_index_sibling_field_reassignment.has_errors());
+        auto const outer_descriptor =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find("%groups.dynamic_array_index");
+        auto const outer_bounds =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %group_index",
+                outer_descriptor
+            );
+        auto const outer_element =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                ".element.addr = getelementptr %record.Group",
+                outer_bounds
+            );
+        auto const nested_descriptor =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                "%groups.element.items.dynamic_array_index",
+                outer_element
+            );
+        auto const nested_bounds =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                ".in_bounds = icmp ult i64 %item_index",
+                nested_descriptor
+            );
+        auto const nested_element =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                ".element.addr = getelementptr %record.Item",
+                nested_bounds
+            );
+        auto const field_address =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                "getelementptr %record.Item, ptr %groups.element.items.dynamic_array_index",
+                nested_element
+            );
+        auto const cleanup =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                "%groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%groups.element.items.element.spare.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            nested_dynamic_index_sibling_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(outer_descriptor != std::string::npos);
+        assert(outer_bounds != std::string::npos);
+        assert(outer_element != std::string::npos);
+        assert(nested_descriptor != std::string::npos);
+        assert(nested_bounds != std::string::npos);
+        assert(nested_element != std::string::npos);
+        assert(field_address != std::string::npos);
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(outer_descriptor < outer_bounds);
+        assert(outer_bounds < outer_element);
+        assert(outer_element < nested_descriptor);
+        assert(nested_descriptor < nested_bounds);
+        assert(nested_bounds < nested_element);
+        assert(nested_element < field_address);
+        assert(field_address < cleanup);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
     auto dynamic_array_owned_element_assignment_rhs_reuse_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
     {
