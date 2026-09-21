@@ -19259,6 +19259,75 @@ auto main() -> int {
     assert(runtime_assignment_sibling_cleanup_00 < runtime_assignment_sibling_cleanup_01);
     assert(runtime_assignment_sibling_cleanup_01 < runtime_assignment_sibling_cleanup_10);
     assert(runtime_assignment_sibling_cleanup_10 < runtime_assignment_selected_cleanup_11);
+    auto assert_returned_runtime_indexed_assignment_out_of_bounds_order =
+        [&](std::filesystem::path const& source_path,
+            std::string_view out_of_bounds_name,
+            std::string_view out_of_bounds_value,
+            std::string_view failure_label_text,
+            std::string_view success_label_text) {
+            auto result = pipeline.emit_llvm(source_path);
+            assert(!result.has_errors());
+            auto const& ir = result.ir_text;
+            auto const out_of_bounds_binding = ir.find(
+                "%" + std::string {out_of_bounds_name} + " = add i64 0, " + std::string {out_of_bounds_value}
+            );
+            auto const root_storage = ir.find("%dynamic_array_receiver_aggregate_tmp", out_of_bounds_binding);
+            auto const group_bounds_check = ir.find("%aggregate_path_index", root_storage);
+            auto const item_bounds_check = ir.find("%aggregate_path_index", group_bounds_check + 1);
+            auto const dynamic_bounds_check = ir.find(
+                ".groups.element.items.element.values.dynamic_array_index",
+                item_bounds_check
+            );
+            auto const failure_label = ir.find(std::string {failure_label_text}, group_bounds_check);
+            auto const success_label = ir.find(std::string {success_label_text}, failure_label);
+            auto const trap = ir.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+            assert(out_of_bounds_binding != std::string::npos);
+            assert(root_storage != std::string::npos);
+            assert(group_bounds_check != std::string::npos);
+            assert(item_bounds_check != std::string::npos);
+            assert(dynamic_bounds_check != std::string::npos);
+            assert(failure_label != std::string::npos);
+            assert(success_label != std::string::npos);
+            assert(trap != std::string::npos);
+            assert(out_of_bounds_binding < root_storage);
+            assert(root_storage < group_bounds_check);
+            assert(group_bounds_check < item_bounds_check);
+            assert(item_bounds_check < dynamic_bounds_check);
+            assert(failure_label < trap);
+            assert(trap < success_label);
+            if (out_of_bounds_name == "value_index") {
+                auto const old_element_cleanup = ir.find(
+                    "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+                    trap
+                );
+                assert(old_element_cleanup != std::string::npos);
+                assert(trap < old_element_cleanup);
+            }
+        };
+    assert_returned_runtime_indexed_assignment_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_group_out_of_bounds.or",
+        "group_index",
+        "2",
+        "fixed_array.index.out_of_bounds.0:",
+        "fixed_array.index.in_bounds.0:"
+    );
+    assert_returned_runtime_indexed_assignment_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_item_out_of_bounds.or",
+        "item_index",
+        "2",
+        "fixed_array.index.out_of_bounds.1:",
+        "fixed_array.index.in_bounds.1:"
+    );
+    assert_returned_runtime_indexed_assignment_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_value_out_of_bounds.or",
+        "value_index",
+        "1",
+        "dynamic_array.aggregate_index.out_of_bounds.2:",
+        "dynamic_array.aggregate_index.in_bounds.2:"
+    );
 
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

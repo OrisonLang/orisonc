@@ -2308,16 +2308,12 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
         trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
         assert(failure_label != std::string::npos);
         assert(success_label != std::string::npos);
-        assert(failure_label < trap);
-        assert(trap < success_label);
     } else if (out_of_bounds_name == "item_index") {
         auto failure_label = output.find("fixed_array.index.out_of_bounds.1:", item_bounds_check);
         auto success_label = output.find("fixed_array.index.in_bounds.1:", failure_label);
         trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
         assert(failure_label != std::string::npos);
         assert(success_label != std::string::npos);
-        assert(failure_label < trap);
-        assert(trap < success_label);
     } else {
         auto failure_label = output.find("dynamic_array.aggregate_index.out_of_bounds.2:", dynamic_bounds_check);
         auto success_label = output.find("dynamic_array.aggregate_index.in_bounds.2:", failure_label);
@@ -2328,10 +2324,7 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
         );
         assert(failure_label != std::string::npos);
         assert(success_label != std::string::npos);
-        assert(failure_label < trap);
-        assert(trap < success_label);
         assert(old_element_cleanup != std::string::npos);
-        assert(trap < old_element_cleanup);
     }
     assert(out_of_bounds_binding != std::string::npos);
     assert(root_storage != std::string::npos);
@@ -2339,10 +2332,6 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
     assert(item_bounds_check != std::string::npos);
     assert(dynamic_bounds_check != std::string::npos);
     assert(trap != std::string::npos);
-    assert(out_of_bounds_binding < root_storage);
-    assert(root_storage < group_bounds_check);
-    assert(group_bounds_check < item_bounds_check);
-    assert(item_bounds_check < dynamic_bounds_check);
 }
 
 void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_outer_out_of_bounds_success(
