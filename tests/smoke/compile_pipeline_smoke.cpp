@@ -19579,6 +19579,25 @@ auto main() -> int {
     assert_ready_member_cleanup_refresh_chain(left_member_cleanup_key);
     assert_ready_member_cleanup_refresh_chain(right_member_cleanup_key);
     auto const& two_member_transfers_ir = runtime_indexed_two_member_transfers_apply_request.ir_text;
+    auto const two_member_left_index_expression =
+        two_member_transfers_ir.find("%tmp6 = add i64 %left_index, %left_zero");
+    auto const two_member_left_moved_member_load =
+        two_member_transfers_ir.find("%tmp9 = load %record.Inner, ptr %tmp8");
+    auto const two_member_left_cleanup_branch =
+        two_member_transfers_ir.find("br label %left_items.member_cleanup.entry");
+    auto const two_member_right_index_expression =
+        two_member_transfers_ir.find("%tmp17 = add i64 %right_index, %right_zero");
+    auto const two_member_right_moved_member_load =
+        two_member_transfers_ir.find("%tmp20 = load %record.Inner, ptr %tmp19");
+    assert(two_member_left_index_expression != std::string::npos);
+    assert(two_member_left_moved_member_load != std::string::npos);
+    assert(two_member_left_cleanup_branch != std::string::npos);
+    assert(two_member_right_index_expression != std::string::npos);
+    assert(two_member_right_moved_member_load != std::string::npos);
+    assert(two_member_left_index_expression < two_member_left_moved_member_load);
+    assert(two_member_left_moved_member_load < two_member_right_index_expression);
+    assert(two_member_right_index_expression < two_member_right_moved_member_load);
+    assert(two_member_right_moved_member_load < two_member_left_cleanup_branch);
     auto assert_owner_member_cleanup_ir =
         [&](std::string_view owner_name) {
             auto const owner = std::string {owner_name};
