@@ -19129,6 +19129,43 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_run.or"
     );
+    auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
+    );
+    assert(!returned_sibling_descriptor_assignment.has_errors());
+    auto const& returned_sibling_descriptor_assignment_ir = returned_sibling_descriptor_assignment.ir_text;
+    auto const assignment_root_storage =
+        returned_sibling_descriptor_assignment_ir.find("%dynamic_array_receiver_aggregate_tmp");
+    auto const assignment_items_projection =
+        returned_sibling_descriptor_assignment_ir.find(".items.addr", assignment_root_storage);
+    auto const assignment_first_bounds_check =
+        returned_sibling_descriptor_assignment_ir.find(".items.dynamic_array_index", assignment_items_projection);
+    auto const assignment_second_bounds_check =
+        returned_sibling_descriptor_assignment_ir.find(".box.primary.dynamic_array_index", assignment_first_bounds_check);
+    auto const assignment_old_element_cleanup = returned_sibling_descriptor_assignment_ir.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        assignment_second_bounds_check
+    );
+    auto const assignment_replacement_store =
+        returned_sibling_descriptor_assignment_ir.find("store %record.Payload", assignment_old_element_cleanup);
+    auto const assignment_root_cleanup = returned_sibling_descriptor_assignment_ir.find(
+        "call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp",
+        assignment_replacement_store
+    );
+    assert(assignment_root_storage != std::string::npos);
+    assert(assignment_items_projection != std::string::npos);
+    assert(assignment_first_bounds_check != std::string::npos);
+    assert(assignment_second_bounds_check != std::string::npos);
+    assert(assignment_old_element_cleanup != std::string::npos);
+    assert(assignment_replacement_store != std::string::npos);
+    assert(assignment_root_cleanup != std::string::npos);
+    assert(assignment_root_storage < assignment_items_projection);
+    assert(assignment_items_projection < assignment_first_bounds_check);
+    assert(assignment_first_bounds_check < assignment_second_bounds_check);
+    assert(assignment_second_bounds_check < assignment_old_element_cleanup);
+    assert(assignment_old_element_cleanup < assignment_replacement_store);
+    assert(assignment_replacement_store < assignment_root_cleanup);
 
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
