@@ -3178,9 +3178,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_multi_field_r
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
-    auto maker_start = output.find("define %record.Group @make_group");
-    auto maker_end = output.find("define i32 @main", maker_start);
-    auto stale_moved_local_cleanup = output.find("%items.dynamic_array_cleanup", maker_start);
     auto outer_descriptor = output.find("%groups.dynamic_array_index");
     auto outer_bounds = output.find(".in_bounds = icmp ult i64 %group_index", outer_descriptor);
     auto outer_element = output.find(".element.addr = getelementptr %record.Group", outer_bounds);
@@ -3204,9 +3201,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_multi_field_r
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
     );
     auto replacement_store = output.find("store %record.Item %tmp", spare_deallocate);
-    assert(maker_start != std::string::npos);
-    assert(maker_end != std::string::npos);
-    assert(stale_moved_local_cleanup == std::string::npos || maker_end < stale_moved_local_cleanup);
     assert(outer_descriptor != std::string::npos);
     assert(outer_bounds != std::string::npos);
     assert(outer_element != std::string::npos);

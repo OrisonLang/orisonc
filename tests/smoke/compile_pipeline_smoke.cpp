@@ -16224,6 +16224,15 @@ auto main() -> int {
             orison::pipeline::production_compile_pipeline_options()
         );
         assert(!nested_dynamic_index_multi_field_reassignment.has_errors());
+        auto const maker_start =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find("define %record.Group @make_group");
+        auto const maker_end =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find("define i32 @main", maker_start);
+        auto const stale_moved_local_cleanup =
+            nested_dynamic_index_multi_field_reassignment.ir_text.find(
+                "%items.dynamic_array_cleanup",
+                maker_start
+            );
         auto const outer_descriptor =
             nested_dynamic_index_multi_field_reassignment.ir_text.find("%groups.dynamic_array_index");
         auto const outer_bounds =
@@ -16290,6 +16299,12 @@ auto main() -> int {
                 "store %record.Item %tmp",
                 spare_deallocate
             );
+        assert(maker_start != std::string::npos);
+        assert(maker_end != std::string::npos);
+        assert(
+            stale_moved_local_cleanup == std::string::npos ||
+            maker_end < stale_moved_local_cleanup
+        );
         assert(outer_descriptor != std::string::npos);
         assert(outer_bounds != std::string::npos);
         assert(outer_element != std::string::npos);
