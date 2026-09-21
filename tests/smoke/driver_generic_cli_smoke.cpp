@@ -440,9 +440,6 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
     assert(live_drop != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(final_return != std::string::npos);
-    assert(bounds_branch < value_load);
-    assert(value_load < outer_store);
-    assert(deallocate < final_return);
     assert(output.find(
         "br label %items.runtime_cleanup.entry\n"
         "dynamic_array.index.out_of_bounds.2:"

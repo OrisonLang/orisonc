@@ -22461,6 +22461,30 @@ auto main() -> int {
         runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_dynamic_array_cleanup.has_errors());
+    auto const runtime_indexed_bounds_branch = runtime_indexed_dynamic_array_cleanup.ir_text.find(
+        "br i1 %items.dynamic_array_index4.in_bounds, "
+        "label %dynamic_array.index.in_bounds.2, label %dynamic_array.index.out_of_bounds.2"
+    );
+    auto const runtime_indexed_value_load = runtime_indexed_dynamic_array_cleanup.ir_text.find(
+        "%items.dynamic_array_index4.value = load %record.Inner, "
+        "ptr %items.dynamic_array_index4.element.addr"
+    );
+    auto const runtime_indexed_outer_store =
+        runtime_indexed_dynamic_array_cleanup.ir_text.find("store %record.Outer %tmp5, ptr %outer.addr");
+    auto const runtime_indexed_deallocate = runtime_indexed_dynamic_array_cleanup.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)"
+    );
+    auto const runtime_indexed_final_return =
+        runtime_indexed_dynamic_array_cleanup.ir_text.find("ret i32 0", runtime_indexed_deallocate);
+    assert(runtime_indexed_bounds_branch != std::string::npos);
+    assert(runtime_indexed_value_load != std::string::npos);
+    assert(runtime_indexed_outer_store != std::string::npos);
+    assert(runtime_indexed_deallocate != std::string::npos);
+    assert(runtime_indexed_final_return != std::string::npos);
+    assert(runtime_indexed_bounds_branch < runtime_indexed_value_load);
+    assert(runtime_indexed_value_load < runtime_indexed_outer_store);
+    assert(runtime_indexed_deallocate < runtime_indexed_final_return);
     assert(
         runtime_indexed_dynamic_array_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 1
     );
