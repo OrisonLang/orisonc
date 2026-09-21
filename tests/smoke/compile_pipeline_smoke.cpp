@@ -7083,6 +7083,50 @@ auto main() -> int {
         assert(outer_drop_call < return_value);
     }
 
+    {
+        auto direct_indexed_scope_cleanup = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_direct_indexed_scope_cleanup_run.or"
+        );
+        assert(!direct_indexed_scope_cleanup.has_errors());
+        auto const values_address = direct_indexed_scope_cleanup.ir_text.find("%holder.values.addr");
+        auto const first_element_address =
+            direct_indexed_scope_cleanup.ir_text.find("%holder.values.element0.addr");
+        auto const second_element_address =
+            direct_indexed_scope_cleanup.ir_text.find("%holder.values.element1.addr");
+        auto const holder_drop_definition =
+            direct_indexed_scope_cleanup.ir_text.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
+        auto const holder_value_cleanup =
+            direct_indexed_scope_cleanup.ir_text.find("%Holder.drop.values.drop.walk");
+        auto const holder_element_drop =
+            direct_indexed_scope_cleanup.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr %Holder.drop.values.element.drop.element.addr)"
+            );
+        auto const holder_element_deallocate =
+            direct_indexed_scope_cleanup.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.element.cleanup.data"
+            );
+        auto const holder_drop_call =
+            direct_indexed_scope_cleanup.ir_text.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)");
+        auto const return_value = direct_indexed_scope_cleanup.ir_text.find("ret i32 0");
+        assert(values_address != std::string::npos);
+        assert(first_element_address != std::string::npos);
+        assert(second_element_address != std::string::npos);
+        assert(holder_drop_definition != std::string::npos);
+        assert(holder_value_cleanup != std::string::npos);
+        assert(holder_element_drop != std::string::npos);
+        assert(holder_element_deallocate != std::string::npos);
+        assert(holder_drop_call != std::string::npos);
+        assert(return_value != std::string::npos);
+        assert(values_address < first_element_address);
+        assert(first_element_address < second_element_address);
+        assert(holder_drop_definition < holder_value_cleanup);
+        assert(holder_value_cleanup < holder_element_drop);
+        assert(holder_element_drop < holder_element_deallocate);
+        assert(second_element_address < holder_drop_call);
+        assert(holder_drop_call < return_value);
+    }
+
     auto const fixtures_dir = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     for (auto const& entry : std::filesystem::directory_iterator(fixtures_dir)) {
         if (!entry.is_regular_file()) {

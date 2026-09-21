@@ -4432,13 +4432,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixtu
     assert(holder_element_deallocate != std::string::npos);
     assert(holder_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
-    assert(values_address < first_element_address);
-    assert(first_element_address < second_element_address);
-    assert(holder_drop_definition < holder_value_cleanup);
-    assert(holder_value_cleanup < holder_element_drop);
-    assert(holder_element_drop < holder_element_deallocate);
-    assert(second_element_address < holder_drop_call);
-    assert(holder_drop_call < return_value);
 }
 
 auto generic_method_lines() -> std::vector<std::string> {
