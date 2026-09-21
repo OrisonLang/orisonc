@@ -4402,15 +4402,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     assert(outer_item_drop != std::string::npos);
     assert(outer_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
-    assert(items_address < first_item_address);
-    assert(first_item_address < first_field_address);
-    assert(first_field_address < second_item_address);
-    assert(second_item_address < second_field_address);
-    assert(item_drop_definition < item_field_drop);
-    assert(item_field_drop < item_field_deallocate);
-    assert(outer_drop_definition < outer_item_drop);
-    assert(second_field_address < outer_drop_call);
-    assert(outer_drop_call < return_value);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixture_success(

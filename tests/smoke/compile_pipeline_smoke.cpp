@@ -7030,6 +7030,59 @@ auto main() -> int {
         assert(outer_drop_call < return_value);
     }
 
+    {
+        auto indexed_field_scope_cleanup = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_indexed_field_scope_cleanup_run.or"
+        );
+        assert(!indexed_field_scope_cleanup.has_errors());
+        auto const items_address = indexed_field_scope_cleanup.ir_text.find("%outer.items.addr");
+        auto const first_item_address = indexed_field_scope_cleanup.ir_text.find("%outer.items.element0.addr");
+        auto const first_field_address = indexed_field_scope_cleanup.ir_text.find("%outer.items.element0.values.addr");
+        auto const second_item_address = indexed_field_scope_cleanup.ir_text.find("%outer.items.element1.addr");
+        auto const second_field_address = indexed_field_scope_cleanup.ir_text.find("%outer.items.element1.values.addr");
+        auto const item_drop_definition =
+            indexed_field_scope_cleanup.ir_text.find("define void @__orison_owned_cleanup.Item(ptr %value)");
+        auto const outer_drop_definition =
+            indexed_field_scope_cleanup.ir_text.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
+        auto const item_field_drop =
+            indexed_field_scope_cleanup.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr %Item.drop.values.drop.element.addr)"
+            );
+        auto const item_field_deallocate =
+            indexed_field_scope_cleanup.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr %Item.drop.values.cleanup.data"
+            );
+        auto const outer_item_drop =
+            indexed_field_scope_cleanup.ir_text.find(
+                "call void @__orison_owned_cleanup.Item(ptr %Outer.drop.items.drop.element.addr)"
+            );
+        auto const outer_drop_call =
+            indexed_field_scope_cleanup.ir_text.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
+        auto const return_value = indexed_field_scope_cleanup.ir_text.find("ret i32 0");
+        assert(items_address != std::string::npos);
+        assert(first_item_address != std::string::npos);
+        assert(first_field_address != std::string::npos);
+        assert(second_item_address != std::string::npos);
+        assert(second_field_address != std::string::npos);
+        assert(item_drop_definition != std::string::npos);
+        assert(outer_drop_definition != std::string::npos);
+        assert(item_field_drop != std::string::npos);
+        assert(item_field_deallocate != std::string::npos);
+        assert(outer_item_drop != std::string::npos);
+        assert(outer_drop_call != std::string::npos);
+        assert(return_value != std::string::npos);
+        assert(items_address < first_item_address);
+        assert(first_item_address < first_field_address);
+        assert(first_field_address < second_item_address);
+        assert(second_item_address < second_field_address);
+        assert(item_drop_definition < item_field_drop);
+        assert(item_field_drop < item_field_deallocate);
+        assert(outer_drop_definition < outer_item_drop);
+        assert(second_field_address < outer_drop_call);
+        assert(outer_drop_call < return_value);
+    }
+
     auto const fixtures_dir = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     for (auto const& entry : std::filesystem::directory_iterator(fixtures_dir)) {
         if (!entry.is_regular_file()) {
