@@ -7175,6 +7175,39 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_returned_payload_ir.has_errors());
+    auto const return_payload_function_start = dynamic_array_returned_payload_ir.ir_text.find(
+        "define { ptr, i64, i64 } @return_switch_payload({ i32, { ptr, i64, i64 } } %buffer)"
+    );
+    auto const return_payload_function_end = dynamic_array_returned_payload_ir.ir_text.find(
+        "define { ptr, i64, i64 } @make_primary()",
+        return_payload_function_start
+    );
+    auto const return_payload_case_cleanup = dynamic_array_returned_payload_ir.ir_text.find(
+        "%values.dynamic_array_cleanup",
+        return_payload_function_start
+    );
+    auto const return_payload_primary_cleanup = dynamic_array_returned_payload_ir.ir_text.find(
+        "%buffer.Primary.values.choice_dynamic_array_cleanup",
+        return_payload_function_start
+    );
+    auto const return_payload_secondary_cleanup = dynamic_array_returned_payload_ir.ir_text.find(
+        "%buffer.Secondary.values.choice_dynamic_array_cleanup",
+        return_payload_function_start
+    );
+    assert(return_payload_function_start != std::string::npos);
+    assert(return_payload_function_end != std::string::npos);
+    assert(
+        return_payload_case_cleanup == std::string::npos ||
+        return_payload_function_end < return_payload_case_cleanup
+    );
+    assert(
+        return_payload_primary_cleanup == std::string::npos ||
+        return_payload_function_end < return_payload_primary_cleanup
+    );
+    assert(
+        return_payload_secondary_cleanup == std::string::npos ||
+        return_payload_function_end < return_payload_secondary_cleanup
+    );
     auto const returned_payload_lifetime_plans = std::count_if(
         dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.plans.begin(),
         dynamic_array_returned_payload_ir.dynamic_array_descriptor_lifetime_plan_state.plans.end(),
