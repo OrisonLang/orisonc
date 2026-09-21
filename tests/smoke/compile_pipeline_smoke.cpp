@@ -19201,6 +19201,64 @@ auto main() -> int {
     assert(static_assignment_old_element_cleanup < static_assignment_replacement_store);
     assert(static_assignment_replacement_store < static_assignment_selected_cleanup);
     assert(static_assignment_selected_cleanup < static_assignment_sibling_cleanup);
+    auto returned_runtime_indexed_assignment = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_nested_runtime_indexed_aggregate_field_index_assignment_dynamic_run.or"
+    );
+    assert(!returned_runtime_indexed_assignment.has_errors());
+    auto const& returned_runtime_indexed_assignment_ir = returned_runtime_indexed_assignment.ir_text;
+    auto const runtime_assignment_root_storage =
+        returned_runtime_indexed_assignment_ir.find("%dynamic_array_receiver_aggregate_tmp");
+    auto const runtime_assignment_group_bounds_check =
+        returned_runtime_indexed_assignment_ir.find("%aggregate_path_index", runtime_assignment_root_storage);
+    auto const runtime_assignment_item_bounds_check =
+        returned_runtime_indexed_assignment_ir.find("%aggregate_path_index", runtime_assignment_group_bounds_check + 1);
+    auto const runtime_assignment_dynamic_bounds_check =
+        returned_runtime_indexed_assignment_ir.find(
+            ".groups.element.items.element.values.dynamic_array_index",
+            runtime_assignment_item_bounds_check
+        );
+    auto const runtime_assignment_old_element_cleanup = returned_runtime_indexed_assignment_ir.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        runtime_assignment_dynamic_bounds_check
+    );
+    auto const runtime_assignment_replacement_store =
+        returned_runtime_indexed_assignment_ir.find("store %record.Payload", runtime_assignment_old_element_cleanup);
+    auto const runtime_assignment_sibling_cleanup_00 = returned_runtime_indexed_assignment_ir.find(
+        ".groups.element0.items.element0.values.dynamic_array_cleanup",
+        runtime_assignment_replacement_store
+    );
+    auto const runtime_assignment_sibling_cleanup_01 = returned_runtime_indexed_assignment_ir.find(
+        ".groups.element0.items.element1.values.dynamic_array_cleanup",
+        runtime_assignment_sibling_cleanup_00
+    );
+    auto const runtime_assignment_sibling_cleanup_10 = returned_runtime_indexed_assignment_ir.find(
+        ".groups.element1.items.element0.values.dynamic_array_cleanup",
+        runtime_assignment_sibling_cleanup_01
+    );
+    auto const runtime_assignment_selected_cleanup_11 = returned_runtime_indexed_assignment_ir.find(
+        ".groups.element1.items.element1.values.dynamic_array_cleanup",
+        runtime_assignment_sibling_cleanup_10
+    );
+    assert(runtime_assignment_root_storage != std::string::npos);
+    assert(runtime_assignment_group_bounds_check != std::string::npos);
+    assert(runtime_assignment_item_bounds_check != std::string::npos);
+    assert(runtime_assignment_dynamic_bounds_check != std::string::npos);
+    assert(runtime_assignment_old_element_cleanup != std::string::npos);
+    assert(runtime_assignment_replacement_store != std::string::npos);
+    assert(runtime_assignment_sibling_cleanup_00 != std::string::npos);
+    assert(runtime_assignment_sibling_cleanup_01 != std::string::npos);
+    assert(runtime_assignment_sibling_cleanup_10 != std::string::npos);
+    assert(runtime_assignment_selected_cleanup_11 != std::string::npos);
+    assert(runtime_assignment_root_storage < runtime_assignment_group_bounds_check);
+    assert(runtime_assignment_group_bounds_check < runtime_assignment_item_bounds_check);
+    assert(runtime_assignment_item_bounds_check < runtime_assignment_dynamic_bounds_check);
+    assert(runtime_assignment_dynamic_bounds_check < runtime_assignment_old_element_cleanup);
+    assert(runtime_assignment_old_element_cleanup < runtime_assignment_replacement_store);
+    assert(runtime_assignment_replacement_store < runtime_assignment_sibling_cleanup_00);
+    assert(runtime_assignment_sibling_cleanup_00 < runtime_assignment_sibling_cleanup_01);
+    assert(runtime_assignment_sibling_cleanup_01 < runtime_assignment_sibling_cleanup_10);
+    assert(runtime_assignment_sibling_cleanup_10 < runtime_assignment_selected_cleanup_11);
 
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
