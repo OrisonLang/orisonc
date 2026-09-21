@@ -19267,6 +19267,45 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_receiver_named_dynamic_array_element_computed_index_field_method_chain_append_statement_out_of_bounds.or"
     );
+    auto assert_computed_named_receiver_nested_element_out_of_bounds_order =
+        [&](std::filesystem::path const& source_path) {
+            auto result = pipeline.emit_llvm(source_path);
+            assert(!result.has_errors());
+            auto const& ir = result.ir_text;
+            auto const index_value = ir.find("%index = add i64 0, 1");
+            auto const one_value = ir.find("%one = add i64 0, 1", index_value);
+            auto const computed_index = ir.find(" = add i64 %index, %one", one_value);
+            auto const bounds_check = ir.find(".in_bounds = icmp ult i64", computed_index);
+            auto const trap = ir.find("call void @__orison_dynamic_array_bounds_failed()", bounds_check);
+            auto const bucket_field = ir.find("getelementptr %record.Bucket", trap);
+            auto const boxed_field = ir.find("getelementptr %record.BoxedValues", bucket_field);
+            auto const descriptor_load = ir.find("named_dynamic_array_receiver_descriptor", boxed_field);
+            auto const source_slot_zero = ir.find(
+                "store { ptr, i64, i64 } zeroinitializer, ptr %tmp",
+                descriptor_load
+            );
+            assert(index_value != std::string::npos);
+            assert(one_value != std::string::npos);
+            assert(computed_index != std::string::npos);
+            assert(bounds_check != std::string::npos);
+            assert(trap != std::string::npos);
+            assert(bucket_field != std::string::npos);
+            assert(boxed_field != std::string::npos);
+            assert(descriptor_load != std::string::npos);
+            assert(source_slot_zero != std::string::npos);
+            assert(index_value < one_value);
+            assert(one_value < computed_index);
+            assert(computed_index < bounds_check);
+            assert(bounds_check < trap);
+            assert(trap < bucket_field);
+            assert(bucket_field < boxed_field);
+            assert(boxed_field < descriptor_load);
+            assert(descriptor_load < source_slot_zero);
+        };
+    assert_computed_named_receiver_nested_element_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_out_of_bounds.or"
+    );
     auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
