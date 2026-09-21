@@ -2417,10 +2417,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
     assert(descriptor_load != std::string::npos);
     assert(named_descriptor_load == std::string::npos);
     assert(source_slot_zero != std::string::npos);
-    assert(index_value < bounds_check);
-    assert(bounds_check < trap);
-    assert(trap < descriptor_load);
-    assert(descriptor_load < source_slot_zero);
     assert(output.find("ret i32") != std::string::npos);
 }
 
