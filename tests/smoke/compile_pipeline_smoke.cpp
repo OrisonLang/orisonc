@@ -22488,6 +22488,30 @@ auto main() -> int {
     assert(
         runtime_indexed_dynamic_array_cleanup.runtime_indexed_cleanup_emission_plan_state.plans.size() == 1
     );
+    auto runtime_indexed_dynamic_array_sibling_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_computed_index_member_path_sibling_run.or";
+    auto runtime_indexed_dynamic_array_sibling_cleanup =
+        pipeline.emit_llvm(runtime_indexed_dynamic_array_sibling_cleanup_path);
+    assert(!runtime_indexed_dynamic_array_sibling_cleanup.has_errors());
+    auto const runtime_indexed_sibling_branch = runtime_indexed_dynamic_array_sibling_cleanup.ir_text.find(
+        "br i1 %items.dynamic_array_element_path6.in_bounds, "
+        "label %dynamic_array.element_path.in_bounds.3, label %dynamic_array.element_path.out_of_bounds.3"
+    );
+    auto const runtime_indexed_sibling_load =
+        runtime_indexed_dynamic_array_sibling_cleanup.ir_text.find("%tmp8 = load i32, ptr %tmp7");
+    auto const runtime_indexed_sibling_deallocate = runtime_indexed_dynamic_array_sibling_cleanup.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
+        "i64 %items.runtime_cleanup.capacity)"
+    );
+    auto const runtime_indexed_sibling_final_return =
+        runtime_indexed_dynamic_array_sibling_cleanup.ir_text.find("ret i32 0", runtime_indexed_sibling_deallocate);
+    assert(runtime_indexed_sibling_branch != std::string::npos);
+    assert(runtime_indexed_sibling_load != std::string::npos);
+    assert(runtime_indexed_sibling_deallocate != std::string::npos);
+    assert(runtime_indexed_sibling_final_return != std::string::npos);
+    assert(runtime_indexed_sibling_branch < runtime_indexed_sibling_load);
+    assert(runtime_indexed_sibling_deallocate < runtime_indexed_sibling_final_return);
     auto runtime_indexed_fixed_array_same_shape_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "runtime_indexed_fixed_array_constructor_computed_index_move_run.or";

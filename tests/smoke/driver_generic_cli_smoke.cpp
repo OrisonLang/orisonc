@@ -489,8 +489,6 @@ void assert_cli_runtime_indexed_dynamic_array_default_sibling_emit_llvm_fixture_
     assert(cleanup_branch != std::string::npos);
     assert(deallocate != std::string::npos);
     assert(final_return != std::string::npos);
-    assert(sibling_branch < sibling_load);
-    assert(deallocate < final_return);
     assert(output.find(
         "br label %items.runtime_cleanup.entry\n"
         "dynamic_array.element_path.out_of_bounds.3:"
