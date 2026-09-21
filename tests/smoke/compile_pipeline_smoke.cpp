@@ -19778,6 +19778,25 @@ auto main() -> int {
     assert_ready_nested_member_cleanup_binding("right_items", "(right_index + right_zero)");
     auto const& two_nested_member_transfers_ir =
         runtime_indexed_two_nested_member_transfers_apply_request.ir_text;
+    auto const two_nested_member_left_index_expression =
+        two_nested_member_transfers_ir.find("%tmp24 = add i64 %left_index, %left_zero");
+    auto const two_nested_member_left_moved_member_load =
+        two_nested_member_transfers_ir.find("%tmp28 = load %record.Inner, ptr %tmp27");
+    auto const two_nested_member_left_cleanup_branch =
+        two_nested_member_transfers_ir.find("br label %left_items.member_cleanup.entry");
+    auto const two_nested_member_right_index_expression =
+        two_nested_member_transfers_ir.find("%tmp54 = add i64 %right_index, %right_zero");
+    auto const two_nested_member_right_moved_member_load =
+        two_nested_member_transfers_ir.find("%tmp58 = load %record.Inner, ptr %tmp57");
+    assert(two_nested_member_left_index_expression != std::string::npos);
+    assert(two_nested_member_left_moved_member_load != std::string::npos);
+    assert(two_nested_member_left_cleanup_branch != std::string::npos);
+    assert(two_nested_member_right_index_expression != std::string::npos);
+    assert(two_nested_member_right_moved_member_load != std::string::npos);
+    assert(two_nested_member_left_index_expression < two_nested_member_left_moved_member_load);
+    assert(two_nested_member_left_moved_member_load < two_nested_member_right_index_expression);
+    assert(two_nested_member_right_index_expression < two_nested_member_right_moved_member_load);
+    assert(two_nested_member_right_moved_member_load < two_nested_member_left_cleanup_branch);
     assert(
         occurrence_count(
             two_nested_member_transfers_ir,

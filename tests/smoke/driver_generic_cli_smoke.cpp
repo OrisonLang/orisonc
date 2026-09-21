@@ -1396,10 +1396,6 @@ void assert_cli_runtime_indexed_two_nested_member_cleanup_emit_llvm_fixture_succ
     assert(right_skip_moved != std::string::npos);
     assert(right_member_helper != std::string::npos);
     assert(right_deallocate != std::string::npos);
-    assert(left_index_expression < left_moved_member_load);
-    assert(left_moved_member_load < right_index_expression);
-    assert(right_index_expression < right_moved_member_load);
-    assert(right_moved_member_load < left_cleanup_branch);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }
