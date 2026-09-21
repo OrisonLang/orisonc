@@ -19129,6 +19129,43 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_run.or"
     );
+    auto assert_returned_sibling_descriptor_out_of_bounds_order =
+        [&](std::filesystem::path const& source_path) {
+            auto result = pipeline.emit_llvm(source_path);
+            assert(!result.has_errors());
+            auto const& ir = result.ir_text;
+            auto const index_value = ir.find("%index = add i64 0, 2");
+            auto const bounds_check = ir.find(".in_bounds = icmp ult i64 %index", index_value);
+            auto const trap = ir.find("call void @__orison_dynamic_array_bounds_failed()", bounds_check);
+            auto const selected_descriptor = ir.find("returned_aggregate_receiver_descriptor", trap);
+            auto const selected_zero = ir.find(
+                "store { ptr, i64, i64 } zeroinitializer, ptr %tmp",
+                selected_descriptor
+            );
+            auto const root_cleanup = ir.find(
+                "call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp",
+                selected_zero
+            );
+            assert(index_value != std::string::npos);
+            assert(bounds_check != std::string::npos);
+            assert(trap != std::string::npos);
+            assert(selected_descriptor != std::string::npos);
+            assert(selected_zero != std::string::npos);
+            assert(root_cleanup != std::string::npos);
+            assert(index_value < bounds_check);
+            assert(bounds_check < trap);
+            assert(trap < selected_descriptor);
+            assert(selected_descriptor < selected_zero);
+            assert(selected_zero < root_cleanup);
+        };
+    assert_returned_sibling_descriptor_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_count_out_of_bounds.or"
+    );
+    assert_returned_sibling_descriptor_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_out_of_bounds.or"
+    );
     auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
