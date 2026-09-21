@@ -6956,6 +6956,38 @@ auto main() -> int {
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
     }
 
+    {
+        auto field_scope_cleanup = pipeline.emit_llvm(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_field_scope_cleanup_run.or"
+        );
+        assert(!field_scope_cleanup.has_errors());
+        auto const field_address = field_scope_cleanup.ir_text.find("%holder.values.addr");
+        auto const holder_drop_definition =
+            field_scope_cleanup.ir_text.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
+        auto const holder_field_drop =
+            field_scope_cleanup.ir_text.find(
+                "call void @__orison_owned_cleanup.Payload(ptr %Holder.drop.values.drop.element.addr)"
+            );
+        auto const holder_field_deallocate =
+            field_scope_cleanup.ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.cleanup.data"
+            );
+        auto const holder_drop_call =
+            field_scope_cleanup.ir_text.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)");
+        auto const return_value = field_scope_cleanup.ir_text.find("ret i32 0");
+        assert(field_address != std::string::npos);
+        assert(holder_drop_definition != std::string::npos);
+        assert(holder_field_drop != std::string::npos);
+        assert(holder_field_deallocate != std::string::npos);
+        assert(holder_drop_call != std::string::npos);
+        assert(return_value != std::string::npos);
+        assert(holder_drop_definition < holder_field_drop);
+        assert(holder_field_drop < holder_field_deallocate);
+        assert(field_address < holder_drop_call);
+        assert(holder_drop_call < return_value);
+    }
+
     auto const fixtures_dir = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     for (auto const& entry : std::filesystem::directory_iterator(fixtures_dir)) {
         if (!entry.is_regular_file()) {
