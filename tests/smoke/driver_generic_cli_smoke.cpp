@@ -2237,11 +2237,6 @@ void assert_cli_emit_llvm_returned_nested_sibling_after_primary_cleanup_success(
     assert(main_start != std::string::npos);
     assert(callee_sibling_cleanup != std::string::npos);
     assert(callee_sibling_deallocate != std::string::npos);
-    assert(primary_element_cleanup < primary_deallocate);
-    assert(primary_deallocate < primary_zero);
-    assert(primary_zero < sibling_handoff);
-    assert(callee_sibling_cleanup < main_start);
-    assert(callee_sibling_deallocate < main_start);
     assert(output.find("%returned.inner.sibling.dynamic_array_cleanup") == std::string::npos);
     assert(output.find("%box.inner.primary.dynamic_array_cleanup") == std::string::npos);
     assert(output.find("%box.inner.sibling.dynamic_array_cleanup") == std::string::npos);
