@@ -1245,11 +1245,6 @@ void assert_cli_runtime_indexed_choice_payload_computed_member_cleanup_emit_llvm
     assert(skip_moved != std::string::npos);
     assert(member_helper != std::string::npos);
     assert(deallocate != std::string::npos);
-    assert(payload_switch < index_expression);
-    assert(index_expression < bounds_trap);
-    assert(bounds_trap < moved_member_load);
-    assert(moved_member_load < cleanup_branch);
-    assert(packet_choice_cleanup < cleanup_branch);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }

@@ -19379,6 +19379,35 @@ auto main() -> int {
     assert(runtime_indexed_switch_cleanup_branch != std::string::npos);
     assert(runtime_indexed_switch_choose_call < runtime_indexed_switch_moved_member_load);
     assert(runtime_indexed_switch_moved_member_load < runtime_indexed_switch_cleanup_branch);
+    auto runtime_indexed_choice_payload_member_transfer_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_choice_payload_computed_member_transfer.or";
+    auto runtime_indexed_choice_payload_member_transfer =
+        pipeline.emit_llvm(runtime_indexed_choice_payload_member_transfer_path);
+    assert(!runtime_indexed_choice_payload_member_transfer.has_errors());
+    auto const runtime_indexed_choice_payload_switch =
+        runtime_indexed_choice_payload_member_transfer.ir_text.find("switch i32 %tmp0, label %switch.unreachable.0");
+    auto const runtime_indexed_choice_index_expression =
+        runtime_indexed_choice_payload_member_transfer.ir_text.find("%tmp2 = add i64 %index, %zero");
+    auto const runtime_indexed_choice_bounds_trap =
+        runtime_indexed_choice_payload_member_transfer.ir_text.find("call void @__orison_dynamic_array_bounds_failed()");
+    auto const runtime_indexed_choice_moved_member_load =
+        runtime_indexed_choice_payload_member_transfer.ir_text.find("%tmp5 = load %record.Inner, ptr %tmp4");
+    auto const runtime_indexed_choice_packet_cleanup =
+        runtime_indexed_choice_payload_member_transfer.ir_text.find("%packet.choice_dynamic_array_cleanup");
+    auto const runtime_indexed_choice_cleanup_branch =
+        runtime_indexed_choice_payload_member_transfer.ir_text.find("br label %items.member_cleanup.entry");
+    assert(runtime_indexed_choice_payload_switch != std::string::npos);
+    assert(runtime_indexed_choice_index_expression != std::string::npos);
+    assert(runtime_indexed_choice_bounds_trap != std::string::npos);
+    assert(runtime_indexed_choice_moved_member_load != std::string::npos);
+    assert(runtime_indexed_choice_packet_cleanup != std::string::npos);
+    assert(runtime_indexed_choice_cleanup_branch != std::string::npos);
+    assert(runtime_indexed_choice_payload_switch < runtime_indexed_choice_index_expression);
+    assert(runtime_indexed_choice_index_expression < runtime_indexed_choice_bounds_trap);
+    assert(runtime_indexed_choice_bounds_trap < runtime_indexed_choice_moved_member_load);
+    assert(runtime_indexed_choice_moved_member_load < runtime_indexed_choice_cleanup_branch);
+    assert(runtime_indexed_choice_packet_cleanup < runtime_indexed_choice_cleanup_branch);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
             runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front()
