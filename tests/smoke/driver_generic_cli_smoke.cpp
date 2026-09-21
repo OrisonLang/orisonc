@@ -2348,15 +2348,10 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignmen
     assert(root_storage != std::string::npos);
     assert(outer_bounds_check != std::string::npos);
     assert(trap != std::string::npos);
-    assert(index_value < root_storage);
-    assert(root_storage < outer_bounds_check);
-    assert(outer_bounds_check < trap);
     auto inner_bounds_check = output.find(".box.primary.dynamic_array_index", trap);
     auto replacement_store = output.find("store %record.Payload", trap);
     assert(inner_bounds_check != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(trap < inner_bounds_check);
-    assert(inner_bounds_check < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignment_inner_out_of_bounds_success(
@@ -2375,13 +2370,8 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_assignmen
     assert(outer_bounds_check != std::string::npos);
     assert(inner_bounds_check != std::string::npos);
     assert(trap != std::string::npos);
-    assert(item_value < outer_bounds_check);
-    assert(outer_bounds_check < inner_bounds_check);
-    assert(inner_bounds_check < trap);
     assert(old_element_cleanup != std::string::npos);
     assert(replacement_store != std::string::npos);
-    assert(trap < old_element_cleanup);
-    assert(old_element_cleanup < replacement_store);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_out_of_bounds_success(

@@ -19328,6 +19328,64 @@ auto main() -> int {
         "dynamic_array.aggregate_index.out_of_bounds.2:",
         "dynamic_array.aggregate_index.in_bounds.2:"
     );
+    auto returned_assignment_outer_oob = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_outer_out_of_bounds.or"
+    );
+    assert(!returned_assignment_outer_oob.has_errors());
+    auto const& returned_assignment_outer_oob_ir = returned_assignment_outer_oob.ir_text;
+    auto const outer_oob_index_value = returned_assignment_outer_oob_ir.find("%index = add i64 0, 2");
+    auto const outer_oob_root_storage =
+        returned_assignment_outer_oob_ir.find("%dynamic_array_receiver_aggregate_tmp", outer_oob_index_value);
+    auto const outer_oob_outer_bounds_check =
+        returned_assignment_outer_oob_ir.find(".items.dynamic_array_index", outer_oob_root_storage);
+    auto const outer_oob_trap =
+        returned_assignment_outer_oob_ir.find("call void @__orison_dynamic_array_bounds_failed()", outer_oob_outer_bounds_check);
+    auto const outer_oob_inner_bounds_check =
+        returned_assignment_outer_oob_ir.find(".box.primary.dynamic_array_index", outer_oob_trap);
+    auto const outer_oob_replacement_store =
+        returned_assignment_outer_oob_ir.find("store %record.Payload", outer_oob_trap);
+    assert(outer_oob_index_value != std::string::npos);
+    assert(outer_oob_root_storage != std::string::npos);
+    assert(outer_oob_outer_bounds_check != std::string::npos);
+    assert(outer_oob_trap != std::string::npos);
+    assert(outer_oob_inner_bounds_check != std::string::npos);
+    assert(outer_oob_replacement_store != std::string::npos);
+    assert(outer_oob_index_value < outer_oob_root_storage);
+    assert(outer_oob_root_storage < outer_oob_outer_bounds_check);
+    assert(outer_oob_outer_bounds_check < outer_oob_trap);
+    assert(outer_oob_trap < outer_oob_inner_bounds_check);
+    assert(outer_oob_inner_bounds_check < outer_oob_replacement_store);
+    auto returned_assignment_inner_oob = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_inner_out_of_bounds.or"
+    );
+    assert(!returned_assignment_inner_oob.has_errors());
+    auto const& returned_assignment_inner_oob_ir = returned_assignment_inner_oob.ir_text;
+    auto const inner_oob_item_value = returned_assignment_inner_oob_ir.find("%item = add i64 0, 1");
+    auto const inner_oob_outer_bounds_check =
+        returned_assignment_inner_oob_ir.find(".items.dynamic_array_index", inner_oob_item_value);
+    auto const inner_oob_inner_bounds_check =
+        returned_assignment_inner_oob_ir.find(".box.primary.dynamic_array_index", inner_oob_outer_bounds_check);
+    auto const inner_oob_trap =
+        returned_assignment_inner_oob_ir.find("call void @__orison_dynamic_array_bounds_failed()", inner_oob_inner_bounds_check);
+    auto const inner_oob_old_element_cleanup = returned_assignment_inner_oob_ir.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        inner_oob_trap
+    );
+    auto const inner_oob_replacement_store =
+        returned_assignment_inner_oob_ir.find("store %record.Payload", inner_oob_trap);
+    assert(inner_oob_item_value != std::string::npos);
+    assert(inner_oob_outer_bounds_check != std::string::npos);
+    assert(inner_oob_inner_bounds_check != std::string::npos);
+    assert(inner_oob_trap != std::string::npos);
+    assert(inner_oob_old_element_cleanup != std::string::npos);
+    assert(inner_oob_replacement_store != std::string::npos);
+    assert(inner_oob_item_value < inner_oob_outer_bounds_check);
+    assert(inner_oob_outer_bounds_check < inner_oob_inner_bounds_check);
+    assert(inner_oob_inner_bounds_check < inner_oob_trap);
+    assert(inner_oob_trap < inner_oob_old_element_cleanup);
+    assert(inner_oob_old_element_cleanup < inner_oob_replacement_store);
 
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
