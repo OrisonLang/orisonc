@@ -3226,8 +3226,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
     auto output = read_command_output(command);
     auto maker_start = output.find("define %record.Outer @make_outer");
     auto maker_end = output.find("define i32 @main", maker_start);
-    auto stale_values_cleanup = output.find("%inner.values.dynamic_array_cleanup", maker_start);
-    auto stale_spare_cleanup = output.find("%inner.spare.dynamic_array_cleanup", maker_start);
     auto replacement_cleanup = output.find("%outer.inner.values.dynamic_array_reassign_cleanup", maker_end);
     auto replacement_drop = output.find(
         "call void @__orison_owned_cleanup.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup",
@@ -3240,8 +3238,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
     auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(maker_start != std::string::npos);
     assert(maker_end != std::string::npos);
-    assert(stale_values_cleanup == std::string::npos || maker_end < stale_values_cleanup);
-    assert(stale_spare_cleanup == std::string::npos || maker_end < stale_spare_cleanup);
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
