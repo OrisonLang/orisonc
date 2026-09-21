@@ -19166,6 +19166,41 @@ auto main() -> int {
     assert(assignment_second_bounds_check < assignment_old_element_cleanup);
     assert(assignment_old_element_cleanup < assignment_replacement_store);
     assert(assignment_replacement_store < assignment_root_cleanup);
+    auto returned_static_indexed_assignment = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_returned_static_indexed_aggregate_field_index_assignment_run.or"
+    );
+    assert(!returned_static_indexed_assignment.has_errors());
+    auto const& returned_static_indexed_assignment_ir = returned_static_indexed_assignment.ir_text;
+    auto const static_assignment_root_storage =
+        returned_static_indexed_assignment_ir.find("%dynamic_array_receiver_aggregate_tmp");
+    auto const static_assignment_selected_index =
+        returned_static_indexed_assignment_ir.find(".buckets.element0.values.dynamic_array_index", static_assignment_root_storage);
+    auto const static_assignment_old_element_cleanup = returned_static_indexed_assignment_ir.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
+        static_assignment_selected_index
+    );
+    auto const static_assignment_replacement_store =
+        returned_static_indexed_assignment_ir.find("store %record.Payload", static_assignment_old_element_cleanup);
+    auto const static_assignment_selected_cleanup = returned_static_indexed_assignment_ir.find(
+        ".buckets.element0.values.dynamic_array_cleanup",
+        static_assignment_replacement_store
+    );
+    auto const static_assignment_sibling_cleanup = returned_static_indexed_assignment_ir.find(
+        ".buckets.element1.values.dynamic_array_cleanup",
+        static_assignment_selected_cleanup
+    );
+    assert(static_assignment_root_storage != std::string::npos);
+    assert(static_assignment_selected_index != std::string::npos);
+    assert(static_assignment_old_element_cleanup != std::string::npos);
+    assert(static_assignment_replacement_store != std::string::npos);
+    assert(static_assignment_selected_cleanup != std::string::npos);
+    assert(static_assignment_sibling_cleanup != std::string::npos);
+    assert(static_assignment_root_storage < static_assignment_selected_index);
+    assert(static_assignment_selected_index < static_assignment_old_element_cleanup);
+    assert(static_assignment_old_element_cleanup < static_assignment_replacement_store);
+    assert(static_assignment_replacement_store < static_assignment_selected_cleanup);
+    assert(static_assignment_selected_cleanup < static_assignment_sibling_cleanup);
 
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
