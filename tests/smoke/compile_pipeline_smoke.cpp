@@ -19362,6 +19362,23 @@ auto main() -> int {
     assert(runtime_indexed_branch_cleanup_branch != std::string::npos);
     assert(runtime_indexed_branch_choose_call < runtime_indexed_branch_moved_member_load);
     assert(runtime_indexed_branch_moved_member_load < runtime_indexed_branch_cleanup_branch);
+    auto runtime_indexed_switch_computed_member_transfer_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "runtime_indexed_dynamic_array_constructor_switch_computed_member_transfer.or";
+    auto runtime_indexed_switch_computed_member_transfer =
+        pipeline.emit_llvm(runtime_indexed_switch_computed_member_transfer_path);
+    assert(!runtime_indexed_switch_computed_member_transfer.has_errors());
+    auto const runtime_indexed_switch_choose_call =
+        runtime_indexed_switch_computed_member_transfer.ir_text.find("%tmp6 = call i64 @choose_index(i32 1)");
+    auto const runtime_indexed_switch_moved_member_load =
+        runtime_indexed_switch_computed_member_transfer.ir_text.find("%tmp9 = load %record.Inner, ptr %tmp8");
+    auto const runtime_indexed_switch_cleanup_branch =
+        runtime_indexed_switch_computed_member_transfer.ir_text.find("br label %items.member_cleanup.entry");
+    assert(runtime_indexed_switch_choose_call != std::string::npos);
+    assert(runtime_indexed_switch_moved_member_load != std::string::npos);
+    assert(runtime_indexed_switch_cleanup_branch != std::string::npos);
+    assert(runtime_indexed_switch_choose_call < runtime_indexed_switch_moved_member_load);
+    assert(runtime_indexed_switch_moved_member_load < runtime_indexed_switch_cleanup_branch);
     assert(
         orison::lowering::runtime_indexed_member_cleanup_typed_promotion_gate_report(
             runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front()
