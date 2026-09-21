@@ -2124,9 +2124,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
     assert(selected_zero != std::string::npos);
     assert(receiver_cleanup != std::string::npos);
     assert(root_cleanup != std::string::npos);
-    assert(selected_descriptor < selected_zero);
-    assert(selected_zero < receiver_cleanup);
-    assert(receiver_cleanup < root_cleanup);
     assert(output.find("getelementptr %record.BoxedValues, ptr %tmp") != std::string::npos);
     assert(output.find("BoxedValues.drop.primary.addr") != std::string::npos);
     assert(output.find("BoxedValues.drop.secondary.addr") != std::string::npos);

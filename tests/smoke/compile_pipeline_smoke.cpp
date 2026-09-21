@@ -19102,6 +19102,34 @@ auto main() -> int {
         runtime_indexed_cleanup.runtime_indexed_cleanup_audit_lines[75]
     );
 
+    auto assert_returned_sibling_descriptor_cleanup_order =
+        [&](std::filesystem::path const& source_path) {
+            auto result = pipeline.emit_llvm(source_path);
+            assert(!result.has_errors());
+            auto const& ir = result.ir_text;
+            auto const selected_descriptor = ir.find("returned_aggregate_receiver_descriptor");
+            auto const selected_zero = ir.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp", selected_descriptor);
+            auto const receiver_cleanup =
+                ir.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp");
+            auto const root_cleanup =
+                ir.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp");
+            assert(selected_descriptor != std::string::npos);
+            assert(selected_zero != std::string::npos);
+            assert(receiver_cleanup != std::string::npos);
+            assert(root_cleanup != std::string::npos);
+            assert(selected_descriptor < selected_zero);
+            assert(selected_zero < receiver_cleanup);
+            assert(receiver_cleanup < root_cleanup);
+        };
+    assert_returned_sibling_descriptor_cleanup_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_count_run.or"
+    );
+    assert_returned_sibling_descriptor_cleanup_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_returned_dynamic_array_element_sibling_descriptor_field_method_chain_append_statement_run.or"
+    );
+
     auto runtime_indexed_member_transfer_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_transfer.or";
