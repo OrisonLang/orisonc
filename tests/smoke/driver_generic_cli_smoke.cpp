@@ -1134,8 +1134,6 @@ void assert_cli_runtime_indexed_single_member_cleanup_emit_llvm_fixture_success(
     assert(skip_moved != std::string::npos);
     assert(member_helper != std::string::npos);
     assert(deallocate != std::string::npos);
-    assert(index_expression < moved_member_load);
-    assert(moved_member_load < cleanup_branch);
     assert(output.find("runtime-index member cleanup blocked") == std::string::npos);
     assert(output.find("lowering does not yet support") == std::string::npos);
 }

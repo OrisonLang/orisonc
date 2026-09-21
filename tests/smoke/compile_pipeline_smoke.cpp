@@ -19332,6 +19332,17 @@ auto main() -> int {
         runtime_indexed_cleanup_audit_module_rewrite_options()
     );
     assert(!runtime_indexed_member_transfer_apply_request.has_errors());
+    auto const runtime_indexed_member_index_expression =
+        runtime_indexed_member_transfer_apply_request.ir_text.find("%tmp6 = add i64 %index, %zero");
+    auto const runtime_indexed_member_moved_member_load =
+        runtime_indexed_member_transfer_apply_request.ir_text.find("%tmp9 = load %record.Inner, ptr %tmp8");
+    auto const runtime_indexed_member_cleanup_branch =
+        runtime_indexed_member_transfer_apply_request.ir_text.find("br label %items.member_cleanup.entry");
+    assert(runtime_indexed_member_index_expression != std::string::npos);
+    assert(runtime_indexed_member_moved_member_load != std::string::npos);
+    assert(runtime_indexed_member_cleanup_branch != std::string::npos);
+    assert(runtime_indexed_member_index_expression < runtime_indexed_member_moved_member_load);
+    assert(runtime_indexed_member_moved_member_load < runtime_indexed_member_cleanup_branch);
     assert(runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.size() == 1);
     assert(runtime_indexed_member_transfer_apply_request.runtime_indexed_member_cleanup_typed_promotion_gates.front().gate_ready);
     assert(
