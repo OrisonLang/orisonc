@@ -15669,6 +15669,76 @@ auto main() -> int {
     }
 
     {
+        auto const literal_computed_multidimensional_record_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_literal_computed_multidimensional_record_field_reassignment_run.or";
+        auto literal_computed_multidimensional_record_field_reassignment = pipeline.emit_llvm(
+            literal_computed_multidimensional_record_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!literal_computed_multidimensional_record_field_reassignment.has_errors());
+        auto const cleanup =
+            literal_computed_multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element0.element.values.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = literal_computed_multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element0.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = literal_computed_multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element0.element.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            literal_computed_multidimensional_record_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
+    {
+        auto const computed_literal_multidimensional_record_field_reassignment_path =
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_owned_computed_literal_multidimensional_record_field_reassignment_run.or";
+        auto computed_literal_multidimensional_record_field_reassignment = pipeline.emit_llvm(
+            computed_literal_multidimensional_record_field_reassignment_path,
+            orison::pipeline::production_compile_pipeline_options()
+        );
+        assert(!computed_literal_multidimensional_record_field_reassignment.has_errors());
+        auto const cleanup =
+            computed_literal_multidimensional_record_field_reassignment.ir_text.find(
+                "%holder.grid.element.element0.values.dynamic_array_reassign_cleanup"
+            );
+        auto const drop = computed_literal_multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_owned_cleanup.Payload(ptr "
+            "%holder.grid.element.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const deallocate = computed_literal_multidimensional_record_field_reassignment.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%holder.grid.element.element0.values.dynamic_array_reassign_cleanup"
+        );
+        auto const replacement_store =
+            computed_literal_multidimensional_record_field_reassignment.ir_text.find(
+                "store { ptr, i64, i64 } %tmp",
+                deallocate
+            );
+        assert(cleanup != std::string::npos);
+        assert(drop != std::string::npos);
+        assert(deallocate != std::string::npos);
+        assert(replacement_store != std::string::npos);
+        assert(cleanup < drop);
+        assert(drop < deallocate);
+        assert(deallocate < replacement_store);
+    }
+
+    {
         auto const computed_index_nested_sibling_field_reassignment_path =
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_owned_computed_index_nested_record_sibling_field_reassignment_run.or";
