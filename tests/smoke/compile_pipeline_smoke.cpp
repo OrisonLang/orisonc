@@ -19306,6 +19306,18 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_count_out_of_bounds.or"
     );
+    assert_computed_named_receiver_nested_element_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_named_dynamic_array_element_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_computed_named_receiver_nested_element_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_choice_payload_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
+    assert_computed_named_receiver_nested_element_out_of_bounds_order(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
+    );
     auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
