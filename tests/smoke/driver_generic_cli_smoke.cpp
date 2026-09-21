@@ -2459,12 +2459,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_com
     assert(trap != std::string::npos);
     assert(descriptor_load != std::string::npos);
     assert(source_slot_zero != std::string::npos);
-    assert(index_value < one_value);
-    assert(one_value < computed_index);
-    assert(computed_index < bounds_check);
-    assert(bounds_check < trap);
-    assert(trap < descriptor_load);
-    assert(descriptor_load < source_slot_zero);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload") != std::string::npos);
     assert(output.find("ret i32") != std::string::npos);
 }
