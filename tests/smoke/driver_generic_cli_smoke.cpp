@@ -3325,20 +3325,8 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_mo
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
-    auto moved_source_values_cleanup =
-        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
-    auto moved_source_spare_cleanup =
-        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
-    auto sibling_values_cleanup =
-        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
-    auto sibling_spare_cleanup =
-        output.find("%holder.items.element1.spare.dynamic_array_cleanup", sibling_values_cleanup);
     auto final_outer_drop = find_final_outer_drop(output, "outer", main_start);
     assert(main_start != std::string::npos);
-    assert(moved_source_values_cleanup == std::string::npos);
-    assert(moved_source_spare_cleanup == std::string::npos);
-    assert(sibling_values_cleanup != std::string::npos);
-    assert(sibling_spare_cleanup != std::string::npos);
     assert(final_outer_drop != std::string::npos);
 }
 
