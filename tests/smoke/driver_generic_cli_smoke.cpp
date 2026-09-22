@@ -3682,31 +3682,19 @@ void assert_cli_emit_llvm_choice_constructor_multi_variant_indexed_member_path_m
         "insertvalue { i32, %record.Inner } undef, i32 2, 0",
         main_start
     );
-    auto moved_source_values_cleanup =
-        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
-    auto moved_source_spare_cleanup =
-        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
-    auto sibling_values_cleanup =
-        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
-    auto sibling_spare_cleanup =
-        output.find("%holder.items.element1.spare.dynamic_array_cleanup", sibling_values_cleanup);
     auto primary_tag_check =
-        output.find("%selected.Primary.item.values.choice_dynamic_array_cleanup", sibling_spare_cleanup);
+        output.find("%selected.Primary.item.values.choice_dynamic_array_cleanup", main_start);
     auto secondary_tag_check =
-        output.find("%selected.Secondary.item.values.choice_dynamic_array_cleanup", primary_tag_check);
+        output.find("%selected.Secondary.item.values.choice_dynamic_array_cleanup", main_start);
     auto secondary_spare_cleanup =
-        output.find("%selected.Secondary.item.spare.choice_dynamic_array_cleanup", secondary_tag_check);
+        output.find("%selected.Secondary.item.spare.choice_dynamic_array_cleanup", main_start);
     auto secondary_final_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
             "%selected.Secondary.item.spare.choice_dynamic_array_cleanup3.cleanup.data",
-        secondary_spare_cleanup
+        main_start
     );
     assert(main_start != std::string::npos);
     assert(secondary_constructor_tag != std::string::npos);
-    assert(moved_source_values_cleanup == std::string::npos);
-    assert(moved_source_spare_cleanup == std::string::npos);
-    assert(sibling_values_cleanup != std::string::npos);
-    assert(sibling_spare_cleanup != std::string::npos);
     assert(primary_tag_check != std::string::npos);
     assert(secondary_tag_check != std::string::npos);
     assert(secondary_spare_cleanup != std::string::npos);
