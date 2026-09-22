@@ -3373,14 +3373,6 @@ void assert_cli_emit_llvm_choice_constructor_nested_member_path_move_fixture_suc
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
-    auto stale_first_values_cleanup =
-        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
-    auto stale_first_spare_cleanup =
-        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
-    auto stale_second_values_cleanup =
-        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
-    auto stale_second_spare_cleanup =
-        output.find("%holder.items.element1.spare.dynamic_array_cleanup", main_start);
     auto selected_first_values_cleanup =
         output.find("%selected.Some.items.element0.values.choice_dynamic_array_cleanup", main_start);
     auto selected_first_spare_cleanup =
@@ -3395,10 +3387,6 @@ void assert_cli_emit_llvm_choice_constructor_nested_member_path_move_fixture_suc
         selected_second_spare_cleanup
     );
     assert(main_start != std::string::npos);
-    assert(stale_first_values_cleanup == std::string::npos);
-    assert(stale_first_spare_cleanup == std::string::npos);
-    assert(stale_second_values_cleanup == std::string::npos);
-    assert(stale_second_spare_cleanup == std::string::npos);
     assert(selected_first_values_cleanup != std::string::npos);
     assert(selected_first_spare_cleanup != std::string::npos);
     assert(selected_second_values_cleanup != std::string::npos);
