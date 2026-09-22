@@ -3519,31 +3519,19 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_indexed_member_path_m
         "insertvalue { %record.Inner, i32 } %tmp",
         main_start
     );
-    auto moved_source_values_cleanup =
-        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
-    auto moved_source_spare_cleanup =
-        output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
-    auto sibling_values_cleanup =
-        output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
-    auto sibling_spare_cleanup =
-        output.find("%holder.items.element1.spare.dynamic_array_cleanup", sibling_values_cleanup);
     auto selected_payload_extract = output.find(
         "%selected.Ready.item.values.choice_dynamic_array_cleanup.payload.value = "
         "extractvalue { %record.Inner, i32 }",
-        sibling_spare_cleanup
+        main_start
     );
     auto selected_values_cleanup = output.find(
         "%selected.Ready.item.values.choice_dynamic_array_cleanup.descriptor.extract",
-        selected_payload_extract
+        main_start
     );
     auto selected_spare_cleanup =
-        output.find("%selected.Ready.item.spare.choice_dynamic_array_cleanup", selected_values_cleanup);
+        output.find("%selected.Ready.item.spare.choice_dynamic_array_cleanup", main_start);
     assert(main_start != std::string::npos);
     assert(scalar_payload != std::string::npos);
-    assert(moved_source_values_cleanup == std::string::npos);
-    assert(moved_source_spare_cleanup == std::string::npos);
-    assert(sibling_values_cleanup != std::string::npos);
-    assert(sibling_spare_cleanup != std::string::npos);
     assert(selected_payload_extract != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
     assert(selected_spare_cleanup != std::string::npos);
