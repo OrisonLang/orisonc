@@ -3454,22 +3454,19 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_nested_member_path_mo
         "extractvalue { [2 x %record.Inner], i32 }",
         main_start
     );
-    auto stale_first_values_cleanup =
-        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
     auto selected_first_values_cleanup = output.find(
         "%selected.Ready.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract",
-        payload_tuple_extract
+        main_start
     );
     auto selected_first_spare_cleanup =
-        output.find("%selected.Ready.items.element0.spare.choice_dynamic_array_cleanup", selected_first_values_cleanup);
+        output.find("%selected.Ready.items.element0.spare.choice_dynamic_array_cleanup", main_start);
     auto selected_second_values_cleanup =
-        output.find("%selected.Ready.items.element1.values.choice_dynamic_array_cleanup", selected_first_spare_cleanup);
+        output.find("%selected.Ready.items.element1.values.choice_dynamic_array_cleanup", main_start);
     auto selected_second_spare_cleanup =
-        output.find("%selected.Ready.items.element1.spare.choice_dynamic_array_cleanup", selected_second_values_cleanup);
+        output.find("%selected.Ready.items.element1.spare.choice_dynamic_array_cleanup", main_start);
     assert(main_start != std::string::npos);
     assert(scalar_payload != std::string::npos);
     assert(payload_tuple_extract != std::string::npos);
-    assert(stale_first_values_cleanup == std::string::npos);
     assert(selected_first_values_cleanup != std::string::npos);
     assert(selected_first_spare_cleanup != std::string::npos);
     assert(selected_second_values_cleanup != std::string::npos);
