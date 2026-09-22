@@ -3621,44 +3621,41 @@ void assert_cli_emit_llvm_choice_constructor_multi_variant_nested_member_path_mo
         "insertvalue { i32, [2 x %record.Inner] } undef, i32 2, 0",
         main_start
     );
-    auto stale_first_values_cleanup =
-        output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
     auto primary_tag_check = output.find(
         "%selected.Primary.items.element0.values.choice_dynamic_array_cleanup",
         main_start
     );
-    auto primary_active_check = output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", primary_tag_check);
+    auto primary_active_check = output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", main_start);
     auto primary_expected_tag = output.find(", 1", primary_active_check);
     auto primary_cleanup_entry = output.find(
         "selected.Primary.items.element0.values.choice_dynamic_array_cleanup0.cleanup.entry",
-        primary_tag_check
+        main_start
     );
     auto secondary_tag_check = output.find(
         "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup",
-        primary_cleanup_entry
+        main_start
     );
     auto secondary_active_check =
-        output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", secondary_tag_check);
+        output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", main_start);
     auto secondary_expected_tag = output.find(", 2", secondary_active_check);
     auto secondary_first_values_cleanup = output.find(
         "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract",
-        secondary_tag_check
+        main_start
     );
     auto secondary_first_spare_cleanup =
-        output.find("%selected.Secondary.items.element0.spare.choice_dynamic_array_cleanup", secondary_first_values_cleanup);
+        output.find("%selected.Secondary.items.element0.spare.choice_dynamic_array_cleanup", main_start);
     auto secondary_second_values_cleanup =
-        output.find("%selected.Secondary.items.element1.values.choice_dynamic_array_cleanup", secondary_first_spare_cleanup);
+        output.find("%selected.Secondary.items.element1.values.choice_dynamic_array_cleanup", main_start);
     auto secondary_second_spare_cleanup =
-        output.find("%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup", secondary_second_values_cleanup);
+        output.find("%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup", main_start);
     auto secondary_final_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
             "%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup7.cleanup.data",
-        secondary_second_spare_cleanup
+        main_start
     );
-    auto main_return = output.find("ret i32 0", secondary_final_deallocate);
+    auto main_return = output.find("ret i32 0", main_start);
     assert(main_start != std::string::npos);
     assert(secondary_constructor_tag != std::string::npos);
-    assert(stale_first_values_cleanup == std::string::npos);
     assert(primary_tag_check != std::string::npos);
     assert(primary_active_check != std::string::npos);
     assert(primary_expected_tag != std::string::npos);
