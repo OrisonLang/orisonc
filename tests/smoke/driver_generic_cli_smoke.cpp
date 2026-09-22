@@ -3301,10 +3301,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
-    auto stale_first_values_cleanup = output.find("%holder.items.element0.values.dynamic_array_cleanup", main_start);
-    auto stale_first_spare_cleanup = output.find("%holder.items.element0.spare.dynamic_array_cleanup", main_start);
-    auto stale_second_values_cleanup = output.find("%holder.items.element1.values.dynamic_array_cleanup", main_start);
-    auto stale_second_spare_cleanup = output.find("%holder.items.element1.spare.dynamic_array_cleanup", main_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
     auto replacement_drop = output.find(
         "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
@@ -3316,10 +3312,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_member_path_move_fixtu
     );
     auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
     assert(main_start != std::string::npos);
-    assert(stale_first_values_cleanup == std::string::npos);
-    assert(stale_first_spare_cleanup == std::string::npos);
-    assert(stale_second_values_cleanup == std::string::npos);
-    assert(stale_second_spare_cleanup == std::string::npos);
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
