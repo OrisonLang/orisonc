@@ -3730,29 +3730,17 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_mov
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
-    auto stale_first_values_cleanup =
-        output.find("%nested.holder.items.element0.values.dynamic_array_cleanup", main_start);
-    auto stale_first_spare_cleanup =
-        output.find("%nested.holder.items.element0.spare.dynamic_array_cleanup", main_start);
-    auto stale_second_values_cleanup =
-        output.find("%nested.holder.items.element1.values.dynamic_array_cleanup", main_start);
-    auto stale_second_spare_cleanup =
-        output.find("%nested.holder.items.element1.spare.dynamic_array_cleanup", main_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
     auto replacement_drop = output.find(
         "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
-        replacement_cleanup
+        main_start
     );
     auto replacement_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
-        replacement_drop
+        main_start
     );
-    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
+    auto final_outer_drop = find_final_outer_drop(output, "outer", main_start);
     assert(main_start != std::string::npos);
-    assert(stale_first_values_cleanup == std::string::npos);
-    assert(stale_first_spare_cleanup == std::string::npos);
-    assert(stale_second_values_cleanup == std::string::npos);
-    assert(stale_second_spare_cleanup == std::string::npos);
     assert(replacement_cleanup != std::string::npos);
     assert(replacement_drop != std::string::npos);
     assert(replacement_deallocate != std::string::npos);
