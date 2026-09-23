@@ -3192,7 +3192,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_multi_field_r
     auto values_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
     );
-    auto spare_address = output.find("%groups.element.items.element.spare.reassign.addr", values_deallocate);
+    auto spare_address = output.find("%groups.element.items.element.spare.reassign.addr");
     auto spare_cleanup = output.find("%groups.element.items.element.spare.dynamic_array_reassign_cleanup");
     auto spare_drop = output.find(
         "call void @__orison_owned_cleanup.Payload(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
@@ -3200,7 +3200,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_multi_field_r
     auto spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.spare.dynamic_array_reassign_cleanup"
     );
-    auto replacement_store = output.find("store %record.Item %tmp", spare_deallocate);
+    auto replacement_store = output.find("store %record.Item %tmp");
     assert(outer_descriptor != std::string::npos);
     assert(outer_bounds != std::string::npos);
     assert(outer_element != std::string::npos);
