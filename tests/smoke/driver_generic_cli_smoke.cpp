@@ -3329,8 +3329,8 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_si
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
-    auto outer_drop = find_final_outer_drop(output, "outer", main_start);
-    auto sibling_drop = find_final_outer_drop(output, "sibling", outer_drop);
+    auto outer_drop = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
+    auto sibling_drop = output.find("call void @__orison_owned_cleanup.Outer(ptr %sibling.addr)");
     assert(main_start != std::string::npos);
     assert(outer_drop != std::string::npos);
     assert(sibling_drop != std::string::npos);
