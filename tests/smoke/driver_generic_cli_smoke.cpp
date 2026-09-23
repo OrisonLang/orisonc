@@ -3986,7 +3986,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_mixed_multidimensional_record_fiel
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %" + owner_prefix + ".dynamic_array_reassign_cleanup"
     );
-    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp", deallocate);
+    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(cleanup != std::string::npos);
     assert(drop != std::string::npos);
     assert(deallocate != std::string::npos);
