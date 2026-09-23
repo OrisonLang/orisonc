@@ -3957,7 +3957,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_multidimensional_record_f
     auto deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element.element.values.dynamic_array_reassign_cleanup"
     );
-    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp", deallocate);
+    auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(output.find("declare void @__orison_dynamic_array_bounds_failed()") != std::string::npos);
     assert(row_index != std::string::npos);
     assert(col_index != std::string::npos);
