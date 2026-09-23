@@ -3918,7 +3918,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_multidimensional_record_field_reas
     auto fourth_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
     );
-    auto replacement_store = output.find("store [2 x [2 x %record.Item]] %tmp", fourth_deallocate);
+    auto replacement_store = output.find("store [2 x [2 x %record.Item]] %tmp");
     assert(grid_address != std::string::npos);
     assert(first_cleanup != std::string::npos);
     assert(first_drop != std::string::npos);
