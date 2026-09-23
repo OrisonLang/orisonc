@@ -3252,14 +3252,12 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_
     auto maker_end = output.find("define i32 @main", maker_start);
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", maker_end);
     auto replacement_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
-        replacement_cleanup
+        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup"
     );
     auto replacement_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup",
-        replacement_drop
+        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup"
     );
-    auto final_outer_drop = find_final_outer_drop(output, "outer", replacement_deallocate);
+    auto final_outer_drop = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     assert(maker_start != std::string::npos);
     assert(maker_end != std::string::npos);
     assert(replacement_cleanup != std::string::npos);
