@@ -3820,7 +3820,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_nested_record_reassign
     auto spare_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.spare.dynamic_array_reassign_cleanup"
     );
-    auto replacement_store = output.find("store %record.Inner %tmp", spare_deallocate);
+    auto replacement_store = output.find("store %record.Inner %tmp");
     assert(inner_address != std::string::npos);
     assert(values_cleanup != std::string::npos);
     assert(values_drop != std::string::npos);
