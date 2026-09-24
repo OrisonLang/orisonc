@@ -3696,11 +3696,11 @@ void assert_cli_emit_llvm_choice_constructor_multi_variant_indexed_member_path_s
     auto selected_values_cleanup =
         output.find("%selected.Secondary.item.values.choice_dynamic_array_cleanup", main_start);
     auto selected_spare_cleanup =
-        output.find("%selected.Secondary.item.spare.choice_dynamic_array_cleanup", selected_values_cleanup);
+        output.find("%selected.Secondary.item.spare.choice_dynamic_array_cleanup");
     auto sibling_values_cleanup =
         output.find("%sibling.Primary.item.values.choice_dynamic_array_cleanup", main_start);
     auto sibling_spare_cleanup =
-        output.find("%sibling.Primary.item.spare.choice_dynamic_array_cleanup", sibling_values_cleanup);
+        output.find("%sibling.Primary.item.spare.choice_dynamic_array_cleanup");
     assert(main_start != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
     assert(selected_spare_cleanup != std::string::npos);
