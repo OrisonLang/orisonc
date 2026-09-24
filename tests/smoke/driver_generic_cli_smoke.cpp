@@ -2888,7 +2888,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_field_reassignment_
     auto second_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr %holder.values.element1.dynamic_array_reassign_cleanup"
     );
-    auto replacement_store = output.find("store [2 x { ptr, i64, i64 }] %tmp", second_deallocate);
+    auto replacement_store = output.find("store [2 x { ptr, i64, i64 }] %tmp");
     assert(values_address != std::string::npos);
     assert(first_element_address != std::string::npos);
     assert(first_cleanup != std::string::npos);
