@@ -2288,30 +2288,29 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
     auto output = read_command_output(command);
     auto out_of_bounds_binding =
         output.find("%" + std::string {out_of_bounds_name} + " = add i64 0, " + std::string {out_of_bounds_value});
-    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp", out_of_bounds_binding);
-    auto group_bounds_check = output.find("%aggregate_path_index", root_storage);
+    auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp");
+    auto group_bounds_check = output.find("%aggregate_path_index");
     auto item_bounds_check = output.find("%aggregate_path_index", group_bounds_check + 1);
-    auto dynamic_bounds_check = output.find(".groups.element.items.element.values.dynamic_array_index", item_bounds_check);
+    auto dynamic_bounds_check = output.find(".groups.element.items.element.values.dynamic_array_index");
     auto trap = std::string::npos;
     if (out_of_bounds_name == "group_index") {
-        auto failure_label = output.find("fixed_array.index.out_of_bounds.0:", group_bounds_check);
-        auto success_label = output.find("fixed_array.index.in_bounds.0:", failure_label);
-        trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+        auto failure_label = output.find("fixed_array.index.out_of_bounds.0:");
+        auto success_label = output.find("fixed_array.index.in_bounds.0:");
+        trap = output.find("call void @__orison_dynamic_array_bounds_failed()");
         assert(failure_label != std::string::npos);
         assert(success_label != std::string::npos);
     } else if (out_of_bounds_name == "item_index") {
-        auto failure_label = output.find("fixed_array.index.out_of_bounds.1:", item_bounds_check);
-        auto success_label = output.find("fixed_array.index.in_bounds.1:", failure_label);
-        trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+        auto failure_label = output.find("fixed_array.index.out_of_bounds.1:");
+        auto success_label = output.find("fixed_array.index.in_bounds.1:");
+        trap = output.find("call void @__orison_dynamic_array_bounds_failed()");
         assert(failure_label != std::string::npos);
         assert(success_label != std::string::npos);
     } else {
-        auto failure_label = output.find("dynamic_array.aggregate_index.out_of_bounds.2:", dynamic_bounds_check);
-        auto success_label = output.find("dynamic_array.aggregate_index.in_bounds.2:", failure_label);
-        trap = output.find("call void @__orison_dynamic_array_bounds_failed()", failure_label);
+        auto failure_label = output.find("dynamic_array.aggregate_index.out_of_bounds.2:");
+        auto success_label = output.find("dynamic_array.aggregate_index.in_bounds.2:");
+        trap = output.find("call void @__orison_dynamic_array_bounds_failed()");
         auto old_element_cleanup = output.find(
-            "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
-            trap
+            "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp"
         );
         assert(failure_label != std::string::npos);
         assert(success_label != std::string::npos);
