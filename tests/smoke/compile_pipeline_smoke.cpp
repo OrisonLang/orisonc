@@ -19398,6 +19398,64 @@ auto main() -> int {
     assert(multi_payload_count_items_extract < multi_payload_count_marker_extract);
     assert(multi_payload_count_marker_extract < multi_payload_count_call);
     assert(multi_payload_count_call < multi_payload_count_marker_subtract);
+    auto multi_variant_choice_nested_count = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_multi_variant_choice_computed_index_nested_field_method_chain_count_run.or"
+    );
+    assert(!multi_variant_choice_nested_count.has_errors());
+    auto const& multi_variant_choice_nested_count_ir = multi_variant_choice_nested_count.ir_text;
+    auto const multi_variant_count_switch = multi_variant_choice_nested_count_ir.find("switch i32");
+    auto const multi_variant_count_primary_case =
+        multi_variant_choice_nested_count_ir.find("switch.case.0.0", multi_variant_count_switch);
+    auto const multi_variant_count_fallback_case =
+        multi_variant_choice_nested_count_ir.find("switch.case.0.1", multi_variant_count_primary_case);
+    auto const multi_variant_count_payload_extract = multi_variant_choice_nested_count_ir.find(
+        "extractvalue { i32, [32 x i8] } %packet, 1",
+        multi_variant_count_primary_case
+    );
+    auto const multi_variant_count_payload_spill =
+        multi_variant_choice_nested_count_ir.find("alloca [32 x i8]", multi_variant_count_payload_extract);
+    auto const multi_variant_count_typed_payload_load = multi_variant_choice_nested_count_ir.find(
+        "load { { ptr, i64, i64 }, i32 }",
+        multi_variant_count_payload_spill
+    );
+    auto const multi_variant_count_items_extract = multi_variant_choice_nested_count_ir.find(
+        "extractvalue { { ptr, i64, i64 }, i32 }",
+        multi_variant_count_typed_payload_load
+    );
+    auto const multi_variant_count_marker_extract = multi_variant_choice_nested_count_ir.find(
+        "extractvalue { { ptr, i64, i64 }, i32 }",
+        multi_variant_count_items_extract + 1
+    );
+    auto const multi_variant_count_call = multi_variant_choice_nested_count_ir.find(
+        "call i64 @method.DynamicArray_Payload_.count__Payload",
+        multi_variant_count_marker_extract
+    );
+    auto const multi_variant_count_fallback_payload =
+        multi_variant_choice_nested_count_ir.find("load i32", multi_variant_count_fallback_case);
+    auto const multi_variant_count_merge_phi =
+        multi_variant_choice_nested_count_ir.find("phi i32", multi_variant_count_fallback_payload);
+    assert(multi_variant_count_switch != std::string::npos);
+    assert(multi_variant_count_primary_case != std::string::npos);
+    assert(multi_variant_count_fallback_case != std::string::npos);
+    assert(multi_variant_count_payload_extract != std::string::npos);
+    assert(multi_variant_count_payload_spill != std::string::npos);
+    assert(multi_variant_count_typed_payload_load != std::string::npos);
+    assert(multi_variant_count_items_extract != std::string::npos);
+    assert(multi_variant_count_marker_extract != std::string::npos);
+    assert(multi_variant_count_call != std::string::npos);
+    assert(multi_variant_count_fallback_payload != std::string::npos);
+    assert(multi_variant_count_merge_phi != std::string::npos);
+    assert(multi_variant_count_switch < multi_variant_count_primary_case);
+    assert(multi_variant_count_primary_case < multi_variant_count_fallback_case);
+    assert(multi_variant_count_primary_case < multi_variant_count_payload_extract);
+    assert(multi_variant_count_payload_extract < multi_variant_count_payload_spill);
+    assert(multi_variant_count_payload_spill < multi_variant_count_typed_payload_load);
+    assert(multi_variant_count_typed_payload_load < multi_variant_count_items_extract);
+    assert(multi_variant_count_items_extract < multi_variant_count_marker_extract);
+    assert(multi_variant_count_marker_extract < multi_variant_count_call);
+    assert(multi_variant_count_fallback_case < multi_variant_count_fallback_payload);
+    assert(multi_variant_count_fallback_payload < multi_variant_count_merge_phi);
     auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
