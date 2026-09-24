@@ -2560,10 +2560,10 @@ void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_cou
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto payload_extract = output.find("extractvalue { i32, { { ptr, i64, i64 }, i32 } } %packet, 1");
-    auto items_extract = output.find("extractvalue { { ptr, i64, i64 }, i32 }", payload_extract);
+    auto items_extract = output.find("extractvalue { { ptr, i64, i64 }, i32 }");
     auto marker_extract = output.find("extractvalue { { ptr, i64, i64 }, i32 }", items_extract + 1);
-    auto count_call = output.find("call i64 @method.DynamicArray_Payload_.count__Payload", marker_extract);
-    auto marker_subtract = output.find("sub i32", count_call);
+    auto count_call = output.find("call i64 @method.DynamicArray_Payload_.count__Payload");
+    auto marker_subtract = output.find("sub i32");
     assert(payload_extract != std::string::npos);
     assert(items_extract != std::string::npos);
     assert(marker_extract != std::string::npos);

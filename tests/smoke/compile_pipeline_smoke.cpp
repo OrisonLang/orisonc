@@ -19366,6 +19366,38 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_out_of_bounds.or"
     );
+    auto multi_payload_choice_nested_count = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_count_run.or"
+    );
+    assert(!multi_payload_choice_nested_count.has_errors());
+    auto const& multi_payload_choice_nested_count_ir = multi_payload_choice_nested_count.ir_text;
+    auto const multi_payload_count_payload_extract = multi_payload_choice_nested_count_ir.find(
+        "extractvalue { i32, { { ptr, i64, i64 }, i32 } } %packet, 1"
+    );
+    auto const multi_payload_count_items_extract = multi_payload_choice_nested_count_ir.find(
+        "extractvalue { { ptr, i64, i64 }, i32 }",
+        multi_payload_count_payload_extract
+    );
+    auto const multi_payload_count_marker_extract = multi_payload_choice_nested_count_ir.find(
+        "extractvalue { { ptr, i64, i64 }, i32 }",
+        multi_payload_count_items_extract + 1
+    );
+    auto const multi_payload_count_call = multi_payload_choice_nested_count_ir.find(
+        "call i64 @method.DynamicArray_Payload_.count__Payload",
+        multi_payload_count_marker_extract
+    );
+    auto const multi_payload_count_marker_subtract =
+        multi_payload_choice_nested_count_ir.find("sub i32", multi_payload_count_call);
+    assert(multi_payload_count_payload_extract != std::string::npos);
+    assert(multi_payload_count_items_extract != std::string::npos);
+    assert(multi_payload_count_marker_extract != std::string::npos);
+    assert(multi_payload_count_call != std::string::npos);
+    assert(multi_payload_count_marker_subtract != std::string::npos);
+    assert(multi_payload_count_payload_extract < multi_payload_count_items_extract);
+    assert(multi_payload_count_items_extract < multi_payload_count_marker_extract);
+    assert(multi_payload_count_marker_extract < multi_payload_count_call);
+    assert(multi_payload_count_call < multi_payload_count_marker_subtract);
     auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
