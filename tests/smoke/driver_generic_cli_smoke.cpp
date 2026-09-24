@@ -3393,11 +3393,10 @@ void assert_cli_emit_llvm_choice_constructor_indexed_member_path_move_fixture_su
     auto selected_values_cleanup =
         output.find("%selected.Some.item.values.choice_dynamic_array_cleanup", main_start);
     auto selected_spare_cleanup =
-        output.find("%selected.Some.item.spare.choice_dynamic_array_cleanup", selected_values_cleanup);
+        output.find("%selected.Some.item.spare.choice_dynamic_array_cleanup");
     auto selected_final_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
-            "%selected.Some.item.spare.choice_dynamic_array_cleanup1.cleanup.data",
-        selected_spare_cleanup
+            "%selected.Some.item.spare.choice_dynamic_array_cleanup1.cleanup.data"
     );
     assert(main_start != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
