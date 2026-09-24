@@ -19456,6 +19456,32 @@ auto main() -> int {
     assert(multi_variant_count_marker_extract < multi_variant_count_call);
     assert(multi_variant_count_fallback_case < multi_variant_count_fallback_payload);
     assert(multi_variant_count_fallback_payload < multi_variant_count_merge_phi);
+    auto multi_payload_choice_nested_append = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_receiver_multi_payload_choice_computed_index_nested_field_method_chain_append_statement_run.or"
+    );
+    assert(!multi_payload_choice_nested_append.has_errors());
+    auto const& multi_payload_choice_nested_append_ir = multi_payload_choice_nested_append.ir_text;
+    auto const multi_payload_append_payload_extract = multi_payload_choice_nested_append_ir.find(
+        "extractvalue { i32, { { ptr, i64, i64 }, i32 } } %packet, 1"
+    );
+    auto const multi_payload_append_items_extract = multi_payload_choice_nested_append_ir.find(
+        "extractvalue { { ptr, i64, i64 }, i32 }",
+        multi_payload_append_payload_extract
+    );
+    auto const multi_payload_append_marker_extract = multi_payload_choice_nested_append_ir.find(
+        "extractvalue { { ptr, i64, i64 }, i32 }",
+        multi_payload_append_items_extract + 1
+    );
+    auto const multi_payload_append_marker_compare =
+        multi_payload_choice_nested_append_ir.find("icmp eq i32", multi_payload_append_marker_extract);
+    assert(multi_payload_append_payload_extract != std::string::npos);
+    assert(multi_payload_append_items_extract != std::string::npos);
+    assert(multi_payload_append_marker_extract != std::string::npos);
+    assert(multi_payload_append_marker_compare != std::string::npos);
+    assert(multi_payload_append_payload_extract < multi_payload_append_items_extract);
+    assert(multi_payload_append_items_extract < multi_payload_append_marker_extract);
+    assert(multi_payload_append_marker_extract < multi_payload_append_marker_compare);
     auto returned_sibling_descriptor_assignment = pipeline.emit_llvm(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_dynamic_array_element_sibling_descriptor_field_index_assignment_run.or"
