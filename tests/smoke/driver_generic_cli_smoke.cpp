@@ -3627,21 +3627,19 @@ void assert_cli_emit_llvm_choice_constructor_multi_variant_nested_member_path_mo
         output.find("icmp eq i32 %selected.choice_dynamic_array_cleanup", main_start);
     auto secondary_expected_tag = output.find(", 2", secondary_active_check);
     auto secondary_first_values_cleanup = output.find(
-        "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract",
-        main_start
+        "%selected.Secondary.items.element0.values.choice_dynamic_array_cleanup.descriptor.extract"
     );
     auto secondary_first_spare_cleanup =
-        output.find("%selected.Secondary.items.element0.spare.choice_dynamic_array_cleanup", main_start);
+        output.find("%selected.Secondary.items.element0.spare.choice_dynamic_array_cleanup");
     auto secondary_second_values_cleanup =
-        output.find("%selected.Secondary.items.element1.values.choice_dynamic_array_cleanup", main_start);
+        output.find("%selected.Secondary.items.element1.values.choice_dynamic_array_cleanup");
     auto secondary_second_spare_cleanup =
-        output.find("%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup", main_start);
+        output.find("%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup");
     auto secondary_final_deallocate = output.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
-            "%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup7.cleanup.data",
-        main_start
+            "%selected.Secondary.items.element1.spare.choice_dynamic_array_cleanup7.cleanup.data"
     );
-    auto main_return = output.find("ret i32 0", main_start);
+    auto main_return = output.find("ret i32 0");
     assert(main_start != std::string::npos);
     assert(secondary_constructor_tag != std::string::npos);
     assert(primary_tag_check != std::string::npos);
