@@ -2151,11 +2151,10 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_d
     auto first_bounds_check = output.find(".items.dynamic_array_index", items_projection);
     auto second_bounds_check = output.find(".box.primary.dynamic_array_index", first_bounds_check);
     auto old_element_cleanup = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
-        second_bounds_check
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp"
     );
-    auto replacement_store = output.find("store %record.Payload", old_element_cleanup);
-    auto root_cleanup = output.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp", replacement_store);
+    auto replacement_store = output.find("store %record.Payload");
+    auto root_cleanup = output.find("call void @__orison_owned_cleanup.Bucket(ptr %dynamic_array_receiver_aggregate_tmp");
     assert(root_storage != std::string::npos);
     assert(items_projection != std::string::npos);
     assert(first_bounds_check != std::string::npos);
@@ -2176,17 +2175,14 @@ void assert_cli_emit_llvm_dynamic_array_returned_static_indexed_assignment_keeps
     auto root_storage = output.find("%dynamic_array_receiver_aggregate_tmp");
     auto selected_index = output.find(".buckets.element0.values.dynamic_array_index", root_storage);
     auto old_element_cleanup = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp",
-        selected_index
+        "call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_aggregate_tmp"
     );
-    auto replacement_store = output.find("store %record.Payload", old_element_cleanup);
+    auto replacement_store = output.find("store %record.Payload");
     auto selected_cleanup = output.find(
-        ".buckets.element0.values.dynamic_array_cleanup",
-        replacement_store
+        ".buckets.element0.values.dynamic_array_cleanup"
     );
     auto sibling_cleanup = output.find(
-        ".buckets.element1.values.dynamic_array_cleanup",
-        selected_cleanup
+        ".buckets.element1.values.dynamic_array_cleanup"
     );
     assert(root_storage != std::string::npos);
     assert(selected_index != std::string::npos);
