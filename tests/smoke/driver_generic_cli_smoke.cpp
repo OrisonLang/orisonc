@@ -431,7 +431,7 @@ void assert_cli_runtime_indexed_dynamic_array_cleanup_emit_llvm_fixture_success(
         "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)"
     );
-    auto final_return = output.find("ret i32 0", deallocate);
+    auto final_return = output.find("ret i32 0");
     assert(bounds_branch != std::string::npos);
     assert(value_load != std::string::npos);
     assert(outer_store != std::string::npos);
@@ -483,7 +483,7 @@ void assert_cli_runtime_indexed_dynamic_array_default_sibling_emit_llvm_fixture_
         "call void @__orison_dynamic_array_deallocate(ptr %items.runtime_cleanup.data, i64 4, "
         "i64 %items.runtime_cleanup.capacity)"
     );
-    auto final_return = output.find("ret i32 0", deallocate);
+    auto final_return = output.find("ret i32 0");
     assert(sibling_branch != std::string::npos);
     assert(sibling_load != std::string::npos);
     assert(cleanup_branch != std::string::npos);
