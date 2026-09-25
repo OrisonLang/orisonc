@@ -3242,7 +3242,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_fixed_array_record_field_
     auto output = read_command_output(command);
     auto maker_start = output.find("define %record.Outer @make_outer");
     auto maker_end = output.find("define i32 @main", maker_start);
-    auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", maker_end);
+    auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup");
     auto replacement_drop = output.find(
         "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup"
     );
