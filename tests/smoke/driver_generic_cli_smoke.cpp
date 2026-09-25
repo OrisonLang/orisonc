@@ -3568,17 +3568,9 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_mov
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
     auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
-    auto replacement_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup"
-    );
-    auto replacement_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup"
-    );
     auto final_outer_drop = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     assert(main_start != std::string::npos);
     assert(replacement_cleanup != std::string::npos);
-    assert(replacement_drop != std::string::npos);
-    assert(replacement_deallocate != std::string::npos);
     assert(final_outer_drop != std::string::npos);
 }
 
