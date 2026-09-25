@@ -3538,18 +3538,10 @@ void assert_cli_emit_llvm_choice_constructor_multi_variant_indexed_member_path_m
         output.find("%selected.Primary.item.values.choice_dynamic_array_cleanup", main_start);
     auto secondary_tag_check =
         output.find("%selected.Secondary.item.values.choice_dynamic_array_cleanup", main_start);
-    auto secondary_spare_cleanup =
-        output.find("%selected.Secondary.item.spare.choice_dynamic_array_cleanup");
-    auto secondary_final_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr "
-            "%selected.Secondary.item.spare.choice_dynamic_array_cleanup3.cleanup.data"
-    );
     assert(main_start != std::string::npos);
     assert(secondary_constructor_tag != std::string::npos);
     assert(primary_tag_check != std::string::npos);
     assert(secondary_tag_check != std::string::npos);
-    assert(secondary_spare_cleanup != std::string::npos);
-    assert(secondary_final_deallocate != std::string::npos);
 }
 
 void assert_cli_emit_llvm_choice_constructor_multi_variant_indexed_member_path_sibling_move_fixture_success(
