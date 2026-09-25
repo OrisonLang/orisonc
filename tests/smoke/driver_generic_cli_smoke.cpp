@@ -3265,7 +3265,7 @@ void assert_cli_emit_llvm_dynamic_array_owned_constructor_fixed_array_record_fie
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
-    auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup", main_start);
+    auto replacement_cleanup = output.find("%outer.items.element0.values.dynamic_array_reassign_cleanup");
     auto replacement_drop = output.find(
         "call void @__orison_owned_cleanup.Payload(ptr %outer.items.element0.values.dynamic_array_reassign_cleanup"
     );
