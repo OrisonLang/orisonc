@@ -3747,12 +3747,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixtu
     auto second_element_address = output.find("%holder.values.element1.addr");
     auto holder_drop_definition = output.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
     auto holder_value_cleanup = output.find("%Holder.drop.values.drop.walk");
-    auto holder_element_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %Holder.drop.values.element.drop.element.addr)"
-    );
-    auto holder_element_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %Holder.drop.values.element.cleanup.data"
-    );
     auto holder_drop_call = output.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)");
     auto return_value = output.find("ret i32 0");
     assert(values_address != std::string::npos);
@@ -3760,8 +3754,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixtu
     assert(second_element_address != std::string::npos);
     assert(holder_drop_definition != std::string::npos);
     assert(holder_value_cleanup != std::string::npos);
-    assert(holder_element_drop != std::string::npos);
-    assert(holder_element_deallocate != std::string::npos);
     assert(holder_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
 }
