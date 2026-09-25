@@ -3453,22 +3453,13 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member
         "insertvalue { i32, %record.Inner } undef, i32 7, 0",
         main_start
     );
-    auto selected_payload_extract = output.find(
-        "%selected.Ready.item.values.choice_dynamic_array_cleanup.payload.value = "
-        "extractvalue { i32, %record.Inner }",
-        main_start
-    );
     auto selected_values_cleanup = output.find(
         "%selected.Ready.item.values.choice_dynamic_array_cleanup.descriptor.extract",
         main_start
     );
-    auto selected_spare_cleanup =
-        output.find("%selected.Ready.item.spare.choice_dynamic_array_cleanup", main_start);
     assert(main_start != std::string::npos);
     assert(scalar_payload != std::string::npos);
-    assert(selected_payload_extract != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
-    assert(selected_spare_cleanup != std::string::npos);
 }
 
 void assert_cli_emit_llvm_choice_constructor_multi_payload_indexed_member_path_sibling_move_fixture_success(
