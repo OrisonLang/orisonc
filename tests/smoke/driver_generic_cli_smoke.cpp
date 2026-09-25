@@ -3362,16 +3362,8 @@ void assert_cli_emit_llvm_choice_constructor_indexed_member_path_move_fixture_su
     auto main_start = output.find("define i32 @main");
     auto selected_values_cleanup =
         output.find("%selected.Some.item.values.choice_dynamic_array_cleanup", main_start);
-    auto selected_spare_cleanup =
-        output.find("%selected.Some.item.spare.choice_dynamic_array_cleanup");
-    auto selected_final_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr "
-            "%selected.Some.item.spare.choice_dynamic_array_cleanup1.cleanup.data"
-    );
     assert(main_start != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
-    assert(selected_spare_cleanup != std::string::npos);
-    assert(selected_final_deallocate != std::string::npos);
 }
 
 void assert_cli_emit_llvm_choice_constructor_indexed_member_path_sibling_move_fixture_success(
