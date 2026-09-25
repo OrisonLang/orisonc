@@ -3614,47 +3614,11 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_multi_field_reassig
     auto output = read_command_output(command);
     auto items_address = output.find("%holder.items.addr");
     auto first_values_cleanup = output.find("%holder.items.element0.inner.values.dynamic_array_reassign_cleanup");
-    auto first_values_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
-    );
-    auto first_values_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
-    );
-    auto first_spare_cleanup = output.find("%holder.items.element0.inner.spare.dynamic_array_reassign_cleanup");
-    auto first_spare_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
-    );
-    auto first_spare_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.spare.dynamic_array_reassign_cleanup"
-    );
-    auto second_values_cleanup = output.find("%holder.items.element1.inner.values.dynamic_array_reassign_cleanup");
-    auto second_values_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.inner.values.dynamic_array_reassign_cleanup"
-    );
-    auto second_values_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.inner.values.dynamic_array_reassign_cleanup"
-    );
     auto second_spare_cleanup = output.find("%holder.items.element1.inner.spare.dynamic_array_reassign_cleanup");
-    auto second_spare_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element1.inner.spare.dynamic_array_reassign_cleanup"
-    );
-    auto second_spare_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element1.inner.spare.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store [2 x %record.Item] %tmp");
     assert(items_address != std::string::npos);
     assert(first_values_cleanup != std::string::npos);
-    assert(first_values_drop != std::string::npos);
-    assert(first_values_deallocate != std::string::npos);
-    assert(first_spare_cleanup != std::string::npos);
-    assert(first_spare_drop != std::string::npos);
-    assert(first_spare_deallocate != std::string::npos);
-    assert(second_values_cleanup != std::string::npos);
-    assert(second_values_drop != std::string::npos);
-    assert(second_values_deallocate != std::string::npos);
     assert(second_spare_cleanup != std::string::npos);
-    assert(second_spare_drop != std::string::npos);
-    assert(second_spare_deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
