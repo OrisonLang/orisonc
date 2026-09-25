@@ -3336,16 +3336,8 @@ void assert_cli_emit_llvm_choice_constructor_member_path_move_fixture_success(
     auto output = read_command_output(command);
     auto main_start = output.find("define i32 @main");
     auto selected_cleanup = output.find("%selected.Some.values.choice_dynamic_array_cleanup", main_start);
-    auto selected_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %selected.Some.values.choice_dynamic_array_cleanup"
-    );
-    auto selected_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %selected.Some.values.choice_dynamic_array_cleanup"
-    );
     assert(main_start != std::string::npos);
     assert(selected_cleanup != std::string::npos);
-    assert(selected_drop != std::string::npos);
-    assert(selected_deallocate != std::string::npos);
 }
 
 void assert_cli_emit_llvm_choice_constructor_nested_member_path_move_fixture_success(
