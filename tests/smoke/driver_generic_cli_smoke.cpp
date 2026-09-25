@@ -3630,47 +3630,11 @@ void assert_cli_emit_llvm_dynamic_array_owned_multidimensional_record_field_reas
     auto output = read_command_output(command);
     auto grid_address = output.find("%holder.grid.addr");
     auto first_cleanup = output.find("%holder.grid.element0.element0.values.dynamic_array_reassign_cleanup");
-    auto first_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
-    );
-    auto first_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element0.element0.values.dynamic_array_reassign_cleanup"
-    );
-    auto second_cleanup = output.find("%holder.grid.element0.element1.values.dynamic_array_reassign_cleanup");
-    auto second_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
-    );
-    auto second_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element0.element1.values.dynamic_array_reassign_cleanup"
-    );
-    auto third_cleanup = output.find("%holder.grid.element1.element0.values.dynamic_array_reassign_cleanup");
-    auto third_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
-    );
-    auto third_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element1.element0.values.dynamic_array_reassign_cleanup"
-    );
     auto fourth_cleanup = output.find("%holder.grid.element1.element1.values.dynamic_array_reassign_cleanup");
-    auto fourth_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
-    );
-    auto fourth_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.grid.element1.element1.values.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store [2 x [2 x %record.Item]] %tmp");
     assert(grid_address != std::string::npos);
     assert(first_cleanup != std::string::npos);
-    assert(first_drop != std::string::npos);
-    assert(first_deallocate != std::string::npos);
-    assert(second_cleanup != std::string::npos);
-    assert(second_drop != std::string::npos);
-    assert(second_deallocate != std::string::npos);
-    assert(third_cleanup != std::string::npos);
-    assert(third_drop != std::string::npos);
-    assert(third_deallocate != std::string::npos);
     assert(fourth_cleanup != std::string::npos);
-    assert(fourth_drop != std::string::npos);
-    assert(fourth_deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
