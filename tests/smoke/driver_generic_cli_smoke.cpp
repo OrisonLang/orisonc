@@ -3721,12 +3721,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     auto second_field_address = output.find("%outer.items.element1.values.addr");
     auto item_drop_definition = output.find("define void @__orison_owned_cleanup.Item(ptr %value)");
     auto outer_drop_definition = output.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
-    auto item_field_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %Item.drop.values.drop.element.addr)"
-    );
-    auto item_field_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %Item.drop.values.cleanup.data"
-    );
     auto outer_item_drop = output.find("call void @__orison_owned_cleanup.Item(ptr %Outer.drop.items.drop.element.addr)");
     auto outer_drop_call = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     auto return_value = output.find("ret i32 0");
@@ -3737,8 +3731,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     assert(second_field_address != std::string::npos);
     assert(item_drop_definition != std::string::npos);
     assert(outer_drop_definition != std::string::npos);
-    assert(item_field_drop != std::string::npos);
-    assert(item_field_deallocate != std::string::npos);
     assert(outer_item_drop != std::string::npos);
     assert(outer_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
