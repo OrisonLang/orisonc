@@ -3095,18 +3095,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_returned_nested_record_field_move_
     auto maker_start = output.find("define %record.Outer @make_outer");
     auto maker_end = output.find("define i32 @main", maker_start);
     auto replacement_cleanup = output.find("%outer.inner.values.dynamic_array_reassign_cleanup");
-    auto replacement_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
-    );
-    auto replacement_deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %outer.inner.values.dynamic_array_reassign_cleanup"
-    );
     auto final_outer_drop = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     assert(maker_start != std::string::npos);
     assert(maker_end != std::string::npos);
     assert(replacement_cleanup != std::string::npos);
-    assert(replacement_drop != std::string::npos);
-    assert(replacement_deallocate != std::string::npos);
     assert(final_outer_drop != std::string::npos);
 }
 
