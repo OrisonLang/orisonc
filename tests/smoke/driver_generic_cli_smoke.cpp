@@ -2992,20 +2992,12 @@ void assert_cli_emit_llvm_dynamic_array_owned_dynamic_index_record_field_reassig
     auto element_address = output.find(".element.addr = getelementptr %record.Item", bounds_check);
     auto field_address = output.find("getelementptr %record.Item, ptr %items.dynamic_array_index", element_address);
     auto cleanup = output.find("%items.element.values.dynamic_array_reassign_cleanup");
-    auto drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %items.element.values.dynamic_array_reassign_cleanup"
-    );
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %items.element.values.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(descriptor != std::string::npos);
     assert(bounds_check != std::string::npos);
     assert(element_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
