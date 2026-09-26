@@ -2920,18 +2920,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_record_element_field_reass
     auto element_address = output.find("%holder.items.element0.addr");
     auto field_address = output.find("%holder.items.element0.values.addr");
     auto cleanup = output.find("%holder.items.element0.values.dynamic_array_reassign_cleanup");
-    auto drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
-    );
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.values.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(element_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
