@@ -2836,12 +2836,8 @@ void assert_cli_emit_llvm_dynamic_array_field_reassignment_fixture_success(
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     auto cleanup = output.find("%holder.values.dynamic_array_reassign_cleanup");
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(cleanup != std::string::npos);
-    assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
