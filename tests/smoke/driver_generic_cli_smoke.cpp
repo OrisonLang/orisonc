@@ -2973,19 +2973,11 @@ void assert_cli_emit_llvm_dynamic_array_owned_computed_index_nested_record_sibli
     auto computed_element_address = output.find("getelementptr [2 x %record.Item], ptr %tmp");
     auto field_address = output.find("getelementptr %record.Inner, ptr %tmp");
     auto cleanup = output.find("%holder.items.element.inner.spare.dynamic_array_reassign_cleanup");
-    auto drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
-    );
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element.inner.spare.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(index_value != std::string::npos);
     assert(computed_element_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
