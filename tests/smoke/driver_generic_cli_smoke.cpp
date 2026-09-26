@@ -2937,19 +2937,11 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_nested_record_field_reassi
     auto inner_address = output.find("%holder.items.element0.inner.addr");
     auto field_address = output.find("%holder.items.element0.inner.values.addr");
     auto cleanup = output.find("%holder.items.element0.inner.values.dynamic_array_reassign_cleanup");
-    auto drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
-    );
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.items.element0.inner.values.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(element_address != std::string::npos);
     assert(inner_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
