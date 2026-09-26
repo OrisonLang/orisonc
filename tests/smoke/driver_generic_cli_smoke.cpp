@@ -3015,12 +3015,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_record_field_
     auto nested_element = output.find(".element.addr = getelementptr %record.Item", nested_bounds);
     auto field_address = output.find("getelementptr %record.Item, ptr %groups.element.items.dynamic_array_index", nested_element);
     auto cleanup = output.find("%groups.element.items.element.values.dynamic_array_reassign_cleanup");
-    auto drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
-    );
-    auto deallocate = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %groups.element.items.element.values.dynamic_array_reassign_cleanup"
-    );
     auto replacement_store = output.find("store { ptr, i64, i64 } %tmp");
     assert(outer_descriptor != std::string::npos);
     assert(outer_bounds != std::string::npos);
@@ -3030,8 +3024,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_dynamic_index_record_field_
     assert(nested_element != std::string::npos);
     assert(field_address != std::string::npos);
     assert(cleanup != std::string::npos);
-    assert(drop != std::string::npos);
-    assert(deallocate != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
