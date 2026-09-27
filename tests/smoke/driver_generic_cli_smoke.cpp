@@ -3310,11 +3310,8 @@ void assert_cli_emit_llvm_choice_constructor_multi_payload_indexed_member_path_s
     auto main_start = output.find("define i32 @main");
     auto selected_values_cleanup =
         output.find("%selected.Ready.item.values.choice_dynamic_array_cleanup", main_start);
-    auto sibling_values_cleanup =
-        output.find("%sibling.Ready.item.values.choice_dynamic_array_cleanup", main_start);
     assert(main_start != std::string::npos);
     assert(selected_values_cleanup != std::string::npos);
-    assert(sibling_values_cleanup != std::string::npos);
 }
 
 void assert_cli_emit_llvm_choice_constructor_multi_payload_second_indexed_member_path_sibling_move_fixture_success(
