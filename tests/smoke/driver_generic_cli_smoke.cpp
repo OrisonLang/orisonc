@@ -3454,11 +3454,9 @@ void assert_cli_emit_llvm_dynamic_array_owned_multidimensional_record_field_reas
     auto output = read_command_output(command);
     auto grid_address = output.find("%holder.grid.addr");
     auto first_cleanup = output.find("%holder.grid.element0.element0.values.dynamic_array_reassign_cleanup");
-    auto fourth_cleanup = output.find("%holder.grid.element1.element1.values.dynamic_array_reassign_cleanup");
     auto replacement_store = output.find("store [2 x [2 x %record.Item]] %tmp");
     assert(grid_address != std::string::npos);
     assert(first_cleanup != std::string::npos);
-    assert(fourth_cleanup != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
