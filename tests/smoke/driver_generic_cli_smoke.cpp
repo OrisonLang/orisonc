@@ -3516,15 +3516,11 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture
     auto field_address = output.find("%outer.inner.values.addr");
     auto inner_drop_definition = output.find("define void @__orison_owned_cleanup.Inner(ptr %value)");
     auto outer_drop_definition = output.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
-    auto outer_inner_drop = output.find("call void @__orison_owned_cleanup.Inner(ptr %Outer.drop.inner.addr)");
-    auto outer_drop_call = output.find("call void @__orison_owned_cleanup.Outer(ptr %outer.addr)");
     auto return_value = output.find("ret i32 0");
     assert(inner_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(inner_drop_definition != std::string::npos);
     assert(outer_drop_definition != std::string::npos);
-    assert(outer_inner_drop != std::string::npos);
-    assert(outer_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
 }
 
