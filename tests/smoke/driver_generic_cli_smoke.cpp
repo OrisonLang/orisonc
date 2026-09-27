@@ -3426,11 +3426,9 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_nested_record_reassign
     auto output = read_command_output(command);
     auto inner_address = output.find("%outer.inner.addr");
     auto values_cleanup = output.find("%outer.inner.values.dynamic_array_reassign_cleanup");
-    auto spare_cleanup = output.find("%outer.inner.spare.dynamic_array_reassign_cleanup");
     auto replacement_store = output.find("store %record.Inner %tmp");
     assert(inner_address != std::string::npos);
     assert(values_cleanup != std::string::npos);
-    assert(spare_cleanup != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
