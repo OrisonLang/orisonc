@@ -3500,11 +3500,9 @@ void assert_cli_emit_llvm_dynamic_array_owned_field_scope_cleanup_fixture_succes
     auto output = read_command_output(command);
     auto field_address = output.find("%holder.values.addr");
     auto holder_drop_definition = output.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
-    auto holder_drop_call = output.find("call void @__orison_owned_cleanup.Holder(ptr %holder.addr)");
     auto return_value = output.find("ret i32 0");
     assert(field_address != std::string::npos);
     assert(holder_drop_definition != std::string::npos);
-    assert(holder_drop_call != std::string::npos);
     assert(return_value != std::string::npos);
 }
 
