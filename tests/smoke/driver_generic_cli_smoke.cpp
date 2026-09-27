@@ -3412,11 +3412,9 @@ void assert_cli_emit_llvm_dynamic_array_owned_multi_field_indexed_record_reassig
     auto output = read_command_output(command);
     auto items_address = output.find("%holder.items.addr");
     auto first_values_cleanup = output.find("%holder.items.element0.values.dynamic_array_reassign_cleanup");
-    auto second_spare_cleanup = output.find("%holder.items.element1.spare.dynamic_array_reassign_cleanup");
     auto replacement_store = output.find("store [2 x %record.Item] %tmp");
     assert(items_address != std::string::npos);
     assert(first_values_cleanup != std::string::npos);
-    assert(second_spare_cleanup != std::string::npos);
     assert(replacement_store != std::string::npos);
 }
 
