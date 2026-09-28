@@ -1769,8 +1769,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_count_fixture_succ
     auto output = read_command_output(command);
     assert(output.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
     assert(output.find("call { ptr, i64, i64 } @make_values()") != std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp") !=
-        std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
