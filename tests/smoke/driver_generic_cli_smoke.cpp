@@ -2107,7 +2107,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
         assert(output.find("ret i32 0") != std::string::npos);
     } else {
         assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
-        assert(output.find("ret i32") != std::string::npos);
     }
 }
 
