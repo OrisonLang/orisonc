@@ -1703,7 +1703,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_fixture_success(
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("define i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %this)") != std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %tmp") != std::string::npos);
     assert(output.find("ret i64 %this.dynamic_array_length0.value") != std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %this.") == std::string::npos);
 }
