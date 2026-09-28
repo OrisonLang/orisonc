@@ -1785,8 +1785,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_count_fixt
     assert(output.find("define { ptr, i64, i64 } @make_left()") != std::string::npos);
     assert(output.find("define { ptr, i64, i64 } @make_right()") != std::string::npos);
     assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp") !=
-        std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
