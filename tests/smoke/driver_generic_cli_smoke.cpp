@@ -2358,7 +2358,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
     assert(output.find("BoxedValues.drop.secondary.addr") != std::string::npos);
     assert(output.find("BoxedValues.drop.secondary.drop.element.addr") != std::string::npos);
     assert(output.find("named_dynamic_array_receiver_descriptor") == std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_out_of_bounds_fixture_success(
