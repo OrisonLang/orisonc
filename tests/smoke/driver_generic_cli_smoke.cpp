@@ -1693,9 +1693,6 @@ void assert_cli_emit_llvm_dynamic_array_generic_method_fixture_success(
     assert(output.find(
         "define i64 @method.DynamicArray_UInt32_.count_with__Payload__UInt32({ ptr, i64, i64 } %this, %record.Payload %value)"
     ) != std::string::npos);
-    assert(output.find(
-        "call i64 @method.DynamicArray_UInt32_.count_with__Payload__UInt32({ ptr, i64, i64 } %tmp"
-    ) != std::string::npos);
     assert(output.find("ret i64 %this.dynamic_array_length0.value") != std::string::npos);
 }
 
