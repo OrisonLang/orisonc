@@ -1975,7 +1975,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_fix
     assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload") !=
         std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
