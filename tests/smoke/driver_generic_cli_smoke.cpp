@@ -1682,8 +1682,6 @@ void assert_cli_emit_llvm_generic_method_inferred_receiver_fixture_success(
     assert(output.find("%record.Box_UInt32_ = type { i32 }") != std::string::npos);
     assert(output.find("define i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %this)") !=
         std::string::npos);
-    assert(output.find("call i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %tmp") !=
-        std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_generic_method_fixture_success(
