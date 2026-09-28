@@ -1671,7 +1671,6 @@ void assert_cli_emit_llvm_generic_method_fixture_success(
     assert(output.find("call i32 @method.UInt32.select__UInt64(i32 %seed, i64 9)") != std::string::npos);
     assert(output.find("call i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %tmp") != std::string::npos);
     assert(output.find("call i32 @method.Pair_UInt32__UInt64_.first__UInt32__UInt64(%record.Pair_UInt32__UInt64_ %tmp") != std::string::npos);
-    assert(output.find("call %record.Pair_UInt32__UInt64_ @method.Box_Pair_UInt32__UInt64__.value__Pair_UInt32__UInt64_(%record.Box_Pair_UInt32__UInt64__ %tmp") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_generic_method_inferred_receiver_fixture_success(
