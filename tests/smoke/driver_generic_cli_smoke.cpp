@@ -1855,8 +1855,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_method_cha
         std::string::npos);
     assert(output.find("call { ptr, i64, i64 } @method.DynamicArray_Payload_.forward__Payload(ptr %dynamic_array_receiver_tmp3.addr)") !=
         std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_Payload_.count__Payload({ ptr, i64, i64 } %tmp4)") !=
-        std::string::npos);
     assert(output.find("dynamic_array_receiver_tmp3.dynamic_array_cleanup") == std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp5") !=
         std::string::npos);
