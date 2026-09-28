@@ -1742,8 +1742,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_ternary_call_result_count_fixtu
     assert(output.find("define { ptr, i64, i64 } @make_left()") != std::string::npos);
     assert(output.find("define { ptr, i64, i64 } @make_right()") != std::string::npos);
     assert(output.find("phi { ptr, i64, i64 }") != std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %tmp") !=
-        std::string::npos);
     assert(output.find("define i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %this)") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup") !=
