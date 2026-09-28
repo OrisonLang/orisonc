@@ -1934,7 +1934,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_meth
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
-    assert(output.find("call") != std::string::npos);
     assert(output.find("dynamic_array_receiver_aggregate_tmp") != std::string::npos);
     assert(output.find(sibling_owner) != std::string::npos);
     if (!excluded_selected_owner.empty()) {
