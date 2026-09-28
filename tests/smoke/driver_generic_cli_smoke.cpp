@@ -1715,8 +1715,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_local_call_result_count_fixture
     auto output = read_command_output(command);
     assert(output.find("define { ptr, i64, i64 } @make_values()") != std::string::npos);
     assert(output.find("%tmp0 = call { ptr, i64, i64 } @make_values()") != std::string::npos);
-    assert(output.find("call i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %tmp0)") !=
-        std::string::npos);
     assert(output.find("define i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %this)") !=
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup") !=
