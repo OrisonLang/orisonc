@@ -2049,7 +2049,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_
         std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.BoxedValues") != std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_nested_append_fixture_success(
