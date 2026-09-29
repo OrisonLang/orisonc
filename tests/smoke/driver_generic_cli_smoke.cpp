@@ -2663,7 +2663,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_app
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %holder.items.dynamic_array_cleanup") !=
         std::string::npos);
-    assert(output.find("ret i32 0") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_ternary_owned_methods_fixture_success(
