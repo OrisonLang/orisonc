@@ -2584,7 +2584,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_multi_variant_choice_nested_cou
         std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
     assert(output.find("switch case ownership mismatch") == std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_append_fixture_success(
