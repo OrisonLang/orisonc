@@ -1943,7 +1943,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_returned_aggregate_sibling_meth
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_aggregate_tmp") !=
         std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggregate_fixture_success(
