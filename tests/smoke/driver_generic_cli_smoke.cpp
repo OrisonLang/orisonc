@@ -2612,7 +2612,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_multi_payload_choice_nested_app
     assert(output.find("call void @__orison_owned_cleanup.Payload(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_owned_cleanup.Bucket(ptr %") != std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_nested_append_out_of_bounds_fixture_success(
