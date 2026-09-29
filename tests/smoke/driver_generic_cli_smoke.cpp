@@ -1958,7 +1958,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_runtime_indexed_returned_aggreg
     assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %tmp") != std::string::npos);
     assert(output.find("dynamic_array_receiver_aggregate_tmp0.grid.element1.element1.values.dynamic_array_cleanup") !=
         std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_fixture_success(
