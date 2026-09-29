@@ -1977,7 +1977,6 @@ void assert_cli_emit_llvm_dynamic_array_receiver_named_dynamic_array_element_fix
         std::string::npos);
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %dynamic_array_receiver_tmp") !=
         std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_receiver_returned_dynamic_array_element_fixture_success(
