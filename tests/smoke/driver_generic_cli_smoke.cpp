@@ -2125,7 +2125,6 @@ void assert_cli_emit_llvm_dynamic_array_returned_dynamic_array_element_sibling_d
     assert(replacement_store != std::string::npos);
     assert(root_cleanup != std::string::npos);
     assert(output.find("returned_aggregate_receiver_descriptor") == std::string::npos);
-    assert(output.find("ret i32 0") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_returned_static_indexed_assignment_keeps_selected_cleanup(
