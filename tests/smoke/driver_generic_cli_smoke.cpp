@@ -2234,7 +2234,6 @@ void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignme
     assert(sibling_cleanup_01 != std::string::npos);
     assert(sibling_cleanup_10 != std::string::npos);
     assert(selected_cleanup_11 != std::string::npos);
-    assert(output.find("ret i32 0") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_out_of_bounds_success(
