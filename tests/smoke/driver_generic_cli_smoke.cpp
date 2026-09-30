@@ -5210,6 +5210,36 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_branch_returned_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_branch_returned_owned_computed_for_cleanup"
     );
