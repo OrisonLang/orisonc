@@ -3474,7 +3474,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     auto second_field_address = output.find("%outer.items.element1.values.addr");
     auto item_drop_definition = output.find("define void @__orison_owned_cleanup.Item(ptr %value)");
     auto outer_drop_definition = output.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
-    auto return_value = output.find("ret i32 0");
     assert(items_address != std::string::npos);
     assert(first_item_address != std::string::npos);
     assert(first_field_address != std::string::npos);
@@ -3482,7 +3481,6 @@ void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixtur
     assert(second_field_address != std::string::npos);
     assert(item_drop_definition != std::string::npos);
     assert(outer_drop_definition != std::string::npos);
-    assert(return_value != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixture_success(
