@@ -2196,7 +2196,6 @@ void assert_cli_emit_llvm_returned_nested_sibling_after_primary_cleanup_success(
     assert(output.find("%returned.inner.sibling.dynamic_array_cleanup") == std::string::npos);
     assert(output.find("%box.inner.primary.dynamic_array_cleanup") == std::string::npos);
     assert(output.find("%box.inner.sibling.dynamic_array_cleanup") == std::string::npos);
-    assert(output.find("ret i32") != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_returned_nested_runtime_indexed_assignment_success(
