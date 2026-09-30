@@ -5205,6 +5205,16 @@ auto main(int argc, char** argv) -> int {
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup"
     );
