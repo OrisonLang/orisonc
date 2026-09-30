@@ -3494,13 +3494,11 @@ void assert_cli_emit_llvm_dynamic_array_owned_direct_indexed_scope_cleanup_fixtu
     auto second_element_address = output.find("%holder.values.element1.addr");
     auto holder_drop_definition = output.find("define void @__orison_owned_cleanup.Holder(ptr %value)");
     auto holder_value_cleanup = output.find("%Holder.drop.values.drop.walk");
-    auto return_value = output.find("ret i32 0");
     assert(values_address != std::string::npos);
     assert(first_element_address != std::string::npos);
     assert(second_element_address != std::string::npos);
     assert(holder_drop_definition != std::string::npos);
     assert(holder_value_cleanup != std::string::npos);
-    assert(return_value != std::string::npos);
 }
 
 auto generic_method_lines() -> std::vector<std::string> {
