@@ -5165,6 +5165,11 @@ auto main(int argc, char** argv) -> int {
     if (run_any_mode({"dynamic_array_cleanup_forwarded", "dynamic_array_cleanup_forwarded_computed"})) {
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
+        fixtures / "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
+        smoke_temp_root / "dynamic_array_forwarded_parameter_owned_computed_for_cleanup"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
         fixtures / "dynamic_array_branch_returned_owned_computed_for_cleanup_run.or",
         smoke_temp_root / "dynamic_array_branch_returned_owned_computed_for_cleanup"
     );
