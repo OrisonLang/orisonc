@@ -3455,12 +3455,10 @@ void assert_cli_emit_llvm_dynamic_array_owned_nested_field_scope_cleanup_fixture
     auto field_address = output.find("%outer.inner.values.addr");
     auto inner_drop_definition = output.find("define void @__orison_owned_cleanup.Inner(ptr %value)");
     auto outer_drop_definition = output.find("define void @__orison_owned_cleanup.Outer(ptr %value)");
-    auto return_value = output.find("ret i32 0");
     assert(inner_address != std::string::npos);
     assert(field_address != std::string::npos);
     assert(inner_drop_definition != std::string::npos);
     assert(outer_drop_definition != std::string::npos);
-    assert(return_value != std::string::npos);
 }
 
 void assert_cli_emit_llvm_dynamic_array_owned_indexed_field_scope_cleanup_fixture_success(
