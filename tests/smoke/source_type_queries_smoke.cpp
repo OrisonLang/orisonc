@@ -1127,6 +1127,16 @@ int main() {
         .element_size_bytes = 4,
     });
     state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "holder.buckets[dynamic_index].items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%holder.buckets[dynamic_index].items.addr",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::audit_runtime_aggregate_descriptor,
+        .element_size_bytes = 4,
+    });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
         .owner_name = "other_holder.buckets.element0.items",
         .source_type_name = "DynamicArray<UInt32>",
         .element_source_type_name = "UInt32",
@@ -3369,7 +3379,13 @@ int main() {
     );
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.ownership_join_matches);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.cleanup_owner_proven);
-    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.source_owner_name ==
+        "holder.buckets[dynamic_index].items");
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.handoff_owner_name ==
+        "holder.buckets[dynamic_index].items");
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_name ==
+        "%holder.buckets[dynamic_index].items.addr");
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.cleanup_owner_proven);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.lowering_enabled);
     assert(
@@ -3377,13 +3393,24 @@ int main() {
             forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
         ) == "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
             "holder.buckets[dynamic_index].items holder.buckets[dynamic_index].items for DynamicArray<UInt32>; "
-            "branch cleanup proofs holder.buckets[dynamic_index].items [cleanup owner proof missing] "
-            "holder.buckets[dynamic_index].items [cleanup owner proof missing]"
+            "branch cleanup proofs holder.buckets[dynamic_index].items "
+            "[cleanup owner audit-only runtime aggregate descriptor] holder.buckets[dynamic_index].items "
+            "[cleanup owner audit-only runtime aggregate descriptor]"
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
         ).find("unsupported reason runtime aggregate index") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan
+        ).find("%holder.buckets[dynamic_index].items.addr") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan
+        ).find("cleanup owner blocked") != std::string::npos
     );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
@@ -4410,7 +4437,8 @@ int main() {
     );
     assert(unproven_computed_handoff_plan.source_owner_name == "predicted_items");
     assert(unproven_computed_handoff_plan.handoff_owner_name == "predicted_items");
-    assert(!unproven_computed_handoff_plan.descriptor_storage_available);
+    assert(unproven_computed_handoff_plan.descriptor_storage_name == "%predicted_items.addr");
+    assert(unproven_computed_handoff_plan.descriptor_storage_available);
     assert(!unproven_computed_handoff_plan.cleanup_owner_proven);
     assert(!unproven_computed_handoff_plan.lowering_enabled);
     assert(

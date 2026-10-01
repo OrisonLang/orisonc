@@ -54,6 +54,7 @@ enum class DynamicArrayIterableCleanupOwnerProofStatus {
     missing_cleanup_plan,
     predicted_owner_local,
     audit_parameter_descriptor,
+    audit_runtime_aggregate_descriptor,
     proven_bound_parameter_descriptor,
     proven_lowered_local_descriptor,
 };

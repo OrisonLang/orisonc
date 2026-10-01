@@ -36,6 +36,7 @@ enum class DynamicArrayBoundsCheckKind {
 enum class DynamicArrayDescriptorStorageStatus {
     predicted_owner_local,
     audit_parameter_descriptor,
+    audit_runtime_aggregate_descriptor,
     bound_parameter_descriptor,
     lowered_local_descriptor,
 };

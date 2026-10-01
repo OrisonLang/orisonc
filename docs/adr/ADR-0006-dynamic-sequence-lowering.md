@@ -221,6 +221,9 @@ representation.
 - Computed DynamicArray aggregate-owner metadata now names runtime indexed projections with the same owner suffix used
   by assignment lowering. Same-owner runtime-index ternaries can pass the metadata ownership join, but cleanup proof
   remains blocked until descriptor storage and cleanup plans can prove the dynamic path.
+- Runtime-index aggregate DynamicArray descriptor storage now has an audit-only cleanup-plan status. It can make
+  descriptor storage visible to internal handoff metadata while still blocking cleanup-owner proof and production
+  cleanup emission.
 - Scalar `DynamicArray<T>` parameter `.push(value)` lowers through the same descriptor load, grow, element store, and
   descriptor write-back path used for local dynamic arrays.
 - Scalar `DynamicArray<T>` parameter indexed assignment lowers through the same descriptor load, bounds check, element

@@ -1085,6 +1085,8 @@ auto dynamic_array_iterable_cleanup_owner_proof_status(
             return DynamicArrayIterableCleanupOwnerProofStatus::predicted_owner_local;
         case DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor:
             return DynamicArrayIterableCleanupOwnerProofStatus::audit_parameter_descriptor;
+        case DynamicArrayDescriptorStorageStatus::audit_runtime_aggregate_descriptor:
+            return DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor;
         case DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor:
             return DynamicArrayIterableCleanupOwnerProofStatus::proven_bound_parameter_descriptor;
         case DynamicArrayDescriptorStorageStatus::lowered_local_descriptor:
@@ -1220,6 +1222,8 @@ auto dynamic_array_iterable_cleanup_owner_proof_status_report(
             return "cleanup owner predicted from semantic descriptor origin";
         case DynamicArrayIterableCleanupOwnerProofStatus::audit_parameter_descriptor:
             return "cleanup owner audit-only parameter descriptor";
+        case DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor:
+            return "cleanup owner audit-only runtime aggregate descriptor";
         case DynamicArrayIterableCleanupOwnerProofStatus::proven_bound_parameter_descriptor:
             return "cleanup owner proven from bound parameter descriptor";
         case DynamicArrayIterableCleanupOwnerProofStatus::proven_lowered_local_descriptor:
@@ -1470,18 +1474,22 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
                 plan.source_owner_name = plan.ownership_plan.branch_owner_names.front();
                 plan.handoff_owner_name = plan.source_owner_name;
             }
-            return plan;
+            break;
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven:
             break;
     }
 
-    if (plan.ownership_plan.branch_owner_names.empty()) {
+    if (plan.source_owner_name.empty()) {
+        if (!plan.ownership_plan.branch_owner_names.empty()) {
+            plan.source_owner_name = plan.ownership_plan.branch_owner_names.front();
+            plan.handoff_owner_name = plan.source_owner_name;
+        }
+    }
+
+    if (plan.source_owner_name.empty()) {
         plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
         return plan;
     }
-
-    plan.source_owner_name = plan.ownership_plan.branch_owner_names.front();
-    plan.handoff_owner_name = plan.source_owner_name;
 
     if (auto const* cleanup_plan = matching_dynamic_array_cleanup_plan(
             state,
