@@ -78,9 +78,16 @@ enum class ComputedDynamicArrayIterableOwnershipPlanKind {
     ternary_single_owner_proven,
 };
 
+enum class ComputedDynamicArrayIterableUnsupportedReason {
+    none,
+    runtime_aggregate_index,
+};
+
 struct ComputedDynamicArrayIterableOwnershipPlan {
     ComputedDynamicArrayIterableOwnershipPlanKind kind =
         ComputedDynamicArrayIterableOwnershipPlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableUnsupportedReason unsupported_reason =
+        ComputedDynamicArrayIterableUnsupportedReason::none;
     std::string source_type_name;
     std::string element_source_type_name;
     std::vector<std::string> branch_owner_names;

@@ -94,6 +94,32 @@ auto named_or_static_indexed_dynamic_array_leaf(
     return static_indexed_aggregate_owner_name(expression).has_value();
 }
 
+auto expression_contains_runtime_aggregate_index(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::index_access &&
+        !expression.arguments.empty() &&
+        !decimal_integer_literal_text(expression.arguments.front()).has_value()) {
+        return true;
+    }
+
+    if (expression.left != nullptr && expression_contains_runtime_aggregate_index(*expression.left)) {
+        return true;
+    }
+    if (expression.right != nullptr && expression_contains_runtime_aggregate_index(*expression.right)) {
+        return true;
+    }
+    if (expression.alternate != nullptr && expression_contains_runtime_aggregate_index(*expression.alternate)) {
+        return true;
+    }
+    for (auto const& argument : expression.arguments) {
+        if (expression_contains_runtime_aggregate_index(argument)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
     auto cloned = syntax::ExpressionSyntax {
         .kind = expression.kind,
@@ -781,7 +807,8 @@ auto collect_computed_dynamic_array_leaf_descriptors(
     std::string_view source_type_name,
     LoweringContext const& context,
     FunctionLoweringState const& state,
-    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
+    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors,
+    ComputedDynamicArrayIterableUnsupportedReason& unsupported_reason
 ) -> bool {
     if (named_or_static_indexed_dynamic_array_leaf(expression)) {
         return push_computed_dynamic_array_leaf_descriptor(
@@ -811,7 +838,8 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                     source_type_name,
                     context,
                     state,
-                    descriptors
+                    descriptors,
+                    unsupported_reason
                 )) {
                 return false;
             }
@@ -841,12 +869,17 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                 expression,
                 clone_expression(helper_call->arguments[forwarded_index])
             );
+            if (expression_contains_runtime_aggregate_index(projected_argument)) {
+                unsupported_reason = ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index;
+                return false;
+            }
             if (!collect_computed_dynamic_array_leaf_descriptors(
                     projected_argument,
                     source_type_name,
                     context,
                     state,
-                    descriptors
+                    descriptors,
+                    unsupported_reason
                 )) {
                 return false;
             }
@@ -865,13 +898,15 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         source_type_name,
         context,
         state,
-        descriptors
+        descriptors,
+        unsupported_reason
     ) && collect_computed_dynamic_array_leaf_descriptors(
         *expression.alternate,
         source_type_name,
         context,
         state,
-        descriptors
+        descriptors,
+        unsupported_reason
     );
 }
 
@@ -1280,7 +1315,8 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
             plan.source_type_name,
             context,
             state,
-            branch_descriptors
+            branch_descriptors,
+            plan.unsupported_reason
         ) ||
         branch_descriptors.empty()) {
         plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
@@ -1351,6 +1387,9 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
         output += " element ";
         output += plan.element_source_type_name;
     }
+    if (plan.unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+        output += " unsupported reason runtime aggregate index";
+    }
     if (!plan.branch_owner_names.empty()) {
         output += " owners";
         for (auto const& owner : plan.branch_owner_names) {
@@ -1372,6 +1411,9 @@ auto computed_dynamic_array_iterable_failure_summary_report(
         if (!plan.source_type_name.empty()) {
             output += ": cannot prove a single owner for ";
             output += plan.source_type_name;
+        }
+        if (plan.unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+            output += "; runtime aggregate index owner proof is not supported";
         }
         return output;
     }

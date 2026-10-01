@@ -3352,10 +3352,25 @@ int main() {
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
     );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index
+    );
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names.empty());
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.cleanup_owner_proven);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.lowering_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
+        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
+            "runtime aggregate index owner proof is not supported"
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
+        ).find("unsupported reason runtime aggregate index") != std::string::npos
+    );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

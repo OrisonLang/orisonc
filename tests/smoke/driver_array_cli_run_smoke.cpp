@@ -23,6 +23,9 @@ auto read_successful_command_output(std::string const& command) -> std::string {
     }
 
     auto status = pclose(pipe);
+    if (status != 0) {
+        std::fprintf(stderr, "command failed:\n%s\n\noutput:\n%s\n", command.c_str(), output.c_str());
+    }
     assert(status == 0);
     return output;
 }
@@ -2079,13 +2082,20 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
     std::filesystem::path const& object_path,
-    std::filesystem::path const& output_path
+    std::filesystem::path const& output_path,
+    bool runtime_aggregate_index_reason_expected = false
 ) {
-    auto const expected_summary_fragment =
-        "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>";
-    auto const expected_shape_fragment =
+    auto expected_summary_fragment =
+        std::string {"computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>"};
+    auto expected_shape_fragment = std::string {
         "computed DynamicArray ownership plan unsupported computed shape source DynamicArray<Payload> "
-        "element Payload [ownership join blocked] [cleanup owner blocked] (metadata only)";
+        "element Payload"
+    };
+    if (runtime_aggregate_index_reason_expected) {
+        expected_summary_fragment += "; runtime aggregate index owner proof is not supported";
+        expected_shape_fragment += " unsupported reason runtime aggregate index";
+    }
+    expected_shape_fragment += " [ownership join blocked] [cleanup owner blocked] (metadata only)";
 
     for (auto const& command : {
              executable.string() + " run " + source_path.string(),
@@ -4626,7 +4636,8 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed.o",
-        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed",
+        true
     );
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
