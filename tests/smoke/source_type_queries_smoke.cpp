@@ -1127,16 +1127,6 @@ int main() {
         .element_size_bytes = 4,
     });
     state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
-        .owner_name = "holder.buckets[dynamic_index].items",
-        .source_type_name = "DynamicArray<UInt32>",
-        .element_source_type_name = "UInt32",
-        .element_llvm_type = "i32",
-        .descriptor_storage_name = "%holder.buckets[dynamic_index].items.addr",
-        .descriptor_storage_status =
-            orison::lowering::DynamicArrayDescriptorStorageStatus::audit_runtime_aggregate_descriptor,
-        .element_size_bytes = 4,
-    });
-    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
         .owner_name = "other_holder.buckets.element0.items",
         .source_type_name = "DynamicArray<UInt32>",
         .element_source_type_name = "UInt32",

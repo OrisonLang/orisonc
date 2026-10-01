@@ -1151,6 +1151,33 @@ auto attach_dynamic_array_iterable_cleanup_owner_proof(
         DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan;
 }
 
+auto attach_runtime_indexed_aggregate_descriptor_storage(
+    DynamicArrayIterableDescriptorPlan& plan,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context
+) -> bool {
+    if (!contains_runtime_indexed_projection(expression)) {
+        return false;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        plan.owner_name,
+        plan.source_type_name,
+        context
+    );
+    if (!cleanup_plan.has_value()) {
+        return false;
+    }
+
+    plan.kind = DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner;
+    plan.descriptor_storage = std::move(cleanup_plan->descriptor_storage_name);
+    plan.can_lower_now = !plan.descriptor_storage.empty();
+    plan.cleanup_owner_proof_status =
+        DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor;
+    plan.cleanup_owner_proven = false;
+    return true;
+}
+
 auto plan_dynamic_array_iterable_descriptor(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -1187,6 +1214,9 @@ auto plan_dynamic_array_iterable_descriptor(
             }
 
             plan.kind = DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage;
+            if (attach_runtime_indexed_aggregate_descriptor_storage(plan, expression, context)) {
+                return plan;
+            }
             attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
             return plan;
         }
@@ -1502,6 +1532,20 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
             cleanup_plan->descriptor_storage_status
         );
         plan.cleanup_owner_proven = dynamic_array_iterable_cleanup_owner_proven(proof_status);
+    } else if (
+        plan.ownership_plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index
+    ) {
+        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+            plan.source_owner_name,
+            plan.source_type_name,
+            context
+        );
+        if (cleanup_plan.has_value()) {
+            plan.descriptor_storage_name = std::move(cleanup_plan->descriptor_storage_name);
+            plan.descriptor_storage_available = !plan.descriptor_storage_name.empty();
+            plan.cleanup_owner_proven = false;
+        }
     }
     plan.kind = plan.descriptor_storage_available && plan.cleanup_owner_proven
         ? ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned

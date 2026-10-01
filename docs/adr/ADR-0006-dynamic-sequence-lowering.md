@@ -224,6 +224,9 @@ representation.
 - Runtime-index aggregate DynamicArray descriptor storage now has an audit-only cleanup-plan status. It can make
   descriptor storage visible to internal handoff metadata while still blocking cleanup-owner proof and production
   cleanup emission.
+- Runtime-index aggregate DynamicArray descriptor storage can also be synthesized directly from a parsed runtime-index
+  projection when no cleanup plan has been seeded yet. The synthesized storage is audit-only and keeps cleanup-owner
+  proof blocked.
 - Scalar `DynamicArray<T>` parameter `.push(value)` lowers through the same descriptor load, grow, element store, and
   descriptor write-back path used for local dynamic arrays.
 - Scalar `DynamicArray<T>` parameter indexed assignment lowers through the same descriptor load, bounds check, element
