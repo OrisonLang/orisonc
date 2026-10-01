@@ -3343,28 +3343,42 @@ int main() {
             ),
             context,
             state
-        );
+    );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven
     );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven
     );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.unsupported_reason ==
         orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index
     );
-    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names.empty());
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names.size() == 2
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names[0] ==
+        "holder.buckets[dynamic_index].items"
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names[1] ==
+        "holder.buckets[dynamic_index].items"
+    );
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.ownership_join_matches);
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.cleanup_owner_proven);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.cleanup_owner_proven);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.lowering_enabled);
     assert(
         orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
-        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
-            "runtime aggregate index owner proof is not supported"
+        ) == "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
+            "holder.buckets[dynamic_index].items holder.buckets[dynamic_index].items for DynamicArray<UInt32>; "
+            "branch cleanup proofs holder.buckets[dynamic_index].items [cleanup owner proof missing] "
+            "holder.buckets[dynamic_index].items [cleanup owner proof missing]"
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(

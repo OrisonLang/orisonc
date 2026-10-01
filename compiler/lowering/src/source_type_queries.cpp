@@ -36,12 +36,7 @@ auto append_aggregate_owner_step(
         return true;
     }
     if (step.kind == AggregatePathStepKind::index && step.index_expression != nullptr) {
-        auto literal = decimal_integer_literal_text(*step.index_expression);
-        if (!literal.has_value()) {
-            return false;
-        }
-        owner_name += ".element";
-        owner_name += std::string {*literal};
+        owner_name += aggregate_index_owner_suffix(*step.index_expression);
         return true;
     }
     return false;
@@ -92,32 +87,6 @@ auto named_or_static_indexed_dynamic_array_leaf(
         return aggregate_member_path_owner_name(expression).has_value();
     }
     return static_indexed_aggregate_owner_name(expression).has_value();
-}
-
-auto expression_contains_runtime_aggregate_index(
-    syntax::ExpressionSyntax const& expression
-) -> bool {
-    if (expression.kind == syntax::ExpressionKind::index_access &&
-        !expression.arguments.empty() &&
-        !decimal_integer_literal_text(expression.arguments.front()).has_value()) {
-        return true;
-    }
-
-    if (expression.left != nullptr && expression_contains_runtime_aggregate_index(*expression.left)) {
-        return true;
-    }
-    if (expression.right != nullptr && expression_contains_runtime_aggregate_index(*expression.right)) {
-        return true;
-    }
-    if (expression.alternate != nullptr && expression_contains_runtime_aggregate_index(*expression.alternate)) {
-        return true;
-    }
-    for (auto const& argument : expression.arguments) {
-        if (expression_contains_runtime_aggregate_index(argument)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
@@ -810,6 +779,11 @@ auto collect_computed_dynamic_array_leaf_descriptors(
     std::vector<DynamicArrayIterableDescriptorPlan>& descriptors,
     ComputedDynamicArrayIterableUnsupportedReason& unsupported_reason
 ) -> bool {
+    if (unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none &&
+        contains_runtime_indexed_projection(expression)) {
+        unsupported_reason = ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index;
+    }
+
     if (named_or_static_indexed_dynamic_array_leaf(expression)) {
         return push_computed_dynamic_array_leaf_descriptor(
             expression,
@@ -869,10 +843,6 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                 expression,
                 clone_expression(helper_call->arguments[forwarded_index])
             );
-            if (expression_contains_runtime_aggregate_index(projected_argument)) {
-                unsupported_reason = ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index;
-                return false;
-            }
             if (!collect_computed_dynamic_array_leaf_descriptors(
                     projected_argument,
                     source_type_name,

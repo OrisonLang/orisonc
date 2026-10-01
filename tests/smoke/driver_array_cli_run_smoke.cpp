@@ -2082,8 +2082,7 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
     std::filesystem::path const& object_path,
-    std::filesystem::path const& output_path,
-    bool runtime_aggregate_index_reason_expected = false
+    std::filesystem::path const& output_path
 ) {
     auto expected_summary_fragment =
         std::string {"computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>"};
@@ -2091,10 +2090,6 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
         "computed DynamicArray ownership plan unsupported computed shape source DynamicArray<Payload> "
         "element Payload"
     };
-    if (runtime_aggregate_index_reason_expected) {
-        expected_summary_fragment += "; runtime aggregate index owner proof is not supported";
-        expected_shape_fragment += " unsupported reason runtime aggregate index";
-    }
     expected_shape_fragment += " [ownership join blocked] [cleanup owner blocked] (metadata only)";
 
     for (auto const& command : {
@@ -2106,6 +2101,33 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
         auto output = read_failing_command_output(command);
         assert_contains(output, expected_summary_fragment);
         assert_contains(output, expected_shape_fragment);
+    }
+}
+
+void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& object_path,
+    std::filesystem::path const& output_path
+) {
+    auto const expected_summary_fragment =
+        "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
+        "holder.buckets[selected].values holder.buckets[selected].values for DynamicArray<Payload>";
+    auto const expected_reason_fragment =
+        "computed DynamicArray ownership plan ternary single owner unproven source DynamicArray<Payload> "
+        "element Payload unsupported reason runtime aggregate index owners "
+        "holder.buckets[selected].values holder.buckets[selected].values "
+        "[ownership join ok] [cleanup owner blocked] (metadata only)";
+
+    for (auto const& command : {
+             executable.string() + " run " + source_path.string(),
+             executable.string() + " --emit-llvm " + source_path.string(),
+             executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string(),
+             executable.string() + " --build " + source_path.string() + " -o " + output_path.string(),
+         }) {
+        auto output = read_failing_command_output(command);
+        assert_contains(output, expected_summary_fragment);
+        assert_contains(output, expected_reason_fragment);
     }
 }
 
@@ -4632,12 +4654,11 @@ auto main(int argc, char** argv) -> int {
         "left.buckets.element0.values",
         "right.buckets.element0.values"
     );
-    assert_computed_dynamic_array_unsupported_shape_failure_matrix(
+    assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix(
         executable,
         forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed.o",
-        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed",
-        true
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
     );
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
