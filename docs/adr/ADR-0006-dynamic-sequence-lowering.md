@@ -3137,6 +3137,8 @@ representation.
 - Runtime-index aggregate computed cleanup handoff metadata now records branch descriptor storage, audit-proof presence,
   single-owner agreement, and descriptor-storage consistency as separate finite inputs while production cleanup remains
   disabled.
+- Runtime-index aggregate computed cleanup authorization now has a dedicated internal metadata gate that consumes
+  finite handoff inputs and reports authorization blocked separately from production emission.
 
 ## Follow-up work
 

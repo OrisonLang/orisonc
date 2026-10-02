@@ -2125,6 +2125,13 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "[cleanup owner blocked] [runtime aggregate audit proof detected] "
         "[runtime aggregate single owner proven] [runtime aggregate descriptor storage consistent] "
         "[runtime aggregate cleanup proof blocked] [lowering disabled] (metadata only)";
+    auto const expected_authorization_gate_fragment =
+        "computed DynamicArray cleanup authorization gate cleanup authorization blocked source "
+        "DynamicArray<Payload> element Payload owner holder.buckets[selected].values descriptor "
+        "%holder.buckets[selected].values.addr [handoff inputs ready] [cleanup owner blocked] "
+        "[runtime aggregate audit proof detected] [runtime aggregate single owner proven] "
+        "[runtime aggregate descriptor storage consistent] [runtime aggregate cleanup authorization blocked] "
+        "[production cleanup blocked] (metadata only)";
     auto const expected_gate_fragment =
         "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values [ownership blocked] [loop render blocked] "
@@ -2142,6 +2149,7 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         assert_contains(output, expected_summary_fragment);
         assert_contains(output, expected_reason_fragment);
         assert_contains(output, expected_handoff_fragment);
+        assert_contains(output, expected_authorization_gate_fragment);
         assert_contains(output, expected_gate_fragment);
     }
 }

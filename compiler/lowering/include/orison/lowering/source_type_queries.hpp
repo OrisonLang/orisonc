@@ -124,6 +124,28 @@ struct ComputedDynamicArrayIterableDescriptorHandoffPlan {
     bool lowering_enabled = false;
 };
 
+enum class ComputedDynamicArrayIterableCleanupAuthorizationGateKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    handoff_inputs_incomplete,
+    cleanup_authorization_blocked,
+    cleanup_authorized,
+};
+
+struct ComputedDynamicArrayIterableCleanupAuthorizationGate {
+    ComputedDynamicArrayIterableCleanupAuthorizationGateKind kind =
+        ComputedDynamicArrayIterableCleanupAuthorizationGateKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableDescriptorHandoffPlan handoff_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string cleanup_owner_name;
+    std::string descriptor_storage_name;
+    bool handoff_inputs_ready = false;
+    bool cleanup_owner_proven = false;
+    bool production_cleanup_authorized = false;
+};
+
 enum class ComputedDynamicArrayIterableCleanupSequencePlanKind {
     not_computed_dynamic_array,
     unsupported_computed_shape,
@@ -435,6 +457,16 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
 
 auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     ComputedDynamicArrayIterableDescriptorHandoffPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableCleanupAuthorizationGate;
+
+auto computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+    ComputedDynamicArrayIterableCleanupAuthorizationGate const& gate
 ) -> std::string;
 
 auto plan_computed_dynamic_array_iterable_cleanup_sequence(

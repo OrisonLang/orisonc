@@ -3440,6 +3440,45 @@ int main() {
             forwarded_static_indexed_aggregate_field_dynamic_index_plan
         ).find("runtime aggregate cleanup proof blocked") != std::string::npos
     );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate =
+        orison::lowering::plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.kind ==
+        orison::lowering::ComputedDynamicArrayIterableCleanupAuthorizationGateKind::
+            cleanup_authorization_blocked
+    );
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.handoff_inputs_ready);
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.cleanup_owner_proven);
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.production_cleanup_authorized);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("cleanup authorization blocked") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("handoff inputs ready") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("runtime aggregate cleanup authorization blocked") != std::string::npos
+    );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

@@ -1652,6 +1652,124 @@ auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableCleanupAuthorizationGate {
+    auto gate = ComputedDynamicArrayIterableCleanupAuthorizationGate {};
+    gate.handoff_plan = plan_computed_dynamic_array_iterable_descriptor_handoff(
+        expression,
+        context,
+        state
+    );
+    gate.source_type_name = gate.handoff_plan.source_type_name;
+    gate.element_source_type_name = gate.handoff_plan.element_source_type_name;
+    gate.cleanup_owner_name = gate.handoff_plan.handoff_owner_name;
+    gate.descriptor_storage_name = gate.handoff_plan.descriptor_storage_name;
+    gate.cleanup_owner_proven = gate.handoff_plan.cleanup_owner_proven;
+    gate.production_cleanup_authorized = false;
+
+    switch (gate.handoff_plan.kind) {
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::not_computed_dynamic_array:
+            gate.kind = ComputedDynamicArrayIterableCleanupAuthorizationGateKind::not_computed_dynamic_array;
+            return gate;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape:
+            gate.kind = ComputedDynamicArrayIterableCleanupAuthorizationGateKind::unsupported_computed_shape;
+            return gate;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked:
+            gate.kind = ComputedDynamicArrayIterableCleanupAuthorizationGateKind::ownership_join_blocked;
+            return gate;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven:
+            break;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned:
+            gate.handoff_inputs_ready = gate.handoff_plan.descriptor_storage_available;
+            gate.production_cleanup_authorized = gate.cleanup_owner_proven;
+            gate.kind = gate.production_cleanup_authorized
+                ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorized
+                : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked;
+            return gate;
+    }
+
+    if (gate.handoff_plan.ownership_plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+        gate.handoff_inputs_ready =
+            gate.handoff_plan.runtime_aggregate_cleanup_proof_detected &&
+            gate.handoff_plan.runtime_aggregate_single_owner_proven &&
+            gate.handoff_plan.runtime_aggregate_descriptor_storage_consistent;
+        gate.kind = gate.handoff_inputs_ready
+            ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked
+            : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete;
+        return gate;
+    }
+
+    gate.handoff_inputs_ready = gate.handoff_plan.descriptor_storage_available &&
+        !gate.cleanup_owner_name.empty();
+    gate.kind = gate.handoff_inputs_ready
+        ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked
+        : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete;
+    return gate;
+}
+
+auto computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+    ComputedDynamicArrayIterableCleanupAuthorizationGate const& gate
+) -> std::string {
+    auto output = std::string {"computed DynamicArray cleanup authorization gate "};
+    switch (gate.kind) {
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete:
+            output += "handoff inputs incomplete";
+            break;
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorized:
+            output += "cleanup authorized";
+            break;
+    }
+    if (!gate.source_type_name.empty()) {
+        output += " source ";
+        output += gate.source_type_name;
+    }
+    if (!gate.element_source_type_name.empty()) {
+        output += " element ";
+        output += gate.element_source_type_name;
+    }
+    if (!gate.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += gate.cleanup_owner_name;
+    }
+    if (!gate.descriptor_storage_name.empty()) {
+        output += " descriptor ";
+        output += gate.descriptor_storage_name;
+    }
+    output += gate.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
+    output += gate.cleanup_owner_proven ? " [cleanup owner proven]" : " [cleanup owner blocked]";
+    if (gate.handoff_plan.ownership_plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+        output += gate.handoff_plan.runtime_aggregate_cleanup_proof_detected ?
+            " [runtime aggregate audit proof detected]" : " [runtime aggregate audit proof missing]";
+        output += gate.handoff_plan.runtime_aggregate_single_owner_proven ?
+            " [runtime aggregate single owner proven]" : " [runtime aggregate single owner blocked]";
+        output += gate.handoff_plan.runtime_aggregate_descriptor_storage_consistent ?
+            " [runtime aggregate descriptor storage consistent]" :
+            " [runtime aggregate descriptor storage mismatch]";
+        output += " [runtime aggregate cleanup authorization blocked]";
+    }
+    output += gate.production_cleanup_authorized ? " [production cleanup authorized]" :
+        " [production cleanup blocked]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto plan_computed_dynamic_array_iterable_cleanup_sequence(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
