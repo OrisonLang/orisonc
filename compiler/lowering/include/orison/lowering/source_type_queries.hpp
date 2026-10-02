@@ -92,6 +92,7 @@ struct ComputedDynamicArrayIterableOwnershipPlan {
     std::string source_type_name;
     std::string element_source_type_name;
     std::vector<std::string> branch_owner_names;
+    std::vector<std::string> branch_descriptor_storage_names;
     std::vector<DynamicArrayIterableCleanupOwnerProofStatus> branch_cleanup_owner_proof_statuses;
     OwnershipTransferState merged_transfers;
     bool ownership_join_matches = false;
@@ -116,6 +117,9 @@ struct ComputedDynamicArrayIterableDescriptorHandoffPlan {
     std::string handoff_owner_name;
     std::string descriptor_storage_name;
     bool descriptor_storage_available = false;
+    bool runtime_aggregate_cleanup_proof_detected = false;
+    bool runtime_aggregate_single_owner_proven = false;
+    bool runtime_aggregate_descriptor_storage_consistent = false;
     bool cleanup_owner_proven = false;
     bool lowering_enabled = false;
 };

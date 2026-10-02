@@ -3134,6 +3134,9 @@ representation.
   removing the need for a promoted-view member production line in that case.
 - Runtime-index aggregate computed cleanup reports now name the explicit `runtime aggregate cleanup proof blocked`
   readiness seam when descriptor storage is known but cleanup-owner proof is still audit-only.
+- Runtime-index aggregate computed cleanup handoff metadata now records branch descriptor storage, audit-proof presence,
+  single-owner agreement, and descriptor-storage consistency as separate finite inputs while production cleanup remains
+  disabled.
 
 ## Follow-up work
 

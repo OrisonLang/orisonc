@@ -3367,6 +3367,18 @@ int main() {
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names[1] ==
         "holder.buckets[dynamic_index].items"
     );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
+            .branch_descriptor_storage_names.size() == 2
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
+            .branch_descriptor_storage_names[0] == "%holder.buckets[dynamic_index].items.addr"
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
+            .branch_descriptor_storage_names[1] == "%holder.buckets[dynamic_index].items.addr"
+    );
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.ownership_join_matches);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.cleanup_owner_proven);
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.source_owner_name ==
@@ -3376,6 +3388,12 @@ int main() {
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_name ==
         "%holder.buckets[dynamic_index].items.addr");
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.runtime_aggregate_cleanup_proof_detected);
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.runtime_aggregate_single_owner_proven);
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_plan
+            .runtime_aggregate_descriptor_storage_consistent
+    );
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.cleanup_owner_proven);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.lowering_enabled);
     assert(
@@ -3401,6 +3419,21 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_plan
         ).find("cleanup owner blocked") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan
+        ).find("runtime aggregate audit proof detected") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan
+        ).find("runtime aggregate single owner proven") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan
+        ).find("runtime aggregate descriptor storage consistent") != std::string::npos
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(

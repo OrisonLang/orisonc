@@ -9,6 +9,7 @@
 #include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <utility>
@@ -1330,9 +1331,11 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
     auto single_owner_name = branch_descriptors.front().owner_name;
     auto cleanup_owner_proven = true;
     plan.branch_owner_names.reserve(branch_descriptors.size());
+    plan.branch_descriptor_storage_names.reserve(branch_descriptors.size());
     plan.branch_cleanup_owner_proof_statuses.reserve(branch_descriptors.size());
     for (auto const& descriptor : branch_descriptors) {
         plan.branch_owner_names.push_back(descriptor.owner_name);
+        plan.branch_descriptor_storage_names.push_back(descriptor.descriptor_storage);
         plan.branch_cleanup_owner_proof_statuses.push_back(descriptor.cleanup_owner_proof_status);
         cleanup_owner_proven = cleanup_owner_proven &&
             descriptor.cleanup_owner_proven &&
@@ -1547,6 +1550,40 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
             plan.cleanup_owner_proven = false;
         }
     }
+    if (plan.ownership_plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+        plan.runtime_aggregate_cleanup_proof_detected =
+            !plan.ownership_plan.branch_cleanup_owner_proof_statuses.empty() &&
+            std::all_of(
+                plan.ownership_plan.branch_cleanup_owner_proof_statuses.begin(),
+                plan.ownership_plan.branch_cleanup_owner_proof_statuses.end(),
+                [](DynamicArrayIterableCleanupOwnerProofStatus status) {
+                    return status ==
+                        DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor;
+                }
+            );
+        plan.runtime_aggregate_single_owner_proven =
+            plan.ownership_plan.ownership_join_matches &&
+            !plan.source_owner_name.empty() &&
+            !plan.ownership_plan.branch_owner_names.empty() &&
+            std::all_of(
+                plan.ownership_plan.branch_owner_names.begin(),
+                plan.ownership_plan.branch_owner_names.end(),
+                [&plan](std::string const& owner_name) {
+                    return owner_name == plan.source_owner_name;
+                }
+            );
+        plan.runtime_aggregate_descriptor_storage_consistent =
+            plan.descriptor_storage_available &&
+            !plan.ownership_plan.branch_descriptor_storage_names.empty() &&
+            std::all_of(
+                plan.ownership_plan.branch_descriptor_storage_names.begin(),
+                plan.ownership_plan.branch_descriptor_storage_names.end(),
+                [&plan](std::string const& descriptor_storage_name) {
+                    return descriptor_storage_name == plan.descriptor_storage_name;
+                }
+            );
+    }
     plan.kind = plan.descriptor_storage_available && plan.cleanup_owner_proven
         ? ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned
         : ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
@@ -1601,6 +1638,13 @@ auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
             ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index &&
         plan.descriptor_storage_available &&
         !plan.cleanup_owner_proven) {
+        output += plan.runtime_aggregate_cleanup_proof_detected ?
+            " [runtime aggregate audit proof detected]" : " [runtime aggregate audit proof missing]";
+        output += plan.runtime_aggregate_single_owner_proven ?
+            " [runtime aggregate single owner proven]" : " [runtime aggregate single owner blocked]";
+        output += plan.runtime_aggregate_descriptor_storage_consistent ?
+            " [runtime aggregate descriptor storage consistent]" :
+            " [runtime aggregate descriptor storage mismatch]";
         output += " [runtime aggregate cleanup proof blocked]";
     }
     output += plan.lowering_enabled ? " [lowering enabled]" : " [lowering disabled]";
