@@ -1684,7 +1684,18 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
             break;
         case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned:
             gate.handoff_inputs_ready = gate.handoff_plan.descriptor_storage_available;
+            if (gate.handoff_inputs_ready) {
+                gate.cleanup_authorization_proof_inputs.push_back("descriptor storage handoff");
+                gate.cleanup_authorization_proof_inputs.push_back("cleanup owner proof");
+            }
             gate.production_cleanup_authorized = gate.cleanup_owner_proven;
+            if (!gate.production_cleanup_authorized) {
+                gate.cleanup_authorization_missing_requirements.push_back(
+                    "production cleanup authorization"
+                );
+            }
+            gate.cleanup_authorization_contract_ready = gate.handoff_inputs_ready &&
+                gate.cleanup_authorization_missing_requirements.empty();
             gate.kind = gate.production_cleanup_authorized
                 ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorized
                 : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked;
@@ -1693,10 +1704,26 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
 
     if (gate.handoff_plan.ownership_plan.unsupported_reason ==
         ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+        if (gate.handoff_plan.runtime_aggregate_cleanup_proof_detected) {
+            gate.cleanup_authorization_proof_inputs.push_back("runtime aggregate audit proof");
+        }
+        if (gate.handoff_plan.runtime_aggregate_single_owner_proven) {
+            gate.cleanup_authorization_proof_inputs.push_back("runtime aggregate single owner");
+        }
+        if (gate.handoff_plan.runtime_aggregate_descriptor_storage_consistent) {
+            gate.cleanup_authorization_proof_inputs.push_back(
+                "runtime aggregate descriptor storage consistency"
+            );
+        }
+        gate.cleanup_authorization_missing_requirements.push_back(
+            "runtime aggregate production cleanup authorization"
+        );
         gate.handoff_inputs_ready =
             gate.handoff_plan.runtime_aggregate_cleanup_proof_detected &&
             gate.handoff_plan.runtime_aggregate_single_owner_proven &&
             gate.handoff_plan.runtime_aggregate_descriptor_storage_consistent;
+        gate.cleanup_authorization_contract_ready = gate.handoff_inputs_ready &&
+            gate.cleanup_authorization_missing_requirements.empty();
         gate.kind = gate.handoff_inputs_ready
             ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked
             : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete;
@@ -1705,6 +1732,13 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
 
     gate.handoff_inputs_ready = gate.handoff_plan.descriptor_storage_available &&
         !gate.cleanup_owner_name.empty();
+    if (gate.handoff_inputs_ready) {
+        gate.cleanup_authorization_proof_inputs.push_back("descriptor storage handoff");
+        gate.cleanup_authorization_proof_inputs.push_back("cleanup owner binding");
+    }
+    gate.cleanup_authorization_missing_requirements.push_back("production cleanup authorization");
+    gate.cleanup_authorization_contract_ready = gate.handoff_inputs_ready &&
+        gate.cleanup_authorization_missing_requirements.empty();
     gate.kind = gate.handoff_inputs_ready
         ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked
         : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete;
@@ -1752,6 +1786,18 @@ auto computed_dynamic_array_iterable_cleanup_authorization_gate_report(
         output += gate.descriptor_storage_name;
     }
     output += gate.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
+    output += gate.cleanup_authorization_contract_ready ? " [authorization contract ready]" :
+        " [authorization contract blocked]";
+    for (auto const& proof_input : gate.cleanup_authorization_proof_inputs) {
+        output += " [authorization proof input: ";
+        output += proof_input;
+        output += "]";
+    }
+    for (auto const& missing_requirement : gate.cleanup_authorization_missing_requirements) {
+        output += " [authorization missing: ";
+        output += missing_requirement;
+        output += "]";
+    }
     output += gate.cleanup_owner_proven ? " [cleanup owner proven]" : " [cleanup owner blocked]";
     if (gate.handoff_plan.ownership_plan.unsupported_reason ==
         ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {

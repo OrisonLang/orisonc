@@ -3462,6 +3462,35 @@ int main() {
             cleanup_authorization_blocked
     );
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.handoff_inputs_ready);
+    assert(
+        !forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_contract_ready
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_proof_inputs.size() == 3
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_proof_inputs[0] == "runtime aggregate audit proof"
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_proof_inputs[1] == "runtime aggregate single owner"
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_proof_inputs[2] == "runtime aggregate descriptor storage consistency"
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_missing_requirements.size() == 1
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .cleanup_authorization_missing_requirements[0] ==
+        "runtime aggregate production cleanup authorization"
+    );
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.cleanup_owner_proven);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.production_cleanup_authorized);
     assert(
@@ -3473,6 +3502,33 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
         ).find("handoff inputs ready") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("authorization contract blocked") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("authorization proof input: runtime aggregate audit proof") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("authorization proof input: runtime aggregate single owner") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("authorization proof input: runtime aggregate descriptor storage consistency") !=
+        std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("authorization missing: runtime aggregate production cleanup authorization") !=
+        std::string::npos
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(

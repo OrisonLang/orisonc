@@ -3145,6 +3145,8 @@ representation.
   instead of collapsing the blocker back to generic cleanup-owner wording.
 - Runtime-index aggregate element address/load, loop-continue, loop-render, loop-exit, and production gate reports now
   preserve `cleanup authorization blocked` through the rest of the computed cleanup metadata pipeline.
+- Runtime-index aggregate cleanup authorization gates now carry a finite proof contract: named available proof inputs
+  plus the remaining production cleanup authorization requirement, while production emission stays disabled.
 
 ## Follow-up work
 

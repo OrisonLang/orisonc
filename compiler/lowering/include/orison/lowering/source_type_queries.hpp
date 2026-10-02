@@ -141,7 +141,10 @@ struct ComputedDynamicArrayIterableCleanupAuthorizationGate {
     std::string element_source_type_name;
     std::string cleanup_owner_name;
     std::string descriptor_storage_name;
+    std::vector<std::string> cleanup_authorization_proof_inputs;
+    std::vector<std::string> cleanup_authorization_missing_requirements;
     bool handoff_inputs_ready = false;
+    bool cleanup_authorization_contract_ready = false;
     bool cleanup_owner_proven = false;
     bool production_cleanup_authorized = false;
 };

@@ -2128,8 +2128,12 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
     auto const expected_authorization_gate_fragment =
         "computed DynamicArray cleanup authorization gate cleanup authorization blocked source "
         "DynamicArray<Payload> element Payload owner holder.buckets[selected].values descriptor "
-        "%holder.buckets[selected].values.addr [handoff inputs ready] [cleanup owner blocked] "
-        "[runtime aggregate audit proof detected] [runtime aggregate single owner proven] "
+        "%holder.buckets[selected].values.addr [handoff inputs ready] "
+        "[authorization contract blocked] [authorization proof input: runtime aggregate audit proof] "
+        "[authorization proof input: runtime aggregate single owner] "
+        "[authorization proof input: runtime aggregate descriptor storage consistency] "
+        "[authorization missing: runtime aggregate production cleanup authorization] "
+        "[cleanup owner blocked] [runtime aggregate audit proof detected] [runtime aggregate single owner proven] "
         "[runtime aggregate descriptor storage consistent] [runtime aggregate cleanup authorization blocked] "
         "[production cleanup blocked] (metadata only)";
     auto const expected_cleanup_sequence_fragment =
