@@ -1776,35 +1776,41 @@ auto plan_computed_dynamic_array_iterable_cleanup_sequence(
     FunctionLoweringState const& state
 ) -> ComputedDynamicArrayIterableCleanupSequencePlan {
     auto plan = ComputedDynamicArrayIterableCleanupSequencePlan {};
-    plan.handoff_plan = plan_computed_dynamic_array_iterable_descriptor_handoff(
+    plan.cleanup_authorization_gate = plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
         expression,
         context,
         state
     );
+    plan.handoff_plan = plan.cleanup_authorization_gate.handoff_plan;
     plan.source_type_name = plan.handoff_plan.source_type_name;
     plan.element_source_type_name = plan.handoff_plan.element_source_type_name;
-    plan.cleanup_owner_name = plan.handoff_plan.handoff_owner_name;
-    plan.descriptor_storage_name = plan.handoff_plan.descriptor_storage_name;
+    plan.cleanup_owner_name = plan.cleanup_authorization_gate.cleanup_owner_name;
+    plan.descriptor_storage_name = plan.cleanup_authorization_gate.descriptor_storage_name;
+    plan.handoff_inputs_ready = plan.cleanup_authorization_gate.handoff_inputs_ready;
+    plan.cleanup_authorized = plan.cleanup_authorization_gate.production_cleanup_authorized;
     plan.cleanup_sequence_enabled = false;
 
-    switch (plan.handoff_plan.kind) {
-        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::not_computed_dynamic_array:
+    switch (plan.cleanup_authorization_gate.kind) {
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::not_computed_dynamic_array:
             plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::not_computed_dynamic_array;
             return plan;
-        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape:
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::unsupported_computed_shape:
             plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::unsupported_computed_shape;
             return plan;
-        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked:
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::ownership_join_blocked:
             plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::ownership_join_blocked;
             return plan;
-        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven:
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete:
             plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven;
             return plan;
-        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned:
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorized:
             break;
     }
 
-    if (plan.cleanup_owner_name.empty() || plan.descriptor_storage_name.empty()) {
+    if (!plan.cleanup_authorized || plan.cleanup_owner_name.empty() || plan.descriptor_storage_name.empty()) {
         plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven;
         return plan;
     }
@@ -1835,6 +1841,9 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
             break;
         case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
             break;
         case ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned:
             output += "loop cleanup sequence planned";
@@ -1870,6 +1879,12 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
     }
     output += plan.loop_body_has_cleanup_responsibility ? " [loop cleanup owns descriptor]" :
         " [loop cleanup blocked]";
+    output += plan.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
+    output += plan.cleanup_authorized ? " [cleanup authorized]" : " [cleanup authorization blocked]";
+    if (plan.cleanup_authorization_gate.handoff_plan.ownership_plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
+        output += " [runtime aggregate cleanup authorization blocked]";
+    }
     output += plan.function_cleanup_resumes_after_loop ? " [function cleanup resumes]" :
         " [function cleanup blocked]";
     output += plan.cleanup_sequence_enabled ? " [cleanup sequence enabled]" :
@@ -1927,6 +1942,9 @@ auto plan_computed_dynamic_array_iterable_descriptor_render(
             plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::ownership_join_blocked;
             return plan;
         case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked:
             plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven;
             return plan;
         case ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned:

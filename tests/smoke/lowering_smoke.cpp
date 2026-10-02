@@ -2027,7 +2027,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_parameter_for.render(path.string()).find(
             "computed DynamicArray cleanup sequence plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [loop cleanup blocked] [function cleanup blocked] "
+            "element UInt32 [loop cleanup blocked] [handoff inputs blocked] "
+            "[cleanup authorization blocked] [function cleanup blocked] "
             "[cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );

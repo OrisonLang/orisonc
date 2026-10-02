@@ -3479,6 +3479,38 @@ int main() {
             forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
         ).find("runtime aggregate cleanup authorization blocked") != std::string::npos
     );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence =
+        orison::lowering::plan_computed_dynamic_array_iterable_cleanup_sequence(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence.kind ==
+        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked
+    );
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence.handoff_inputs_ready);
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence.cleanup_authorized);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence
+        ).find("cleanup authorization blocked") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence
+        ).find("handoff inputs ready") != std::string::npos
+    );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -4521,16 +4553,18 @@ int main() {
         );
     assert(
         unproven_computed_cleanup_sequence.kind ==
-        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven
+        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked
     );
     assert(unproven_computed_cleanup_sequence.cleanup_owner_name == "predicted_items");
+    assert(unproven_computed_cleanup_sequence.handoff_inputs_ready);
+    assert(!unproven_computed_cleanup_sequence.cleanup_authorized);
     assert(!unproven_computed_cleanup_sequence.loop_body_has_cleanup_responsibility);
     assert(!unproven_computed_cleanup_sequence.function_cleanup_resumes_after_loop);
     assert(!unproven_computed_cleanup_sequence.cleanup_sequence_enabled);
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
             unproven_computed_cleanup_sequence
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
     auto unproven_computed_descriptor_render =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_render(

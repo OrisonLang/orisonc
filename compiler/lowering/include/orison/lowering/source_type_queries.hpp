@@ -151,6 +151,7 @@ enum class ComputedDynamicArrayIterableCleanupSequencePlanKind {
     unsupported_computed_shape,
     ownership_join_blocked,
     cleanup_owner_unproven,
+    cleanup_authorization_blocked,
     loop_cleanup_sequence_planned,
 };
 
@@ -158,6 +159,7 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     ComputedDynamicArrayIterableCleanupSequencePlanKind kind =
         ComputedDynamicArrayIterableCleanupSequencePlanKind::not_computed_dynamic_array;
     ComputedDynamicArrayIterableDescriptorHandoffPlan handoff_plan;
+    ComputedDynamicArrayIterableCleanupAuthorizationGate cleanup_authorization_gate;
     std::string source_type_name;
     std::string element_source_type_name;
     std::string cleanup_owner_name;
@@ -165,6 +167,8 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     std::string loop_entry_cleanup_owner_name;
     std::string loop_exit_cleanup_owner_name;
     std::string loop_entry_cleanup_operation_name;
+    bool handoff_inputs_ready = false;
+    bool cleanup_authorized = false;
     bool loop_body_has_cleanup_responsibility = false;
     bool function_cleanup_resumes_after_loop = false;
     bool cleanup_sequence_enabled = false;

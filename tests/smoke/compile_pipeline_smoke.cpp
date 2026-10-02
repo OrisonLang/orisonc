@@ -2557,7 +2557,8 @@ auto main() -> int {
     assert(
         computed_dynamic_array_parameter_for.error_text.find(
             "computed DynamicArray cleanup sequence plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [loop cleanup blocked] [function cleanup blocked] "
+            "element UInt32 [loop cleanup blocked] [handoff inputs blocked] "
+            "[cleanup authorization blocked] [function cleanup blocked] "
             "[cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );

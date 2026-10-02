@@ -3139,6 +3139,8 @@ representation.
   disabled.
 - Runtime-index aggregate computed cleanup authorization now has a dedicated internal metadata gate that consumes
   finite handoff inputs and reports authorization blocked separately from production emission.
+- Runtime-index aggregate cleanup sequence planning now consumes that authorization gate and reports
+  `cleanup authorization blocked` when handoff inputs are ready but production cleanup is still unauthorized.
 
 ## Follow-up work
 
