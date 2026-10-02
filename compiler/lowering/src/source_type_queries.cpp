@@ -2253,6 +2253,9 @@ auto plan_computed_dynamic_array_iterable_element_address_render(
         case ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven;
             return plan;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_authorization_blocked;
+            return plan;
         case ComputedDynamicArrayIterableLoopControlRenderPlanKind::loop_control_render_planned:
             break;
     }
@@ -2309,6 +2312,9 @@ auto computed_dynamic_array_iterable_element_address_render_plan_report(
         case ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_type_unlowerable:
             output += "element type unlowerable";
             break;
@@ -2349,6 +2355,10 @@ auto computed_dynamic_array_iterable_element_address_render_plan_report(
     output += plan.index_available ? " [index available]" : " [index blocked]";
     output += plan.element_address_planned ? " [element address planned]" :
         " [element address blocked]";
+    if (plan.loop_control_render_plan.kind ==
+        ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
@@ -2384,6 +2394,9 @@ auto plan_computed_dynamic_array_iterable_element_load_render(
             return plan;
         case ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_type_unlowerable:
             plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_type_unlowerable;
@@ -2434,6 +2447,9 @@ auto computed_dynamic_array_iterable_element_load_render_plan_report(
         case ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_type_unlowerable:
             output += "element type unlowerable";
             break;
@@ -2471,6 +2487,10 @@ auto computed_dynamic_array_iterable_element_load_render_plan_report(
     output += plan.element_address_available ? " [element address available]" :
         " [element address blocked]";
     output += plan.item_value_planned ? " [item value planned]" : " [item value blocked]";
+    if (plan.element_address_render_plan.kind ==
+        ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
@@ -2511,6 +2531,9 @@ auto plan_computed_dynamic_array_iterable_loop_continue_render(
             return plan;
         case ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_type_unlowerable:
             plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_type_unlowerable;
@@ -2556,6 +2579,9 @@ auto computed_dynamic_array_iterable_loop_continue_render_plan_report(
             break;
         case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
             break;
         case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_type_unlowerable:
             output += "element type unlowerable";
@@ -2603,6 +2629,10 @@ auto computed_dynamic_array_iterable_loop_continue_render_plan_report(
     output += plan.next_index_planned ? " [next index planned]" : " [next index blocked]";
     output += plan.backedge_branch_planned ? " [backedge branch planned]" :
         " [backedge branch blocked]";
+    if (plan.element_load_render_plan.kind ==
+        ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
@@ -2641,6 +2671,9 @@ auto plan_computed_dynamic_array_iterable_loop_render_sequence(
             return plan;
         case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_type_unlowerable:
             plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_type_unlowerable;
@@ -2722,6 +2755,9 @@ auto computed_dynamic_array_iterable_loop_render_sequence_plan_report(
         case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_type_unlowerable:
             output += "element type unlowerable";
             break;
@@ -2765,6 +2801,10 @@ auto computed_dynamic_array_iterable_loop_render_sequence_plan_report(
         " [element load blocked]";
     output += plan.loop_continue_render_planned ? " [loop continue planned]" :
         " [loop continue blocked]";
+    if (plan.loop_continue_render_plan.kind ==
+        ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
@@ -2807,6 +2847,9 @@ auto plan_computed_dynamic_array_iterable_loop_exit_cleanup(
             return plan;
         case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_type_unlowerable:
             plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_type_unlowerable;
@@ -2866,6 +2909,9 @@ auto computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
         case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_type_unlowerable:
             output += "element type unlowerable";
             break;
@@ -2915,6 +2961,10 @@ auto computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
     }
     output += plan.exit_block_planned ? " [exit block planned]" : " [exit block blocked]";
     output += plan.cleanup_resumption_planned ? " [cleanup resumes]" : " [cleanup blocked]";
+    if (plan.loop_render_sequence_plan.kind ==
+        ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.cleanup_sequence_enabled ? " [cleanup sequence enabled]" :
         " [cleanup sequence disabled]";
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
@@ -2950,6 +3000,9 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
             return plan;
         case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_type_unlowerable:
             plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_type_unlowerable;
@@ -3065,6 +3118,9 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
         case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_type_unlowerable:
             output += "element type unlowerable";
             break;
@@ -3108,6 +3164,10 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     output += plan.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]";
     output += plan.production_sequence_render_planned ? " [production sequence planned]" :
         " [production sequence blocked]";
+    if (plan.loop_exit_cleanup_plan.kind ==
+        ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     if (computed_dynamic_array_iterable_runtime_aggregate_cleanup_proof_blocked(plan)) {
         output += " [runtime aggregate cleanup proof blocked]";
     }

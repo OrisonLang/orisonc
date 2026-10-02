@@ -2148,11 +2148,32 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "element Payload owner holder.buckets[selected].values [entry branch blocked] [index phi blocked] "
         "[bounds check blocked] [conditional branch blocked] [cleanup authorization blocked] "
         "[render disabled] (metadata only)";
+    auto const expected_element_address_fragment =
+        "computed DynamicArray element address render plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [data pointer blocked] [index blocked] "
+        "[element address blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
+    auto const expected_element_load_fragment =
+        "computed DynamicArray element load render plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [element address blocked] "
+        "[item value blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
+    auto const expected_loop_continue_fragment =
+        "computed DynamicArray loop continue render plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [continue block blocked] [next index blocked] "
+        "[backedge branch blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
+    auto const expected_loop_render_fragment =
+        "computed DynamicArray loop render sequence plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [descriptor render blocked] "
+        "[loop control blocked] [body block blocked] [element address blocked] [element load blocked] "
+        "[loop continue blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
+    auto const expected_loop_exit_fragment =
+        "computed DynamicArray loop exit cleanup plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [exit block blocked] [cleanup blocked] "
+        "[cleanup authorization blocked] [cleanup sequence disabled] [render disabled] (metadata only)";
     auto const expected_gate_fragment =
-        "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<Payload> "
+        "computed DynamicArray production emission gate plan cleanup authorization blocked source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values [ownership blocked] [loop render blocked] "
         "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
-        "[production sequence blocked] [runtime aggregate cleanup proof blocked] "
+        "[production sequence blocked] [cleanup authorization blocked] [runtime aggregate cleanup proof blocked] "
         "[production emission disabled] (metadata only)";
 
     for (auto const& command : {
@@ -2169,6 +2190,11 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         assert_contains(output, expected_cleanup_sequence_fragment);
         assert_contains(output, expected_descriptor_render_fragment);
         assert_contains(output, expected_loop_control_fragment);
+        assert_contains(output, expected_element_address_fragment);
+        assert_contains(output, expected_element_load_fragment);
+        assert_contains(output, expected_loop_continue_fragment);
+        assert_contains(output, expected_loop_render_fragment);
+        assert_contains(output, expected_loop_exit_fragment);
         assert_contains(output, expected_gate_fragment);
     }
 }

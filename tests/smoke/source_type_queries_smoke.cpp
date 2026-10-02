@@ -3561,6 +3561,106 @@ int main() {
             forwarded_static_indexed_aggregate_field_dynamic_index_loop_control
         ).find("cleanup authorization blocked") != std::string::npos
     );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_element_address =
+        orison::lowering::plan_computed_dynamic_array_iterable_element_address_render(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_element_address.kind ==
+        orison::lowering::ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_authorization_blocked
+    );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_element_load =
+        orison::lowering::plan_computed_dynamic_array_iterable_element_load_render(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_element_load.kind ==
+        orison::lowering::ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_authorization_blocked
+    );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_loop_continue =
+        orison::lowering::plan_computed_dynamic_array_iterable_loop_continue_render(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_loop_continue.kind ==
+        orison::lowering::ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_authorization_blocked
+    );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_loop_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_loop_render_sequence(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_loop_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_authorization_blocked
+    );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_loop_exit =
+        orison::lowering::plan_computed_dynamic_array_iterable_loop_exit_cleanup(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_loop_exit.kind ==
+        orison::lowering::ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked
+    );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -4668,7 +4768,7 @@ int main() {
         );
     assert(
         unproven_computed_element_address_render.kind ==
-        orison::lowering::ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven
+        orison::lowering::ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_authorization_blocked
     );
     assert(unproven_computed_element_address_render.cleanup_owner_name == "predicted_items");
     assert(unproven_computed_element_address_render.rendered_ir.empty());
@@ -4679,7 +4779,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_element_address_render_plan_report(
             unproven_computed_element_address_render
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
     auto unproven_computed_element_load_render =
         orison::lowering::plan_computed_dynamic_array_iterable_element_load_render(
@@ -4689,7 +4789,7 @@ int main() {
         );
     assert(
         unproven_computed_element_load_render.kind ==
-        orison::lowering::ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven
+        orison::lowering::ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_authorization_blocked
     );
     assert(unproven_computed_element_load_render.cleanup_owner_name == "predicted_items");
     assert(unproven_computed_element_load_render.rendered_ir.empty());
@@ -4699,7 +4799,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_element_load_render_plan_report(
             unproven_computed_element_load_render
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
     auto unproven_computed_loop_continue_render =
         orison::lowering::plan_computed_dynamic_array_iterable_loop_continue_render(
@@ -4709,7 +4809,7 @@ int main() {
         );
     assert(
         unproven_computed_loop_continue_render.kind ==
-        orison::lowering::ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven
+        orison::lowering::ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_authorization_blocked
     );
     assert(unproven_computed_loop_continue_render.cleanup_owner_name == "predicted_items");
     assert(unproven_computed_loop_continue_render.rendered_ir.empty());
@@ -4720,7 +4820,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_loop_continue_render_plan_report(
             unproven_computed_loop_continue_render
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
     auto unproven_computed_loop_render_sequence =
         orison::lowering::plan_computed_dynamic_array_iterable_loop_render_sequence(
@@ -4731,7 +4831,7 @@ int main() {
     assert(
         unproven_computed_loop_render_sequence.kind ==
         orison::lowering::ComputedDynamicArrayIterableLoopRenderSequencePlanKind::
-            cleanup_owner_unproven
+            cleanup_authorization_blocked
     );
     assert(unproven_computed_loop_render_sequence.cleanup_owner_name == "predicted_items");
     assert(unproven_computed_loop_render_sequence.rendered_ir.empty());
@@ -4745,7 +4845,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_loop_render_sequence_plan_report(
             unproven_computed_loop_render_sequence
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
     auto unproven_computed_loop_exit_cleanup =
         orison::lowering::plan_computed_dynamic_array_iterable_loop_exit_cleanup(
@@ -4756,7 +4856,7 @@ int main() {
     assert(
         unproven_computed_loop_exit_cleanup.kind ==
         orison::lowering::ComputedDynamicArrayIterableLoopExitCleanupPlanKind::
-            cleanup_owner_unproven
+            cleanup_authorization_blocked
     );
     assert(unproven_computed_loop_exit_cleanup.cleanup_owner_name == "predicted_items");
     assert(unproven_computed_loop_exit_cleanup.rendered_ir.empty());
@@ -4767,7 +4867,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
             unproven_computed_loop_exit_cleanup
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
     auto unproven_computed_production_emission_gate =
         orison::lowering::plan_computed_dynamic_array_iterable_production_emission_gate(
@@ -4778,7 +4878,7 @@ int main() {
     assert(
         unproven_computed_production_emission_gate.kind ==
         orison::lowering::ComputedDynamicArrayIterableProductionEmissionGatePlanKind::
-            cleanup_owner_unproven
+            cleanup_authorization_blocked
     );
     assert(unproven_computed_production_emission_gate.cleanup_owner_name == "predicted_items");
     assert(!unproven_computed_production_emission_gate.ownership_ready);
@@ -4790,7 +4890,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
             unproven_computed_production_emission_gate
-        ).find("cleanup owner unproven") != std::string::npos
+        ).find("cleanup authorization blocked") != std::string::npos
     );
 
     auto not_dynamic_array_plan =

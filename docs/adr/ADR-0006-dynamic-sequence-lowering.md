@@ -3143,6 +3143,8 @@ representation.
   `cleanup authorization blocked` when handoff inputs are ready but production cleanup is still unauthorized.
 - Runtime-index aggregate descriptor render and loop-control reports now preserve `cleanup authorization blocked`
   instead of collapsing the blocker back to generic cleanup-owner wording.
+- Runtime-index aggregate element address/load, loop-continue, loop-render, loop-exit, and production gate reports now
+  preserve `cleanup authorization blocked` through the rest of the computed cleanup metadata pipeline.
 
 ## Follow-up work
 
