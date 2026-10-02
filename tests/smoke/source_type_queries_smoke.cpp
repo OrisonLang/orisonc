@@ -3402,6 +3402,11 @@ int main() {
             forwarded_static_indexed_aggregate_field_dynamic_index_plan
         ).find("cleanup owner blocked") != std::string::npos
     );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_plan
+        ).find("runtime aggregate cleanup proof blocked") != std::string::npos
+    );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

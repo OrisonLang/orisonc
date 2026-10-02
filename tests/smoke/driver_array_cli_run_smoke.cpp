@@ -2122,7 +2122,13 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "computed DynamicArray descriptor handoff plan cleanup owner unproven source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values handoff holder.buckets[selected].values "
         "descriptor %holder.buckets[selected].values.addr [descriptor storage available] "
-        "[cleanup owner blocked] [lowering disabled] (metadata only)";
+        "[cleanup owner blocked] [runtime aggregate cleanup proof blocked] [lowering disabled] (metadata only)";
+    auto const expected_gate_fragment =
+        "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [ownership blocked] [loop render blocked] "
+        "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
+        "[production sequence blocked] [runtime aggregate cleanup proof blocked] "
+        "[production emission disabled] (metadata only)";
 
     for (auto const& command : {
              executable.string() + " run " + source_path.string(),
@@ -2134,6 +2140,7 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         assert_contains(output, expected_summary_fragment);
         assert_contains(output, expected_reason_fragment);
         assert_contains(output, expected_handoff_fragment);
+        assert_contains(output, expected_gate_fragment);
     }
 }
 

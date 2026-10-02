@@ -1597,6 +1597,12 @@ auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     output += plan.descriptor_storage_available ? " [descriptor storage available]" :
         " [descriptor storage blocked]";
     output += plan.cleanup_owner_proven ? " [cleanup owner proven]" : " [cleanup owner blocked]";
+    if (plan.ownership_plan.unsupported_reason ==
+            ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index &&
+        plan.descriptor_storage_available &&
+        !plan.cleanup_owner_proven) {
+        output += " [runtime aggregate cleanup proof blocked]";
+    }
     output += plan.lowering_enabled ? " [lowering enabled]" : " [lowering disabled]";
     output += " (metadata only)";
     return output;
@@ -2832,6 +2838,19 @@ auto computed_dynamic_array_iterable_cleanup_transition_ready(
         !loop_exit_plan.cleanup_resumption_operation_name.empty();
 }
 
+auto computed_dynamic_array_iterable_runtime_aggregate_cleanup_proof_blocked(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
+) -> bool {
+    auto const& handoff_plan =
+        plan.loop_exit_cleanup_plan.loop_render_sequence_plan.loop_continue_render_plan
+            .element_load_render_plan.element_address_render_plan.loop_control_render_plan
+            .descriptor_render_plan.cleanup_sequence_plan.handoff_plan;
+    return handoff_plan.ownership_plan.unsupported_reason ==
+            ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index &&
+        handoff_plan.descriptor_storage_available &&
+        !handoff_plan.cleanup_owner_proven;
+}
+
 auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
 ) -> std::string {
@@ -2892,6 +2911,9 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     output += plan.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]";
     output += plan.production_sequence_render_planned ? " [production sequence planned]" :
         " [production sequence blocked]";
+    if (computed_dynamic_array_iterable_runtime_aggregate_cleanup_proof_blocked(plan)) {
+        output += " [runtime aggregate cleanup proof blocked]";
+    }
     output += plan.production_emission_enabled ? " [production emission enabled]" :
         " [production emission disabled]";
     output += " (metadata only)";

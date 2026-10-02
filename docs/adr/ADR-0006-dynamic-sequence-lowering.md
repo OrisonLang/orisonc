@@ -3132,6 +3132,8 @@ representation.
 - Runtime-indexed member cleanup production-readiness now converges after module readiness integration. Proven member
   cleanup records remove stale module-mutation blockers and render as production-ready in the final audit stream,
   removing the need for a promoted-view member production line in that case.
+- Runtime-index aggregate computed cleanup reports now name the explicit `runtime aggregate cleanup proof blocked`
+  readiness seam when descriptor storage is known but cleanup-owner proof is still audit-only.
 
 ## Follow-up work
 
