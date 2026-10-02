@@ -183,6 +183,7 @@ enum class ComputedDynamicArrayIterableDescriptorRenderPlanKind {
     unsupported_computed_shape,
     ownership_join_blocked,
     cleanup_owner_unproven,
+    cleanup_authorization_blocked,
     descriptor_render_planned,
 };
 
@@ -211,6 +212,7 @@ enum class ComputedDynamicArrayIterableLoopControlRenderPlanKind {
     unsupported_computed_shape,
     ownership_join_blocked,
     cleanup_owner_unproven,
+    cleanup_authorization_blocked,
     loop_control_render_planned,
 };
 

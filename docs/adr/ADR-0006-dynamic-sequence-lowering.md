@@ -3141,6 +3141,8 @@ representation.
   finite handoff inputs and reports authorization blocked separately from production emission.
 - Runtime-index aggregate cleanup sequence planning now consumes that authorization gate and reports
   `cleanup authorization blocked` when handoff inputs are ready but production cleanup is still unauthorized.
+- Runtime-index aggregate descriptor render and loop-control reports now preserve `cleanup authorization blocked`
+  instead of collapsing the blocker back to generic cleanup-owner wording.
 
 ## Follow-up work
 

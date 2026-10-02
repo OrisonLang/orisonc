@@ -2138,6 +2138,16 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "[loop cleanup blocked] [handoff inputs ready] [cleanup authorization blocked] "
         "[runtime aggregate cleanup authorization blocked] [function cleanup blocked] "
         "[cleanup sequence disabled] (metadata only)";
+    auto const expected_descriptor_render_fragment =
+        "computed DynamicArray descriptor render plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets[selected].values.addr "
+        "[descriptor load blocked] [data projection blocked] [length projection blocked] "
+        "[capacity projection blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
+    auto const expected_loop_control_fragment =
+        "computed DynamicArray loop control render plan cleanup authorization blocked source DynamicArray<Payload> "
+        "element Payload owner holder.buckets[selected].values [entry branch blocked] [index phi blocked] "
+        "[bounds check blocked] [conditional branch blocked] [cleanup authorization blocked] "
+        "[render disabled] (metadata only)";
     auto const expected_gate_fragment =
         "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values [ownership blocked] [loop render blocked] "
@@ -2157,6 +2167,8 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         assert_contains(output, expected_handoff_fragment);
         assert_contains(output, expected_authorization_gate_fragment);
         assert_contains(output, expected_cleanup_sequence_fragment);
+        assert_contains(output, expected_descriptor_render_fragment);
+        assert_contains(output, expected_loop_control_fragment);
         assert_contains(output, expected_gate_fragment);
     }
 }

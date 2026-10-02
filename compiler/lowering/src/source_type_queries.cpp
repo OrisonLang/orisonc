@@ -1945,7 +1945,7 @@ auto plan_computed_dynamic_array_iterable_descriptor_render(
             plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven;
             return plan;
         case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked:
-            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven;
+            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned:
             break;
@@ -2011,6 +2011,9 @@ auto computed_dynamic_array_iterable_descriptor_render_plan_report(
         case ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned:
             output += "descriptor load projection planned";
             break;
@@ -2055,6 +2058,10 @@ auto computed_dynamic_array_iterable_descriptor_render_plan_report(
         " [length projection blocked]";
     output += plan.capacity_projection_planned ? " [capacity projection planned]" :
         " [capacity projection blocked]";
+    if (plan.cleanup_sequence_plan.kind ==
+        ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
@@ -2088,6 +2095,9 @@ auto plan_computed_dynamic_array_iterable_loop_control_render(
             return plan;
         case ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_authorization_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_authorization_blocked;
             return plan;
         case ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned:
             break;
@@ -2153,6 +2163,9 @@ auto computed_dynamic_array_iterable_loop_control_render_plan_report(
         case ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven:
             output += "cleanup owner unproven";
             break;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_authorization_blocked:
+            output += "cleanup authorization blocked";
+            break;
         case ComputedDynamicArrayIterableLoopControlRenderPlanKind::loop_control_render_planned:
             output += "loop control render planned";
             break;
@@ -2200,6 +2213,10 @@ auto computed_dynamic_array_iterable_loop_control_render_plan_report(
         " [bounds check blocked]";
     output += plan.conditional_branch_planned ? " [conditional branch planned]" :
         " [conditional branch blocked]";
+    if (plan.descriptor_render_plan.kind ==
+        ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_authorization_blocked) {
+        output += " [cleanup authorization blocked]";
+    }
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
