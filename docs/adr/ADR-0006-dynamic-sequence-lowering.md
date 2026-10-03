@@ -3151,6 +3151,8 @@ representation.
   diagnostics keep the missing production cleanup authorization visible.
 - Production cleanup authorization is now tracked as a named internal readiness predicate across the authorization gate,
   cleanup sequence, and production emission gate reports while emission remains disabled.
+- Runtime-index aggregate production cleanup authorization can now be satisfied from internal lowering state for
+  metadata-only tests; the contract can become ready while cleanup authorization and production emission remain blocked.
 
 ## Follow-up work
 

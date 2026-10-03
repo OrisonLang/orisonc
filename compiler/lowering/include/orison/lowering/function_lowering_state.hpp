@@ -77,6 +77,7 @@ struct FunctionLoweringState {
     std::vector<ComputedDynamicArrayCleanupCallOperands> computed_dynamic_array_cleanup_call_operands;
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
     std::vector<std::string> active_runtime_indexed_constructor_argument_keys;
+    std::unordered_set<std::string> computed_dynamic_array_production_cleanup_authorized_owners;
     OwnershipTransferState ownership_transfers;
     std::vector<syntax::StatementSyntax const*> sibling_statements_after_current;
     std::vector<syntax::StatementSyntax const*> function_statements_after_current;

@@ -27,6 +27,15 @@ auto computed_dynamic_array_for_base_name(
     return name;
 }
 
+auto computed_dynamic_array_production_cleanup_authorized(
+    FunctionLoweringState const& state,
+    std::string_view cleanup_owner_name
+) -> bool {
+    return state.computed_dynamic_array_production_cleanup_authorized_owners.contains(
+        std::string {cleanup_owner_name}
+    );
+}
+
 auto append_aggregate_owner_step(
     std::string& owner_name,
     AggregatePathStep const& step
@@ -1709,7 +1718,13 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
                 gate.cleanup_authorization_proof_inputs.push_back("descriptor storage handoff");
                 gate.cleanup_authorization_proof_inputs.push_back("cleanup owner proof");
             }
-            gate.production_cleanup_authorization_ready = gate.cleanup_owner_proven;
+            gate.production_cleanup_authorization_ready = gate.cleanup_owner_proven ||
+                computed_dynamic_array_production_cleanup_authorized(state, gate.cleanup_owner_name);
+            if (gate.production_cleanup_authorization_ready && !gate.cleanup_owner_proven) {
+                gate.cleanup_authorization_proof_inputs.push_back(
+                    "internal production cleanup authorization"
+                );
+            }
             gate.production_cleanup_authorized = gate.production_cleanup_authorization_ready;
             if (!gate.production_cleanup_authorization_ready) {
                 gate.cleanup_authorization_missing_requirements.push_back(
@@ -1740,7 +1755,14 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
         gate.cleanup_authorization_missing_requirements.push_back(
             "runtime aggregate production cleanup authorization"
         );
-        gate.production_cleanup_authorization_ready = false;
+        gate.production_cleanup_authorization_ready =
+            computed_dynamic_array_production_cleanup_authorized(state, gate.cleanup_owner_name);
+        if (gate.production_cleanup_authorization_ready) {
+            gate.cleanup_authorization_proof_inputs.push_back(
+                "internal runtime aggregate production cleanup authorization"
+            );
+            gate.cleanup_authorization_missing_requirements.clear();
+        }
         gate.handoff_inputs_ready =
             gate.handoff_plan.runtime_aggregate_cleanup_proof_detected &&
             gate.handoff_plan.runtime_aggregate_single_owner_proven &&
@@ -1760,7 +1782,12 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
         gate.cleanup_authorization_proof_inputs.push_back("cleanup owner binding");
     }
     gate.cleanup_authorization_missing_requirements.push_back("production cleanup authorization");
-    gate.production_cleanup_authorization_ready = false;
+    gate.production_cleanup_authorization_ready =
+        computed_dynamic_array_production_cleanup_authorized(state, gate.cleanup_owner_name);
+    if (gate.production_cleanup_authorization_ready) {
+        gate.cleanup_authorization_proof_inputs.push_back("internal production cleanup authorization");
+        gate.cleanup_authorization_missing_requirements.clear();
+    }
     gate.cleanup_authorization_contract_ready = gate.handoff_inputs_ready &&
         gate.cleanup_authorization_missing_requirements.empty();
     gate.kind = gate.handoff_inputs_ready
