@@ -925,6 +925,28 @@ void assert_computed_dynamic_array_production_reports() {
         "(metadata only)"
     );
 
+    auto mutation_preview = driver::computed_dynamic_array_for_production_mutation_preview_state_report(
+        pipeline::ComputedDynamicArrayForProductionMutationPreviewState {
+            .cleanup_owner_names = {"items"},
+            .preview_metadata_available = true,
+            .gate_ready = true,
+            .sequence_ready = true,
+            .mutation_permission_available = true,
+            .production_emission_enabled = true,
+            .would_mutate = true,
+            .preview_count = 1,
+            .rendered_ir_snippet_count = 17,
+        }
+    );
+    assert(mutation_preview.size() == 2);
+    assert(
+        mutation_preview.front() ==
+        "computed DynamicArray production mutation preview planned previews 1 snippets 17 "
+        "[metadata available] [gate ready] [sequence ready] [mutation permission available] "
+        "[production emission enabled] [would mutate] (metadata only)"
+    );
+    assert(mutation_preview[1] == "computed DynamicArray production mutation preview detail owner items (metadata only)");
+
     auto computed_blocked = driver::computed_dynamic_array_for_production_readiness_report(
         pipeline::ComputedDynamicArrayForProductionReadiness {
             .sequence_ready = true,

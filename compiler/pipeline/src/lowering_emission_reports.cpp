@@ -4213,6 +4213,12 @@ void populate_lowering_emission_reports(
             result.computed_dynamic_array_for_inserted_cleanup_state_verification_state,
             result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
         );
+    result.computed_dynamic_array_for_production_mutation_preview_state =
+        plan_computed_dynamic_array_for_production_mutation_preview(
+            result.computed_dynamic_array_for_production_emission_gate_state,
+            result.computed_dynamic_array_for_production_sequence_state,
+            result.computed_dynamic_array_for_production_readiness
+        );
     result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines =
         std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =

@@ -96,6 +96,7 @@ struct CompilePipelineResult {
     ComputedDynamicArrayForProductionEmissionGateState computed_dynamic_array_for_production_emission_gate_state;
     ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
     ComputedDynamicArrayForProductionReadiness computed_dynamic_array_for_production_readiness;
+    ComputedDynamicArrayForProductionMutationPreviewState computed_dynamic_array_for_production_mutation_preview_state;
     ComputedDynamicArrayForProductionSequenceModuleIrArtifactState
         computed_dynamic_array_for_production_sequence_module_ir_artifact_state;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;

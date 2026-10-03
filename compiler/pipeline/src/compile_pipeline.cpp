@@ -70,6 +70,28 @@ auto computed_dynamic_array_for_production_ready(
         readiness.production_emission_enabled;
 }
 
+auto plan_computed_dynamic_array_for_production_mutation_preview(
+    ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
+    ComputedDynamicArrayForProductionSequenceState const& sequence_state,
+    ComputedDynamicArrayForProductionReadiness const& readiness
+) -> ComputedDynamicArrayForProductionMutationPreviewState {
+    auto state = ComputedDynamicArrayForProductionMutationPreviewState {
+        .cleanup_owner_names = gate_state.cleanup_owner_names,
+        .preview_metadata_available = gate_state.gate_metadata_available,
+        .gate_ready = readiness.gate_ready,
+        .sequence_ready = readiness.sequence_ready,
+        .mutation_permission_available = gate_state.any_production_emission_mutation_allowed,
+        .production_emission_enabled = readiness.production_emission_enabled,
+        .preview_count = gate_state.gate_count,
+        .rendered_ir_snippet_count = sequence_state.rendered_ir_snippet_count,
+    };
+    state.would_mutate = state.preview_metadata_available &&
+        state.gate_ready &&
+        state.sequence_ready &&
+        state.mutation_permission_available;
+    return state;
+}
+
 auto CompilePipeline::analyze(std::filesystem::path const& source_path) const -> CompilePipelineResult {
     return analyze(source_path, CompilePipelineOptions {});
 }

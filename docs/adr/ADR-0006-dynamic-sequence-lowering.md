@@ -3160,6 +3160,8 @@ representation.
 - Production emission mutation permission now opens only when production-gate readiness, the cleanup authorization
   contract, production cleanup authorization, and cleanup insertion capability are all ready; production emission still
   remains separately disabled until the final mutation path is enabled.
+- Production mutation preview reporting now records a metadata-only `would mutate` decision once the production gate,
+  sequence, and mutation permission are ready, without performing module IR mutation.
 
 ## Follow-up work
 

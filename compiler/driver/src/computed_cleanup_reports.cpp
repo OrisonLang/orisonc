@@ -1015,6 +1015,42 @@ auto computed_dynamic_array_for_production_readiness_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_production_mutation_preview_state_report(
+    pipeline::ComputedDynamicArrayForProductionMutationPreviewState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "previews " << state.preview_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.preview_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.gate_ready ? " [gate ready]" : " [gate blocked]");
+    counts << (state.sequence_ready ? " [sequence ready]" : " [sequence blocked]");
+    counts << (state.mutation_permission_available ?
+        " [mutation permission available]" : " [mutation permission blocked]");
+    counts << (state.production_emission_enabled ?
+        " [production emission enabled]" : " [production emission disabled]");
+    counts << (state.would_mutate ? " [would mutate]" : " [would not mutate]");
+    append_computed_cleanup_summary(
+        lines,
+        "production mutation preview",
+        state.preview_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto const& owner_name : state.cleanup_owner_names) {
+        append_computed_cleanup_detail(
+            lines,
+            "production mutation preview",
+            owner_name,
+            {},
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto dynamic_array_cleanup_production_readiness_state_report(
     pipeline::DynamicArrayCleanupProductionReadiness const& state
 ) -> std::vector<std::string> {

@@ -502,6 +502,10 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_production_readiness =
             emitted_result.computed_dynamic_array_for_production_readiness;
     }
+    if (emitted_result.computed_dynamic_array_for_production_mutation_preview_state.preview_count > 0) {
+        result.computed_dynamic_array_for_production_mutation_preview_state =
+            std::move(emitted_result.computed_dynamic_array_for_production_mutation_preview_state);
+    }
 }
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
@@ -672,6 +676,12 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
         report,
         computed_dynamic_array_for_production_sequence_state_report(
             result.computed_dynamic_array_for_production_sequence_state
+        )
+    );
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_production_mutation_preview_state_report(
+            result.computed_dynamic_array_for_production_mutation_preview_state
         )
     );
     append_report_lines(

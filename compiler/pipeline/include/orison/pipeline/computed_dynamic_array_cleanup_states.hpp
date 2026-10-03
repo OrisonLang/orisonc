@@ -34,6 +34,18 @@ struct ComputedDynamicArrayForProductionReadiness {
     bool production_emission_enabled = false;
 };
 
+struct ComputedDynamicArrayForProductionMutationPreviewState {
+    std::vector<std::string> cleanup_owner_names;
+    bool preview_metadata_available = false;
+    bool gate_ready = false;
+    bool sequence_ready = false;
+    bool mutation_permission_available = false;
+    bool production_emission_enabled = false;
+    bool would_mutate = false;
+    std::size_t preview_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 struct ConsumedDescriptorFinalizationState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> descriptor_storage_names;
