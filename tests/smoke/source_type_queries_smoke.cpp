@@ -3568,7 +3568,7 @@ int main() {
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate.kind ==
         orison::lowering::ComputedDynamicArrayIterableCleanupAuthorizationGateKind::
-            cleanup_authorization_blocked
+            cleanup_authorized
     );
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate.handoff_inputs_ready);
     assert(
@@ -3583,7 +3583,12 @@ int main() {
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate
             .cleanup_authorization_missing_requirements.empty()
     );
-    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate.production_cleanup_authorized);
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate.production_cleanup_authorized);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate
+        ).find("cleanup authorized") != std::string::npos
+    );
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorized_gate
@@ -3688,7 +3693,7 @@ int main() {
         );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence.kind ==
-        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_authorization_blocked
+        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned
     );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence
@@ -3698,7 +3703,20 @@ int main() {
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence
             .cleanup_authorization_contract_ready
     );
-    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence.cleanup_authorized);
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence.cleanup_authorized);
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence
+            .loop_body_has_cleanup_responsibility
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence
+            .function_cleanup_resumes_after_loop
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence
+        ).find("loop cleanup sequence planned") != std::string::npos
+    );
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorized_cleanup_sequence
@@ -3926,7 +3944,7 @@ int main() {
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate.kind ==
         orison::lowering::ComputedDynamicArrayIterableProductionEmissionGatePlanKind::
-            cleanup_authorization_blocked
+            production_emission_gate_planned
     );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
@@ -3938,6 +3956,13 @@ int main() {
     );
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
         .production_emission_enabled);
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
+        .production_sequence_render_planned);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
+        ).find("production emission gate planned") != std::string::npos
+    );
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate

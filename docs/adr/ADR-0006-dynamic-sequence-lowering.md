@@ -3153,6 +3153,8 @@ representation.
   cleanup sequence, and production emission gate reports while emission remains disabled.
 - Runtime-index aggregate production cleanup authorization can now be satisfied from internal lowering state for
   metadata-only tests; the contract can become ready while cleanup authorization and production emission remain blocked.
+- When that internal contract is ready, runtime-index aggregate cleanup authorization now advances to metadata-only
+  authorized planning and can build production-gate metadata while final emission remains disabled.
 
 ## Follow-up work
 

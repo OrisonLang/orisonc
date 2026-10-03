@@ -1769,9 +1769,14 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
             gate.handoff_plan.runtime_aggregate_descriptor_storage_consistent;
         gate.cleanup_authorization_contract_ready = gate.handoff_inputs_ready &&
             gate.cleanup_authorization_missing_requirements.empty();
-        gate.kind = gate.handoff_inputs_ready
-            ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked
-            : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete;
+        gate.production_cleanup_authorized = gate.cleanup_authorization_contract_ready;
+        if (!gate.handoff_inputs_ready) {
+            gate.kind = ComputedDynamicArrayIterableCleanupAuthorizationGateKind::handoff_inputs_incomplete;
+            return gate;
+        }
+        gate.kind = gate.production_cleanup_authorized
+            ? ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorized
+            : ComputedDynamicArrayIterableCleanupAuthorizationGateKind::cleanup_authorization_blocked;
         return gate;
     }
 
