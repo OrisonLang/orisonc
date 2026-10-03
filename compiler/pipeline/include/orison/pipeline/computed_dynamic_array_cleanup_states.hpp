@@ -48,6 +48,16 @@ struct ComputedDynamicArrayForProductionMutationPreviewState {
     std::size_t rendered_ir_snippet_count = 0;
 };
 
+struct ComputedDynamicArrayForProductionMutationExecutionState {
+    std::vector<std::string> cleanup_owner_names;
+    bool execution_metadata_available = false;
+    bool would_execute = false;
+    bool executed = false;
+    bool ir_unchanged = true;
+    std::size_t execution_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 struct ConsumedDescriptorFinalizationState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> descriptor_storage_names;

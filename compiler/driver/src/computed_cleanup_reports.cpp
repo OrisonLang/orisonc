@@ -1054,6 +1054,38 @@ auto computed_dynamic_array_for_production_mutation_preview_state_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_production_mutation_execution_state_report(
+    pipeline::ComputedDynamicArrayForProductionMutationExecutionState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "executions " << state.execution_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.execution_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.would_execute ? " [would execute]" : " [would not execute]");
+    counts << (state.executed ? " [executed]" : " [skipped]");
+    counts << (state.ir_unchanged ? " [ir unchanged]" : " [ir changed]");
+    append_computed_cleanup_summary(
+        lines,
+        "production mutation execution",
+        state.execution_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(no-op)"
+    );
+
+    for (auto const& owner_name : state.cleanup_owner_names) {
+        append_computed_cleanup_detail(
+            lines,
+            "production mutation execution",
+            owner_name,
+            {},
+            "(no-op)"
+        );
+    }
+
+    return lines;
+}
+
 auto dynamic_array_cleanup_production_readiness_state_report(
     pipeline::DynamicArrayCleanupProductionReadiness const& state
 ) -> std::vector<std::string> {

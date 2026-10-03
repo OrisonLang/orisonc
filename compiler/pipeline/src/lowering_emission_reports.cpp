@@ -4220,6 +4220,10 @@ void populate_lowering_emission_reports(
             result.computed_dynamic_array_for_production_readiness,
             options.computed_dynamic_array_production_module_ir_mutation_enabled
         );
+    result.computed_dynamic_array_for_production_mutation_execution_state =
+        plan_computed_dynamic_array_for_production_mutation_execution(
+            result.computed_dynamic_array_for_production_mutation_preview_state
+        );
     result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines =
         std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =

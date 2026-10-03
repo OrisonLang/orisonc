@@ -96,6 +96,20 @@ auto plan_computed_dynamic_array_for_production_mutation_preview(
     return state;
 }
 
+auto plan_computed_dynamic_array_for_production_mutation_execution(
+    ComputedDynamicArrayForProductionMutationPreviewState const& preview_state
+) -> ComputedDynamicArrayForProductionMutationExecutionState {
+    return ComputedDynamicArrayForProductionMutationExecutionState {
+        .cleanup_owner_names = preview_state.cleanup_owner_names,
+        .execution_metadata_available = preview_state.preview_metadata_available,
+        .would_execute = preview_state.will_mutate,
+        .executed = preview_state.will_mutate,
+        .ir_unchanged = true,
+        .execution_count = preview_state.will_mutate ? preview_state.preview_count : 0,
+        .rendered_ir_snippet_count = preview_state.will_mutate ? preview_state.rendered_ir_snippet_count : 0,
+    };
+}
+
 auto CompilePipeline::analyze(std::filesystem::path const& source_path) const -> CompilePipelineResult {
     return analyze(source_path, CompilePipelineOptions {});
 }

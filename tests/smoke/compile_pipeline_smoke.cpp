@@ -2890,23 +2890,24 @@ auto main() -> int {
             << "        total = total + word\n"
             << "    total\n";
     }
+    auto computed_dynamic_array_local_same_owner_for_options = orison::pipeline::CompilePipelineOptions {
+        .collect_computed_dynamic_array_for_descriptor_renders = true,
+        .collect_computed_dynamic_array_for_loop_control_renders = true,
+        .collect_computed_dynamic_array_for_element_address_renders = true,
+        .collect_computed_dynamic_array_for_element_load_renders = true,
+        .collect_computed_dynamic_array_for_loop_continue_renders = true,
+        .collect_computed_dynamic_array_for_loop_render_sequences = true,
+        .collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+        .collect_computed_dynamic_array_for_cleanup_transitions = true,
+        .collect_computed_dynamic_array_for_production_emission_gates = true,
+        .collect_computed_dynamic_array_for_production_sequences = true,
+        .dynamic_array_production_construction_lowering_enabled = true,
+        .dynamic_array_production_for_lowering_enabled = true,
+        .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
+    };
     auto computed_dynamic_array_local_same_owner_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
-        orison::pipeline::CompilePipelineOptions {
-            .collect_computed_dynamic_array_for_descriptor_renders = true,
-            .collect_computed_dynamic_array_for_loop_control_renders = true,
-            .collect_computed_dynamic_array_for_element_address_renders = true,
-            .collect_computed_dynamic_array_for_element_load_renders = true,
-            .collect_computed_dynamic_array_for_loop_continue_renders = true,
-            .collect_computed_dynamic_array_for_loop_render_sequences = true,
-            .collect_computed_dynamic_array_for_loop_exit_cleanups = true,
-            .collect_computed_dynamic_array_for_cleanup_transitions = true,
-            .collect_computed_dynamic_array_for_production_emission_gates = true,
-            .collect_computed_dynamic_array_for_production_sequences = true,
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_for_lowering_enabled = true,
-            .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
-        }
+        computed_dynamic_array_local_same_owner_for_options
     );
     assert(!computed_dynamic_array_local_same_owner_for.has_errors());
     assert(
@@ -3586,9 +3587,60 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_mutation_preview_state.rendered_ir_snippet_count == 17
     );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_execution_state.execution_metadata_available
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_execution_state.would_execute
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_execution_state.executed
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_execution_state.ir_unchanged
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_execution_state.execution_count == 0
+    );
     assert(orison::pipeline::computed_dynamic_array_for_production_ready(
         computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_readiness
     ));
+    auto computed_dynamic_array_local_same_owner_for_mutation_options =
+        computed_dynamic_array_local_same_owner_for_options;
+    computed_dynamic_array_local_same_owner_for_mutation_options
+        .computed_dynamic_array_production_module_ir_mutation_enabled = true;
+    auto computed_dynamic_array_local_same_owner_for_noop_mutation = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        computed_dynamic_array_local_same_owner_for_mutation_options
+    );
+    assert(!computed_dynamic_array_local_same_owner_for_noop_mutation.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_for_noop_mutation
+            .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_noop_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.would_execute
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_noop_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.executed
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_noop_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.ir_unchanged
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_noop_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.execution_count == 1
+    );
+    assert(computed_dynamic_array_local_same_owner_for_noop_mutation.ir_text ==
+        computed_dynamic_array_local_same_owner_for.ir_text);
     auto dynamic_array_metadata_collector =
         orison::pipeline::DynamicArrayCleanupMetadataCollector {pipeline};
     auto computed_dynamic_array_local_same_owner_metadata_without_comments =

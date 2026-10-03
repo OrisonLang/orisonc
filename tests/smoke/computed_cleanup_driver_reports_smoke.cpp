@@ -970,6 +970,44 @@ void assert_computed_dynamic_array_production_reports() {
         std::string::npos
     );
 
+    auto skipped_mutation_execution = driver::computed_dynamic_array_for_production_mutation_execution_state_report(
+        pipeline::ComputedDynamicArrayForProductionMutationExecutionState {
+            .cleanup_owner_names = {"items"},
+            .execution_metadata_available = true,
+            .would_execute = false,
+            .executed = false,
+            .ir_unchanged = true,
+            .execution_count = 0,
+            .rendered_ir_snippet_count = 0,
+        }
+    );
+    assert(skipped_mutation_execution.size() == 2);
+    assert(
+        skipped_mutation_execution.front() ==
+        "computed DynamicArray production mutation execution planned executions 0 snippets 0 "
+        "[metadata available] [would not execute] [skipped] [ir unchanged] (no-op)"
+    );
+    assert(
+        skipped_mutation_execution[1] ==
+        "computed DynamicArray production mutation execution detail owner items (no-op)"
+    );
+
+    auto executed_mutation_execution = driver::computed_dynamic_array_for_production_mutation_execution_state_report(
+        pipeline::ComputedDynamicArrayForProductionMutationExecutionState {
+            .cleanup_owner_names = {"items"},
+            .execution_metadata_available = true,
+            .would_execute = true,
+            .executed = true,
+            .ir_unchanged = true,
+            .execution_count = 1,
+            .rendered_ir_snippet_count = 17,
+        }
+    );
+    assert(
+        executed_mutation_execution.front().find("executions 1 snippets 17 [metadata available] "
+            "[would execute] [executed] [ir unchanged] (no-op)") != std::string::npos
+    );
+
     auto computed_blocked = driver::computed_dynamic_array_for_production_readiness_report(
         pipeline::ComputedDynamicArrayForProductionReadiness {
             .sequence_ready = true,

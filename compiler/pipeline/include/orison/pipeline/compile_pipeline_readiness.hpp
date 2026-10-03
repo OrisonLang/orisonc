@@ -40,4 +40,8 @@ auto plan_computed_dynamic_array_for_production_mutation_preview(
     bool final_mutation_authorization_enabled
 ) -> ComputedDynamicArrayForProductionMutationPreviewState;
 
+auto plan_computed_dynamic_array_for_production_mutation_execution(
+    ComputedDynamicArrayForProductionMutationPreviewState const& preview_state
+) -> ComputedDynamicArrayForProductionMutationExecutionState;
+
 }  // namespace orison::pipeline
