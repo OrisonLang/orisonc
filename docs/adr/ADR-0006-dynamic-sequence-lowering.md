@@ -3147,6 +3147,8 @@ representation.
   preserve `cleanup authorization blocked` through the rest of the computed cleanup metadata pipeline.
 - Runtime-index aggregate cleanup authorization gates now carry a finite proof contract: named available proof inputs
   plus the remaining production cleanup authorization requirement, while production emission stays disabled.
+- Cleanup sequence and production emission gate reports now preserve that finite proof contract so downstream blocked
+  diagnostics keep the missing production cleanup authorization visible.
 
 ## Follow-up work
 

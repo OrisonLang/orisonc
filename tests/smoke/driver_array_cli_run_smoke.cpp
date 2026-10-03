@@ -2139,7 +2139,11 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
     auto const expected_cleanup_sequence_fragment =
         "computed DynamicArray cleanup sequence plan cleanup authorization blocked source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values descriptor %holder.buckets[selected].values.addr "
-        "[loop cleanup blocked] [handoff inputs ready] [cleanup authorization blocked] "
+        "[loop cleanup blocked] [handoff inputs ready] [authorization contract blocked] "
+        "[authorization proof input: runtime aggregate audit proof] "
+        "[authorization proof input: runtime aggregate single owner] "
+        "[authorization proof input: runtime aggregate descriptor storage consistency] "
+        "[authorization missing: runtime aggregate production cleanup authorization] [cleanup authorization blocked] "
         "[runtime aggregate cleanup authorization blocked] [function cleanup blocked] "
         "[cleanup sequence disabled] (metadata only)";
     auto const expected_descriptor_render_fragment =
@@ -2177,7 +2181,12 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "computed DynamicArray production emission gate plan cleanup authorization blocked source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values [ownership blocked] [loop render blocked] "
         "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
-        "[production sequence blocked] [cleanup authorization blocked] [runtime aggregate cleanup proof blocked] "
+        "[production sequence blocked] [cleanup authorization blocked] [authorization contract blocked] "
+        "[authorization proof input: runtime aggregate audit proof] "
+        "[authorization proof input: runtime aggregate single owner] "
+        "[authorization proof input: runtime aggregate descriptor storage consistency] "
+        "[authorization missing: runtime aggregate production cleanup authorization] "
+        "[runtime aggregate cleanup proof blocked] "
         "[production emission disabled] (metadata only)";
 
     for (auto const& command : {

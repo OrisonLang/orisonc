@@ -170,7 +170,10 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     std::string loop_entry_cleanup_owner_name;
     std::string loop_exit_cleanup_owner_name;
     std::string loop_entry_cleanup_operation_name;
+    std::vector<std::string> cleanup_authorization_proof_inputs;
+    std::vector<std::string> cleanup_authorization_missing_requirements;
     bool handoff_inputs_ready = false;
+    bool cleanup_authorization_contract_ready = false;
     bool cleanup_authorized = false;
     bool loop_body_has_cleanup_responsibility = false;
     bool function_cleanup_resumes_after_loop = false;
@@ -412,7 +415,10 @@ struct ComputedDynamicArrayIterableProductionEmissionGatePlan {
     std::string source_type_name;
     std::string element_source_type_name;
     std::string cleanup_owner_name;
+    std::vector<std::string> cleanup_authorization_proof_inputs;
+    std::vector<std::string> cleanup_authorization_missing_requirements;
     std::vector<std::string> rendered_ir;
+    bool cleanup_authorization_contract_ready = false;
     bool ownership_ready = false;
     bool loop_render_ready = false;
     bool loop_cleanup_ownership_ready = false;

@@ -1652,6 +1652,27 @@ auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     return output;
 }
 
+auto append_cleanup_authorization_contract_report(
+    std::string output,
+    bool contract_ready,
+    std::vector<std::string> const& proof_inputs,
+    std::vector<std::string> const& missing_requirements
+) -> std::string {
+    output += contract_ready ? " [authorization contract ready]" :
+        " [authorization contract blocked]";
+    for (auto const& proof_input : proof_inputs) {
+        output += " [authorization proof input: ";
+        output += proof_input;
+        output += "]";
+    }
+    for (auto const& missing_requirement : missing_requirements) {
+        output += " [authorization missing: ";
+        output += missing_requirement;
+        output += "]";
+    }
+    return output;
+}
+
 auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -1786,18 +1807,12 @@ auto computed_dynamic_array_iterable_cleanup_authorization_gate_report(
         output += gate.descriptor_storage_name;
     }
     output += gate.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
-    output += gate.cleanup_authorization_contract_ready ? " [authorization contract ready]" :
-        " [authorization contract blocked]";
-    for (auto const& proof_input : gate.cleanup_authorization_proof_inputs) {
-        output += " [authorization proof input: ";
-        output += proof_input;
-        output += "]";
-    }
-    for (auto const& missing_requirement : gate.cleanup_authorization_missing_requirements) {
-        output += " [authorization missing: ";
-        output += missing_requirement;
-        output += "]";
-    }
+    output = append_cleanup_authorization_contract_report(
+        std::move(output),
+        gate.cleanup_authorization_contract_ready,
+        gate.cleanup_authorization_proof_inputs,
+        gate.cleanup_authorization_missing_requirements
+    );
     output += gate.cleanup_owner_proven ? " [cleanup owner proven]" : " [cleanup owner blocked]";
     if (gate.handoff_plan.ownership_plan.unsupported_reason ==
         ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
@@ -1833,6 +1848,12 @@ auto plan_computed_dynamic_array_iterable_cleanup_sequence(
     plan.cleanup_owner_name = plan.cleanup_authorization_gate.cleanup_owner_name;
     plan.descriptor_storage_name = plan.cleanup_authorization_gate.descriptor_storage_name;
     plan.handoff_inputs_ready = plan.cleanup_authorization_gate.handoff_inputs_ready;
+    plan.cleanup_authorization_contract_ready =
+        plan.cleanup_authorization_gate.cleanup_authorization_contract_ready;
+    plan.cleanup_authorization_proof_inputs =
+        plan.cleanup_authorization_gate.cleanup_authorization_proof_inputs;
+    plan.cleanup_authorization_missing_requirements =
+        plan.cleanup_authorization_gate.cleanup_authorization_missing_requirements;
     plan.cleanup_authorized = plan.cleanup_authorization_gate.production_cleanup_authorized;
     plan.cleanup_sequence_enabled = false;
 
@@ -1926,6 +1947,12 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
     output += plan.loop_body_has_cleanup_responsibility ? " [loop cleanup owns descriptor]" :
         " [loop cleanup blocked]";
     output += plan.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
+    output = append_cleanup_authorization_contract_report(
+        std::move(output),
+        plan.cleanup_authorization_contract_ready,
+        plan.cleanup_authorization_proof_inputs,
+        plan.cleanup_authorization_missing_requirements
+    );
     output += plan.cleanup_authorized ? " [cleanup authorized]" : " [cleanup authorization blocked]";
     if (plan.cleanup_authorization_gate.handoff_plan.ownership_plan.unsupported_reason ==
         ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index) {
@@ -3033,6 +3060,16 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     plan.element_source_type_name = plan.loop_exit_cleanup_plan.element_source_type_name;
     plan.cleanup_owner_name = plan.loop_exit_cleanup_plan.cleanup_owner_name;
     plan.production_emission_enabled = false;
+    auto const& early_cleanup_sequence_plan =
+        plan.loop_exit_cleanup_plan.loop_render_sequence_plan.loop_continue_render_plan
+            .element_load_render_plan.element_address_render_plan.loop_control_render_plan
+            .descriptor_render_plan.cleanup_sequence_plan;
+    plan.cleanup_authorization_contract_ready =
+        early_cleanup_sequence_plan.cleanup_authorization_contract_ready;
+    plan.cleanup_authorization_proof_inputs =
+        early_cleanup_sequence_plan.cleanup_authorization_proof_inputs;
+    plan.cleanup_authorization_missing_requirements =
+        early_cleanup_sequence_plan.cleanup_authorization_missing_requirements;
 
     switch (plan.loop_exit_cleanup_plan.kind) {
         case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::not_computed_dynamic_array:
@@ -3214,6 +3251,12 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
         ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked) {
         output += " [cleanup authorization blocked]";
     }
+    output = append_cleanup_authorization_contract_report(
+        std::move(output),
+        plan.cleanup_authorization_contract_ready,
+        plan.cleanup_authorization_proof_inputs,
+        plan.cleanup_authorization_missing_requirements
+    );
     if (computed_dynamic_array_iterable_runtime_aggregate_cleanup_proof_blocked(plan)) {
         output += " [runtime aggregate cleanup proof blocked]";
     }
