@@ -77,6 +77,7 @@ struct CompilePipelineOptions {
     bool dynamic_array_production_append_lowering_enabled = false;
     bool dynamic_array_production_cleanup_emission_enabled = false;
     bool computed_dynamic_array_local_cleanup_call_insertion_enabled = true;
+    bool computed_dynamic_array_production_module_ir_mutation_enabled = false;
 };
 
 inline auto production_compile_pipeline_options() -> CompilePipelineOptions {

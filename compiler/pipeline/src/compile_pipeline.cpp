@@ -73,7 +73,8 @@ auto computed_dynamic_array_for_production_ready(
 auto plan_computed_dynamic_array_for_production_mutation_preview(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
     ComputedDynamicArrayForProductionSequenceState const& sequence_state,
-    ComputedDynamicArrayForProductionReadiness const& readiness
+    ComputedDynamicArrayForProductionReadiness const& readiness,
+    bool final_mutation_authorization_enabled
 ) -> ComputedDynamicArrayForProductionMutationPreviewState {
     auto state = ComputedDynamicArrayForProductionMutationPreviewState {
         .cleanup_owner_names = gate_state.cleanup_owner_names,
@@ -82,6 +83,7 @@ auto plan_computed_dynamic_array_for_production_mutation_preview(
         .sequence_ready = readiness.sequence_ready,
         .mutation_permission_available = gate_state.any_production_emission_mutation_allowed,
         .production_emission_enabled = readiness.production_emission_enabled,
+        .final_mutation_authorization_enabled = final_mutation_authorization_enabled,
         .preview_count = gate_state.gate_count,
         .rendered_ir_snippet_count = sequence_state.rendered_ir_snippet_count,
     };
@@ -89,6 +91,8 @@ auto plan_computed_dynamic_array_for_production_mutation_preview(
         state.gate_ready &&
         state.sequence_ready &&
         state.mutation_permission_available;
+    state.will_mutate = state.would_mutate &&
+        state.final_mutation_authorization_enabled;
     return state;
 }
 

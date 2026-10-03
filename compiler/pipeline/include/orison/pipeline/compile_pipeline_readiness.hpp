@@ -36,7 +36,8 @@ auto computed_dynamic_array_for_production_ready(
 auto plan_computed_dynamic_array_for_production_mutation_preview(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
     ComputedDynamicArrayForProductionSequenceState const& sequence_state,
-    ComputedDynamicArrayForProductionReadiness const& readiness
+    ComputedDynamicArrayForProductionReadiness const& readiness,
+    bool final_mutation_authorization_enabled
 ) -> ComputedDynamicArrayForProductionMutationPreviewState;
 
 }  // namespace orison::pipeline

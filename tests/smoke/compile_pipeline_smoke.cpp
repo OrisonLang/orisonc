@@ -3571,6 +3571,14 @@ auto main() -> int {
             .computed_dynamic_array_for_production_mutation_preview_state.would_mutate
     );
     assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_preview_state.final_mutation_authorization_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
+    );
+    assert(
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_mutation_preview_state.preview_count == 1
     );

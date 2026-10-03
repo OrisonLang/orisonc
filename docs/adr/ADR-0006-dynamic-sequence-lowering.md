@@ -3162,6 +3162,8 @@ representation.
   remains separately disabled until the final mutation path is enabled.
 - Production mutation preview reporting now records a metadata-only `would mutate` decision once the production gate,
   sequence, and mutation permission are ready, without performing module IR mutation.
+- Production mutation preview reporting now includes a final module-IR mutation authorization gate. It defaults to
+  blocked, so `would mutate` can be true while `will mutate` remains false until the internal gate is enabled.
 
 ## Follow-up work
 

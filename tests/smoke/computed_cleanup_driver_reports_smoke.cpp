@@ -933,7 +933,9 @@ void assert_computed_dynamic_array_production_reports() {
             .sequence_ready = true,
             .mutation_permission_available = true,
             .production_emission_enabled = true,
+            .final_mutation_authorization_enabled = false,
             .would_mutate = true,
+            .will_mutate = false,
             .preview_count = 1,
             .rendered_ir_snippet_count = 17,
         }
@@ -943,9 +945,30 @@ void assert_computed_dynamic_array_production_reports() {
         mutation_preview.front() ==
         "computed DynamicArray production mutation preview planned previews 1 snippets 17 "
         "[metadata available] [gate ready] [sequence ready] [mutation permission available] "
-        "[production emission enabled] [would mutate] (metadata only)"
+        "[production emission enabled] [final mutation authorization blocked] "
+        "[would mutate] [will not mutate] (metadata only)"
     );
     assert(mutation_preview[1] == "computed DynamicArray production mutation preview detail owner items (metadata only)");
+
+    auto authorized_mutation_preview = driver::computed_dynamic_array_for_production_mutation_preview_state_report(
+        pipeline::ComputedDynamicArrayForProductionMutationPreviewState {
+            .cleanup_owner_names = {"items"},
+            .preview_metadata_available = true,
+            .gate_ready = true,
+            .sequence_ready = true,
+            .mutation_permission_available = true,
+            .production_emission_enabled = true,
+            .final_mutation_authorization_enabled = true,
+            .would_mutate = true,
+            .will_mutate = true,
+            .preview_count = 1,
+            .rendered_ir_snippet_count = 17,
+        }
+    );
+    assert(
+        authorized_mutation_preview.front().find("[final mutation authorization enabled] [would mutate] [will mutate]") !=
+        std::string::npos
+    );
 
     auto computed_blocked = driver::computed_dynamic_array_for_production_readiness_report(
         pipeline::ComputedDynamicArrayForProductionReadiness {

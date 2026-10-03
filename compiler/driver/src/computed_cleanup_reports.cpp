@@ -1029,7 +1029,10 @@ auto computed_dynamic_array_for_production_mutation_preview_state_report(
         " [mutation permission available]" : " [mutation permission blocked]");
     counts << (state.production_emission_enabled ?
         " [production emission enabled]" : " [production emission disabled]");
+    counts << (state.final_mutation_authorization_enabled ?
+        " [final mutation authorization enabled]" : " [final mutation authorization blocked]");
     counts << (state.would_mutate ? " [would mutate]" : " [would not mutate]");
+    counts << (state.will_mutate ? " [will mutate]" : " [will not mutate]");
     append_computed_cleanup_summary(
         lines,
         "production mutation preview",

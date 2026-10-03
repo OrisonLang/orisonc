@@ -41,7 +41,9 @@ struct ComputedDynamicArrayForProductionMutationPreviewState {
     bool sequence_ready = false;
     bool mutation_permission_available = false;
     bool production_emission_enabled = false;
+    bool final_mutation_authorization_enabled = false;
     bool would_mutate = false;
+    bool will_mutate = false;
     std::size_t preview_count = 0;
     std::size_t rendered_ir_snippet_count = 0;
 };
