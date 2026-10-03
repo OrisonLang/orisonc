@@ -3697,6 +3697,8 @@ auto build_computed_dynamic_array_for_production_emission_gate_state(
         state.all_exit_cleanup_ready = state.all_exit_cleanup_ready && gate.exit_cleanup_ready;
         state.all_production_sequences_planned =
             state.all_production_sequences_planned && gate.production_sequence_render_planned;
+        state.any_production_emission_mutation_allowed =
+            state.any_production_emission_mutation_allowed || gate.production_emission_mutation_allowed;
         state.any_production_emission_enabled =
             state.any_production_emission_enabled || gate.production_emission_enabled;
     }

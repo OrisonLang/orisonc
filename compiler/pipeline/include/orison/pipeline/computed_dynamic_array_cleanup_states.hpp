@@ -15,6 +15,7 @@ struct ComputedDynamicArrayForProductionEmissionGateState {
     bool all_function_cleanup_resumption_ready = false;
     bool all_exit_cleanup_ready = false;
     bool all_production_sequences_planned = false;
+    bool any_production_emission_mutation_allowed = false;
     bool any_production_emission_enabled = false;
     std::size_t gate_count = 0;
     std::size_t rendered_ir_snippet_count = 0;

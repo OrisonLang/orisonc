@@ -3155,6 +3155,8 @@ representation.
   metadata-only tests; the contract can become ready while cleanup authorization and production emission remain blocked.
 - When that internal contract is ready, runtime-index aggregate cleanup authorization now advances to metadata-only
   authorized planning and can build production-gate metadata while final emission remains disabled.
+- Production emission gate reports now separate metadata readiness from IR mutation permission with an explicit
+  mutation-allowed predicate that remains blocked while production emission stays disabled.
 
 ## Follow-up work
 

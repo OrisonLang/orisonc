@@ -2189,7 +2189,7 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "[authorization proof input: runtime aggregate single owner] "
         "[authorization proof input: runtime aggregate descriptor storage consistency] "
         "[authorization missing: runtime aggregate production cleanup authorization] "
-        "[runtime aggregate cleanup proof blocked] "
+        "[runtime aggregate cleanup proof blocked] [production emission mutation blocked] "
         "[production emission disabled] (metadata only)";
 
     for (auto const& command : {

@@ -313,7 +313,7 @@ auto main() -> int {
             "[function cleanup resumption blocked] [exit cleanup blocked] "
             "[production sequence blocked] [production cleanup authorization blocked] "
             "[authorization contract blocked] "
-            "[production emission disabled] (metadata only)"
+            "[production emission mutation blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 

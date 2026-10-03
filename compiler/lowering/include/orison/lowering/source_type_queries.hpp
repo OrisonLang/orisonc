@@ -428,6 +428,7 @@ struct ComputedDynamicArrayIterableProductionEmissionGatePlan {
     bool function_cleanup_resumption_ready = false;
     bool exit_cleanup_ready = false;
     bool production_sequence_render_planned = false;
+    bool production_emission_mutation_allowed = false;
     bool production_emission_enabled = false;
 };
 

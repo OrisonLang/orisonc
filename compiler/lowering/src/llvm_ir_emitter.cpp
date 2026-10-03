@@ -3130,6 +3130,7 @@ auto collect_computed_dynamic_array_for_production_emission_gates(
                     .function_cleanup_resumption_ready = gate.function_cleanup_resumption_ready,
                     .exit_cleanup_ready = gate.exit_cleanup_ready,
                     .production_sequence_render_planned = gate.production_sequence_render_planned,
+                    .production_emission_mutation_allowed = false,
                     .production_emission_enabled = insertion_capability.enabled,
                 });
             }
@@ -3989,6 +3990,8 @@ auto format_computed_dynamic_array_for_production_emission_gate_metadata(
     output << (metadata.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup missing]");
     output << (metadata.production_sequence_render_planned ? " [production sequence planned]" :
         " [production sequence missing]");
+    output << (metadata.production_emission_mutation_allowed ? " [production emission mutation allowed]" :
+        " [production emission mutation blocked]");
     output << (metadata.production_emission_enabled ? " [production emission enabled]" :
         " [production emission disabled]");
     output << " snippets " << metadata.rendered_ir.size();

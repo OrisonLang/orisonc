@@ -1639,7 +1639,8 @@ void test_rejects_computed_dynamic_array_internal_cleanup_owner_proof_suppressio
     );
     assert(
         rendered.find(
-            "[authorization missing: production cleanup authorization] [production emission disabled] "
+            "[authorization missing: production cleanup authorization] [production emission mutation blocked] "
+            "[production emission disabled] "
             "(metadata only)"
         ) != std::string::npos
     );
@@ -2096,7 +2097,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "[function cleanup resumption blocked] [exit cleanup blocked] "
             "[production sequence blocked] [production cleanup authorization blocked] "
             "[authorization contract blocked] "
-            "[production emission disabled] (metadata only)"
+            "[production emission mutation blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 

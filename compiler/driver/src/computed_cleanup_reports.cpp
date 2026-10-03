@@ -927,6 +927,8 @@ auto computed_dynamic_array_for_production_emission_gate_state_report(
     counts << (state.all_exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]");
     counts << (state.all_production_sequences_planned ?
         " [production sequence planned]" : " [production sequence blocked]");
+    counts << (state.any_production_emission_mutation_allowed ?
+        " [production emission mutation allowed]" : " [production emission mutation blocked]");
     counts << (state.any_production_emission_enabled ?
         " [production emission enabled]" : " [production emission disabled]");
     append_computed_cleanup_summary(

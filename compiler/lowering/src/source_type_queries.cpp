@@ -3102,6 +3102,7 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     plan.source_type_name = plan.loop_exit_cleanup_plan.source_type_name;
     plan.element_source_type_name = plan.loop_exit_cleanup_plan.element_source_type_name;
     plan.cleanup_owner_name = plan.loop_exit_cleanup_plan.cleanup_owner_name;
+    plan.production_emission_mutation_allowed = false;
     plan.production_emission_enabled = false;
     auto const& early_cleanup_sequence_plan =
         plan.loop_exit_cleanup_plan.loop_render_sequence_plan.loop_continue_render_plan
@@ -3308,6 +3309,8 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     if (computed_dynamic_array_iterable_runtime_aggregate_cleanup_proof_blocked(plan)) {
         output += " [runtime aggregate cleanup proof blocked]";
     }
+    output += plan.production_emission_mutation_allowed ? " [production emission mutation allowed]" :
+        " [production emission mutation blocked]";
     output += plan.production_emission_enabled ? " [production emission enabled]" :
         " [production emission disabled]";
     output += " (metadata only)";
