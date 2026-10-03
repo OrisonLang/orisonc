@@ -1709,8 +1709,9 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
                 gate.cleanup_authorization_proof_inputs.push_back("descriptor storage handoff");
                 gate.cleanup_authorization_proof_inputs.push_back("cleanup owner proof");
             }
-            gate.production_cleanup_authorized = gate.cleanup_owner_proven;
-            if (!gate.production_cleanup_authorized) {
+            gate.production_cleanup_authorization_ready = gate.cleanup_owner_proven;
+            gate.production_cleanup_authorized = gate.production_cleanup_authorization_ready;
+            if (!gate.production_cleanup_authorization_ready) {
                 gate.cleanup_authorization_missing_requirements.push_back(
                     "production cleanup authorization"
                 );
@@ -1739,6 +1740,7 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
         gate.cleanup_authorization_missing_requirements.push_back(
             "runtime aggregate production cleanup authorization"
         );
+        gate.production_cleanup_authorization_ready = false;
         gate.handoff_inputs_ready =
             gate.handoff_plan.runtime_aggregate_cleanup_proof_detected &&
             gate.handoff_plan.runtime_aggregate_single_owner_proven &&
@@ -1758,6 +1760,7 @@ auto plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
         gate.cleanup_authorization_proof_inputs.push_back("cleanup owner binding");
     }
     gate.cleanup_authorization_missing_requirements.push_back("production cleanup authorization");
+    gate.production_cleanup_authorization_ready = false;
     gate.cleanup_authorization_contract_ready = gate.handoff_inputs_ready &&
         gate.cleanup_authorization_missing_requirements.empty();
     gate.kind = gate.handoff_inputs_ready
@@ -1807,6 +1810,9 @@ auto computed_dynamic_array_iterable_cleanup_authorization_gate_report(
         output += gate.descriptor_storage_name;
     }
     output += gate.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
+    output += gate.production_cleanup_authorization_ready ?
+        " [production cleanup authorization ready]" :
+        " [production cleanup authorization blocked]";
     output = append_cleanup_authorization_contract_report(
         std::move(output),
         gate.cleanup_authorization_contract_ready,
@@ -1854,6 +1860,8 @@ auto plan_computed_dynamic_array_iterable_cleanup_sequence(
         plan.cleanup_authorization_gate.cleanup_authorization_proof_inputs;
     plan.cleanup_authorization_missing_requirements =
         plan.cleanup_authorization_gate.cleanup_authorization_missing_requirements;
+    plan.production_cleanup_authorization_ready =
+        plan.cleanup_authorization_gate.production_cleanup_authorization_ready;
     plan.cleanup_authorized = plan.cleanup_authorization_gate.production_cleanup_authorized;
     plan.cleanup_sequence_enabled = false;
 
@@ -1947,6 +1955,9 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
     output += plan.loop_body_has_cleanup_responsibility ? " [loop cleanup owns descriptor]" :
         " [loop cleanup blocked]";
     output += plan.handoff_inputs_ready ? " [handoff inputs ready]" : " [handoff inputs blocked]";
+    output += plan.production_cleanup_authorization_ready ?
+        " [production cleanup authorization ready]" :
+        " [production cleanup authorization blocked]";
     output = append_cleanup_authorization_contract_report(
         std::move(output),
         plan.cleanup_authorization_contract_ready,
@@ -3070,6 +3081,8 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
         early_cleanup_sequence_plan.cleanup_authorization_proof_inputs;
     plan.cleanup_authorization_missing_requirements =
         early_cleanup_sequence_plan.cleanup_authorization_missing_requirements;
+    plan.production_cleanup_authorization_ready =
+        early_cleanup_sequence_plan.production_cleanup_authorization_ready;
 
     switch (plan.loop_exit_cleanup_plan.kind) {
         case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::not_computed_dynamic_array:
@@ -3251,6 +3264,9 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
         ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_authorization_blocked) {
         output += " [cleanup authorization blocked]";
     }
+    output += plan.production_cleanup_authorization_ready ?
+        " [production cleanup authorization ready]" :
+        " [production cleanup authorization blocked]";
     output = append_cleanup_authorization_contract_report(
         std::move(output),
         plan.cleanup_authorization_contract_ready,

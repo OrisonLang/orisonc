@@ -3492,6 +3492,10 @@ int main() {
         "runtime aggregate production cleanup authorization"
     );
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.cleanup_owner_proven);
+    assert(
+        !forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+            .production_cleanup_authorization_ready
+    );
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate.production_cleanup_authorized);
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
@@ -3502,6 +3506,11 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
         ).find("handoff inputs ready") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
+        ).find("production cleanup authorization blocked") != std::string::npos
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
@@ -3561,6 +3570,10 @@ int main() {
             .cleanup_authorization_contract_ready
     );
     assert(
+        !forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence
+            .production_cleanup_authorization_ready
+    );
+    assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence
             .cleanup_authorization_proof_inputs.size() == 3
     );
@@ -3578,6 +3591,11 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence
         ).find("handoff inputs ready") != std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_cleanup_sequence
+        ).find("production cleanup authorization blocked") != std::string::npos
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
@@ -3766,6 +3784,10 @@ int main() {
             .cleanup_authorization_contract_ready
     );
     assert(
+        !forwarded_static_indexed_aggregate_field_dynamic_index_production_gate
+            .production_cleanup_authorization_ready
+    );
+    assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_production_gate
             .cleanup_authorization_proof_inputs.size() == 3
     );
@@ -3778,6 +3800,11 @@ int main() {
             forwarded_static_indexed_aggregate_field_dynamic_index_production_gate
         ).find("authorization missing: runtime aggregate production cleanup authorization") !=
         std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_production_gate
+        ).find("production cleanup authorization blocked") != std::string::npos
     );
 
     auto forwarded_static_indexed_aggregate_field_extra_statement_plan =

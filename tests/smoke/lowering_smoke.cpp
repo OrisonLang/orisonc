@@ -1631,6 +1631,7 @@ void test_rejects_computed_dynamic_array_internal_cleanup_owner_proof_suppressio
     assert(rendered.find("computed DynamicArray production emission gate plan") != std::string::npos);
     assert(rendered.find("source DynamicArray<UInt32> element UInt32 owner predicted_items") !=
         std::string::npos);
+    assert(rendered.find("[production cleanup authorization blocked]") != std::string::npos);
     assert(rendered.find("[authorization contract blocked]") != std::string::npos);
     assert(
         rendered.find("[authorization missing: production cleanup authorization]") !=
@@ -2034,7 +2035,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_parameter_for.render(path.string()).find(
             "computed DynamicArray cleanup sequence plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [loop cleanup blocked] [handoff inputs blocked] "
-            "[authorization contract blocked] [cleanup authorization blocked] [function cleanup blocked] "
+            "[production cleanup authorization blocked] [authorization contract blocked] "
+            "[cleanup authorization blocked] [function cleanup blocked] "
             "[cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );
@@ -2092,7 +2094,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [ownership blocked] [loop render blocked] [loop cleanup ownership blocked] "
             "[function cleanup resumption blocked] [exit cleanup blocked] "
-            "[production sequence blocked] [authorization contract blocked] "
+            "[production sequence blocked] [production cleanup authorization blocked] "
+            "[authorization contract blocked] "
             "[production emission disabled] (metadata only)"
         ) != std::string::npos
     );

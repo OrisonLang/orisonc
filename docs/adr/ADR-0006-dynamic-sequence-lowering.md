@@ -3149,6 +3149,8 @@ representation.
   plus the remaining production cleanup authorization requirement, while production emission stays disabled.
 - Cleanup sequence and production emission gate reports now preserve that finite proof contract so downstream blocked
   diagnostics keep the missing production cleanup authorization visible.
+- Production cleanup authorization is now tracked as a named internal readiness predicate across the authorization gate,
+  cleanup sequence, and production emission gate reports while emission remains disabled.
 
 ## Follow-up work
 

@@ -145,6 +145,7 @@ struct ComputedDynamicArrayIterableCleanupAuthorizationGate {
     std::vector<std::string> cleanup_authorization_missing_requirements;
     bool handoff_inputs_ready = false;
     bool cleanup_authorization_contract_ready = false;
+    bool production_cleanup_authorization_ready = false;
     bool cleanup_owner_proven = false;
     bool production_cleanup_authorized = false;
 };
@@ -174,6 +175,7 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     std::vector<std::string> cleanup_authorization_missing_requirements;
     bool handoff_inputs_ready = false;
     bool cleanup_authorization_contract_ready = false;
+    bool production_cleanup_authorization_ready = false;
     bool cleanup_authorized = false;
     bool loop_body_has_cleanup_responsibility = false;
     bool function_cleanup_resumes_after_loop = false;
@@ -419,6 +421,7 @@ struct ComputedDynamicArrayIterableProductionEmissionGatePlan {
     std::vector<std::string> cleanup_authorization_missing_requirements;
     std::vector<std::string> rendered_ir;
     bool cleanup_authorization_contract_ready = false;
+    bool production_cleanup_authorization_ready = false;
     bool ownership_ready = false;
     bool loop_render_ready = false;
     bool loop_cleanup_ownership_ready = false;
