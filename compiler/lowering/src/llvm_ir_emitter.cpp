@@ -3130,7 +3130,9 @@ auto collect_computed_dynamic_array_for_production_emission_gates(
                     .function_cleanup_resumption_ready = gate.function_cleanup_resumption_ready,
                     .exit_cleanup_ready = gate.exit_cleanup_ready,
                     .production_sequence_render_planned = gate.production_sequence_render_planned,
-                    .production_emission_mutation_allowed = false,
+                    .production_emission_mutation_allowed =
+                        gate.production_emission_mutation_allowed &&
+                        insertion_capability.enabled,
                     .production_emission_enabled = insertion_capability.enabled,
                 });
             }

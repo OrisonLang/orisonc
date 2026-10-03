@@ -3157,6 +3157,9 @@ representation.
   authorized planning and can build production-gate metadata while final emission remains disabled.
 - Production emission gate reports now separate metadata readiness from IR mutation permission with an explicit
   mutation-allowed predicate that remains blocked while production emission stays disabled.
+- Production emission mutation permission now opens only when production-gate readiness, the cleanup authorization
+  contract, production cleanup authorization, and cleanup insertion capability are all ready; production emission still
+  remains separately disabled until the final mutation path is enabled.
 
 ## Follow-up work
 

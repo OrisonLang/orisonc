@@ -868,7 +868,7 @@ void assert_computed_dynamic_array_production_reports() {
             .all_function_cleanup_resumption_ready = true,
             .all_exit_cleanup_ready = true,
             .all_production_sequences_planned = true,
-            .any_production_emission_mutation_allowed = false,
+            .any_production_emission_mutation_allowed = true,
             .any_production_emission_enabled = true,
             .gate_count = 1,
             .rendered_ir_snippet_count = 17,
@@ -880,7 +880,7 @@ void assert_computed_dynamic_array_production_reports() {
         "computed DynamicArray production emission gate planned gates 1 snippets 17 [metadata available] "
         "[ownership ready] [loop render ready] [loop cleanup ownership ready] "
         "[function cleanup resumption ready] [exit cleanup ready] [production sequence planned] "
-        "[production emission mutation blocked] [production emission enabled] (metadata only)"
+        "[production emission mutation allowed] [production emission enabled] (metadata only)"
     );
 
     auto sequence = driver::computed_dynamic_array_for_production_sequence_state_report(

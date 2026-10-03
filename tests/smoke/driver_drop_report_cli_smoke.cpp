@@ -1175,7 +1175,7 @@ int main() {
             "computed DynamicArray production emission gate planned gates 1 snippets 17 [metadata available] "
             "[ownership ready] [loop render ready] [loop cleanup ownership ready] "
             "[function cleanup resumption ready] [exit cleanup ready] [production sequence planned] "
-            "[production emission mutation blocked] [production emission enabled] (metadata only)",
+            "[production emission mutation allowed] [production emission enabled] (metadata only)",
             "computed DynamicArray production sequence planned sequences 1 snippets 17 module-comments 0 "
             "[metadata available] [module comments absent] (metadata only)",
             "computed DynamicArray production readiness ready [gate ready] [sequence ready] "

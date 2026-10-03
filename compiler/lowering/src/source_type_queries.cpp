@@ -3187,6 +3187,10 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
         plan.loop_exit_cleanup_plan.rendered_ir.end()
     );
     plan.production_sequence_render_planned = !plan.rendered_ir.empty();
+    plan.production_emission_mutation_allowed =
+        plan.cleanup_authorization_contract_ready &&
+        plan.production_cleanup_authorization_ready &&
+        plan.production_sequence_render_planned;
     return plan;
 }
 

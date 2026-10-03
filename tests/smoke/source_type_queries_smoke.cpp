@@ -3956,7 +3956,7 @@ int main() {
     );
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
         .production_emission_enabled);
-    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
+    assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
         .production_emission_mutation_allowed);
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
         .production_sequence_render_planned);
@@ -3978,7 +3978,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
-        ).find("production emission mutation blocked") != std::string::npos
+        ).find("production emission mutation allowed") != std::string::npos
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
@@ -4949,7 +4949,7 @@ int main() {
     );
     assert(proven_computed_production_emission_gate.production_sequence_render_planned);
     assert(!proven_computed_production_emission_gate.production_emission_enabled);
-    assert(!proven_computed_production_emission_gate.production_emission_mutation_allowed);
+    assert(proven_computed_production_emission_gate.production_emission_mutation_allowed);
     auto proven_computed_production_emission_gate_report =
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
             proven_computed_production_emission_gate
@@ -4963,7 +4963,7 @@ int main() {
         std::string::npos
     );
     assert(
-        proven_computed_production_emission_gate_report.find("[production emission mutation blocked]") !=
+        proven_computed_production_emission_gate_report.find("[production emission mutation allowed]") !=
         std::string::npos
     );
     assert(
