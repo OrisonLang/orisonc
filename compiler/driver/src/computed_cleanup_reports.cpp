@@ -1066,6 +1066,9 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
     counts << (state.would_execute ? " [would execute]" : " [would not execute]");
     counts << (state.executed ? " [executed]" : " [skipped]");
     counts << (state.ir_unchanged ? " [ir unchanged]" : " [ir changed]");
+    counts << (state.function_slice_candidate_available ? " [function candidate available]" : " [function candidate absent]");
+    counts << (state.function_slice_rewrite_applied ? " [function rewrite applied]" : " [function rewrite skipped]");
+    counts << (state.llvm_verifier_passed ? " [llvm verified]" : " [llvm unverified]");
     append_computed_cleanup_summary(
         lines,
         "production mutation execution",

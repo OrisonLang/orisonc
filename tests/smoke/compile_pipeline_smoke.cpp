@@ -3649,6 +3649,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.function_slice_candidate_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.function_slice_rewrite_applied
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.llvm_verifier_passed
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines.empty()
     );
     assert(
@@ -3658,8 +3670,7 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.front() ==
-        "@__orison_computed_dynamic_array_production_sequence_0 = private unnamed_addr constant "
-        "{ i64, i64 } { i64 6, i64 17 }\n"
+        "  %__orison_computed_dynamic_array_production_sequence_0 = add i64 6, 17\n"
     );
     auto computed_dynamic_array_local_same_owner_for_inserted_ir = std::string {};
     for (
@@ -3670,9 +3681,19 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for_inserted_ir += line;
     }
     assert(
-        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text ==
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text !=
         computed_dynamic_array_local_same_owner_for.ir_text +
             computed_dynamic_array_local_same_owner_for_inserted_ir
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "  %__orison_computed_dynamic_array_production_sequence_0 = add i64 6, 17\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "@__orison_computed_dynamic_array_production_sequence_0"
+        ) == std::string::npos
     );
     auto computed_dynamic_array_local_same_owner_for_module_mutation_object =
         orison::lowering::LlvmObjectEmitter {}.emit(

@@ -986,7 +986,8 @@ void assert_computed_dynamic_array_production_reports() {
     assert(
         skipped_mutation_execution.front() ==
         "computed DynamicArray production mutation execution planned executions 0 snippets 0 inserted-lines 0 "
-        "[metadata available] [would not execute] [skipped] [ir unchanged] (module IR)"
+        "[metadata available] [would not execute] [skipped] [ir unchanged] "
+        "[function candidate absent] [function rewrite skipped] [llvm unverified] (module IR)"
     );
     assert(
         skipped_mutation_execution[1] ==
@@ -1000,6 +1001,9 @@ void assert_computed_dynamic_array_production_reports() {
             .would_execute = true,
             .executed = true,
             .ir_unchanged = false,
+            .function_slice_candidate_available = true,
+            .function_slice_rewrite_applied = true,
+            .llvm_verifier_passed = true,
             .execution_count = 1,
             .rendered_ir_snippet_count = 17,
             .inserted_module_ir_line_count = 1,
@@ -1007,7 +1011,8 @@ void assert_computed_dynamic_array_production_reports() {
     );
     assert(
         executed_mutation_execution.front().find("executions 1 snippets 17 inserted-lines 1 "
-            "[metadata available] [would execute] [executed] [ir changed] (module IR)") !=
+            "[metadata available] [would execute] [executed] [ir changed] "
+            "[function candidate available] [function rewrite applied] [llvm verified] (module IR)") !=
         std::string::npos
     );
 

@@ -54,6 +54,9 @@ struct ComputedDynamicArrayForProductionMutationExecutionState {
     bool would_execute = false;
     bool executed = false;
     bool ir_unchanged = true;
+    bool function_slice_candidate_available = false;
+    bool function_slice_rewrite_applied = false;
+    bool llvm_verifier_passed = false;
     std::size_t execution_count = 0;
     std::size_t rendered_ir_snippet_count = 0;
     std::size_t inserted_module_ir_line_count = 0;

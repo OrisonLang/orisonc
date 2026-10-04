@@ -3167,6 +3167,9 @@ representation.
 - Production mutation execution now renders a verifier-safe private module IR constant for each production sequence,
   appends those non-comment lines only when `will mutate` is true, records the exact inserted line count, and reports
   `ir changed` when the candidate reaches module IR.
+- Production mutation execution now composes that proof artifact as a verifier-checked function-slice rewrite, inserting
+  a non-comment local instruction at the owning function entry terminator rather than appending a module-level global.
+  The report records candidate availability, rewrite application, and LLVM verifier status.
 
 ## Follow-up work
 
