@@ -1071,7 +1071,7 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
         "production mutation execution",
         state.execution_metadata_available ? "planned" : "absent",
         counts.str(),
-        "(module IR comments)"
+        "(module IR)"
     );
 
     for (auto const& owner_name : state.cleanup_owner_names) {
@@ -1080,7 +1080,7 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
             "production mutation execution",
             owner_name,
             {},
-            "(module IR comments)"
+            "(module IR)"
         );
     }
 

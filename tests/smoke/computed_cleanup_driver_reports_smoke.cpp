@@ -986,11 +986,11 @@ void assert_computed_dynamic_array_production_reports() {
     assert(
         skipped_mutation_execution.front() ==
         "computed DynamicArray production mutation execution planned executions 0 snippets 0 inserted-lines 0 "
-        "[metadata available] [would not execute] [skipped] [ir unchanged] (module IR comments)"
+        "[metadata available] [would not execute] [skipped] [ir unchanged] (module IR)"
     );
     assert(
         skipped_mutation_execution[1] ==
-        "computed DynamicArray production mutation execution detail owner items (module IR comments)"
+        "computed DynamicArray production mutation execution detail owner items (module IR)"
     );
 
     auto executed_mutation_execution = driver::computed_dynamic_array_for_production_mutation_execution_state_report(
@@ -1002,12 +1002,12 @@ void assert_computed_dynamic_array_production_reports() {
             .ir_unchanged = false,
             .execution_count = 1,
             .rendered_ir_snippet_count = 17,
-            .inserted_module_ir_line_count = 18,
+            .inserted_module_ir_line_count = 1,
         }
     );
     assert(
-        executed_mutation_execution.front().find("executions 1 snippets 17 inserted-lines 18 "
-            "[metadata available] [would execute] [executed] [ir changed] (module IR comments)") !=
+        executed_mutation_execution.front().find("executions 1 snippets 17 inserted-lines 1 "
+            "[metadata available] [would execute] [executed] [ir changed] (module IR)") !=
         std::string::npos
     );
 

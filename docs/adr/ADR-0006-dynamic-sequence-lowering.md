@@ -3164,9 +3164,9 @@ representation.
   sequence, and mutation permission are ready, without performing module IR mutation.
 - Production mutation preview reporting now includes a final module-IR mutation authorization gate. It defaults to
   blocked, so `would mutate` can be true while `will mutate` remains false until the internal gate is enabled.
-- Production mutation execution now requests the rendered production sequence comment block only when `will mutate` is
-  true, records the exact inserted module IR line count, and reports `ir changed` when the comment block reaches module
-  IR.
+- Production mutation execution now renders a verifier-safe private module IR constant for each production sequence,
+  appends those non-comment lines only when `will mutate` is true, records the exact inserted line count, and reports
+  `ir changed` when the candidate reaches module IR.
 
 ## Follow-up work
 

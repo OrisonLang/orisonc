@@ -1043,6 +1043,37 @@ auto build_computed_dynamic_array_for_production_sequence_state(
     return state;
 }
 
+auto render_computed_dynamic_array_for_production_sequence_mutation_ir(
+    std::vector<lowering::ComputedDynamicArrayForProductionSequenceMetadata> const& sequences
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(sequences.size());
+    for (auto index = std::size_t {0}; index < sequences.size(); ++index) {
+        auto const& sequence = sequences[index];
+        auto line = std::ostringstream {};
+        line << "@__orison_computed_dynamic_array_production_sequence_" << index;
+        line << " = private unnamed_addr constant { i64, i64 } { i64 ";
+        line << sequence.source_line;
+        line << ", i64 " << sequence.rendered_ir.size();
+        line << " }\n";
+        lines.push_back(line.str());
+    }
+    return lines;
+}
+
+void apply_computed_dynamic_array_for_production_mutation(
+    ComputedDynamicArrayForProductionMutationExecutionState const& execution_state,
+    ComputedDynamicArrayForProductionSequenceModuleIrArtifactState const& artifact_state,
+    std::string& ir_text
+) {
+    if (!execution_state.executed) {
+        return;
+    }
+    for (auto const& line : artifact_state.mutation_ir_lines) {
+        ir_text += line;
+    }
+}
+
 auto build_dynamic_array_cleanup_emission_capability_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> DynamicArrayCleanupEmissionCapabilityState {
@@ -4222,11 +4253,20 @@ void populate_lowering_emission_reports(
         );
     result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines =
         std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
+    result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines =
+        render_computed_dynamic_array_for_production_sequence_mutation_ir(
+            emission.computed_dynamic_array_for_production_sequences
+        );
     result.computed_dynamic_array_for_production_mutation_execution_state =
         plan_computed_dynamic_array_for_production_mutation_execution(
             result.computed_dynamic_array_for_production_mutation_preview_state,
-            result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines.size()
+            result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.size()
         );
+    apply_computed_dynamic_array_for_production_mutation(
+        result.computed_dynamic_array_for_production_mutation_execution_state,
+        result.computed_dynamic_array_for_production_sequence_module_ir_artifact_state,
+        result.ir_text
+    );
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
     result.owned_cleanup_declaration_state =

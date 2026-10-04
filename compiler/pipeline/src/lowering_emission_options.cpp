@@ -109,10 +109,10 @@ auto build_lowering_emission_options(
     emission_options.collect_computed_dynamic_array_for_production_emission_gates =
         options.collect_computed_dynamic_array_for_production_emission_gates;
     emission_options.collect_computed_dynamic_array_for_production_sequences =
-        options.collect_computed_dynamic_array_for_production_sequences;
-    emission_options.emit_computed_dynamic_array_for_production_sequence_comments =
-        options.emit_computed_dynamic_array_for_production_sequence_comments ||
+        options.collect_computed_dynamic_array_for_production_sequences ||
         options.computed_dynamic_array_production_module_ir_mutation_enabled;
+    emission_options.emit_computed_dynamic_array_for_production_sequence_comments =
+        options.emit_computed_dynamic_array_for_production_sequence_comments;
     emission_options.fixture_authorize_computed_dynamic_array_cleanup_calls =
         options.fixture_authorize_computed_dynamic_array_cleanup_calls;
     emission_options.fixture_insert_computed_dynamic_array_cleanup_calls =

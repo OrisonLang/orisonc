@@ -17,6 +17,7 @@ struct ComputedDynamicArrayForProductionSequenceState {
 
 struct ComputedDynamicArrayForProductionSequenceModuleIrArtifactState {
     std::vector<std::string> comment_ir_lines;
+    std::vector<std::string> mutation_ir_lines;
 };
 
 } // namespace orison::pipeline
