@@ -3172,6 +3172,8 @@ representation.
   The report records candidate availability, rewrite application, and LLVM verifier status.
 - Production mutation execution now uses the first rendered production-sequence instruction as the function-slice
   candidate, so the gated rewrite inserts a real descriptor load instead of a synthetic proof instruction.
+- Production mutation execution now expands the verifier-gated function-slice candidate to the full descriptor
+  extraction prefix: descriptor load plus data, length, and capacity extracts.
 
 ## Follow-up work
 

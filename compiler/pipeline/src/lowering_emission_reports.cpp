@@ -24,6 +24,8 @@ namespace orison::pipeline {
 
 namespace {
 
+auto constexpr computed_dynamic_array_descriptor_prefix_line_count = std::size_t {4};
+
 auto runtime_indexed_cleanup_function_ir_rewrite_requested(
     CompilePipelineOptions const& options
 ) -> bool {
@@ -1047,12 +1049,16 @@ auto render_computed_dynamic_array_for_production_sequence_mutation_ir(
     std::vector<lowering::ComputedDynamicArrayForProductionSequenceMetadata> const& sequences
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    lines.reserve(sequences.size());
+    lines.reserve(sequences.size() * computed_dynamic_array_descriptor_prefix_line_count);
     for (auto const& sequence : sequences) {
-        if (sequence.rendered_ir.empty()) {
+        if (sequence.rendered_ir.size() < computed_dynamic_array_descriptor_prefix_line_count) {
             continue;
         }
-        lines.push_back(sequence.rendered_ir.front());
+        lines.insert(
+            lines.end(),
+            sequence.rendered_ir.begin(),
+            sequence.rendered_ir.begin() + computed_dynamic_array_descriptor_prefix_line_count
+        );
     }
     return lines;
 }
@@ -1080,7 +1086,7 @@ void apply_computed_dynamic_array_for_production_mutation(
 ) {
     if (!execution_state.would_execute ||
         sequences.empty() ||
-        sequences.size() != artifact_state.mutation_ir_lines.size()) {
+        artifact_state.mutation_ir_lines.empty()) {
         execution_state.executed = false;
         execution_state.ir_unchanged = true;
         execution_state.execution_count = 0;
@@ -1090,14 +1096,30 @@ void apply_computed_dynamic_array_for_production_mutation(
     }
 
     auto composed_ir = ir_text;
+    auto mutation_line_index = std::size_t {0};
     for (auto index = std::size_t {0}; index < sequences.size(); ++index) {
         auto const& sequence = sequences[index];
-        auto const& mutation_line = artifact_state.mutation_ir_lines[index];
+        if (mutation_line_index + computed_dynamic_array_descriptor_prefix_line_count >
+            artifact_state.mutation_ir_lines.size()) {
+            execution_state.executed = false;
+            execution_state.ir_unchanged = true;
+            execution_state.execution_count = 0;
+            execution_state.rendered_ir_snippet_count = 0;
+            execution_state.inserted_module_ir_line_count = 0;
+            return;
+        }
+        auto mutation_text = std::string {};
+        for (auto line_index = std::size_t {0};
+             line_index < computed_dynamic_array_descriptor_prefix_line_count;
+             ++line_index) {
+            mutation_text += artifact_state.mutation_ir_lines[mutation_line_index + line_index];
+        }
+        mutation_line_index += computed_dynamic_array_descriptor_prefix_line_count;
         auto const original_function_ir = function_ir_slice(composed_ir, sequence.enclosing_function_name);
         auto const insertion_position = first_entry_terminator_position(original_function_ir);
         auto const target_ready =
             !original_function_ir.empty() &&
-            !mutation_line.empty() &&
+            !mutation_text.empty() &&
             occurrence_count(composed_ir, original_function_ir) == 1 &&
             insertion_position != std::string::npos;
         if (!target_ready) {
@@ -1110,7 +1132,7 @@ void apply_computed_dynamic_array_for_production_mutation(
         }
 
         auto candidate_function_ir = original_function_ir.substr(0, insertion_position);
-        candidate_function_ir += mutation_line;
+        candidate_function_ir += mutation_text;
         candidate_function_ir += original_function_ir.substr(insertion_position);
         auto candidate_module_ir = replace_once(composed_ir, original_function_ir, candidate_function_ir);
         if (candidate_module_ir.empty()) {

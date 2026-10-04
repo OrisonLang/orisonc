@@ -3645,7 +3645,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
-            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 1
+            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 4
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
@@ -3665,12 +3665,30 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
-            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.size() == 1
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.size() == 4
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.front() ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[1] ==
+        "  %items.computed_for.data = extractvalue { ptr, i64, i64 } "
+        "%items.computed_for.descriptor, 0\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[2] ==
+        "  %items.computed_for.length = extractvalue { ptr, i64, i64 } "
+        "%items.computed_for.descriptor, 1\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[3] ==
+        "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } "
+        "%items.computed_for.descriptor, 2\n"
     );
     auto computed_dynamic_array_local_same_owner_for_inserted_ir = std::string {};
     for (
@@ -3688,6 +3706,12 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
             "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } "
+            "%items.computed_for.descriptor, 2\n"
         ) != std::string::npos
     );
     assert(
