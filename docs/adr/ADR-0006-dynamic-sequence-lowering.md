@@ -3170,6 +3170,8 @@ representation.
 - Production mutation execution now composes that proof artifact as a verifier-checked function-slice rewrite, inserting
   a non-comment local instruction at the owning function entry terminator rather than appending a module-level global.
   The report records candidate availability, rewrite application, and LLVM verifier status.
+- Production mutation execution now uses the first rendered production-sequence instruction as the function-slice
+  candidate, so the gated rewrite inserts a real descriptor load instead of a synthetic proof instruction.
 
 ## Follow-up work
 

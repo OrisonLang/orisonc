@@ -1048,15 +1048,11 @@ auto render_computed_dynamic_array_for_production_sequence_mutation_ir(
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     lines.reserve(sequences.size());
-    for (auto index = std::size_t {0}; index < sequences.size(); ++index) {
-        auto const& sequence = sequences[index];
-        auto line = std::ostringstream {};
-        line << "  %__orison_computed_dynamic_array_production_sequence_" << index;
-        line << " = add i64 ";
-        line << sequence.source_line;
-        line << ", " << sequence.rendered_ir.size();
-        line << "\n";
-        lines.push_back(line.str());
+    for (auto const& sequence : sequences) {
+        if (sequence.rendered_ir.empty()) {
+            continue;
+        }
+        lines.push_back(sequence.rendered_ir.front());
     }
     return lines;
 }

@@ -3670,7 +3670,7 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.front() ==
-        "  %__orison_computed_dynamic_array_production_sequence_0 = add i64 6, 17\n"
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     auto computed_dynamic_array_local_same_owner_for_inserted_ir = std::string {};
     for (
@@ -3687,7 +3687,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
-            "  %__orison_computed_dynamic_array_production_sequence_0 = add i64 6, 17\n"
+            "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
         ) != std::string::npos
     );
     assert(
