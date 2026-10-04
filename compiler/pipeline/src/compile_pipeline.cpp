@@ -97,16 +97,19 @@ auto plan_computed_dynamic_array_for_production_mutation_preview(
 }
 
 auto plan_computed_dynamic_array_for_production_mutation_execution(
-    ComputedDynamicArrayForProductionMutationPreviewState const& preview_state
+    ComputedDynamicArrayForProductionMutationPreviewState const& preview_state,
+    std::size_t inserted_module_ir_line_count
 ) -> ComputedDynamicArrayForProductionMutationExecutionState {
+    auto const executed = preview_state.will_mutate && inserted_module_ir_line_count > 0;
     return ComputedDynamicArrayForProductionMutationExecutionState {
         .cleanup_owner_names = preview_state.cleanup_owner_names,
         .execution_metadata_available = preview_state.preview_metadata_available,
         .would_execute = preview_state.will_mutate,
-        .executed = preview_state.will_mutate,
-        .ir_unchanged = true,
-        .execution_count = preview_state.will_mutate ? preview_state.preview_count : 0,
-        .rendered_ir_snippet_count = preview_state.will_mutate ? preview_state.rendered_ir_snippet_count : 0,
+        .executed = executed,
+        .ir_unchanged = !executed,
+        .execution_count = executed ? preview_state.preview_count : 0,
+        .rendered_ir_snippet_count = executed ? preview_state.rendered_ir_snippet_count : 0,
+        .inserted_module_ir_line_count = executed ? inserted_module_ir_line_count : 0,
     };
 }
 

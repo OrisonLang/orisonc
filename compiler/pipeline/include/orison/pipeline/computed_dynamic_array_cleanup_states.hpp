@@ -56,6 +56,7 @@ struct ComputedDynamicArrayForProductionMutationExecutionState {
     bool ir_unchanged = true;
     std::size_t execution_count = 0;
     std::size_t rendered_ir_snippet_count = 0;
+    std::size_t inserted_module_ir_line_count = 0;
 };
 
 struct ConsumedDescriptorFinalizationState {

@@ -3614,33 +3614,56 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for_options;
     computed_dynamic_array_local_same_owner_for_mutation_options
         .computed_dynamic_array_production_module_ir_mutation_enabled = true;
-    auto computed_dynamic_array_local_same_owner_for_noop_mutation = pipeline.emit_llvm(
+    auto computed_dynamic_array_local_same_owner_for_comment_mutation = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         computed_dynamic_array_local_same_owner_for_mutation_options
     );
-    assert(!computed_dynamic_array_local_same_owner_for_noop_mutation.has_errors());
+    assert(!computed_dynamic_array_local_same_owner_for_comment_mutation.has_errors());
     assert(
-        computed_dynamic_array_local_same_owner_for_noop_mutation
+        computed_dynamic_array_local_same_owner_for_comment_mutation
             .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
     );
     assert(
-        computed_dynamic_array_local_same_owner_for_noop_mutation
+        computed_dynamic_array_local_same_owner_for_comment_mutation
             .computed_dynamic_array_for_production_mutation_execution_state.would_execute
     );
     assert(
-        computed_dynamic_array_local_same_owner_for_noop_mutation
+        computed_dynamic_array_local_same_owner_for_comment_mutation
             .computed_dynamic_array_for_production_mutation_execution_state.executed
     );
     assert(
-        computed_dynamic_array_local_same_owner_for_noop_mutation
+        !computed_dynamic_array_local_same_owner_for_comment_mutation
             .computed_dynamic_array_for_production_mutation_execution_state.ir_unchanged
     );
     assert(
-        computed_dynamic_array_local_same_owner_for_noop_mutation
+        computed_dynamic_array_local_same_owner_for_comment_mutation
             .computed_dynamic_array_for_production_mutation_execution_state.execution_count == 1
     );
-    assert(computed_dynamic_array_local_same_owner_for_noop_mutation.ir_text ==
-        computed_dynamic_array_local_same_owner_for.ir_text);
+    assert(
+        computed_dynamic_array_local_same_owner_for_comment_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.rendered_ir_snippet_count == 17
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_comment_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 18
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_comment_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines.size() == 18
+    );
+    auto computed_dynamic_array_local_same_owner_for_inserted_ir = std::string {};
+    for (
+        auto const& line :
+        computed_dynamic_array_local_same_owner_for_comment_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines
+    ) {
+        computed_dynamic_array_local_same_owner_for_inserted_ir += line;
+    }
+    assert(
+        computed_dynamic_array_local_same_owner_for_comment_mutation.ir_text ==
+        computed_dynamic_array_local_same_owner_for.ir_text +
+            computed_dynamic_array_local_same_owner_for_inserted_ir
+    );
     auto dynamic_array_metadata_collector =
         orison::pipeline::DynamicArrayCleanupMetadataCollector {pipeline};
     auto computed_dynamic_array_local_same_owner_metadata_without_comments =

@@ -1182,8 +1182,8 @@ int main() {
             "[metadata available] [gate ready] [sequence ready] [mutation permission available] "
             "[production emission enabled] [final mutation authorization blocked] "
             "[would mutate] [will not mutate] (metadata only)",
-            "computed DynamicArray production mutation execution planned executions 0 snippets 0 "
-            "[metadata available] [would not execute] [skipped] [ir unchanged] (no-op)",
+            "computed DynamicArray production mutation execution planned executions 0 snippets 0 inserted-lines 0 "
+            "[metadata available] [would not execute] [skipped] [ir unchanged] (module IR comments)",
             "computed DynamicArray production readiness ready [gate ready] [sequence ready] "
             "[cleanup transition ready] [cleanup state verified] [gate sequence counts match] "
             "[gate sequence snippets match] [sequence transition counts match] "

@@ -1061,6 +1061,7 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
     auto counts = std::ostringstream {};
     counts << "executions " << state.execution_count;
     counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << " inserted-lines " << state.inserted_module_ir_line_count;
     counts << (state.execution_metadata_available ? " [metadata available]" : " [metadata missing]");
     counts << (state.would_execute ? " [would execute]" : " [would not execute]");
     counts << (state.executed ? " [executed]" : " [skipped]");
@@ -1070,7 +1071,7 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
         "production mutation execution",
         state.execution_metadata_available ? "planned" : "absent",
         counts.str(),
-        "(no-op)"
+        "(module IR comments)"
     );
 
     for (auto const& owner_name : state.cleanup_owner_names) {
@@ -1079,7 +1080,7 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
             "production mutation execution",
             owner_name,
             {},
-            "(no-op)"
+            "(module IR comments)"
         );
     }
 

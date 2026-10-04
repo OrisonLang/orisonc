@@ -4,6 +4,7 @@
 #include "orison/pipeline/computed_dynamic_array_production_sequence.hpp"
 #include "orison/pipeline/dynamic_array_pipeline_states.hpp"
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -41,7 +42,8 @@ auto plan_computed_dynamic_array_for_production_mutation_preview(
 ) -> ComputedDynamicArrayForProductionMutationPreviewState;
 
 auto plan_computed_dynamic_array_for_production_mutation_execution(
-    ComputedDynamicArrayForProductionMutationPreviewState const& preview_state
+    ComputedDynamicArrayForProductionMutationPreviewState const& preview_state,
+    std::size_t inserted_module_ir_line_count
 ) -> ComputedDynamicArrayForProductionMutationExecutionState;
 
 }  // namespace orison::pipeline
