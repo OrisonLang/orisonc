@@ -10714,6 +10714,27 @@ auto main() -> int {
         "values",
         ".1"
     );
+    auto const forwarded_choice_payload_mutation_fixtures = std::array<std::string_view, 11> {
+        "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_if_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_switch_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_choice_payload_nested_final_switch_if_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
+    };
+    for (auto fixture_name : forwarded_choice_payload_mutation_fixtures) {
+        assert_dynamic_array_computed_for_mutation(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name,
+            dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+            "values",
+            ".1"
+        );
+    }
     auto const migrated_choice_payload_owned_computed_fixtures = std::array<std::string_view, 13> {
         "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or",

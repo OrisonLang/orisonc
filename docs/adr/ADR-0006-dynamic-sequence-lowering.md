@@ -3213,6 +3213,9 @@ representation.
 - Computed DynamicArray production metadata collection now seeds direct `DynamicArray<T>` choice payload bindings from
   choice `switch` cases. Explicit choice-payload computed-loop fixtures now have verified mutation coverage over their
   `values.computed_for.1` source loops.
+- Forwarded choice-payload computed-loop fixtures now also use the verified mutation path for owner `values` over
+  `values.computed_for.1`, including harmless-local, final-control, branch-local alias, and nested final-control
+  variants.
 - Computed DynamicArray production metadata collection now also seeds fixed-array aggregate element owners like
   `holder.buckets.element0.values` and `holder.grid.element1.element0.values`. Static-indexed aggregate computed-loop
   fixtures now have verified mutation coverage over their numbered source loops.
