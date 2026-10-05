@@ -3187,8 +3187,12 @@ representation.
   the mutated module.
 - Pipeline smoke coverage now proves the replacement path on both local same-owner and local nested same-owner
   computed DynamicArray production mutation fixtures.
-- Pipeline smoke coverage now pins the returned-owned computed DynamicArray production-mutation boundary: cleanup
-  transition metadata is ready, but production gate/sequence metadata is not yet ready, so mutation remains blocked.
+- Computed DynamicArray production metadata collection now seeds annotated local `DynamicArray<T>` bindings initialized
+  from matching DynamicArray-returning calls, letting returned-owned locals enter the same gate/sequence path as
+  constructor-backed locals.
+- Pipeline smoke coverage now proves the returned-owned computed DynamicArray production mutation path: the numbered
+  source loop is replaced by the unnumbered mutation loop, owned element cleanup and descriptor deallocation remain in
+  the rewritten IR, and object emission accepts the mutated module.
 
 ## Follow-up work
 

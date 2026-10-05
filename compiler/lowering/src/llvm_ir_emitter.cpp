@@ -2557,12 +2557,19 @@ void bind_dynamic_array_local_for_computed_for_collection(
          statement.kind != syntax::StatementKind::var_binding) ||
         statement.name.empty() ||
         statement.annotated_type.name.empty() ||
-        !is_dynamic_array_source_type(statement.annotated_type) ||
-        !is_dynamic_array_default_constructor(statement.expression)) {
+        !is_dynamic_array_source_type(statement.annotated_type)) {
         return;
     }
 
     auto source_type_name = render_source_type_name(statement.annotated_type);
+    if (!is_dynamic_array_default_constructor(statement.expression)) {
+        auto initializer_source_type =
+            source_type_name_for_expression(statement.expression, context, state);
+        if (!initializer_source_type.has_value() || *initializer_source_type != source_type_name) {
+            return;
+        }
+    }
+
     auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
         statement.name,
         source_type_name,
