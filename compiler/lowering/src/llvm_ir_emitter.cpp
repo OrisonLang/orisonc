@@ -2685,6 +2685,75 @@ void bind_annotated_aggregate_local_for_computed_for_collection(
     );
 }
 
+void bind_choice_payloads_for_computed_for_collection(
+    syntax::StatementSyntax const& statement,
+    syntax::SwitchCaseSyntax const& switch_case,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) {
+    if (statement.kind != syntax::StatementKind::switch_statement ||
+        switch_case.is_default ||
+        switch_case.pattern.kind != syntax::ExpressionKind::call ||
+        switch_case.pattern.left == nullptr ||
+        switch_case.pattern.left->kind != syntax::ExpressionKind::name ||
+        switch_case.pattern.arguments.empty()) {
+        return;
+    }
+
+    auto subject_source_type = source_type_name_for_expression(statement.expression, context, state);
+    if (!subject_source_type.has_value()) {
+        return;
+    }
+    auto choice = context.choices.find(*subject_source_type);
+    if (choice == context.choices.end()) {
+        return;
+    }
+
+    for (auto const& variant : choice->second.variants) {
+        if (variant.name != switch_case.pattern.left->text ||
+            variant.payloads.size() != switch_case.pattern.arguments.size()) {
+            continue;
+        }
+
+        for (auto index = std::size_t {0}; index < variant.payloads.size(); ++index) {
+            auto const& argument = switch_case.pattern.arguments[index];
+            if (argument.kind != syntax::ExpressionKind::name || argument.text.empty()) {
+                continue;
+            }
+            auto const& payload = variant.payloads[index];
+            auto sequence = dynamic_sequence_source_type(payload.source_type_name);
+            if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+                continue;
+            }
+
+            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+                argument.text,
+                payload.source_type_name,
+                context
+            );
+            if (!cleanup_plan.has_value()) {
+                continue;
+            }
+
+            auto descriptor_storage_name = "%" + argument.text + ".addr";
+            state.source_type_names[argument.text] = payload.source_type_name;
+            state.addressable_bindings[argument.text] = AddressableBinding {
+                .type = LoweredType {
+                    .type = std::string {dynamic_array_descriptor_llvm_type()},
+                    .signedness = IntegerSignedness::not_integer,
+                },
+                .storage = descriptor_storage_name,
+            };
+            cleanup_plan->descriptor_storage_name = std::move(descriptor_storage_name);
+            cleanup_plan->descriptor_storage_status =
+                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+            cleanup_plan->source_line = statement.line;
+            state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+        }
+        return;
+    }
+}
+
 template <typename CollectForStatement>
 void collect_computed_dynamic_array_for_statements(
     syntax::StatementSyntax const& statement,
@@ -2718,6 +2787,7 @@ void collect_computed_dynamic_array_for_statements(
         );
     }
     for (auto const& switch_case : statement.switch_cases) {
+        bind_choice_payloads_for_computed_for_collection(statement, switch_case, context, state);
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
                 collect_computed_dynamic_array_for_statements(

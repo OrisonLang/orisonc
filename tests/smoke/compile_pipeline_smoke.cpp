@@ -10630,6 +10630,12 @@ auto main() -> int {
         dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "values",
+        ".1"
+    );
     auto dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or";
@@ -10669,6 +10675,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "values",
+        ".1"
     );
     auto const migrated_choice_payload_owned_computed_fixtures = std::array<std::string_view, 13> {
         "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",

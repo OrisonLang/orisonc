@@ -3210,6 +3210,9 @@ representation.
 - Final-control returned aggregate-field cleanup families now also use the verified mutation smoke helper against their
   `computed_for.1` source loops. Coverage includes final `if` and final `switch` shapes across direct, returned-through
   switch, forwarded, mixed-forwarded, nested, and forwarded-nested aggregate-field owners.
+- Computed DynamicArray production metadata collection now seeds direct `DynamicArray<T>` choice payload bindings from
+  choice `switch` cases. Explicit choice-payload computed-loop fixtures now have verified mutation coverage over their
+  `values.computed_for.1` source loops.
 
 ## Follow-up work
 
