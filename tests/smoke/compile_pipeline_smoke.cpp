@@ -3652,7 +3652,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
-            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 18
+            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 21
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
@@ -3773,6 +3773,21 @@ auto main() -> int {
             "  %items.computed_for.index = phi i64 [ 0, %items.computed_for.0.exit ], "
             "[ %items.computed_for.next.index, %items.computed_for.continue ]\n"
         ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "  %items.computed_for.body.tmp0 = load i32, ptr %total.addr\n"
+            "  %items.computed_for.body.tmp1 = add i32 %items.computed_for.body.tmp0, "
+            "%items.computed_for.item\n"
+            "  store i32 %items.computed_for.body.tmp1, ptr %total.addr\n"
+            "  br label %items.computed_for.continue\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
+            "  br label %items.computed_for.continue\n"
+        ) == std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(

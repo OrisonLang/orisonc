@@ -31,6 +31,8 @@ auto constexpr computed_dynamic_array_render_sequence_line_count = std::size_t {
 auto constexpr computed_dynamic_array_mutation_line_count = std::size_t {18};
 auto constexpr computed_dynamic_array_condition_phi_line_index = std::size_t {6};
 auto constexpr computed_dynamic_array_element_load_line_index = std::size_t {11};
+auto constexpr computed_dynamic_array_body_placeholder_line_index =
+    computed_dynamic_array_element_load_line_index + std::size_t {1};
 
 auto runtime_indexed_cleanup_function_ir_rewrite_requested(
     CompilePipelineOptions const& options
@@ -1097,6 +1099,27 @@ auto terminator_end_position(
     return line_end + 1;
 }
 
+auto line_count(std::string const& text) -> std::size_t {
+    return static_cast<std::size_t>(std::ranges::count(text, '\n'));
+}
+
+auto replace_all_copy(
+    std::string text,
+    std::string const& from,
+    std::string const& to
+) -> std::string {
+    if (from.empty()) {
+        return text;
+    }
+
+    auto position = std::string::size_type {0};
+    while ((position = text.find(from, position)) != std::string::npos) {
+        text.replace(position, from.size(), to);
+        position += to.size();
+    }
+    return text;
+}
+
 auto block_label_before_position(
     std::string const& function_ir,
     std::string::size_type position
@@ -1128,6 +1151,118 @@ auto computed_dynamic_array_condition_phi_with_predecessor(
         sequence.cleanup_owner_name + ".computed_for.continue ]\n";
 }
 
+auto computed_dynamic_array_source_loop_prefix(
+    std::string const& function_ir,
+    std::string const& cleanup_owner_name
+) -> std::optional<std::string> {
+    auto const label_stem = cleanup_owner_name + ".computed_for.";
+    auto const body_suffix = std::string {".body:\n"};
+    auto search_position = std::string::size_type {0};
+    while ((search_position = function_ir.find(label_stem, search_position)) != std::string::npos) {
+        auto const line_start = search_position == 0
+            ? std::string::npos
+            : function_ir.rfind('\n', search_position - 1);
+        auto const line_end = function_ir.find('\n', search_position);
+        if (line_end == std::string::npos) {
+            return std::nullopt;
+        }
+        auto const starts_label =
+            (search_position == 0 && line_start == std::string::npos) ||
+            (line_start != std::string::npos && line_start + 1 == search_position);
+        auto const label_end = function_ir.find(body_suffix, search_position + label_stem.size());
+        auto const suffix_on_same_line =
+            label_end != std::string::npos &&
+            label_end + body_suffix.size() == line_end + std::size_t {1};
+        if (starts_label) {
+            if (suffix_on_same_line) {
+                return function_ir.substr(search_position, label_end - search_position);
+            }
+            search_position = line_end + 1;
+            continue;
+        }
+        ++search_position;
+    }
+    return std::nullopt;
+}
+
+auto namespace_copied_body_temporaries(
+    std::string const& body_text,
+    std::string const& target_prefix
+) -> std::string {
+    auto output = std::string {};
+    output.reserve(body_text.size() + target_prefix.size());
+    for (auto index = std::size_t {0}; index < body_text.size();) {
+        auto const has_tmp_prefix =
+            index + std::size_t {4} <= body_text.size() &&
+            body_text[index] == '%' &&
+            body_text[index + 1] == 't' &&
+            body_text[index + 2] == 'm' &&
+            body_text[index + 3] == 'p';
+        if (!has_tmp_prefix) {
+            output.push_back(body_text[index]);
+            ++index;
+            continue;
+        }
+
+        auto end = index + std::size_t {4};
+        while (end < body_text.size() &&
+               std::isdigit(static_cast<unsigned char>(body_text[end])) != 0) {
+            ++end;
+        }
+        if (end == index + std::size_t {4}) {
+            output.push_back(body_text[index]);
+            ++index;
+            continue;
+        }
+
+        output += "%" + target_prefix + ".body." +
+            body_text.substr(index + std::size_t {1}, end - index - std::size_t {1});
+        index = end;
+    }
+    return output;
+}
+
+auto computed_dynamic_array_mutation_body_text(
+    std::string const& function_ir,
+    std::string const& cleanup_owner_name
+) -> std::optional<std::string> {
+    auto const source_prefix = computed_dynamic_array_source_loop_prefix(
+        function_ir,
+        cleanup_owner_name
+    );
+    if (!source_prefix.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const body_label = *source_prefix + ".body:\n";
+    auto const continue_label = *source_prefix + ".continue:\n";
+    auto const body_label_position = function_ir.find(body_label);
+    if (body_label_position == std::string::npos) {
+        return std::nullopt;
+    }
+    auto const body_start = body_label_position + body_label.size();
+    auto const continue_position = function_ir.find(continue_label, body_start);
+    if (continue_position == std::string::npos) {
+        return std::nullopt;
+    }
+
+    auto const item_load_prefix = "  %" + *source_prefix + ".item = load ";
+    auto const item_load_position = function_ir.find(item_load_prefix, body_start);
+    if (item_load_position == std::string::npos || item_load_position > continue_position) {
+        return std::nullopt;
+    }
+    auto const item_load_end = terminator_end_position(function_ir, item_load_position);
+    if (item_load_end == std::string::npos || item_load_end > continue_position) {
+        return std::nullopt;
+    }
+
+    auto body_text = function_ir.substr(item_load_end, continue_position - item_load_end);
+    auto const target_prefix = cleanup_owner_name + ".computed_for";
+    body_text = replace_all_copy(body_text, "%" + *source_prefix, "%" + target_prefix);
+    body_text = namespace_copied_body_temporaries(body_text, target_prefix);
+    return body_text;
+}
+
 void apply_computed_dynamic_array_for_production_mutation(
     std::vector<lowering::ComputedDynamicArrayForProductionSequenceMetadata> const& sequences,
     ComputedDynamicArrayForProductionSequenceModuleIrArtifactState const& artifact_state,
@@ -1147,6 +1282,7 @@ void apply_computed_dynamic_array_for_production_mutation(
 
     auto composed_ir = ir_text;
     auto mutation_line_index = std::size_t {0};
+    auto actual_inserted_module_ir_line_count = std::size_t {0};
     for (auto index = std::size_t {0}; index < sequences.size(); ++index) {
         auto const& sequence = sequences[index];
         auto const mutation_line_base_index = mutation_line_index;
@@ -1169,9 +1305,31 @@ void apply_computed_dynamic_array_for_production_mutation(
         auto const original_function_ir = function_ir_slice(composed_ir, sequence.enclosing_function_name);
         auto const terminator_position = first_return_terminator_position(original_function_ir);
         auto const terminator_end = terminator_end_position(original_function_ir, terminator_position);
+        auto const body_mutation_text = computed_dynamic_array_mutation_body_text(
+            original_function_ir,
+            sequence.cleanup_owner_name
+        );
+        if (original_function_ir.empty()) {
+            execution_state.llvm_verifier_diagnostic_text =
+                "computed DynamicArray production mutation blocked: function slice missing";
+        } else if (entry_mutation_text.empty()) {
+            execution_state.llvm_verifier_diagnostic_text =
+                "computed DynamicArray production mutation blocked: entry mutation missing";
+        } else if (!body_mutation_text.has_value() || body_mutation_text->empty()) {
+            execution_state.llvm_verifier_diagnostic_text =
+                "computed DynamicArray production mutation blocked: copied loop body missing";
+        } else if (occurrence_count(composed_ir, original_function_ir) != 1) {
+            execution_state.llvm_verifier_diagnostic_text =
+                "computed DynamicArray production mutation blocked: function slice not unique";
+        } else if (terminator_position == std::string::npos || terminator_end == std::string::npos) {
+            execution_state.llvm_verifier_diagnostic_text =
+                "computed DynamicArray production mutation blocked: return terminator missing";
+        }
         auto const target_ready =
             !original_function_ir.empty() &&
             !entry_mutation_text.empty() &&
+            body_mutation_text.has_value() &&
+            !body_mutation_text->empty() &&
             occurrence_count(composed_ir, original_function_ir) == 1 &&
             terminator_position != std::string::npos &&
             terminator_end != std::string::npos;
@@ -1197,11 +1355,15 @@ void apply_computed_dynamic_array_for_production_mutation(
                 );
                 continue;
             }
+            if (line_index == computed_dynamic_array_body_placeholder_line_index) {
+                append_mutation_text += *body_mutation_text;
+                continue;
+            }
             append_mutation_text += artifact_state.mutation_ir_lines[
                 mutation_line_base_index + line_index
             ];
         }
-        append_mutation_text += original_function_ir.substr(
+        auto const original_return_text = original_function_ir.substr(
             terminator_position,
             terminator_end - terminator_position
         );
@@ -1209,6 +1371,7 @@ void apply_computed_dynamic_array_for_production_mutation(
         auto candidate_function_ir = original_function_ir.substr(0, terminator_position);
         candidate_function_ir += entry_mutation_text;
         candidate_function_ir += append_mutation_text;
+        candidate_function_ir += original_return_text;
         candidate_function_ir += original_function_ir.substr(terminator_end);
         auto candidate_module_ir = replace_once(composed_ir, original_function_ir, candidate_function_ir);
         if (candidate_module_ir.empty()) {
@@ -1220,6 +1383,8 @@ void apply_computed_dynamic_array_for_production_mutation(
             return;
         }
         composed_ir = std::move(candidate_module_ir);
+        actual_inserted_module_ir_line_count += line_count(entry_mutation_text);
+        actual_inserted_module_ir_line_count += line_count(append_mutation_text);
         execution_state.function_slice_candidate_available = true;
     }
 
@@ -1240,6 +1405,7 @@ void apply_computed_dynamic_array_for_production_mutation(
     execution_state.executed = true;
     execution_state.ir_unchanged = false;
     execution_state.function_slice_rewrite_applied = true;
+    execution_state.inserted_module_ir_line_count = actual_inserted_module_ir_line_count;
 }
 
 auto build_dynamic_array_cleanup_emission_capability_state(

@@ -3179,6 +3179,9 @@ representation.
   and resuming with the original return from the computed-loop exit block.
 - Production mutation execution now records LLVM verifier diagnostic text for blocked computed-loop mutation
   candidates, matching the existing runtime-indexed cleanup candidate reporting pattern.
+- Production mutation execution now replaces the synthetic body-to-continue placeholder with a copied lowered body from
+  the existing source loop, retargeting the loop item and continue label to the mutation loop and namespacing copied
+  temporary SSA values.
 
 ## Follow-up work
 
