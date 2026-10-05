@@ -3199,6 +3199,11 @@ representation.
   source loop. This keeps aggregate-field rewrites valid when normal lowering assigns a unique projection storage name.
 - Pipeline smoke coverage now proves the returned aggregate-field owned computed DynamicArray production mutation path,
   including owned element cleanup, descriptor deallocation, numbered loop removal, and object emission.
+- Pipeline smoke coverage now also proves the nested returned aggregate-field production mutation path for owners like
+  `returned.inner.values`.
+- Branch- and switch-returned aggregate-field fixtures reuse the same descriptor-storage retargeting path and now have
+  mutation coverage proving readiness, rewrite execution, numbered loop removal, cleanup preservation, and object
+  emission.
 
 ## Follow-up work
 
