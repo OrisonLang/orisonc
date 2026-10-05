@@ -8044,6 +8044,24 @@ auto main() -> int {
             std::string(owner)
         );
     }
+    auto const returned_aggregate_extra_statement_mutation_fixtures =
+        std::array<std::pair<std::string_view, std::string_view>, 2> {
+            std::pair {
+                "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
+                "returned.values",
+            },
+            std::pair {
+                "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
+                "returned.inner.values",
+            },
+        };
+    for (auto const& [fixture_name, owner] : returned_aggregate_extra_statement_mutation_fixtures) {
+        assert_dynamic_array_aggregate_field_computed_for_mutation(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name,
+            dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+            std::string(owner)
+        );
+    }
     assert_dynamic_array_computed_for_mutation(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",

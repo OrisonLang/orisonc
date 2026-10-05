@@ -3223,6 +3223,8 @@ representation.
   local/let alias, depth8, final-control, and alias final-control variants.
 - Returned-owned computed-loop fixtures now use verified mutation coverage for alias-chain, helper-call,
   returned-choice-payload, branch-returned, and switch-returned variants.
+- Returned aggregate-field helper fixtures with harmless extra statements now use verified mutation coverage for
+  direct and nested owners.
 
 ## Follow-up work
 
