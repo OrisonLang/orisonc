@@ -3204,6 +3204,9 @@ representation.
 - Branch- and switch-returned aggregate-field fixtures reuse the same descriptor-storage retargeting path and now have
   mutation coverage proving readiness, rewrite execution, numbered loop removal, cleanup preservation, and object
   emission.
+- Forwarded branch/switch returned aggregate-field fixtures, including nested and mixed-forwarded variants, now use the
+  same verified mutation smoke helper. Remaining numbered aggregate-field computed-loop checks are concentrated in
+  final-control cleanup families that still assert `computed_for.1` source-loop lowering.
 
 ## Follow-up work
 
