@@ -3229,6 +3229,8 @@ representation.
   final `switch` paths.
 - Owned-scope cleanup fixtures now pair their direct cleanup-order assertions with table-driven object/link/run
   coverage.
+- Owned-parameter forwarding and branch-join fixture files now pair migrated no-legacy cleanup checks with direct
+  object/link/run coverage.
 
 ## Follow-up work
 

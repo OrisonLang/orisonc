@@ -7161,6 +7161,12 @@ auto main() -> int {
         assert(!migrated.has_errors());
         assert_ir_contains(migrated.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
         assert_ir_excludes(migrated.ir_text, "method.Payload.drop");
+        auto executable_name = std::filesystem::path(fixture_name).replace_extension();
+        assert_emit_object_link_run_success(
+            pipeline,
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name,
+            smoke_temp_root / executable_name
+        );
     }
 
     auto const migrated_owned_computed_parameter_fixtures = std::array<std::string_view, 10> {
