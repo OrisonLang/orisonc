@@ -8015,6 +8015,35 @@ auto main() -> int {
             dynamic_array_returned_owned_computed_for_cleanup_mutation_ir.ir_text
         );
     assert(!dynamic_array_returned_owned_computed_for_cleanup_mutation_object.has_errors());
+    auto const returned_owned_mutation_fixtures = std::array<std::pair<std::string_view, std::string_view>, 5> {
+        std::pair {
+            "dynamic_array_returned_alias_chain_owned_computed_for_cleanup_run.or",
+            "returned",
+        },
+        std::pair {
+            "dynamic_array_returned_helper_call_owned_computed_for_cleanup_run.or",
+            "returned",
+        },
+        std::pair {
+            "dynamic_array_returned_choice_payload_owned_computed_for_cleanup_run.or",
+            "values",
+        },
+        std::pair {
+            "dynamic_array_branch_returned_owned_computed_for_cleanup_run.or",
+            "selected",
+        },
+        std::pair {
+            "dynamic_array_switch_returned_owned_computed_for_cleanup_run.or",
+            "selected",
+        },
+    };
+    for (auto const& [fixture_name, owner] : returned_owned_mutation_fixtures) {
+        assert_dynamic_array_computed_for_mutation(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name,
+            dynamic_array_returned_owned_computed_for_cleanup_mutation_options,
+            std::string(owner)
+        );
+    }
     assert_dynamic_array_computed_for_mutation(
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
             "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",

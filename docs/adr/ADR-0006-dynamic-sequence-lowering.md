@@ -3221,6 +3221,8 @@ representation.
   fixtures now have verified mutation coverage over their numbered source loops.
 - Forwarded-parameter computed-loop fixtures now use verified mutation coverage for owner `items`, including multi-hop,
   local/let alias, depth8, final-control, and alias final-control variants.
+- Returned-owned computed-loop fixtures now use verified mutation coverage for alias-chain, helper-call,
+  returned-choice-payload, branch-returned, and switch-returned variants.
 
 ## Follow-up work
 
