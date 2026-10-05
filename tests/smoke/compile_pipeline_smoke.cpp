@@ -7431,6 +7431,21 @@ auto main() -> int {
         assert(holder_drop_call < return_value);
     }
 
+    auto const owned_scope_cleanup_run_fixtures = std::array<std::string_view, 4> {
+        "dynamic_array_owned_field_scope_cleanup_run.or",
+        "dynamic_array_owned_nested_field_scope_cleanup_run.or",
+        "dynamic_array_owned_indexed_field_scope_cleanup_run.or",
+        "dynamic_array_owned_direct_indexed_scope_cleanup_run.or",
+    };
+    for (auto fixture_name : owned_scope_cleanup_run_fixtures) {
+        auto executable_name = std::filesystem::path(fixture_name).replace_extension();
+        assert_emit_object_link_run_success(
+            pipeline,
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name,
+            smoke_temp_root / executable_name
+        );
+    }
+
     auto const fixtures_dir = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     for (auto const& entry : std::filesystem::directory_iterator(fixtures_dir)) {
         if (!entry.is_regular_file()) {

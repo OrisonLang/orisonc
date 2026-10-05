@@ -3227,6 +3227,8 @@ representation.
   direct and nested owners.
 - Local final-control consumed-owner cleanup fixtures now verify consume-before-cleanup ordering for final `if` and
   final `switch` paths.
+- Owned-scope cleanup fixtures now pair their direct cleanup-order assertions with table-driven object/link/run
+  coverage.
 
 ## Follow-up work
 
