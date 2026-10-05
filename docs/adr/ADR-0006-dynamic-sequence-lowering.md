@@ -3185,6 +3185,8 @@ representation.
 - Production mutation execution now replaces the existing numbered computed-loop region with the unnumbered mutation
   loop, copies exit cleanup/finalization into the mutation exit block, and verifies the old numbered loop is absent in
   the mutated module.
+- Pipeline smoke coverage now proves the replacement path on both local same-owner and local nested same-owner
+  computed DynamicArray production mutation fixtures.
 
 ## Follow-up work
 

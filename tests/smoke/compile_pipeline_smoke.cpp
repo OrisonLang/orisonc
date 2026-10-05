@@ -3826,6 +3826,45 @@ auto main() -> int {
             computed_dynamic_array_local_same_owner_for_module_mutation.ir_text
         );
     assert(!computed_dynamic_array_local_same_owner_for_module_mutation_object.has_errors());
+    auto computed_dynamic_array_local_nested_same_owner_for_module_mutation = pipeline.emit_llvm(
+        computed_dynamic_array_local_nested_same_owner_for_path,
+        computed_dynamic_array_local_same_owner_for_mutation_options
+    );
+    assert(!computed_dynamic_array_local_nested_same_owner_for_module_mutation.has_errors());
+    assert(
+        computed_dynamic_array_local_nested_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.executed
+    );
+    assert(
+        computed_dynamic_array_local_nested_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 24
+    );
+    assert(
+        computed_dynamic_array_local_nested_same_owner_for_module_mutation.ir_text.find(
+            "items.computed_for.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_nested_same_owner_for_module_mutation.ir_text.find(
+            "  %items.computed_for.index = phi i64 [ 0, %entry ], "
+            "[ %items.computed_for.next.index, %items.computed_for.continue ]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_nested_same_owner_for_module_mutation.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_nested_same_owner_for_module_mutation.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
+        ) == std::string::npos
+    );
+    auto computed_dynamic_array_local_nested_same_owner_for_module_mutation_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(
+            computed_dynamic_array_local_nested_same_owner_for_module_mutation.ir_text
+        );
+    assert(!computed_dynamic_array_local_nested_same_owner_for_module_mutation_object.has_errors());
     auto dynamic_array_metadata_collector =
         orison::pipeline::DynamicArrayCleanupMetadataCollector {pipeline};
     auto computed_dynamic_array_local_same_owner_metadata_without_comments =
