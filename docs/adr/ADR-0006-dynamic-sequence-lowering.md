@@ -3225,6 +3225,8 @@ representation.
   returned-choice-payload, branch-returned, and switch-returned variants.
 - Returned aggregate-field helper fixtures with harmless extra statements now use verified mutation coverage for
   direct and nested owners.
+- Local final-control consumed-owner cleanup fixtures now verify consume-before-cleanup ordering for final `if` and
+  final `switch` paths.
 
 ## Follow-up work
 

@@ -15586,6 +15586,22 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_parameter_branch_cleanup_run"
     );
 
+    auto assert_final_control_consumed_owner_cleanup_order = [](std::string const& ir_text) {
+        auto const consume_call = ir_text.find("call i32 @use_items({ ptr, i64, i64 } %tmp");
+        auto const payload_cleanup =
+            ir_text.find("call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup", consume_call);
+        auto const descriptor_deallocate =
+            ir_text.find(
+                "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup",
+                payload_cleanup
+            );
+        assert(consume_call != std::string::npos);
+        assert(payload_cleanup != std::string::npos);
+        assert(descriptor_deallocate != std::string::npos);
+        assert(consume_call < payload_cleanup);
+        assert(payload_cleanup < descriptor_deallocate);
+    };
+
     auto dynamic_array_local_final_if_consumed_owner_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_local_final_if_consumed_owner_cleanup_run.or";
@@ -15614,6 +15630,7 @@ auto main() -> int {
         dynamic_array_local_final_if_consumed_owner_cleanup.ir_text,
         "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
     );
+    assert_final_control_consumed_owner_cleanup_order(dynamic_array_local_final_if_consumed_owner_cleanup.ir_text);
     assert_ir_excludes(dynamic_array_local_final_if_consumed_owner_cleanup.ir_text, "if branch ownership mismatch");
     assert_emit_object_link_run_success(
         pipeline,
@@ -15704,6 +15721,7 @@ auto main() -> int {
         dynamic_array_local_final_switch_consumed_owner_cleanup.ir_text,
         "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
     );
+    assert_final_control_consumed_owner_cleanup_order(dynamic_array_local_final_switch_consumed_owner_cleanup.ir_text);
     assert_ir_excludes(
         dynamic_array_local_final_switch_consumed_owner_cleanup.ir_text,
         "switch case ownership mismatch"
