@@ -3219,6 +3219,8 @@ representation.
 - Computed DynamicArray production metadata collection now also seeds fixed-array aggregate element owners like
   `holder.buckets.element0.values` and `holder.grid.element1.element0.values`. Static-indexed aggregate computed-loop
   fixtures now have verified mutation coverage over their numbered source loops.
+- Forwarded-parameter computed-loop fixtures now use verified mutation coverage for owner `items`, including multi-hop,
+  local/let alias, depth8, final-control, and alias final-control variants.
 
 ## Follow-up work
 
