@@ -3174,6 +3174,11 @@ representation.
   candidate, so the gated rewrite inserts a real descriptor load instead of a synthetic proof instruction.
 - Production mutation execution now expands the verifier-gated function-slice candidate to the full descriptor
   extraction prefix: descriptor load plus data, length, and capacity extracts.
+- Production mutation execution now stages a verifier-gated computed-loop skeleton by splitting the owning function's
+  return terminator, inserting descriptor extraction plus loop control, adding a synthetic body-to-continue branch,
+  and resuming with the original return from the computed-loop exit block.
+- Production mutation execution now records LLVM verifier diagnostic text for blocked computed-loop mutation
+  candidates, matching the existing runtime-indexed cleanup candidate reporting pattern.
 
 ## Follow-up work
 

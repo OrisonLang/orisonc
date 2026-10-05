@@ -3627,6 +3627,13 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_mutation_execution_state.would_execute
     );
+    if (!computed_dynamic_array_local_same_owner_for_module_mutation
+             .computed_dynamic_array_for_production_mutation_execution_state.executed) {
+        std::cerr << computed_dynamic_array_local_same_owner_for_module_mutation
+                         .computed_dynamic_array_for_production_mutation_execution_state
+                         .llvm_verifier_diagnostic_text
+                  << '\n';
+    }
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_mutation_execution_state.executed
@@ -3645,7 +3652,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
-            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 4
+            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 18
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
@@ -3661,11 +3668,16 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_mutation_execution_state
+            .llvm_verifier_diagnostic_text.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
             .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.comment_ir_lines.empty()
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
-            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.size() == 4
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines.size() == 18
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
@@ -3690,6 +3702,43 @@ auto main() -> int {
         "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } "
         "%items.computed_for.descriptor, 2\n"
     );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[4] ==
+        "  br label %items.computed_for.condition\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[5] ==
+        "items.computed_for.condition:\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[6] ==
+        "  %items.computed_for.index = phi i64 [ 0, %entry ], [ %items.computed_for.next.index, "
+        "%items.computed_for.continue ]\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[7] ==
+        "  %items.computed_for.more = icmp ult i64 %items.computed_for.index, "
+        "%items.computed_for.length\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[9] ==
+        "items.computed_for.body:\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[12] ==
+        "  br label %items.computed_for.continue\n"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation
+            .computed_dynamic_array_for_production_sequence_module_ir_artifact_state.mutation_ir_lines[16] ==
+        "items.computed_for.exit:\n"
+    );
     auto computed_dynamic_array_local_same_owner_for_inserted_ir = std::string {};
     for (
         auto const& line :
@@ -3712,6 +3761,17 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
             "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } "
             "%items.computed_for.descriptor, 2\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "items.computed_for.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "  %items.computed_for.index = phi i64 [ 0, %items.computed_for.0.exit ], "
+            "[ %items.computed_for.next.index, %items.computed_for.continue ]\n"
         ) != std::string::npos
     );
     assert(

@@ -50,6 +50,7 @@ struct ComputedDynamicArrayForProductionMutationPreviewState {
 
 struct ComputedDynamicArrayForProductionMutationExecutionState {
     std::vector<std::string> cleanup_owner_names;
+    std::string llvm_verifier_diagnostic_text;
     bool execution_metadata_available = false;
     bool would_execute = false;
     bool executed = false;

@@ -1086,6 +1086,15 @@ auto computed_dynamic_array_for_production_mutation_execution_state_report(
             "(module IR)"
         );
     }
+    if (!state.llvm_verifier_diagnostic_text.empty()) {
+        append_computed_cleanup_detail(
+            lines,
+            "production mutation execution verifier",
+            state.llvm_verifier_diagnostic_text,
+            {},
+            "(module IR)"
+        );
+    }
 
     return lines;
 }

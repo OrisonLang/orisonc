@@ -25,6 +25,12 @@ namespace orison::pipeline {
 namespace {
 
 auto constexpr computed_dynamic_array_descriptor_prefix_line_count = std::size_t {4};
+auto constexpr computed_dynamic_array_entry_prefix_line_count =
+    computed_dynamic_array_descriptor_prefix_line_count + std::size_t {1};
+auto constexpr computed_dynamic_array_render_sequence_line_count = std::size_t {17};
+auto constexpr computed_dynamic_array_mutation_line_count = std::size_t {18};
+auto constexpr computed_dynamic_array_condition_phi_line_index = std::size_t {6};
+auto constexpr computed_dynamic_array_element_load_line_index = std::size_t {11};
 
 auto runtime_indexed_cleanup_function_ir_rewrite_requested(
     CompilePipelineOptions const& options
@@ -1049,33 +1055,77 @@ auto render_computed_dynamic_array_for_production_sequence_mutation_ir(
     std::vector<lowering::ComputedDynamicArrayForProductionSequenceMetadata> const& sequences
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    lines.reserve(sequences.size() * computed_dynamic_array_descriptor_prefix_line_count);
+    lines.reserve(sequences.size() * computed_dynamic_array_mutation_line_count);
     for (auto const& sequence : sequences) {
-        if (sequence.rendered_ir.size() < computed_dynamic_array_descriptor_prefix_line_count) {
+        if (sequence.rendered_ir.size() < computed_dynamic_array_render_sequence_line_count) {
             continue;
         }
-        lines.insert(
-            lines.end(),
-            sequence.rendered_ir.begin(),
-            sequence.rendered_ir.begin() + computed_dynamic_array_descriptor_prefix_line_count
-        );
+        for (auto line_index = std::size_t {0};
+             line_index < computed_dynamic_array_render_sequence_line_count;
+             ++line_index) {
+            lines.push_back(sequence.rendered_ir[line_index]);
+            if (line_index == computed_dynamic_array_element_load_line_index) {
+                lines.push_back(
+                    "  br label %" + sequence.cleanup_owner_name + ".computed_for.continue\n"
+                );
+            }
+        }
     }
     return lines;
 }
 
-auto first_entry_terminator_position(std::string const& function_ir) -> std::string::size_type {
+auto first_return_terminator_position(std::string const& function_ir) -> std::string::size_type {
     auto const header_end = function_ir.find('\n');
     if (header_end == std::string::npos) {
         return std::string::npos;
     }
-
-    for (auto const terminator : {"\n  br ", "\n  ret "}) {
-        auto const terminator_position = function_ir.find(terminator, header_end + 1);
-        if (terminator_position != std::string::npos) {
-            return terminator_position + 1;
-        }
+    auto const return_position = function_ir.find("\n  ret ", header_end + 1);
+    if (return_position == std::string::npos) {
+        return std::string::npos;
     }
-    return std::string::npos;
+    return return_position + 1;
+}
+
+auto terminator_end_position(
+    std::string const& function_ir,
+    std::string::size_type terminator_position
+) -> std::string::size_type {
+    auto const line_end = function_ir.find('\n', terminator_position);
+    if (line_end == std::string::npos) {
+        return std::string::npos;
+    }
+    return line_end + 1;
+}
+
+auto block_label_before_position(
+    std::string const& function_ir,
+    std::string::size_type position
+) -> std::string {
+    auto label_end = function_ir.rfind(":\n", position);
+    while (label_end != std::string::npos) {
+        auto const line_start = function_ir.rfind('\n', label_end);
+        auto const label_start = line_start == std::string::npos ? std::size_t {0} : line_start + 1;
+        if (label_start < label_end && function_ir[label_start] != ' ') {
+            return function_ir.substr(label_start, label_end - label_start);
+        }
+        if (label_end == 0) {
+            break;
+        }
+        label_end = function_ir.rfind(":\n", label_end - 1);
+    }
+    return "entry";
+}
+
+auto computed_dynamic_array_condition_phi_with_predecessor(
+    lowering::ComputedDynamicArrayForProductionSequenceMetadata const& sequence,
+    std::string const& predecessor_block_name
+) -> std::string {
+    return "  %" + sequence.cleanup_owner_name +
+        ".computed_for.index = phi i64 [ 0, %" +
+        predecessor_block_name + " ], [ %" +
+        sequence.cleanup_owner_name +
+        ".computed_for.next.index, %" +
+        sequence.cleanup_owner_name + ".computed_for.continue ]\n";
 }
 
 void apply_computed_dynamic_array_for_production_mutation(
@@ -1099,7 +1149,8 @@ void apply_computed_dynamic_array_for_production_mutation(
     auto mutation_line_index = std::size_t {0};
     for (auto index = std::size_t {0}; index < sequences.size(); ++index) {
         auto const& sequence = sequences[index];
-        if (mutation_line_index + computed_dynamic_array_descriptor_prefix_line_count >
+        auto const mutation_line_base_index = mutation_line_index;
+        if (mutation_line_base_index + computed_dynamic_array_mutation_line_count >
             artifact_state.mutation_ir_lines.size()) {
             execution_state.executed = false;
             execution_state.ir_unchanged = true;
@@ -1108,20 +1159,22 @@ void apply_computed_dynamic_array_for_production_mutation(
             execution_state.inserted_module_ir_line_count = 0;
             return;
         }
-        auto mutation_text = std::string {};
+        auto entry_mutation_text = std::string {};
         for (auto line_index = std::size_t {0};
-             line_index < computed_dynamic_array_descriptor_prefix_line_count;
+             line_index < computed_dynamic_array_entry_prefix_line_count;
              ++line_index) {
-            mutation_text += artifact_state.mutation_ir_lines[mutation_line_index + line_index];
+            entry_mutation_text += artifact_state.mutation_ir_lines[mutation_line_base_index + line_index];
         }
-        mutation_line_index += computed_dynamic_array_descriptor_prefix_line_count;
+        mutation_line_index += computed_dynamic_array_mutation_line_count;
         auto const original_function_ir = function_ir_slice(composed_ir, sequence.enclosing_function_name);
-        auto const insertion_position = first_entry_terminator_position(original_function_ir);
+        auto const terminator_position = first_return_terminator_position(original_function_ir);
+        auto const terminator_end = terminator_end_position(original_function_ir, terminator_position);
         auto const target_ready =
             !original_function_ir.empty() &&
-            !mutation_text.empty() &&
+            !entry_mutation_text.empty() &&
             occurrence_count(composed_ir, original_function_ir) == 1 &&
-            insertion_position != std::string::npos;
+            terminator_position != std::string::npos &&
+            terminator_end != std::string::npos;
         if (!target_ready) {
             execution_state.executed = false;
             execution_state.ir_unchanged = true;
@@ -1131,9 +1184,32 @@ void apply_computed_dynamic_array_for_production_mutation(
             return;
         }
 
-        auto candidate_function_ir = original_function_ir.substr(0, insertion_position);
-        candidate_function_ir += mutation_text;
-        candidate_function_ir += original_function_ir.substr(insertion_position);
+        auto const predecessor_block_name =
+            block_label_before_position(original_function_ir, terminator_position);
+        auto append_mutation_text = std::string {};
+        for (auto line_index = computed_dynamic_array_entry_prefix_line_count;
+             line_index < computed_dynamic_array_mutation_line_count;
+             ++line_index) {
+            if (line_index == computed_dynamic_array_condition_phi_line_index) {
+                append_mutation_text += computed_dynamic_array_condition_phi_with_predecessor(
+                    sequence,
+                    predecessor_block_name
+                );
+                continue;
+            }
+            append_mutation_text += artifact_state.mutation_ir_lines[
+                mutation_line_base_index + line_index
+            ];
+        }
+        append_mutation_text += original_function_ir.substr(
+            terminator_position,
+            terminator_end - terminator_position
+        );
+
+        auto candidate_function_ir = original_function_ir.substr(0, terminator_position);
+        candidate_function_ir += entry_mutation_text;
+        candidate_function_ir += append_mutation_text;
+        candidate_function_ir += original_function_ir.substr(terminator_end);
         auto candidate_module_ir = replace_once(composed_ir, original_function_ir, candidate_function_ir);
         if (candidate_module_ir.empty()) {
             execution_state.executed = false;
@@ -1149,6 +1225,8 @@ void apply_computed_dynamic_array_for_production_mutation(
 
     auto verifier_diagnostics = lowering::LlvmIrVerifier {}.verify(composed_ir);
     execution_state.llvm_verifier_passed = !verifier_diagnostics.has_errors();
+    execution_state.llvm_verifier_diagnostic_text =
+        verifier_diagnostics.render("<computed-dynamic-array-production-mutation>");
     if (!execution_state.llvm_verifier_passed) {
         execution_state.executed = false;
         execution_state.ir_unchanged = true;
