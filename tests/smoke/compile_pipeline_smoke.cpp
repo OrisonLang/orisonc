@@ -3652,7 +3652,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
-            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 21
+            .computed_dynamic_array_for_production_mutation_execution_state.inserted_module_ir_line_count == 24
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation
@@ -3770,7 +3770,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
-            "  %items.computed_for.index = phi i64 [ 0, %items.computed_for.0.exit ], "
+            "  %items.computed_for.index = phi i64 [ 0, %entry ], "
             "[ %items.computed_for.next.index, %items.computed_for.continue ]\n"
         ) != std::string::npos
     );
@@ -3787,6 +3787,33 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
             "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
             "  br label %items.computed_for.continue\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "items.computed_for.exit:\n"
+            "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls enabled]\n"
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.data, "
+            "i64 4, i64 %items.computed_for.capacity)\n"
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "items.computed_for.exit:\n"
+            "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls disabled]\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for_module_mutation.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
         ) == std::string::npos
     );
     assert(

@@ -3182,6 +3182,9 @@ representation.
 - Production mutation execution now replaces the synthetic body-to-continue placeholder with a copied lowered body from
   the existing source loop, retargeting the loop item and continue label to the mutation loop and namespacing copied
   temporary SSA values.
+- Production mutation execution now replaces the existing numbered computed-loop region with the unnumbered mutation
+  loop, copies exit cleanup/finalization into the mutation exit block, and verifies the old numbered loop is absent in
+  the mutated module.
 
 ## Follow-up work
 
