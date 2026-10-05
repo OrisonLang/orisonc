@@ -7858,6 +7858,54 @@ auto main() -> int {
         dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run"
     );
+    auto dynamic_array_returned_owned_computed_for_cleanup_mutation_options =
+        computed_dynamic_array_local_same_owner_for_mutation_options;
+    dynamic_array_returned_owned_computed_for_cleanup_mutation_options
+        .semantic_owned_cleanup_lowering_enabled = true;
+    dynamic_array_returned_owned_computed_for_cleanup_mutation_options
+        .dynamic_array_descriptor_cleanup_planning_enabled = true;
+    auto dynamic_array_returned_owned_computed_for_cleanup_mutation_ir =
+        pipeline.emit_llvm(
+            dynamic_array_returned_owned_computed_for_cleanup_path,
+            dynamic_array_returned_owned_computed_for_cleanup_mutation_options
+        );
+    assert(!dynamic_array_returned_owned_computed_for_cleanup_mutation_ir.has_errors());
+    assert(
+        !dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+             .computed_dynamic_array_for_production_mutation_execution_state.executed
+    );
+    assert(
+        !dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+             .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        !dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+             .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_readiness.inserted_cleanup_transition_ready
+    );
+    assert(
+        dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_readiness.inserted_cleanup_state_verification_ready
+    );
+    assert(
+        dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(
+        !dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+             .computed_dynamic_array_for_production_mutation_preview_state.would_mutate
+    );
+    assert(
+        !dynamic_array_returned_owned_computed_for_cleanup_mutation_ir
+             .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
+    );
+    assert_ir_contains(
+        dynamic_array_returned_owned_computed_for_cleanup_mutation_ir.ir_text,
+        "returned.computed_for.0.condition:\n"
+    );
     auto dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_run.or";
