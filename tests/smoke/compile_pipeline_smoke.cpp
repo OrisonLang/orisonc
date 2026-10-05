@@ -7867,7 +7867,8 @@ auto main() -> int {
     auto assert_dynamic_array_aggregate_field_computed_for_mutation =
         [&](std::filesystem::path const& path,
             orison::pipeline::CompilePipelineOptions const& options,
-            std::string const& owner) {
+            std::string const& owner,
+            std::string const& source_loop_suffix = ".0") {
             auto mutation_ir = pipeline.emit_llvm(path, options);
             assert(!mutation_ir.has_errors());
             assert(mutation_ir.computed_dynamic_array_for_production_mutation_execution_state.executed);
@@ -7884,7 +7885,7 @@ auto main() -> int {
                 mutation_ir.ir_text,
                 "call void @__orison_dynamic_array_deallocate(ptr %" + owner + ".computed_for.data"
             );
-            assert_ir_excludes(mutation_ir.ir_text, owner + ".computed_for.0.condition:\n");
+            assert_ir_excludes(mutation_ir.ir_text, owner + ".computed_for" + source_loop_suffix + ".condition:\n");
             auto mutation_object = orison::lowering::LlvmObjectEmitter {}.emit(mutation_ir.ir_text);
             assert(!mutation_object.has_errors());
         };
@@ -8485,6 +8486,12 @@ auto main() -> int {
         dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
+    );
     auto dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_run.or";
@@ -8556,6 +8563,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
     );
     auto dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8641,6 +8654,12 @@ auto main() -> int {
         dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
+    );
     auto dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_run.or";
@@ -8662,6 +8681,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
     );
     auto dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8735,6 +8760,12 @@ auto main() -> int {
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
+    );
     auto dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
@@ -8797,6 +8828,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8869,6 +8906,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -8955,6 +8998,12 @@ auto main() -> int {
         smoke_temp_root /
             "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
+    );
     auto dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
@@ -8980,6 +9029,12 @@ auto main() -> int {
         dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root /
             "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9053,6 +9108,12 @@ auto main() -> int {
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
+    );
     auto dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or";
@@ -9108,6 +9169,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_forwarded_returned_nested_aggregate_field_sibling_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9435,6 +9502,12 @@ auto main() -> int {
         dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
+    );
     auto dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
@@ -9510,6 +9583,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
     );
     auto dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9595,6 +9674,12 @@ auto main() -> int {
         dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
+    );
     auto dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
@@ -9616,6 +9701,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
     );
     auto dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9693,6 +9784,12 @@ auto main() -> int {
         dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.values",
+        ".1"
+    );
     auto dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
@@ -9755,6 +9852,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9831,6 +9934,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -9917,6 +10026,12 @@ auto main() -> int {
         smoke_temp_root /
             "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
+    );
     auto dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
@@ -9942,6 +10057,12 @@ auto main() -> int {
         dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root /
             "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -10019,6 +10140,12 @@ auto main() -> int {
         dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
+    );
     auto dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
@@ -10086,6 +10213,12 @@ auto main() -> int {
         pipeline,
         dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run"
+    );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.values",
+        ".1"
     );
     auto dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

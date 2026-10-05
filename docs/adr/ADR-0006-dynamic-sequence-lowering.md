@@ -3207,6 +3207,9 @@ representation.
 - Forwarded branch/switch returned aggregate-field fixtures, including nested and mixed-forwarded variants, now use the
   same verified mutation smoke helper. Remaining numbered aggregate-field computed-loop checks are concentrated in
   final-control cleanup families that still assert `computed_for.1` source-loop lowering.
+- Final-control returned aggregate-field cleanup families now also use the verified mutation smoke helper against their
+  `computed_for.1` source loops. Coverage includes final `if` and final `switch` shapes across direct, returned-through
+  switch, forwarded, mixed-forwarded, nested, and forwarded-nested aggregate-field owners.
 
 ## Follow-up work
 
