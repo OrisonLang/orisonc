@@ -2607,6 +2607,53 @@ void seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
     if (depth > 8) {
         return;
     }
+
+    if (auto sequence = dynamic_sequence_source_type(source_type_name);
+        sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array) {
+        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+            owner_name,
+            std::string {source_type_name},
+            context
+        );
+        if (cleanup_plan.has_value()) {
+            auto const existing = std::find_if(
+                state.dynamic_array_local_cleanup_plans.begin(),
+                state.dynamic_array_local_cleanup_plans.end(),
+                [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+                    return plan.owner_name == owner_name &&
+                        plan.source_type_name == source_type_name;
+                }
+            );
+            if (existing == state.dynamic_array_local_cleanup_plans.end()) {
+                cleanup_plan->descriptor_storage_name = "%" + owner_name + ".addr";
+                cleanup_plan->descriptor_storage_status =
+                    DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+                cleanup_plan->source_line = source_line;
+                state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+            }
+        }
+        return;
+    }
+
+    if (auto element_source_type = array_element_source_type_name(source_type_name)) {
+        auto length = fixed_array_length_value(source_type_name);
+        if (!length.has_value()) {
+            return;
+        }
+        auto const element_count = static_cast<std::size_t>(std::stoull(*length));
+        for (auto index = std::size_t {0}; index < element_count; ++index) {
+            seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
+                owner_name + ".element" + std::to_string(index),
+                *element_source_type,
+                source_line,
+                context,
+                state,
+                depth + 1
+            );
+        }
+        return;
+    }
+
     auto const record = context.records.find(std::string {source_type_name});
     if (record == context.records.end()) {
         return;
@@ -2614,33 +2661,6 @@ void seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
 
     for (auto const& field : record->second.fields) {
         auto field_owner_name = owner_name + "." + field.name;
-        if (auto sequence = dynamic_sequence_source_type(field.source_type_name);
-            sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array) {
-            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-                field_owner_name,
-                field.source_type_name,
-                context
-            );
-            if (!cleanup_plan.has_value()) {
-                continue;
-            }
-            auto const existing = std::find_if(
-                state.dynamic_array_local_cleanup_plans.begin(),
-                state.dynamic_array_local_cleanup_plans.end(),
-                [&](DynamicArrayDescriptorCleanupPlan const& plan) {
-                    return plan.owner_name == field_owner_name &&
-                        plan.source_type_name == field.source_type_name;
-                }
-            );
-            if (existing != state.dynamic_array_local_cleanup_plans.end()) {
-                continue;
-            }
-            cleanup_plan->descriptor_storage_name = "%" + field_owner_name + ".addr";
-            cleanup_plan->descriptor_storage_status =
-                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-            cleanup_plan->source_line = source_line;
-            state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
-        }
         seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
             field_owner_name,
             field.source_type_name,

@@ -7864,7 +7864,7 @@ auto main() -> int {
         .semantic_owned_cleanup_lowering_enabled = true;
     dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options
         .dynamic_array_descriptor_cleanup_planning_enabled = true;
-    auto assert_dynamic_array_aggregate_field_computed_for_mutation =
+    auto assert_dynamic_array_computed_for_mutation =
         [&](std::filesystem::path const& path,
             orison::pipeline::CompilePipelineOptions const& options,
             std::string const& owner,
@@ -7889,6 +7889,8 @@ auto main() -> int {
             auto mutation_object = orison::lowering::LlvmObjectEmitter {}.emit(mutation_ir.ir_text);
             assert(!mutation_object.has_errors());
         };
+    auto const& assert_dynamic_array_aggregate_field_computed_for_mutation =
+        assert_dynamic_array_computed_for_mutation;
     auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir =
         pipeline.emit_llvm(
             dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_path,
@@ -8013,6 +8015,36 @@ auto main() -> int {
             dynamic_array_returned_owned_computed_for_cleanup_mutation_ir.ir_text
         );
     assert(!dynamic_array_returned_owned_computed_for_cleanup_mutation_object.has_errors());
+    assert_dynamic_array_computed_for_mutation(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "holder.buckets.element0.values"
+    );
+    assert_dynamic_array_computed_for_mutation(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "holder.grid.element1.element0.values"
+    );
+    assert_dynamic_array_computed_for_mutation(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or",
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "holder.buckets.element0.values"
+    );
+    assert_dynamic_array_computed_for_mutation(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or",
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "holder.buckets.element0.values"
+    );
+    assert_dynamic_array_computed_for_mutation(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+            "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or",
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "holder.buckets.element0.values"
+    );
     auto dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_run.or";
