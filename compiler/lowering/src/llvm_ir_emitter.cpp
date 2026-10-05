@@ -1,5 +1,6 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
@@ -2595,6 +2596,95 @@ void bind_dynamic_array_local_for_computed_for_collection(
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
 }
 
+void seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
+    std::string const& owner_name,
+    std::string_view source_type_name,
+    std::size_t source_line,
+    LoweringContext const& context,
+    FunctionLoweringState& state,
+    std::size_t depth = 0
+) {
+    if (depth > 8) {
+        return;
+    }
+    auto const record = context.records.find(std::string {source_type_name});
+    if (record == context.records.end()) {
+        return;
+    }
+
+    for (auto const& field : record->second.fields) {
+        auto field_owner_name = owner_name + "." + field.name;
+        if (auto sequence = dynamic_sequence_source_type(field.source_type_name);
+            sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array) {
+            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+                field_owner_name,
+                field.source_type_name,
+                context
+            );
+            if (!cleanup_plan.has_value()) {
+                continue;
+            }
+            auto const existing = std::find_if(
+                state.dynamic_array_local_cleanup_plans.begin(),
+                state.dynamic_array_local_cleanup_plans.end(),
+                [&](DynamicArrayDescriptorCleanupPlan const& plan) {
+                    return plan.owner_name == field_owner_name &&
+                        plan.source_type_name == field.source_type_name;
+                }
+            );
+            if (existing != state.dynamic_array_local_cleanup_plans.end()) {
+                continue;
+            }
+            cleanup_plan->descriptor_storage_name = "%" + field_owner_name + ".addr";
+            cleanup_plan->descriptor_storage_status =
+                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+            cleanup_plan->source_line = source_line;
+            state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+        }
+        seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
+            field_owner_name,
+            field.source_type_name,
+            source_line,
+            context,
+            state,
+            depth + 1
+        );
+    }
+}
+
+void bind_annotated_aggregate_local_for_computed_for_collection(
+    syntax::StatementSyntax const& statement,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) {
+    if ((statement.kind != syntax::StatementKind::let_binding &&
+         statement.kind != syntax::StatementKind::var_binding) ||
+        statement.name.empty() ||
+        statement.annotated_type.name.empty()) {
+        return;
+    }
+
+    auto source_type_name = render_source_type_name(statement.annotated_type);
+    state.source_type_names[statement.name] = source_type_name;
+    auto lowered_type = lowered_type_for_source_type_name(source_type_name, context);
+    if (!lowered_type.has_value() || !is_aggregate_llvm_type(lowered_type->type)) {
+        return;
+    }
+
+    auto storage_name = "%" + statement.name + ".addr";
+    state.addressable_bindings[statement.name] = AddressableBinding {
+        .type = std::move(*lowered_type),
+        .storage = std::move(storage_name),
+    };
+    seed_dynamic_array_field_cleanup_plans_for_computed_for_collection(
+        statement.name,
+        source_type_name,
+        statement.line,
+        context,
+        state
+    );
+}
+
 template <typename CollectForStatement>
 void collect_computed_dynamic_array_for_statements(
     syntax::StatementSyntax const& statement,
@@ -2603,6 +2693,7 @@ void collect_computed_dynamic_array_for_statements(
     FunctionLoweringState& state,
     CollectForStatement&& collect_for_statement
 ) {
+    bind_annotated_aggregate_local_for_computed_for_collection(statement, context, state);
     bind_dynamic_array_local_for_computed_for_collection(statement, context, state);
     if (statement.kind == syntax::StatementKind::for_statement) {
         collect_for_statement(statement, enclosing_function_name, context, state);

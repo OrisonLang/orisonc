@@ -3193,6 +3193,12 @@ representation.
 - Pipeline smoke coverage now proves the returned-owned computed DynamicArray production mutation path: the numbered
   source loop is replaced by the unnumbered mutation loop, owned element cleanup and descriptor deallocation remain in
   the rewritten IR, and object emission accepts the mutated module.
+- Computed DynamicArray production metadata collection now also seeds annotated aggregate locals and their
+  DynamicArray field cleanup plans, letting returned aggregate-field owners reach production gate/sequence readiness.
+- Production mutation execution now retargets the descriptor load to the actual storage operand from the replaced
+  source loop. This keeps aggregate-field rewrites valid when normal lowering assigns a unique projection storage name.
+- Pipeline smoke coverage now proves the returned aggregate-field owned computed DynamicArray production mutation path,
+  including owned element cleanup, descriptor deallocation, numbered loop removal, and object emission.
 
 ## Follow-up work
 

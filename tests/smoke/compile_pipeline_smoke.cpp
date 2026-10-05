@@ -7858,6 +7858,63 @@ auto main() -> int {
         dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run"
     );
+    auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options =
+        computed_dynamic_array_local_same_owner_for_mutation_options;
+    dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options
+        .semantic_owned_cleanup_lowering_enabled = true;
+    dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options
+        .dynamic_array_descriptor_cleanup_planning_enabled = true;
+    auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir =
+        pipeline.emit_llvm(
+            dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_path,
+            dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options
+        );
+    assert(!dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.has_errors());
+    assert(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_mutation_execution_state.executed
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
+    );
+    assert(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir
+            .computed_dynamic_array_for_production_mutation_execution_state.llvm_verifier_passed
+    );
+    assert_ir_contains(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.ir_text,
+        "returned.values.computed_for.condition:\n"
+    );
+    assert_ir_contains(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.values.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.values.computed_for.data"
+    );
+    assert_ir_excludes(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.ir_text,
+        "returned.values.computed_for.0.condition:\n"
+    );
+    assert_ir_excludes(
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %returned.values.computed_for.0.data"
+    );
+    auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(
+            dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir.ir_text
+        );
+    assert(!dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_object.has_errors());
     auto dynamic_array_returned_owned_computed_for_cleanup_mutation_options =
         computed_dynamic_array_local_same_owner_for_mutation_options;
     dynamic_array_returned_owned_computed_for_cleanup_mutation_options

@@ -1284,6 +1284,46 @@ auto computed_dynamic_array_source_loop_replacement_start(
     return descriptor_position + std::size_t {1};
 }
 
+auto computed_dynamic_array_source_descriptor_storage(
+    std::string const& function_ir,
+    std::string const& source_prefix
+) -> std::optional<std::string> {
+    auto const descriptor_prefix = "%" + source_prefix + ".descriptor = load ";
+    auto const descriptor_position = function_ir.find(descriptor_prefix);
+    if (descriptor_position == std::string::npos) {
+        return std::nullopt;
+    }
+    auto const line_end = function_ir.find('\n', descriptor_position);
+    if (line_end == std::string::npos) {
+        return std::nullopt;
+    }
+    auto const storage_marker = std::string {", ptr "};
+    auto const storage_position = function_ir.rfind(storage_marker, line_end);
+    if (storage_position == std::string::npos || storage_position < descriptor_position) {
+        return std::nullopt;
+    }
+    auto const storage_start = storage_position + storage_marker.size();
+    return function_ir.substr(storage_start, line_end - storage_start);
+}
+
+auto retarget_computed_dynamic_array_entry_descriptor_storage(
+    std::string entry_mutation_text,
+    std::string const& descriptor_storage
+) -> std::string {
+    auto const line_end = entry_mutation_text.find('\n');
+    if (line_end == std::string::npos) {
+        return entry_mutation_text;
+    }
+    auto const storage_marker = std::string {", ptr "};
+    auto const storage_position = entry_mutation_text.rfind(storage_marker, line_end);
+    if (storage_position == std::string::npos) {
+        return entry_mutation_text;
+    }
+    auto const storage_start = storage_position + storage_marker.size();
+    entry_mutation_text.replace(storage_start, line_end - storage_start, descriptor_storage);
+    return entry_mutation_text;
+}
+
 auto computed_dynamic_array_mutation_cleanup_text(
     std::string const& function_ir,
     std::string const& cleanup_owner_name
@@ -1373,6 +1413,9 @@ void apply_computed_dynamic_array_for_production_mutation(
                 *source_prefix
             )
             : std::nullopt;
+        auto const source_descriptor_storage = source_prefix.has_value()
+            ? computed_dynamic_array_source_descriptor_storage(original_function_ir, *source_prefix)
+            : std::nullopt;
         if (original_function_ir.empty()) {
             execution_state.llvm_verifier_diagnostic_text =
                 "computed DynamicArray production mutation blocked: function slice missing";
@@ -1388,6 +1431,9 @@ void apply_computed_dynamic_array_for_production_mutation(
         } else if (!replacement_start_position.has_value()) {
             execution_state.llvm_verifier_diagnostic_text =
                 "computed DynamicArray production mutation blocked: source loop start missing";
+        } else if (!source_descriptor_storage.has_value()) {
+            execution_state.llvm_verifier_diagnostic_text =
+                "computed DynamicArray production mutation blocked: source descriptor storage missing";
         } else if (occurrence_count(composed_ir, original_function_ir) != 1) {
             execution_state.llvm_verifier_diagnostic_text =
                 "computed DynamicArray production mutation blocked: function slice not unique";
@@ -1403,6 +1449,7 @@ void apply_computed_dynamic_array_for_production_mutation(
             cleanup_mutation_text.has_value() &&
             !cleanup_mutation_text->empty() &&
             replacement_start_position.has_value() &&
+            source_descriptor_storage.has_value() &&
             occurrence_count(composed_ir, original_function_ir) == 1 &&
             terminator_position != std::string::npos &&
             terminator_end != std::string::npos;
@@ -1417,6 +1464,10 @@ void apply_computed_dynamic_array_for_production_mutation(
 
         auto const predecessor_block_name =
             block_label_before_position(original_function_ir, *replacement_start_position);
+        entry_mutation_text = retarget_computed_dynamic_array_entry_descriptor_storage(
+            std::move(entry_mutation_text),
+            *source_descriptor_storage
+        );
         auto append_mutation_text = std::string {};
         for (auto line_index = computed_dynamic_array_entry_prefix_line_count;
              line_index < computed_dynamic_array_mutation_line_count;
