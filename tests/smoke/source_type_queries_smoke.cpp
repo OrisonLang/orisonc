@@ -3978,6 +3978,17 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
+        ).find("authorization missing: runtime aggregate production cleanup authorization") ==
+        std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
+        ).find("runtime aggregate cleanup proof blocked") == std::string::npos
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            forwarded_static_indexed_aggregate_field_dynamic_index_authorized_production_gate
         ).find("production emission mutation allowed") != std::string::npos
     );
     assert(

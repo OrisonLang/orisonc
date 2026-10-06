@@ -138,6 +138,8 @@ representation.
   before inserting the loop, and emits the disabled cleanup-acquisition marker immediately before descriptor rendering.
 - Pipeline emission reports now derive an inserted cleanup-transition audit line from the actual lowered IR markers,
   keeping executable test-only insertion observability separate from metadata-only cleanup-transition readiness.
+- Runtime-index aggregate computed DynamicArray production-gate reports now suppress the blocked proof marker once the
+  internal production cleanup authorization is present, so authorized metadata does not also report stale blocked state.
 - Computed dynamic-array cleanup acquisition and resumption markers now render through a shared internal cleanup state
   handoff model. The lowered IR still contains disabled audit markers only; no cleanup calls, deallocation, or element
   drops are emitted by this seam.

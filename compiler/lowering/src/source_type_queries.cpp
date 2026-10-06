@@ -3231,6 +3231,7 @@ auto computed_dynamic_array_iterable_runtime_aggregate_cleanup_proof_blocked(
     return handoff_plan.ownership_plan.unsupported_reason ==
             ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index &&
         handoff_plan.descriptor_storage_available &&
+        !plan.production_cleanup_authorization_ready &&
         !handoff_plan.cleanup_owner_proven;
 }
 
