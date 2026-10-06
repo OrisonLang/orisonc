@@ -3552,6 +3552,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or";
+    auto forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed_for_cleanup_run.or";
     auto forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
@@ -4548,6 +4550,30 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
+    );
+    assert_run_success(executable, forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_path);
+    assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_path,
+        "holder.grid[row][column].values",
+        "holder.grid.row..column..values",
+        "%record.Holder = type { [2 x [2 x %record.Bucket]] }",
+        {
+            "getelementptr [2 x [2 x %record.Bucket]], ptr %tmp12, i64 0, i64 %tmp13",
+            "getelementptr [2 x %record.Bucket], ptr %tmp15, i64 0, i64 %tmp16",
+        },
+        "store { ptr, i64, i64 } zeroinitializer, ptr %tmp19",
+        "holder.grid.element0.element0.values.dynamic_array_cleanup"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
