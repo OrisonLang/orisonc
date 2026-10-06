@@ -2164,6 +2164,43 @@ void assert_computed_dynamic_array_owner_mismatch_failure_matrix(
     }
 }
 
+void assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& object_path,
+    std::filesystem::path const& output_path,
+    std::string_view left_owner,
+    std::string_view right_owner
+) {
+    auto const left = std::string {left_owner};
+    auto const right = std::string {right_owner};
+    auto const expected_summary_fragment =
+        "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to " +
+        left + " " + right + " for DynamicArray<Payload>";
+    auto const expected_owner_fragment =
+        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
+        "element Payload unsupported reason runtime aggregate index owners " +
+        left + " " + right + " [ownership join blocked] [cleanup owner blocked] (metadata only)";
+    auto const expected_gate_fragment =
+        "computed DynamicArray cleanup authorization gate ownership join blocked source DynamicArray<Payload> "
+        "element Payload [handoff inputs blocked] [production cleanup authorization blocked] "
+        "[authorization contract blocked] [cleanup owner blocked] [runtime aggregate audit proof missing] "
+        "[runtime aggregate single owner blocked] [runtime aggregate descriptor storage mismatch] "
+        "[runtime aggregate cleanup authorization blocked] [production cleanup blocked] (metadata only)";
+
+    for (auto const& command : {
+             executable.string() + " run " + source_path.string(),
+             executable.string() + " --emit-llvm " + source_path.string(),
+             executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string(),
+             executable.string() + " --build " + source_path.string() + " -o " + output_path.string(),
+         }) {
+        auto output = read_failing_command_output(command);
+        assert_contains(output, expected_summary_fragment);
+        assert_contains(output, expected_owner_fragment);
+        assert_contains(output, expected_gate_fragment);
+    }
+}
+
 void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -3548,6 +3585,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
+    auto nested_dynamic_index_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path =
@@ -4823,6 +4862,14 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch",
         "holder.grid.element1.element0.values",
         "holder.grid.element0.element1.values"
+    );
+    assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
+        executable,
+        nested_dynamic_index_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_owner_mismatch",
+        "holder.grid[row][column].values",
+        "holder.grid[column][row].values"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
