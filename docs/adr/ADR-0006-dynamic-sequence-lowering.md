@@ -3261,6 +3261,8 @@ representation.
 - Forwarded-helper runtime-index aggregate computed loops now reuse the proven source owner for descriptor storage.
   Shapes like `forward_holder(holder).buckets[selected].values` project from the original `holder` storage and do not
   call the forwarding helper while forming the descriptor address.
+- Nested runtime-index aggregate computed loops now emit bounded descriptor-storage projections for multi-step fixed
+  arrays such as `holder.grid[row][column].values`, including one runtime bounds check per dynamic fixed-array index.
 
 ## Follow-up work
 

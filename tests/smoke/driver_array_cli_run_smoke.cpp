@@ -344,46 +344,59 @@ void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_succ
 
 void assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
     std::filesystem::path const& executable,
-    std::filesystem::path const& source_path
+    std::filesystem::path const& source_path,
+    std::string_view semantic_owner_name,
+    std::string_view label_owner_name,
+    std::string_view holder_type,
+    std::initializer_list<std::string_view> dynamic_descriptor_fragments,
+    std::string_view finalization_fragment,
+    std::string_view sibling_cleanup_fragment
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
     assert_contains(output, "%record.Bucket = type { { ptr, i64, i64 } }");
-    assert_contains(output, "%record.Holder = type { [2 x %record.Bucket] }");
+    assert_contains(output, holder_type);
     assert_contains(output, "define void @__orison_owned_cleanup.Payload(ptr %value)");
     assert_contains(output, "%computed_dynamic_array_runtime_aggregate_index");
-    assert_contains(output, "getelementptr [2 x %record.Bucket], ptr %tmp6, i64 0, i64 %tmp7");
-    assert_contains(output, "holder.buckets.selected..values.computed_for.0.condition:");
-    assert_contains(output, "holder.buckets.selected..values.computed_for.0.body:");
-    assert_contains(output, "holder.buckets.selected..values.computed_for.0.exit:");
+    for (auto const dynamic_descriptor_fragment : dynamic_descriptor_fragments) {
+        assert_contains(output, dynamic_descriptor_fragment);
+    }
+    auto semantic_owner = std::string {semantic_owner_name};
+    auto label_owner = std::string {label_owner_name};
+    assert_contains(output, label_owner + ".computed_for.0.condition:");
+    assert_contains(output, label_owner + ".computed_for.0.body:");
+    assert_contains(output, label_owner + ".computed_for.0.exit:");
     assert(output.find("call %record.Holder @forward_holder") == std::string::npos);
     assert_contains(
         output,
-        "cleanup state handoff acquire operation holder.buckets.selected..values.computed_for.0.cleanup.acquire "
-        "from holder.buckets[selected].values to holder.buckets[selected].values.loop.entry [cleanup calls enabled]"
+        "cleanup state handoff acquire operation " + label_owner + ".computed_for.0.cleanup.acquire "
+        "from " + semantic_owner + " to " + semantic_owner + ".loop.entry [cleanup calls enabled]"
     );
     assert_contains(
         output,
-        "cleanup state handoff resume operation holder.buckets.selected..values.computed_for.0.cleanup.resume "
-        "from holder.buckets[selected].values.loop.entry to holder.buckets[selected].values [cleanup calls enabled]"
+        "cleanup state handoff resume operation " + label_owner + ".computed_for.0.cleanup.resume "
+        "from " + semantic_owner + ".loop.entry to " + semantic_owner + " [cleanup calls enabled]"
     );
 
     auto const runtime_bounds = output.find("%computed_dynamic_array_runtime_aggregate_index");
-    auto const dynamic_descriptor = output.find("getelementptr [2 x %record.Bucket], ptr %tmp6, i64 0, i64 %tmp7");
+    auto dynamic_descriptor = runtime_bounds;
+    for (auto const dynamic_descriptor_fragment : dynamic_descriptor_fragments) {
+        dynamic_descriptor = output.find(dynamic_descriptor_fragment, dynamic_descriptor);
+        assert(dynamic_descriptor != std::string::npos);
+    }
     auto const computed_drop = output.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %holder.buckets.selected..values.computed_dynamic_array_cleanup"
+        "call void @__orison_owned_cleanup.Payload(ptr %" + label_owner + ".computed_dynamic_array_cleanup"
     );
     auto const computed_deallocation = output.find(
-        "call void @__orison_dynamic_array_deallocate(ptr %holder.buckets.selected..values.computed_for.0.data",
+        "call void @__orison_dynamic_array_deallocate(ptr %" + label_owner + ".computed_for.0.data",
         computed_drop
     );
     auto const computed_finalization = output.find(
-        "store { ptr, i64, i64 } zeroinitializer, ptr %tmp10",
+        finalization_fragment,
         computed_deallocation
     );
-    auto const sibling_cleanup = output.find("holder.buckets.element0.values.dynamic_array_cleanup", computed_finalization);
+    auto const sibling_cleanup = output.find(sibling_cleanup_fragment, computed_finalization);
     auto const return_value = output.find("ret i32", sibling_cleanup);
     assert(runtime_bounds != std::string::npos);
-    assert(dynamic_descriptor != std::string::npos);
     assert(computed_drop != std::string::npos);
     assert(computed_deallocation != std::string::npos);
     assert(computed_finalization != std::string::npos);
@@ -3527,6 +3540,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
     auto direct_dynamic_index_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup_run.or";
+    auto nested_dynamic_index_aggregate_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_for_cleanup_run.or";
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4454,7 +4469,13 @@ auto main(int argc, char** argv) -> int {
     assert_run_success(executable, direct_dynamic_index_aggregate_owned_computed_dynamic_array_path);
     assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
         executable,
-        direct_dynamic_index_aggregate_owned_computed_dynamic_array_path
+        direct_dynamic_index_aggregate_owned_computed_dynamic_array_path,
+        "holder.buckets[selected].values",
+        "holder.buckets.selected..values",
+        "%record.Holder = type { [2 x %record.Bucket] }",
+        {"getelementptr [2 x %record.Bucket], ptr %tmp6, i64 0, i64 %tmp7"},
+        "store { ptr, i64, i64 } zeroinitializer, ptr %tmp10",
+        "holder.buckets.element0.values.dynamic_array_cleanup"
     );
     assert_emit_object_success(
         executable,
@@ -4465,6 +4486,30 @@ auto main(int argc, char** argv) -> int {
         executable,
         direct_dynamic_index_aggregate_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, nested_dynamic_index_aggregate_owned_computed_dynamic_array_path);
+    assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        nested_dynamic_index_aggregate_owned_computed_dynamic_array_path,
+        "holder.grid[row][column].values",
+        "holder.grid.row..column..values",
+        "%record.Holder = type { [2 x [2 x %record.Bucket]] }",
+        {
+            "getelementptr [2 x [2 x %record.Bucket]], ptr %tmp12, i64 0, i64 %tmp13",
+            "getelementptr [2 x %record.Bucket], ptr %tmp15, i64 0, i64 %tmp16",
+        },
+        "store { ptr, i64, i64 } zeroinitializer, ptr %tmp19",
+        "holder.grid.element0.element0.values.dynamic_array_cleanup"
+    );
+    assert_emit_object_success(
+        executable,
+        nested_dynamic_index_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        nested_dynamic_index_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_for_cleanup"
     );
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
@@ -4486,7 +4531,13 @@ auto main(int argc, char** argv) -> int {
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path);
     assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
         executable,
-        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path
+        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
+        "holder.buckets[selected].values",
+        "holder.buckets.selected..values",
+        "%record.Holder = type { [2 x %record.Bucket] }",
+        {"getelementptr [2 x %record.Bucket], ptr %tmp6, i64 0, i64 %tmp7"},
+        "store { ptr, i64, i64 } zeroinitializer, ptr %tmp10",
+        "holder.buckets.element0.values.dynamic_array_cleanup"
     );
     assert_emit_object_success(
         executable,
