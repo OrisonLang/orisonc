@@ -3238,6 +3238,9 @@ representation.
   and final owned descriptor cleanup for that contract.
 - The `dynamic_array_owned_parameter_cleanup_run.or` fixture now has an executable `main` and is covered by the
   existing array CLI forwarding-mode run, emit-object, and build checks for owned-parameter cleanup.
+- A positive `dynamic_array*_run.or` fixture coverage audit found no remaining run fixtures outside the existing CLI
+  smoke harnesses. The remaining unmatched `dynamic_array_cleanup_audit.or` fixture is intentionally audit-only and
+  keeps its single-function shape for drop-report assertions.
 
 ## Follow-up work
 
