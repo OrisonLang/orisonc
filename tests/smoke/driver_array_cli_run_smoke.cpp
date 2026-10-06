@@ -202,6 +202,24 @@ void assert_owned_dynamic_array_replacement_emit_llvm_success(
     assert(replacement_store < cleanup_drop);
 }
 
+void assert_dynamic_array_complete_contract_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "define i32 @scalar_demo()");
+    assert_contains(output, "define i32 @owned_demo()");
+    assert_contains(output, "define void @method.DynamicArray_UInt32_.append_value__UInt32(ptr %this, i32 %value)");
+    assert_contains(output, "define void @method.DynamicArray_Payload_.replace_first__Payload");
+    assert_contains(output, "call i32 @scalar_demo()");
+    assert_contains(output, "call i32 @owned_demo()");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %this.dynamic_array_assign0.element.addr)");
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup");
+    assert_contains(output, "define i32 @method.DynamicArray_Payload_.first_value__Payload");
+    assert_contains(output, "getelementptr [2 x i32]");
+}
+
 void assert_owned_computed_dynamic_array_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -4147,6 +4165,8 @@ auto main(int argc, char** argv) -> int {
     auto dynamic_array_parameter_push_path =
         fixtures / "dynamic_array_parameter_push_run.or";
     auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
+    auto dynamic_array_complete_contract_path =
+        fixtures / "dynamic_array_complete_contract.or";
     auto dynamic_array_push_owned_payload_reuse_path =
         fixtures / "dynamic_array_push_owned_payload_reuse_rejected.or";
     auto dynamic_array_push_owned_field_reuse_path =
@@ -4211,6 +4231,16 @@ auto main(int argc, char** argv) -> int {
         executable,
         owned_nested_computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_owned_nested_computed_for"
+    );
+    assert_run_success(executable, dynamic_array_complete_contract_path);
+    assert_dynamic_array_complete_contract_emit_llvm_success(
+        executable,
+        dynamic_array_complete_contract_path
+    );
+    assert_build_success(
+        executable,
+        dynamic_array_complete_contract_path,
+        smoke_temp_root / "dynamic_array_complete_contract"
     );
     assert_run_success(executable, forwarded_parameter_owned_computed_dynamic_array_path);
     assert_owned_computed_dynamic_array_emit_llvm_success(

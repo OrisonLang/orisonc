@@ -3233,6 +3233,9 @@ representation.
   object/link/run coverage.
 - Remaining migrated cleanup fixture tables now use explicit `legacy_drop_spelling_*` names and a shared helper, making
   their compatibility-guard role distinct from mutation and executable coverage.
+- The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
+  `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
+  and final owned descriptor cleanup for that contract.
 
 ## Follow-up work
 

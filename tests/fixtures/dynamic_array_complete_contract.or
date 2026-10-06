@@ -56,4 +56,6 @@ function owned_demo() -> UInt32
     projected + indexed + values.first_value() + values.second_byte()
 
 function main() -> UInt32
+    let scalar: UInt32 = scalar_demo()
+    let owned: UInt32 = owned_demo()
     0 as UInt32
