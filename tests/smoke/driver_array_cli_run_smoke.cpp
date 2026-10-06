@@ -3593,6 +3593,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or";
     auto forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed_for_cleanup_run.or";
+    auto forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path =
+        fixtures / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
@@ -4878,6 +4880,14 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch",
         "left.buckets.element0.values",
         "right.buckets.element0.values"
+    );
+    assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
+        executable,
+        forwarded_nested_dynamic_index_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path,
+        smoke_temp_root / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed_owner_mismatch.o",
+        smoke_temp_root / "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed_owner_mismatch",
+        "holder.grid[row][column].values",
+        "holder.grid[column][row].values"
     );
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(

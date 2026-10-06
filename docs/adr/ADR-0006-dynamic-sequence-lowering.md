@@ -3268,6 +3268,8 @@ representation.
   storage rather than calling the helper.
 - Nested runtime-index aggregate owner mismatches remain rejected when ternary branches resolve to different runtime
   indexed owners such as `holder.grid[row][column].values` and `holder.grid[column][row].values`.
+- Forwarded-helper nested runtime-index aggregate owner mismatches use the same recovered source-owner diagnostic, so
+  forwarding does not hide branch mismatches between runtime-indexed aggregate descriptors.
 
 ## Follow-up work
 
