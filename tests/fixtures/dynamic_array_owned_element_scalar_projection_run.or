@@ -1,0 +1,12 @@
+package fixtures.dynamicarrayownedelementscalarprojectionrun
+
+record Payload
+    public value: UInt32
+
+function read_first_value(values: DynamicArray<Payload>) -> UInt32
+    values[0].value
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(7 as UInt32))
+    read_first_value(values) == 7 as UInt32 ? 0 as UInt32 : 1 as UInt32

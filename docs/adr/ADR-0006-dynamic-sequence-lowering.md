@@ -3245,6 +3245,9 @@ representation.
 - Final-control forwarded choice-payload alias fixtures with an extra post-forward owner read now report the direct
   `use after move: packet` diagnostic instead of a generic branch/case lowering failure. The source remains rejected;
   the change tightens the safety explanation without expanding accepted syntax or ownership behavior.
+- Owned `DynamicArray<T>` element scalar projection now has explicit production CLI coverage. The accepted
+  `values[0].value` path is pinned beside rejected owned-element copy and owned aggregate projection fixtures, keeping
+  the safety boundary visible in tests.
 
 ## Follow-up work
 

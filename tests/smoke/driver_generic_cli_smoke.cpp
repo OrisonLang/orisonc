@@ -6313,6 +6313,11 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_projection_rejected.or",
         "DynamicArray element path read of owned projection requires a non-owning scalar projection"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_owned_element_scalar_projection_run.or",
+        smoke_temp_root / "dynamic_array_owned_element_scalar_projection"
+    );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "aggregate_owned_projection_rejected.or",
