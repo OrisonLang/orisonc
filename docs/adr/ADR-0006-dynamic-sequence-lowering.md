@@ -3270,6 +3270,9 @@ representation.
   indexed owners such as `holder.grid[row][column].values` and `holder.grid[column][row].values`.
 - Forwarded-helper nested runtime-index aggregate owner mismatches use the same recovered source-owner diagnostic, so
   forwarding does not hide branch mismatches between runtime-indexed aggregate descriptors.
+- Runtime-index aggregate descriptor lowering now separates source-owner projection planning from IR emission. Direct,
+  forwarded, and nested computed-loop paths keep the same emitted descriptor projection while future aggregate cases can
+  reuse the validated projection plan.
 
 ## Follow-up work
 

@@ -274,14 +274,18 @@ inline auto runtime_index_aggregate_root_name(std::string_view owner_name) -> st
     return std::string {owner_name.substr(0, separator)};
 }
 
-inline auto lower_named_runtime_index_aggregate_descriptor_storage(
+struct RuntimeIndexAggregateDescriptorProjectionPlan {
+    std::string root_name;
+    std::string root_storage;
+    std::string root_source_type_name;
+    AggregatePath aggregate_path;
+};
+
+inline auto plan_runtime_index_aggregate_descriptor_projection(
     syntax::ExpressionSyntax const& expression,
     std::string_view owner_name,
-    std::string_view expected_source_type_name,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    std::ostringstream& output
-) -> std::optional<std::string> {
+    FunctionLoweringSession const& session
+) -> std::optional<RuntimeIndexAggregateDescriptorProjectionPlan> {
     auto aggregate_path = collect_aggregate_path(expression);
     if (aggregate_path.base_expression == nullptr || aggregate_path.steps.empty()) {
         return std::nullopt;
@@ -301,16 +305,31 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
     if (!root_storage.has_value() || !root_storage->source_type_name.has_value()) {
         return std::nullopt;
     }
+    return RuntimeIndexAggregateDescriptorProjectionPlan {
+        .root_name = std::move(*root_name),
+        .root_storage = root_storage->storage,
+        .root_source_type_name = *root_storage->source_type_name,
+        .aggregate_path = std::move(aggregate_path),
+    };
+}
+
+inline auto emit_runtime_index_aggregate_descriptor_projection(
+    RuntimeIndexAggregateDescriptorProjectionPlan const& plan,
+    std::string_view expected_source_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::string> {
     auto cursor = initialize_aggregate_path_cursor(
-        root_storage->storage,
-        *root_storage->source_type_name,
+        plan.root_storage,
+        plan.root_source_type_name,
         context.lowering
     );
     if (!cursor.has_value()) {
         return std::nullopt;
     }
 
-    for (auto const& step : aggregate_path.steps) {
+    for (auto const& step : plan.aggregate_path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
             auto result = advance_aggregate_path_member_with_temporary(
                 *cursor,
@@ -373,6 +392,31 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
     return cursor->pointer;
+}
+
+inline auto lower_named_runtime_index_aggregate_descriptor_storage(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view owner_name,
+    std::string_view expected_source_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::string> {
+    auto projection_plan = plan_runtime_index_aggregate_descriptor_projection(
+        expression,
+        owner_name,
+        session
+    );
+    if (!projection_plan.has_value()) {
+        return std::nullopt;
+    }
+    return emit_runtime_index_aggregate_descriptor_projection(
+        *projection_plan,
+        expected_source_type_name,
+        context,
+        session,
+        output
+    );
 }
 
 inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_storage(
