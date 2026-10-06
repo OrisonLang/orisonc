@@ -3258,6 +3258,9 @@ representation.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.
+- Forwarded-helper runtime-index aggregate computed loops now reuse the proven source owner for descriptor storage.
+  Shapes like `forward_holder(holder).buckets[selected].values` project from the original `holder` storage and do not
+  call the forwarding helper while forming the descriptor address.
 
 ## Follow-up work
 

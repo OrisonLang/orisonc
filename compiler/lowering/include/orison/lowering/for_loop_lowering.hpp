@@ -23,6 +23,7 @@
 #include "orison/semantics/drop_model.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <sstream>
@@ -260,23 +261,43 @@ inline auto computed_dynamic_array_owned_cleanup_label_prefix(std::string_view n
     return label_prefix;
 }
 
+inline auto runtime_index_aggregate_root_name(std::string_view owner_name) -> std::optional<std::string> {
+    auto const member_separator = owner_name.find('.');
+    auto const index_separator = owner_name.find('[');
+    auto separator = std::min(member_separator, index_separator);
+    if (separator == std::string_view::npos) {
+        separator = owner_name.size();
+    }
+    if (separator == 0) {
+        return std::nullopt;
+    }
+    return std::string {owner_name.substr(0, separator)};
+}
+
 inline auto lower_named_runtime_index_aggregate_descriptor_storage(
     syntax::ExpressionSyntax const& expression,
+    std::string_view owner_name,
     std::string_view expected_source_type_name,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<std::string> {
-    auto aggregate_path = collect_named_aggregate_path(expression);
-    if (!aggregate_path.has_value() || aggregate_path->base_expression == nullptr ||
-        aggregate_path->base_expression->kind != syntax::ExpressionKind::name) {
+    auto aggregate_path = collect_aggregate_path(expression);
+    if (aggregate_path.base_expression == nullptr || aggregate_path.steps.empty()) {
         return std::nullopt;
     }
 
-    auto root_storage = named_aggregate_storage_for_name(
-        aggregate_path->base_expression->text,
-        session.state
-    );
+    auto root_name = std::optional<std::string> {};
+    if (aggregate_path.base_expression->kind == syntax::ExpressionKind::name) {
+        root_name = aggregate_path.base_expression->text;
+    } else {
+        root_name = runtime_index_aggregate_root_name(owner_name);
+    }
+    if (!root_name.has_value()) {
+        return std::nullopt;
+    }
+
+    auto root_storage = named_aggregate_storage_for_name(*root_name, session.state);
     if (!root_storage.has_value() || !root_storage->source_type_name.has_value()) {
         return std::nullopt;
     }
@@ -289,7 +310,7 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
 
-    for (auto const& step : aggregate_path->steps) {
+    for (auto const& step : aggregate_path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
             auto result = advance_aggregate_path_member_with_temporary(
                 *cursor,
@@ -381,6 +402,7 @@ inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_stora
 
     auto descriptor_storage = lower_named_runtime_index_aggregate_descriptor_storage(
         *expression.right,
+        handoff_plan.handoff_owner_name,
         handoff_plan.source_type_name,
         context,
         session,

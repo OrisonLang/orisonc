@@ -1,4 +1,4 @@
-package fixtures.dynamicarrayforwardedstaticindexedaggregatehelperdynamicindexownedcomputedrejected
+package fixtures.dynamicarrayforwardedstaticindexedaggregatehelperdynamicindexownedcomputedforcleanuprun
 
 record Payload
     value: UInt32
@@ -27,4 +27,4 @@ function main() -> UInt32
     var total = 0 as UInt32
     for item in true ? forward_holder(holder).buckets[selected].values : forward_holder(holder).buckets[selected].values
         total = total + item.value
-    total
+    total - 81 as UInt32

@@ -342,7 +342,7 @@ void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_succ
     assert(sibling_cleanup < return_value);
 }
 
-void assert_direct_dynamic_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+void assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
 ) {
@@ -355,6 +355,7 @@ void assert_direct_dynamic_index_aggregate_owned_computed_dynamic_array_emit_llv
     assert_contains(output, "holder.buckets.selected..values.computed_for.0.condition:");
     assert_contains(output, "holder.buckets.selected..values.computed_for.0.body:");
     assert_contains(output, "holder.buckets.selected..values.computed_for.0.exit:");
+    assert(output.find("call %record.Holder @forward_holder") == std::string::npos);
     assert_contains(
         output,
         "cleanup state handoff acquire operation holder.buckets.selected..values.computed_for.0.cleanup.acquire "
@@ -2176,117 +2177,6 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     }
 }
 
-void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& source_path,
-    std::filesystem::path const& object_path,
-    std::filesystem::path const& output_path
-) {
-    auto const expected_summary_fragment =
-        "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to "
-        "holder.buckets[selected].values holder.buckets[selected].values for DynamicArray<Payload>";
-    auto const expected_reason_fragment =
-        "computed DynamicArray ownership plan ternary single owner unproven source DynamicArray<Payload> "
-        "element Payload unsupported reason runtime aggregate index owners "
-        "holder.buckets[selected].values holder.buckets[selected].values "
-        "[ownership join ok] [cleanup owner blocked] (metadata only)";
-    auto const expected_handoff_fragment =
-        "computed DynamicArray descriptor handoff plan cleanup owner unproven source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values handoff holder.buckets[selected].values "
-        "descriptor %holder.buckets.selected..values.addr [descriptor storage available] "
-        "[cleanup owner blocked] [runtime aggregate audit proof detected] "
-        "[runtime aggregate single owner proven] [runtime aggregate descriptor storage consistent] "
-        "[runtime aggregate cleanup proof blocked] [lowering disabled] (metadata only)";
-    auto const expected_authorization_gate_fragment =
-        "computed DynamicArray cleanup authorization gate cleanup authorization blocked source "
-        "DynamicArray<Payload> element Payload owner holder.buckets[selected].values descriptor "
-        "%holder.buckets.selected..values.addr [handoff inputs ready] "
-        "[production cleanup authorization blocked] "
-        "[authorization contract blocked] [authorization proof input: runtime aggregate audit proof] "
-        "[authorization proof input: runtime aggregate single owner] "
-        "[authorization proof input: runtime aggregate descriptor storage consistency] "
-        "[authorization missing: runtime aggregate production cleanup authorization] "
-        "[cleanup owner blocked] [runtime aggregate audit proof detected] [runtime aggregate single owner proven] "
-        "[runtime aggregate descriptor storage consistent] [runtime aggregate cleanup authorization blocked] "
-        "[production cleanup blocked] (metadata only)";
-    auto const expected_cleanup_sequence_fragment =
-        "computed DynamicArray cleanup sequence plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets.selected..values.addr "
-        "[loop cleanup blocked] [handoff inputs ready] [production cleanup authorization blocked] "
-        "[authorization contract blocked] "
-        "[authorization proof input: runtime aggregate audit proof] "
-        "[authorization proof input: runtime aggregate single owner] "
-        "[authorization proof input: runtime aggregate descriptor storage consistency] "
-        "[authorization missing: runtime aggregate production cleanup authorization] [cleanup authorization blocked] "
-        "[runtime aggregate cleanup authorization blocked] [function cleanup blocked] "
-        "[cleanup sequence disabled] (metadata only)";
-    auto const expected_descriptor_render_fragment =
-        "computed DynamicArray descriptor render plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets.selected..values.addr "
-        "[descriptor load blocked] [data projection blocked] [length projection blocked] "
-        "[capacity projection blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
-    auto const expected_loop_control_fragment =
-        "computed DynamicArray loop control render plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [entry branch blocked] [index phi blocked] "
-        "[bounds check blocked] [conditional branch blocked] [cleanup authorization blocked] "
-        "[render disabled] (metadata only)";
-    auto const expected_element_address_fragment =
-        "computed DynamicArray element address render plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [data pointer blocked] [index blocked] "
-        "[element address blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
-    auto const expected_element_load_fragment =
-        "computed DynamicArray element load render plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [element address blocked] "
-        "[item value blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
-    auto const expected_loop_continue_fragment =
-        "computed DynamicArray loop continue render plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [continue block blocked] [next index blocked] "
-        "[backedge branch blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
-    auto const expected_loop_render_fragment =
-        "computed DynamicArray loop render sequence plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [descriptor render blocked] "
-        "[loop control blocked] [body block blocked] [element address blocked] [element load blocked] "
-        "[loop continue blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
-    auto const expected_loop_exit_fragment =
-        "computed DynamicArray loop exit cleanup plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [exit block blocked] [cleanup blocked] "
-        "[cleanup authorization blocked] [cleanup sequence disabled] [render disabled] (metadata only)";
-    auto const expected_gate_fragment =
-        "computed DynamicArray production emission gate plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values [ownership blocked] [loop render blocked] "
-        "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
-        "[production sequence blocked] [cleanup authorization blocked] [production cleanup authorization blocked] "
-        "[authorization contract blocked] "
-        "[authorization proof input: runtime aggregate audit proof] "
-        "[authorization proof input: runtime aggregate single owner] "
-        "[authorization proof input: runtime aggregate descriptor storage consistency] "
-        "[authorization missing: runtime aggregate production cleanup authorization] "
-        "[runtime aggregate cleanup proof blocked] [production emission mutation blocked] "
-        "[production emission disabled] (metadata only)";
-
-    for (auto const& command : {
-             executable.string() + " run " + source_path.string(),
-             executable.string() + " --emit-llvm " + source_path.string(),
-             executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string(),
-             executable.string() + " --build " + source_path.string() + " -o " + output_path.string(),
-         }) {
-        auto output = read_failing_command_output(command);
-        assert_contains(output, expected_summary_fragment);
-        assert_contains(output, expected_reason_fragment);
-        assert_contains(output, expected_handoff_fragment);
-        assert_contains(output, expected_authorization_gate_fragment);
-        assert_contains(output, expected_cleanup_sequence_fragment);
-        assert_contains(output, expected_descriptor_render_fragment);
-        assert_contains(output, expected_loop_control_fragment);
-        assert_contains(output, expected_element_address_fragment);
-        assert_contains(output, expected_element_load_fragment);
-        assert_contains(output, expected_loop_continue_fragment);
-        assert_contains(output, expected_loop_render_fragment);
-        assert_contains(output, expected_loop_exit_fragment);
-        assert_contains(output, expected_gate_fragment);
-    }
-}
-
 void assert_diagnostic_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -3646,7 +3536,7 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path =
-        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_rejected.or";
+        fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or";
     auto forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
@@ -4562,7 +4452,7 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup"
     );
     assert_run_success(executable, direct_dynamic_index_aggregate_owned_computed_dynamic_array_path);
-    assert_direct_dynamic_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+    assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
         executable,
         direct_dynamic_index_aggregate_owned_computed_dynamic_array_path
     );
@@ -4592,6 +4482,21 @@ auto main(int argc, char** argv) -> int {
         executable,
         forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path);
+    assert_runtime_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
     );
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
@@ -4849,12 +4754,6 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_owner_mismatch",
         "left.buckets.element0.values",
         "right.buckets.element0.values"
-    );
-    assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix(
-        executable,
-        forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_dynamic_array_path,
-        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed.o",
-        smoke_temp_root / "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed"
     );
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
