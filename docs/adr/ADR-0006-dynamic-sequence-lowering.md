@@ -3242,6 +3242,9 @@ representation.
 - A positive `dynamic_array*_run.or` fixture coverage audit found no remaining run fixtures outside the existing CLI
   smoke harnesses. The remaining unmatched `dynamic_array_cleanup_audit.or` fixture is intentionally audit-only and
   keeps its single-function shape for drop-report assertions.
+- Final-control forwarded choice-payload alias fixtures with an extra post-forward owner read now report the direct
+  `use after move: packet` diagnostic instead of a generic branch/case lowering failure. The source remains rejected;
+  the change tightens the safety explanation without expanding accepted syntax or ownership behavior.
 
 ## Follow-up work
 

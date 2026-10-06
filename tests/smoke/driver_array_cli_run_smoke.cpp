@@ -7715,14 +7715,14 @@ auto main(int argc, char** argv) -> int {
         forwarded_choice_payload_final_if_branch_local_alias_extra_path,
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_extra.o",
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_if_branch_local_alias_extra",
-        "if else arm lowering failed"
+        "use after move: packet"
     );
     assert_diagnostic_failure_matrix(
         executable,
         forwarded_choice_payload_final_switch_branch_local_alias_extra_path,
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_extra.o",
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_extra",
-        "switch case lowering failed"
+        "use after move: packet"
     );
     assert_diagnostic_failure_matrix(
         executable,

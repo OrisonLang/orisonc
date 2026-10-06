@@ -1903,6 +1903,19 @@ auto lower_prefix_statement(
         );
         return flow != StatementFlow::failed;
     }
+    if (statement.kind == syntax::StatementKind::expression_statement &&
+        statement.expression.kind == syntax::ExpressionKind::name) {
+        if (auto moved_name = consumed_owned_binding_or_descendant_name(
+                session.state.ownership_transfers,
+                statement.expression.text
+            )) {
+            record_expression_lowering_failure(
+                session.failures,
+                ExpressionLoweringFailureReason::use_after_move,
+                *moved_name
+            );
+        }
+    }
     return false;
 }
 
