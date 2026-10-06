@@ -140,6 +140,11 @@ representation.
   keeping executable test-only insertion observability separate from metadata-only cleanup-transition readiness.
 - Runtime-index aggregate computed DynamicArray production-gate reports now suppress the blocked proof marker once the
   internal production cleanup authorization is present, so authorized metadata does not also report stale blocked state.
+- Runtime-index aggregate computed DynamicArray cleanup now has a metadata-only authorization helper that grants
+  production cleanup authorization when audit proof, single-owner proof, and descriptor-storage consistency are all
+  present. Executable lowering remains blocked until runtime-index descriptor address emission is implemented.
+- LLVM identifier generation now sanitizes source-derived owner fragments before using them in SSA names and computed
+  loop labels, preserving raw owner paths for diagnostics while avoiding invalid IR spelling for runtime-index owners.
 - Computed dynamic-array cleanup acquisition and resumption markers now render through a shared internal cleanup state
   handoff model. The lowered IR still contains disabled audit markers only; no cleanup calls, deallocation, or element
   drops are emitted by this seam.

@@ -5,6 +5,10 @@
 int main() {
     auto counts = std::unordered_map<std::string, std::size_t> {};
     assert(orison::lowering::llvm_local_value_name("value") == "%value");
+    assert(orison::lowering::llvm_identifier_fragment("holder.buckets[index].values") ==
+        "holder.buckets.index..values");
+    assert(orison::lowering::llvm_local_value_name("holder.buckets[index].values.addr") ==
+        "%holder.buckets.index..values.addr");
     assert(orison::lowering::next_llvm_local_value_name("value", counts) == "%value");
     assert(orison::lowering::next_llvm_local_value_name("value", counts) == "%value.1");
 

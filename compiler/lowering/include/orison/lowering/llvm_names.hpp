@@ -7,6 +7,8 @@
 
 namespace orison::lowering {
 
+auto llvm_identifier_fragment(std::string_view source_name) -> std::string;
+
 auto llvm_local_value_name(std::string_view source_name) -> std::string;
 
 auto next_llvm_local_value_name(

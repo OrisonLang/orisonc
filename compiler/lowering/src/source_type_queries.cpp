@@ -3,6 +3,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
 #include "orison/lowering/runtime_index_expression.hpp"
@@ -22,7 +23,7 @@ auto computed_dynamic_array_for_base_name(
     std::string_view cleanup_owner_name,
     FunctionLoweringState const& state
 ) -> std::string {
-    auto name = std::string {cleanup_owner_name} + ".computed_for";
+    auto name = llvm_identifier_fragment(cleanup_owner_name) + ".computed_for";
     name += state.computed_dynamic_array_for_unique_suffix;
     return name;
 }
@@ -1181,7 +1182,7 @@ auto attach_runtime_indexed_aggregate_descriptor_storage(
 
     plan.kind = DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner;
     plan.descriptor_storage = std::move(cleanup_plan->descriptor_storage_name);
-    plan.can_lower_now = !plan.descriptor_storage.empty();
+    plan.can_lower_now = false;
     plan.cleanup_owner_proof_status =
         DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor;
     plan.cleanup_owner_proven = false;
@@ -1659,6 +1660,31 @@ auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     output += plan.lowering_enabled ? " [lowering enabled]" : " [lowering disabled]";
     output += " (metadata only)";
     return output;
+}
+
+auto authorize_runtime_index_aggregate_computed_dynamic_array_cleanup(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) -> bool {
+    auto const plan = plan_computed_dynamic_array_iterable_descriptor_handoff(
+        expression,
+        context,
+        state
+    );
+    if (plan.ownership_plan.unsupported_reason !=
+            ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index ||
+        plan.handoff_owner_name.empty() ||
+        !plan.descriptor_storage_available ||
+        !plan.runtime_aggregate_cleanup_proof_detected ||
+        !plan.runtime_aggregate_single_owner_proven ||
+        !plan.runtime_aggregate_descriptor_storage_consistent) {
+        return false;
+    }
+
+    return state.computed_dynamic_array_production_cleanup_authorized_owners.insert(
+        plan.handoff_owner_name
+    ).second;
 }
 
 auto append_cleanup_authorization_contract_report(

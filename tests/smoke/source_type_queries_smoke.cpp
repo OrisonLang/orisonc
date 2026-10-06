@@ -3356,6 +3356,20 @@ int main() {
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.unsupported_reason ==
         orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index
     );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_leaf_descriptor =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(
+            member(
+                index(member(name("holder"), "buckets"), name("dynamic_index")),
+                "items"
+            ),
+            context,
+            state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_leaf_descriptor.cleanup_owner_proof_status ==
+        orison::lowering::DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor
+    );
+    assert(!forwarded_static_indexed_aggregate_field_dynamic_index_leaf_descriptor.can_lower_now);
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.branch_owner_names.size() == 2
     );
@@ -3373,11 +3387,11 @@ int main() {
     );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
-            .branch_descriptor_storage_names[0] == "%holder.buckets[dynamic_index].items.addr"
+            .branch_descriptor_storage_names[0] == "%holder.buckets.dynamic_index..items.addr"
     );
     assert(
         forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan
-            .branch_descriptor_storage_names[1] == "%holder.buckets[dynamic_index].items.addr"
+            .branch_descriptor_storage_names[1] == "%holder.buckets.dynamic_index..items.addr"
     );
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.ownership_join_matches);
     assert(!forwarded_static_indexed_aggregate_field_dynamic_index_plan.ownership_plan.cleanup_owner_proven);
@@ -3386,7 +3400,7 @@ int main() {
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.handoff_owner_name ==
         "holder.buckets[dynamic_index].items");
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_name ==
-        "%holder.buckets[dynamic_index].items.addr");
+        "%holder.buckets.dynamic_index..items.addr");
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.descriptor_storage_available);
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.runtime_aggregate_cleanup_proof_detected);
     assert(forwarded_static_indexed_aggregate_field_dynamic_index_plan.runtime_aggregate_single_owner_proven);
@@ -3413,7 +3427,7 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_plan
-        ).find("%holder.buckets[dynamic_index].items.addr") != std::string::npos
+        ).find("%holder.buckets.dynamic_index..items.addr") != std::string::npos
     );
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
@@ -3543,6 +3557,59 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_cleanup_authorization_gate_report(
             forwarded_static_indexed_aggregate_field_dynamic_index_authorization_gate
         ).find("runtime aggregate cleanup authorization blocked") != std::string::npos
+    );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_state = state;
+    assert(
+        orison::lowering::authorize_runtime_index_aggregate_computed_dynamic_array_cleanup(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_state
+        )
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_state
+            .computed_dynamic_array_production_cleanup_authorized_owners.contains(
+                "holder.buckets[dynamic_index].items"
+            )
+    );
+    auto forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_gate =
+        orison::lowering::plan_computed_dynamic_array_iterable_cleanup_authorization_gate(
+            ternary(
+                name("flag"),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                ),
+                member(
+                    index(member(call("forward_holder", name("holder")), "buckets"), name("dynamic_index")),
+                    "items"
+                )
+            ),
+            context,
+            forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_state
+        );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_gate.kind ==
+        orison::lowering::ComputedDynamicArrayIterableCleanupAuthorizationGateKind::
+            cleanup_authorized
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_gate
+            .production_cleanup_authorization_ready
+    );
+    assert(
+        forwarded_static_indexed_aggregate_field_dynamic_index_auto_authorized_gate
+            .cleanup_authorization_contract_ready
     );
     auto forwarded_static_indexed_aggregate_field_dynamic_index_authorized_state = state;
     forwarded_static_indexed_aggregate_field_dynamic_index_authorized_state

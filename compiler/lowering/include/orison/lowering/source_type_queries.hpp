@@ -480,6 +480,12 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
     FunctionLoweringState const& state
 ) -> ComputedDynamicArrayIterableDescriptorHandoffPlan;
 
+auto authorize_runtime_index_aggregate_computed_dynamic_array_cleanup(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) -> bool;
+
 auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     ComputedDynamicArrayIterableDescriptorHandoffPlan const& plan
 ) -> std::string;

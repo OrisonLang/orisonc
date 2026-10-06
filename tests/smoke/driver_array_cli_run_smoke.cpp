@@ -2139,14 +2139,14 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
     auto const expected_handoff_fragment =
         "computed DynamicArray descriptor handoff plan cleanup owner unproven source DynamicArray<Payload> "
         "element Payload owner holder.buckets[selected].values handoff holder.buckets[selected].values "
-        "descriptor %holder.buckets[selected].values.addr [descriptor storage available] "
+        "descriptor %holder.buckets.selected..values.addr [descriptor storage available] "
         "[cleanup owner blocked] [runtime aggregate audit proof detected] "
         "[runtime aggregate single owner proven] [runtime aggregate descriptor storage consistent] "
         "[runtime aggregate cleanup proof blocked] [lowering disabled] (metadata only)";
     auto const expected_authorization_gate_fragment =
         "computed DynamicArray cleanup authorization gate cleanup authorization blocked source "
         "DynamicArray<Payload> element Payload owner holder.buckets[selected].values descriptor "
-        "%holder.buckets[selected].values.addr [handoff inputs ready] "
+        "%holder.buckets.selected..values.addr [handoff inputs ready] "
         "[production cleanup authorization blocked] "
         "[authorization contract blocked] [authorization proof input: runtime aggregate audit proof] "
         "[authorization proof input: runtime aggregate single owner] "
@@ -2157,7 +2157,7 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "[production cleanup blocked] (metadata only)";
     auto const expected_cleanup_sequence_fragment =
         "computed DynamicArray cleanup sequence plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets[selected].values.addr "
+        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets.selected..values.addr "
         "[loop cleanup blocked] [handoff inputs ready] [production cleanup authorization blocked] "
         "[authorization contract blocked] "
         "[authorization proof input: runtime aggregate audit proof] "
@@ -2168,7 +2168,7 @@ void assert_computed_dynamic_array_runtime_index_cleanup_unproven_failure_matrix
         "[cleanup sequence disabled] (metadata only)";
     auto const expected_descriptor_render_fragment =
         "computed DynamicArray descriptor render plan cleanup authorization blocked source DynamicArray<Payload> "
-        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets[selected].values.addr "
+        "element Payload owner holder.buckets[selected].values descriptor %holder.buckets.selected..values.addr "
         "[descriptor load blocked] [data projection blocked] [length projection blocked] "
         "[capacity projection blocked] [cleanup authorization blocked] [render disabled] (metadata only)";
     auto const expected_loop_control_fragment =

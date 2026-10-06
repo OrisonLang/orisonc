@@ -2,8 +2,25 @@
 
 namespace orison::lowering {
 
+auto llvm_identifier_fragment(std::string_view source_name) -> std::string {
+    auto fragment = std::string {};
+    fragment.reserve(source_name.size());
+    for (auto character : source_name) {
+        auto const allowed =
+            (character >= 'a' && character <= 'z') ||
+            (character >= 'A' && character <= 'Z') ||
+            (character >= '0' && character <= '9') ||
+            character == '$' ||
+            character == '-' ||
+            character == '.' ||
+            character == '_';
+        fragment += allowed ? character : '.';
+    }
+    return fragment;
+}
+
 auto llvm_local_value_name(std::string_view source_name) -> std::string {
-    return "%" + std::string(source_name);
+    return "%" + llvm_identifier_fragment(source_name);
 }
 
 auto next_llvm_local_value_name(

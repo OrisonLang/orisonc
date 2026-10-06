@@ -2785,6 +2785,11 @@ void collect_computed_dynamic_array_for_statements(
     bind_annotated_aggregate_local_for_computed_for_collection(statement, context, state);
     bind_dynamic_array_local_for_computed_for_collection(statement, context, state);
     if (statement.kind == syntax::StatementKind::for_statement) {
+        authorize_runtime_index_aggregate_computed_dynamic_array_cleanup(
+            statement.expression,
+            context,
+            state
+        );
         collect_for_statement(statement, enclosing_function_name, context, state);
     }
 
