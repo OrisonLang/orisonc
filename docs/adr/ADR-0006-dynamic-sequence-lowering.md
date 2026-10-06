@@ -3231,6 +3231,8 @@ representation.
   coverage.
 - Owned-parameter forwarding and branch-join fixture files now pair migrated no-legacy cleanup checks with direct
   object/link/run coverage.
+- Remaining migrated cleanup fixture tables now use explicit `legacy_drop_spelling_*` names and a shared helper, making
+  their compatibility-guard role distinct from mutation and executable coverage.
 
 ## Follow-up work
 
