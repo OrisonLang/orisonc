@@ -3594,6 +3594,8 @@ auto main(int argc, char** argv) -> int {
     auto forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or";
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
+    auto owned_dynamic_array_parameter_cleanup_path =
+        fixtures / "dynamic_array_owned_parameter_cleanup_run.or";
     auto owned_dynamic_array_parameter_forwarding_path =
         fixtures / "dynamic_array_owned_parameter_forwarding_run.or";
     auto returned_dynamic_array_parameter_forwarding_path =
@@ -5729,6 +5731,21 @@ auto main(int argc, char** argv) -> int {
         owned_dynamic_array_parameter_path,
         smoke_temp_root / "dynamic_array_owned_parameter"
     );
+    assert_cli_emit_llvm_existing_fixture_success(
+        executable,
+        owned_dynamic_array_parameter_cleanup_path
+    );
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_cleanup_path,
+        smoke_temp_root / "dynamic_array_owned_parameter_cleanup"
+    );
+    assert_run_success(executable, owned_dynamic_array_parameter_cleanup_path);
     assert_emit_object_success(
         executable,
         owned_dynamic_array_parameter_forwarding_path,

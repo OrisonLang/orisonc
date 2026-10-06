@@ -3236,6 +3236,8 @@ representation.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
+- The `dynamic_array_owned_parameter_cleanup_run.or` fixture now has an executable `main` and is covered by the
+  existing array CLI forwarding-mode run, emit-object, and build checks for owned-parameter cleanup.
 
 ## Follow-up work
 
