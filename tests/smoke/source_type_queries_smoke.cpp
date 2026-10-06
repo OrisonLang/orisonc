@@ -782,7 +782,7 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_cycle_left");
     register_dynamic_array_forwarding_signature(context, "forward_cycle_right");
     for (auto prefix : {"forward_limit", "forward_over"}) {
-        auto const chain_length = std::string_view {prefix} == "forward_limit" ? 8 : 9;
+        auto const chain_length = std::string_view {prefix} == "forward_limit" ? 16 : 17;
         for (auto index = 1; index <= chain_length; ++index) {
             register_dynamic_array_forwarding_signature(context, std::string {prefix} + std::to_string(index));
         }
@@ -1838,9 +1838,9 @@ int main() {
     context.source_functions["forward_cycle_right"] = &forward_cycle_right_function;
 
     auto depth_functions = std::vector<orison::syntax::FunctionSyntax> {};
-    depth_functions.reserve(17);
+    depth_functions.reserve(33);
     for (auto prefix : {"forward_limit", "forward_over"}) {
-        auto const chain_length = std::string_view {prefix} == "forward_limit" ? 8 : 9;
+        auto const chain_length = std::string_view {prefix} == "forward_limit" ? 16 : 17;
         for (auto index = 1; index <= chain_length; ++index) {
             auto function_name = std::string {prefix} + std::to_string(index);
             auto function = index == chain_length

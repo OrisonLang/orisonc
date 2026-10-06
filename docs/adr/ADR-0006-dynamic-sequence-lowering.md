@@ -2708,9 +2708,10 @@ representation.
 - Cyclic forwarded-parameter computed `DynamicArray<T>` helper chains now have bounded-recursion rejection coverage.
   The resolver exhausts its finite forwarding depth and reports an unsupported computed shape across source-query and
   production CLI paths.
-- Acyclic forwarded-parameter computed `DynamicArray<T>` chains now pin the resolver depth boundary: eight forwarding
-  helpers prove the original owner, while nine helpers reject as an unsupported computed shape across source-query and
-  production CLI paths.
+- Acyclic forwarded-parameter computed `DynamicArray<T>` chains now pin the resolver depth boundary: sixteen
+  forwarding helpers prove the original owner in source-query coverage, while longer synthetic chains reject as an
+  unsupported computed shape. Depth-nine fixture coverage now emits, builds, runs, and participates in mutation smoke
+  coverage across production paths.
 - Source-query forwarding coverage now uses shared C++ helpers for one-parameter `DynamicArray<UInt32>` forwarding
   signatures and source functions, reducing fixture scaffolding duplication without changing the resolver model.
 - Forwarded-parameter computed `DynamicArray<T>` helper bodies that move the parameter into one typed local alias and
@@ -3220,7 +3221,7 @@ representation.
   `holder.buckets.element0.values` and `holder.grid.element1.element0.values`. Static-indexed aggregate computed-loop
   fixtures now have verified mutation coverage over their numbered source loops.
 - Forwarded-parameter computed-loop fixtures now use verified mutation coverage for owner `items`, including multi-hop,
-  local/let alias, depth8, final-control, and alias final-control variants.
+  local/let alias, depth8/depth9, final-control, and alias final-control variants.
 - Returned-owned computed-loop fixtures now use verified mutation coverage for alias-chain, helper-call,
   returned-choice-payload, branch-returned, and switch-returned variants.
 - Returned aggregate-field helper fixtures with harmless extra statements now use verified mutation coverage for

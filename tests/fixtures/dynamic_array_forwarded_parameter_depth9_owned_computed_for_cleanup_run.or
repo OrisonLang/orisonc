@@ -1,4 +1,4 @@
-package fixtures.dynamicarrayforwardedparameterdepth9ownedcomputedrejected
+package fixtures.dynamicarrayforwardedparameterdepth9ownedcomputedforcleanuprun
 
 record Payload
     value: Int64

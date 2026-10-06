@@ -7173,12 +7173,13 @@ auto main() -> int {
         );
     }
 
-    auto const legacy_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 10> {
+    auto const legacy_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 11> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_depth9_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_alias_owned_computed_for_cleanup_run.or",
@@ -8101,12 +8102,13 @@ auto main() -> int {
         dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
         "holder.buckets.element0.values"
     );
-    auto const forwarded_parameter_mutation_fixtures = std::array<std::string_view, 10> {
+    auto const forwarded_parameter_mutation_fixtures = std::array<std::string_view, 11> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_depth9_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_alias_owned_computed_for_cleanup_run.or",

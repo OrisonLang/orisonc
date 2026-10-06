@@ -503,7 +503,7 @@ auto forwarded_dynamic_array_parameter_indexes(
     std::string_view function_name,
     std::string_view source_type_name,
     LoweringContext const& context,
-    std::size_t remaining_depth = 8
+    std::size_t remaining_depth = 16
 ) -> std::optional<std::vector<std::size_t>>;
 
 auto single_forwarded_dynamic_array_parameter_index(std::size_t index) -> std::vector<std::size_t> {
