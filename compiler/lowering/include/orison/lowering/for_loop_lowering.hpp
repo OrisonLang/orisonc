@@ -2,11 +2,13 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/addressable_binding.hpp"
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/fixed_array_bounds.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -15,6 +17,7 @@
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/semantics/drop_model.hpp"
@@ -257,6 +260,151 @@ inline auto computed_dynamic_array_owned_cleanup_label_prefix(std::string_view n
     return label_prefix;
 }
 
+inline auto lower_named_runtime_index_aggregate_descriptor_storage(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_source_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::string> {
+    auto aggregate_path = collect_named_aggregate_path(expression);
+    if (!aggregate_path.has_value() || aggregate_path->base_expression == nullptr ||
+        aggregate_path->base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto root_storage = named_aggregate_storage_for_name(
+        aggregate_path->base_expression->text,
+        session.state
+    );
+    if (!root_storage.has_value() || !root_storage->source_type_name.has_value()) {
+        return std::nullopt;
+    }
+    auto cursor = initialize_aggregate_path_cursor(
+        root_storage->storage,
+        *root_storage->source_type_name,
+        context.lowering
+    );
+    if (!cursor.has_value()) {
+        return std::nullopt;
+    }
+
+    for (auto const& step : aggregate_path->steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto result = advance_aggregate_path_member_with_temporary(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                session.state.next_temporary_index,
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                return std::nullopt;
+            }
+            continue;
+        }
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+        auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
+        if (!array_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto index_value = std::string {};
+        if (auto index_text = decimal_integer_literal_text(*step.index_expression)) {
+            index_value = std::string {*index_text};
+        } else {
+            auto lowered_index = lower_expression(
+                *step.index_expression,
+                "i64",
+                IntegerSignedness::unsigned_integer,
+                context,
+                session,
+                output
+            );
+            if (!lowered_index.has_value()) {
+                return std::nullopt;
+            }
+            index_value = lowered_index->value;
+            emit_fixed_array_runtime_index_bounds_check(
+                "computed_dynamic_array_runtime_aggregate_index",
+                index_value,
+                array_type->length,
+                session,
+                output
+            );
+        }
+
+        auto result = advance_aggregate_path_index_with_temporary(
+            *cursor,
+            std::move(index_value),
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            return std::nullopt;
+        }
+    }
+
+    if (cursor->source_type_name != expected_source_type_name) {
+        return std::nullopt;
+    }
+    return cursor->pointer;
+}
+
+inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_storage(
+    syntax::ExpressionSyntax const& expression,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    if (expression.kind != syntax::ExpressionKind::ternary ||
+        expression.right == nullptr ||
+        expression.alternate == nullptr) {
+        return false;
+    }
+
+    auto handoff_plan = plan_computed_dynamic_array_iterable_descriptor_handoff(
+        expression,
+        context.lowering,
+        session.state
+    );
+    if (handoff_plan.ownership_plan.unsupported_reason !=
+            ComputedDynamicArrayIterableUnsupportedReason::runtime_aggregate_index ||
+        !handoff_plan.runtime_aggregate_single_owner_proven ||
+        handoff_plan.handoff_owner_name.empty()) {
+        return false;
+    }
+
+    auto descriptor_storage = lower_named_runtime_index_aggregate_descriptor_storage(
+        *expression.right,
+        handoff_plan.source_type_name,
+        context,
+        session,
+        output
+    );
+    if (!descriptor_storage.has_value()) {
+        return false;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        handoff_plan.handoff_owner_name,
+        handoff_plan.source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        return false;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(*descriptor_storage);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    return true;
+}
+
 inline auto emit_computed_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,
@@ -355,6 +503,13 @@ auto lower_sequence_for_statement(
         if (computed_dynamic_array_for_lowering_enabled) {
             session.state.computed_dynamic_array_for_unique_suffix =
                 "." + std::to_string(next_llvm_block_index(session.state.next_block_index));
+            seed_runtime_index_aggregate_computed_dynamic_array_descriptor_storage(
+                statement.expression,
+                statement.line,
+                context,
+                session,
+                output
+            );
         }
         auto computed_production_emission_gate_plan =
             plan_computed_dynamic_array_iterable_production_emission_gate(
@@ -517,7 +672,8 @@ auto lower_sequence_for_statement(
                         return StatementFlow::failed;
                     }
                     if (element_owned_cleanup_symbol_name.has_value()) {
-                        auto owned_cleanup_walk_prefix = "%" + cleanup_sequence_plan.cleanup_owner_name +
+                        auto owned_cleanup_walk_prefix = "%" +
+                            llvm_identifier_fragment(cleanup_sequence_plan.cleanup_owner_name) +
                             ".computed_dynamic_array_cleanup" +
                             std::to_string(session.state.next_temporary_index++);
                         output << emit_computed_dynamic_array_element_owned_cleanup_walk(

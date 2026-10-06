@@ -342,6 +342,60 @@ void assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_succ
     assert(sibling_cleanup < return_value);
 }
 
+void assert_direct_dynamic_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "%record.Bucket = type { { ptr, i64, i64 } }");
+    assert_contains(output, "%record.Holder = type { [2 x %record.Bucket] }");
+    assert_contains(output, "define void @__orison_owned_cleanup.Payload(ptr %value)");
+    assert_contains(output, "%computed_dynamic_array_runtime_aggregate_index");
+    assert_contains(output, "getelementptr [2 x %record.Bucket], ptr %tmp6, i64 0, i64 %tmp7");
+    assert_contains(output, "holder.buckets.selected..values.computed_for.0.condition:");
+    assert_contains(output, "holder.buckets.selected..values.computed_for.0.body:");
+    assert_contains(output, "holder.buckets.selected..values.computed_for.0.exit:");
+    assert_contains(
+        output,
+        "cleanup state handoff acquire operation holder.buckets.selected..values.computed_for.0.cleanup.acquire "
+        "from holder.buckets[selected].values to holder.buckets[selected].values.loop.entry [cleanup calls enabled]"
+    );
+    assert_contains(
+        output,
+        "cleanup state handoff resume operation holder.buckets.selected..values.computed_for.0.cleanup.resume "
+        "from holder.buckets[selected].values.loop.entry to holder.buckets[selected].values [cleanup calls enabled]"
+    );
+
+    auto const runtime_bounds = output.find("%computed_dynamic_array_runtime_aggregate_index");
+    auto const dynamic_descriptor = output.find("getelementptr [2 x %record.Bucket], ptr %tmp6, i64 0, i64 %tmp7");
+    auto const computed_drop = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %holder.buckets.selected..values.computed_dynamic_array_cleanup"
+    );
+    auto const computed_deallocation = output.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.buckets.selected..values.computed_for.0.data",
+        computed_drop
+    );
+    auto const computed_finalization = output.find(
+        "store { ptr, i64, i64 } zeroinitializer, ptr %tmp10",
+        computed_deallocation
+    );
+    auto const sibling_cleanup = output.find("holder.buckets.element0.values.dynamic_array_cleanup", computed_finalization);
+    auto const return_value = output.find("ret i32", sibling_cleanup);
+    assert(runtime_bounds != std::string::npos);
+    assert(dynamic_descriptor != std::string::npos);
+    assert(computed_drop != std::string::npos);
+    assert(computed_deallocation != std::string::npos);
+    assert(computed_finalization != std::string::npos);
+    assert(sibling_cleanup != std::string::npos);
+    assert(return_value != std::string::npos);
+    assert(runtime_bounds < dynamic_descriptor);
+    assert(dynamic_descriptor < computed_drop);
+    assert(computed_drop < computed_deallocation);
+    assert(computed_deallocation < computed_finalization);
+    assert(computed_finalization < sibling_cleanup);
+    assert(sibling_cleanup < return_value);
+}
+
 void assert_owned_dynamic_array_parameter_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -3581,6 +3635,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or";
     auto nested_static_indexed_aggregate_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or";
+    auto direct_dynamic_index_aggregate_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup_run.or";
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or";
     auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4504,6 +4560,21 @@ auto main(int argc, char** argv) -> int {
         executable,
         nested_static_indexed_aggregate_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, direct_dynamic_index_aggregate_owned_computed_dynamic_array_path);
+    assert_direct_dynamic_index_aggregate_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        direct_dynamic_index_aggregate_owned_computed_dynamic_array_path
+    );
+    assert_emit_object_success(
+        executable,
+        direct_dynamic_index_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        direct_dynamic_index_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup"
     );
     assert_run_success(executable, forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path);
     assert_static_indexed_aggregate_owned_computed_dynamic_array_emit_llvm_success(
