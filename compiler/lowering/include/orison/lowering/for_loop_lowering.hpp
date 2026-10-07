@@ -299,6 +299,12 @@ struct ReturnedAggregateDescriptorProjectionPath {
     std::vector<ReturnedAggregateDescriptorProjectionStep> steps;
 };
 
+enum class ReturnedAggregateProjectionCollectionKind {
+    dynamic_array_descriptor,
+    maybe_owner,
+    choice_owner,
+};
+
 inline auto plan_runtime_index_aggregate_descriptor_projection(
     syntax::ExpressionSyntax const& expression,
     std::string_view owner_name,
@@ -437,14 +443,86 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
     );
 }
 
-inline auto collect_returned_aggregate_descriptor_projection_paths(
+inline auto returned_aggregate_dynamic_array_descriptor_count(
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t depth = 0
+) -> std::size_t {
+    if (depth > 16) {
+        return 2;
+    }
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        return 1;
+    }
+    if (auto array_element_type = array_element_source_type_name(source_type_name)) {
+        auto element_count = returned_aggregate_dynamic_array_descriptor_count(
+            *array_element_type,
+            context,
+            depth + 1
+        );
+        return element_count == 0 ? 0 : 2;
+    }
+    if (auto maybe_payload_type = maybe_payload_source_type_name(source_type_name)) {
+        return returned_aggregate_dynamic_array_descriptor_count(*maybe_payload_type, context, depth + 1);
+    }
+    auto choice = context.choices.find(std::string {source_type_name});
+    if (choice != context.choices.end()) {
+        auto count = std::size_t {0};
+        for (auto const& variant : choice->second.variants) {
+            for (auto const& payload : variant.payloads) {
+                count += returned_aggregate_dynamic_array_descriptor_count(
+                    payload.source_type_name,
+                    context,
+                    depth + 1
+                );
+                if (count > 1) {
+                    return count;
+                }
+            }
+        }
+        return count;
+    }
+    auto record = context.records.find(std::string {source_type_name});
+    if (record == context.records.end()) {
+        return 0;
+    }
+    auto count = std::size_t {0};
+    for (auto const& field : record->second.fields) {
+        count += returned_aggregate_dynamic_array_descriptor_count(field.source_type_name, context, depth + 1);
+        if (count > 1) {
+            return count;
+        }
+    }
+    return count;
+}
+
+inline auto returned_aggregate_projection_collection_target(
+    ReturnedAggregateProjectionCollectionKind kind,
+    std::string_view source_type_name,
+    LoweringContext const& context
+) -> bool {
+    switch (kind) {
+    case ReturnedAggregateProjectionCollectionKind::dynamic_array_descriptor:
+        return dynamic_array_element_source_type_name(source_type_name).has_value();
+    case ReturnedAggregateProjectionCollectionKind::maybe_owner:
+        return maybe_payload_source_type_name(source_type_name).has_value() &&
+            returned_aggregate_dynamic_array_descriptor_count(source_type_name, context) > 0;
+    case ReturnedAggregateProjectionCollectionKind::choice_owner:
+        return context.choices.contains(std::string {source_type_name}) &&
+            returned_aggregate_dynamic_array_descriptor_count(source_type_name, context) > 0;
+    }
+    return false;
+}
+
+inline auto collect_returned_aggregate_projection_paths(
     std::string owner_name,
     std::string_view source_type_name,
     std::string_view llvm_type,
     LoweringContext const& context,
+    ReturnedAggregateProjectionCollectionKind kind,
     std::vector<ReturnedAggregateDescriptorProjectionStep> steps = {}
 ) -> std::optional<std::vector<ReturnedAggregateDescriptorProjectionPath>> {
-    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+    if (returned_aggregate_projection_collection_target(kind, source_type_name, context)) {
         return std::vector<ReturnedAggregateDescriptorProjectionPath> {
             ReturnedAggregateDescriptorProjectionPath {
                 .owner_name = std::move(owner_name),
@@ -468,11 +546,12 @@ inline auto collect_returned_aggregate_descriptor_projection_paths(
                 .aggregate_llvm_type = std::string {llvm_type},
                 .index_value = std::to_string(index),
             });
-            auto nested = collect_returned_aggregate_descriptor_projection_paths(
+            auto nested = collect_returned_aggregate_projection_paths(
                 owner_name + ".element" + std::to_string(index),
                 *array_element_type,
                 array_type->element_type,
                 context,
+                kind,
                 std::move(element_steps)
             );
             if (!nested.has_value()) {
@@ -500,11 +579,12 @@ inline auto collect_returned_aggregate_descriptor_projection_paths(
             .aggregate_llvm_type = std::string {llvm_type},
             .index_value = std::to_string(field.index),
         });
-        auto nested = collect_returned_aggregate_descriptor_projection_paths(
+        auto nested = collect_returned_aggregate_projection_paths(
             owner_name + "." + field.name,
             field.source_type_name,
             field.llvm_type,
             context,
+            kind,
             std::move(field_steps)
         );
         if (!nested.has_value()) {
@@ -517,6 +597,57 @@ inline auto collect_returned_aggregate_descriptor_projection_paths(
         );
     }
     return paths;
+}
+
+inline auto collect_returned_aggregate_descriptor_projection_paths(
+    std::string owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> steps = {}
+) -> std::optional<std::vector<ReturnedAggregateDescriptorProjectionPath>> {
+    return collect_returned_aggregate_projection_paths(
+        std::move(owner_name),
+        source_type_name,
+        llvm_type,
+        context,
+        ReturnedAggregateProjectionCollectionKind::dynamic_array_descriptor,
+        std::move(steps)
+    );
+}
+
+inline auto collect_returned_aggregate_maybe_projection_paths(
+    std::string owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> steps = {}
+) -> std::optional<std::vector<ReturnedAggregateDescriptorProjectionPath>> {
+    return collect_returned_aggregate_projection_paths(
+        std::move(owner_name),
+        source_type_name,
+        llvm_type,
+        context,
+        ReturnedAggregateProjectionCollectionKind::maybe_owner,
+        std::move(steps)
+    );
+}
+
+inline auto collect_returned_aggregate_choice_projection_paths(
+    std::string owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> steps = {}
+) -> std::optional<std::vector<ReturnedAggregateDescriptorProjectionPath>> {
+    return collect_returned_aggregate_projection_paths(
+        std::move(owner_name),
+        source_type_name,
+        llvm_type,
+        context,
+        ReturnedAggregateProjectionCollectionKind::choice_owner,
+        std::move(steps)
+    );
 }
 
 inline auto emit_returned_aggregate_descriptor_projection_pointer(
@@ -579,6 +710,37 @@ inline auto register_returned_aggregate_descriptor_projection_cleanups(
     return true;
 }
 
+inline auto register_returned_aggregate_owner_bindings(
+    std::string_view aggregate_storage,
+    std::vector<ReturnedAggregateDescriptorProjectionPath> const& owner_paths,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    for (auto const& owner_path : owner_paths) {
+        auto pointer = emit_returned_aggregate_descriptor_projection_pointer(
+            aggregate_storage,
+            owner_path,
+            "%" + owner_path.owner_name,
+            session,
+            output
+        );
+        auto lowered_type = llvm_type_for_source_type_name(owner_path.source_type_name, context.lowering);
+        if (!lowered_type.has_value() || *lowered_type == "void") {
+            return false;
+        }
+        session.state.source_type_names[owner_path.owner_name] = owner_path.source_type_name;
+        session.state.addressable_bindings[owner_path.owner_name] = AddressableBinding {
+            .type = LoweredType {
+                .type = *lowered_type,
+                .signedness = IntegerSignedness::not_integer,
+            },
+            .storage = std::move(pointer),
+        };
+    }
+    return true;
+}
+
 inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
     syntax::ExpressionSyntax const& expression,
     std::string_view owner_name,
@@ -607,13 +769,32 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
 
+    auto returned_aggregate_member_owner = "returned_aggregate_members." + llvm_identifier_fragment(owner_name);
     auto descriptor_paths = collect_returned_aggregate_descriptor_projection_paths(
-        "returned_aggregate_members." + llvm_identifier_fragment(owner_name),
+        returned_aggregate_member_owner,
         *base_source_type,
         *base_llvm_type,
         context.lowering
     );
     if (!descriptor_paths.has_value()) {
+        return std::nullopt;
+    }
+    auto maybe_paths = collect_returned_aggregate_maybe_projection_paths(
+        returned_aggregate_member_owner,
+        *base_source_type,
+        *base_llvm_type,
+        context.lowering
+    );
+    if (!maybe_paths.has_value()) {
+        return std::nullopt;
+    }
+    auto choice_paths = collect_returned_aggregate_choice_projection_paths(
+        returned_aggregate_member_owner,
+        *base_source_type,
+        *base_llvm_type,
+        context.lowering
+    );
+    if (!choice_paths.has_value()) {
         return std::nullopt;
     }
 
@@ -675,6 +856,22 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
             aggregate_storage,
             *descriptor_paths,
             source_line,
+            context,
+            session,
+            output)) {
+        return std::nullopt;
+    }
+    if (!register_returned_aggregate_owner_bindings(
+            aggregate_storage,
+            *maybe_paths,
+            context,
+            session,
+            output)) {
+        return std::nullopt;
+    }
+    if (!register_returned_aggregate_owner_bindings(
+            aggregate_storage,
+            *choice_paths,
             context,
             session,
             output)) {

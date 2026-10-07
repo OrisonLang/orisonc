@@ -11,6 +11,16 @@ record Group
 
 record Holder
     groups: Array<Group, 2>
+    maybe_values: Maybe<DynamicArray<Payload>>
+    packet: Packet
+
+choice Maybe<T>
+    Some(value: T)
+    Empty
+
+choice Packet
+    Primary(values: DynamicArray<Payload>)
+    EmptyPacket
 
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
@@ -19,7 +29,7 @@ function make_values(seed: UInt32) -> DynamicArray<Payload>
     values
 
 function make_holder() -> Holder
-    Holder([Group([Item(make_values(100 as UInt32))]), Group([Item(make_values(200 as UInt32))])])
+    Holder([Group([Item(make_values(100 as UInt32))]), Group([Item(make_values(200 as UInt32))])], Some(make_values(300 as UInt32)), Primary(make_values(400 as UInt32)))
 
 function main() -> UInt32
     let group_index: UInt64 = 0 as UInt64

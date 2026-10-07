@@ -2232,7 +2232,7 @@ void assert_returned_runtime_indexed_aggregate_owned_computed_dynamic_array_emit
     std::filesystem::path const& source_path
 ) {
     auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert_contains(output, "%record.Holder = type { [2 x %record.Group] }");
+    assert_contains(output, "%record.Holder = type { [2 x %record.Group], { i1, { ptr, i64, i64 } }, { i32, { ptr, i64, i64 } } }");
     assert_contains(output, "define %record.Holder @make_holder()");
     assert_contains(output, "%returned_aggregate.make_holder...groups.group_index..items.item_index..values.aggregate.addr = alloca %record.Holder");
     assert_contains(output, "call %record.Holder @make_holder()");
@@ -2240,6 +2240,8 @@ void assert_returned_runtime_indexed_aggregate_owned_computed_dynamic_array_emit
     assert_contains(output, "store { ptr, i64, i64 } zeroinitializer, ptr %tmp");
     assert_contains(output, "returned_aggregate_members.returned_aggregate.make_holder...groups.group_index..items.item_index..values.groups.element0.items.element0.values.dynamic_array_cleanup");
     assert_contains(output, "returned_aggregate_members.returned_aggregate.make_holder...groups.group_index..items.item_index..values.groups.element1.items.element0.values.dynamic_array_cleanup");
+    assert_contains(output, "returned_aggregate_members.returned_aggregate.make_holder...groups.group_index..items.item_index..values.maybe_values.maybe_dynamic_array_cleanup");
+    assert_contains(output, "returned_aggregate_members.returned_aggregate.make_holder...groups.group_index..items.item_index..values.packet.Primary.values.choice_dynamic_array_cleanup");
     assert_contains(output, "returned_aggregate.make_holder...groups.group_index..items.item_index..values.computed_for.0.condition:");
     assert_contains(output, "call void @__orison_dynamic_array_deallocate(ptr %returned_aggregate.make_holder...groups.group_index..items.item_index..values.computed_for.0.data");
     assert_contains(output, "ret i32 %tmp");

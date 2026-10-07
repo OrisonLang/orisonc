@@ -3284,6 +3284,9 @@ representation.
   cleanups for returned aggregate materialization. The selected descriptor is moved into computed-loop cleanup storage,
   while sibling descriptors are registered under internal returned-aggregate member cleanup owners and emitted before
   the final return.
+- Returned-temporary nested runtime-index aggregate computed loops now also register internal `Maybe` and `Choice`
+  owner bindings for returned aggregate siblings whose payloads contain `DynamicArray` descriptors. Final cleanup can
+  now reuse the existing tag-aware Maybe and Choice cleanup emitters for those returned aggregate member owners.
 
 ## Follow-up work
 
@@ -3297,12 +3300,7 @@ representation.
   test-only commands.
 - Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that remains blocked or diagnostic-only,
   while keeping future production fixture families isolated by mode.
-- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, choice-sibling, choice record
-  payload, choice fixed-array payload, choice nested fixed-array payload, choice fixed-array record payload, choice
-  nested fixed-array record payload, fixed-array choice-sibling, nested fixed-array choice-sibling, direct `Maybe`
-  payload, fixed-array `Maybe` payload, and
-  nested fixed-array `Maybe` payload, record-wrapped `Maybe` payload, Maybe-wrapped fixed-array payload,
-  Maybe-wrapped nested fixed-array payload, Maybe-wrapped fixed-array record payload, and Maybe-wrapped nested
-  fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
+- Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, `Maybe`, and `Choice` descriptor
+  sets only after a broader dynamic descriptor-discovery model is proven.
 - Continue migrating returned aggregate sibling cleanup emission toward shared helpers, while preserving distinct
   selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
