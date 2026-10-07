@@ -491,10 +491,12 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
 
-    auto aggregate_storage = "%" + llvm_identifier_fragment(owner_name) + ".aggregate.addr";
-    output << "  " << aggregate_storage << " = alloca " << *base_llvm_type << "\n";
-    output << "  store " << *base_llvm_type << " " << lowered_base->value;
-    output << ", ptr " << aggregate_storage << "\n";
+    auto aggregate_storage = emit_returned_aggregate_materialized_storage(
+        owner_name,
+        *base_llvm_type,
+        lowered_base->value,
+        output
+    );
 
     auto projection_plan = RuntimeIndexAggregateDescriptorProjectionPlan {
         .root_name = std::string {owner_name},
@@ -513,24 +515,18 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
 
-    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
-        std::string {owner_name},
+    auto descriptor_storage_name = move_returned_aggregate_selected_descriptor_to_cleanup_storage(
+        owner_name,
         expected_source_type_name,
-        context.lowering
+        *projected_descriptor_storage,
+        source_line,
+        context,
+        session,
+        output
     );
-    if (!cleanup_plan.has_value() || cleanup_plan->descriptor_storage_name.empty()) {
+    if (!descriptor_storage_name.has_value()) {
         return std::nullopt;
     }
-
-    output << "  " << cleanup_plan->descriptor_storage_name << " = alloca "
-           << dynamic_array_descriptor_llvm_type() << "\n";
-    auto descriptor_value = "%" + llvm_identifier_fragment(owner_name) + ".descriptor";
-    output << "  " << descriptor_value << " = load " << dynamic_array_descriptor_llvm_type()
-           << ", ptr " << *projected_descriptor_storage << "\n";
-    output << "  store " << dynamic_array_descriptor_llvm_type() << " " << descriptor_value
-           << ", ptr " << cleanup_plan->descriptor_storage_name << "\n";
-    output << "  store " << dynamic_array_descriptor_llvm_type()
-           << " zeroinitializer, ptr " << *projected_descriptor_storage << "\n";
 
     if (!register_returned_aggregate_descriptor_projection_cleanups(
             aggregate_storage,
@@ -558,17 +554,6 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
 
-    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
-    cleanup_plan->source_line = source_line;
-    auto descriptor_storage_name = cleanup_plan->descriptor_storage_name;
-    session.state.source_type_names[std::string {owner_name}] = std::string {expected_source_type_name};
-    session.state.addressable_bindings[std::string {owner_name}] = AddressableBinding {
-        .type = LoweredType {
-            .type = std::string {dynamic_array_descriptor_llvm_type()},
-            .signedness = IntegerSignedness::not_integer,
-        },
-        .storage = descriptor_storage_name,
-    };
     return descriptor_storage_name;
 }
 

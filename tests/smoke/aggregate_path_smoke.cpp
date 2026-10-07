@@ -453,6 +453,57 @@ int main() {
         "ptr %returned.holder.addr, i32 0, i32 1\n"
     );
 
+    auto returned_materialization_output = std::ostringstream {};
+    auto returned_aggregate_storage = orison::lowering::emit_returned_aggregate_materialized_storage(
+        "returned.holder.grid[row][column].values",
+        "%record.Holder",
+        "%holder.value",
+        returned_materialization_output
+    );
+    assert(returned_aggregate_storage == "%returned.holder.grid.row..column..values.aggregate.addr");
+    assert(
+        returned_materialization_output.str() ==
+        "  %returned.holder.grid.row..column..values.aggregate.addr = alloca %record.Holder\n"
+        "  store %record.Holder %holder.value, ptr "
+        "%returned.holder.grid.row..column..values.aggregate.addr\n"
+    );
+
+    auto selected_descriptor_output = std::ostringstream {};
+    auto selected_descriptor_storage =
+        orison::lowering::move_returned_aggregate_selected_descriptor_to_cleanup_storage(
+            "returned.holder.grid[row][column].values",
+            "DynamicArray<Payload>",
+            "%selected.descriptor.ptr",
+            42,
+            projection_context,
+            projection_session,
+            selected_descriptor_output
+        );
+    assert(selected_descriptor_storage.has_value());
+    assert(projection_state.source_type_names["returned.holder.grid[row][column].values"] == "DynamicArray<Payload>");
+    assert(projection_state.addressable_bindings.contains("returned.holder.grid[row][column].values"));
+    assert(
+        projection_state.addressable_bindings["returned.holder.grid[row][column].values"].storage ==
+        *selected_descriptor_storage
+    );
+    auto const selected_descriptor_ir = selected_descriptor_output.str();
+    assert(
+        selected_descriptor_ir.find(
+            "%returned.holder.grid.row..column..values.descriptor = load { ptr, i64, i64 }, "
+            "ptr %selected.descriptor.ptr\n"
+        ) != std::string::npos
+    );
+    assert(
+        selected_descriptor_ir.find(
+            "  store { ptr, i64, i64 } %returned.holder.grid.row..column..values.descriptor, ptr "
+        ) != std::string::npos
+    );
+    assert(
+        selected_descriptor_ir.find(
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %selected.descriptor.ptr\n"
+        ) != std::string::npos
+    );
+
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
         lowering,

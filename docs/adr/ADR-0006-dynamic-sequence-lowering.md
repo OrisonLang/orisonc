@@ -3290,6 +3290,9 @@ representation.
 - Returned aggregate sibling projection and cleanup registration now live in a dedicated returned-aggregate cleanup
   helper header. Aggregate-path smoke coverage pins finite descriptor, Maybe-owner, Choice-owner, and emitted GEP
   projection behavior at the helper seam.
+- Returned aggregate materialization and selected descriptor move/zeroing now also live in the returned-aggregate
+  cleanup helper. Aggregate-path smoke coverage pins the emitted alloca/store, selected descriptor load/store, zeroing,
+  and selected-owner binding registration.
 
 ## Follow-up work
 
