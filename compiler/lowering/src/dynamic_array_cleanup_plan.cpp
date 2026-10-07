@@ -215,6 +215,8 @@ auto dynamic_array_cleanup_action_authorized(
              (action.capture_name.starts_with("dynamic_array_receiver_tmp") &&
               action.capture_name.ends_with(".element")) ||
              (action.capture_name.starts_with("dynamic_array_receiver_aggregate_tmp") &&
+              action.capture_name.ends_with(".element")) ||
+             (action.capture_name.starts_with("returned_aggregate_members.") &&
               action.capture_name.ends_with(".element")));
     });
 }
@@ -271,6 +273,17 @@ auto authorized_descriptor_element_owned_cleanup_symbol_name(
         options.semantic_owned_cleanup_lowering_authorizations
     );
     if (!authorization.authorized) {
+        auto const& action = obligation.actions.front();
+        if (action.capture_name.starts_with("returned_aggregate_members.") &&
+            action.capture_name.ends_with(".element")) {
+            for (auto const& semantic_authorization : options.semantic_owned_cleanup_lowering_authorizations) {
+                if (semantic_authorization.authorized &&
+                    semantic_authorization.site.source_type_name == action.source_type_name &&
+                    semantic_authorization.site.abi_symbol_name == action.symbol_name) {
+                    return action.symbol_name;
+                }
+            }
+        }
         return std::nullopt;
     }
     return obligation.actions.front().symbol_name;

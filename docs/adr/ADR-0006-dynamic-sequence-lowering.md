@@ -3280,6 +3280,10 @@ representation.
 - Returned-temporary nested runtime-index aggregate computed loops now support the one-selected-descriptor case by
   materializing the returned aggregate, moving the selected descriptor into internal cleanup storage, zeroing the
   aggregate field, and reusing the runtime-index projection renderer.
+- Returned-temporary nested runtime-index aggregate computed loops now retain finite sibling `DynamicArray` descriptor
+  cleanups for returned aggregate materialization. The selected descriptor is moved into computed-loop cleanup storage,
+  while sibling descriptors are registered under internal returned-aggregate member cleanup owners and emitted before
+  the final return.
 
 ## Follow-up work
 
@@ -3302,6 +3306,3 @@ representation.
   fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
 - Continue migrating returned aggregate sibling cleanup emission toward shared helpers, while preserving distinct
   selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
-- Extend returned-temporary runtime-index aggregate computed loops from the one-selected-descriptor case to aggregates
-  with sibling `DynamicArray` descriptors only after sibling cleanup registration is wired into the computed-loop
-  materialization path.

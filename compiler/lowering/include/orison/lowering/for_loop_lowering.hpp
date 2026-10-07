@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -281,6 +282,23 @@ struct RuntimeIndexAggregateDescriptorProjectionPlan {
     AggregatePath aggregate_path;
 };
 
+enum class ReturnedAggregateDescriptorProjectionStepKind {
+    field,
+    array_element,
+};
+
+struct ReturnedAggregateDescriptorProjectionStep {
+    ReturnedAggregateDescriptorProjectionStepKind kind = ReturnedAggregateDescriptorProjectionStepKind::field;
+    std::string aggregate_llvm_type;
+    std::string index_value;
+};
+
+struct ReturnedAggregateDescriptorProjectionPath {
+    std::string owner_name;
+    std::string source_type_name;
+    std::vector<ReturnedAggregateDescriptorProjectionStep> steps;
+};
+
 inline auto plan_runtime_index_aggregate_descriptor_projection(
     syntax::ExpressionSyntax const& expression,
     std::string_view owner_name,
@@ -419,6 +437,148 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
     );
 }
 
+inline auto collect_returned_aggregate_descriptor_projection_paths(
+    std::string owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> steps = {}
+) -> std::optional<std::vector<ReturnedAggregateDescriptorProjectionPath>> {
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        return std::vector<ReturnedAggregateDescriptorProjectionPath> {
+            ReturnedAggregateDescriptorProjectionPath {
+                .owner_name = std::move(owner_name),
+                .source_type_name = std::string {source_type_name},
+                .steps = std::move(steps),
+            },
+        };
+    }
+
+    if (auto array_element_type = array_element_source_type_name(source_type_name)) {
+        auto array_type = parse_llvm_array_type(llvm_type);
+        if (!array_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto paths = std::vector<ReturnedAggregateDescriptorProjectionPath> {};
+        for (auto index = std::size_t {0}; index < array_type->length; ++index) {
+            auto element_steps = steps;
+            element_steps.push_back(ReturnedAggregateDescriptorProjectionStep {
+                .kind = ReturnedAggregateDescriptorProjectionStepKind::array_element,
+                .aggregate_llvm_type = std::string {llvm_type},
+                .index_value = std::to_string(index),
+            });
+            auto nested = collect_returned_aggregate_descriptor_projection_paths(
+                owner_name + ".element" + std::to_string(index),
+                *array_element_type,
+                array_type->element_type,
+                context,
+                std::move(element_steps)
+            );
+            if (!nested.has_value()) {
+                return std::nullopt;
+            }
+            paths.insert(
+                paths.end(),
+                std::make_move_iterator(nested->begin()),
+                std::make_move_iterator(nested->end())
+            );
+        }
+        return paths;
+    }
+
+    auto record = context.records.find(std::string {source_type_name});
+    if (record == context.records.end()) {
+        return std::vector<ReturnedAggregateDescriptorProjectionPath> {};
+    }
+
+    auto paths = std::vector<ReturnedAggregateDescriptorProjectionPath> {};
+    for (auto const& field : record->second.fields) {
+        auto field_steps = steps;
+        field_steps.push_back(ReturnedAggregateDescriptorProjectionStep {
+            .kind = ReturnedAggregateDescriptorProjectionStepKind::field,
+            .aggregate_llvm_type = std::string {llvm_type},
+            .index_value = std::to_string(field.index),
+        });
+        auto nested = collect_returned_aggregate_descriptor_projection_paths(
+            owner_name + "." + field.name,
+            field.source_type_name,
+            field.llvm_type,
+            context,
+            std::move(field_steps)
+        );
+        if (!nested.has_value()) {
+            return std::nullopt;
+        }
+        paths.insert(
+            paths.end(),
+            std::make_move_iterator(nested->begin()),
+            std::make_move_iterator(nested->end())
+        );
+    }
+    return paths;
+}
+
+inline auto emit_returned_aggregate_descriptor_projection_pointer(
+    std::string_view root_storage,
+    ReturnedAggregateDescriptorProjectionPath const& path,
+    std::string_view pointer_prefix,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::string {
+    auto pointer = std::string {root_storage};
+    for (auto const& step : path.steps) {
+        auto next_pointer = std::string {pointer_prefix} + ".path" +
+            std::to_string(session.state.next_temporary_index++);
+        output << "  " << next_pointer << " = getelementptr " << step.aggregate_llvm_type
+               << ", ptr " << pointer;
+        if (step.kind == ReturnedAggregateDescriptorProjectionStepKind::field) {
+            output << ", i32 0, i32 " << step.index_value << "\n";
+        } else {
+            output << ", i64 0, i64 " << step.index_value << "\n";
+        }
+        pointer = std::move(next_pointer);
+    }
+    return pointer;
+}
+
+inline auto register_returned_aggregate_descriptor_projection_cleanups(
+    std::string_view aggregate_storage,
+    std::vector<ReturnedAggregateDescriptorProjectionPath> const& descriptor_paths,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    if (descriptor_paths.size() <= 1) {
+        return true;
+    }
+
+    for (auto const& descriptor_path : descriptor_paths) {
+        auto descriptor_pointer = emit_returned_aggregate_descriptor_projection_pointer(
+            aggregate_storage,
+            descriptor_path,
+            "%" + descriptor_path.owner_name,
+            session,
+            output
+        );
+        auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+            descriptor_path.owner_name,
+            descriptor_path.source_type_name,
+            context.lowering
+        );
+        if (!cleanup_plan.has_value()) {
+            return false;
+        }
+        cleanup_plan->descriptor_storage_name = std::move(descriptor_pointer);
+        cleanup_plan->descriptor_storage_status =
+            DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+        cleanup_plan->source_line = source_line;
+        session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    }
+    return true;
+}
+
 inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
     syntax::ExpressionSyntax const& expression,
     std::string_view owner_name,
@@ -444,6 +604,16 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
 
     auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
     if (!base_llvm_type.has_value() || *base_llvm_type == "void") {
+        return std::nullopt;
+    }
+
+    auto descriptor_paths = collect_returned_aggregate_descriptor_projection_paths(
+        "returned_aggregate_members." + llvm_identifier_fragment(owner_name),
+        *base_source_type,
+        *base_llvm_type,
+        context.lowering
+    );
+    if (!descriptor_paths.has_value()) {
         return std::nullopt;
     }
 
@@ -500,6 +670,16 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
            << ", ptr " << cleanup_plan->descriptor_storage_name << "\n";
     output << "  store " << dynamic_array_descriptor_llvm_type()
            << " zeroinitializer, ptr " << *projected_descriptor_storage << "\n";
+
+    if (!register_returned_aggregate_descriptor_projection_cleanups(
+            aggregate_storage,
+            *descriptor_paths,
+            source_line,
+            context,
+            session,
+            output)) {
+        return std::nullopt;
+    }
 
     cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
     cleanup_plan->source_line = source_line;
