@@ -148,6 +148,38 @@ auto context() -> orison::lowering::LoweringContext {
                 .llvm_type = "[2 x [2 x %record.RuntimeBucket]]",
                 .index = 0,
             },
+            orison::lowering::LoweredRecordField {
+                .name = "maybe_values",
+                .source_type_name = "Maybe<DynamicArray<Payload>>",
+                .llvm_type = "{ i1, { ptr, i64, i64 } }",
+                .index = 1,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "packet",
+                .source_type_name = "Packet",
+                .llvm_type = "{ i32, { ptr, i64, i64 } }",
+                .index = 2,
+            },
+        },
+    });
+    lowering.choices.emplace("Packet", orison::lowering::LoweredChoiceLayout {
+        .name = "Packet",
+        .source_type_name = "Packet",
+        .llvm_type_name = "{ i32, { ptr, i64, i64 } }",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Primary",
+                .lowered_payload_type = "{ ptr, i64, i64 }",
+                .tag = 0,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "values",
+                        .source_type_name = "DynamicArray<Payload>",
+                        .llvm_type = "{ ptr, i64, i64 }",
+                        .index = 0,
+                    },
+                },
+            },
         },
     });
     return lowering;
@@ -356,6 +388,70 @@ int main() {
         failed_projection_output
     );
     assert(!mismatched_descriptor_storage.has_value());
+
+    auto returned_descriptor_paths = orison::lowering::collect_returned_aggregate_descriptor_projection_paths(
+        "returned.holder",
+        "Holder",
+        "%record.Holder",
+        lowering
+    );
+    assert(returned_descriptor_paths.has_value());
+    assert(returned_descriptor_paths->size() == 4);
+    assert((*returned_descriptor_paths)[0].owner_name == "returned.holder.grid.element0.element0.values");
+    assert((*returned_descriptor_paths)[0].source_type_name == "DynamicArray<Payload>");
+    assert((*returned_descriptor_paths)[0].steps.size() == 4);
+    assert(
+        (*returned_descriptor_paths)[0].steps[0].kind ==
+        orison::lowering::ReturnedAggregateDescriptorProjectionStepKind::field
+    );
+    assert((*returned_descriptor_paths)[0].steps[0].index_value == "0");
+    assert(
+        (*returned_descriptor_paths)[0].steps[1].kind ==
+        orison::lowering::ReturnedAggregateDescriptorProjectionStepKind::array_element
+    );
+    assert((*returned_descriptor_paths)[0].steps[1].index_value == "0");
+
+    auto returned_maybe_paths = orison::lowering::collect_returned_aggregate_maybe_projection_paths(
+        "returned.holder",
+        "Holder",
+        "%record.Holder",
+        lowering
+    );
+    assert(returned_maybe_paths.has_value());
+    assert(returned_maybe_paths->size() == 1);
+    assert((*returned_maybe_paths)[0].owner_name == "returned.holder.maybe_values");
+    assert((*returned_maybe_paths)[0].source_type_name == "Maybe<DynamicArray<Payload>>");
+    assert((*returned_maybe_paths)[0].steps.size() == 1);
+    assert((*returned_maybe_paths)[0].steps[0].index_value == "1");
+
+    auto returned_choice_paths = orison::lowering::collect_returned_aggregate_choice_projection_paths(
+        "returned.holder",
+        "Holder",
+        "%record.Holder",
+        lowering
+    );
+    assert(returned_choice_paths.has_value());
+    assert(returned_choice_paths->size() == 1);
+    assert((*returned_choice_paths)[0].owner_name == "returned.holder.packet");
+    assert((*returned_choice_paths)[0].source_type_name == "Packet");
+    assert((*returned_choice_paths)[0].steps.size() == 1);
+    assert((*returned_choice_paths)[0].steps[0].index_value == "2");
+
+    projection_state.next_temporary_index = 0;
+    auto returned_projection_output = std::ostringstream {};
+    auto maybe_pointer = orison::lowering::emit_returned_aggregate_descriptor_projection_pointer(
+        "%returned.holder.addr",
+        (*returned_maybe_paths)[0],
+        "%returned.holder.maybe_values",
+        projection_session,
+        returned_projection_output
+    );
+    assert(maybe_pointer == "%returned.holder.maybe_values.path0");
+    assert(
+        returned_projection_output.str() ==
+        "  %returned.holder.maybe_values.path0 = getelementptr %record.Holder, "
+        "ptr %returned.holder.addr, i32 0, i32 1\n"
+    );
 
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,

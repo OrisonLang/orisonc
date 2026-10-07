@@ -3287,6 +3287,9 @@ representation.
 - Returned-temporary nested runtime-index aggregate computed loops now also register internal `Maybe` and `Choice`
   owner bindings for returned aggregate siblings whose payloads contain `DynamicArray` descriptors. Final cleanup can
   now reuse the existing tag-aware Maybe and Choice cleanup emitters for those returned aggregate member owners.
+- Returned aggregate sibling projection and cleanup registration now live in a dedicated returned-aggregate cleanup
+  helper header. Aggregate-path smoke coverage pins finite descriptor, Maybe-owner, Choice-owner, and emitted GEP
+  projection behavior at the helper seam.
 
 ## Follow-up work
 
@@ -3302,5 +3305,5 @@ representation.
   while keeping future production fixture families isolated by mode.
 - Extend returned aggregate sibling cleanup beyond finite record-field, fixed-array, `Maybe`, and `Choice` descriptor
   sets only after a broader dynamic descriptor-discovery model is proven.
-- Continue migrating returned aggregate sibling cleanup emission toward shared helpers, while preserving distinct
-  selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
+- Continue migrating returned aggregate sibling cleanup emission toward smaller call-site orchestration while
+  preserving distinct selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
