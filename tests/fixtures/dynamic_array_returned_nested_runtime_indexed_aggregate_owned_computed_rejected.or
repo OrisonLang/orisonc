@@ -1,0 +1,30 @@
+package fixtures.dynamicarray.returnednestedruntimeindexedaggregateownedcomputedrejected
+
+record Payload
+    value: UInt32
+
+record Item
+    values: DynamicArray<Payload>
+
+record Group
+    items: Array<Item, 2>
+
+record Holder
+    groups: Array<Group, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_holder() -> Holder
+    Holder([Group([Item(make_values(10 as UInt32)), Item(make_values(20 as UInt32))]), Group([Item(make_values(100 as UInt32)), Item(make_values(200 as UInt32))])])
+
+function main() -> UInt32
+    let group_index: UInt64 = 1 as UInt64
+    let item_index: UInt64 = 0 as UInt64
+    var total = 0 as UInt32
+    for item in true ? make_holder().groups[group_index].items[item_index].values : make_holder().groups[group_index].items[item_index].values
+        total = total + item.value
+    total - 201 as UInt32

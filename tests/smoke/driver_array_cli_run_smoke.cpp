@@ -2227,6 +2227,39 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     }
 }
 
+void assert_computed_dynamic_array_runtime_aggregate_unsupported_shape_failure_matrix(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& object_path,
+    std::filesystem::path const& output_path
+) {
+    auto expected_summary_fragment = std::string {
+        "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>; "
+        "runtime aggregate index owner proof is not supported"
+    };
+    auto expected_shape_fragment = std::string {
+        "computed DynamicArray ownership plan unsupported computed shape source DynamicArray<Payload> "
+        "element Payload unsupported reason runtime aggregate index"
+    };
+    expected_shape_fragment += " [ownership join blocked] [cleanup owner blocked] (metadata only)";
+    auto expected_descriptor_fragment = std::string {
+        "computed DynamicArray descriptor handoff plan unsupported computed shape source DynamicArray<Payload> "
+        "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
+    };
+
+    for (auto const& command : {
+             executable.string() + " run " + source_path.string(),
+             executable.string() + " --emit-llvm " + source_path.string(),
+             executable.string() + " --emit-object " + source_path.string() + " -o " + object_path.string(),
+             executable.string() + " --build " + source_path.string() + " -o " + output_path.string(),
+         }) {
+        auto output = read_failing_command_output(command);
+        assert_contains(output, expected_summary_fragment);
+        assert_contains(output, expected_shape_fragment);
+        assert_contains(output, expected_descriptor_fragment);
+    }
+}
+
 void assert_diagnostic_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -4040,6 +4073,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_runtime_indexed_aggregate_parameter_field_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_nested_runtime_indexed_aggregate_parameter_field_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_nested_runtime_indexed_aggregate_parameter_field_cleanup_reuse_rejected.or";
+    auto returned_nested_runtime_indexed_aggregate_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_returned_nested_runtime_indexed_aggregate_owned_computed_rejected.or";
     auto owned_dynamic_array_parameter_nested_loop_break_cleanup_reuse_path =
         fixtures / "dynamic_array_owned_parameter_nested_loop_break_cleanup_reuse_rejected.or";
     auto owned_dynamic_array_parameter_nested_loop_continue_cleanup_reuse_path =
@@ -4637,6 +4672,12 @@ auto main(int argc, char** argv) -> int {
         forwarded_parameter_cycle_owned_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_forwarded_parameter_cycle_owned_computed.o",
         smoke_temp_root / "dynamic_array_forwarded_parameter_cycle_owned_computed"
+    );
+    assert_computed_dynamic_array_runtime_aggregate_unsupported_shape_failure_matrix(
+        executable,
+        returned_nested_runtime_indexed_aggregate_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_returned_nested_runtime_indexed_aggregate_owned_computed.o",
+        smoke_temp_root / "dynamic_array_returned_nested_runtime_indexed_aggregate_owned_computed"
     );
     assert_run_success(executable, forwarded_parameter_local_alias_harmless_local_owned_computed_dynamic_array_path);
     assert_owned_computed_dynamic_array_emit_llvm_success(

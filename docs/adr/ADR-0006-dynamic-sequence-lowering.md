@@ -3277,6 +3277,8 @@ representation.
   roots, forwarded/call roots recovered from the semantic owner, and missing-root rejection.
 - Aggregate-path smoke coverage now also pins the runtime-index aggregate projection emitter directly, including
   emitted bounds checks, nested fixed-array GEPs, final descriptor storage, and expected-source mismatch rejection.
+- Returned-temporary nested runtime-index aggregate computed loops remain rejected at ownership proof. They need
+  returned aggregate materialization and lifetime tracking before descriptor projection emission can run safely.
 
 ## Follow-up work
 
