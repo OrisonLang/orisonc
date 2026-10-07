@@ -126,6 +126,30 @@ auto context() -> orison::lowering::LoweringContext {
             },
         },
     });
+    lowering.records.emplace("RuntimeBucket", orison::lowering::LoweredRecordLayout {
+        .name = "RuntimeBucket",
+        .llvm_type_name = "%record.RuntimeBucket",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "values",
+                .source_type_name = "DynamicArray<Payload>",
+                .llvm_type = "{ ptr, i64, i64 }",
+                .index = 0,
+            },
+        },
+    });
+    lowering.records.emplace("Holder", orison::lowering::LoweredRecordLayout {
+        .name = "Holder",
+        .llvm_type_name = "%record.Holder",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "grid",
+                .source_type_name = "Array<Array<RuntimeBucket, 2>, 2>",
+                .llvm_type = "[2 x [2 x %record.RuntimeBucket]]",
+                .index = 0,
+            },
+        },
+    });
     return lowering;
 }
 
@@ -219,6 +243,16 @@ int main() {
         .storage = "%holder.addr",
     });
     projection_state.source_type_names.emplace("holder", "Holder");
+    projection_state.immutable_bindings.emplace("row", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%row",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    projection_state.immutable_bindings.emplace("column", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%column",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
     auto projection_failures = orison::lowering::LoweringFailures {};
     auto projection_session = orison::lowering::FunctionLoweringSession {
         .state = projection_state,
@@ -267,6 +301,61 @@ int main() {
         projection_session
     );
     assert(!missing_projection_plan.has_value());
+
+    auto string_constants = orison::lowering::StringConstantTable {};
+    auto projection_context = orison::lowering::LoweringEmissionContext {
+        .lowering = lowering,
+        .string_constants = string_constants,
+        .options = {},
+    };
+    auto projection_output = std::ostringstream {};
+    projection_state.next_temporary_index = 0;
+    projection_state.next_block_index = 0;
+    projection_state.current_block = "entry";
+    auto direct_descriptor_storage = orison::lowering::emit_runtime_index_aggregate_descriptor_projection(
+        *direct_projection_plan,
+        "DynamicArray<Payload>",
+        projection_context,
+        projection_session,
+        projection_output
+    );
+    assert(direct_descriptor_storage.has_value());
+    assert(*direct_descriptor_storage == "%tmp5");
+    assert(projection_state.current_block == "fixed_array.index.in_bounds.1");
+    assert(
+        projection_output.str() ==
+        "  %tmp0 = getelementptr %record.Holder, ptr %holder.addr, i32 0, i32 0\n"
+        "  %computed_dynamic_array_runtime_aggregate_index1.in_bounds = icmp ult i64 %row, 2\n"
+        "  br i1 %computed_dynamic_array_runtime_aggregate_index1.in_bounds, "
+        "label %fixed_array.index.in_bounds.0, label %fixed_array.index.out_of_bounds.0\n"
+        "fixed_array.index.out_of_bounds.0:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.0:\n"
+        "  %tmp2 = getelementptr [2 x [2 x %record.RuntimeBucket]], ptr %tmp0, i64 0, i64 %row\n"
+        "  %computed_dynamic_array_runtime_aggregate_index3.in_bounds = icmp ult i64 %column, 2\n"
+        "  br i1 %computed_dynamic_array_runtime_aggregate_index3.in_bounds, "
+        "label %fixed_array.index.in_bounds.1, label %fixed_array.index.out_of_bounds.1\n"
+        "fixed_array.index.out_of_bounds.1:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
+        "  unreachable\n"
+        "fixed_array.index.in_bounds.1:\n"
+        "  %tmp4 = getelementptr [2 x %record.RuntimeBucket], ptr %tmp2, i64 0, i64 %column\n"
+        "  %tmp5 = getelementptr %record.RuntimeBucket, ptr %tmp4, i32 0, i32 0\n"
+    );
+
+    projection_state.next_temporary_index = 0;
+    projection_state.next_block_index = 0;
+    projection_state.current_block = "entry";
+    auto failed_projection_output = std::ostringstream {};
+    auto mismatched_descriptor_storage = orison::lowering::emit_runtime_index_aggregate_descriptor_projection(
+        *direct_projection_plan,
+        "DynamicArray<UInt32>",
+        projection_context,
+        projection_session,
+        failed_projection_output
+    );
+    assert(!mismatched_descriptor_storage.has_value());
 
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,

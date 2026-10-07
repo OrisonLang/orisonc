@@ -3275,6 +3275,8 @@ representation.
   reuse the validated projection plan.
 - Aggregate-path smoke coverage now pins the runtime-index aggregate projection-planning seam directly, including named
   roots, forwarded/call roots recovered from the semantic owner, and missing-root rejection.
+- Aggregate-path smoke coverage now also pins the runtime-index aggregate projection emitter directly, including
+  emitted bounds checks, nested fixed-array GEPs, final descriptor storage, and expected-source mismatch rejection.
 
 ## Follow-up work
 
