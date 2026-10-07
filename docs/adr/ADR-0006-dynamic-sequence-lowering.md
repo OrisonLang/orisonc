@@ -3273,6 +3273,8 @@ representation.
 - Runtime-index aggregate descriptor lowering now separates source-owner projection planning from IR emission. Direct,
   forwarded, and nested computed-loop paths keep the same emitted descriptor projection while future aggregate cases can
   reuse the validated projection plan.
+- Aggregate-path smoke coverage now pins the runtime-index aggregate projection-planning seam directly, including named
+  roots, forwarded/call roots recovered from the semantic owner, and missing-root rejection.
 
 ## Follow-up work
 

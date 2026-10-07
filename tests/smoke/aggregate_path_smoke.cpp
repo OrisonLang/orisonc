@@ -1,4 +1,5 @@
 #include "orison/lowering/aggregate_path.hpp"
+#include "orison/lowering/for_loop_lowering.hpp"
 
 #include <cassert>
 #include <memory>
@@ -31,6 +32,18 @@ auto index(orison::syntax::ExpressionSyntax left, std::string index_text = "0")
     auto index = orison::syntax::ExpressionSyntax {};
     index.kind = orison::syntax::ExpressionKind::integer_literal;
     index.text = std::move(index_text);
+    expression.arguments.push_back(std::move(index));
+    return expression;
+}
+
+auto index_name(orison::syntax::ExpressionSyntax left, std::string index_name)
+    -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::index_access;
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(left));
+    auto index = orison::syntax::ExpressionSyntax {};
+    index.kind = orison::syntax::ExpressionKind::name;
+    index.text = std::move(index_name);
     expression.arguments.push_back(std::move(index));
     return expression;
 }
@@ -196,6 +209,64 @@ int main() {
         "aggregate projection access intent explicit_transfer status allowed "
         "binding box.payload source Payload receiver false"
     );
+
+    auto projection_state = orison::lowering::FunctionLoweringState {};
+    projection_state.addressable_bindings.emplace("holder", orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.Holder",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%holder.addr",
+    });
+    projection_state.source_type_names.emplace("holder", "Holder");
+    auto projection_failures = orison::lowering::LoweringFailures {};
+    auto projection_session = orison::lowering::FunctionLoweringSession {
+        .state = projection_state,
+        .failures = projection_failures,
+        .semantics = nullptr,
+        .enclosing_symbol_name = "main",
+    };
+
+    auto direct_runtime_projection = member(
+        index_name(index_name(member(name("holder"), "grid"), "row"), "column"),
+        "values"
+    );
+    auto direct_projection_plan = orison::lowering::plan_runtime_index_aggregate_descriptor_projection(
+        direct_runtime_projection,
+        "holder.grid[row][column].values",
+        projection_session
+    );
+    assert(direct_projection_plan.has_value());
+    assert(direct_projection_plan->root_name == "holder");
+    assert(direct_projection_plan->root_storage == "%holder.addr");
+    assert(direct_projection_plan->root_source_type_name == "Holder");
+    assert(direct_projection_plan->aggregate_path.base_expression != nullptr);
+    assert(direct_projection_plan->aggregate_path.base_expression->kind == orison::syntax::ExpressionKind::name);
+    assert(direct_projection_plan->aggregate_path.steps.size() == 4);
+
+    auto forwarded_runtime_projection = member(
+        index_name(index_name(member(call("forward_holder"), "grid"), "row"), "column"),
+        "values"
+    );
+    auto forwarded_projection_plan = orison::lowering::plan_runtime_index_aggregate_descriptor_projection(
+        forwarded_runtime_projection,
+        "holder.grid[row][column].values",
+        projection_session
+    );
+    assert(forwarded_projection_plan.has_value());
+    assert(forwarded_projection_plan->root_name == "holder");
+    assert(forwarded_projection_plan->root_storage == "%holder.addr");
+    assert(forwarded_projection_plan->root_source_type_name == "Holder");
+    assert(forwarded_projection_plan->aggregate_path.base_expression != nullptr);
+    assert(forwarded_projection_plan->aggregate_path.base_expression->kind == orison::syntax::ExpressionKind::call);
+    assert(forwarded_projection_plan->aggregate_path.steps.size() == 4);
+
+    auto missing_projection_plan = orison::lowering::plan_runtime_index_aggregate_descriptor_projection(
+        forwarded_runtime_projection,
+        ".grid[row][column].values",
+        projection_session
+    );
+    assert(!missing_projection_plan.has_value());
 
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
