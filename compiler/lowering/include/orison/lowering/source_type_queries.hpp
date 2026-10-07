@@ -456,6 +456,10 @@ auto plan_dynamic_array_iterable_descriptor(
     FunctionLoweringState const& state
 ) -> DynamicArrayIterableDescriptorPlan;
 
+auto returned_aggregate_computed_dynamic_array_owner_name(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string>;
+
 auto dynamic_array_iterable_descriptor_plan_report(
     DynamicArrayIterableDescriptorPlan const& plan
 ) -> std::string;

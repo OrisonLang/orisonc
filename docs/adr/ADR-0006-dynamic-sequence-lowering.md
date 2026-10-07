@@ -3277,8 +3277,9 @@ representation.
   roots, forwarded/call roots recovered from the semantic owner, and missing-root rejection.
 - Aggregate-path smoke coverage now also pins the runtime-index aggregate projection emitter directly, including
   emitted bounds checks, nested fixed-array GEPs, final descriptor storage, and expected-source mismatch rejection.
-- Returned-temporary nested runtime-index aggregate computed loops remain rejected at ownership proof. They need
-  returned aggregate materialization and lifetime tracking before descriptor projection emission can run safely.
+- Returned-temporary nested runtime-index aggregate computed loops now support the one-selected-descriptor case by
+  materializing the returned aggregate, moving the selected descriptor into internal cleanup storage, zeroing the
+  aggregate field, and reusing the runtime-index projection renderer.
 
 ## Follow-up work
 
@@ -3301,3 +3302,6 @@ representation.
   fixed-array record payload descriptor sets only after a broader dynamic descriptor-discovery model is proven.
 - Continue migrating returned aggregate sibling cleanup emission toward shared helpers, while preserving distinct
   selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
+- Extend returned-temporary runtime-index aggregate computed loops from the one-selected-descriptor case to aggregates
+  with sibling `DynamicArray` descriptors only after sibling cleanup registration is wired into the computed-loop
+  materialization path.

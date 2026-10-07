@@ -419,6 +419,112 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
     );
 }
 
+inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view owner_name,
+    std::string_view expected_source_type_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::string> {
+    auto aggregate_path = collect_temporary_aggregate_path(expression);
+    if (!aggregate_path.has_value() || aggregate_path->base_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_expression(
+        *aggregate_path->base_expression,
+        context.lowering,
+        session.state
+    );
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
+    if (!base_llvm_type.has_value() || *base_llvm_type == "void") {
+        return std::nullopt;
+    }
+
+    auto lowered_base = lower_expression(
+        *aggregate_path->base_expression,
+        *base_llvm_type,
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output,
+        *base_source_type
+    );
+    if (!lowered_base.has_value()) {
+        return std::nullopt;
+    }
+
+    auto aggregate_storage = "%" + llvm_identifier_fragment(owner_name) + ".aggregate.addr";
+    output << "  " << aggregate_storage << " = alloca " << *base_llvm_type << "\n";
+    output << "  store " << *base_llvm_type << " " << lowered_base->value;
+    output << ", ptr " << aggregate_storage << "\n";
+
+    auto projection_plan = RuntimeIndexAggregateDescriptorProjectionPlan {
+        .root_name = std::string {owner_name},
+        .root_storage = aggregate_storage,
+        .root_source_type_name = *base_source_type,
+        .aggregate_path = std::move(*aggregate_path),
+    };
+    auto projected_descriptor_storage = emit_runtime_index_aggregate_descriptor_projection(
+        projection_plan,
+        expected_source_type_name,
+        context,
+        session,
+        output
+    );
+    if (!projected_descriptor_storage.has_value()) {
+        return std::nullopt;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        std::string {owner_name},
+        expected_source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value() || cleanup_plan->descriptor_storage_name.empty()) {
+        return std::nullopt;
+    }
+
+    output << "  " << cleanup_plan->descriptor_storage_name << " = alloca "
+           << dynamic_array_descriptor_llvm_type() << "\n";
+    auto descriptor_value = "%" + llvm_identifier_fragment(owner_name) + ".descriptor";
+    output << "  " << descriptor_value << " = load " << dynamic_array_descriptor_llvm_type()
+           << ", ptr " << *projected_descriptor_storage << "\n";
+    output << "  store " << dynamic_array_descriptor_llvm_type() << " " << descriptor_value
+           << ", ptr " << cleanup_plan->descriptor_storage_name << "\n";
+    output << "  store " << dynamic_array_descriptor_llvm_type()
+           << " zeroinitializer, ptr " << *projected_descriptor_storage << "\n";
+
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+    auto descriptor_storage_name = cleanup_plan->descriptor_storage_name;
+    session.state.source_type_names[std::string {owner_name}] = std::string {expected_source_type_name};
+    session.state.addressable_bindings[std::string {owner_name}] = AddressableBinding {
+        .type = LoweredType {
+            .type = std::string {dynamic_array_descriptor_llvm_type()},
+            .signedness = IntegerSignedness::not_integer,
+        },
+        .storage = descriptor_storage_name,
+    };
+    return descriptor_storage_name;
+}
+
+inline auto zero_argument_returned_aggregate_projection(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    auto aggregate_path = collect_temporary_aggregate_path(expression);
+    return aggregate_path.has_value() &&
+        aggregate_path->base_expression != nullptr &&
+        aggregate_path->base_expression->kind == syntax::ExpressionKind::call &&
+        aggregate_path->base_expression->arguments.empty();
+}
+
 inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_storage(
     syntax::ExpressionSyntax const& expression,
     std::size_t source_line,
@@ -444,14 +550,24 @@ inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_stora
         return false;
     }
 
-    auto descriptor_storage = lower_named_runtime_index_aggregate_descriptor_storage(
-        *expression.right,
-        handoff_plan.handoff_owner_name,
-        handoff_plan.source_type_name,
-        context,
-        session,
-        output
-    );
+    auto descriptor_storage = zero_argument_returned_aggregate_projection(*expression.right)
+        ? lower_returned_runtime_index_aggregate_descriptor_storage(
+              *expression.right,
+              handoff_plan.handoff_owner_name,
+              handoff_plan.source_type_name,
+              source_line,
+              context,
+              session,
+              output
+          )
+        : lower_named_runtime_index_aggregate_descriptor_storage(
+              *expression.right,
+              handoff_plan.handoff_owner_name,
+              handoff_plan.source_type_name,
+              context,
+              session,
+              output
+          );
     if (!descriptor_storage.has_value()) {
         return false;
     }

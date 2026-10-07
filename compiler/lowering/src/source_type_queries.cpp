@@ -88,6 +88,24 @@ auto static_indexed_aggregate_owner_name(
     return aggregate_member_path_owner_name(expression);
 }
 
+auto returned_aggregate_computed_dynamic_array_owner_name_impl(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    auto path = collect_temporary_aggregate_path(expression);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto owner_name = std::string {"returned_aggregate."};
+    owner_name += llvm_identifier_fragment(runtime_index_expression_key(*path->base_expression));
+    for (auto const& step : path->steps) {
+        if (!append_aggregate_owner_step(owner_name, step)) {
+            return std::nullopt;
+        }
+    }
+    return owner_name;
+}
+
 auto named_or_static_indexed_dynamic_array_leaf(
     syntax::ExpressionSyntax const& expression
 ) -> bool {
@@ -191,6 +209,51 @@ auto push_computed_dynamic_array_leaf_descriptor(
         return false;
     }
     descriptors.push_back(std::move(descriptor));
+    return true;
+}
+
+auto push_returned_aggregate_computed_dynamic_array_leaf_descriptor(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
+) -> bool {
+    if (auto const* helper_call = projected_helper_call_base(expression)) {
+        if (!helper_call->arguments.empty()) {
+            return false;
+        }
+    }
+
+    auto owner_name = returned_aggregate_computed_dynamic_array_owner_name_impl(expression);
+    if (!owner_name.has_value()) {
+        return false;
+    }
+
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+        return false;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        *owner_name,
+        source_type_name,
+        context
+    );
+    if (!cleanup_plan.has_value() || cleanup_plan->descriptor_storage_name.empty()) {
+        return false;
+    }
+
+    descriptors.push_back(DynamicArrayIterableDescriptorPlan {
+        .kind = DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner,
+        .cleanup_owner_proof_status =
+            DynamicArrayIterableCleanupOwnerProofStatus::audit_runtime_aggregate_descriptor,
+        .source_type_name = std::string {source_type_name},
+        .element_source_type_name = std::move(sequence->element_source_type_name),
+        .owner_name = std::move(*owner_name),
+        .descriptor_storage = std::move(cleanup_plan->descriptor_storage_name),
+        .can_lower_now = false,
+        .cleanup_owner_proven = false,
+    });
     return true;
 }
 
@@ -805,6 +868,16 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         );
     }
 
+    if (contains_runtime_indexed_projection(expression) &&
+        push_returned_aggregate_computed_dynamic_array_leaf_descriptor(
+            expression,
+            source_type_name,
+            context,
+            descriptors
+        )) {
+        return true;
+    }
+
     if (expression.kind == syntax::ExpressionKind::call &&
         expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
@@ -1086,6 +1159,12 @@ auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants {
     return DynamicArrayLoweringInvariants {
         .descriptor_llvm_type = dynamic_array_descriptor_llvm_type(),
     };
+}
+
+auto returned_aggregate_computed_dynamic_array_owner_name(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<std::string> {
+    return returned_aggregate_computed_dynamic_array_owner_name_impl(expression);
 }
 
 auto dynamic_array_iterable_cleanup_owner_proof_status(
