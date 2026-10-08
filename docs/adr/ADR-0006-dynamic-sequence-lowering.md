@@ -3303,6 +3303,9 @@ representation.
 - Returned aggregate-field computed cleanup fixtures that were previously emit-LLVM-only now have driver CLI run
   coverage with non-zero program return values. The smoke test verifies cleanup IR and executable behavior for direct
   and nested aggregate-field payloads.
+- Returned aggregate-field `*_computed_for_cleanup_run.or` fixtures now pair their existing IR, object, and build
+  checks with direct executable run coverage across direct, switch, branch, forwarded, nested, and helper-returned
+  payload shapes.
 
 ## Follow-up work
 
