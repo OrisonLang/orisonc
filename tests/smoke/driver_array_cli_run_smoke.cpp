@@ -5192,6 +5192,7 @@ auto main(int argc, char** argv) -> int {
         returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, returned_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5207,6 +5208,7 @@ auto main(int argc, char** argv) -> int {
         switch_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_returned_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5222,6 +5224,7 @@ auto main(int argc, char** argv) -> int {
         switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5237,6 +5240,7 @@ auto main(int argc, char** argv) -> int {
         switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5252,6 +5256,7 @@ auto main(int argc, char** argv) -> int {
         branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, branch_mixed_forwarded_returned_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5267,6 +5272,7 @@ auto main(int argc, char** argv) -> int {
         returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, returned_nested_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5282,6 +5288,7 @@ auto main(int argc, char** argv) -> int {
         switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5297,6 +5304,7 @@ auto main(int argc, char** argv) -> int {
         switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5312,6 +5320,7 @@ auto main(int argc, char** argv) -> int {
         switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5327,6 +5336,7 @@ auto main(int argc, char** argv) -> int {
         branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, branch_mixed_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_if_branch_local_cleanup_emit_llvm_success(
         executable,
         forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
@@ -5342,6 +5352,7 @@ auto main(int argc, char** argv) -> int {
         forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup"
     );
+    assert_run_success(executable, forwarded_returned_nested_aggregate_field_final_if_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         returned_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5357,6 +5368,7 @@ auto main(int argc, char** argv) -> int {
         returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, returned_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5372,6 +5384,7 @@ auto main(int argc, char** argv) -> int {
         switch_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_returned_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5387,6 +5400,7 @@ auto main(int argc, char** argv) -> int {
         switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5402,6 +5416,7 @@ auto main(int argc, char** argv) -> int {
         switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5417,6 +5432,7 @@ auto main(int argc, char** argv) -> int {
         branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5432,6 +5448,7 @@ auto main(int argc, char** argv) -> int {
         returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, returned_nested_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5447,6 +5464,7 @@ auto main(int argc, char** argv) -> int {
         switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5462,6 +5480,7 @@ auto main(int argc, char** argv) -> int {
         switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5477,6 +5496,7 @@ auto main(int argc, char** argv) -> int {
         switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5492,6 +5512,7 @@ auto main(int argc, char** argv) -> int {
         branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_final_switch_branch_local_cleanup_emit_llvm_success(
         executable,
         forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
@@ -5507,6 +5528,7 @@ auto main(int argc, char** argv) -> int {
         forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path,
         smoke_temp_root / "dynamic_array_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup"
     );
+    assert_run_success(executable, forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_path);
     assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,
         returned_nested_aggregate_field_owned_computed_dynamic_array_path,

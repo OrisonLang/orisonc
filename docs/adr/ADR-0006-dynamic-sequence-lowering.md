@@ -3306,6 +3306,9 @@ representation.
 - Returned aggregate-field `*_computed_for_cleanup_run.or` fixtures now pair their existing IR, object, and build
   checks with direct executable run coverage across direct, switch, branch, forwarded, nested, and helper-returned
   payload shapes.
+- Final-if and final-switch returned aggregate-field branch-local cleanup fixtures now pair their existing IR, object,
+  and build checks with direct executable run coverage across direct, switch, forwarded, mixed-forwarded, nested, and
+  helper-forwarded payload shapes.
 
 ## Follow-up work
 
