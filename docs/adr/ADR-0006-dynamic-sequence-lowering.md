@@ -3300,6 +3300,9 @@ representation.
   bindings from the grouped result.
 - Choice-payload computed cleanup fixtures that were previously emit-LLVM-only now have driver CLI run coverage. The
   smoke test verifies owned payload cleanup IR and executable behavior for ordinary and final-switch payload bindings.
+- Returned aggregate-field computed cleanup fixtures that were previously emit-LLVM-only now have driver CLI run
+  coverage with non-zero program return values. The smoke test verifies cleanup IR and executable behavior for direct
+  and nested aggregate-field payloads.
 
 ## Follow-up work
 

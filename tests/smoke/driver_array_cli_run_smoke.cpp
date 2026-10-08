@@ -110,6 +110,16 @@ void assert_run_success(std::filesystem::path const& executable, std::filesystem
     assert(WEXITSTATUS(status) == 0);
 }
 
+void assert_run_exit_code(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path,
+    int expected_exit_code
+) {
+    auto status = std::system((executable.string() + " run " + source_path.string()).c_str());
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == expected_exit_code);
+}
+
 void assert_emit_llvm_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -7654,14 +7664,22 @@ auto main(int argc, char** argv) -> int {
         executable,
         returned_owned_computed_dynamic_array_missing_drop_path
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,
-        returned_aggregate_field_owned_computed_dynamic_array_missing_drop_path
+        returned_aggregate_field_owned_computed_dynamic_array_missing_drop_path,
+        "returned.values",
+        "%record.PayloadBox = type { { ptr, i64, i64 } }",
+        "define %record.PayloadBox @make_box()"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_run_exit_code(executable, returned_aggregate_field_owned_computed_dynamic_array_missing_drop_path, 42);
+    assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
         executable,
-        returned_nested_aggregate_field_owned_computed_dynamic_array_missing_drop_path
+        returned_nested_aggregate_field_owned_computed_dynamic_array_missing_drop_path,
+        "returned.inner.values",
+        "%record.OuterBox = type { %record.PayloadBox }",
+        "define %record.OuterBox @make_outer_box()"
     );
+    assert_run_exit_code(executable, returned_nested_aggregate_field_owned_computed_dynamic_array_missing_drop_path, 60);
     assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
         executable,
         returned_aggregate_field_owned_computed_dynamic_array_reuse_path,
