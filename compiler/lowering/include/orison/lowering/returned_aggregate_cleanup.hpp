@@ -39,6 +39,12 @@ struct ReturnedAggregateDescriptorProjectionPath {
     std::vector<ReturnedAggregateDescriptorProjectionStep> steps;
 };
 
+struct ReturnedAggregateSiblingProjectionPaths {
+    std::vector<ReturnedAggregateDescriptorProjectionPath> descriptor_paths;
+    std::vector<ReturnedAggregateDescriptorProjectionPath> maybe_owner_paths;
+    std::vector<ReturnedAggregateDescriptorProjectionPath> choice_owner_paths;
+};
+
 enum class ReturnedAggregateProjectionCollectionKind {
     dynamic_array_descriptor,
     maybe_owner,
@@ -250,6 +256,46 @@ inline auto collect_returned_aggregate_choice_projection_paths(
         ReturnedAggregateProjectionCollectionKind::choice_owner,
         std::move(steps)
     );
+}
+
+inline auto collect_returned_aggregate_sibling_projection_paths(
+    std::string owner_name,
+    std::string_view source_type_name,
+    std::string_view llvm_type,
+    LoweringContext const& context
+) -> std::optional<ReturnedAggregateSiblingProjectionPaths> {
+    auto descriptor_paths = collect_returned_aggregate_descriptor_projection_paths(
+        owner_name,
+        source_type_name,
+        llvm_type,
+        context
+    );
+    if (!descriptor_paths.has_value()) {
+        return std::nullopt;
+    }
+    auto maybe_paths = collect_returned_aggregate_maybe_projection_paths(
+        owner_name,
+        source_type_name,
+        llvm_type,
+        context
+    );
+    if (!maybe_paths.has_value()) {
+        return std::nullopt;
+    }
+    auto choice_paths = collect_returned_aggregate_choice_projection_paths(
+        owner_name,
+        source_type_name,
+        llvm_type,
+        context
+    );
+    if (!choice_paths.has_value()) {
+        return std::nullopt;
+    }
+    return ReturnedAggregateSiblingProjectionPaths {
+        .descriptor_paths = std::move(*descriptor_paths),
+        .maybe_owner_paths = std::move(*maybe_paths),
+        .choice_owner_paths = std::move(*choice_paths),
+    };
 }
 
 inline auto emit_returned_aggregate_descriptor_projection_pointer(

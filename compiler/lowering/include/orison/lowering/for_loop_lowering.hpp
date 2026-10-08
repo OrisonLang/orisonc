@@ -450,31 +450,13 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
     }
 
     auto returned_aggregate_member_owner = "returned_aggregate_members." + llvm_identifier_fragment(owner_name);
-    auto descriptor_paths = collect_returned_aggregate_descriptor_projection_paths(
+    auto sibling_paths = collect_returned_aggregate_sibling_projection_paths(
         returned_aggregate_member_owner,
         *base_source_type,
         *base_llvm_type,
         context.lowering
     );
-    if (!descriptor_paths.has_value()) {
-        return std::nullopt;
-    }
-    auto maybe_paths = collect_returned_aggregate_maybe_projection_paths(
-        returned_aggregate_member_owner,
-        *base_source_type,
-        *base_llvm_type,
-        context.lowering
-    );
-    if (!maybe_paths.has_value()) {
-        return std::nullopt;
-    }
-    auto choice_paths = collect_returned_aggregate_choice_projection_paths(
-        returned_aggregate_member_owner,
-        *base_source_type,
-        *base_llvm_type,
-        context.lowering
-    );
-    if (!choice_paths.has_value()) {
+    if (!sibling_paths.has_value()) {
         return std::nullopt;
     }
 
@@ -530,7 +512,7 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
 
     if (!register_returned_aggregate_descriptor_projection_cleanups(
             aggregate_storage,
-            *descriptor_paths,
+            sibling_paths->descriptor_paths,
             source_line,
             context,
             session,
@@ -539,7 +521,7 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
     }
     if (!register_returned_aggregate_owner_bindings(
             aggregate_storage,
-            *maybe_paths,
+            sibling_paths->maybe_owner_paths,
             context,
             session,
             output)) {
@@ -547,7 +529,7 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
     }
     if (!register_returned_aggregate_owner_bindings(
             aggregate_storage,
-            *choice_paths,
+            sibling_paths->choice_owner_paths,
             context,
             session,
             output)) {

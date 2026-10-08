@@ -3293,6 +3293,8 @@ representation.
 - Returned aggregate materialization and selected descriptor move/zeroing now also live in the returned-aggregate
   cleanup helper. Aggregate-path smoke coverage pins the emitted alloca/store, selected descriptor load/store, zeroing,
   and selected-owner binding registration.
+- Returned aggregate sibling path collection now has a grouped helper result that carries descriptor, Maybe-owner, and
+  Choice-owner paths together. Aggregate-path smoke coverage pins grouped collection counts and wrapper parity.
 
 ## Follow-up work
 

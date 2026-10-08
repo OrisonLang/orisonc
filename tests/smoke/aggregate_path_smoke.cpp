@@ -389,6 +389,17 @@ int main() {
     );
     assert(!mismatched_descriptor_storage.has_value());
 
+    auto returned_sibling_paths = orison::lowering::collect_returned_aggregate_sibling_projection_paths(
+        "returned.holder",
+        "Holder",
+        "%record.Holder",
+        lowering
+    );
+    assert(returned_sibling_paths.has_value());
+    assert(returned_sibling_paths->descriptor_paths.size() == 4);
+    assert(returned_sibling_paths->maybe_owner_paths.size() == 1);
+    assert(returned_sibling_paths->choice_owner_paths.size() == 1);
+
     auto returned_descriptor_paths = orison::lowering::collect_returned_aggregate_descriptor_projection_paths(
         "returned.holder",
         "Holder",
@@ -396,8 +407,9 @@ int main() {
         lowering
     );
     assert(returned_descriptor_paths.has_value());
-    assert(returned_descriptor_paths->size() == 4);
+    assert(returned_descriptor_paths->size() == returned_sibling_paths->descriptor_paths.size());
     assert((*returned_descriptor_paths)[0].owner_name == "returned.holder.grid.element0.element0.values");
+    assert(returned_sibling_paths->descriptor_paths[0].owner_name == (*returned_descriptor_paths)[0].owner_name);
     assert((*returned_descriptor_paths)[0].source_type_name == "DynamicArray<Payload>");
     assert((*returned_descriptor_paths)[0].steps.size() == 4);
     assert(
@@ -418,8 +430,9 @@ int main() {
         lowering
     );
     assert(returned_maybe_paths.has_value());
-    assert(returned_maybe_paths->size() == 1);
+    assert(returned_maybe_paths->size() == returned_sibling_paths->maybe_owner_paths.size());
     assert((*returned_maybe_paths)[0].owner_name == "returned.holder.maybe_values");
+    assert(returned_sibling_paths->maybe_owner_paths[0].owner_name == (*returned_maybe_paths)[0].owner_name);
     assert((*returned_maybe_paths)[0].source_type_name == "Maybe<DynamicArray<Payload>>");
     assert((*returned_maybe_paths)[0].steps.size() == 1);
     assert((*returned_maybe_paths)[0].steps[0].index_value == "1");
@@ -431,8 +444,9 @@ int main() {
         lowering
     );
     assert(returned_choice_paths.has_value());
-    assert(returned_choice_paths->size() == 1);
+    assert(returned_choice_paths->size() == returned_sibling_paths->choice_owner_paths.size());
     assert((*returned_choice_paths)[0].owner_name == "returned.holder.packet");
+    assert(returned_sibling_paths->choice_owner_paths[0].owner_name == (*returned_choice_paths)[0].owner_name);
     assert((*returned_choice_paths)[0].source_type_name == "Packet");
     assert((*returned_choice_paths)[0].steps.size() == 1);
     assert((*returned_choice_paths)[0].steps[0].index_value == "2");
