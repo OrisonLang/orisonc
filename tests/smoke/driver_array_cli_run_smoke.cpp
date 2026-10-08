@@ -2101,6 +2101,16 @@ void assert_choice_payload_final_switch_computed_reuse_emit_llvm_failure(
     assert(output.find("use after move: values") != std::string::npos);
 }
 
+void assert_choice_payload_owned_computed_cleanup_run_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert_contains(output, "call void @__orison_owned_cleanup.Payload");
+    assert_contains(output, "call void @__orison_dynamic_array_deallocate");
+    assert_run_success(executable, source_path);
+}
+
 void assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -7817,11 +7827,11 @@ auto main(int argc, char** argv) -> int {
         forwarded_returned_nested_aggregate_field_final_switch_owner_reuse_path,
         "returned.inner.values"
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_choice_payload_owned_computed_cleanup_run_success(
         executable,
         choice_payload_switch_binding_owned_computed_dynamic_array_missing_drop_path
     );
-    assert_cli_emit_llvm_existing_fixture_success(
+    assert_choice_payload_owned_computed_cleanup_run_success(
         executable,
         choice_payload_final_switch_binding_owned_computed_dynamic_array_missing_drop_path
     );

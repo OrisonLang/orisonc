@@ -3298,6 +3298,8 @@ representation.
 - Returned aggregate sibling registration now uses one grouped helper for descriptor cleanup plans plus Maybe/Choice
   owner bindings. Aggregate-path smoke coverage pins descriptor cleanup plan registration and addressable owner
   bindings from the grouped result.
+- Choice-payload computed cleanup fixtures that were previously emit-LLVM-only now have driver CLI run coverage. The
+  smoke test verifies owned payload cleanup IR and executable behavior for ordinary and final-switch payload bindings.
 
 ## Follow-up work
 
