@@ -3312,6 +3312,9 @@ representation.
 - Returned aggregate-field choice and Maybe sibling cleanup fixtures now pair their existing IR, object, and build
   checks with direct executable run coverage across scalar payload, record payload, fixed-array payload, and nested
   fixed-array payload shapes.
+- The sibling-after-primary cleanup fixture audit found no missing executable coverage. The accepted returned and
+  forwarded nested aggregate-field sibling-after-primary fixtures already use the generic CLI full-production helper,
+  which covers source run, emitted LLVM link/run, emitted object, and built executable paths.
 
 ## Follow-up work
 
