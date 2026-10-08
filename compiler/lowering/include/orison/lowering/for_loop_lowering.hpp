@@ -510,26 +510,10 @@ inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
         return std::nullopt;
     }
 
-    if (!register_returned_aggregate_descriptor_projection_cleanups(
+    if (!register_returned_aggregate_sibling_cleanups_and_bindings(
             aggregate_storage,
-            sibling_paths->descriptor_paths,
+            *sibling_paths,
             source_line,
-            context,
-            session,
-            output)) {
-        return std::nullopt;
-    }
-    if (!register_returned_aggregate_owner_bindings(
-            aggregate_storage,
-            sibling_paths->maybe_owner_paths,
-            context,
-            session,
-            output)) {
-        return std::nullopt;
-    }
-    if (!register_returned_aggregate_owner_bindings(
-            aggregate_storage,
-            sibling_paths->choice_owner_paths,
             context,
             session,
             output)) {

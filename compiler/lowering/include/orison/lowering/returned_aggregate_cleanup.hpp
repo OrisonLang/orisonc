@@ -444,4 +444,33 @@ inline auto register_returned_aggregate_owner_bindings(
     return true;
 }
 
+inline auto register_returned_aggregate_sibling_cleanups_and_bindings(
+    std::string_view aggregate_storage,
+    ReturnedAggregateSiblingProjectionPaths const& sibling_paths,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    return register_returned_aggregate_descriptor_projection_cleanups(
+            aggregate_storage,
+            sibling_paths.descriptor_paths,
+            source_line,
+            context,
+            session,
+            output) &&
+        register_returned_aggregate_owner_bindings(
+            aggregate_storage,
+            sibling_paths.maybe_owner_paths,
+            context,
+            session,
+            output) &&
+        register_returned_aggregate_owner_bindings(
+            aggregate_storage,
+            sibling_paths.choice_owner_paths,
+            context,
+            session,
+            output);
+}
+
 }  // namespace orison::lowering

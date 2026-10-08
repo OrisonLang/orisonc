@@ -3295,6 +3295,9 @@ representation.
   and selected-owner binding registration.
 - Returned aggregate sibling path collection now has a grouped helper result that carries descriptor, Maybe-owner, and
   Choice-owner paths together. Aggregate-path smoke coverage pins grouped collection counts and wrapper parity.
+- Returned aggregate sibling registration now uses one grouped helper for descriptor cleanup plans plus Maybe/Choice
+  owner bindings. Aggregate-path smoke coverage pins descriptor cleanup plan registration and addressable owner
+  bindings from the grouped result.
 
 ## Follow-up work
 

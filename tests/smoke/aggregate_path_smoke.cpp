@@ -518,6 +518,47 @@ int main() {
         ) != std::string::npos
     );
 
+    projection_state.next_temporary_index = 0;
+    projection_state.dynamic_array_local_cleanup_plans.clear();
+    projection_state.source_type_names.erase("returned.holder.maybe_values");
+    projection_state.source_type_names.erase("returned.holder.packet");
+    projection_state.addressable_bindings.erase("returned.holder.maybe_values");
+    projection_state.addressable_bindings.erase("returned.holder.packet");
+    auto returned_registration_output = std::ostringstream {};
+    assert(orison::lowering::register_returned_aggregate_sibling_cleanups_and_bindings(
+        "%returned.holder.addr",
+        *returned_sibling_paths,
+        43,
+        projection_context,
+        projection_session,
+        returned_registration_output
+    ));
+    assert(projection_state.dynamic_array_local_cleanup_plans.size() == 4);
+    assert(
+        projection_state.dynamic_array_local_cleanup_plans[0].owner_name ==
+        "returned.holder.grid.element0.element0.values"
+    );
+    assert(projection_state.source_type_names["returned.holder.maybe_values"] == "Maybe<DynamicArray<Payload>>");
+    assert(projection_state.source_type_names["returned.holder.packet"] == "Packet");
+    assert(projection_state.addressable_bindings.contains("returned.holder.maybe_values"));
+    assert(projection_state.addressable_bindings.contains("returned.holder.packet"));
+    auto const returned_registration_ir = returned_registration_output.str();
+    assert(
+        returned_registration_ir.find(
+            "returned.holder.grid.element0.element0.values.path0 = getelementptr %record.Holder"
+        ) != std::string::npos
+    );
+    assert(
+        returned_registration_ir.find(
+            "returned.holder.maybe_values.path"
+        ) != std::string::npos
+    );
+    assert(
+        returned_registration_ir.find(
+            "returned.holder.packet.path"
+        ) != std::string::npos
+    );
+
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
         lowering,
