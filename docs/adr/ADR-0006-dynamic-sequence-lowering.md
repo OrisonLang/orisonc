@@ -3309,6 +3309,9 @@ representation.
 - Final-if and final-switch returned aggregate-field branch-local cleanup fixtures now pair their existing IR, object,
   and build checks with direct executable run coverage across direct, switch, forwarded, mixed-forwarded, nested, and
   helper-forwarded payload shapes.
+- Returned aggregate-field choice and Maybe sibling cleanup fixtures now pair their existing IR, object, and build
+  checks with direct executable run coverage across scalar payload, record payload, fixed-array payload, and nested
+  fixed-array payload shapes.
 
 ## Follow-up work
 
