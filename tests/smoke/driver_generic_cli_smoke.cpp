@@ -6047,9 +6047,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "choice_constructor_member_path_reuse_rejected.or",
         "use after move: holder.values"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_owned_constructor_nested_member_path_move_run.or"
+        fixtures / "dynamic_array_owned_constructor_nested_member_path_move_run.or",
+        smoke_temp_root / "dynamic_array_owned_constructor_nested_member_path_move"
     );
     assert_cli_emit_llvm_dynamic_array_owned_constructor_nested_member_path_move_fixture_success(
         executable,
@@ -6060,17 +6061,19 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_owned_constructor_nested_member_path_reuse_rejected.or",
         "use after move: nested.holder.items"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_run.or"
+        fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_run.or",
+        smoke_temp_root / "dynamic_array_owned_constructor_indexed_member_path_move"
     );
     assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_move_fixture_success(
         executable,
         fixtures / "dynamic_array_owned_constructor_indexed_member_path_move_run.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_owned_constructor_indexed_member_path_sibling_move_run.or"
+        fixtures / "dynamic_array_owned_constructor_indexed_member_path_sibling_move_run.or",
+        smoke_temp_root / "dynamic_array_owned_constructor_indexed_member_path_sibling_move"
     );
     assert_cli_emit_llvm_dynamic_array_owned_constructor_indexed_member_path_sibling_move_fixture_success(
         executable,

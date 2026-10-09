@@ -3348,6 +3348,8 @@ representation.
   full production CLI helper, aligning accepted generic fixtures with their existing IR assertions.
 - Basic non-generic `DynamicArray<T>` receiver fixtures now use the full production CLI helper across length, local
   call-result, direct call-result, ternary call-result, and direct ternary count paths.
+- Constructor member-transfer fixtures for nested, indexed, and indexed-sibling `DynamicArray<T>` member moves now use
+  the full production CLI helper beside their existing IR-shape assertions.
 
 ## Follow-up work
 
