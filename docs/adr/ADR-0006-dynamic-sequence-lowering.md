@@ -3318,6 +3318,9 @@ representation.
 - Stored choice-payload forwarding fixtures now pair their detailed array-driver IR, object, and build checks with
   direct executable run coverage across aggregate-field, nested aggregate-field, branch, and distinct-owner switch
   forwarding shapes.
+- The stored choice-payload forwarding rejected-path audit found no dedicated rejected fixtures for that family. All
+  matching stored choice-payload forwarding fixtures are accepted run fixtures covered by the generic CLI
+  full-production matrix and by the detailed array-driver IR/object/build/run checks.
 
 ## Follow-up work
 
