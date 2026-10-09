@@ -597,6 +597,28 @@ int main() {
     dynamic_selected_projection.complete_static_descriptor_path = false;
     assert(orison::lowering::returned_aggregate_selected_static_descriptor_path(dynamic_selected_projection) == nullptr);
     assert(orison::lowering::returned_aggregate_register_without_static_selected_path(dynamic_selected_projection));
+    auto selected_step_helpers = std::vector<orison::lowering::ReturnedAggregateDescriptorProjectionStep> {};
+    orison::lowering::append_returned_aggregate_selected_field_step(
+        selected_step_helpers,
+        "%record.Holder",
+        2
+    );
+    orison::lowering::append_returned_aggregate_selected_array_element_step(
+        selected_step_helpers,
+        "[2 x %record.RuntimeBucket]",
+        "1"
+    );
+    assert(selected_step_helpers.size() == 2);
+    assert(
+        selected_step_helpers[0].kind ==
+        orison::lowering::ReturnedAggregateDescriptorProjectionStepKind::field
+    );
+    assert(selected_step_helpers[0].index_value == "2");
+    assert(
+        selected_step_helpers[1].kind ==
+        orison::lowering::ReturnedAggregateDescriptorProjectionStepKind::array_element
+    );
+    assert(selected_step_helpers[1].index_value == "1");
 
     projection_state.next_temporary_index = 0;
     projection_state.dynamic_array_local_cleanup_plans.clear();

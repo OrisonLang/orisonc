@@ -3337,6 +3337,8 @@ representation.
 - Returned aggregate selected descriptor projection state now uses a shared helper shape with policy accessors for
   static selected-path skip and runtime-dynamic selected-path cleanup retention. Direct receiver lowering still owns
   traversal, expression lowering, and dynamic-index bounds emission for selected path discovery.
+- Returned aggregate selected descriptor step construction now uses shared field and array-element append helpers.
+  Direct receiver lowering still owns traversal, expression lowering, and dynamic-index bounds/control-flow emission.
 
 ## Follow-up work
 

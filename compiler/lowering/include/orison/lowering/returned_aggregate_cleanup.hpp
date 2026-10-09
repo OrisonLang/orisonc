@@ -65,6 +65,30 @@ inline auto returned_aggregate_register_without_static_selected_path(
     return !selected_path.complete_static_descriptor_path;
 }
 
+inline auto append_returned_aggregate_selected_field_step(
+    std::vector<ReturnedAggregateDescriptorProjectionStep>& selected_steps,
+    std::string aggregate_llvm_type,
+    std::size_t field_index
+) -> void {
+    selected_steps.push_back(ReturnedAggregateDescriptorProjectionStep {
+        .kind = ReturnedAggregateDescriptorProjectionStepKind::field,
+        .aggregate_llvm_type = std::move(aggregate_llvm_type),
+        .index_value = std::to_string(field_index),
+    });
+}
+
+inline auto append_returned_aggregate_selected_array_element_step(
+    std::vector<ReturnedAggregateDescriptorProjectionStep>& selected_steps,
+    std::string aggregate_llvm_type,
+    std::string index_value
+) -> void {
+    selected_steps.push_back(ReturnedAggregateDescriptorProjectionStep {
+        .kind = ReturnedAggregateDescriptorProjectionStepKind::array_element,
+        .aggregate_llvm_type = std::move(aggregate_llvm_type),
+        .index_value = std::move(index_value),
+    });
+}
+
 inline auto same_returned_aggregate_descriptor_projection_step(
     ReturnedAggregateDescriptorProjectionStep const& left,
     ReturnedAggregateDescriptorProjectionStep const& right

@@ -435,11 +435,11 @@ auto lower_selected_descriptor_projection_path(
             if (field == nullptr) {
                 return std::nullopt;
             }
-            selected_steps.push_back(DescriptorProjectionStep {
-                .kind = DescriptorProjectionStepKind::field,
-                .aggregate_llvm_type = std::move(step_cursor.llvm_type_name),
-                .index_value = std::to_string(field->index),
-            });
+            append_returned_aggregate_selected_field_step(
+                selected_steps,
+                std::move(step_cursor.llvm_type_name),
+                field->index
+            );
             continue;
         }
 
@@ -566,11 +566,11 @@ auto lower_selected_descriptor_projection_path(
         if (result.error != AggregatePathError::none) {
             return std::nullopt;
         }
-        selected_steps.push_back(DescriptorProjectionStep {
-            .kind = DescriptorProjectionStepKind::array_element,
-            .aggregate_llvm_type = std::move(index_cursor.llvm_type_name),
-            .index_value = std::move(selected_index_value),
-        });
+        append_returned_aggregate_selected_array_element_step(
+            selected_steps,
+            std::move(index_cursor.llvm_type_name),
+            std::move(selected_index_value)
+        );
     }
 
     if (!dynamic_array_element_source_type_name(cursor->source_type_name).has_value()) {
