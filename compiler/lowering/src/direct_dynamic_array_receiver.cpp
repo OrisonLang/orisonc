@@ -27,13 +27,6 @@ namespace {
 using DescriptorProjectionStep = ReturnedAggregateDescriptorProjectionStep;
 using DescriptorProjectionStepKind = ReturnedAggregateDescriptorProjectionStepKind;
 
-struct LoweredSelectedDescriptorProjection {
-    std::string pointer;
-    std::string source_type_name;
-    std::vector<DescriptorProjectionStep> static_descriptor_steps;
-    bool complete_static_descriptor_path = true;
-};
-
 auto named_dynamic_array_element_receiver_owner_name(
     syntax::ExpressionSyntax const& receiver_expression,
     LoweringContext const& context,
@@ -409,7 +402,7 @@ auto lower_selected_descriptor_projection_path(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
-) -> std::optional<LoweredSelectedDescriptorProjection> {
+) -> std::optional<ReturnedAggregateSelectedDescriptorProjection> {
     auto cursor = initialize_aggregate_path_cursor(
         std::string {aggregate_storage},
         std::move(source_type_name),
@@ -583,7 +576,7 @@ auto lower_selected_descriptor_projection_path(
     if (!dynamic_array_element_source_type_name(cursor->source_type_name).has_value()) {
         return std::nullopt;
     }
-    return LoweredSelectedDescriptorProjection {
+    return ReturnedAggregateSelectedDescriptorProjection {
         .pointer = std::move(cursor->pointer),
         .source_type_name = std::move(cursor->source_type_name),
         .static_descriptor_steps = std::move(selected_steps),
@@ -690,14 +683,11 @@ auto lower_returned_aggregate_projection_receiver(
     output << "  store " << dynamic_array_descriptor_llvm_type()
            << " zeroinitializer, ptr " << selected_path->pointer << "\n";
 
-    auto const* selected_descriptor_path = selected_path->complete_static_descriptor_path
-        ? &selected_path->static_descriptor_steps
-        : nullptr;
     if (!register_returned_aggregate_sibling_cleanups_and_bindings(
             aggregate_storage,
             *sibling_paths,
-            selected_descriptor_path,
-            !selected_path->complete_static_descriptor_path,
+            returned_aggregate_selected_static_descriptor_path(*selected_path),
+            returned_aggregate_register_without_static_selected_path(*selected_path),
             receiver_expression.line,
             context,
             session,

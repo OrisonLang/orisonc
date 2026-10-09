@@ -46,6 +46,25 @@ struct ReturnedAggregateSiblingProjectionPaths {
     std::vector<ReturnedAggregateDescriptorProjectionPath> choice_owner_paths;
 };
 
+struct ReturnedAggregateSelectedDescriptorProjection {
+    std::string pointer;
+    std::string source_type_name;
+    std::vector<ReturnedAggregateDescriptorProjectionStep> static_descriptor_steps;
+    bool complete_static_descriptor_path = true;
+};
+
+inline auto returned_aggregate_selected_static_descriptor_path(
+    ReturnedAggregateSelectedDescriptorProjection const& selected_path
+) -> std::vector<ReturnedAggregateDescriptorProjectionStep> const* {
+    return selected_path.complete_static_descriptor_path ? &selected_path.static_descriptor_steps : nullptr;
+}
+
+inline auto returned_aggregate_register_without_static_selected_path(
+    ReturnedAggregateSelectedDescriptorProjection const& selected_path
+) -> bool {
+    return !selected_path.complete_static_descriptor_path;
+}
+
 inline auto same_returned_aggregate_descriptor_projection_step(
     ReturnedAggregateDescriptorProjectionStep const& left,
     ReturnedAggregateDescriptorProjectionStep const& right

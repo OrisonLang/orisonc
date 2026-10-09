@@ -582,6 +582,21 @@ int main() {
             "returned.holder.grid.element0.element0.values.path"
         ) == std::string::npos
     );
+    auto static_selected_projection = orison::lowering::ReturnedAggregateSelectedDescriptorProjection {
+        .pointer = "%selected.descriptor.ptr",
+        .source_type_name = "DynamicArray<Payload>",
+        .static_descriptor_steps = returned_sibling_paths->descriptor_paths[0].steps,
+        .complete_static_descriptor_path = true,
+    };
+    assert(
+        orison::lowering::returned_aggregate_selected_static_descriptor_path(static_selected_projection) ==
+        &static_selected_projection.static_descriptor_steps
+    );
+    assert(!orison::lowering::returned_aggregate_register_without_static_selected_path(static_selected_projection));
+    auto dynamic_selected_projection = static_selected_projection;
+    dynamic_selected_projection.complete_static_descriptor_path = false;
+    assert(orison::lowering::returned_aggregate_selected_static_descriptor_path(dynamic_selected_projection) == nullptr);
+    assert(orison::lowering::returned_aggregate_register_without_static_selected_path(dynamic_selected_projection));
 
     projection_state.next_temporary_index = 0;
     projection_state.dynamic_array_local_cleanup_plans.clear();

@@ -3334,6 +3334,9 @@ representation.
 - Returned aggregate grouped sibling registration now also accepts the same selected-descriptor policy. Direct
   returned-aggregate receiver lowering delegates descriptor, Maybe-owner, and Choice-owner registration through that
   grouped helper after discovering the selected path.
+- Returned aggregate selected descriptor projection state now uses a shared helper shape with policy accessors for
+  static selected-path skip and runtime-dynamic selected-path cleanup retention. Direct receiver lowering still owns
+  traversal, expression lowering, and dynamic-index bounds emission for selected path discovery.
 
 ## Follow-up work
 
