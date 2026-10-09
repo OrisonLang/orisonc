@@ -3327,6 +3327,10 @@ representation.
 - Direct returned-aggregate receiver lowering now also reuses the returned-aggregate cleanup helper's projection path
   types, grouped sibling path collector, projection GEP emitter, and Maybe/Choice owner-binding registration. Its
   direct-only code now focuses on selected-descriptor exclusion for statically known selected paths.
+- Returned aggregate descriptor cleanup registration now accepts an optional static selected descriptor path and skips
+  that path when registering sibling cleanups. Direct returned-aggregate receiver lowering uses this shared skip policy
+  for static paths and still retains cleanup when the selected path is runtime-dynamic. Runtime-index returned cleanup
+  continues to register all finite sibling descriptors after the selected descriptor has been moved and zeroed.
 
 ## Follow-up work
 

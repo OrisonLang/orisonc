@@ -1,6 +1,5 @@
 #include "orison/lowering/direct_dynamic_array_receiver.hpp"
 
-#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
@@ -25,7 +24,6 @@
 namespace orison::lowering {
 namespace {
 
-using DescriptorProjectionPath = ReturnedAggregateDescriptorProjectionPath;
 using DescriptorProjectionStep = ReturnedAggregateDescriptorProjectionStep;
 using DescriptorProjectionStepKind = ReturnedAggregateDescriptorProjectionStepKind;
 
@@ -35,23 +33,6 @@ struct LoweredSelectedDescriptorProjection {
     std::vector<DescriptorProjectionStep> static_descriptor_steps;
     bool complete_static_descriptor_path = true;
 };
-
-auto same_descriptor_projection_step(
-    DescriptorProjectionStep const& left,
-    DescriptorProjectionStep const& right
-) -> bool {
-    return left.kind == right.kind &&
-        left.aggregate_llvm_type == right.aggregate_llvm_type &&
-        left.index_value == right.index_value;
-}
-
-auto same_descriptor_projection_path(
-    std::vector<DescriptorProjectionStep> const& left,
-    std::vector<DescriptorProjectionStep> const& right
-) -> bool {
-    return left.size() == right.size() &&
-        std::equal(left.begin(), left.end(), right.begin(), same_descriptor_projection_step);
-}
 
 auto named_dynamic_array_element_receiver_owner_name(
     syntax::ExpressionSyntax const& receiver_expression,
@@ -634,41 +615,6 @@ auto register_lowered_local_dynamic_array_cleanup(
     return true;
 }
 
-auto register_returned_aggregate_descriptor_cleanups(
-    std::string_view aggregate_storage,
-    std::vector<DescriptorProjectionPath> const& descriptor_paths,
-    LoweredSelectedDescriptorProjection const& selected_path,
-    std::size_t source_line,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    std::ostringstream& output
-) -> bool {
-    for (auto const& descriptor_path : descriptor_paths) {
-        if (selected_path.complete_static_descriptor_path &&
-            same_descriptor_projection_path(descriptor_path.steps, selected_path.static_descriptor_steps)) {
-            continue;
-        }
-        auto sibling_pointer = emit_returned_aggregate_descriptor_projection_pointer(
-            aggregate_storage,
-            descriptor_path,
-            "%" + descriptor_path.owner_name,
-            session,
-            output
-        );
-        if (!register_lowered_local_dynamic_array_cleanup(
-            descriptor_path.owner_name,
-            descriptor_path.source_type_name,
-            std::move(sibling_pointer),
-            source_line,
-            context,
-            session
-        )) {
-            return false;
-        }
-    }
-    return true;
-}
-
 auto lower_returned_aggregate_projection_receiver(
     syntax::ExpressionSyntax const& receiver_expression,
     std::string_view receiver_type_name,
@@ -744,10 +690,14 @@ auto lower_returned_aggregate_projection_receiver(
     output << "  store " << dynamic_array_descriptor_llvm_type()
            << " zeroinitializer, ptr " << selected_path->pointer << "\n";
 
-    if (!register_returned_aggregate_descriptor_cleanups(
+    auto const* selected_descriptor_path = selected_path->complete_static_descriptor_path
+        ? &selected_path->static_descriptor_steps
+        : nullptr;
+    if (!register_returned_aggregate_descriptor_projection_cleanups(
             aggregate_storage,
             sibling_paths->descriptor_paths,
-            *selected_path,
+            selected_descriptor_path,
+            !selected_path->complete_static_descriptor_path,
             receiver_expression.line,
             context,
             session,

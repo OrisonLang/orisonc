@@ -559,6 +559,30 @@ int main() {
         ) != std::string::npos
     );
 
+    projection_state.next_temporary_index = 0;
+    projection_state.dynamic_array_local_cleanup_plans.clear();
+    auto selected_skip_registration_output = std::ostringstream {};
+    assert(orison::lowering::register_returned_aggregate_descriptor_projection_cleanups(
+        "%returned.holder.addr",
+        returned_sibling_paths->descriptor_paths,
+        &returned_sibling_paths->descriptor_paths[0].steps,
+        false,
+        44,
+        projection_context,
+        projection_session,
+        selected_skip_registration_output
+    ));
+    assert(projection_state.dynamic_array_local_cleanup_plans.size() == 3);
+    assert(
+        projection_state.dynamic_array_local_cleanup_plans[0].owner_name ==
+        "returned.holder.grid.element0.element1.values"
+    );
+    assert(
+        selected_skip_registration_output.str().find(
+            "returned.holder.grid.element0.element0.values.path"
+        ) == std::string::npos
+    );
+
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
         lowering,

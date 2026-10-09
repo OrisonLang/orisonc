@@ -11,6 +11,7 @@
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <optional>
@@ -44,6 +45,28 @@ struct ReturnedAggregateSiblingProjectionPaths {
     std::vector<ReturnedAggregateDescriptorProjectionPath> maybe_owner_paths;
     std::vector<ReturnedAggregateDescriptorProjectionPath> choice_owner_paths;
 };
+
+inline auto same_returned_aggregate_descriptor_projection_step(
+    ReturnedAggregateDescriptorProjectionStep const& left,
+    ReturnedAggregateDescriptorProjectionStep const& right
+) -> bool {
+    return left.kind == right.kind &&
+        left.aggregate_llvm_type == right.aggregate_llvm_type &&
+        left.index_value == right.index_value;
+}
+
+inline auto same_returned_aggregate_descriptor_projection_path(
+    std::vector<ReturnedAggregateDescriptorProjectionStep> const& left,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> const& right
+) -> bool {
+    return left.size() == right.size() &&
+        std::equal(
+            left.begin(),
+            left.end(),
+            right.begin(),
+            same_returned_aggregate_descriptor_projection_step
+        );
+}
 
 enum class ReturnedAggregateProjectionCollectionKind {
     dynamic_array_descriptor,
@@ -324,16 +347,24 @@ inline auto emit_returned_aggregate_descriptor_projection_pointer(
 inline auto register_returned_aggregate_descriptor_projection_cleanups(
     std::string_view aggregate_storage,
     std::vector<ReturnedAggregateDescriptorProjectionPath> const& descriptor_paths,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> const* selected_descriptor_path,
+    bool register_without_static_selected_path,
     std::size_t source_line,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> bool {
-    if (descriptor_paths.size() <= 1) {
+    if (selected_descriptor_path == nullptr &&
+        !register_without_static_selected_path &&
+        descriptor_paths.size() <= 1) {
         return true;
     }
 
     for (auto const& descriptor_path : descriptor_paths) {
+        if (selected_descriptor_path != nullptr &&
+            same_returned_aggregate_descriptor_projection_path(descriptor_path.steps, *selected_descriptor_path)) {
+            continue;
+        }
         auto descriptor_pointer = emit_returned_aggregate_descriptor_projection_pointer(
             aggregate_storage,
             descriptor_path,
@@ -455,6 +486,8 @@ inline auto register_returned_aggregate_sibling_cleanups_and_bindings(
     return register_returned_aggregate_descriptor_projection_cleanups(
             aggregate_storage,
             sibling_paths.descriptor_paths,
+            nullptr,
+            false,
             source_line,
             context,
             session,
