@@ -3342,6 +3342,8 @@ representation.
 - Returned aggregate receiver method-chain fixtures now pair direct run and emit-LLVM assertions with object emission and
   built-executable coverage for direct, static-indexed, nested static-indexed, sibling-field, and runtime-indexed
   aggregate receiver paths.
+- Direct owned receiver fixtures now use the full production CLI helper across count, append-statement, method-chain,
+  and ternary method-chain paths so object emission and built-executable behavior stay pinned beside IR assertions.
 
 ## Follow-up work
 

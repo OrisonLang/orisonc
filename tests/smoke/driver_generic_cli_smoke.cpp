@@ -3940,57 +3940,64 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_receiver_direct_ternary_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_count.or"
+        fixtures / "dynamic_array_receiver_direct_owned_count.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_ternary_count.or"
+        fixtures / "dynamic_array_receiver_direct_owned_ternary_count.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_ternary_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_ternary_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_append_statement.or"
+        fixtures / "dynamic_array_receiver_direct_owned_append_statement.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_append_statement"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_append_statement_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_append_statement.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_method_chain_count.or"
+        fixtures / "dynamic_array_receiver_direct_owned_method_chain_count.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_method_chain_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_method_chain_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_method_chain_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement.or"
+        fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_method_chain_append_statement"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_method_chain_append_statement_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_method_chain_append_statement.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_ternary_method_chain_count.or"
+        fixtures / "dynamic_array_receiver_direct_owned_ternary_method_chain_count.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_ternary_method_chain_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_method_chain_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_owned_ternary_method_chain_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_owned_ternary_method_chain_append_statement.or"
+        fixtures / "dynamic_array_receiver_direct_owned_ternary_method_chain_append_statement.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_owned_ternary_method_chain_append_statement"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_owned_ternary_method_chain_append_statement_fixture_success(
         executable,
