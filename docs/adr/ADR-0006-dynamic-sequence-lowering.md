@@ -3339,6 +3339,9 @@ representation.
   traversal, expression lowering, and dynamic-index bounds emission for selected path discovery.
 - Returned aggregate selected descriptor step construction now uses shared field and array-element append helpers.
   Direct receiver lowering still owns traversal, expression lowering, and dynamic-index bounds/control-flow emission.
+- Returned aggregate receiver method-chain fixtures now pair direct run and emit-LLVM assertions with object emission and
+  built-executable coverage for direct, static-indexed, nested static-indexed, sibling-field, and runtime-indexed
+  aggregate receiver paths.
 
 ## Follow-up work
 
