@@ -478,6 +478,8 @@ inline auto register_returned_aggregate_owner_bindings(
 inline auto register_returned_aggregate_sibling_cleanups_and_bindings(
     std::string_view aggregate_storage,
     ReturnedAggregateSiblingProjectionPaths const& sibling_paths,
+    std::vector<ReturnedAggregateDescriptorProjectionStep> const* selected_descriptor_path,
+    bool register_without_static_selected_path,
     std::size_t source_line,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
@@ -486,8 +488,8 @@ inline auto register_returned_aggregate_sibling_cleanups_and_bindings(
     return register_returned_aggregate_descriptor_projection_cleanups(
             aggregate_storage,
             sibling_paths.descriptor_paths,
-            nullptr,
-            false,
+            selected_descriptor_path,
+            register_without_static_selected_path,
             source_line,
             context,
             session,
@@ -504,6 +506,26 @@ inline auto register_returned_aggregate_sibling_cleanups_and_bindings(
             context,
             session,
             output);
+}
+
+inline auto register_returned_aggregate_sibling_cleanups_and_bindings(
+    std::string_view aggregate_storage,
+    ReturnedAggregateSiblingProjectionPaths const& sibling_paths,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    return register_returned_aggregate_sibling_cleanups_and_bindings(
+        aggregate_storage,
+        sibling_paths,
+        nullptr,
+        false,
+        source_line,
+        context,
+        session,
+        output
+    );
 }
 
 }  // namespace orison::lowering

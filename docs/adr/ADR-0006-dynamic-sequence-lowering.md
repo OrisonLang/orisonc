@@ -3331,6 +3331,9 @@ representation.
   that path when registering sibling cleanups. Direct returned-aggregate receiver lowering uses this shared skip policy
   for static paths and still retains cleanup when the selected path is runtime-dynamic. Runtime-index returned cleanup
   continues to register all finite sibling descriptors after the selected descriptor has been moved and zeroed.
+- Returned aggregate grouped sibling registration now also accepts the same selected-descriptor policy. Direct
+  returned-aggregate receiver lowering delegates descriptor, Maybe-owner, and Choice-owner registration through that
+  grouped helper after discovering the selected path.
 
 ## Follow-up work
 

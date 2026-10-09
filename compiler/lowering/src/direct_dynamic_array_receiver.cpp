@@ -693,30 +693,12 @@ auto lower_returned_aggregate_projection_receiver(
     auto const* selected_descriptor_path = selected_path->complete_static_descriptor_path
         ? &selected_path->static_descriptor_steps
         : nullptr;
-    if (!register_returned_aggregate_descriptor_projection_cleanups(
+    if (!register_returned_aggregate_sibling_cleanups_and_bindings(
             aggregate_storage,
-            sibling_paths->descriptor_paths,
+            *sibling_paths,
             selected_descriptor_path,
             !selected_path->complete_static_descriptor_path,
             receiver_expression.line,
-            context,
-            session,
-            output)) {
-        return std::nullopt;
-    }
-
-    if (!register_returned_aggregate_owner_bindings(
-            aggregate_storage,
-            sibling_paths->maybe_owner_paths,
-            context,
-            session,
-            output)) {
-        return std::nullopt;
-    }
-
-    if (!register_returned_aggregate_owner_bindings(
-            aggregate_storage,
-            sibling_paths->choice_owner_paths,
             context,
             session,
             output)) {
