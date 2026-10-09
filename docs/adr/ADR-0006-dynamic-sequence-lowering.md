@@ -3321,6 +3321,9 @@ representation.
 - The stored choice-payload forwarding rejected-path audit found no dedicated rejected fixtures for that family. All
   matching stored choice-payload forwarding fixtures are accepted run fixtures covered by the generic CLI
   full-production matrix and by the detailed array-driver IR/object/build/run checks.
+- Direct returned-aggregate receiver lowering now reuses the returned-aggregate cleanup helper's descriptor-count
+  walker when deciding whether a returned projection has sibling descriptors and when discovering Maybe/Choice owners.
+  This keeps direct receiver cleanup gating aligned with returned runtime-index aggregate cleanup.
 
 ## Follow-up work
 

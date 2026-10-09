@@ -11,6 +11,7 @@
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
+#include "orison/lowering/returned_aggregate_cleanup.hpp"
 #include "orison/lowering/runtime_index_expression.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -159,56 +160,6 @@ auto direct_projection_root_call(
     return current;
 }
 
-auto dynamic_array_descriptor_count(
-    std::string_view source_type_name,
-    LoweringContext const& context,
-    std::size_t depth = 0
-) -> std::size_t {
-    if (depth > 16) {
-        return 2;
-    }
-    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
-        return 1;
-    }
-
-    if (auto array_element_type = array_element_source_type_name(source_type_name)) {
-        auto element_count = dynamic_array_descriptor_count(*array_element_type, context, depth + 1);
-        return element_count == 0 ? 0 : 2;
-    }
-
-    if (auto maybe_payload_type = maybe_payload_source_type_name(source_type_name)) {
-        return dynamic_array_descriptor_count(*maybe_payload_type, context, depth + 1);
-    }
-
-    auto choice = context.choices.find(std::string {source_type_name});
-    if (choice != context.choices.end()) {
-        auto count = std::size_t {0};
-        for (auto const& variant : choice->second.variants) {
-            for (auto const& payload : variant.payloads) {
-                count += dynamic_array_descriptor_count(payload.source_type_name, context, depth + 1);
-                if (count > 1) {
-                    return count;
-                }
-            }
-        }
-        return count;
-    }
-
-    auto record = context.records.find(std::string {source_type_name});
-    if (record == context.records.end()) {
-        return 0;
-    }
-
-    auto count = std::size_t {0};
-    for (auto const& field : record->second.fields) {
-        count += dynamic_array_descriptor_count(field.source_type_name, context, depth + 1);
-        if (count > 1) {
-            return count;
-        }
-    }
-    return count;
-}
-
 auto returned_aggregate_projection_has_sibling_descriptors(
     syntax::ExpressionSyntax const& receiver_expression,
     LoweringContext const& context
@@ -223,7 +174,7 @@ auto returned_aggregate_projection_has_sibling_descriptors(
         return false;
     }
 
-    return dynamic_array_descriptor_count(function->second.source_return_type_name, context) > 1;
+    return returned_aggregate_dynamic_array_descriptor_count(function->second.source_return_type_name, context) > 1;
 }
 
 auto aggregate_path_crosses_dynamic_array_element(
@@ -499,10 +450,10 @@ auto descriptor_projection_collection_target(
         return dynamic_array_element_source_type_name(source_type_name).has_value();
     case DescriptorProjectionCollectionKind::maybe_owner:
         return maybe_payload_source_type_name(source_type_name).has_value() &&
-            dynamic_array_descriptor_count(source_type_name, context) > 0;
+            returned_aggregate_dynamic_array_descriptor_count(source_type_name, context) > 0;
     case DescriptorProjectionCollectionKind::choice_owner:
         return context.choices.contains(std::string {source_type_name}) &&
-            dynamic_array_descriptor_count(source_type_name, context) > 0;
+            returned_aggregate_dynamic_array_descriptor_count(source_type_name, context) > 0;
     }
     return false;
 }
