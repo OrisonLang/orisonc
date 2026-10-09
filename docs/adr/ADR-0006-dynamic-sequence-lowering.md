@@ -3315,6 +3315,9 @@ representation.
 - The sibling-after-primary cleanup fixture audit found no missing executable coverage. The accepted returned and
   forwarded nested aggregate-field sibling-after-primary fixtures already use the generic CLI full-production helper,
   which covers source run, emitted LLVM link/run, emitted object, and built executable paths.
+- Stored choice-payload forwarding fixtures now pair their detailed array-driver IR, object, and build checks with
+  direct executable run coverage across aggregate-field, nested aggregate-field, branch, and distinct-owner switch
+  forwarding shapes.
 
 ## Follow-up work
 

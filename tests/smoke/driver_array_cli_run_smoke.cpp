@@ -6327,6 +6327,7 @@ auto main(int argc, char** argv) -> int {
         returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding"
     );
+    assert_run_success(executable, returned_dynamic_array_aggregate_field_stored_choice_payload_forwarding_path);
     assert_returned_dynamic_array_aggregate_field_stored_choice_payload_branch_forwarding_emit_llvm_success(
         executable,
         returned_dynamic_array_aggregate_field_stored_choice_payload_branch_forwarding_path
@@ -6341,6 +6342,7 @@ auto main(int argc, char** argv) -> int {
         returned_dynamic_array_aggregate_field_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding"
     );
+    assert_run_success(executable, returned_dynamic_array_aggregate_field_stored_choice_payload_branch_forwarding_path);
     assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_emit_llvm_success(
         executable,
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_path
@@ -6355,6 +6357,7 @@ auto main(int argc, char** argv) -> int {
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding"
     );
+    assert_run_success(executable, returned_dynamic_array_nested_aggregate_field_stored_choice_payload_forwarding_path);
     assert_returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_emit_llvm_success(
         executable,
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path
@@ -6369,6 +6372,7 @@ auto main(int argc, char** argv) -> int {
         returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding"
     );
+    assert_run_success(executable, returned_dynamic_array_nested_aggregate_field_stored_choice_payload_branch_forwarding_path);
     assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_success(
         executable,
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path
@@ -6383,6 +6387,7 @@ auto main(int argc, char** argv) -> int {
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding"
     );
+    assert_run_success(executable, returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_path);
     assert_returned_dynamic_array_distinct_choice_payload_branch_forwarding_emit_llvm_success(
         executable,
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path
@@ -6397,6 +6402,7 @@ auto main(int argc, char** argv) -> int {
         returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path,
         smoke_temp_root / "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding"
     );
+    assert_run_success(executable, returned_dynamic_array_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_path);
     }
     if (runs_mode("final_control")) {
     assert_dynamic_array_local_final_if_branch_cleanup_emit_llvm_success(
