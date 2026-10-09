@@ -25,34 +25,15 @@
 namespace orison::lowering {
 namespace {
 
-enum class DescriptorProjectionStepKind {
-    field,
-    array_element,
-};
-
-struct DescriptorProjectionStep {
-    DescriptorProjectionStepKind kind = DescriptorProjectionStepKind::field;
-    std::string aggregate_llvm_type;
-    std::string index_value;
-};
-
-struct DescriptorProjectionPath {
-    std::string owner_name;
-    std::string source_type_name;
-    std::vector<DescriptorProjectionStep> steps;
-};
+using DescriptorProjectionPath = ReturnedAggregateDescriptorProjectionPath;
+using DescriptorProjectionStep = ReturnedAggregateDescriptorProjectionStep;
+using DescriptorProjectionStepKind = ReturnedAggregateDescriptorProjectionStepKind;
 
 struct LoweredSelectedDescriptorProjection {
     std::string pointer;
     std::string source_type_name;
     std::vector<DescriptorProjectionStep> static_descriptor_steps;
     bool complete_static_descriptor_path = true;
-};
-
-enum class DescriptorProjectionCollectionKind {
-    dynamic_array_descriptor,
-    maybe_owner,
-    choice_owner,
 };
 
 auto same_descriptor_projection_step(
@@ -440,160 +421,6 @@ auto lower_named_dynamic_array_element_projection_receiver(
     };
 }
 
-auto descriptor_projection_collection_target(
-    DescriptorProjectionCollectionKind kind,
-    std::string_view source_type_name,
-    LoweringContext const& context
-) -> bool {
-    switch (kind) {
-    case DescriptorProjectionCollectionKind::dynamic_array_descriptor:
-        return dynamic_array_element_source_type_name(source_type_name).has_value();
-    case DescriptorProjectionCollectionKind::maybe_owner:
-        return maybe_payload_source_type_name(source_type_name).has_value() &&
-            returned_aggregate_dynamic_array_descriptor_count(source_type_name, context) > 0;
-    case DescriptorProjectionCollectionKind::choice_owner:
-        return context.choices.contains(std::string {source_type_name}) &&
-            returned_aggregate_dynamic_array_descriptor_count(source_type_name, context) > 0;
-    }
-    return false;
-}
-
-auto collect_projection_paths(
-    std::string owner_name,
-    std::string_view source_type_name,
-    std::string_view llvm_type,
-    LoweringContext const& context,
-    DescriptorProjectionCollectionKind kind,
-    std::vector<DescriptorProjectionStep> steps = {}
-) -> std::optional<std::vector<DescriptorProjectionPath>> {
-    if (descriptor_projection_collection_target(kind, source_type_name, context)) {
-        return std::vector<DescriptorProjectionPath> {
-            DescriptorProjectionPath {
-                .owner_name = std::move(owner_name),
-                .source_type_name = std::string {source_type_name},
-                .steps = std::move(steps),
-            },
-        };
-    }
-
-    if (auto array_element_type = array_element_source_type_name(source_type_name)) {
-        auto array_type = parse_llvm_array_type(llvm_type);
-        if (!array_type.has_value()) {
-            return std::nullopt;
-        }
-
-        auto paths = std::vector<DescriptorProjectionPath> {};
-        for (auto index = std::size_t {0}; index < array_type->length; ++index) {
-            auto element_steps = steps;
-            element_steps.push_back(DescriptorProjectionStep {
-                .kind = DescriptorProjectionStepKind::array_element,
-                .aggregate_llvm_type = std::string {llvm_type},
-                .index_value = std::to_string(index),
-            });
-            auto nested = collect_projection_paths(
-                owner_name + ".element" + std::to_string(index),
-                *array_element_type,
-                array_type->element_type,
-                context,
-                kind,
-                std::move(element_steps)
-            );
-            if (!nested.has_value()) {
-                return std::nullopt;
-            }
-            paths.insert(
-                paths.end(),
-                std::make_move_iterator(nested->begin()),
-                std::make_move_iterator(nested->end())
-            );
-        }
-        return paths;
-    }
-
-    auto record = context.records.find(std::string {source_type_name});
-    if (record == context.records.end()) {
-        return std::vector<DescriptorProjectionPath> {};
-    }
-
-    auto paths = std::vector<DescriptorProjectionPath> {};
-    for (auto const& field : record->second.fields) {
-        auto field_steps = steps;
-        field_steps.push_back(DescriptorProjectionStep {
-            .kind = DescriptorProjectionStepKind::field,
-            .aggregate_llvm_type = std::string {llvm_type},
-            .index_value = std::to_string(field.index),
-        });
-        auto nested = collect_projection_paths(
-            owner_name + "." + field.name,
-            field.source_type_name,
-            field.llvm_type,
-            context,
-            kind,
-            std::move(field_steps)
-        );
-        if (!nested.has_value()) {
-            return std::nullopt;
-        }
-        paths.insert(
-            paths.end(),
-            std::make_move_iterator(nested->begin()),
-            std::make_move_iterator(nested->end())
-        );
-    }
-    return paths;
-}
-
-auto collect_descriptor_projection_paths(
-    std::string owner_name,
-    std::string_view source_type_name,
-    std::string_view llvm_type,
-    LoweringContext const& context,
-    std::vector<DescriptorProjectionStep> steps = {}
-) -> std::optional<std::vector<DescriptorProjectionPath>> {
-    return collect_projection_paths(
-        std::move(owner_name),
-        source_type_name,
-        llvm_type,
-        context,
-        DescriptorProjectionCollectionKind::dynamic_array_descriptor,
-        std::move(steps)
-    );
-}
-
-auto collect_maybe_projection_paths(
-    std::string owner_name,
-    std::string_view source_type_name,
-    std::string_view llvm_type,
-    LoweringContext const& context,
-    std::vector<DescriptorProjectionStep> steps = {}
-) -> std::optional<std::vector<DescriptorProjectionPath>> {
-    return collect_projection_paths(
-        std::move(owner_name),
-        source_type_name,
-        llvm_type,
-        context,
-        DescriptorProjectionCollectionKind::maybe_owner,
-        std::move(steps)
-    );
-}
-
-auto collect_choice_projection_paths(
-    std::string owner_name,
-    std::string_view source_type_name,
-    std::string_view llvm_type,
-    LoweringContext const& context,
-    std::vector<DescriptorProjectionStep> steps = {}
-) -> std::optional<std::vector<DescriptorProjectionPath>> {
-    return collect_projection_paths(
-        std::move(owner_name),
-        source_type_name,
-        llvm_type,
-        context,
-        DescriptorProjectionCollectionKind::choice_owner,
-        std::move(steps)
-    );
-}
-
 auto lower_selected_descriptor_projection_path(
     AggregatePath const& aggregate_path,
     std::string_view aggregate_storage,
@@ -783,60 +610,6 @@ auto lower_selected_descriptor_projection_path(
     };
 }
 
-auto emit_descriptor_projection_pointer(
-    std::string_view root_storage,
-    DescriptorProjectionPath const& path,
-    std::string_view pointer_prefix,
-    FunctionLoweringSession& session,
-    std::ostringstream& output
-) -> std::string {
-    auto pointer = std::string {root_storage};
-    for (auto const& step : path.steps) {
-        auto next_pointer = std::string {pointer_prefix} + ".path" +
-            std::to_string(session.state.next_temporary_index++);
-        output << "  " << next_pointer << " = getelementptr " << step.aggregate_llvm_type
-               << ", ptr " << pointer;
-        if (step.kind == DescriptorProjectionStepKind::field) {
-            output << ", i32 0, i32 " << step.index_value << "\n";
-        } else {
-            output << ", i64 0, i64 " << step.index_value << "\n";
-        }
-        pointer = std::move(next_pointer);
-    }
-    return pointer;
-}
-
-auto register_returned_aggregate_owner_bindings(
-    std::string_view aggregate_storage,
-    std::vector<DescriptorProjectionPath> const& paths,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    std::ostringstream& output
-) -> bool {
-    for (auto const& path : paths) {
-        auto pointer = emit_descriptor_projection_pointer(
-            aggregate_storage,
-            path,
-            "%" + path.owner_name,
-            session,
-            output
-        );
-        auto lowered_type = llvm_type_for_source_type_name(path.source_type_name, context.lowering);
-        if (!lowered_type.has_value() || *lowered_type == "void") {
-            return false;
-        }
-        session.state.source_type_names[path.owner_name] = path.source_type_name;
-        session.state.addressable_bindings[path.owner_name] = AddressableBinding {
-            .type = LoweredType {
-                .type = *lowered_type,
-                .signedness = IntegerSignedness::not_integer,
-            },
-            .storage = std::move(pointer),
-        };
-    }
-    return true;
-}
-
 auto register_lowered_local_dynamic_array_cleanup(
     std::string_view owner_name,
     std::string_view source_type_name,
@@ -875,7 +648,7 @@ auto register_returned_aggregate_descriptor_cleanups(
             same_descriptor_projection_path(descriptor_path.steps, selected_path.static_descriptor_steps)) {
             continue;
         }
-        auto sibling_pointer = emit_descriptor_projection_pointer(
+        auto sibling_pointer = emit_returned_aggregate_descriptor_projection_pointer(
             aggregate_storage,
             descriptor_path,
             "%" + descriptor_path.owner_name,
@@ -924,31 +697,13 @@ auto lower_returned_aggregate_projection_receiver(
 
     auto aggregate_owner_name = std::string {"dynamic_array_receiver_aggregate_tmp"};
     aggregate_owner_name += std::to_string(session.state.next_temporary_index++);
-    auto all_descriptor_paths = collect_descriptor_projection_paths(
+    auto sibling_paths = collect_returned_aggregate_sibling_projection_paths(
         aggregate_owner_name,
         *base_source_type,
         *base_llvm_type,
         context.lowering
     );
-    if (!all_descriptor_paths.has_value()) {
-        return std::nullopt;
-    }
-    auto all_maybe_paths = collect_maybe_projection_paths(
-        aggregate_owner_name,
-        *base_source_type,
-        *base_llvm_type,
-        context.lowering
-    );
-    if (!all_maybe_paths.has_value()) {
-        return std::nullopt;
-    }
-    auto all_choice_paths = collect_choice_projection_paths(
-        aggregate_owner_name,
-        *base_source_type,
-        *base_llvm_type,
-        context.lowering
-    );
-    if (!all_choice_paths.has_value()) {
+    if (!sibling_paths.has_value()) {
         return std::nullopt;
     }
 
@@ -991,7 +746,7 @@ auto lower_returned_aggregate_projection_receiver(
 
     if (!register_returned_aggregate_descriptor_cleanups(
             aggregate_storage,
-            *all_descriptor_paths,
+            sibling_paths->descriptor_paths,
             *selected_path,
             receiver_expression.line,
             context,
@@ -1002,7 +757,7 @@ auto lower_returned_aggregate_projection_receiver(
 
     if (!register_returned_aggregate_owner_bindings(
             aggregate_storage,
-            *all_maybe_paths,
+            sibling_paths->maybe_owner_paths,
             context,
             session,
             output)) {
@@ -1011,7 +766,7 @@ auto lower_returned_aggregate_projection_receiver(
 
     if (!register_returned_aggregate_owner_bindings(
             aggregate_storage,
-            *all_choice_paths,
+            sibling_paths->choice_owner_paths,
             context,
             session,
             output)) {

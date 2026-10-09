@@ -3324,6 +3324,9 @@ representation.
 - Direct returned-aggregate receiver lowering now reuses the returned-aggregate cleanup helper's descriptor-count
   walker when deciding whether a returned projection has sibling descriptors and when discovering Maybe/Choice owners.
   This keeps direct receiver cleanup gating aligned with returned runtime-index aggregate cleanup.
+- Direct returned-aggregate receiver lowering now also reuses the returned-aggregate cleanup helper's projection path
+  types, grouped sibling path collector, projection GEP emitter, and Maybe/Choice owner-binding registration. Its
+  direct-only code now focuses on selected-descriptor exclusion for statically known selected paths.
 
 ## Follow-up work
 
