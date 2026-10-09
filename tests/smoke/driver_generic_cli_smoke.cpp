@@ -3912,41 +3912,46 @@ auto main(int argc, char** argv) -> int {
         fixtures / "generic_method_ambiguous_specialization.or",
         "extension method 'Box<T>.value' is duplicated"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_length.or"
+        fixtures / "dynamic_array_receiver_length.or",
+        smoke_temp_root / "dynamic_array_receiver_length"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_length.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_local_call_result_count.or"
+        fixtures / "dynamic_array_receiver_local_call_result_count.or",
+        smoke_temp_root / "dynamic_array_receiver_local_call_result_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_local_call_result_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_local_call_result_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_call_result_count.or"
+        fixtures / "dynamic_array_receiver_direct_call_result_count.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_call_result_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_call_result_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_direct_call_result_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_ternary_call_result_count.or"
+        fixtures / "dynamic_array_receiver_ternary_call_result_count.or",
+        smoke_temp_root / "dynamic_array_receiver_ternary_call_result_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_ternary_call_result_count_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_ternary_call_result_count.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_receiver_direct_ternary_count.or"
+        fixtures / "dynamic_array_receiver_direct_ternary_count.or",
+        smoke_temp_root / "dynamic_array_receiver_direct_ternary_count"
     );
     assert_cli_emit_llvm_dynamic_array_receiver_direct_ternary_count_fixture_success(
         executable,
