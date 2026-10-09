@@ -3713,73 +3713,82 @@ auto main(int argc, char** argv) -> int {
         underconstrained_generic_record_for_lines(),
         "generic parameter 'T' cannot be inferred for record 'Tag'"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_parameter.or"
+        fixtures / "dynamic_array_generic_parameter.or",
+        smoke_temp_root / "dynamic_array_generic_parameter"
     );
     assert_cli_emit_llvm_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_owned_parameter.or"
+        fixtures / "dynamic_array_generic_owned_parameter.or",
+        smoke_temp_root / "dynamic_array_generic_owned_parameter"
     );
     assert_cli_emit_llvm_owned_dynamic_array_generic_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_owned_parameter.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_owned_element_projection.or"
+        fixtures / "dynamic_array_generic_owned_element_projection.or",
+        smoke_temp_root / "dynamic_array_generic_owned_element_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_owned_element_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_owned_element_projection.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_owned_element_projection.or"
+        fixtures / "dynamic_array_generic_nested_owned_element_projection.or",
+        smoke_temp_root / "dynamic_array_generic_nested_owned_element_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_nested_owned_element_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_owned_element_projection.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_projection.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_projection.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_fixed_array_projection.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_call_result_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_call_result_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_fixed_array_call_result_projection.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_local_call_result_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_local_call_result_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_fixed_array_local_call_result_projection.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_ternary_call_result_projection_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_fixed_array_ternary_call_result_projection.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_fixed_array_local_ternary_call_result_projection.or"
+        fixtures / "dynamic_array_generic_nested_fixed_array_local_ternary_call_result_projection.or",
+        smoke_temp_root / "dynamic_array_generic_nested_fixed_array_local_ternary_call_result_projection"
     );
     assert_cli_emit_llvm_dynamic_array_generic_nested_fixed_array_local_ternary_call_result_projection_fixture_success(
         executable,
@@ -3824,25 +3833,28 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_generic_owned_parameter_missing_drop.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_call_result_parameter.or"
+        fixtures / "dynamic_array_generic_call_result_parameter.or",
+        smoke_temp_root / "dynamic_array_generic_call_result_parameter"
     );
     assert_cli_emit_llvm_call_result_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_call_result_parameter.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_nested_call_result_parameter.or"
+        fixtures / "dynamic_array_generic_nested_call_result_parameter.or",
+        smoke_temp_root / "dynamic_array_generic_nested_call_result_parameter"
     );
     assert_cli_emit_llvm_nested_call_result_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_nested_call_result_parameter.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_generic_local_call_result_parameter.or"
+        fixtures / "dynamic_array_generic_local_call_result_parameter.or",
+        smoke_temp_root / "dynamic_array_generic_local_call_result_parameter"
     );
     assert_cli_emit_llvm_local_call_result_fixture_success(
         executable,

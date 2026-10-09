@@ -3344,6 +3344,8 @@ representation.
   aggregate receiver paths.
 - Direct owned receiver fixtures now use the full production CLI helper across count, append-statement, method-chain,
   and ternary method-chain paths so object emission and built-executable behavior stay pinned beside IR assertions.
+- Generic `DynamicArray<T>` parameter, projection, nested fixed-array projection, and call-result fixtures now use the
+  full production CLI helper, aligning accepted generic fixtures with their existing IR assertions.
 
 ## Follow-up work
 
