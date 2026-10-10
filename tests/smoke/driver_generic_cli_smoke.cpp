@@ -5921,9 +5921,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "choice_constructor_multi_variant_computed_index_member_path_reuse_rejected.or",
         "use after move: holder.items[index]"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or"
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_run.or",
+        smoke_temp_root / "runtime_indexed_record_constructor_computed_index_member_path_move"
     );
     assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
         executable,
@@ -5955,9 +5956,10 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "runtime_indexed_record_constructor_reuse_rejected",
         "use after move: holder.items[index]"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_run.or"
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_run.or",
+        smoke_temp_root / "runtime_indexed_choice_constructor_computed_index_member_path_move"
     );
     assert_cli_runtime_indexed_constructor_fixed_array_guard_fixture_success(
         executable,

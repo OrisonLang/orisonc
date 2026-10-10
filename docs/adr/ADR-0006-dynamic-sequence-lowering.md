@@ -3354,6 +3354,8 @@ representation.
   direct dynamic-array computed-index member move paths.
 - Runtime-index dynamic-array constructor sibling fixtures now avoid duplicate run-only checks when full production
   coverage already exists, and computed-index constructor member move coverage now uses the same helper.
+- Runtime-index record and choice constructor direct computed-index member move fixtures now use the full production
+  CLI helper beside their existing guard IR checks.
 
 ## Follow-up work
 
