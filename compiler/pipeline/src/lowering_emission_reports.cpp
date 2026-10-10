@@ -507,6 +507,32 @@ auto reconcile_runtime_indexed_member_cleanup_production_readiness(
             );
         }
 
+        auto seam = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_promotion_seams,
+            [&](lowering::RuntimeIndexedMemberCleanupPromotionSeam const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (seam != result.runtime_indexed_member_cleanup_promotion_seams.end() &&
+            checklist != result.runtime_indexed_member_cleanup_promotion_checklists.end() &&
+            checklist->promotion_ready) {
+            std::erase(seam->blockers, "member-helper-drop-bindings");
+            seam->checklist_ready = true;
+            seam->mutation_seam_selected = true;
+            seam->promotion_ready = seam->ir_mutation_enabled &&
+                seam->production_gate_enabled &&
+                seam->blockers.empty();
+            seam->report_only = !seam->promotion_ready;
+            seam->production_enabled = seam->promotion_ready;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup promotion-seam",
+                *seam,
+                lowering::runtime_indexed_member_cleanup_promotion_seam_report(*seam),
+                source_text
+            );
+        }
+
         erase_runtime_indexed_member_cleanup_audit_lines(
             result.runtime_indexed_cleanup_audit_lines,
             "runtime-index member cleanup production blocker",
@@ -4935,6 +4961,8 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_production_readiness);
     result.runtime_indexed_member_cleanup_promotion_checklists =
         std::move(emission.runtime_indexed_member_cleanup_promotion_checklists);
+    result.runtime_indexed_member_cleanup_promotion_seams =
+        std::move(emission.runtime_indexed_member_cleanup_promotion_seams);
     result.runtime_indexed_member_cleanup_typed_promotion_gates =
         std::move(emission.runtime_indexed_member_cleanup_typed_promotion_gates);
     result.runtime_indexed_member_cleanup_mutation_operation_plans =

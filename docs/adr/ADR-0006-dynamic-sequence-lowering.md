@@ -3359,6 +3359,9 @@ representation.
 - Runtime-index member cleanup audit reconciliation now carries promotion checklist metadata through lowering and
   pipeline results. When member cleanup promotion is integrated, the audit refreshes the checklist to ready and removes
   stale blocker diagnostic lines for the same site.
+- Runtime-index member cleanup audit reconciliation now also carries promotion seam metadata through lowering and
+  pipeline results. When the matching checklist is ready, the audit refreshes the seam line to remove stale
+  helper-binding blockers for the same site.
 
 ## Follow-up work
 

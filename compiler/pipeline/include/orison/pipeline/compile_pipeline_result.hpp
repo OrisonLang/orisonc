@@ -147,6 +147,8 @@ struct CompilePipelineResult {
         runtime_indexed_member_cleanup_production_readiness;
     std::vector<lowering::RuntimeIndexedMemberCleanupPromotionChecklist>
         runtime_indexed_member_cleanup_promotion_checklists;
+    std::vector<lowering::RuntimeIndexedMemberCleanupPromotionSeam>
+        runtime_indexed_member_cleanup_promotion_seams;
     std::vector<lowering::RuntimeIndexedMemberCleanupTypedPromotionGate>
         runtime_indexed_member_cleanup_typed_promotion_gates;
     std::vector<lowering::RuntimeIndexedMemberCleanupMutationOperationPlan>

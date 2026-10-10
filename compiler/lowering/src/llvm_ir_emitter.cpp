@@ -1282,6 +1282,7 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
 
 void refresh_runtime_indexed_member_cleanup_promotion_checklists(
     std::vector<RuntimeIndexedMemberCleanupPromotionChecklist>& checklists,
+    std::vector<RuntimeIndexedMemberCleanupPromotionSeam>& seams,
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> const& readiness,
     std::vector<std::string>& audit_lines
 ) {
@@ -1348,6 +1349,35 @@ void refresh_runtime_indexed_member_cleanup_promotion_checklists(
             );
         }
     }
+    for (auto& seam : seams) {
+        auto const checklist = std::ranges::find_if(
+            checklists,
+            [&](RuntimeIndexedMemberCleanupPromotionChecklist const& candidate) {
+                return seam.owner_name == candidate.owner_name &&
+                    seam.index_expression_text == candidate.index_expression_text &&
+                    seam.element_source_type_name == candidate.element_source_type_name &&
+                    seam.moved_source_type_name == candidate.moved_source_type_name &&
+                    seam.moved_member_path == candidate.moved_member_path;
+            }
+        );
+        if (checklist == checklists.end() || !checklist->promotion_ready) {
+            continue;
+        }
+        std::erase(seam.blockers, "member-helper-drop-bindings");
+        seam.checklist_ready = true;
+        seam.mutation_seam_selected = true;
+        seam.promotion_ready = seam.ir_mutation_enabled &&
+            seam.production_gate_enabled &&
+            seam.blockers.empty();
+        seam.report_only = !seam.promotion_ready;
+        seam.production_enabled = seam.promotion_ready;
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup promotion-seam",
+            seam,
+            runtime_indexed_member_cleanup_promotion_seam_report(seam)
+        );
+    }
 }
 
 template <typename LeftRecord, typename RightRecord>
@@ -1381,6 +1411,7 @@ auto find_runtime_indexed_member_cleanup_refresh_record(
 
 void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
     std::vector<RuntimeIndexedMemberCleanupPromotionChecklist>& promotion_checklists,
+    std::vector<RuntimeIndexedMemberCleanupPromotionSeam>& promotion_seams,
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness> const& production_readiness,
     std::vector<RuntimeIndexedMemberCleanupTypedPromotionGate>& typed_promotion_gates,
     std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>& operation_plans,
@@ -1401,6 +1432,7 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
 ) {
     refresh_runtime_indexed_member_cleanup_promotion_checklists(
         promotion_checklists,
+        promotion_seams,
         production_readiness,
         audit_lines
     );
@@ -3686,6 +3718,11 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_promotion_checklists.begin(),
         function_emission.runtime_indexed_member_cleanup_promotion_checklists.end()
     );
+    result.runtime_indexed_member_cleanup_promotion_seams.insert(
+        result.runtime_indexed_member_cleanup_promotion_seams.end(),
+        function_emission.runtime_indexed_member_cleanup_promotion_seams.begin(),
+        function_emission.runtime_indexed_member_cleanup_promotion_seams.end()
+    );
     result.runtime_indexed_member_cleanup_typed_promotion_gates.insert(
         result.runtime_indexed_member_cleanup_typed_promotion_gates.end(),
         function_emission.runtime_indexed_member_cleanup_typed_promotion_gates.begin(),
@@ -5037,6 +5074,7 @@ auto emit_module(
         );
         refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
             result.runtime_indexed_member_cleanup_promotion_checklists,
+            result.runtime_indexed_member_cleanup_promotion_seams,
             result.runtime_indexed_member_cleanup_production_readiness,
             result.runtime_indexed_member_cleanup_typed_promotion_gates,
             result.runtime_indexed_member_cleanup_mutation_operation_plans,
