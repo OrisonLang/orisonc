@@ -301,6 +301,41 @@ auto runtime_indexed_cleanup_function_module_verification_report(
     return report.str();
 }
 
+auto runtime_indexed_cleanup_member_function_module_verification_report(
+    pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteMutationState const& state
+) -> std::string {
+    auto const verified =
+        state.mutation_applied &&
+        state.module_matches_candidate &&
+        state.llvm_verifier_passed &&
+        state.composition_failure == pipeline::RuntimeIndexedCleanupIrCompositionFailure::none;
+    auto const composition_failure_count =
+        state.composition_failure == pipeline::RuntimeIndexedCleanupIrCompositionFailure::none
+            ? std::size_t {0}
+            : std::size_t {1};
+    auto const verified_count = verified ? state.candidate_count : std::size_t {0};
+    auto report = std::ostringstream {};
+    report << "runtime-index cleanup function-module verification "
+           << "metadata " << (state.mutation_requested ? "available" : "missing")
+           << " verifications " << state.candidate_count
+           << " candidate-functions " << (state.candidate_verified ? "found" : "blocked")
+           << " candidate-match " << (state.candidate_verified ? "true" : "false")
+           << " replacement-targets " << (state.replacement_targets_unique ? "unique" : "blocked")
+           << " module-changed " << (state.mutation_applied ? "true" : "false")
+           << " separate-module true"
+           << " splice-conflicts 0"
+           << " composition-failures " << composition_failure_count
+           << " first-composition-failure "
+           << pipeline::runtime_indexed_cleanup_ir_composition_failure_token(state.composition_failure)
+           << " llvm-ran " << (state.mutation_applied ? "true" : "false")
+           << " llvm-passed " << (state.llvm_verifier_passed ? "true" : "false")
+           << " verified " << (verified ? "true" : "false")
+           << " verified-count " << verified_count
+           << " llvm-verified-count " << verified_count
+           << " diagnostics " << state.llvm_verifier_diagnostic_count;
+    return report.str();
+}
+
 auto runtime_indexed_cleanup_function_module_splice_conflict_report(
     pipeline::RuntimeIndexedCleanupFunctionIrModuleRewriteSpliceConflict const& conflict
 ) -> std::string {
@@ -740,9 +775,18 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
     if (lines.empty()) {
         lines.push_back("runtime-index cleanup audit: no runtime-index cleanup metadata");
     } else {
-        lines.push_back(runtime_indexed_cleanup_function_module_verification_report(
-            result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
-        ));
+        auto const use_member_cleanup_module_state =
+            result.runtime_indexed_cleanup_module_ir_production_readiness_state.member_cleanup_promotion_integrated &&
+            result.runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state.mutation_requested;
+        if (use_member_cleanup_module_state) {
+            lines.push_back(runtime_indexed_cleanup_member_function_module_verification_report(
+                result.runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state
+            ));
+        } else {
+            lines.push_back(runtime_indexed_cleanup_function_module_verification_report(
+                result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state
+            ));
+        }
         for (auto const& conflict :
              result.runtime_indexed_cleanup_function_ir_module_rewrite_candidate_verification_state.splice_conflicts) {
             lines.push_back(runtime_indexed_cleanup_function_module_splice_conflict_report(conflict));
@@ -754,7 +798,9 @@ auto runtime_indexed_cleanup_audit(std::filesystem::path const& source_path) -> 
             }
         }
         lines.push_back(runtime_indexed_cleanup_function_module_mutation_report(
-            result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
+            use_member_cleanup_module_state
+                ? result.runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation_state
+                : result.runtime_indexed_cleanup_function_ir_module_rewrite_mutation_state
         ));
         lines.push_back(runtime_indexed_cleanup_module_ir_production_readiness_report(
             result.runtime_indexed_cleanup_module_ir_production_readiness_state

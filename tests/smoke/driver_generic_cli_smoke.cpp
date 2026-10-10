@@ -952,6 +952,18 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
     auto command = executable.string() + " --runtime-indexed-cleanup-audit " + path.string();
     auto output = read_command_output(command);
     assert(output.find(
+        "runtime-index cleanup function-module verification metadata available verifications 1 "
+        "candidate-functions found candidate-match true replacement-targets unique module-changed true "
+        "separate-module true splice-conflicts 0 composition-failures 0 first-composition-failure none "
+        "llvm-ran true llvm-passed true verified true verified-count 1 llvm-verified-count 1 diagnostics 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index cleanup function-module mutation requested true candidate-verified true "
+        "replacement-targets unique mutation-applied true module-matches-candidate true composition-failure none "
+        "apply-stages available branch-replacements true cleanup-cfg-appended true phi-retargeted true "
+        "llvm-passed true diagnostics 0"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);

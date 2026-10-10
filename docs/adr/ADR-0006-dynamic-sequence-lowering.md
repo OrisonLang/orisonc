@@ -3371,6 +3371,9 @@ representation.
 - Runtime-index member cleanup audit reconciliation now refreshes mutation conflict detection from the matching
   production apply-authorization. Once authorization succeeds, conflict detection reports apply allowed and production
   enabled while preserving the uniqueness and conflict-free proof details.
+- Runtime-index cleanup audit rendering now selects the member-cleanup module rewrite state for top-level
+  function-module verification and mutation lines when member cleanup promotion is integrated. Those lines now describe
+  the promoted member cleanup path rather than the ordinary whole-element module rewrite path.
 
 ## Follow-up work
 
