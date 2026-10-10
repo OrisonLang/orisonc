@@ -143,6 +143,18 @@ struct CompilePipelineResult {
         runtime_indexed_member_cleanup_helper_owned_cleanup_bindings;
     std::vector<lowering::RuntimeIndexedMemberCleanupHelperBody>
         runtime_indexed_member_cleanup_helper_bodies;
+    std::vector<lowering::RuntimeIndexedMemberCleanupEmissionGate>
+        runtime_indexed_member_cleanup_emission_gates;
+    std::vector<lowering::RuntimeIndexedMemberCleanupIrInsertionPlan>
+        runtime_indexed_member_cleanup_ir_insertion_plans;
+    std::vector<lowering::RuntimeIndexedMemberCleanupIrCompositionPlan>
+        runtime_indexed_member_cleanup_ir_composition_plans;
+    std::vector<lowering::RuntimeIndexedMemberCleanupCfgSlice>
+        runtime_indexed_member_cleanup_cfg_slices;
+    std::vector<lowering::RuntimeIndexedMemberCleanupFunctionRewriteCandidate>
+        runtime_indexed_member_cleanup_function_rewrite_candidates;
+    std::vector<lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
+        runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
     std::vector<lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation>
         runtime_indexed_member_cleanup_function_rewrite_edit_script_validations;
     std::vector<lowering::RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan>

@@ -476,6 +476,124 @@ auto reconcile_runtime_indexed_member_cleanup_production_readiness(
             source_text
         );
 
+        auto emission_gate = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_emission_gates,
+            [&](lowering::RuntimeIndexedMemberCleanupEmissionGate const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (emission_gate != result.runtime_indexed_member_cleanup_emission_gates.end()) {
+            std::erase(emission_gate->blockers, "member-cleanup-ir-insertion");
+            emission_gate->ir_insertion_ready = true;
+            emission_gate->prerequisites_met =
+                emission_gate->sketch_ready &&
+                emission_gate->member_drop_metadata_ready &&
+                emission_gate->ir_insertion_ready;
+            emission_gate->production_enabled =
+                emission_gate->prerequisites_met &&
+                emission_gate->blockers.empty();
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup emission-gate",
+                *emission_gate,
+                lowering::runtime_indexed_member_cleanup_emission_gate_report(*emission_gate),
+                source_text
+            );
+        }
+
+        auto insertion_plan = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_ir_insertion_plans,
+            [&](lowering::RuntimeIndexedMemberCleanupIrInsertionPlan const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (insertion_plan != result.runtime_indexed_member_cleanup_ir_insertion_plans.end()) {
+            insertion_plan->report_only = !(insertion_plan->target_metadata_ready &&
+                insertion_plan->insertion_points_named);
+            insertion_plan->production_enabled = !insertion_plan->report_only;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup ir-insertion-plan",
+                *insertion_plan,
+                lowering::runtime_indexed_member_cleanup_ir_insertion_plan_report(*insertion_plan),
+                source_text
+            );
+        }
+
+        auto composition_plan = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_ir_composition_plans,
+            [&](lowering::RuntimeIndexedMemberCleanupIrCompositionPlan const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (composition_plan != result.runtime_indexed_member_cleanup_ir_composition_plans.end()) {
+            composition_plan->report_only = !(composition_plan->insertion_plan_ready &&
+                composition_plan->block_topology_ready &&
+                composition_plan->preview_operations_ready);
+            composition_plan->production_enabled = !composition_plan->report_only;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup ir-composition-plan",
+                *composition_plan,
+                lowering::runtime_indexed_member_cleanup_ir_composition_plan_report(*composition_plan),
+                source_text
+            );
+        }
+
+        auto cfg_slice = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_cfg_slices,
+            [&](lowering::RuntimeIndexedMemberCleanupCfgSlice const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (cfg_slice != result.runtime_indexed_member_cleanup_cfg_slices.end()) {
+            cfg_slice->report_only = !(cfg_slice->composition_ready && cfg_slice->slice_rendered);
+            cfg_slice->production_enabled = !cfg_slice->report_only;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup cfg-slice",
+                *cfg_slice,
+                lowering::runtime_indexed_member_cleanup_cfg_slice_report(*cfg_slice),
+                source_text
+            );
+        }
+
+        auto rewrite_candidate = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_function_rewrite_candidates,
+            [&](lowering::RuntimeIndexedMemberCleanupFunctionRewriteCandidate const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (rewrite_candidate != result.runtime_indexed_member_cleanup_function_rewrite_candidates.end()) {
+            rewrite_candidate->report_only = !rewrite_candidate->candidate_verified;
+            rewrite_candidate->production_enabled = rewrite_candidate->candidate_verified;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup function-rewrite-candidate",
+                *rewrite_candidate,
+                lowering::runtime_indexed_member_cleanup_function_rewrite_candidate_report(*rewrite_candidate),
+                source_text
+            );
+        }
+
+        auto edit_script_plan = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans,
+            [&](lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (edit_script_plan != result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.end()) {
+            edit_script_plan->report_only = !edit_script_plan->edit_script_ready;
+            edit_script_plan->production_enabled = edit_script_plan->edit_script_ready;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup function-rewrite-edit-script-plan",
+                *edit_script_plan,
+                lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_plan_report(*edit_script_plan),
+                source_text
+            );
+        }
+
         auto validation = std::ranges::find_if(
             result.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations,
             [&](lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& candidate) {
@@ -5116,6 +5234,18 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings);
     result.runtime_indexed_member_cleanup_helper_bodies =
         std::move(emission.runtime_indexed_member_cleanup_helper_bodies);
+    result.runtime_indexed_member_cleanup_emission_gates =
+        std::move(emission.runtime_indexed_member_cleanup_emission_gates);
+    result.runtime_indexed_member_cleanup_ir_insertion_plans =
+        std::move(emission.runtime_indexed_member_cleanup_ir_insertion_plans);
+    result.runtime_indexed_member_cleanup_ir_composition_plans =
+        std::move(emission.runtime_indexed_member_cleanup_ir_composition_plans);
+    result.runtime_indexed_member_cleanup_cfg_slices =
+        std::move(emission.runtime_indexed_member_cleanup_cfg_slices);
+    result.runtime_indexed_member_cleanup_function_rewrite_candidates =
+        std::move(emission.runtime_indexed_member_cleanup_function_rewrite_candidates);
+    result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans =
+        std::move(emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans);
     result.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations =
         std::move(emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations);
     result.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans =

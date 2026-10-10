@@ -968,6 +968,50 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index member cleanup emission-gate owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "sketch-ready true member-drop-metadata ready ir-insertion ready "
+        "prerequisites met production enabled blockers 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup ir-insertion-plan owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "target-metadata ready insertion-points named report-only false production enabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup ir-composition-plan owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "insertion-plan ready block-topology ready preview-operations ready "
+        "report-only false production enabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup cfg-slice owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "composition ready slice rendered report-only false production enabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup function-rewrite-candidate owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "candidate available verification verified report-only false production enabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup function-rewrite-edit-script-plan owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "edit-script ready report-only false production enabled"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index member cleanup function-rewrite-edit-script-validation owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);
@@ -1034,6 +1078,7 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "var outer: Outer = Outer(items[index + zero].box.item) checklist ready mutation-seam selected "
         "ir-mutation enabled production-gate enabled promotion ready report-only false production enabled blockers 1"
     ) == std::string::npos);
+    assert(output.find("blocker member-cleanup-ir-insertion") == std::string::npos);
     assert(output.find("runtime-index member cleanup promoted-view production-readiness") == std::string::npos);
     assert(output.find("runtime-index member cleanup production blocker owner items") == std::string::npos);
     assert(output.find("runtime-index member cleanup edit-script validation diagnostic owner items") ==

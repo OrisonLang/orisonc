@@ -3848,6 +3848,31 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_cleanup_capabilities.begin(),
         function_emission.runtime_indexed_cleanup_capabilities.end()
     );
+    result.runtime_indexed_member_cleanup_emission_gates.insert(
+        result.runtime_indexed_member_cleanup_emission_gates.end(),
+        function_emission.runtime_indexed_member_cleanup_emission_gates.begin(),
+        function_emission.runtime_indexed_member_cleanup_emission_gates.end()
+    );
+    result.runtime_indexed_member_cleanup_ir_insertion_plans.insert(
+        result.runtime_indexed_member_cleanup_ir_insertion_plans.end(),
+        function_emission.runtime_indexed_member_cleanup_ir_insertion_plans.begin(),
+        function_emission.runtime_indexed_member_cleanup_ir_insertion_plans.end()
+    );
+    result.runtime_indexed_member_cleanup_ir_composition_plans.insert(
+        result.runtime_indexed_member_cleanup_ir_composition_plans.end(),
+        function_emission.runtime_indexed_member_cleanup_ir_composition_plans.begin(),
+        function_emission.runtime_indexed_member_cleanup_ir_composition_plans.end()
+    );
+    result.runtime_indexed_member_cleanup_cfg_slices.insert(
+        result.runtime_indexed_member_cleanup_cfg_slices.end(),
+        function_emission.runtime_indexed_member_cleanup_cfg_slices.begin(),
+        function_emission.runtime_indexed_member_cleanup_cfg_slices.end()
+    );
+    result.runtime_indexed_member_cleanup_function_rewrite_candidates.insert(
+        result.runtime_indexed_member_cleanup_function_rewrite_candidates.end(),
+        function_emission.runtime_indexed_member_cleanup_function_rewrite_candidates.begin(),
+        function_emission.runtime_indexed_member_cleanup_function_rewrite_candidates.end()
+    );
     result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.insert(
         result.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.end(),
         function_emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans.begin(),

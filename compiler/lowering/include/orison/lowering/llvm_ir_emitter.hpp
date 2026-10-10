@@ -329,6 +329,16 @@ struct LlvmIrEmissionResult {
         runtime_indexed_member_cleanup_helper_owned_cleanup_bindings;
     std::vector<RuntimeIndexedMemberCleanupHelperBody>
         runtime_indexed_member_cleanup_helper_bodies;
+    std::vector<RuntimeIndexedMemberCleanupEmissionGate>
+        runtime_indexed_member_cleanup_emission_gates;
+    std::vector<RuntimeIndexedMemberCleanupIrInsertionPlan>
+        runtime_indexed_member_cleanup_ir_insertion_plans;
+    std::vector<RuntimeIndexedMemberCleanupIrCompositionPlan>
+        runtime_indexed_member_cleanup_ir_composition_plans;
+    std::vector<RuntimeIndexedMemberCleanupCfgSlice>
+        runtime_indexed_member_cleanup_cfg_slices;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteCandidate>
+        runtime_indexed_member_cleanup_function_rewrite_candidates;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation>

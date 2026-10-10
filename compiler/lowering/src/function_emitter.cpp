@@ -1781,6 +1781,16 @@ void preserve_function_emission_metadata(
             state.ownership_transfers.runtime_indexed_cleanup_capabilities;
         result->runtime_indexed_cleanup_emission_plans =
             state.ownership_transfers.runtime_indexed_cleanup_emission_plans;
+        result->runtime_indexed_member_cleanup_emission_gates =
+            state.ownership_transfers.runtime_indexed_member_cleanup_emission_gates;
+        result->runtime_indexed_member_cleanup_ir_insertion_plans =
+            state.ownership_transfers.runtime_indexed_member_cleanup_ir_insertion_plans;
+        result->runtime_indexed_member_cleanup_ir_composition_plans =
+            state.ownership_transfers.runtime_indexed_member_cleanup_ir_composition_plans;
+        result->runtime_indexed_member_cleanup_cfg_slices =
+            state.ownership_transfers.runtime_indexed_member_cleanup_cfg_slices;
+        result->runtime_indexed_member_cleanup_function_rewrite_candidates =
+            state.ownership_transfers.runtime_indexed_member_cleanup_function_rewrite_candidates;
         result->runtime_indexed_member_cleanup_function_rewrite_edit_script_plans =
             state.ownership_transfers.runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
         for (auto& plan : result->runtime_indexed_member_cleanup_function_rewrite_edit_script_plans) {

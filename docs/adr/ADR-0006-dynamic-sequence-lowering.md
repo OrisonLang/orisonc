@@ -3374,6 +3374,10 @@ representation.
 - Runtime-index cleanup audit rendering now selects the member-cleanup module rewrite state for top-level
   function-module verification and mutation lines when member cleanup promotion is integrated. Those lines now describe
   the promoted member cleanup path rather than the ordinary whole-element module rewrite path.
+- Runtime-index member cleanup audit reconciliation now carries lower-level emission gate, IR insertion,
+  IR composition, CFG slice, rewrite-candidate, and edit-script plan metadata through pipeline results. When production
+  readiness is proven for the same site, those precursor records stay visible and report production-enabled state
+  rather than stale report-only status.
 
 ## Follow-up work
 
