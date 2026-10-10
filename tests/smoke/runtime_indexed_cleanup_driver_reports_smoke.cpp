@@ -643,6 +643,16 @@ void assert_constructor_move_report_for_nested_member_sibling_cleanup_ready() {
     );
     assert(
         report.find(
+            "runtime-index member cleanup mutation-conflict-detection owner items index (index + zero) "
+            "element Wrap moved Inner member-path box.item source-line 37 source-text "
+            "var outer: Outer = Outer(items[index + zero].box.item) validation ready branch-anchor-matches 1 "
+            "branch-anchor unique closing-anchor-matches 1 closing-anchor unique phi-predecessor-matches 1 "
+            "phi-predecessor unique conflict-free true apply-allowed true report-only false production enabled "
+            "blockers 0"
+        ) != std::string::npos
+    );
+    assert(
+        report.find(
             "runtime-index member cleanup mutation-production-readiness owner items index (index + zero) "
             "element Wrap moved Inner member-path box.item source-line 37 source-text "
             "var outer: Outer = Outer(items[index + zero].box.item) promotion ready post-apply-verification ready "

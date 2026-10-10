@@ -3368,6 +3368,9 @@ representation.
 - Runtime-index member cleanup audit reconciliation now refreshes mutation operation plans from the matching
   production apply-preview. Once application succeeds, operation plans report all planned edits as applied and
   production enabled, while operation validation remains a record of the pre-apply validation gate.
+- Runtime-index member cleanup audit reconciliation now refreshes mutation conflict detection from the matching
+  production apply-authorization. Once authorization succeeds, conflict detection reports apply allowed and production
+  enabled while preserving the uniqueness and conflict-free proof details.
 
 ## Follow-up work
 

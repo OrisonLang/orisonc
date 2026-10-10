@@ -1607,6 +1607,22 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
             runtime_indexed_member_cleanup_mutation_operation_validation_report(validation)
         );
     }
+    for (auto& detection : conflict_detections) {
+        auto const* authorization =
+            find_runtime_indexed_member_cleanup_refresh_record(detection, apply_authorizations);
+        if (authorization == nullptr || !authorization->production_enabled || !authorization->apply_authorized) {
+            continue;
+        }
+        detection.apply_allowed = authorization->apply_authorized;
+        detection.report_only = !detection.apply_allowed;
+        detection.production_enabled = detection.apply_allowed && detection.blockers.empty();
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup mutation-conflict-detection",
+            detection,
+            runtime_indexed_member_cleanup_mutation_conflict_detection_report(detection)
+        );
+    }
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         post_apply_verifications,
         audit_lines,

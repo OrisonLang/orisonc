@@ -664,6 +664,34 @@ auto reconcile_runtime_indexed_member_cleanup_production_readiness(
             );
         }
 
+        auto conflict_detection = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_mutation_conflict_detections,
+            [&](lowering::RuntimeIndexedMemberCleanupMutationConflictDetection const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        auto const* apply_authorization = runtime_indexed_member_cleanup_find_matching_record(
+            readiness,
+            result.runtime_indexed_member_cleanup_mutation_apply_authorizations
+        );
+        if (conflict_detection != result.runtime_indexed_member_cleanup_mutation_conflict_detections.end() &&
+            apply_authorization != nullptr &&
+            apply_authorization->production_enabled &&
+            apply_authorization->apply_authorized) {
+            conflict_detection->apply_allowed = apply_authorization->apply_authorized;
+            conflict_detection->report_only = !conflict_detection->apply_allowed;
+            conflict_detection->production_enabled =
+                conflict_detection->apply_allowed &&
+                conflict_detection->blockers.empty();
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup mutation-conflict-detection",
+                *conflict_detection,
+                lowering::runtime_indexed_member_cleanup_mutation_conflict_detection_report(*conflict_detection),
+                source_text
+            );
+        }
+
         erase_runtime_indexed_member_cleanup_audit_lines(
             result.runtime_indexed_cleanup_audit_lines,
             "runtime-index member cleanup production blocker",

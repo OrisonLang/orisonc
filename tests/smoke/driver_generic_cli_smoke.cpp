@@ -1010,6 +1010,13 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "validation ready report-only false production enabled blockers 0"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index member cleanup mutation-conflict-detection owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "conflict-free true apply-allowed true report-only false production enabled blockers 0"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index member cleanup promotion-seam owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item source-line 37 source-text "
         "var outer: Outer = Outer(items[index + zero].box.item) checklist ready mutation-seam selected "
