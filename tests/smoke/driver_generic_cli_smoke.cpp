@@ -814,35 +814,12 @@ void assert_cli_runtime_indexed_constructor_move_readiness_fixture_ready(
     assert(output.find(
         "runtime-index cleanup constructor-move production-readiness "
         "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
-        "capability-count 1 ordinary-emit accepted member-cleanup-promotion blocked "
+        "capability-count 1 ordinary-emit accepted member-cleanup-promotion not-required "
         "member-production-records 1 member-gate-records 1 member-mutation-records 1 member-rewrite-records 1"
     ) != std::string::npos);
     assert(output.find("diagnostic none member-module-ir-shape ready") != std::string::npos);
-    assert(output.find(
-        "runtime-index member cleanup promotion blocker owner holder.items index index "
-        "element Inner moved Inner member-path none"
-    ) != std::string::npos);
-    assert(output.find(
-        "blocker blocked-production-readiness "
-        "detail matching member cleanup production-readiness record is blocked"
-    ) != std::string::npos);
-    assert(output.find(
-        "blocker typed-promotion-disabled detail typed promotion gate production is disabled"
-    ) != std::string::npos);
-    assert(output.find(
-        "blocker blocked-mutation-readiness "
-        "detail matching member cleanup mutation-readiness record production is disabled"
-    ) != std::string::npos);
-    assert(output.find(
-        "blocker blocked-rewrite-promotion "
-        "detail matching member cleanup rewrite-promotion record production is disabled"
-    ) != std::string::npos);
-    assert(output.find("runtime-index member cleanup production-readiness owner ") != std::string::npos);
-    assert(output.find(
-        "proof missing target-metadata missing helper-drop-bindings ready cfg-slice missing "
-        "module-mutation blocked production-member-cleanup blocked production-gate blocked "
-        "production-enabled false production blocked"
-    ) != std::string::npos);
+    assert(output.find("runtime-index member cleanup promotion blocker owner holder.items") == std::string::npos);
+    assert(output.find("runtime-index member cleanup production-readiness owner holder.items") == std::string::npos);
     assert(output.find("member-cleanup-promotion ready") == std::string::npos);
 }
 

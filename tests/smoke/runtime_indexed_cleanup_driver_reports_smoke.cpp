@@ -111,7 +111,7 @@ void assert_mutation_report_for_scalar_same_function_success() {
     assert(report.find("splice-range") == std::string::npos);
 }
 
-void assert_constructor_move_report_for_blocked_member_promotion() {
+void assert_constructor_move_report_for_whole_element_member_promotion_not_required() {
     auto options = pipeline::production_compile_pipeline_options();
     options.collect_runtime_indexed_cleanup_audit = true;
     auto const result = pipeline::CompilePipeline {}.emit_llvm(
@@ -125,57 +125,13 @@ void assert_constructor_move_report_for_blocked_member_promotion() {
         report.find(
             "runtime-index cleanup constructor-move production-readiness "
             "constructor-move enabled partial-ownership accepted cleanup-proof ready cleanup-production enabled "
-            "capability-count 1 ordinary-emit accepted member-cleanup-promotion blocked "
+            "capability-count 1 ordinary-emit accepted member-cleanup-promotion not-required "
             "member-production-records 1 member-gate-records 1 member-mutation-records 1 "
             "member-rewrite-records 1 diagnostic none member-module-ir-shape ready"
         ) != std::string::npos
     );
-    assert(
-        report.find(
-            "runtime-index member cleanup promotion blocker owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 31 source-text "
-            "var selected: TaggedInner = Secondary(holder.items[index]) "
-            "blocker blocked-production-readiness "
-            "detail matching member cleanup production-readiness record is blocked"
-        ) != std::string::npos
-    );
-    assert(
-        report.find(
-            "runtime-index member cleanup promotion blocker owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 31 source-text "
-            "var selected: TaggedInner = Secondary(holder.items[index]) "
-            "blocker typed-promotion-disabled detail typed promotion gate production is disabled"
-        ) != std::string::npos
-    );
-    assert(
-        report.find(
-            "runtime-index member cleanup promotion blocker owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 31 source-text "
-            "var selected: TaggedInner = Secondary(holder.items[index]) "
-            "blocker blocked-mutation-readiness "
-            "detail matching member cleanup mutation-readiness record production is disabled"
-        ) != std::string::npos
-    );
-    assert(
-        report.find(
-            "runtime-index member cleanup promotion blocker owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 31 source-text "
-            "var selected: TaggedInner = Secondary(holder.items[index]) "
-            "blocker blocked-rewrite-promotion "
-            "detail matching member cleanup rewrite-promotion record production is disabled"
-        ) != std::string::npos
-    );
-    assert(
-        report.find(
-            "runtime-index member cleanup production-readiness owner holder.items index index "
-            "element Inner moved Inner member-path none source-line 31 source-text "
-            "var selected: TaggedInner = Secondary(holder.items[index]) proof missing target-metadata missing "
-            "helper-drop-bindings ready cfg-slice missing module-mutation blocked production-member-cleanup blocked "
-            "production-gate blocked production-enabled false production blocked blockers 5 "
-            "blocker member-cleanup-proof blocker member-drop-metadata blocker member-cleanup-cfg-slice "
-            "blocker member-cleanup-module-mutation blocker production-member-cleanup"
-        ) != std::string::npos
-    );
+    assert(report.find("runtime-index member cleanup promotion blocker owner holder.items") == std::string::npos);
+    assert(report.find("runtime-index member cleanup production-readiness owner holder.items") == std::string::npos);
     assert(report.find("member-cleanup-promotion ready") == std::string::npos);
 }
 
@@ -706,7 +662,7 @@ auto main() -> int {
     assert_mutation_report_with_composition_detail();
     assert_mutation_report_without_composition_detail();
     assert_mutation_report_for_scalar_same_function_success();
-    assert_constructor_move_report_for_blocked_member_promotion();
+    assert_constructor_move_report_for_whole_element_member_promotion_not_required();
     assert_constructor_move_report_for_two_member_cleanup_ready();
     assert_constructor_move_report_for_branch_computed_cleanup_ready();
     assert_constructor_move_report_for_switch_computed_cleanup_ready();

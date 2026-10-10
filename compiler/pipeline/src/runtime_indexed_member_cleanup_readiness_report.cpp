@@ -649,6 +649,15 @@ auto runtime_indexed_member_cleanup_promotion_state(
         state.state = "blocked";
         return state;
     }
+    if (std::ranges::all_of(
+            result.runtime_indexed_member_cleanup_typed_promotion_gates,
+            [](lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate) {
+                return gate.moved_member_path.empty();
+            }
+        )) {
+        state.state = "not-required";
+        return state;
+    }
 
     auto ready = true;
     for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {
@@ -685,6 +694,14 @@ auto runtime_indexed_member_cleanup_promotion_state_report_lines(
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     if (result.runtime_indexed_member_cleanup_typed_promotion_gates.empty()) {
+        return lines;
+    }
+    if (std::ranges::all_of(
+            result.runtime_indexed_member_cleanup_typed_promotion_gates,
+            [](lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate) {
+                return gate.moved_member_path.empty();
+            }
+        )) {
         return lines;
     }
 
@@ -785,6 +802,14 @@ auto runtime_indexed_member_cleanup_readiness_report_lines(
     if (result.runtime_indexed_member_cleanup_typed_promotion_gates.empty()) {
         append_ungated_member_cleanup_lines(lines, result);
         return enrich_runtime_indexed_member_cleanup_source_text_lines(std::move(lines), result);
+    }
+    if (std::ranges::all_of(
+            result.runtime_indexed_member_cleanup_typed_promotion_gates,
+            [](lowering::RuntimeIndexedMemberCleanupTypedPromotionGate const& gate) {
+                return gate.moved_member_path.empty();
+            }
+        )) {
+        return lines;
     }
 
     for (auto const& gate : result.runtime_indexed_member_cleanup_typed_promotion_gates) {

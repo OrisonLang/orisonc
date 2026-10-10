@@ -3381,6 +3381,9 @@ representation.
 - Runtime-index member cleanup owner/proof/sketch/target audit lines remain proof-only precursor records even after
   production integration. The emission gate is the first production-backed gate; earlier lines preserve the planning
   distinction and remain disabled or report-only by design.
+- Runtime-index constructor-move readiness reports now classify whole-element runtime-index moves with empty member
+  paths as `member-cleanup-promotion not-required`. Those moves use the ordinary runtime-index cleanup production path,
+  so the summary no longer reports member-cleanup promotion blockers for them.
 
 ## Follow-up work
 
