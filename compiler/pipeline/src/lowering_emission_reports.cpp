@@ -600,6 +600,70 @@ auto reconcile_runtime_indexed_member_cleanup_production_readiness(
             );
         }
 
+        auto operation_plan = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_mutation_operation_plans,
+            [&](lowering::RuntimeIndexedMemberCleanupMutationOperationPlan const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        auto const* apply_preview = runtime_indexed_member_cleanup_find_matching_record(
+            readiness,
+            result.runtime_indexed_member_cleanup_mutation_apply_previews
+        );
+        if (operation_plan != result.runtime_indexed_member_cleanup_mutation_operation_plans.end() &&
+            apply_preview != nullptr &&
+            apply_preview->production_enabled &&
+            apply_preview->actions_applied) {
+            for (auto& operation : operation_plan->operations) {
+                auto const action = std::ranges::find_if(
+                    apply_preview->actions,
+                    [&](lowering::RuntimeIndexedMemberCleanupMutationApplyPreviewAction const& candidate) {
+                        return candidate.kind == operation.kind;
+                    }
+                );
+                if (action != apply_preview->actions.end()) {
+                    operation.applied = action->applied;
+                }
+            }
+            operation_plan->operations_applied = !operation_plan->operations.empty();
+            for (auto const& operation : operation_plan->operations) {
+                operation_plan->operations_applied = operation_plan->operations_applied && operation.applied;
+            }
+            operation_plan->report_only = !operation_plan->operations_applied;
+            operation_plan->production_enabled =
+                operation_plan->operations_applied &&
+                operation_plan->blockers.empty();
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup mutation-operation-plan",
+                *operation_plan,
+                lowering::runtime_indexed_member_cleanup_mutation_operation_plan_report(*operation_plan),
+                source_text
+            );
+        }
+
+        auto operation_validation = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_mutation_operation_validations,
+            [&](lowering::RuntimeIndexedMemberCleanupMutationOperationValidation const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (operation_validation != result.runtime_indexed_member_cleanup_mutation_operation_validations.end() &&
+            operation_plan != result.runtime_indexed_member_cleanup_mutation_operation_plans.end() &&
+            operation_plan->production_enabled) {
+            operation_validation->report_only = !operation_validation->validation_ready;
+            operation_validation->production_enabled =
+                operation_validation->validation_ready &&
+                operation_validation->blockers.empty();
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup mutation-operation-validation",
+                *operation_validation,
+                lowering::runtime_indexed_member_cleanup_mutation_operation_validation_report(*operation_validation),
+                source_text
+            );
+        }
+
         erase_runtime_indexed_member_cleanup_audit_lines(
             result.runtime_indexed_cleanup_audit_lines,
             "runtime-index member cleanup production blocker",

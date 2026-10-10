@@ -1564,6 +1564,49 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
         "runtime-index member cleanup mutation-apply-preview",
         runtime_indexed_member_cleanup_mutation_apply_preview_report
     );
+    for (auto& plan : operation_plans) {
+        auto const* preview = find_runtime_indexed_member_cleanup_refresh_record(plan, apply_previews);
+        if (preview == nullptr || !preview->production_enabled || !preview->actions_applied) {
+            continue;
+        }
+        for (auto& operation : plan.operations) {
+            auto const action = std::ranges::find_if(
+                preview->actions,
+                [&](RuntimeIndexedMemberCleanupMutationApplyPreviewAction const& candidate) {
+                    return candidate.kind == operation.kind;
+                }
+            );
+            if (action != preview->actions.end()) {
+                operation.applied = action->applied;
+            }
+        }
+        plan.operations_applied = !plan.operations.empty();
+        for (auto const& operation : plan.operations) {
+            plan.operations_applied = plan.operations_applied && operation.applied;
+        }
+        plan.report_only = !plan.operations_applied;
+        plan.production_enabled = plan.operations_applied && plan.blockers.empty();
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup mutation-operation-plan",
+            plan,
+            runtime_indexed_member_cleanup_mutation_operation_plan_report(plan)
+        );
+    }
+    for (auto& validation : operation_validations) {
+        auto const* plan = find_runtime_indexed_member_cleanup_refresh_record(validation, operation_plans);
+        if (plan == nullptr || !plan->production_enabled) {
+            continue;
+        }
+        validation.report_only = !validation.validation_ready;
+        validation.production_enabled = validation.validation_ready && validation.blockers.empty();
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup mutation-operation-validation",
+            validation,
+            runtime_indexed_member_cleanup_mutation_operation_validation_report(validation)
+        );
+    }
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         post_apply_verifications,
         audit_lines,

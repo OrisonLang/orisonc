@@ -3365,6 +3365,9 @@ representation.
 - Runtime-index member cleanup audit reconciliation now carries edit-script validation, staged-apply, and
   module-mutation gate metadata through lowering and pipeline results. When production integration is proven for the
   same site, those staging lines are refreshed to production-enabled state with no stale production-mutation blockers.
+- Runtime-index member cleanup audit reconciliation now refreshes mutation operation plans from the matching
+  production apply-preview. Once application succeeds, operation plans report all planned edits as applied and
+  production enabled, while operation validation remains a record of the pre-apply validation gate.
 
 ## Follow-up work
 
