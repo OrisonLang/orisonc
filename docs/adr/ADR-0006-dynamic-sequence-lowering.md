@@ -3356,6 +3356,9 @@ representation.
   coverage already exists, and computed-index constructor member move coverage now uses the same helper.
 - Runtime-index record and choice constructor direct computed-index member move fixtures now use the full production
   CLI helper beside their existing guard IR checks.
+- Runtime-index member cleanup audit reconciliation now carries promotion checklist metadata through lowering and
+  pipeline results. When member cleanup promotion is integrated, the audit refreshes the checklist to ready and removes
+  stale blocker diagnostic lines for the same site.
 
 ## Follow-up work
 

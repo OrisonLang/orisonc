@@ -1210,6 +1210,22 @@ void replace_runtime_indexed_member_cleanup_audit_line(
     }
 }
 
+template <typename Record>
+void erase_runtime_indexed_member_cleanup_audit_lines(
+    std::vector<std::string>& audit_lines,
+    std::string_view report_prefix,
+    Record const& record
+) {
+    auto const site_fragment = member_cleanup_site_fragment(record);
+    std::erase_if(
+        audit_lines,
+        [&](std::string const& candidate) {
+            return candidate.starts_with(report_prefix) &&
+                candidate.find(site_fragment) != std::string::npos;
+        }
+    );
+}
+
 template <typename Record, typename Report>
 void refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
     std::vector<Record>& records,
@@ -1264,6 +1280,76 @@ void refresh_runtime_indexed_member_cleanup_production_readiness_with_helper_bin
     }
 }
 
+void refresh_runtime_indexed_member_cleanup_promotion_checklists(
+    std::vector<RuntimeIndexedMemberCleanupPromotionChecklist>& checklists,
+    std::vector<RuntimeIndexedMemberCleanupProductionReadiness> const& readiness,
+    std::vector<std::string>& audit_lines
+) {
+    for (auto& checklist : checklists) {
+        auto const matched_readiness = std::ranges::find_if(
+            readiness,
+            [&](RuntimeIndexedMemberCleanupProductionReadiness const& entry) {
+                return checklist.owner_name == entry.owner_name &&
+                    checklist.index_expression_text == entry.index_expression_text &&
+                    checklist.element_source_type_name == entry.element_source_type_name &&
+                    checklist.moved_source_type_name == entry.moved_source_type_name &&
+                    checklist.moved_member_path == entry.moved_member_path;
+            }
+        );
+        if (matched_readiness == readiness.end() || !matched_readiness->production_ready) {
+            continue;
+        }
+        checklist.module_mutation_ready = matched_readiness->module_mutation_ready;
+        checklist.production_readiness_ready = matched_readiness->production_ready;
+        std::erase(checklist.blockers, "member-helper-drop-bindings");
+        std::erase(checklist.blockers, "member-cleanup-module-mutation");
+        std::erase(checklist.blockers, "production-member-cleanup");
+        checklist.promotion_ready =
+            checklist.rewrite_candidate_ready &&
+            checklist.edit_script_ready &&
+            checklist.validation_ready &&
+            checklist.staged_apply_ready &&
+            checklist.module_mutation_ready &&
+            checklist.production_readiness_ready &&
+            checklist.blockers.empty();
+        checklist.report_only = !checklist.promotion_ready;
+        checklist.production_enabled = checklist.promotion_ready;
+        replace_runtime_indexed_member_cleanup_audit_line(
+            audit_lines,
+            "runtime-index member cleanup promotion-checklist",
+            checklist,
+            runtime_indexed_member_cleanup_promotion_checklist_report(checklist)
+        );
+        if (checklist.promotion_ready) {
+            erase_runtime_indexed_member_cleanup_audit_lines(
+                audit_lines,
+                "runtime-index member cleanup production blocker",
+                checklist
+            );
+            erase_runtime_indexed_member_cleanup_audit_lines(
+                audit_lines,
+                "runtime-index member cleanup edit-script validation diagnostic",
+                checklist
+            );
+            erase_runtime_indexed_member_cleanup_audit_lines(
+                audit_lines,
+                "runtime-index member cleanup staged-apply diagnostic",
+                checklist
+            );
+            erase_runtime_indexed_member_cleanup_audit_lines(
+                audit_lines,
+                "runtime-index member cleanup module-mutation diagnostic",
+                checklist
+            );
+            erase_runtime_indexed_member_cleanup_audit_lines(
+                audit_lines,
+                "runtime-index member cleanup mutation production blocker",
+                checklist
+            );
+        }
+    }
+}
+
 template <typename LeftRecord, typename RightRecord>
 auto same_runtime_indexed_member_cleanup_refresh_key(
     LeftRecord const& left,
@@ -1294,6 +1380,8 @@ auto find_runtime_indexed_member_cleanup_refresh_record(
 }
 
 void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+    std::vector<RuntimeIndexedMemberCleanupPromotionChecklist>& promotion_checklists,
+    std::vector<RuntimeIndexedMemberCleanupProductionReadiness> const& production_readiness,
     std::vector<RuntimeIndexedMemberCleanupTypedPromotionGate>& typed_promotion_gates,
     std::vector<RuntimeIndexedMemberCleanupMutationOperationPlan>& operation_plans,
     std::vector<RuntimeIndexedMemberCleanupMutationOperationValidation>& operation_validations,
@@ -1311,6 +1399,11 @@ void refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindi
     std::vector<std::string>& audit_lines,
     std::vector<RuntimeIndexedMemberCleanupHelperOwnedCleanupBindings> const& helper_owned_cleanup_bindings
 ) {
+    refresh_runtime_indexed_member_cleanup_promotion_checklists(
+        promotion_checklists,
+        production_readiness,
+        audit_lines
+    );
     refresh_runtime_indexed_member_cleanup_mutation_blockers_with_helper_bindings(
         typed_promotion_gates,
         audit_lines,
@@ -3588,6 +3681,11 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_production_readiness.begin(),
         function_emission.runtime_indexed_member_cleanup_production_readiness.end()
     );
+    result.runtime_indexed_member_cleanup_promotion_checklists.insert(
+        result.runtime_indexed_member_cleanup_promotion_checklists.end(),
+        function_emission.runtime_indexed_member_cleanup_promotion_checklists.begin(),
+        function_emission.runtime_indexed_member_cleanup_promotion_checklists.end()
+    );
     result.runtime_indexed_member_cleanup_typed_promotion_gates.insert(
         result.runtime_indexed_member_cleanup_typed_promotion_gates.end(),
         function_emission.runtime_indexed_member_cleanup_typed_promotion_gates.begin(),
@@ -4938,6 +5036,8 @@ auto emit_module(
             result.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings
         );
         refresh_runtime_indexed_member_cleanup_mutation_readiness_with_helper_bindings(
+            result.runtime_indexed_member_cleanup_promotion_checklists,
+            result.runtime_indexed_member_cleanup_production_readiness,
             result.runtime_indexed_member_cleanup_typed_promotion_gates,
             result.runtime_indexed_member_cleanup_mutation_operation_plans,
             result.runtime_indexed_member_cleanup_mutation_operation_validations,

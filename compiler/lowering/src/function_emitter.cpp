@@ -1788,6 +1788,8 @@ void preserve_function_emission_metadata(
         }
         result->runtime_indexed_member_cleanup_production_readiness =
             state.ownership_transfers.runtime_indexed_member_cleanup_production_readiness;
+        result->runtime_indexed_member_cleanup_promotion_checklists =
+            state.ownership_transfers.runtime_indexed_member_cleanup_promotion_checklists;
         result->runtime_indexed_member_cleanup_typed_promotion_gates =
             state.ownership_transfers.runtime_indexed_member_cleanup_typed_promotion_gates;
         result->runtime_indexed_member_cleanup_mutation_operation_plans =

@@ -955,7 +955,20 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "runtime-index member cleanup production-readiness owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup promotion-checklist owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "promotion ready report-only false production enabled blockers 0"
+    ) != std::string::npos);
     assert(output.find("runtime-index member cleanup promoted-view production-readiness") == std::string::npos);
+    assert(output.find("runtime-index member cleanup production blocker owner items") == std::string::npos);
+    assert(output.find("runtime-index member cleanup edit-script validation diagnostic owner items") ==
+        std::string::npos);
+    assert(output.find("runtime-index member cleanup staged-apply diagnostic owner items") == std::string::npos);
+    assert(output.find("runtime-index member cleanup module-mutation diagnostic owner items") == std::string::npos);
+    assert(output.find("runtime-index member cleanup mutation production blocker owner items") == std::string::npos);
     assert(output.find(
         "runtime-index cleanup module-ir production-readiness insertion-gate ready insertion-preview ready "
         "candidate ready candidate-verification verified module-mutation enabled function-integration ready "
