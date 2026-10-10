@@ -3378,6 +3378,9 @@ representation.
   IR composition, CFG slice, rewrite-candidate, and edit-script plan metadata through pipeline results. When production
   readiness is proven for the same site, those precursor records stay visible and report production-enabled state
   rather than stale report-only status.
+- Runtime-index member cleanup owner/proof/sketch/target audit lines remain proof-only precursor records even after
+  production integration. The emission gate is the first production-backed gate; earlier lines preserve the planning
+  distinction and remain disabled or report-only by design.
 
 ## Follow-up work
 

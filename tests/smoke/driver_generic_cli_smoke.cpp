@@ -968,6 +968,38 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index member cleanup owner items index (index + zero) element Wrap moved Inner "
+        "member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "owner-known true index-known true element-type-known true moved-type-known true "
+        "member-path-known true cleanup-element-matches-move false member-granular-required true "
+        "prerequisites missing production disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup proof owner items index (index + zero) element Wrap moved Inner "
+        "member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "plan-ready true whole-element-cleanup-matches-move false member-cleanup-required true "
+        "member-scope-proven true whole-element-cleanup-blocked true prerequisites met production disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup emission-sketch owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "proof-ready true report-only true production-emission disabled"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup target owner items index (index + zero) element Wrap moved Inner "
+        "member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "operation drop-live-member-siblings drop-metadata __orison_member_cleanup.Wrap.except.box.item "
+        "metadata ready production disabled"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index member cleanup emission-gate owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);
