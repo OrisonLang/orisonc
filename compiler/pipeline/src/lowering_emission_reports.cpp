@@ -476,6 +476,73 @@ auto reconcile_runtime_indexed_member_cleanup_production_readiness(
             source_text
         );
 
+        auto validation = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations,
+            [&](lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (validation !=
+            result.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations.end()) {
+            std::erase(validation->blockers, "production-member-cleanup-module-mutation");
+            validation->report_only = !validation->validation_ready;
+            validation->production_enabled = validation->validation_ready;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup function-rewrite-edit-script-validation",
+                *validation,
+                lowering::runtime_indexed_member_cleanup_function_rewrite_edit_script_validation_report(*validation),
+                source_text
+            );
+        }
+
+        auto staged_apply = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans,
+            [&](lowering::RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (staged_apply != result.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans.end()) {
+            std::erase(staged_apply->blockers, "production-member-cleanup-module-mutation");
+            staged_apply->branch_replacement_applied = staged_apply->branch_replacement_planned;
+            staged_apply->cleanup_cfg_appended = staged_apply->cleanup_cfg_append_planned;
+            staged_apply->phi_retarget_applied = staged_apply->phi_retarget_planned;
+            staged_apply->report_only = !staged_apply->staged_apply_ready;
+            staged_apply->production_enabled = staged_apply->staged_apply_ready;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup function-rewrite-staged-apply-plan",
+                *staged_apply,
+                lowering::runtime_indexed_member_cleanup_function_rewrite_staged_apply_plan_report(*staged_apply),
+                source_text
+            );
+        }
+
+        auto module_gate = std::ranges::find_if(
+            result.runtime_indexed_member_cleanup_module_mutation_gates,
+            [&](lowering::RuntimeIndexedMemberCleanupModuleMutationGate const& candidate) {
+                return runtime_indexed_member_cleanup_same_record(readiness, candidate);
+            }
+        );
+        if (module_gate != result.runtime_indexed_member_cleanup_module_mutation_gates.end()) {
+            std::erase(module_gate->blockers, "member-cleanup-module-mutation");
+            std::erase(module_gate->blockers, "production-member-cleanup");
+            module_gate->module_mutation_enabled = true;
+            module_gate->production_member_cleanup_enabled = true;
+            module_gate->prerequisites_met =
+                module_gate->cfg_slice_ready &&
+                module_gate->edit_script_validation_ready &&
+                module_gate->staged_apply_ready;
+            module_gate->production_enabled = module_gate->prerequisites_met;
+            replace_runtime_indexed_member_cleanup_audit_line(
+                result.runtime_indexed_cleanup_audit_lines,
+                "runtime-index member cleanup module-mutation-gate",
+                *module_gate,
+                lowering::runtime_indexed_member_cleanup_module_mutation_gate_report(*module_gate),
+                source_text
+            );
+        }
+
         auto checklist = std::ranges::find_if(
             result.runtime_indexed_member_cleanup_promotion_checklists,
             [&](lowering::RuntimeIndexedMemberCleanupPromotionChecklist const& candidate) {
@@ -4957,6 +5024,12 @@ void populate_lowering_emission_reports(
         std::move(emission.runtime_indexed_member_cleanup_helper_owned_cleanup_bindings);
     result.runtime_indexed_member_cleanup_helper_bodies =
         std::move(emission.runtime_indexed_member_cleanup_helper_bodies);
+    result.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations =
+        std::move(emission.runtime_indexed_member_cleanup_function_rewrite_edit_script_validations);
+    result.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans =
+        std::move(emission.runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans);
+    result.runtime_indexed_member_cleanup_module_mutation_gates =
+        std::move(emission.runtime_indexed_member_cleanup_module_mutation_gates);
     result.runtime_indexed_member_cleanup_production_readiness =
         std::move(emission.runtime_indexed_member_cleanup_production_readiness);
     result.runtime_indexed_member_cleanup_promotion_checklists =

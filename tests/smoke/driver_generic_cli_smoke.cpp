@@ -956,6 +956,28 @@ void assert_cli_runtime_indexed_member_cleanup_audit_distinguishes_promoted_read
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);
     assert(output.find(
+        "runtime-index member cleanup function-rewrite-edit-script-validation owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "validation ready report-only false production enabled blockers 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup function-rewrite-staged-apply-plan owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "staged-apply ready branch-applied true cfg-appended true phi-applied true "
+        "report-only false production enabled blockers 0"
+    ) != std::string::npos);
+    assert(output.find(
+        "runtime-index member cleanup module-mutation-gate owner items index (index + zero) "
+        "element Wrap moved Inner member-path box.item"
+    ) != std::string::npos);
+    assert(output.find(
+        "module-mutation enabled production-member-cleanup enabled prerequisites met production enabled blockers 0"
+    ) != std::string::npos);
+    assert(output.find(
         "runtime-index member cleanup promotion-checklist owner items index (index + zero) "
         "element Wrap moved Inner member-path box.item"
     ) != std::string::npos);

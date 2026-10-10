@@ -3362,6 +3362,9 @@ representation.
 - Runtime-index member cleanup audit reconciliation now also carries promotion seam metadata through lowering and
   pipeline results. When the matching checklist is ready, the audit refreshes the seam line to remove stale
   helper-binding blockers for the same site.
+- Runtime-index member cleanup audit reconciliation now carries edit-script validation, staged-apply, and
+  module-mutation gate metadata through lowering and pipeline results. When production integration is proven for the
+  same site, those staging lines are refreshed to production-enabled state with no stale production-mutation blockers.
 
 ## Follow-up work
 

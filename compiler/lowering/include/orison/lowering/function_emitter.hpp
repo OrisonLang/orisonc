@@ -38,6 +38,12 @@ struct FunctionEmissionResult {
     std::vector<RuntimeIndexedCleanupEmissionPlan> runtime_indexed_cleanup_emission_plans;
     std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan>
         runtime_indexed_member_cleanup_function_rewrite_edit_script_plans;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteEditScriptValidation>
+        runtime_indexed_member_cleanup_function_rewrite_edit_script_validations;
+    std::vector<RuntimeIndexedMemberCleanupFunctionRewriteStagedApplyPlan>
+        runtime_indexed_member_cleanup_function_rewrite_staged_apply_plans;
+    std::vector<RuntimeIndexedMemberCleanupModuleMutationGate>
+        runtime_indexed_member_cleanup_module_mutation_gates;
     std::vector<RuntimeIndexedMemberCleanupProductionReadiness>
         runtime_indexed_member_cleanup_production_readiness;
     std::vector<RuntimeIndexedMemberCleanupPromotionChecklist>
