@@ -3352,6 +3352,8 @@ representation.
   the full production CLI helper beside their existing IR-shape assertions.
 - Runtime-index constructor fixtures now use the full production CLI helper for record sibling, choice sibling, and
   direct dynamic-array computed-index member move paths.
+- Runtime-index dynamic-array constructor sibling fixtures now avoid duplicate run-only checks when full production
+  coverage already exists, and computed-index constructor member move coverage now uses the same helper.
 
 ## Follow-up work
 
