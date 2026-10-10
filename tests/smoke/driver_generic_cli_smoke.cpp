@@ -5939,9 +5939,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_record_constructor_computed_index_member_path_move_out_of_bounds.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_sibling_run.or"
+        fixtures / "runtime_indexed_record_constructor_computed_index_member_path_sibling_run.or",
+        smoke_temp_root / "runtime_indexed_record_constructor_computed_index_member_path_sibling"
     );
     assert_cli_emit_llvm_runtime_indexed_fixed_constructor_reuse_failure(
         executable,
@@ -5967,9 +5968,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_move_out_of_bounds.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_sibling_run.or"
+        fixtures / "runtime_indexed_choice_constructor_computed_index_member_path_sibling_run.or",
+        smoke_temp_root / "runtime_indexed_choice_constructor_computed_index_member_path_sibling"
     );
     assert_cli_emit_llvm_runtime_indexed_fixed_constructor_reuse_failure(
         executable,
@@ -6088,9 +6090,10 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "dynamic_array_owned_constructor_computed_index_member_path_move_run.or"
     );
-    assert_cli_run_fixture_success(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or"
+        fixtures / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move_run.or",
+        smoke_temp_root / "runtime_indexed_dynamic_array_constructor_computed_index_member_path_move"
     );
     assert_cli_runtime_indexed_dynamic_array_default_emit_llvm_fixture_success(
         executable,
