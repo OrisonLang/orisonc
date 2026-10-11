@@ -3386,6 +3386,9 @@ representation.
   so the summary no longer reports member-cleanup promotion blockers for them.
 - Computed `DynamicArray<T>` ternary ownership planning now uses an explicit same-owner proof helper. Repeated leaves
   that all resolve to the same non-empty owner remain a single-owner join, while mixed owners still block lowering.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now distinguish helper-cycle or over-depth resolution
+  failure from generic unsupported computed shapes. The diagnostic remains metadata-only and does not expand accepted
+  lowering shapes.
 
 ## Follow-up work
 

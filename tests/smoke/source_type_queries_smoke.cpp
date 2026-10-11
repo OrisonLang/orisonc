@@ -2110,6 +2110,11 @@ int main() {
         cyclic_forwarded_parameter_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
     );
+    assert(
+        cyclic_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_depth_exhausted
+    );
     assert(cyclic_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!cyclic_forwarded_parameter_plan.descriptor_storage_available);
     assert(!cyclic_forwarded_parameter_plan.cleanup_owner_proven);
@@ -2117,7 +2122,8 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
             cyclic_forwarded_parameter_plan.ownership_plan
-        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>"
+        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
+            "forwarded owner resolution depth exhausted"
     );
 
     auto depth_overflow_forwarded_parameter_plan =
@@ -2138,10 +2144,20 @@ int main() {
         depth_overflow_forwarded_parameter_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
     );
+    assert(
+        depth_overflow_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_depth_exhausted
+    );
     assert(depth_overflow_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!depth_overflow_forwarded_parameter_plan.descriptor_storage_available);
     assert(!depth_overflow_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!depth_overflow_forwarded_parameter_plan.lowering_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            depth_overflow_forwarded_parameter_plan.ownership_plan
+        ).find("unsupported reason forwarded owner resolution depth exhausted") != std::string::npos
+    );
 
     auto local_alias_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

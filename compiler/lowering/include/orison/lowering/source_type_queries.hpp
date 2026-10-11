@@ -82,6 +82,7 @@ enum class ComputedDynamicArrayIterableOwnershipPlanKind {
 enum class ComputedDynamicArrayIterableUnsupportedReason {
     none,
     runtime_aggregate_index,
+    forwarded_owner_resolution_depth_exhausted,
 };
 
 struct ComputedDynamicArrayIterableOwnershipPlan {

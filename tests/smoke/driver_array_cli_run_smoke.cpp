@@ -2228,10 +2228,11 @@ void assert_computed_dynamic_array_unsupported_shape_failure_matrix(
     std::filesystem::path const& output_path
 ) {
     auto expected_summary_fragment =
-        std::string {"computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>"};
+        std::string {"computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<Payload>; "
+                     "forwarded owner resolution depth exhausted"};
     auto expected_shape_fragment = std::string {
         "computed DynamicArray ownership plan unsupported computed shape source DynamicArray<Payload> "
-        "element Payload"
+        "element Payload unsupported reason forwarded owner resolution depth exhausted"
     };
     expected_shape_fragment += " [ownership join blocked] [cleanup owner blocked] (metadata only)";
 
