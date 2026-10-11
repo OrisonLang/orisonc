@@ -3395,6 +3395,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep alias-reassignment failures separate from
   generic unsupported forwarded-owner shapes. Alias reassignment remains rejected, since the helper no longer preserves
   the simple single-owner forwarding proof required for computed iterable handoff.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep owner-read failures separate from generic
+  unsupported forwarded-owner shapes. Owner reads remain rejected unless a later proof can show the read is
+  non-consuming and preserves single-owner handoff.
 
 ## Follow-up work
 

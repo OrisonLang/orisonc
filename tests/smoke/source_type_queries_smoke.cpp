@@ -2519,7 +2519,7 @@ int main() {
     assert(
         local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
         orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_unsupported_shape
+            forwarded_owner_resolution_owner_read
     );
     assert(local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
@@ -2529,7 +2529,7 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
             local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan
         ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
-            "forwarded owner resolution unsupported shape"
+            "forwarded owner resolution owner read"
     );
 
     auto final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan =
@@ -2549,6 +2549,12 @@ int main() {
     assert(
         final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
+            .ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_owner_read
     );
     assert(
         final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
@@ -2653,7 +2659,7 @@ int main() {
         assert(
             plan.ownership_plan.unsupported_reason ==
             orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-                forwarded_owner_resolution_unsupported_shape
+                forwarded_owner_resolution_owner_read
         );
         assert(plan.ownership_plan.branch_owner_names.empty());
         assert(!plan.descriptor_storage_available);
@@ -2789,7 +2795,7 @@ int main() {
     assert(
         final_if_alias_extra_statement_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
         orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_unsupported_shape
+            forwarded_owner_resolution_owner_read
     );
     assert(final_if_alias_extra_statement_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!final_if_alias_extra_statement_forwarded_parameter_plan.descriptor_storage_available);

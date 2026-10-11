@@ -84,6 +84,7 @@ enum class ComputedDynamicArrayIterableUnsupportedReason {
     runtime_aggregate_index,
     forwarded_owner_resolution_depth_exhausted,
     forwarded_owner_resolution_alias_reassigned,
+    forwarded_owner_resolution_owner_read,
     forwarded_owner_resolution_unsupported_shape,
 };
 
