@@ -2840,12 +2840,18 @@ int main() {
     assert(
         final_if_alias_reassigned_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
         orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_unsupported_shape
+            forwarded_owner_resolution_alias_reassigned
     );
     assert(final_if_alias_reassigned_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!final_if_alias_reassigned_forwarded_parameter_plan.descriptor_storage_available);
     assert(!final_if_alias_reassigned_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!final_if_alias_reassigned_forwarded_parameter_plan.lowering_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
+            final_if_alias_reassigned_forwarded_parameter_plan.ownership_plan
+        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
+            "forwarded owner resolution alias reassigned"
+    );
 
     auto final_switch_alias_reassigned_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -2956,6 +2962,11 @@ int main() {
     assert(
         local_alias_reassigned_forwarded_parameter_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        local_alias_reassigned_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_alias_reassigned
     );
     assert(local_alias_reassigned_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!local_alias_reassigned_forwarded_parameter_plan.descriptor_storage_available);

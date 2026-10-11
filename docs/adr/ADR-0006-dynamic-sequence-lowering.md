@@ -3392,6 +3392,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now also classify non-depth forwarded helper proof
   failures as unsupported forwarded-owner shapes. This covers helper bodies or call arguments that the current proof
   model does not accept, while leaving accepted lowering behavior unchanged.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep alias-reassignment failures separate from
+  generic unsupported forwarded-owner shapes. Alias reassignment remains rejected, since the helper no longer preserves
+  the simple single-owner forwarding proof required for computed iterable handoff.
 
 ## Follow-up work
 
