@@ -3389,6 +3389,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now distinguish helper-cycle or over-depth resolution
   failure from generic unsupported computed shapes. The diagnostic remains metadata-only and does not expand accepted
   lowering shapes.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now also classify non-depth forwarded helper proof
+  failures as unsupported forwarded-owner shapes. This covers helper bodies or call arguments that the current proof
+  model does not accept, while leaving accepted lowering behavior unchanged.
 
 ## Follow-up work
 

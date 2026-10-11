@@ -912,6 +912,9 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                 unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
                 unsupported_reason =
                     ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted;
+            } else if (unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
+                unsupported_reason =
+                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape;
             }
             return false;
         }
@@ -950,6 +953,9 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                 unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
                 unsupported_reason =
                     ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted;
+            } else if (unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
+                unsupported_reason =
+                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape;
             }
             return false;
         }
@@ -1553,6 +1559,10 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
         ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted) {
         output += " unsupported reason forwarded owner resolution depth exhausted";
     }
+    if (plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape) {
+        output += " unsupported reason forwarded owner resolution unsupported shape";
+    }
     if (!plan.branch_owner_names.empty()) {
         output += " owners";
         for (auto const& owner : plan.branch_owner_names) {
@@ -1581,6 +1591,10 @@ auto computed_dynamic_array_iterable_failure_summary_report(
         if (plan.unsupported_reason ==
             ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted) {
             output += "; forwarded owner resolution depth exhausted";
+        }
+        if (plan.unsupported_reason ==
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape) {
+            output += "; forwarded owner resolution unsupported shape";
         }
         return output;
     }
