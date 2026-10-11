@@ -3404,6 +3404,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep forwarded argument-shape failures separate from
   generic unsupported forwarded-owner shapes. Missing forwarded arguments, non-name forwarded arguments, and names that
   do not resolve to caller parameters remain rejected.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep forwarded callee-shape failures separate from
+  generic unsupported forwarded-owner shapes. Calls through unknown helpers or helpers with incompatible source return
+  types remain rejected.
 
 ## Follow-up work
 
