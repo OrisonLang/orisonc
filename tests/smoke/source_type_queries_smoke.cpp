@@ -732,6 +732,9 @@ int main() {
     register_packet_forwarding_signature(context, "forward_packet_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_items");
     register_dynamic_array_forwarding_signature(context, "forward_again");
+    register_dynamic_array_forwarding_signature(context, "forward_missing_argument");
+    register_dynamic_array_forwarding_signature(context, "forward_literal_argument");
+    register_dynamic_array_forwarding_signature(context, "forward_unknown_owner_argument");
     register_dynamic_array_forwarding_signature(context, "forward_alias");
     register_dynamic_array_forwarding_signature(context, "forward_alias_let");
     register_dynamic_array_forwarding_signature(context, "forward_final_if");
@@ -1246,6 +1249,28 @@ int main() {
 
     auto forward_again_function = call_dynamic_array_forwarding_function("forward_again", "forward_items");
     context.source_functions["forward_again"] = &forward_again_function;
+
+    auto forward_missing_argument_function = orison::syntax::FunctionSyntax {};
+    forward_missing_argument_function.name = "forward_missing_argument";
+    forward_missing_argument_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_missing_argument_function.body_statements.push_back(expression_statement(call("forward_items")));
+    context.source_functions["forward_missing_argument"] = &forward_missing_argument_function;
+
+    auto forward_literal_argument_function = orison::syntax::FunctionSyntax {};
+    forward_literal_argument_function.name = "forward_literal_argument";
+    forward_literal_argument_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_literal_argument_function.body_statements.push_back(
+        expression_statement(call("forward_items", integer_literal("1")))
+    );
+    context.source_functions["forward_literal_argument"] = &forward_literal_argument_function;
+
+    auto forward_unknown_owner_argument_function = orison::syntax::FunctionSyntax {};
+    forward_unknown_owner_argument_function.name = "forward_unknown_owner_argument";
+    forward_unknown_owner_argument_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_unknown_owner_argument_function.body_statements.push_back(
+        expression_statement(call("forward_items", name("other")))
+    );
+    context.source_functions["forward_unknown_owner_argument"] = &forward_unknown_owner_argument_function;
 
     auto forward_alias_function = orison::syntax::FunctionSyntax {};
     forward_alias_function.name = "forward_alias";
@@ -2091,6 +2116,34 @@ int main() {
     assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.descriptor_storage_available);
     assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.cleanup_owner_proven);
     assert(!multi_hop_forwarded_parameter_owner_mismatch_plan.lowering_enabled);
+
+    auto assert_argument_shape_forwarded_parameter_plan = [&](std::string const& function_name) {
+        auto plan = orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(name("flag"), call(function_name, name("items")), call(function_name, name("items"))),
+            context,
+            state
+        );
+        assert(
+            plan.kind ==
+            orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        );
+        assert(
+            plan.ownership_plan.kind ==
+            orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+        );
+        assert(
+            plan.ownership_plan.unsupported_reason ==
+            orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+                forwarded_owner_resolution_argument_shape
+        );
+        assert(plan.ownership_plan.branch_owner_names.empty());
+        assert(!plan.descriptor_storage_available);
+        assert(!plan.cleanup_owner_proven);
+        assert(!plan.lowering_enabled);
+    };
+    assert_argument_shape_forwarded_parameter_plan("forward_missing_argument");
+    assert_argument_shape_forwarded_parameter_plan("forward_literal_argument");
+    assert_argument_shape_forwarded_parameter_plan("forward_unknown_owner_argument");
 
     auto cyclic_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

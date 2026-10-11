@@ -727,7 +727,8 @@ auto forwarded_dynamic_array_parameter_indexes(
     bool* depth_exhausted = nullptr,
     bool* alias_reassigned = nullptr,
     bool* owner_read = nullptr,
-    bool* multiple_result_statements = nullptr
+    bool* multiple_result_statements = nullptr,
+    bool* argument_shape = nullptr
 ) -> std::optional<std::vector<std::size_t>>;
 
 auto single_forwarded_dynamic_array_parameter_index(std::size_t index) -> std::vector<std::size_t> {
@@ -746,7 +747,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
     bool* depth_exhausted,
     bool* alias_reassigned,
     bool* owner_read,
-    bool* multiple_result_statements
+    bool* multiple_result_statements,
+    bool* argument_shape
 ) -> std::optional<std::vector<std::size_t>>;
 
 auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
@@ -759,7 +761,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
     bool* depth_exhausted = nullptr,
     bool* alias_reassigned = nullptr,
     bool* owner_read = nullptr,
-    bool* multiple_result_statements = nullptr
+    bool* multiple_result_statements = nullptr,
+    bool* argument_shape = nullptr
 ) -> std::optional<std::vector<std::size_t>> {
     if (statements.empty()) {
         return std::nullopt;
@@ -803,7 +806,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
         depth_exhausted,
         alias_reassigned,
         owner_read,
-        multiple_result_statements
+        multiple_result_statements,
+        argument_shape
     );
 }
 
@@ -817,7 +821,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
     bool* depth_exhausted = nullptr,
     bool* alias_reassigned = nullptr,
     bool* owner_read = nullptr,
-    bool* multiple_result_statements = nullptr
+    bool* multiple_result_statements = nullptr,
+    bool* argument_shape = nullptr
 ) -> std::optional<std::vector<std::size_t>> {
     if (statements.empty()) {
         return std::nullopt;
@@ -861,7 +866,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
         depth_exhausted,
         alias_reassigned,
         owner_read,
-        multiple_result_statements
+        multiple_result_statements,
+        argument_shape
     );
 }
 
@@ -875,7 +881,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
     bool* depth_exhausted,
     bool* alias_reassigned,
     bool* owner_read,
-    bool* multiple_result_statements
+    bool* multiple_result_statements,
+    bool* argument_shape
 ) -> std::optional<std::vector<std::size_t>> {
     if (expression.kind == syntax::ExpressionKind::name) {
         if (auto parameter_index = parameter_index_named(
@@ -903,7 +910,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
         depth_exhausted,
         alias_reassigned,
         owner_read,
-        multiple_result_statements
+        multiple_result_statements,
+        argument_shape
     );
     if (!forwarded_argument_indexes.has_value() || forwarded_argument_indexes->empty()) {
         return std::nullopt;
@@ -913,11 +921,17 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
     result.reserve(forwarded_argument_indexes->size());
     for (auto forwarded_argument_index : *forwarded_argument_indexes) {
         if (forwarded_argument_index >= expression.arguments.size()) {
+            if (argument_shape != nullptr) {
+                *argument_shape = true;
+            }
             return std::nullopt;
         }
 
         auto const& argument = expression.arguments[forwarded_argument_index];
         if (argument.kind != syntax::ExpressionKind::name) {
+            if (argument_shape != nullptr) {
+                *argument_shape = true;
+            }
             return std::nullopt;
         }
 
@@ -928,6 +942,9 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
             source_type_name
         );
         if (!caller_parameter_index.has_value()) {
+            if (argument_shape != nullptr) {
+                *argument_shape = true;
+            }
             return std::nullopt;
         }
         result.push_back(*caller_parameter_index);
@@ -953,7 +970,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
     bool* depth_exhausted,
     bool* alias_reassigned,
     bool* owner_read,
-    bool* multiple_result_statements
+    bool* multiple_result_statements,
+    bool* argument_shape
 ) -> std::optional<std::vector<std::size_t>> {
     if (statement.kind == syntax::StatementKind::expression_statement ||
         statement.kind == syntax::StatementKind::return_statement) {
@@ -967,7 +985,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
             depth_exhausted,
             alias_reassigned,
             owner_read,
-            multiple_result_statements
+            multiple_result_statements,
+            argument_shape
         );
     }
 
@@ -982,7 +1001,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
             depth_exhausted,
             alias_reassigned,
             owner_read,
-            multiple_result_statements
+            multiple_result_statements,
+            argument_shape
         );
         auto else_indexes = forwarded_dynamic_array_parameter_indexes_for_statement_block(
             statement.alternate_statements,
@@ -994,7 +1014,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
             depth_exhausted,
             alias_reassigned,
             owner_read,
-            multiple_result_statements
+            multiple_result_statements,
+            argument_shape
         );
         if (!then_indexes.has_value() || !else_indexes.has_value()) {
             return std::nullopt;
@@ -1019,7 +1040,8 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
                 depth_exhausted,
                 alias_reassigned,
                 owner_read,
-                multiple_result_statements
+                multiple_result_statements,
+                argument_shape
             );
             if (!case_indexes.has_value()) {
                 return std::nullopt;
@@ -1040,7 +1062,8 @@ auto forwarded_dynamic_array_parameter_indexes(
     bool* depth_exhausted,
     bool* alias_reassigned,
     bool* owner_read,
-    bool* multiple_result_statements
+    bool* multiple_result_statements,
+    bool* argument_shape
 ) -> std::optional<std::vector<std::size_t>> {
     if (remaining_depth == 0) {
         if (depth_exhausted != nullptr) {
@@ -1072,7 +1095,8 @@ auto forwarded_dynamic_array_parameter_indexes(
         depth_exhausted,
         alias_reassigned,
         owner_read,
-        multiple_result_statements
+        multiple_result_statements,
+        argument_shape
     );
     if (!result.has_value() && owner_read != nullptr) {
         auto owner_names = forwarded_owner_parameter_names(
@@ -1127,6 +1151,7 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         auto alias_reassigned = false;
         auto owner_read = false;
         auto multiple_result_statements = false;
+        auto argument_shape = false;
         auto forwarded_indexes = forwarded_dynamic_array_parameter_indexes(
             expression.left->text,
             source_type_name,
@@ -1135,7 +1160,8 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             &depth_exhausted,
             &alias_reassigned,
             &owner_read,
-            &multiple_result_statements
+            &multiple_result_statements,
+            &argument_shape
         );
         if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
             if (depth_exhausted &&
@@ -1150,6 +1176,10 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                 unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
                 unsupported_reason =
                     ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_multiple_result_statements;
+            } else if (argument_shape &&
+                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
+                unsupported_reason =
+                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape;
             } else if (owner_read &&
                 unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
                 unsupported_reason =
@@ -1186,6 +1216,7 @@ auto collect_computed_dynamic_array_leaf_descriptors(
         auto alias_reassigned = false;
         auto owner_read = false;
         auto multiple_result_statements = false;
+        auto argument_shape = false;
         auto forwarded_indexes = forwarded_dynamic_array_parameter_indexes(
             helper_call->left->text,
             source_type_name_for_expression(*helper_call, context, state).value_or(std::string {}),
@@ -1194,7 +1225,8 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             &depth_exhausted,
             &alias_reassigned,
             &owner_read,
-            &multiple_result_statements
+            &multiple_result_statements,
+            &argument_shape
         );
         if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
             if (depth_exhausted &&
@@ -1209,6 +1241,10 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                 unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
                 unsupported_reason =
                     ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_multiple_result_statements;
+            } else if (argument_shape &&
+                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
+                unsupported_reason =
+                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape;
             } else if (owner_read &&
                 unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
                 unsupported_reason =
@@ -1832,6 +1868,10 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
         output += " unsupported reason forwarded owner resolution multiple result statements";
     }
     if (plan.unsupported_reason ==
+        ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape) {
+        output += " unsupported reason forwarded owner resolution argument shape";
+    }
+    if (plan.unsupported_reason ==
         ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape) {
         output += " unsupported reason forwarded owner resolution unsupported shape";
     }
@@ -1875,6 +1915,10 @@ auto computed_dynamic_array_iterable_failure_summary_report(
         if (plan.unsupported_reason ==
             ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_multiple_result_statements) {
             output += "; forwarded owner resolution multiple result statements";
+        }
+        if (plan.unsupported_reason ==
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape) {
+            output += "; forwarded owner resolution argument shape";
         }
         if (plan.unsupported_reason ==
             ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape) {

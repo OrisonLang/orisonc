@@ -3401,6 +3401,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep multiple-result helper bodies separate from
   generic unsupported forwarded-owner shapes. These helpers remain rejected until the proof model can identify one
   deterministic forwarding result for every branch.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep forwarded argument-shape failures separate from
+  generic unsupported forwarded-owner shapes. Missing forwarded arguments, non-name forwarded arguments, and names that
+  do not resolve to caller parameters remain rejected.
 
 ## Follow-up work
 
