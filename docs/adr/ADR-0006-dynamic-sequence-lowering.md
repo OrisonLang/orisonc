@@ -3398,6 +3398,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep owner-read failures separate from generic
   unsupported forwarded-owner shapes. Owner reads remain rejected unless a later proof can show the read is
   non-consuming and preserves single-owner handoff.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep multiple-result helper bodies separate from
+  generic unsupported forwarded-owner shapes. These helpers remain rejected until the proof model can identify one
+  deterministic forwarding result for every branch.
 
 ## Follow-up work
 

@@ -2795,7 +2795,7 @@ int main() {
     assert(
         final_if_alias_extra_statement_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
         orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_owner_read
+            forwarded_owner_resolution_multiple_result_statements
     );
     assert(final_if_alias_extra_statement_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!final_if_alias_extra_statement_forwarded_parameter_plan.descriptor_storage_available);
@@ -2819,6 +2819,11 @@ int main() {
     assert(
         final_switch_alias_extra_statement_forwarded_parameter_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        final_switch_alias_extra_statement_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_multiple_result_statements
     );
     assert(final_switch_alias_extra_statement_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!final_switch_alias_extra_statement_forwarded_parameter_plan.descriptor_storage_available);
@@ -2945,6 +2950,11 @@ int main() {
     assert(
         local_alias_extra_statement_forwarded_parameter_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        local_alias_extra_statement_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_multiple_result_statements
     );
     assert(local_alias_extra_statement_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
     assert(!local_alias_extra_statement_forwarded_parameter_plan.descriptor_storage_available);
@@ -3092,6 +3102,11 @@ int main() {
     assert(
         forwarded_aggregate_field_extra_statement_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        forwarded_aggregate_field_extra_statement_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_multiple_result_statements
     );
     assert(forwarded_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
     assert(!forwarded_aggregate_field_extra_statement_plan.descriptor_storage_available);
@@ -3259,6 +3274,11 @@ int main() {
     assert(
         forwarded_nested_aggregate_field_extra_statement_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        forwarded_nested_aggregate_field_extra_statement_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_multiple_result_statements
     );
     assert(forwarded_nested_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
     assert(!forwarded_nested_aggregate_field_extra_statement_plan.descriptor_storage_available);
@@ -4141,6 +4161,11 @@ int main() {
         forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
     );
+    assert(
+        forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_multiple_result_statements
+    );
     assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
     assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.descriptor_storage_available);
     assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.cleanup_owner_proven);
@@ -4305,6 +4330,11 @@ int main() {
     assert(
         forwarded_choice_payload_extra_statement_plan.ownership_plan.kind ==
         orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
+    );
+    assert(
+        forwarded_choice_payload_extra_statement_plan.ownership_plan.unsupported_reason ==
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_multiple_result_statements
     );
     assert(forwarded_choice_payload_extra_statement_plan.ownership_plan.branch_owner_names.empty());
     assert(!forwarded_choice_payload_extra_statement_plan.descriptor_storage_available);
