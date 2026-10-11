@@ -964,6 +964,27 @@ auto collect_computed_dynamic_array_leaf_descriptors(
     );
 }
 
+auto computed_dynamic_array_single_owner_name(
+    std::vector<DynamicArrayIterableDescriptorPlan> const& descriptors
+) -> std::optional<std::string> {
+    if (descriptors.empty() || descriptors.front().owner_name.empty()) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = descriptors.front().owner_name;
+    if (!std::all_of(
+            descriptors.begin(),
+            descriptors.end(),
+            [&owner_name](DynamicArrayIterableDescriptorPlan const& descriptor) {
+                return descriptor.owner_name == owner_name;
+            }
+        )) {
+        return std::nullopt;
+    }
+
+    return owner_name;
+}
+
 }  // namespace
 
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
@@ -1417,8 +1438,6 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
         return plan;
     }
 
-    auto single_owner_name = branch_descriptors.front().owner_name;
-    auto cleanup_owner_proven = true;
     plan.branch_owner_names.reserve(branch_descriptors.size());
     plan.branch_descriptor_storage_names.reserve(branch_descriptors.size());
     plan.branch_cleanup_owner_proof_statuses.reserve(branch_descriptors.size());
@@ -1426,9 +1445,19 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
         plan.branch_owner_names.push_back(descriptor.owner_name);
         plan.branch_descriptor_storage_names.push_back(descriptor.descriptor_storage);
         plan.branch_cleanup_owner_proof_statuses.push_back(descriptor.cleanup_owner_proof_status);
+    }
+
+    auto single_owner_name = computed_dynamic_array_single_owner_name(branch_descriptors);
+    if (!single_owner_name.has_value()) {
+        plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch;
+        return plan;
+    }
+
+    auto cleanup_owner_proven = true;
+    for (auto const& descriptor : branch_descriptors) {
         cleanup_owner_proven = cleanup_owner_proven &&
             descriptor.cleanup_owner_proven &&
-            descriptor.owner_name == single_owner_name;
+            descriptor.owner_name == *single_owner_name;
     }
 
     auto branch_states = std::vector<OwnershipTransferState> {};

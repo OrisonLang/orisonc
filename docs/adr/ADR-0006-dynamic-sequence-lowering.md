@@ -3384,6 +3384,8 @@ representation.
 - Runtime-index constructor-move readiness reports now classify whole-element runtime-index moves with empty member
   paths as `member-cleanup-promotion not-required`. Those moves use the ordinary runtime-index cleanup production path,
   so the summary no longer reports member-cleanup promotion blockers for them.
+- Computed `DynamicArray<T>` ternary ownership planning now uses an explicit same-owner proof helper. Repeated leaves
+  that all resolve to the same non-empty owner remain a single-owner join, while mixed owners still block lowering.
 
 ## Follow-up work
 

@@ -4603,6 +4603,11 @@ int main() {
             "items"
         )
     );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            proven_nested_computed_ownership_plan
+        ).find("owners items items items [ownership join ok]") != std::string::npos
+    );
     auto nested_mismatched_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
             ternary(
