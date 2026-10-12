@@ -4282,6 +4282,59 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_production_ready_for
             .computed_dynamic_array_for_inserted_cleanup_call_state.call_count == 1
     );
+    auto forwarded_runtime_indexed_aggregate_computed_for_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" /
+        "fixtures" /
+        "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or";
+    auto forwarded_runtime_indexed_aggregate_computed_for = pipeline.emit_llvm(
+        forwarded_runtime_indexed_aggregate_computed_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!forwarded_runtime_indexed_aggregate_computed_for.has_errors());
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_count == 1
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state
+            .any_production_emission_mutation_allowed
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() ==
+        "holder.buckets[selected].values"
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(orison::pipeline::computed_dynamic_array_for_production_ready(
+        forwarded_runtime_indexed_aggregate_computed_for
+            .computed_dynamic_array_for_production_readiness
+    ));
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
