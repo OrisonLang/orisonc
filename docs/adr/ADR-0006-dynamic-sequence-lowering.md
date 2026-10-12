@@ -3423,6 +3423,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof now accepts helper bodies that forward a safe aggregate projection
   argument, such as forwarding `box.values` through a `DynamicArray<T>` helper, when substituting the caller argument
   yields a projected descriptor owner with existing cleanup-plan metadata.
+- Computed `DynamicArray<T>` forwarded-owner rejection classification now uses a shared internal helper for direct call
+  and projected helper-call paths. The priority order of depth, alias, multiple-result, argument, callee, owner-read,
+  and unsupported-shape reasons is unchanged.
 
 ## Follow-up work
 

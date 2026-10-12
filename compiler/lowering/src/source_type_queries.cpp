@@ -285,6 +285,42 @@ auto push_returned_aggregate_computed_dynamic_array_leaf_descriptor(
     return true;
 }
 
+auto apply_forwarded_owner_resolution_failure_reason(
+    ComputedDynamicArrayIterableUnsupportedReason& unsupported_reason,
+    bool depth_exhausted,
+    bool alias_reassigned,
+    bool multiple_result_statements,
+    bool argument_shape,
+    bool callee_shape,
+    bool owner_read
+) -> void {
+    if (unsupported_reason != ComputedDynamicArrayIterableUnsupportedReason::none) {
+        return;
+    }
+    if (depth_exhausted) {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted;
+    } else if (alias_reassigned) {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_alias_reassigned;
+    } else if (multiple_result_statements) {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_multiple_result_statements;
+    } else if (argument_shape) {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape;
+    } else if (callee_shape) {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_callee_shape;
+    } else if (owner_read) {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_owner_read;
+    } else {
+        unsupported_reason =
+            ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape;
+    }
+}
+
 auto matching_dynamic_array_cleanup_plan(
     std::vector<DynamicArrayDescriptorCleanupPlan> const& cleanup_plans,
     std::string_view owner_name,
@@ -1670,34 +1706,15 @@ auto collect_computed_dynamic_array_leaf_descriptors(
                     }
                 }
             }
-            if (depth_exhausted &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted;
-            } else if (alias_reassigned &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_alias_reassigned;
-            } else if (multiple_result_statements &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_multiple_result_statements;
-            } else if (argument_shape &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape;
-            } else if (callee_shape &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_callee_shape;
-            } else if (owner_read &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_owner_read;
-            } else if (unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape;
-            }
+            apply_forwarded_owner_resolution_failure_reason(
+                unsupported_reason,
+                depth_exhausted,
+                alias_reassigned,
+                multiple_result_statements,
+                argument_shape,
+                callee_shape,
+                owner_read
+            );
             return false;
         }
         for (auto forwarded_index : *forwarded_indexes) {
@@ -1741,34 +1758,15 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             &callee_shape
         );
         if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
-            if (depth_exhausted &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_depth_exhausted;
-            } else if (alias_reassigned &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_alias_reassigned;
-            } else if (multiple_result_statements &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_multiple_result_statements;
-            } else if (argument_shape &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_argument_shape;
-            } else if (callee_shape &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_callee_shape;
-            } else if (owner_read &&
-                unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_owner_read;
-            } else if (unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none) {
-                unsupported_reason =
-                    ComputedDynamicArrayIterableUnsupportedReason::forwarded_owner_resolution_unsupported_shape;
-            }
+            apply_forwarded_owner_resolution_failure_reason(
+                unsupported_reason,
+                depth_exhausted,
+                alias_reassigned,
+                multiple_result_statements,
+                argument_shape,
+                callee_shape,
+                owner_read
+            );
             return false;
         }
         for (auto forwarded_index : *forwarded_indexes) {
