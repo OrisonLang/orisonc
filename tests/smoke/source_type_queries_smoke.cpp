@@ -344,6 +344,22 @@ auto register_dynamic_array_forwarding_signature(
     });
 }
 
+auto register_payload_box_dynamic_array_projection_signature(
+    orison::lowering::LoweringContext& context,
+    std::string function_name
+) -> void {
+    auto symbol_name = function_name;
+    context.functions.emplace(std::move(function_name), orison::lowering::LoweredFunctionSignature {
+        .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+        .source_return_type_name = "DynamicArray<UInt32>",
+        .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+        .parameter_types = {"%record.PayloadBox"},
+        .parameter_source_type_names = {"PayloadBox"},
+        .parameter_signedness = {orison::lowering::IntegerSignedness::not_integer},
+        .symbol_name = std::move(symbol_name),
+    });
+}
+
 auto direct_dynamic_array_forwarding_function(std::string function_name) -> orison::syntax::FunctionSyntax {
     auto function = orison::syntax::FunctionSyntax {};
     function.name = std::move(function_name);
@@ -735,6 +751,7 @@ int main() {
     register_dynamic_array_forwarding_signature(context, "forward_missing_argument");
     register_dynamic_array_forwarding_signature(context, "forward_literal_argument");
     register_dynamic_array_forwarding_signature(context, "forward_unknown_owner_argument");
+    register_payload_box_dynamic_array_projection_signature(context, "forward_projected_argument");
     register_dynamic_array_forwarding_signature(context, "forward_unknown_callee");
     register_dynamic_array_forwarding_signature(context, "forward_alias");
     register_dynamic_array_forwarding_signature(context, "forward_alias_let");
@@ -1272,6 +1289,14 @@ int main() {
         expression_statement(call("forward_items", name("other")))
     );
     context.source_functions["forward_unknown_owner_argument"] = &forward_unknown_owner_argument_function;
+
+    auto forward_projected_argument_function = orison::syntax::FunctionSyntax {};
+    forward_projected_argument_function.name = "forward_projected_argument";
+    forward_projected_argument_function.parameters.push_back(payload_box_parameter());
+    forward_projected_argument_function.body_statements.push_back(
+        expression_statement(call("forward_items", member(name("box"), "values")))
+    );
+    context.source_functions["forward_projected_argument"] = &forward_projected_argument_function;
 
     auto forward_unknown_callee_function = orison::syntax::FunctionSyntax {};
     forward_unknown_callee_function.name = "forward_unknown_callee";
@@ -2153,6 +2178,27 @@ int main() {
     assert_argument_shape_forwarded_parameter_plan("forward_missing_argument");
     assert_argument_shape_forwarded_parameter_plan("forward_literal_argument");
     assert_argument_shape_forwarded_parameter_plan("forward_unknown_owner_argument");
+
+    auto projected_argument_forwarded_parameter_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_projected_argument", name("returned")),
+                call("forward_projected_argument", name("returned"))
+            ),
+            context,
+            state
+        );
+    assert(
+        projected_argument_forwarded_parameter_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(projected_argument_forwarded_parameter_plan.source_owner_name == "returned.values");
+    assert(projected_argument_forwarded_parameter_plan.handoff_owner_name == "returned.values");
+    assert(projected_argument_forwarded_parameter_plan.descriptor_storage_name == "%returned.values.addr0");
+    assert(projected_argument_forwarded_parameter_plan.descriptor_storage_available);
+    assert(projected_argument_forwarded_parameter_plan.cleanup_owner_proven);
 
     auto unknown_callee_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

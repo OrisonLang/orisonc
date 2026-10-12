@@ -3420,6 +3420,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof now applies the same deterministic multi-result rule to returned
   aggregate and choice projections. The projected descriptor owner must still resolve through the existing descriptor
   cleanup plan before the handoff is accepted.
+- Computed `DynamicArray<T>` forwarded-owner proof now accepts helper bodies that forward a safe aggregate projection
+  argument, such as forwarding `box.values` through a `DynamicArray<T>` helper, when substituting the caller argument
+  yields a projected descriptor owner with existing cleanup-plan metadata.
 
 ## Follow-up work
 
