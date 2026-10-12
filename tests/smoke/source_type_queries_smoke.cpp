@@ -2990,21 +2990,14 @@ int main() {
         );
     assert(
         forwarded_aggregate_field_extra_statement_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
     );
-    assert(
-        forwarded_aggregate_field_extra_statement_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        forwarded_aggregate_field_extra_statement_plan.ownership_plan.unsupported_reason ==
-        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_multiple_result_statements
-    );
-    assert(forwarded_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
-    assert(!forwarded_aggregate_field_extra_statement_plan.descriptor_storage_available);
-    assert(!forwarded_aggregate_field_extra_statement_plan.cleanup_owner_proven);
-    assert(!forwarded_aggregate_field_extra_statement_plan.lowering_enabled);
+    assert(forwarded_aggregate_field_extra_statement_plan.source_owner_name == "returned.values");
+    assert(forwarded_aggregate_field_extra_statement_plan.handoff_owner_name == "returned.values");
+    assert(forwarded_aggregate_field_extra_statement_plan.descriptor_storage_name == "%returned.values.addr0");
+    assert(forwarded_aggregate_field_extra_statement_plan.descriptor_storage_available);
+    assert(forwarded_aggregate_field_extra_statement_plan.cleanup_owner_proven);
 
     auto forwarded_aggregate_field_helper_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -3162,21 +3155,17 @@ int main() {
         );
     assert(
         forwarded_nested_aggregate_field_extra_statement_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
     );
-    assert(
-        forwarded_nested_aggregate_field_extra_statement_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        forwarded_nested_aggregate_field_extra_statement_plan.ownership_plan.unsupported_reason ==
-        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_multiple_result_statements
-    );
-    assert(forwarded_nested_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
-    assert(!forwarded_nested_aggregate_field_extra_statement_plan.descriptor_storage_available);
-    assert(!forwarded_nested_aggregate_field_extra_statement_plan.cleanup_owner_proven);
-    assert(!forwarded_nested_aggregate_field_extra_statement_plan.lowering_enabled);
+    assert(forwarded_nested_aggregate_field_extra_statement_plan.source_owner_name ==
+        "returned_outer.inner.values");
+    assert(forwarded_nested_aggregate_field_extra_statement_plan.handoff_owner_name ==
+        "returned_outer.inner.values");
+    assert(forwarded_nested_aggregate_field_extra_statement_plan.descriptor_storage_name ==
+        "%returned_outer.inner.values.addr0");
+    assert(forwarded_nested_aggregate_field_extra_statement_plan.descriptor_storage_available);
+    assert(forwarded_nested_aggregate_field_extra_statement_plan.cleanup_owner_proven);
 
     auto forwarded_nested_aggregate_field_helper_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -4048,21 +4037,17 @@ int main() {
         );
     assert(
         forwarded_static_indexed_aggregate_field_extra_statement_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
     );
-    assert(
-        forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.unsupported_reason ==
-        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_multiple_result_statements
-    );
-    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.ownership_plan.branch_owner_names.empty());
-    assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.descriptor_storage_available);
-    assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.cleanup_owner_proven);
-    assert(!forwarded_static_indexed_aggregate_field_extra_statement_plan.lowering_enabled);
+    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.source_owner_name ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.handoff_owner_name ==
+        "holder.buckets.element0.items");
+    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.descriptor_storage_name ==
+        "%holder.buckets.element0.items.addr0");
+    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.descriptor_storage_available);
+    assert(forwarded_static_indexed_aggregate_field_extra_statement_plan.cleanup_owner_proven);
 
     auto forwarded_static_indexed_aggregate_field_helper_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
@@ -4218,21 +4203,14 @@ int main() {
         );
     assert(
         forwarded_choice_payload_extra_statement_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
     );
-    assert(
-        forwarded_choice_payload_extra_statement_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        forwarded_choice_payload_extra_statement_plan.ownership_plan.unsupported_reason ==
-        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_multiple_result_statements
-    );
-    assert(forwarded_choice_payload_extra_statement_plan.ownership_plan.branch_owner_names.empty());
-    assert(!forwarded_choice_payload_extra_statement_plan.descriptor_storage_available);
-    assert(!forwarded_choice_payload_extra_statement_plan.cleanup_owner_proven);
-    assert(!forwarded_choice_payload_extra_statement_plan.lowering_enabled);
+    assert(forwarded_choice_payload_extra_statement_plan.source_owner_name == "packet.Primary.values");
+    assert(forwarded_choice_payload_extra_statement_plan.handoff_owner_name == "packet.Primary.values");
+    assert(forwarded_choice_payload_extra_statement_plan.descriptor_storage_name == "%packet.Primary.values.addr0");
+    assert(forwarded_choice_payload_extra_statement_plan.descriptor_storage_available);
+    assert(forwarded_choice_payload_extra_statement_plan.cleanup_owner_proven);
 
     auto forwarded_choice_payload_helper_mismatch_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

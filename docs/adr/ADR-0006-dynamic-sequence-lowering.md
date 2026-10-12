@@ -3417,6 +3417,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof now accepts deterministic multi-result helper blocks when every
   result candidate resolves to the same forwarded owner parameter through either the owner name, a local owner alias,
   or a forwarded helper call. Ambiguous result expressions and mixed-owner branches remain rejected.
+- Computed `DynamicArray<T>` forwarded-owner proof now applies the same deterministic multi-result rule to returned
+  aggregate and choice projections. The projected descriptor owner must still resolve through the existing descriptor
+  cleanup plan before the handoff is accepted.
 
 ## Follow-up work
 

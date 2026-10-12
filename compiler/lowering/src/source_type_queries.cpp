@@ -1205,9 +1205,6 @@ auto deterministic_multi_result_parameter_indexes_for_block(
     bool* argument_shape,
     bool* callee_shape
 ) -> std::optional<std::vector<std::size_t>> {
-    if (!source_type_name.starts_with("DynamicArray<")) {
-        return std::nullopt;
-    }
     if (statements_result_candidate_count(statements) <= 1) {
         return std::nullopt;
     }
@@ -1282,9 +1279,6 @@ auto deterministic_multi_result_parameter_indexes_for_pointer_block(
     bool* argument_shape,
     bool* callee_shape
 ) -> std::optional<std::vector<std::size_t>> {
-    if (!source_type_name.starts_with("DynamicArray<")) {
-        return std::nullopt;
-    }
     if (statement_pointers_result_candidate_count(statements) <= 1) {
         return std::nullopt;
     }
