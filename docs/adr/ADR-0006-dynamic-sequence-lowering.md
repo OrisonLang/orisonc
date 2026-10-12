@@ -3434,6 +3434,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded runtime-indexed aggregate helper cleanup now has pipeline readiness coverage.
   The pipeline smoke pins production gate readiness, production mutation permission, production emission enablement,
   and the runtime-indexed cleanup owner for the existing forwarded helper fixture.
+- Computed `DynamicArray<T>` forwarded returned aggregate-field helper cleanup now has pipeline readiness coverage.
+  The pipeline smoke pins production gate readiness, production mutation permission, production emission enablement,
+  and the projected cleanup owner for the existing forwarded helper fixture.
 
 ## Follow-up work
 
