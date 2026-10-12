@@ -3428,6 +3428,9 @@ representation.
   and unsupported-shape reasons is unchanged.
 - Computed `DynamicArray<T>` direct-call projected forwarding now routes through a named internal collector. The
   accepted projected-argument behavior is unchanged, but the proof path is isolated for the next narrow promotion.
+- Computed `DynamicArray<T>` direct-call projected-argument forwarding now has production-path fixture coverage. The
+  fixture forwards `box.values` through a helper returning `DynamicArray<T>` and verifies LLVM emission, object
+  emission, executable build, and runtime execution.
 
 ## Follow-up work
 

@@ -1,0 +1,29 @@
+package fixtures.dynamicarrayforwardedprojectedargumentownedcomputedforcleanuprun
+
+record Payload
+    public value: UInt32
+
+record PayloadBox
+    public values: DynamicArray<Payload>
+
+function make_values() -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(19 as UInt32))
+    values.push(Payload(23 as UInt32))
+    values
+
+function make_box() -> PayloadBox
+    PayloadBox(make_values())
+
+function forward_items(items: DynamicArray<Payload>) -> DynamicArray<Payload>
+    items
+
+function forward_projected_values(box: PayloadBox) -> DynamicArray<Payload>
+    forward_items(box.values)
+
+function main() -> UInt32
+    var returned: PayloadBox = make_box()
+    var total = 0 as UInt32
+    for item in true ? forward_projected_values(returned) : forward_projected_values(returned)
+        total = total + item.value
+    total - 42 as UInt32

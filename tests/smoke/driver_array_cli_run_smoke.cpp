@@ -3667,6 +3667,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_run.or";
     auto forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup_run.or";
+    auto forwarded_projected_argument_owned_computed_dynamic_array_path =
+        fixtures / "dynamic_array_forwarded_projected_argument_owned_computed_for_cleanup_run.or";
     auto forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_dynamic_array_path =
@@ -5152,6 +5154,24 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup"
     );
     assert_run_success(executable, forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_path);
+    assert_returned_aggregate_field_owned_computed_dynamic_array_emit_llvm_success(
+        executable,
+        forwarded_projected_argument_owned_computed_dynamic_array_path,
+        "returned.values",
+        "%record.PayloadBox = type { { ptr, i64, i64 } }",
+        "define { ptr, i64, i64 } @forward_projected_values(%record.PayloadBox %box)"
+    );
+    assert_emit_object_success(
+        executable,
+        forwarded_projected_argument_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_projected_argument_owned_computed_for_cleanup.o"
+    );
+    assert_build_success(
+        executable,
+        forwarded_projected_argument_owned_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_forwarded_projected_argument_owned_computed_for_cleanup"
+    );
+    assert_run_success(executable, forwarded_projected_argument_owned_computed_dynamic_array_path);
     assert_computed_dynamic_array_owner_mismatch_failure_matrix(
         executable,
         forwarded_returned_aggregate_field_helper_owned_computed_dynamic_array_owner_mismatch_path,
