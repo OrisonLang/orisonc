@@ -3445,6 +3445,8 @@ representation.
   projected cleanup owners.
 - Computed `DynamicArray<T>` forwarded returned aggregate-field final-if cleanup now has pipeline readiness coverage
   for direct and nested projected cleanup owners.
+- Computed `DynamicArray<T>` forwarded returned aggregate-field final-switch cleanup now has pipeline readiness
+  coverage for direct and nested projected cleanup owners.
 
 ## Follow-up work
 
