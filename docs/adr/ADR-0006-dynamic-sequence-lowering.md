@@ -3410,6 +3410,10 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now treat unsupported forwarded-owner shape as a final
   report fallback. Current rejected forwarding fixtures use narrower depth, alias, owner-read, multiple-result,
   argument-shape, or callee-shape reasons.
+- Computed `DynamicArray<T>` forwarded-owner proof now accepts read-only marker bindings between an owner/alias binding
+  and the final forwarded result. The accepted marker expression shape is limited to name, literal, member/index,
+  cast, unary, binary, and ternary expressions; calls, alias reads, alias reassignment, multiple result candidates, and
+  unsupported argument or callee shapes still reject forwarding.
 
 ## Follow-up work
 

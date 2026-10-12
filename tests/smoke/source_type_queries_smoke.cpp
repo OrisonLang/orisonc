@@ -2607,151 +2607,7 @@ int main() {
     assert(final_switch_alias_with_multi_harmless_locals_forwarded_parameter_plan.descriptor_storage_available);
     assert(final_switch_alias_with_multi_harmless_locals_forwarded_parameter_plan.cleanup_owner_proven);
 
-    auto local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan =
-        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
-            ternary(
-                name("flag"),
-                call("forward_alias_with_owner_in_ternary_alternate", name("items")),
-                call("forward_alias_with_owner_in_ternary_alternate", name("items"))
-            ),
-            context,
-            state
-        );
-    assert(
-        local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
-    );
-    assert(
-        local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.unsupported_reason ==
-        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_owner_read
-    );
-    assert(local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.branch_owner_names.empty());
-    assert(!local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
-    assert(!local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.cleanup_owner_proven);
-    assert(!local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.lowering_enabled);
-    assert(
-        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
-            local_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan
-        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
-            "forwarded owner resolution owner read"
-    );
-
-    auto final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan =
-        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
-            ternary(
-                name("flag"),
-                call("forward_final_if_alias_with_owner_in_ternary_alternate", name("items")),
-                call("forward_final_if_alias_with_owner_in_ternary_alternate", name("items"))
-            ),
-            context,
-            state
-        );
-    assert(
-        final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
-            .ownership_plan.unsupported_reason ==
-        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-            forwarded_owner_resolution_owner_read
-    );
-    assert(
-        final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
-            .ownership_plan.branch_owner_names.empty()
-    );
-    assert(!final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
-    assert(!final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.cleanup_owner_proven);
-    assert(!final_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.lowering_enabled);
-
-    auto final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan =
-        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
-            ternary(
-                name("flag"),
-                call("forward_final_switch_alias_with_owner_in_ternary_alternate", name("items")),
-                call("forward_final_switch_alias_with_owner_in_ternary_alternate", name("items"))
-            ),
-            context,
-            state
-        );
-    assert(
-        final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
-            .ownership_plan.branch_owner_names.empty()
-    );
-    assert(!final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
-    assert(!final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.cleanup_owner_proven);
-    assert(!final_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.lowering_enabled);
-
-    auto final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan =
-        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
-            ternary(
-                name("flag"),
-                call("forward_final_if_switch_alias_with_owner_in_ternary_alternate", name("items")),
-                call("forward_final_if_switch_alias_with_owner_in_ternary_alternate", name("items"))
-            ),
-            context,
-            state
-        );
-    assert(
-        final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
-            .ownership_plan.branch_owner_names.empty()
-    );
-    assert(!final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
-    assert(!final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.cleanup_owner_proven);
-    assert(!final_if_switch_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.lowering_enabled);
-
-    auto final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan =
-        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
-            ternary(
-                name("flag"),
-                call("forward_final_switch_if_alias_with_owner_in_ternary_alternate", name("items")),
-                call("forward_final_switch_if_alias_with_owner_in_ternary_alternate", name("items"))
-            ),
-            context,
-            state
-        );
-    assert(
-        final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.ownership_plan.kind ==
-        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-    );
-    assert(
-        final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan
-            .ownership_plan.branch_owner_names.empty()
-    );
-    assert(!final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.descriptor_storage_available);
-    assert(!final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.cleanup_owner_proven);
-    assert(!final_switch_if_alias_with_owner_in_ternary_alternate_forwarded_parameter_plan.lowering_enabled);
-
-    auto assert_owner_read_scalar_forwarded_parameter_plan = [&](std::string const& function_name) {
+    auto assert_read_only_owner_marker_forwarded_parameter_plan = [&](std::string const& function_name) {
         auto plan = orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(name("flag"), call(function_name, name("items")), call(function_name, name("items"))),
             context,
@@ -2759,30 +2615,37 @@ int main() {
         );
         assert(
             plan.kind ==
-            orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape
+            orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+                single_cleanup_owner_handoff_planned
         );
-        assert(
-            plan.ownership_plan.kind ==
-            orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape
-        );
-        assert(
-            plan.ownership_plan.unsupported_reason ==
-            orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
-                forwarded_owner_resolution_owner_read
-        );
-        assert(plan.ownership_plan.branch_owner_names.empty());
-        assert(!plan.descriptor_storage_available);
-        assert(!plan.cleanup_owner_proven);
-        assert(!plan.lowering_enabled);
+        assert(plan.source_owner_name == "items");
+        assert(plan.handoff_owner_name == "items");
+        assert(plan.descriptor_storage_name == "%items.addr");
+        assert(plan.descriptor_storage_available);
+        assert(plan.cleanup_owner_proven);
     };
+
+    assert_read_only_owner_marker_forwarded_parameter_plan("forward_alias_with_owner_in_ternary_alternate");
+    assert_read_only_owner_marker_forwarded_parameter_plan(
+        "forward_final_if_alias_with_owner_in_ternary_alternate"
+    );
+    assert_read_only_owner_marker_forwarded_parameter_plan(
+        "forward_final_switch_alias_with_owner_in_ternary_alternate"
+    );
+    assert_read_only_owner_marker_forwarded_parameter_plan(
+        "forward_final_if_switch_alias_with_owner_in_ternary_alternate"
+    );
+    assert_read_only_owner_marker_forwarded_parameter_plan(
+        "forward_final_switch_if_alias_with_owner_in_ternary_alternate"
+    );
     for (auto shape_name : {"binary", "cast", "unary"}) {
-        assert_owner_read_scalar_forwarded_parameter_plan(
+        assert_read_only_owner_marker_forwarded_parameter_plan(
             std::string {"forward_alias_with_owner_in_"} + shape_name + "_local"
         );
-        assert_owner_read_scalar_forwarded_parameter_plan(
+        assert_read_only_owner_marker_forwarded_parameter_plan(
             std::string {"forward_final_if_alias_with_owner_in_"} + shape_name + "_local"
         );
-        assert_owner_read_scalar_forwarded_parameter_plan(
+        assert_read_only_owner_marker_forwarded_parameter_plan(
             std::string {"forward_final_switch_alias_with_owner_in_"} + shape_name + "_local"
         );
     }

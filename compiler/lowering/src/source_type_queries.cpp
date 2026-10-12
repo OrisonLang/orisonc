@@ -383,6 +383,49 @@ auto expression_mentions_any_name(
     );
 }
 
+auto read_only_forwarding_marker_expression(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    switch (expression.kind) {
+        case syntax::ExpressionKind::name:
+        case syntax::ExpressionKind::integer_literal:
+        case syntax::ExpressionKind::boolean_literal:
+            return true;
+        case syntax::ExpressionKind::member_access:
+        case syntax::ExpressionKind::null_safe_member_access:
+            return expression.left != nullptr &&
+                read_only_forwarding_marker_expression(*expression.left);
+        case syntax::ExpressionKind::index_access:
+            if (expression.left == nullptr ||
+                !read_only_forwarding_marker_expression(*expression.left)) {
+                return false;
+            }
+            return std::all_of(
+                expression.arguments.begin(),
+                expression.arguments.end(),
+                [](syntax::ExpressionSyntax const& argument) {
+                    return read_only_forwarding_marker_expression(argument);
+                }
+            );
+        case syntax::ExpressionKind::cast:
+        case syntax::ExpressionKind::unary:
+            return expression.left != nullptr &&
+                read_only_forwarding_marker_expression(*expression.left);
+        case syntax::ExpressionKind::binary:
+            return expression.left != nullptr && expression.right != nullptr &&
+                read_only_forwarding_marker_expression(*expression.left) &&
+                read_only_forwarding_marker_expression(*expression.right);
+        case syntax::ExpressionKind::ternary:
+            return expression.left != nullptr && expression.right != nullptr &&
+                expression.alternate != nullptr &&
+                read_only_forwarding_marker_expression(*expression.left) &&
+                read_only_forwarding_marker_expression(*expression.right) &&
+                read_only_forwarding_marker_expression(*expression.alternate);
+        default:
+            return false;
+    }
+}
+
 auto harmless_alias_forwarding_statement(
     syntax::StatementSyntax const& statement,
     std::string_view alias_name,
@@ -395,32 +438,10 @@ auto harmless_alias_forwarding_statement(
     if (statement.name == alias_name || statement.name == owner_name) {
         return false;
     }
-    switch (statement.expression.kind) {
-        case syntax::ExpressionKind::integer_literal:
-        case syntax::ExpressionKind::boolean_literal:
-            break;
-        case syntax::ExpressionKind::cast:
-        case syntax::ExpressionKind::unary:
-            if (statement.expression.left == nullptr) {
-                return false;
-            }
-            break;
-        case syntax::ExpressionKind::binary:
-            if (statement.expression.left == nullptr || statement.expression.right == nullptr) {
-                return false;
-            }
-            break;
-        case syntax::ExpressionKind::ternary:
-            if (statement.expression.left == nullptr || statement.expression.right == nullptr ||
-                statement.expression.alternate == nullptr) {
-                return false;
-            }
-            break;
-        default:
-            return false;
+    if (!read_only_forwarding_marker_expression(statement.expression)) {
+        return false;
     }
-    return !expression_mentions_name(statement.expression, alias_name) &&
-        !expression_mentions_name(statement.expression, owner_name);
+    return !expression_mentions_name(statement.expression, alias_name);
 }
 
 auto statement_contains_assignment(
