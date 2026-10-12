@@ -1574,6 +1574,109 @@ auto collect_computed_dynamic_array_leaf_descriptors(
     FunctionLoweringState const& state,
     std::vector<DynamicArrayIterableDescriptorPlan>& descriptors,
     ComputedDynamicArrayIterableUnsupportedReason& unsupported_reason
+) -> bool;
+
+auto collect_direct_call_projected_forwarded_dynamic_array_descriptors(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
+) -> bool {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return false;
+    }
+
+    auto source_function = context.source_functions.find(expression.left->text);
+    auto source_signature = context.functions.find(expression.left->text);
+    auto const* final_statement = source_function == context.source_functions.end()
+        ? nullptr
+        : final_value_statement_for(*source_function->second);
+    auto const* final_expression = final_statement == nullptr ? nullptr : &final_statement->expression;
+    if (source_function == context.source_functions.end() ||
+        source_signature == context.functions.end() ||
+        source_signature->second.source_return_type_name != source_type_name ||
+        final_expression == nullptr ||
+        final_expression->kind != syntax::ExpressionKind::call ||
+        final_expression->left == nullptr ||
+        final_expression->left->kind != syntax::ExpressionKind::name) {
+        return false;
+    }
+
+    auto inner_depth_exhausted = false;
+    auto inner_alias_reassigned = false;
+    auto inner_owner_read = false;
+    auto inner_multiple_result_statements = false;
+    auto inner_argument_shape = false;
+    auto inner_callee_shape = false;
+    auto inner_forwarded_indexes = forwarded_dynamic_array_parameter_indexes(
+        final_expression->left->text,
+        source_type_name,
+        context,
+        16,
+        &inner_depth_exhausted,
+        &inner_alias_reassigned,
+        &inner_owner_read,
+        &inner_multiple_result_statements,
+        &inner_argument_shape,
+        &inner_callee_shape
+    );
+    if (!inner_forwarded_indexes.has_value() || inner_forwarded_indexes->empty()) {
+        return false;
+    }
+
+    auto projected_descriptors = std::vector<DynamicArrayIterableDescriptorPlan> {};
+    for (auto inner_forwarded_index : *inner_forwarded_indexes) {
+        if (inner_forwarded_index >= final_expression->arguments.size()) {
+            return false;
+        }
+        auto const& projected_argument = final_expression->arguments[inner_forwarded_index];
+        auto root_name = aggregate_projection_root_name(projected_argument);
+        if (!root_name.has_value()) {
+            return false;
+        }
+        auto helper_parameter_index = function_parameter_index_named(
+            *source_function->second,
+            *root_name
+        );
+        if (!helper_parameter_index.has_value() ||
+            *helper_parameter_index >= expression.arguments.size()) {
+            return false;
+        }
+        auto substituted_argument = projected_argument_for_aggregate_chain(
+            projected_argument,
+            clone_expression(expression.arguments[*helper_parameter_index])
+        );
+        auto projected_unsupported_reason = ComputedDynamicArrayIterableUnsupportedReason::none;
+        if (!collect_computed_dynamic_array_leaf_descriptors(
+                substituted_argument,
+                source_type_name,
+                context,
+                state,
+                projected_descriptors,
+                projected_unsupported_reason
+            )) {
+            return false;
+        }
+    }
+
+    descriptors.insert(
+        descriptors.end(),
+        std::make_move_iterator(projected_descriptors.begin()),
+        std::make_move_iterator(projected_descriptors.end())
+    );
+    return true;
+}
+
+auto collect_computed_dynamic_array_leaf_descriptors(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors,
+    ComputedDynamicArrayIterableUnsupportedReason& unsupported_reason
 ) -> bool {
     if (unsupported_reason == ComputedDynamicArrayIterableUnsupportedReason::none &&
         contains_runtime_indexed_projection(expression)) {
@@ -1622,89 +1725,14 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             &callee_shape
         );
         if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
-            if (argument_shape) {
-                auto source_function = context.source_functions.find(expression.left->text);
-                auto source_signature = context.functions.find(expression.left->text);
-                auto const* final_statement = source_function == context.source_functions.end() ?
-                    nullptr :
-                    final_value_statement_for(*source_function->second);
-                auto const* final_expression = final_statement == nullptr ? nullptr : &final_statement->expression;
-                if (source_function != context.source_functions.end() &&
-                    source_signature != context.functions.end() &&
-                    source_signature->second.source_return_type_name == source_type_name &&
-                    final_expression != nullptr &&
-                    final_expression->kind == syntax::ExpressionKind::call &&
-                    final_expression->left != nullptr &&
-                    final_expression->left->kind == syntax::ExpressionKind::name) {
-                    auto inner_depth_exhausted = false;
-                    auto inner_alias_reassigned = false;
-                    auto inner_owner_read = false;
-                    auto inner_multiple_result_statements = false;
-                    auto inner_argument_shape = false;
-                    auto inner_callee_shape = false;
-                    auto inner_forwarded_indexes = forwarded_dynamic_array_parameter_indexes(
-                        final_expression->left->text,
-                        source_type_name,
-                        context,
-                        16,
-                        &inner_depth_exhausted,
-                        &inner_alias_reassigned,
-                        &inner_owner_read,
-                        &inner_multiple_result_statements,
-                        &inner_argument_shape,
-                        &inner_callee_shape
-                    );
-                    auto projected_descriptors = std::vector<DynamicArrayIterableDescriptorPlan> {};
-                    auto projected_unsupported_reason = ComputedDynamicArrayIterableUnsupportedReason::none;
-                    auto projected_arguments_proven = inner_forwarded_indexes.has_value() &&
-                        !inner_forwarded_indexes->empty();
-                    if (projected_arguments_proven) {
-                        for (auto inner_forwarded_index : *inner_forwarded_indexes) {
-                            if (inner_forwarded_index >= final_expression->arguments.size()) {
-                                projected_arguments_proven = false;
-                                break;
-                            }
-                            auto const& projected_argument = final_expression->arguments[inner_forwarded_index];
-                            auto root_name = aggregate_projection_root_name(projected_argument);
-                            if (!root_name.has_value()) {
-                                projected_arguments_proven = false;
-                                break;
-                            }
-                            auto helper_parameter_index = function_parameter_index_named(
-                                *source_function->second,
-                                *root_name
-                            );
-                            if (!helper_parameter_index.has_value() ||
-                                *helper_parameter_index >= expression.arguments.size()) {
-                                projected_arguments_proven = false;
-                                break;
-                            }
-                            auto substituted_argument = projected_argument_for_aggregate_chain(
-                                projected_argument,
-                                clone_expression(expression.arguments[*helper_parameter_index])
-                            );
-                            if (!collect_computed_dynamic_array_leaf_descriptors(
-                                    substituted_argument,
-                                    source_type_name,
-                                    context,
-                                    state,
-                                    projected_descriptors,
-                                    projected_unsupported_reason
-                                )) {
-                                projected_arguments_proven = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (projected_arguments_proven) {
-                        descriptors.insert(
-                            descriptors.end(),
-                            std::make_move_iterator(projected_descriptors.begin()),
-                            std::make_move_iterator(projected_descriptors.end())
-                        );
-                        return true;
-                    }
-                }
+            if (argument_shape && collect_direct_call_projected_forwarded_dynamic_array_descriptors(
+                    expression,
+                    source_type_name,
+                    context,
+                    state,
+                    descriptors
+                )) {
+                return true;
             }
             apply_forwarded_owner_resolution_failure_reason(
                 unsupported_reason,

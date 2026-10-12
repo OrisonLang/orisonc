@@ -3426,6 +3426,8 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner rejection classification now uses a shared internal helper for direct call
   and projected helper-call paths. The priority order of depth, alias, multiple-result, argument, callee, owner-read,
   and unsupported-shape reasons is unchanged.
+- Computed `DynamicArray<T>` direct-call projected forwarding now routes through a named internal collector. The
+  accepted projected-argument behavior is unchanged, but the proof path is isolated for the next narrow promotion.
 
 ## Follow-up work
 
