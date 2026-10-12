@@ -3443,6 +3443,8 @@ representation.
 - Computed `DynamicArray<T>` forwarded returned aggregate-field helper cleanup now also covers helper bodies with
   read-only marker statements. The pipeline smoke pins the same production readiness contract for direct and nested
   projected cleanup owners.
+- Computed `DynamicArray<T>` forwarded returned aggregate-field final-if cleanup now has pipeline readiness coverage
+  for direct and nested projected cleanup owners.
 
 ## Follow-up work
 
