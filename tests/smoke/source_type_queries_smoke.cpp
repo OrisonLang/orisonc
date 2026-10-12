@@ -2182,6 +2182,25 @@ int main() {
     assert(!unknown_callee_forwarded_parameter_plan.cleanup_owner_proven);
     assert(!unknown_callee_forwarded_parameter_plan.lowering_enabled);
 
+    auto forwarded_owner_fallback_report_plan = orison::lowering::ComputedDynamicArrayIterableOwnershipPlan {};
+    forwarded_owner_fallback_report_plan.kind =
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
+    forwarded_owner_fallback_report_plan.unsupported_reason =
+        orison::lowering::ComputedDynamicArrayIterableUnsupportedReason::
+            forwarded_owner_resolution_unsupported_shape;
+    forwarded_owner_fallback_report_plan.source_type_name = "DynamicArray<UInt32>";
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_failure_summary_report(
+            forwarded_owner_fallback_report_plan
+        ) == "computed DynamicArray unsupported shape: cannot prove a single owner for DynamicArray<UInt32>; "
+            "forwarded owner resolution unsupported shape"
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            forwarded_owner_fallback_report_plan
+        ).find("unsupported reason forwarded owner resolution unsupported shape") != std::string::npos
+    );
+
     auto cyclic_forwarded_parameter_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(

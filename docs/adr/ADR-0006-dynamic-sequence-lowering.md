@@ -3407,6 +3407,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded-owner proof diagnostics now keep forwarded callee-shape failures separate from
   generic unsupported forwarded-owner shapes. Calls through unknown helpers or helpers with incompatible source return
   types remain rejected.
+- Computed `DynamicArray<T>` forwarded-owner proof diagnostics now treat unsupported forwarded-owner shape as a final
+  report fallback. Current rejected forwarding fixtures use narrower depth, alias, owner-read, multiple-result,
+  argument-shape, or callee-shape reasons.
 
 ## Follow-up work
 
