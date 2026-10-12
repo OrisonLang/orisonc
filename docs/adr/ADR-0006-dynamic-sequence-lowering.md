@@ -3440,6 +3440,9 @@ representation.
 - Computed `DynamicArray<T>` forwarded returned nested aggregate-field helper cleanup now has pipeline readiness
   coverage. The pipeline smoke pins production gate readiness, production mutation permission, production emission
   enablement, and the nested projected cleanup owner for the existing forwarded helper fixture.
+- Computed `DynamicArray<T>` forwarded returned aggregate-field helper cleanup now also covers helper bodies with
+  read-only marker statements. The pipeline smoke pins the same production readiness contract for direct and nested
+  projected cleanup owners.
 
 ## Follow-up work
 
