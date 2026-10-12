@@ -774,6 +774,181 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
     bool* callee_shape
 ) -> std::optional<std::vector<std::size_t>>;
 
+auto forwarded_dynamic_array_parameter_indexes_for_expression(
+    syntax::ExpressionSyntax const& expression,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>>;
+
+auto deterministic_multi_result_parameter_indexes_for_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>>;
+
+auto deterministic_multi_result_parameter_indexes_for_pointer_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>>;
+
+auto local_forwarding_alias_parameter_index(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::size_t> {
+    if ((statement.kind != syntax::StatementKind::let_binding &&
+        statement.kind != syntax::StatementKind::var_binding) ||
+        statement.name.empty() ||
+        statement.expression.kind != syntax::ExpressionKind::name ||
+        render_source_type_name(statement.annotated_type) != source_type_name) {
+        return std::nullopt;
+    }
+
+    return parameter_index_named(
+        function,
+        signature,
+        statement.expression.text,
+        source_type_name
+    );
+}
+
+auto resolve_alias_aware_forwarded_name(
+    std::string_view name,
+    std::string_view alias_name,
+    std::optional<std::size_t> alias_parameter_index,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name
+) -> std::optional<std::size_t> {
+    if (!alias_name.empty() && name == alias_name && alias_parameter_index.has_value()) {
+        return alias_parameter_index;
+    }
+    return parameter_index_named(function, signature, name, source_type_name);
+}
+
+auto alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view alias_name,
+    std::optional<std::size_t> alias_parameter_index,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto parameter_index = resolve_alias_aware_forwarded_name(
+            expression.text,
+            alias_name,
+            alias_parameter_index,
+            function,
+            signature,
+            source_type_name
+        );
+        if (parameter_index.has_value()) {
+            return single_forwarded_dynamic_array_parameter_index(*parameter_index);
+        }
+        return std::nullopt;
+    }
+
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        if (callee_shape != nullptr && expression.kind == syntax::ExpressionKind::call) {
+            *callee_shape = true;
+        }
+        return std::nullopt;
+    }
+
+    auto forwarded_argument_indexes = forwarded_dynamic_array_parameter_indexes(
+        expression.left->text,
+        source_type_name,
+        context,
+        remaining_depth - 1,
+        depth_exhausted,
+        alias_reassigned,
+        owner_read,
+        multiple_result_statements,
+        argument_shape,
+        callee_shape
+    );
+    if (!forwarded_argument_indexes.has_value() || forwarded_argument_indexes->empty()) {
+        return std::nullopt;
+    }
+
+    auto result = std::vector<std::size_t> {};
+    result.reserve(forwarded_argument_indexes->size());
+    for (auto forwarded_argument_index : *forwarded_argument_indexes) {
+        if (forwarded_argument_index >= expression.arguments.size()) {
+            if (argument_shape != nullptr) {
+                *argument_shape = true;
+            }
+            return std::nullopt;
+        }
+
+        auto const& argument = expression.arguments[forwarded_argument_index];
+        if (argument.kind != syntax::ExpressionKind::name) {
+            if (argument_shape != nullptr) {
+                *argument_shape = true;
+            }
+            return std::nullopt;
+        }
+
+        auto caller_parameter_index = resolve_alias_aware_forwarded_name(
+            argument.text,
+            alias_name,
+            alias_parameter_index,
+            function,
+            signature,
+            source_type_name
+        );
+        if (!caller_parameter_index.has_value()) {
+            if (argument_shape != nullptr) {
+                *argument_shape = true;
+            }
+            return std::nullopt;
+        }
+        result.push_back(*caller_parameter_index);
+    }
+
+    return result;
+}
+
 auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     syntax::FunctionSyntax const& function,
@@ -812,6 +987,23 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_block(
         }
     }
     if (statements.size() != 1) {
+        auto deterministic_indexes = deterministic_multi_result_parameter_indexes_for_block(
+            statements,
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth,
+            depth_exhausted,
+            alias_reassigned,
+            owner_read,
+            multiple_result_statements,
+            argument_shape,
+            callee_shape
+        );
+        if (deterministic_indexes.has_value()) {
+            return deterministic_indexes;
+        }
         if (alias_reassigned != nullptr && statements_contain_assignment(statements)) {
             *alias_reassigned = true;
         }
@@ -874,6 +1066,23 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement_pointer_block(
         }
     }
     if (statements.size() != 1 || statements.back() == nullptr) {
+        auto deterministic_indexes = deterministic_multi_result_parameter_indexes_for_pointer_block(
+            statements,
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth,
+            depth_exhausted,
+            alias_reassigned,
+            owner_read,
+            multiple_result_statements,
+            argument_shape,
+            callee_shape
+        );
+        if (deterministic_indexes.has_value()) {
+            return deterministic_indexes;
+        }
         if (alias_reassigned != nullptr && statement_pointers_contain_assignment(statements)) {
             *alias_reassigned = true;
         }
@@ -912,32 +1121,15 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
     bool* argument_shape,
     bool* callee_shape
 ) -> std::optional<std::vector<std::size_t>> {
-    if (expression.kind == syntax::ExpressionKind::name) {
-        if (auto parameter_index = parameter_index_named(
-            function,
-            signature,
-            expression.text,
-            source_type_name
-        )) {
-            return single_forwarded_dynamic_array_parameter_index(*parameter_index);
-        }
-        return std::nullopt;
-    }
-
-    if (expression.kind != syntax::ExpressionKind::call ||
-        expression.left == nullptr ||
-        expression.left->kind != syntax::ExpressionKind::name) {
-        if (callee_shape != nullptr && expression.kind == syntax::ExpressionKind::call) {
-            *callee_shape = true;
-        }
-        return std::nullopt;
-    }
-
-    auto forwarded_argument_indexes = forwarded_dynamic_array_parameter_indexes(
-        expression.left->text,
+    return alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
+        expression,
+        std::string_view {},
+        std::nullopt,
+        function,
+        signature,
         source_type_name,
         context,
-        remaining_depth - 1,
+        remaining_depth,
         depth_exhausted,
         alias_reassigned,
         owner_read,
@@ -945,44 +1137,6 @@ auto forwarded_dynamic_array_parameter_indexes_for_expression(
         argument_shape,
         callee_shape
     );
-    if (!forwarded_argument_indexes.has_value() || forwarded_argument_indexes->empty()) {
-        return std::nullopt;
-    }
-
-    auto result = std::vector<std::size_t> {};
-    result.reserve(forwarded_argument_indexes->size());
-    for (auto forwarded_argument_index : *forwarded_argument_indexes) {
-        if (forwarded_argument_index >= expression.arguments.size()) {
-            if (argument_shape != nullptr) {
-                *argument_shape = true;
-            }
-            return std::nullopt;
-        }
-
-        auto const& argument = expression.arguments[forwarded_argument_index];
-        if (argument.kind != syntax::ExpressionKind::name) {
-            if (argument_shape != nullptr) {
-                *argument_shape = true;
-            }
-            return std::nullopt;
-        }
-
-        auto caller_parameter_index = parameter_index_named(
-            function,
-            signature,
-            argument.text,
-            source_type_name
-        );
-        if (!caller_parameter_index.has_value()) {
-            if (argument_shape != nullptr) {
-                *argument_shape = true;
-            }
-            return std::nullopt;
-        }
-        result.push_back(*caller_parameter_index);
-    }
-
-    return result;
 }
 
 auto append_forwarded_dynamic_array_parameter_indexes(
@@ -990,6 +1144,208 @@ auto append_forwarded_dynamic_array_parameter_indexes(
     std::vector<std::size_t> const& source
 ) -> void {
     target.insert(target.end(), source.begin(), source.end());
+}
+
+auto append_deterministic_multi_result_statement_indexes(
+    std::vector<std::size_t>& target,
+    syntax::StatementSyntax const& statement,
+    std::string_view alias_name,
+    std::optional<std::size_t> alias_parameter_index,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> bool {
+    if (statement.kind != syntax::StatementKind::expression_statement &&
+        statement.kind != syntax::StatementKind::return_statement) {
+        return false;
+    }
+
+    auto indexes = alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
+        statement.expression,
+        alias_name,
+        alias_parameter_index,
+        function,
+        signature,
+        source_type_name,
+        context,
+        remaining_depth,
+        depth_exhausted,
+        alias_reassigned,
+        owner_read,
+        multiple_result_statements,
+        argument_shape,
+        callee_shape
+    );
+    if (!indexes.has_value() || indexes->empty()) {
+        return false;
+    }
+    append_forwarded_dynamic_array_parameter_indexes(target, *indexes);
+    return true;
+}
+
+auto deterministic_multi_result_parameter_indexes_for_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>> {
+    if (!source_type_name.starts_with("DynamicArray<")) {
+        return std::nullopt;
+    }
+    if (statements_result_candidate_count(statements) <= 1) {
+        return std::nullopt;
+    }
+
+    auto alias_name = std::string_view {};
+    auto owner_name = std::string_view {};
+    auto alias_parameter_index = std::optional<std::size_t> {};
+    if (!statements.empty()) {
+        alias_parameter_index = local_forwarding_alias_parameter_index(
+            statements.front(),
+            function,
+            signature,
+            source_type_name
+        );
+        if (alias_parameter_index.has_value()) {
+            alias_name = statements.front().name;
+            owner_name = statements.front().expression.text;
+        }
+    }
+
+    auto result = std::vector<std::size_t> {};
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        auto const& statement = statements[index];
+        if (statement.kind == syntax::StatementKind::expression_statement ||
+            statement.kind == syntax::StatementKind::return_statement) {
+            if (!append_deterministic_multi_result_statement_indexes(
+                result,
+                statement,
+                alias_name,
+                alias_parameter_index,
+                function,
+                signature,
+                source_type_name,
+                context,
+                remaining_depth,
+                depth_exhausted,
+                alias_reassigned,
+                owner_read,
+                multiple_result_statements,
+                argument_shape,
+                callee_shape
+            )) {
+                return std::nullopt;
+            }
+            continue;
+        }
+        if (alias_parameter_index.has_value() && index == 0) {
+            continue;
+        }
+        if (!harmless_alias_forwarding_statement(statement, alias_name, owner_name)) {
+            return std::nullopt;
+        }
+    }
+
+    if (result.empty()) {
+        return std::nullopt;
+    }
+    return result;
+}
+
+auto deterministic_multi_result_parameter_indexes_for_pointer_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>> {
+    if (!source_type_name.starts_with("DynamicArray<")) {
+        return std::nullopt;
+    }
+    if (statement_pointers_result_candidate_count(statements) <= 1) {
+        return std::nullopt;
+    }
+
+    auto alias_name = std::string_view {};
+    auto owner_name = std::string_view {};
+    auto alias_parameter_index = std::optional<std::size_t> {};
+    if (!statements.empty() && statements.front() != nullptr) {
+        alias_parameter_index = local_forwarding_alias_parameter_index(
+            *statements.front(),
+            function,
+            signature,
+            source_type_name
+        );
+        if (alias_parameter_index.has_value()) {
+            alias_name = statements.front()->name;
+            owner_name = statements.front()->expression.text;
+        }
+    }
+
+    auto result = std::vector<std::size_t> {};
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        if (statements[index] == nullptr) {
+            return std::nullopt;
+        }
+        auto const& statement = *statements[index];
+        if (statement.kind == syntax::StatementKind::expression_statement ||
+            statement.kind == syntax::StatementKind::return_statement) {
+            if (!append_deterministic_multi_result_statement_indexes(
+                result,
+                statement,
+                alias_name,
+                alias_parameter_index,
+                function,
+                signature,
+                source_type_name,
+                context,
+                remaining_depth,
+                depth_exhausted,
+                alias_reassigned,
+                owner_read,
+                multiple_result_statements,
+                argument_shape,
+                callee_shape
+            )) {
+                return std::nullopt;
+            }
+            continue;
+        }
+        if (alias_parameter_index.has_value() && index == 0) {
+            continue;
+        }
+        if (!harmless_alias_forwarding_statement(statement, alias_name, owner_name)) {
+            return std::nullopt;
+        }
+    }
+
+    if (result.empty()) {
+        return std::nullopt;
+    }
+    return result;
 }
 
 auto forwarded_dynamic_array_parameter_indexes_for_statement(

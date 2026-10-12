@@ -3414,6 +3414,9 @@ representation.
   and the final forwarded result. The accepted marker expression shape is limited to name, literal, member/index,
   cast, unary, binary, and ternary expressions; calls, alias reads, alias reassignment, multiple result candidates, and
   unsupported argument or callee shapes still reject forwarding.
+- Computed `DynamicArray<T>` forwarded-owner proof now accepts deterministic multi-result helper blocks when every
+  result candidate resolves to the same forwarded owner parameter through either the owner name, a local owner alias,
+  or a forwarded helper call. Ambiguous result expressions and mixed-owner branches remain rejected.
 
 ## Follow-up work
 
