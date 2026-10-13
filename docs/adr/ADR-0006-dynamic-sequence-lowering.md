@@ -3455,6 +3455,9 @@ representation.
   pipeline readiness coverage for switch-origin and branch-origin direct/nested projected cleanup owners.
 - Computed `DynamicArray<T>` forwarded returned nested aggregate-field sibling cleanup now has pipeline readiness
   coverage for plain, final-control, mixed-forwarded, and after-primary sibling cleanup fixtures.
+- Computed `DynamicArray<T>` forwarded returned nested aggregate-field sibling cleanup now has production mutation
+  coverage for the plain sibling fixture. The smoke verifies mutation execution, LLVM verification, owned payload
+  cleanup, descriptor deallocation, source-loop replacement, and object emission.
 
 ## Follow-up work
 
