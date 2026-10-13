@@ -5077,6 +5077,218 @@ auto main() -> int {
         branch_mixed_forwarded_returned_nested_aggregate_field_final_if_computed_for
             .computed_dynamic_array_for_production_readiness
     ));
+    auto switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" /
+        "fixtures" /
+        "dynamic_array_switch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for = pipeline.emit_llvm(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for.has_errors());
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_count == 1
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state
+            .any_production_emission_mutation_allowed
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() ==
+        "returned.values"
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(orison::pipeline::computed_dynamic_array_for_production_ready(
+        switch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness
+    ));
+    auto switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" /
+        "fixtures" /
+        "dynamic_array_switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for = pipeline.emit_llvm(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for.has_errors());
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_count == 1
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state
+            .any_production_emission_mutation_allowed
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() ==
+        "returned.inner.values"
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(orison::pipeline::computed_dynamic_array_for_production_ready(
+        switch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness
+    ));
+    auto branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" /
+        "fixtures" /
+        "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for = pipeline.emit_llvm(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for.has_errors());
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_count == 1
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state
+            .any_production_emission_mutation_allowed
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() ==
+        "returned.values"
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(orison::pipeline::computed_dynamic_array_for_production_ready(
+        branch_mixed_forwarded_returned_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness
+    ));
+    auto branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" /
+        "fixtures" /
+        "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or";
+    auto branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for = pipeline.emit_llvm(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for.has_errors());
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_count == 1
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state
+            .any_production_emission_mutation_allowed
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() ==
+        "returned.inner.values"
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(orison::pipeline::computed_dynamic_array_for_production_ready(
+        branch_mixed_forwarded_returned_nested_aggregate_field_final_switch_computed_for
+            .computed_dynamic_array_for_production_readiness
+    ));
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
