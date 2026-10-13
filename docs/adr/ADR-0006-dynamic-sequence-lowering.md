@@ -3460,6 +3460,9 @@ representation.
   cleanup, descriptor deallocation, source-loop replacement, and object emission.
 - Computed `DynamicArray<T>` forwarded returned nested aggregate-field sibling cleanup now has production mutation
   coverage for the final-switch sibling fixture using the same projected owner and mutation verification contract.
+- Computed `DynamicArray<T>` mixed direct/helper-forwarded returned nested aggregate-field sibling cleanup now has
+  production mutation coverage for the final-if sibling fixture using the same projected owner and mutation
+  verification contract.
 
 ## Follow-up work
 
