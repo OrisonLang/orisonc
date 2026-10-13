@@ -3453,6 +3453,8 @@ representation.
   readiness coverage for switch-origin and branch-origin direct/nested projected cleanup owners.
 - Computed `DynamicArray<T>` mixed direct/helper-forwarded returned aggregate-field final-switch cleanup now has
   pipeline readiness coverage for switch-origin and branch-origin direct/nested projected cleanup owners.
+- Computed `DynamicArray<T>` forwarded returned nested aggregate-field sibling cleanup now has pipeline readiness
+  coverage for plain, final-control, mixed-forwarded, and after-primary sibling cleanup fixtures.
 
 ## Follow-up work
 
