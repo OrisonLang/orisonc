@@ -3458,6 +3458,8 @@ representation.
 - Computed `DynamicArray<T>` forwarded returned nested aggregate-field sibling cleanup now has production mutation
   coverage for the plain sibling fixture. The smoke verifies mutation execution, LLVM verification, owned payload
   cleanup, descriptor deallocation, source-loop replacement, and object emission.
+- Computed `DynamicArray<T>` forwarded returned nested aggregate-field sibling cleanup now has production mutation
+  coverage for the final-switch sibling fixture using the same projected owner and mutation verification contract.
 
 ## Follow-up work
 
