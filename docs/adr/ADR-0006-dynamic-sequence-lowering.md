@@ -3475,6 +3475,9 @@ representation.
 - Computed `DynamicArray<T>` returned nested aggregate-field after-primary sibling cleanup now has production mutation
   coverage for the plain non-forwarded after-primary fixture using the same projected owner and mutation verification
   contract.
+- Computed `DynamicArray<T>` returned nested aggregate-field after-primary sibling cleanup now has production mutation
+  coverage for the final-switch non-forwarded after-primary fixture using the same projected owner and mutation
+  verification contract.
 
 ## Follow-up work
 
