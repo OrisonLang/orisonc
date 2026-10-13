@@ -10915,6 +10915,11 @@ auto main() -> int {
         dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_path,
         smoke_temp_root / "dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_run"
     );
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
+        dynamic_array_branch_returned_nested_aggregate_field_sibling_after_primary_final_if_path,
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options,
+        "returned.inner.primary"
+    );
     auto dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_returned_aggregate_field_final_switch_branch_local_cleanup_run.or";
