@@ -8477,19 +8477,19 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_owned_parameter_forwarding_run_status));
     assert(WEXITSTATUS(dynamic_array_owned_parameter_forwarding_run_status) == 0);
 
-    auto assert_owned_cleanup_without_legacy_drop_spelling = [&](std::filesystem::path const& path) {
+    auto assert_owned_cleanup_without_source_drop_spelling = [&](std::filesystem::path const& path) {
         auto result = pipeline.emit_llvm(path);
         assert(!result.has_errors());
         assert_ir_contains(result.ir_text, "define void @__orison_owned_cleanup.Payload(ptr %value)");
         assert_ir_excludes(result.ir_text, "method.Payload.drop");
     };
 
-    auto const legacy_drop_spelling_owned_parameter_fixtures = std::array<std::string_view, 2> {
+    auto const source_drop_spelling_owned_parameter_fixtures = std::array<std::string_view, 2> {
         "dynamic_array_owned_parameter_forwarding_run.or",
         "dynamic_array_owned_parameter_branch_join_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_owned_parameter_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_owned_parameter_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
         auto executable_name = std::filesystem::path(fixture_name).replace_extension();
@@ -8500,7 +8500,7 @@ auto main() -> int {
         );
     }
 
-    auto const legacy_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 11> {
+    auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 11> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
@@ -8513,13 +8513,13 @@ auto main() -> int {
         "dynamic_array_forwarded_parameter_final_switch_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_for_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_owned_computed_parameter_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_owned_computed_parameter_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }
 
-    auto const legacy_drop_spelling_returned_owned_computed_fixtures = std::array<std::string_view, 6> {
+    auto const source_drop_spelling_returned_owned_computed_fixtures = std::array<std::string_view, 6> {
         "dynamic_array_returned_owned_computed_for_cleanup_run.or",
         "dynamic_array_returned_alias_chain_owned_computed_for_cleanup_run.or",
         "dynamic_array_returned_helper_call_owned_computed_for_cleanup_run.or",
@@ -8527,13 +8527,13 @@ auto main() -> int {
         "dynamic_array_branch_returned_owned_computed_for_cleanup_run.or",
         "dynamic_array_switch_returned_owned_computed_for_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_returned_owned_computed_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_returned_owned_computed_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }
 
-    auto const legacy_drop_spelling_static_indexed_aggregate_owned_computed_fixtures =
+    auto const source_drop_spelling_static_indexed_aggregate_owned_computed_fixtures =
         std::array<std::string_view, 5> {
         "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
@@ -8541,43 +8541,43 @@ auto main() -> int {
         "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_static_indexed_aggregate_owned_computed_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_static_indexed_aggregate_owned_computed_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }
 
-    auto const legacy_drop_spelling_returned_aggregate_owned_computed_fixtures =
+    auto const source_drop_spelling_returned_aggregate_owned_computed_fixtures =
         std::array<std::string_view, 2> {
         "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_returned_aggregate_owned_computed_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_returned_aggregate_owned_computed_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }
 
-    auto const legacy_drop_spelling_local_final_control_cleanup_fixtures = std::array<std::string_view, 4> {
+    auto const source_drop_spelling_local_final_control_cleanup_fixtures = std::array<std::string_view, 4> {
         "dynamic_array_local_final_if_branch_cleanup_run.or",
         "dynamic_array_local_final_if_consumed_owner_cleanup_run.or",
         "dynamic_array_local_final_switch_case_cleanup_run.or",
         "dynamic_array_local_final_switch_consumed_owner_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_local_final_control_cleanup_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_local_final_control_cleanup_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }
 
-    auto const legacy_drop_spelling_owned_scope_cleanup_fixtures = std::array<std::string_view, 4> {
+    auto const source_drop_spelling_owned_scope_cleanup_fixtures = std::array<std::string_view, 4> {
         "dynamic_array_owned_field_scope_cleanup_run.or",
         "dynamic_array_owned_nested_field_scope_cleanup_run.or",
         "dynamic_array_owned_indexed_field_scope_cleanup_run.or",
         "dynamic_array_owned_direct_indexed_scope_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_owned_scope_cleanup_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_owned_scope_cleanup_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }
@@ -12259,7 +12259,7 @@ auto main() -> int {
             ".1"
         );
     }
-    auto const legacy_drop_spelling_choice_payload_owned_computed_fixtures = std::array<std::string_view, 13> {
+    auto const source_drop_spelling_choice_payload_owned_computed_fixtures = std::array<std::string_view, 13> {
         "dynamic_array_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_choice_payload_final_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_switch_binding_owned_computed_for_cleanup_run.or",
@@ -12274,8 +12274,8 @@ auto main() -> int {
         "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_choice_payload_nested_final_switch_if_branch_local_alias_harmless_local_switch_binding_owned_computed_for_cleanup_run.or",
     };
-    for (auto fixture_name : legacy_drop_spelling_choice_payload_owned_computed_fixtures) {
-        assert_owned_cleanup_without_legacy_drop_spelling(
+    for (auto fixture_name : source_drop_spelling_choice_payload_owned_computed_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
     }

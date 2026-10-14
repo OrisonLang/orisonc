@@ -3237,9 +3237,9 @@ representation.
   final `switch` paths.
 - Owned-scope cleanup fixtures now pair their direct cleanup-order assertions with table-driven object/link/run
   coverage.
-- Owned-parameter forwarding and branch-join fixture files now pair migrated no-legacy cleanup checks with direct
+- Owned-parameter forwarding and branch-join fixture files now pair migrated source-drop cleanup checks with direct
   object/link/run coverage.
-- Remaining migrated cleanup fixture tables now use explicit `legacy_drop_spelling_*` names and a shared helper, making
+- Remaining migrated cleanup fixture tables now use explicit `source_drop_spelling_*` names and a shared helper, making
   their compatibility-guard role distinct from mutation and executable coverage.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
