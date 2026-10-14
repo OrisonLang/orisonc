@@ -9228,6 +9228,30 @@ auto main() -> int {
         };
     auto const& assert_dynamic_array_aggregate_field_computed_for_mutation =
         assert_dynamic_array_computed_for_mutation;
+    auto forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir = pipeline.emit_llvm(
+        std::filesystem::path(ORISON_SOURCE_DIR) /
+            "tests" /
+            "fixtures" /
+            "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or",
+        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options
+    );
+    assert(!forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir.has_errors());
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
+            .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
+    );
+    assert(
+        !forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
+             .computed_dynamic_array_for_production_mutation_execution_state.executed
+    );
     auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir =
         pipeline.emit_llvm(
             dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_path,
