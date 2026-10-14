@@ -9401,7 +9401,15 @@ auto main() -> int {
         );
     }
     auto const returned_aggregate_extra_statement_mutation_fixtures =
-        std::array<std::pair<std::string_view, std::string_view>, 2> {
+        std::array<std::pair<std::string_view, std::string_view>, 4> {
+            std::pair {
+                "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup_run.or",
+                "returned.values",
+            },
+            std::pair {
+                "dynamic_array_forwarded_returned_nested_aggregate_field_helper_owned_computed_for_cleanup_run.or",
+                "returned.inner.values",
+            },
             std::pair {
                 "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
                 "returned.values",

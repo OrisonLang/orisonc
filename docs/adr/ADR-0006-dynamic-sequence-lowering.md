@@ -3484,6 +3484,8 @@ representation.
 - Computed `DynamicArray<T>` forwarded runtime-indexed aggregate helper cleanup now has production mutation coverage
   for the static-indexed aggregate helper fixture using the LLVM-safe projected owner spelling and mutation
   verification contract.
+- Computed `DynamicArray<T>` forwarded returned aggregate-field helper cleanup now has production mutation coverage
+  for the base direct and nested helper fixtures using the existing projected owner mutation verification contract.
 
 ## Follow-up work
 
