@@ -3481,9 +3481,9 @@ representation.
 - Computed `DynamicArray<T>` returned nested aggregate-field after-primary sibling cleanup now has production mutation
   coverage for the branch final-if non-forwarded after-primary fixture using the same projected owner and mutation
   verification contract.
-- Computed `DynamicArray<T>` forwarded runtime-indexed aggregate helper cleanup now has a bounded production mutation
-  gap marker for the static-indexed aggregate helper fixture. The pipeline smoke verifies production readiness and
-  mutation preview while pinning the current non-executed mutation state for the next narrow promotion.
+- Computed `DynamicArray<T>` forwarded runtime-indexed aggregate helper cleanup now has production mutation coverage
+  for the static-indexed aggregate helper fixture using the LLVM-safe projected owner spelling and mutation
+  verification contract.
 
 ## Follow-up work
 

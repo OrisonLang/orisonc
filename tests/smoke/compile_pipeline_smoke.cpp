@@ -9208,6 +9208,11 @@ auto main() -> int {
             std::string const& source_loop_suffix = ".0") {
             auto mutation_ir = pipeline.emit_llvm(path, options);
             assert(!mutation_ir.has_errors());
+            if (!mutation_ir.computed_dynamic_array_for_production_mutation_execution_state.executed) {
+                std::cerr << mutation_ir.computed_dynamic_array_for_production_mutation_execution_state
+                                 .llvm_verifier_diagnostic_text
+                          << '\n';
+            }
             assert(mutation_ir.computed_dynamic_array_for_production_mutation_execution_state.executed);
             assert(mutation_ir.computed_dynamic_array_for_production_readiness.gate_ready);
             assert(mutation_ir.computed_dynamic_array_for_production_readiness.sequence_ready);
@@ -9228,29 +9233,19 @@ auto main() -> int {
         };
     auto const& assert_dynamic_array_aggregate_field_computed_for_mutation =
         assert_dynamic_array_computed_for_mutation;
-    auto forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir = pipeline.emit_llvm(
+    auto forwarded_runtime_indexed_aggregate_computed_for_mutation_options =
+        orison::pipeline::production_compile_pipeline_options();
+    forwarded_runtime_indexed_aggregate_computed_for_mutation_options
+        .collect_computed_dynamic_array_for_production_emission_gates = true;
+    forwarded_runtime_indexed_aggregate_computed_for_mutation_options
+        .computed_dynamic_array_production_module_ir_mutation_enabled = true;
+    assert_dynamic_array_aggregate_field_computed_for_mutation(
         std::filesystem::path(ORISON_SOURCE_DIR) /
             "tests" /
             "fixtures" /
             "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or",
-        dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_options
-    );
-    assert(!forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir.has_errors());
-    assert(
-        forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
-            .computed_dynamic_array_for_production_readiness.gate_ready
-    );
-    assert(
-        forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
-            .computed_dynamic_array_for_production_readiness.sequence_ready
-    );
-    assert(
-        forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
-            .computed_dynamic_array_for_production_mutation_preview_state.will_mutate
-    );
-    assert(
-        !forwarded_runtime_indexed_aggregate_computed_for_mutation_gap_ir
-             .computed_dynamic_array_for_production_mutation_execution_state.executed
+        forwarded_runtime_indexed_aggregate_computed_for_mutation_options,
+        "holder.buckets.selected..values"
     );
     auto dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_mutation_ir =
         pipeline.emit_llvm(

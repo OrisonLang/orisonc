@@ -1444,8 +1444,9 @@ auto render_computed_dynamic_array_for_production_sequence_mutation_ir(
              ++line_index) {
             lines.push_back(sequence.rendered_ir[line_index]);
             if (line_index == computed_dynamic_array_element_load_line_index) {
+                auto const label_owner_name = lowering::llvm_identifier_fragment(sequence.cleanup_owner_name);
                 lines.push_back(
-                    "  br label %" + sequence.cleanup_owner_name + ".computed_for.continue\n"
+                    "  br label %" + label_owner_name + ".computed_for.continue\n"
                 );
             }
         }
@@ -1520,12 +1521,13 @@ auto computed_dynamic_array_condition_phi_with_predecessor(
     lowering::ComputedDynamicArrayForProductionSequenceMetadata const& sequence,
     std::string const& predecessor_block_name
 ) -> std::string {
-    return "  %" + sequence.cleanup_owner_name +
+    auto const label_owner_name = lowering::llvm_identifier_fragment(sequence.cleanup_owner_name);
+    return "  %" + label_owner_name +
         ".computed_for.index = phi i64 [ 0, %" +
         predecessor_block_name + " ], [ %" +
-        sequence.cleanup_owner_name +
+        label_owner_name +
         ".computed_for.next.index, %" +
-        sequence.cleanup_owner_name + ".computed_for.continue ]\n";
+        label_owner_name + ".computed_for.continue ]\n";
 }
 
 auto computed_dynamic_array_source_loop_prefix(
@@ -1768,20 +1770,21 @@ void apply_computed_dynamic_array_for_production_mutation(
             entry_mutation_text += artifact_state.mutation_ir_lines[mutation_line_base_index + line_index];
         }
         mutation_line_index += computed_dynamic_array_mutation_line_count;
+        auto const label_cleanup_owner_name = lowering::llvm_identifier_fragment(sequence.cleanup_owner_name);
         auto const original_function_ir = function_ir_slice(composed_ir, sequence.enclosing_function_name);
         auto const terminator_position = first_return_terminator_position(original_function_ir);
         auto const terminator_end = terminator_end_position(original_function_ir, terminator_position);
         auto const body_mutation_text = computed_dynamic_array_mutation_body_text(
             original_function_ir,
-            sequence.cleanup_owner_name
+            label_cleanup_owner_name
         );
         auto const cleanup_mutation_text = computed_dynamic_array_mutation_cleanup_text(
             original_function_ir,
-            sequence.cleanup_owner_name
+            label_cleanup_owner_name
         );
         auto const source_prefix = computed_dynamic_array_source_loop_prefix(
             original_function_ir,
-            sequence.cleanup_owner_name
+            label_cleanup_owner_name
         );
         auto const replacement_start_position = source_prefix.has_value()
             ? computed_dynamic_array_source_loop_replacement_start(
