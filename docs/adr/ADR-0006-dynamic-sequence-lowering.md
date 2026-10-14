@@ -3486,6 +3486,9 @@ representation.
   verification contract.
 - Computed `DynamicArray<T>` forwarded returned aggregate-field helper cleanup now has production mutation coverage
   for the base direct and nested helper fixtures using the existing projected owner mutation verification contract.
+- Computed `DynamicArray<T>` forwarded returned aggregate-field final-control cleanup now has production mutation
+  coverage for the direct and nested final-if/final-switch fixtures using the projected owner mutation verification
+  contract.
 
 ## Follow-up work
 
