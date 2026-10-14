@@ -13808,6 +13808,20 @@ auto main() -> int {
         std::system(dynamic_array_returned_nested_aggregate_field_branch_forwarding_executable.string().c_str());
     assert(WIFEXITED(dynamic_array_returned_nested_aggregate_field_branch_forwarding_status));
     assert(WEXITSTATUS(dynamic_array_returned_nested_aggregate_field_branch_forwarding_status) == 0);
+    auto const source_drop_spelling_returned_forwarding_fixtures = std::array<std::string_view, 7> {
+        "dynamic_array_returned_parameter_forwarding_run.or",
+        "dynamic_array_returned_multi_hop_forwarding_run.or",
+        "dynamic_array_returned_branch_join_forwarding_run.or",
+        "dynamic_array_returned_choice_branch_forwarding_run.or",
+        "dynamic_array_returned_aggregate_field_forwarding_run.or",
+        "dynamic_array_returned_nested_aggregate_field_forwarding_run.or",
+        "dynamic_array_returned_nested_aggregate_field_branch_forwarding_run.or",
+    };
+    for (auto fixture_name : source_drop_spelling_returned_forwarding_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+    }
 
     auto dynamic_array_returned_aggregate_field_choice_payload_forwarding_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

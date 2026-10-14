@@ -3241,6 +3241,9 @@ representation.
   object/link/run coverage.
 - Remaining migrated cleanup fixture tables now use explicit `source_drop_spelling_*` names and a shared helper, making
   their compatibility-guard role distinct from mutation and executable coverage.
+- Returned forwarding cleanup fixtures now also participate in the source-drop spelling guard, covering parameter,
+  multi-hop, branch-join, choice-branch, direct aggregate-field, nested aggregate-field, and branch nested-field
+  forwarding shapes.
 - Returned choice-payload forwarding cleanup fixtures now also participate in the source-drop spelling guard, covering
   direct, stored, branch, nested, and distinct stored Choice forwarding shapes.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
