@@ -14969,6 +14969,28 @@ auto main() -> int {
         dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run"
     );
+    auto const source_drop_spelling_owned_result_mixed_nested_fixtures =
+        std::array<std::string_view, 14> {
+        "dynamic_array_owned_result_if_switch_branch_cleanup_run.or",
+        "dynamic_array_owned_result_switch_if_branch_cleanup_run.or",
+        "dynamic_array_owned_result_direct_nested_if_branch_cleanup_run.or",
+        "dynamic_array_owned_result_direct_nested_switch_branch_cleanup_run.or",
+        "dynamic_array_owned_result_three_case_switch_cleanup_run.or",
+        "dynamic_array_owned_result_three_case_mixed_switch_cleanup_run.or",
+        "dynamic_array_owned_result_three_case_nested_switch_cleanup_run.or",
+        "dynamic_array_owned_result_multi_nested_switch_cleanup_run.or",
+        "dynamic_array_owned_result_multi_nested_switch_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_if_two_switches_cleanup_run.or",
+        "dynamic_array_owned_result_if_two_switches_consumed_scratch_cleanup_run.or",
+        "dynamic_array_owned_result_if_two_switches_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_switch_two_ifs_cleanup_run.or",
+        "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run.or",
+    };
+    for (auto fixture_name : source_drop_spelling_owned_result_mixed_nested_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+    }
 
     auto dynamic_array_owned_result_helper_call_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
