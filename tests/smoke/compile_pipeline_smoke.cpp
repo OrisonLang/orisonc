@@ -15164,6 +15164,20 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_run"
     );
 
+    auto const source_drop_spelling_owned_result_helper_fixtures =
+        std::array<std::string_view, 5> {
+        "dynamic_array_owned_result_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_named_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_named_chained_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_named_helper_call_local_return_cleanup_run.or",
+    };
+    for (auto fixture_name : source_drop_spelling_owned_result_helper_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+    }
+
     auto dynamic_array_owned_result_ternary_branch_consumer_local_return_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_cleanup_run.or";

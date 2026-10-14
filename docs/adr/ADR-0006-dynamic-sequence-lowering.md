@@ -3251,6 +3251,8 @@ representation.
 - Owned-result mixed/nested branch cleanup fixtures now also participate in the source-drop spelling guard, covering
   if/switch composition, three-case switches, multi-nested switches, two-switch/two-if compositions, consumed scratch,
   and helper-call variants.
+- Owned-result helper and named-ternary cleanup fixtures now also participate in the source-drop spelling guard,
+  covering direct helper calls, unnamed ternaries, named ternaries, chained forwarding, and local returns.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
