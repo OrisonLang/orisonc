@@ -14207,6 +14207,21 @@ auto main() -> int {
         smoke_temp_root /
             "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_run"
     );
+    auto const source_drop_spelling_returned_choice_payload_forwarding_fixtures =
+        std::array<std::string_view, 7> {
+        "dynamic_array_returned_aggregate_field_choice_payload_forwarding_run.or",
+        "dynamic_array_returned_aggregate_field_stored_choice_payload_forwarding_run.or",
+        "dynamic_array_returned_aggregate_field_stored_choice_payload_branch_forwarding_run.or",
+        "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_forwarding_run.or",
+        "dynamic_array_returned_nested_aggregate_field_stored_choice_payload_branch_forwarding_run.or",
+        "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_branch_forwarding_run.or",
+        "dynamic_array_returned_nested_aggregate_field_distinct_stored_choice_payload_switch_forwarding_run.or",
+    };
+    for (auto fixture_name : source_drop_spelling_returned_choice_payload_forwarding_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+    }
 
     auto dynamic_array_local_final_if_branch_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
