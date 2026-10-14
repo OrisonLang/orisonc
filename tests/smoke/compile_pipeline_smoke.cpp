@@ -8484,9 +8484,12 @@ auto main() -> int {
         assert_ir_excludes(result.ir_text, "method.Payload.drop");
     };
 
-    auto const source_drop_spelling_owned_parameter_fixtures = std::array<std::string_view, 2> {
+    auto const source_drop_spelling_owned_parameter_fixtures = std::array<std::string_view, 5> {
         "dynamic_array_owned_parameter_forwarding_run.or",
         "dynamic_array_owned_parameter_branch_join_run.or",
+        "dynamic_array_owned_parameter_cleanup_run.or",
+        "dynamic_array_owned_parameter_branch_cleanup_run.or",
+        "dynamic_array_owned_parameter_switch_cleanup_run.or",
     };
     for (auto fixture_name : source_drop_spelling_owned_parameter_fixtures) {
         assert_owned_cleanup_without_source_drop_spelling(
