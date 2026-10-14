@@ -3260,6 +3260,8 @@ representation.
 - Owned-result ternary branch-consumer nested-helper cleanup fixtures now also participate in the source-drop spelling
   guard, covering distinct local names, mixed direct forwarding, nested helper arguments, asymmetric arguments, and
   nested local chains.
+- Owned-result ternary branch-consumer result-nested cleanup fixtures now also participate in the source-drop spelling
+  guard, covering symmetric, asymmetric, mixed, nested-wrapper-argument, and final-consumer variants.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
