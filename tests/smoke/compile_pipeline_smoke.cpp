@@ -16152,6 +16152,20 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_ternary_branch_consumer_nested_argument_local_chain_cleanup_run"
     );
 
+    auto const source_drop_spelling_owned_result_branch_consumer_nested_helper_fixtures =
+        std::array<std::string_view, 5> {
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_distinct_local_names_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_mixed_direct_distinct_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_nested_helper_argument_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_asymmetric_nested_helper_argument_cleanup_run.or",
+        "dynamic_array_owned_result_ternary_local_return_branch_consumer_nested_argument_local_chain_cleanup_run.or",
+    };
+    for (auto fixture_name : source_drop_spelling_owned_result_branch_consumer_nested_helper_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+    }
+
     auto dynamic_array_owned_result_ternary_branch_consumer_result_nested_ternary_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_result_ternary_local_return_branch_consumer_result_nested_ternary_cleanup_run.or";

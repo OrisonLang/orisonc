@@ -3257,6 +3257,9 @@ representation.
   covering base, chained, scratch, direct-alias, nested-alias, and asymmetric-alias variants.
 - Owned-result ternary branch-consumer helper cleanup fixtures now also participate in the source-drop spelling guard,
   covering alias helper forwarding, stored local returns, asymmetric stored helpers, and three-local helper chains.
+- Owned-result ternary branch-consumer nested-helper cleanup fixtures now also participate in the source-drop spelling
+  guard, covering distinct local names, mixed direct forwarding, nested helper arguments, asymmetric arguments, and
+  nested local chains.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
