@@ -14450,6 +14450,20 @@ auto main() -> int {
         dynamic_array_owned_result_nested_final_switch_case_cleanup_path,
         smoke_temp_root / "dynamic_array_owned_result_nested_final_switch_case_cleanup_run"
     );
+    auto const source_drop_spelling_owned_result_final_control_fixtures =
+        std::array<std::string_view, 6> {
+        "dynamic_array_owned_result_final_if_branch_cleanup_run.or",
+        "dynamic_array_owned_result_final_switch_case_cleanup_run.or",
+        "dynamic_array_owned_result_returned_local_final_if_branch_cleanup_run.or",
+        "dynamic_array_owned_result_returned_local_final_switch_case_cleanup_run.or",
+        "dynamic_array_owned_result_nested_final_if_branch_cleanup_run.or",
+        "dynamic_array_owned_result_nested_final_switch_case_cleanup_run.or",
+    };
+    for (auto fixture_name : source_drop_spelling_owned_result_final_control_fixtures) {
+        assert_owned_cleanup_without_source_drop_spelling(
+            std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
+        );
+    }
 
     auto dynamic_array_owned_result_if_switch_branch_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /

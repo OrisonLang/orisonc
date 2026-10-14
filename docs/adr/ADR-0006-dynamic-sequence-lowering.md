@@ -3246,6 +3246,8 @@ representation.
   forwarding shapes.
 - Returned choice-payload forwarding cleanup fixtures now also participate in the source-drop spelling guard, covering
   direct, stored, branch, nested, and distinct stored Choice forwarding shapes.
+- Owned-result final-control cleanup fixtures now also participate in the source-drop spelling guard, covering direct,
+  returned-local, and nested final-if/final-switch result cleanup shapes.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
