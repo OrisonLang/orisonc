@@ -3265,6 +3265,8 @@ representation.
 - A source-spelling guard audit over 149 positive `record Payload` cleanup-run fixtures found 90 guarded and 59
   uncovered fixtures. Direct owned-parameter plain, branch, and switch cleanup now join the guard-and-run table,
   bringing the audited matrix to 93 guarded fixtures with 56 remaining.
+- Forwarded-parameter control-flow and harmless-local cleanup fixtures now all participate in the source-drop spelling
+  guard. The nine added variants bring the audited matrix to 102 guarded fixtures with 47 remaining.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.

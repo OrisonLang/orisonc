@@ -8503,18 +8503,27 @@ auto main() -> int {
         );
     }
 
-    auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 11> {
+    auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 20> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_local_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_let_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_depth8_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_depth9_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_owned_computed_for_cleanup_run.or",
-        "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_if_alias_harmless_local_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_if_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_switch_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_final_if_switch_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_if_switch_alias_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_alias_harmless_local_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_alias_multi_harmless_locals_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_if_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_final_switch_if_alias_owned_computed_for_cleanup_run.or",
     };
     for (auto fixture_name : source_drop_spelling_owned_computed_parameter_fixtures) {
         assert_owned_cleanup_without_source_drop_spelling(
