@@ -8565,7 +8565,7 @@ auto main() -> int {
     }
 
     auto const source_drop_spelling_returned_aggregate_owned_computed_fixtures =
-        std::array<std::string_view, 42> {
+        std::array<std::string_view, 43> {
         "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup_run.or",
@@ -8608,6 +8608,7 @@ auto main() -> int {
         "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_cleanup_run.or",
         "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or",
         "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or",
+        "dynamic_array_forwarded_projected_argument_owned_computed_for_cleanup_run.or",
     };
     for (auto fixture_name : source_drop_spelling_returned_aggregate_owned_computed_fixtures) {
         assert_owned_cleanup_without_source_drop_spelling(
@@ -15027,7 +15028,7 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run"
     );
     auto const source_drop_spelling_owned_result_mixed_nested_fixtures =
-        std::array<std::string_view, 14> {
+        std::array<std::string_view, 15> {
         "dynamic_array_owned_result_if_switch_branch_cleanup_run.or",
         "dynamic_array_owned_result_switch_if_branch_cleanup_run.or",
         "dynamic_array_owned_result_direct_nested_if_branch_cleanup_run.or",
@@ -15042,6 +15043,7 @@ auto main() -> int {
         "dynamic_array_owned_result_if_two_switches_helper_call_cleanup_run.or",
         "dynamic_array_owned_result_switch_two_ifs_cleanup_run.or",
         "dynamic_array_owned_result_switch_two_ifs_helper_call_cleanup_run.or",
+        "dynamic_array_owned_result_multi_nested_switch_consumed_scratch_cleanup_run.or",
     };
     for (auto fixture_name : source_drop_spelling_owned_result_mixed_nested_fixtures) {
         assert_owned_cleanup_without_source_drop_spelling(
