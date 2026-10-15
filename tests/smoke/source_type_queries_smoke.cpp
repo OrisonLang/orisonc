@@ -748,6 +748,7 @@ int main() {
     register_packet_forwarding_signature(context, "forward_packet_mismatch", 2);
     register_dynamic_array_forwarding_signature(context, "forward_items");
     register_dynamic_array_forwarding_signature(context, "forward_again");
+    register_dynamic_array_forwarding_signature(context, "forward_ternary_argument");
     register_dynamic_array_forwarding_signature(context, "forward_missing_argument");
     register_dynamic_array_forwarding_signature(context, "forward_literal_argument");
     register_dynamic_array_forwarding_signature(context, "forward_unknown_owner_argument");
@@ -1267,6 +1268,15 @@ int main() {
 
     auto forward_again_function = call_dynamic_array_forwarding_function("forward_again", "forward_items");
     context.source_functions["forward_again"] = &forward_again_function;
+
+    auto forward_ternary_argument_function = orison::syntax::FunctionSyntax {};
+    forward_ternary_argument_function.name = "forward_ternary_argument";
+    forward_ternary_argument_function.parameters.push_back(dynamic_array_uint32_parameter());
+    forward_ternary_argument_function.body_statements.push_back(expression_statement(call(
+        "forward_items",
+        ternary(name("flag"), name("items"), name("items"))
+    )));
+    context.source_functions["forward_ternary_argument"] = &forward_ternary_argument_function;
 
     auto forward_missing_argument_function = orison::syntax::FunctionSyntax {};
     forward_missing_argument_function.name = "forward_missing_argument";
@@ -2087,6 +2097,25 @@ int main() {
     assert(multi_hop_forwarded_parameter_computed_handoff_plan.descriptor_storage_name == "%items.addr");
     assert(multi_hop_forwarded_parameter_computed_handoff_plan.descriptor_storage_available);
     assert(multi_hop_forwarded_parameter_computed_handoff_plan.cleanup_owner_proven);
+
+    auto ternary_argument_forwarded_parameter_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(
+                name("flag"),
+                call("forward_ternary_argument", name("items")),
+                call("forward_ternary_argument", name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        ternary_argument_forwarded_parameter_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(ternary_argument_forwarded_parameter_computed_handoff_plan.source_owner_name == "items");
+    assert(ternary_argument_forwarded_parameter_computed_handoff_plan.descriptor_storage_name == "%items.addr");
+    assert(ternary_argument_forwarded_parameter_computed_handoff_plan.cleanup_owner_proven);
 
     auto depth_limit_forwarded_parameter_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(

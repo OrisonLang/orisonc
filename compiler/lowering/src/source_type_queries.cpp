@@ -950,6 +950,47 @@ auto alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
         return std::nullopt;
     }
 
+    if (expression.kind == syntax::ExpressionKind::ternary &&
+        expression.right != nullptr && expression.alternate != nullptr) {
+        auto then_indexes = alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
+            *expression.right,
+            alias_name,
+            alias_parameter_index,
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth,
+            depth_exhausted,
+            alias_reassigned,
+            owner_read,
+            multiple_result_statements,
+            argument_shape,
+            callee_shape
+        );
+        auto else_indexes = alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
+            *expression.alternate,
+            alias_name,
+            alias_parameter_index,
+            function,
+            signature,
+            source_type_name,
+            context,
+            remaining_depth,
+            depth_exhausted,
+            alias_reassigned,
+            owner_read,
+            multiple_result_statements,
+            argument_shape,
+            callee_shape
+        );
+        if (!then_indexes.has_value() || !else_indexes.has_value()) {
+            return std::nullopt;
+        }
+        then_indexes->insert(then_indexes->end(), else_indexes->begin(), else_indexes->end());
+        return then_indexes;
+    }
+
     if (expression.kind != syntax::ExpressionKind::call ||
         expression.left == nullptr ||
         expression.left->kind != syntax::ExpressionKind::name) {
@@ -986,6 +1027,33 @@ auto alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
         }
 
         auto const& argument = expression.arguments[forwarded_argument_index];
+        if (argument.kind == syntax::ExpressionKind::ternary) {
+            auto argument_indexes =
+                alias_aware_forwarded_dynamic_array_parameter_indexes_for_expression(
+                    argument,
+                    alias_name,
+                    alias_parameter_index,
+                    function,
+                    signature,
+                    source_type_name,
+                    context,
+                    remaining_depth,
+                    depth_exhausted,
+                    alias_reassigned,
+                    owner_read,
+                    multiple_result_statements,
+                    argument_shape,
+                    callee_shape
+                );
+            if (!argument_indexes.has_value() || argument_indexes->empty()) {
+                if (argument_shape != nullptr) {
+                    *argument_shape = true;
+                }
+                return std::nullopt;
+            }
+            result.insert(result.end(), argument_indexes->begin(), argument_indexes->end());
+            continue;
+        }
         if (argument.kind != syntax::ExpressionKind::name) {
             if (argument_shape != nullptr) {
                 *argument_shape = true;

@@ -8503,8 +8503,9 @@ auto main() -> int {
         );
     }
 
-    auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 20> {
+    auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 21> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_parameter_ternary_argument_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_multi_hop_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_parameter_local_alias_harmless_local_owned_computed_for_cleanup_run.or",

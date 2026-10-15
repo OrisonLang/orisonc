@@ -3278,6 +3278,10 @@ representation.
   argument and consumed-scratch singletons.
 - Projected-argument forwarding and multi-nested-switch consumed-scratch cleanup fixtures now participate in the
   source-drop spelling guard. All 149 positive `record Payload` cleanup-run fixtures are guarded.
+- A fresh production-lowering gap audit separates safety rejections from proof limitations. Forwarding helpers now
+  resolve same-owner ternary arguments through the existing single-owner gate, with full production coverage. Missing,
+  literal, unknown-owner, mixed-owner, and post-move-read shapes remain rejected. The new positive fixture extends the
+  source-drop spelling audit to 150 guarded fixtures with none uncovered.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
