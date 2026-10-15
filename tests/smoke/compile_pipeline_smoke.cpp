@@ -8565,7 +8565,7 @@ auto main() -> int {
     }
 
     auto const source_drop_spelling_returned_aggregate_owned_computed_fixtures =
-        std::array<std::string_view, 28> {
+        std::array<std::string_view, 42> {
         "dynamic_array_forwarded_returned_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_returned_nested_aggregate_field_helper_extra_statement_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_returned_aggregate_field_helper_owned_computed_for_cleanup_run.or",
@@ -8594,6 +8594,20 @@ auto main() -> int {
         "dynamic_array_switch_returned_aggregate_field_final_switch_branch_local_cleanup_run.or",
         "dynamic_array_switch_returned_nested_aggregate_field_final_if_branch_local_cleanup_run.or",
         "dynamic_array_switch_returned_nested_aggregate_field_final_switch_branch_local_cleanup_run.or",
+        "dynamic_array_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_branch_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_branch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_branch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_branch_mixed_forwarded_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_branch_mixed_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_switch_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_switch_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_switch_forwarded_returned_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_switch_forwarded_returned_nested_aggregate_field_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_cleanup_run.or",
+        "dynamic_array_forwarded_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or",
+        "dynamic_array_returned_nested_aggregate_field_sibling_after_primary_cleanup_run.or",
     };
     for (auto fixture_name : source_drop_spelling_returned_aggregate_owned_computed_fixtures) {
         assert_owned_cleanup_without_source_drop_spelling(

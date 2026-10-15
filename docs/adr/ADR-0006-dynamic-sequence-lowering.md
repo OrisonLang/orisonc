@@ -3273,6 +3273,9 @@ representation.
 - Returned aggregate-field helper and final-control cleanup fixtures now all participate in the source-drop spelling
   guard. The 26 added direct, nested, forwarded, branch, switch, mixed, and sibling variants bring the audited matrix
   to 133 guarded fixtures with 16 remaining.
+- Returned aggregate-field base, forwarding, and sibling cleanup fixtures now all participate in the source-drop
+  spelling guard. The 14 additions bring the audited matrix to 147 guarded fixtures, leaving only the projected-
+  argument and consumed-scratch singletons.
 - The broad `dynamic_array_complete_contract.or` fixture now exercises scalar and owned `DynamicArray<T>` methods from
   `main`, and CLI core-mode coverage pins run, build, specialization, indexed projection, owned replacement cleanup,
   and final owned descriptor cleanup for that contract.
