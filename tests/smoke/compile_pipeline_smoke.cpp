@@ -8545,15 +8545,20 @@ auto main() -> int {
         );
     }
 
-    auto const source_drop_spelling_static_indexed_aggregate_owned_computed_fixtures =
-        std::array<std::string_view, 5> {
+    auto const source_drop_spelling_indexed_aggregate_owned_computed_fixtures =
+        std::array<std::string_view, 10> {
         "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or",
+        "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup_run.or",
+        "dynamic_array_nested_dynamic_index_aggregate_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_nested_dynamic_index_aggregate_helper_owned_computed_for_cleanup_run.or",
+        "dynamic_array_forwarded_static_indexed_aggregate_helper_dynamic_index_owned_computed_for_cleanup_run.or",
+        "dynamic_array_returned_nested_runtime_indexed_aggregate_owned_computed_for_cleanup_run.or",
     };
-    for (auto fixture_name : source_drop_spelling_static_indexed_aggregate_owned_computed_fixtures) {
+    for (auto fixture_name : source_drop_spelling_indexed_aggregate_owned_computed_fixtures) {
         assert_owned_cleanup_without_source_drop_spelling(
             std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / fixture_name
         );
