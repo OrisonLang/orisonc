@@ -3568,3 +3568,7 @@ representation.
   `flag ? left.inner.values : right.inner.values` now have production verification. Both source projections become
   consumed after the ternary, independent of the selected branch; dedicated negative fixtures reject later reads of
   either projection. Nested computed arms and indexed projections remain outside this path.
+- 2026-10-16 Distinct-owner ternary iteration now accepts finite static-indexed aggregate projections, including
+  nested fixed-array paths. The proof rejects any arm containing a runtime index, while the emitter still requires two
+  concrete, distinct descriptor pointers. Direct and nested fixtures exercise both branch outcomes, unselected payload
+  cleanup, descriptor zeroing, PHI selection, object emission, and executable linking.

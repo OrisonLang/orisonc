@@ -935,6 +935,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   production coverage. The positive fixture validates both runtime branch outcomes and nested descriptor cleanup;
   separate negative fixtures prove that both candidate field owners are consumed after selection. Nested computed and
   indexed distinct-owner arms remain rejected.
+- 2026-10-16: finite static-indexed distinct-owner `DynamicArray<T>` ternary arms now lower for direct and nested
+  fixed-array aggregate paths. Former owner-mismatch fixtures now exercise both runtime branch outcomes plus LLVM,
+  object, and executable production paths. Runtime-indexed arms remain rejected before selected-owner proof.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

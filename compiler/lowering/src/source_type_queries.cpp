@@ -2399,21 +2399,13 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
 
     auto single_owner_name = computed_dynamic_array_single_owner_name(branch_descriptors);
     if (!single_owner_name.has_value()) {
-        auto const named_or_member_only_leaf = [](syntax::ExpressionSyntax const& branch) {
-            if (branch.kind == syntax::ExpressionKind::name) {
-                return true;
-            }
-            auto path = collect_named_aggregate_path(branch);
-            return path.has_value() &&
-                std::ranges::all_of(path->steps, [](AggregatePathStep const& step) {
-                    return step.kind == AggregatePathStepKind::member;
-                });
-        };
         auto const direct_distinct_owner_selection =
             expression.right != nullptr &&
             expression.alternate != nullptr &&
-            named_or_member_only_leaf(*expression.right) &&
-            named_or_member_only_leaf(*expression.alternate) &&
+            named_or_static_indexed_dynamic_array_leaf(*expression.right) &&
+            named_or_static_indexed_dynamic_array_leaf(*expression.alternate) &&
+            !contains_runtime_indexed_projection(*expression.right) &&
+            !contains_runtime_indexed_projection(*expression.alternate) &&
             branch_descriptors.size() == 2 &&
             branch_descriptors[0].owner_name != branch_descriptors[1].owner_name;
         auto const selected_owner_name = computed_dynamic_array_selected_owner_name(state);

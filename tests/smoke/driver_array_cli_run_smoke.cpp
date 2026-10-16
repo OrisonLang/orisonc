@@ -3597,10 +3597,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_for_cleanup_run.or";
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_path =
         fixtures / "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or";
-    auto static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
-        fixtures / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
-    auto nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
-        fixtures / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch_rejected.or";
+    auto static_indexed_aggregate_distinct_owner_computed_dynamic_array_path =
+        fixtures / "dynamic_array_static_indexed_aggregate_distinct_owner_computed_for_run.or";
+    auto nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path =
+        fixtures / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run.or";
     auto nested_dynamic_index_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4884,21 +4884,63 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_parameter_final_switch_if_owned_computed_owner_mismatch",
         "if branch ownership mismatch: owned transfers must match across all continuing branches"
     );
-    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
-        executable,
-        static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
-        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch.o",
-        smoke_temp_root / "dynamic_array_static_indexed_aggregate_owned_computed_owner_mismatch",
-        "holder.buckets.element0.values",
-        "holder.buckets.element1.values"
+    assert_run_success(executable, static_indexed_aggregate_distinct_owner_computed_dynamic_array_path);
+    auto static_indexed_distinct_owner_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        static_indexed_aggregate_distinct_owner_computed_dynamic_array_path.string()
     );
-    assert_computed_dynamic_array_owner_mismatch_failure_matrix(
+    assert_contains(static_indexed_distinct_owner_ir, "%holder.buckets.element0.values.addr");
+    assert_contains(static_indexed_distinct_owner_ir, "%holder.buckets.element1.values.addr");
+    assert_contains(
+        static_indexed_distinct_owner_ir,
+        "call void @__orison_owned_cleanup.Payload(ptr "
+        "%computed_dynamic_array_selection.0.else.unselected.cleanup.drop.element.addr)"
+    );
+    assert_contains(
+        static_indexed_distinct_owner_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
         executable,
-        nested_static_indexed_aggregate_owned_computed_dynamic_array_owner_mismatch_path,
-        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch.o",
-        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_owned_computed_owner_mismatch",
-        "holder.grid.element1.element0.values",
-        "holder.grid.element0.element1.values"
+        static_indexed_aggregate_distinct_owner_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_distinct_owner_computed_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        static_indexed_aggregate_distinct_owner_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_distinct_owner_computed_for_run"
+    );
+    assert_run_success(executable, nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path);
+    auto nested_static_indexed_distinct_owner_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path.string()
+    );
+    assert_contains(
+        nested_static_indexed_distinct_owner_ir,
+        "%holder.grid.element1.element0.values.addr"
+    );
+    assert_contains(
+        nested_static_indexed_distinct_owner_ir,
+        "%holder.grid.element0.element1.values.addr"
+    );
+    assert_contains(
+        nested_static_indexed_distinct_owner_ir,
+        "call void @__orison_owned_cleanup.Payload(ptr "
+        "%computed_dynamic_array_selection.0.then.unselected.cleanup.drop.element.addr)"
+    );
+    assert_contains(
+        nested_static_indexed_distinct_owner_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
+        executable,
+        nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run"
     );
     assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
         executable,
