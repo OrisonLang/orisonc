@@ -1,0 +1,27 @@
+package fixtures.dynamicarraynestedprojecteddistinctownerternaryownedforrun
+
+record Payload
+    public value: UInt32
+
+record Inner
+    public values: DynamicArray<Payload>
+
+record Holder
+    public inner: Inner
+
+function make_values(first: UInt32, second: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(first))
+    values.push(Payload(second))
+    values
+
+function sum_selected(flag: Bool) -> UInt32
+    var left: Holder = Holder(Inner(make_values(3 as UInt32, 5 as UInt32)))
+    var right: Holder = Holder(Inner(make_values(7 as UInt32, 11 as UInt32)))
+    var total = 0 as UInt32
+    for item in flag ? left.inner.values : right.inner.values
+        total = total + item.value
+    total
+
+function main() -> UInt32
+    sum_selected(true) + sum_selected(false) - 26 as UInt32

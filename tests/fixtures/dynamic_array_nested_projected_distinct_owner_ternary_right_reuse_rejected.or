@@ -1,0 +1,26 @@
+package fixtures.dynamicarraynestedprojecteddistinctownerternaryrightreuserejected
+
+record Payload
+    public value: UInt32
+
+record Inner
+    public values: DynamicArray<Payload>
+
+record Holder
+    public inner: Inner
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values
+
+function consume_values(values: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function main() -> UInt32
+    var left: Holder = Holder(Inner(make_values(3 as UInt32)))
+    var right: Holder = Holder(Inner(make_values(7 as UInt32)))
+    var total = 0 as UInt32
+    for item in false ? left.inner.values : right.inner.values
+        total = total + item.value
+    total + consume_values(right.inner.values)

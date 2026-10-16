@@ -6336,6 +6336,25 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_projected_distinct_owner_ternary_owned_for_run.or",
         smoke_temp_root / "dynamic_array_projected_distinct_owner_ternary_owned_for_run"
     );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_nested_projected_distinct_owner_ternary_owned_for_run.or",
+        smoke_temp_root / "dynamic_array_nested_projected_distinct_owner_ternary_owned_for_run"
+    );
+    assert_cli_production_failures_containing_without(
+        executable,
+        fixtures / "dynamic_array_nested_projected_distinct_owner_ternary_left_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_nested_projected_distinct_owner_ternary_left_reuse_rejected",
+        "use after move: left.inner.values",
+        "lowering does not yet support"
+    );
+    assert_cli_production_failures_containing_without(
+        executable,
+        fixtures / "dynamic_array_nested_projected_distinct_owner_ternary_right_reuse_rejected.or",
+        smoke_temp_root / "dynamic_array_nested_projected_distinct_owner_ternary_right_reuse_rejected",
+        "use after move: right.inner.values",
+        "lowering does not yet support"
+    );
     assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
         executable,
         fixtures / "dynamic_array_computed_nested_owner_mismatch_iterable_rejected.or",

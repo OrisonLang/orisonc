@@ -931,6 +931,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   projections. Pipeline and generic CLI coverage pin projected descriptor zeroing, unselected element cleanup,
   descriptor PHI formation, object emission, executable linking, and both runtime branch outcomes. Indexed
   distinct-owner projections remain rejected.
+- 2026-10-16: nested member-only distinct-owner `DynamicArray<T>` projections now have pipeline and generic CLI
+  production coverage. The positive fixture validates both runtime branch outcomes and nested descriptor cleanup;
+  separate negative fixtures prove that both candidate field owners are consumed after selection. Nested computed and
+  indexed distinct-owner arms remain rejected.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

@@ -3564,3 +3564,7 @@ representation.
   field is zeroed after transfer, the unselected field receives element cleanup and deallocation, and the synthesized
   owner retains automatic post-iteration cleanup. Static-indexed and runtime-indexed distinct-owner projections remain
   rejected.
+- 2026-10-16 Nested member-only distinct-owner projections such as
+  `flag ? left.inner.values : right.inner.values` now have production verification. Both source projections become
+  consumed after the ternary, independent of the selected branch; dedicated negative fixtures reject later reads of
+  either projection. Nested computed arms and indexed projections remain outside this path.
