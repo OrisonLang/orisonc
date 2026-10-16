@@ -3559,3 +3559,8 @@ representation.
   deallocation, joins from the cleanup-loop exit, and leaves selected-element cleanup to the existing post-iteration
   computed-array path. This supersedes the 2026-08-25 branch-returned and switch-returned owner-mismatch fixture
   boundaries; those fixtures are now positive distinct-owner run coverage.
+- 2026-10-16 Distinct-owner owned-element ternary iteration now accepts finite record-field projections such as
+  `flag ? left.values : right.values`. Both projected descriptor pointers must be available and distinct. The selected
+  field is zeroed after transfer, the unselected field receives element cleanup and deallocation, and the synthesized
+  owner retains automatic post-iteration cleanup. Static-indexed and runtime-indexed distinct-owner projections remain
+  rejected.

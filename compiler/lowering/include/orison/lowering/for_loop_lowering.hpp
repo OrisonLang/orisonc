@@ -616,10 +616,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
     if (expression.kind != syntax::ExpressionKind::ternary ||
         expression.left == nullptr ||
         expression.right == nullptr ||
-        expression.alternate == nullptr ||
-        expression.right->kind != syntax::ExpressionKind::name ||
-        expression.alternate->kind != syntax::ExpressionKind::name ||
-        expression.right->text == expression.alternate->text) {
+        expression.alternate == nullptr) {
         return false;
     }
 
@@ -633,7 +630,9 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         context.lowering,
         session.state
     );
-    if (!then_descriptor.can_lower_now || !else_descriptor.can_lower_now) {
+    if (!then_descriptor.can_lower_now || !else_descriptor.can_lower_now ||
+        then_descriptor.owner_name == else_descriptor.owner_name ||
+        then_descriptor.descriptor_storage == else_descriptor.descriptor_storage) {
         return false;
     }
     auto const sequence = dynamic_sequence_source_type(source_type_name);

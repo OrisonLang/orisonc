@@ -8425,6 +8425,10 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_distinct_owner_ternary_owned_for_run.or"
     );
+    assert_owned_cleanup_without_source_drop_spelling(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_projected_distinct_owner_ternary_owned_for_run.or"
+    );
 
     auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 21> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
@@ -9024,6 +9028,40 @@ auto main() -> int {
         pipeline,
         dynamic_array_distinct_owner_ternary_owned_path,
         smoke_temp_root / "dynamic_array_distinct_owner_ternary_owned_for_run"
+    );
+
+    auto dynamic_array_projected_distinct_owner_ternary_owned_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_projected_distinct_owner_ternary_owned_for_run.or";
+    auto dynamic_array_projected_distinct_owner_ternary_owned_ir =
+        pipeline.emit_llvm(dynamic_array_projected_distinct_owner_ternary_owned_path);
+    assert(!dynamic_array_projected_distinct_owner_ternary_owned_ir.has_errors());
+    assert_ir_contains(
+        dynamic_array_projected_distinct_owner_ternary_owned_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %left.values.addr"
+    );
+    assert_ir_contains(
+        dynamic_array_projected_distinct_owner_ternary_owned_ir.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %right.values.addr"
+    );
+    assert_ir_contains(
+        dynamic_array_projected_distinct_owner_ternary_owned_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr "
+        "%computed_dynamic_array_selection.0.else.unselected.cleanup.drop.element.addr)"
+    );
+    assert_ir_contains(
+        dynamic_array_projected_distinct_owner_ternary_owned_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr "
+        "%computed_dynamic_array_selection.0.then.unselected.cleanup.drop.element.addr)"
+    );
+    assert_ir_contains(
+        dynamic_array_projected_distinct_owner_ternary_owned_ir.ir_text,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_projected_distinct_owner_ternary_owned_path,
+        smoke_temp_root / "dynamic_array_projected_distinct_owner_ternary_owned_for_run"
     );
 
     auto dynamic_array_returned_owned_computed_for_cleanup_path =

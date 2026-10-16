@@ -927,6 +927,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup is authorized. The unselected branch walks initialized elements before deallocation, while the selected
   descriptor uses the existing automatic post-iteration element cleanup. The former branch-returned and switch-returned
   owner-mismatch fixtures are now positive distinct-owner run fixtures; this supersedes their 2026-08-25 rejection entries.
+- 2026-10-16: distinct-owner owned-element `DynamicArray<T>` ternary iteration now lowers direct record-field
+  projections. Pipeline and generic CLI coverage pin projected descriptor zeroing, unselected element cleanup,
+  descriptor PHI formation, object emission, executable linking, and both runtime branch outcomes. Indexed
+  distinct-owner projections remain rejected.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.
