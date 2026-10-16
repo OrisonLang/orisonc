@@ -3601,6 +3601,14 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_static_indexed_aggregate_distinct_owner_computed_for_run.or";
     auto nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run.or";
+    auto static_indexed_aggregate_distinct_owner_left_reuse_path =
+        fixtures / "dynamic_array_static_indexed_aggregate_distinct_owner_left_reuse_rejected.or";
+    auto static_indexed_aggregate_distinct_owner_right_reuse_path =
+        fixtures / "dynamic_array_static_indexed_aggregate_distinct_owner_right_reuse_rejected.or";
+    auto nested_static_indexed_aggregate_distinct_owner_left_reuse_path =
+        fixtures / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_left_reuse_rejected.or";
+    auto nested_static_indexed_aggregate_distinct_owner_right_reuse_path =
+        fixtures / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_right_reuse_rejected.or";
     auto nested_dynamic_index_aggregate_owned_computed_dynamic_array_owner_mismatch_path =
         fixtures / "dynamic_array_nested_dynamic_index_aggregate_owned_computed_owner_mismatch_rejected.or";
     auto forwarded_static_indexed_aggregate_helper_owned_computed_dynamic_array_owner_mismatch_path =
@@ -4941,6 +4949,34 @@ auto main(int argc, char** argv) -> int {
         executable,
         nested_static_indexed_aggregate_distinct_owner_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        static_indexed_aggregate_distinct_owner_left_reuse_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_distinct_owner_left_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_distinct_owner_left_reuse_rejected",
+        "use after move: holder.buckets.element0.values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        static_indexed_aggregate_distinct_owner_right_reuse_path,
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_distinct_owner_right_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_static_indexed_aggregate_distinct_owner_right_reuse_rejected",
+        "use after move: holder.buckets.element1.values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        nested_static_indexed_aggregate_distinct_owner_left_reuse_path,
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_left_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_left_reuse_rejected",
+        "use after move: holder.grid.element1.element0.values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        nested_static_indexed_aggregate_distinct_owner_right_reuse_path,
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_right_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_right_reuse_rejected",
+        "use after move: holder.grid.element0.element1.values"
     );
     assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
         executable,

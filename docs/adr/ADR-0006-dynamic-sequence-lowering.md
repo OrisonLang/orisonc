@@ -3572,3 +3572,6 @@ representation.
   nested fixed-array paths. The proof rejects any arm containing a runtime index, while the emitter still requires two
   concrete, distinct descriptor pointers. Direct and nested fixtures exercise both branch outcomes, unselected payload
   cleanup, descriptor zeroing, PHI selection, object emission, and executable linking.
+- 2026-10-16 Static-indexed distinct-owner ternary transfer now has explicit post-transfer safety coverage for both
+  candidate projections in direct and nested fixed-array paths. Every production mode rejects a later owned read with
+  the canonical projected use-after-move owner.
