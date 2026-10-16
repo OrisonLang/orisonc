@@ -3550,3 +3550,7 @@ representation.
   sets only after a broader dynamic descriptor-discovery model is proven.
 - Continue migrating returned aggregate sibling cleanup emission toward smaller call-site orchestration while
   preserving distinct selected-descriptor, Maybe-owner, and Choice-owner cleanup rules.
+- 2026-10-15 Direct distinct-owner scalar `DynamicArray<T>` ternaries now materialize a compiler-generated selected
+  descriptor owner before computed-loop lowering. Each branch transfers and zeroes the selected source descriptor,
+  deallocates and zeroes the unselected descriptor, and joins with both source bindings consumed. This remains limited
+  to direct name arms with scalar or non-owning elements; owned elements and broader computed shapes stay blocked.

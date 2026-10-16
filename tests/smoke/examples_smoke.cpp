@@ -214,109 +214,22 @@ auto main() -> int {
 
     auto computed_dynamic_array_iterable =
         pipeline.emit_llvm(
-            fixtures / "dynamic_array_computed_iterable_rejected.or",
+            fixtures / "dynamic_array_computed_iterable_lowered.or",
             orison::pipeline::CompilePipelineOptions {
                 .fixture_derive_dynamic_array_cleanup_from_semantics = true,
             }
         );
-    assert(computed_dynamic_array_iterable.has_errors());
+    assert(!computed_dynamic_array_iterable.has_errors());
     assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "lowering DynamicArray for statements currently requires a named descriptor iterable"
+        computed_dynamic_array_iterable.ir_text.find(
+            "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
         ) != std::string::npos
     );
     assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray iterable of type 'DynamicArray<UInt32>' requires a proven single descriptor owner"
+        computed_dynamic_array_iterable.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate"
         ) != std::string::npos
     );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "cleanup owner proof missing"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
-            "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
-            "[lowering disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray cleanup sequence plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [loop cleanup blocked] [handoff inputs blocked] "
-            "[production cleanup authorization blocked] [authorization contract blocked] "
-            "[cleanup authorization blocked] [function cleanup blocked] "
-            "[cleanup sequence disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray descriptor render plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray loop control render plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [entry branch blocked] [index phi blocked] [bounds check blocked] "
-            "[conditional branch blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray element address render plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [data pointer blocked] [index blocked] [element address blocked] "
-            "[render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray element load render plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [element address blocked] [item value blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray loop continue render plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [continue block blocked] [next index blocked] [backedge branch blocked] "
-            "[render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray loop render sequence plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [descriptor render blocked] [loop control blocked] [body block blocked] "
-            "[element address blocked] [element load blocked] [loop continue blocked] "
-            "[render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray loop exit cleanup plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [exit block blocked] [cleanup blocked] [cleanup sequence disabled] "
-            "[render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [ownership blocked] [loop render blocked] [loop cleanup ownership blocked] "
-            "[function cleanup resumption blocked] [exit cleanup blocked] "
-            "[production sequence blocked] [production cleanup authorization blocked] "
-            "[authorization contract blocked] "
-            "[production emission mutation blocked] [production emission disabled] (metadata only)"
-        ) != std::string::npos
-    );
-
     auto computed_dynamic_array_local_same_owner_iterable =
         pipeline.emit_llvm(fixtures / "dynamic_array_computed_local_same_owner_iterable.or");
     assert(!computed_dynamic_array_local_same_owner_iterable.has_errors());

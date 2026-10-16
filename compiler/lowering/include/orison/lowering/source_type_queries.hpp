@@ -75,6 +75,7 @@ enum class ComputedDynamicArrayIterableOwnershipPlanKind {
     not_computed_dynamic_array,
     unsupported_computed_shape,
     ternary_branch_owner_mismatch,
+    ternary_branch_selected_owner_proven,
     ternary_single_owner_unproven,
     ternary_single_owner_proven,
 };
@@ -476,6 +477,8 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> ComputedDynamicArrayIterableOwnershipPlan;
+
+auto computed_dynamic_array_selected_owner_name(FunctionLoweringState const& state) -> std::string;
 
 auto computed_dynamic_array_iterable_ownership_plan_report(
     ComputedDynamicArrayIterableOwnershipPlan const& plan

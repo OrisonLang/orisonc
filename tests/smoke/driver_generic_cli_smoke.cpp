@@ -6325,12 +6325,10 @@ auto main(int argc, char** argv) -> int {
         "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
         "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
     );
-    assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_computed_iterable_rejected.or",
-        smoke_temp_root / "dynamic_array_computed_iterable_rejected",
-        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
-        "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        fixtures / "dynamic_array_distinct_owner_ternary_scalar_for_run.or",
+        smoke_temp_root / "dynamic_array_distinct_owner_ternary_scalar_for_run"
     );
     assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
         executable,

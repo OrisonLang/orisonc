@@ -5,6 +5,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
@@ -595,6 +596,177 @@ inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_stora
     return true;
 }
 
+inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view source_type_name,
+    std::size_t source_line,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    if (expression.kind != syntax::ExpressionKind::ternary ||
+        expression.left == nullptr ||
+        expression.right == nullptr ||
+        expression.alternate == nullptr ||
+        expression.right->kind != syntax::ExpressionKind::name ||
+        expression.alternate->kind != syntax::ExpressionKind::name ||
+        expression.right->text == expression.alternate->text) {
+        return false;
+    }
+
+    auto const then_descriptor = plan_dynamic_array_iterable_descriptor(
+        *expression.right,
+        context.lowering,
+        session.state
+    );
+    auto const else_descriptor = plan_dynamic_array_iterable_descriptor(
+        *expression.alternate,
+        context.lowering,
+        session.state
+    );
+    if (!then_descriptor.can_lower_now || !else_descriptor.can_lower_now) {
+        return false;
+    }
+    auto const sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        return false;
+    }
+    auto const cleanup_construction_plan = plan_dynamic_array_construction(
+        source_type_name,
+        0,
+        context.lowering
+    );
+    if (!cleanup_construction_plan.has_value()) {
+        return false;
+    }
+    auto const owner_name = computed_dynamic_array_selected_owner_name(session.state);
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        source_type_name,
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        return false;
+    }
+
+    auto condition = lower_expression(
+        *expression.left,
+        "i1",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!condition.has_value()) {
+        return false;
+    }
+
+    auto descriptor_storage = "%" + llvm_identifier_fragment(owner_name) + ".addr";
+    output << "  " << descriptor_storage << " = alloca " << dynamic_array_descriptor_llvm_type() << "\n";
+    auto const conditional = plan_conditional(
+        ConditionalPlanKind::ternary,
+        next_llvm_block_index(session.state.next_block_index)
+    );
+    emit_llvm_conditional_branch(
+        output,
+        condition->value,
+        conditional.then_block,
+        conditional.else_block
+    );
+
+    {
+        auto branch_scope = BranchBindingScope {session.state};
+        emit_llvm_block_label(output, conditional.then_block);
+        session.state.current_block = conditional.then_block;
+        auto const then_value = "%" + llvm_identifier_fragment(owner_name) + ".then";
+        output << emit_dynamic_array_descriptor_load(then_value, then_descriptor.descriptor_storage);
+        output << emit_dynamic_array_descriptor_finalization(then_descriptor.descriptor_storage);
+        mark_owned_binding_consumed(session.state.ownership_transfers, then_descriptor.owner_name);
+        auto const else_cleanup_descriptor =
+            "%" + llvm_identifier_fragment(owner_name) + ".else.unselected";
+        auto const else_cleanup_data = else_cleanup_descriptor + ".data";
+        auto const else_cleanup_capacity = else_cleanup_descriptor + ".capacity";
+        output << emit_dynamic_array_descriptor_load(
+            else_cleanup_descriptor,
+            else_descriptor.descriptor_storage
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
+            else_cleanup_data,
+            else_cleanup_descriptor,
+            DynamicArrayDescriptorField::data
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
+            else_cleanup_capacity,
+            else_cleanup_descriptor,
+            DynamicArrayDescriptorField::capacity
+        );
+        output << emit_dynamic_array_deallocation_call(
+            *cleanup_construction_plan,
+            else_cleanup_data,
+            else_cleanup_capacity
+        );
+        output << emit_dynamic_array_descriptor_finalization(else_descriptor.descriptor_storage);
+        mark_owned_binding_consumed(session.state.ownership_transfers, else_descriptor.owner_name);
+        auto const then_predecessor = session.state.current_block;
+        emit_llvm_branch(output, conditional.merge_block);
+
+        branch_scope.reset();
+        emit_llvm_block_label(output, conditional.else_block);
+        session.state.current_block = conditional.else_block;
+        auto const else_value = "%" + llvm_identifier_fragment(owner_name) + ".else";
+        output << emit_dynamic_array_descriptor_load(else_value, else_descriptor.descriptor_storage);
+        output << emit_dynamic_array_descriptor_finalization(else_descriptor.descriptor_storage);
+        mark_owned_binding_consumed(session.state.ownership_transfers, else_descriptor.owner_name);
+        auto const then_cleanup_descriptor =
+            "%" + llvm_identifier_fragment(owner_name) + ".then.unselected";
+        auto const then_cleanup_data = then_cleanup_descriptor + ".data";
+        auto const then_cleanup_capacity = then_cleanup_descriptor + ".capacity";
+        output << emit_dynamic_array_descriptor_load(
+            then_cleanup_descriptor,
+            then_descriptor.descriptor_storage
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
+            then_cleanup_data,
+            then_cleanup_descriptor,
+            DynamicArrayDescriptorField::data
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
+            then_cleanup_capacity,
+            then_cleanup_descriptor,
+            DynamicArrayDescriptorField::capacity
+        );
+        output << emit_dynamic_array_deallocation_call(
+            *cleanup_construction_plan,
+            then_cleanup_data,
+            then_cleanup_capacity
+        );
+        output << emit_dynamic_array_descriptor_finalization(then_descriptor.descriptor_storage);
+        mark_owned_binding_consumed(session.state.ownership_transfers, then_descriptor.owner_name);
+        auto const else_predecessor = session.state.current_block;
+        emit_llvm_branch(output, conditional.merge_block);
+
+        auto joined_transfers = branch_scope.saved_ownership_transfers();
+        mark_owned_binding_consumed(joined_transfers, then_descriptor.owner_name);
+        mark_owned_binding_consumed(joined_transfers, else_descriptor.owner_name);
+        branch_scope.commit_ownership_transfers(std::move(joined_transfers));
+        emit_llvm_block_label(output, conditional.merge_block);
+        session.state.current_block = conditional.merge_block;
+        auto const selected_value = "%" + llvm_identifier_fragment(owner_name) + ".descriptor";
+        output << "  " << selected_value << " = phi " << dynamic_array_descriptor_llvm_type();
+        output << " [ " << then_value << ", %" << then_predecessor << " ],";
+        output << " [ " << else_value << ", %" << else_predecessor << " ]\n";
+        output << "  store " << dynamic_array_descriptor_llvm_type() << " " << selected_value;
+        output << ", ptr " << descriptor_storage << "\n";
+    }
+
+    cleanup_plan->descriptor_storage_name = std::move(descriptor_storage);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = source_line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+    return true;
+}
+
 inline auto emit_computed_dynamic_array_element_owned_cleanup_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,
@@ -693,6 +865,14 @@ auto lower_sequence_for_statement(
         if (computed_dynamic_array_for_lowering_enabled) {
             session.state.computed_dynamic_array_for_unique_suffix =
                 "." + std::to_string(next_llvm_block_index(session.state.next_block_index));
+            seed_distinct_owner_computed_dynamic_array_descriptor_storage(
+                statement.expression,
+                *source_type_name,
+                statement.line,
+                context,
+                session,
+                output
+            );
             seed_runtime_index_aggregate_computed_dynamic_array_descriptor_storage(
                 statement.expression,
                 statement.line,

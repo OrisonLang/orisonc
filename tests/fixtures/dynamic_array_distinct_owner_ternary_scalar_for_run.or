@@ -1,0 +1,16 @@
+package fixtures.dynamicarraydistinctownerternaryscalarforrun
+
+function sum_selected(flag: Bool) -> UInt32
+    var left: DynamicArray<UInt32> = DynamicArray()
+    left.push(3 as UInt32)
+    left.push(5 as UInt32)
+    var right: DynamicArray<UInt32> = DynamicArray()
+    right.push(7 as UInt32)
+    right.push(11 as UInt32)
+    var total = 0 as UInt32
+    for word in flag ? left : right
+        total = total + word
+    total
+
+function main() -> UInt32
+    sum_selected(true) + sum_selected(false) - 26 as UInt32

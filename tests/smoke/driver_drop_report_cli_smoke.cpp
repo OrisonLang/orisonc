@@ -1194,19 +1194,17 @@ int main() {
         }
     );
 
-    auto dynamic_array_computed_rejected_path =
+    auto dynamic_array_computed_lowered_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_computed_iterable_rejected.or";
-    auto dynamic_array_computed_rejected_audit =
-        run_dynamic_array_cleanup_audit(app, dynamic_array_computed_rejected_path);
+        "dynamic_array_computed_iterable_lowered.or";
+    auto dynamic_array_computed_lowered_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_computed_lowered_path);
     assert_success_with_stdout_contains(
-        dynamic_array_computed_rejected_audit,
+        dynamic_array_computed_lowered_audit,
         {
-            "computed DynamicArray production readiness blocked [gate blocked] [sequence blocked] "
-            "[cleanup transition blocked] [cleanup state blocked] [gate sequence counts mismatch] "
-            "[gate sequence snippets mismatch] [sequence transition counts mismatch] "
-            "[transition verification counts mismatch] [cleanup owners mismatch] [production emission enabled] "
-            "(metadata only)",
+            "function sum_words dynamic array cleanup obligation __orison_dynamic_array_cleanup.0 owner "
+            "computed_dynamic_array_selection.0 source DynamicArray<UInt32>",
+            "computed DynamicArray inserted cleanup handoffs paired transitions 1 verifications 1 paired 1 blocked 0",
         }
     );
 

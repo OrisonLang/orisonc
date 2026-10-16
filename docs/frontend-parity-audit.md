@@ -918,9 +918,11 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-24: method-returned `shared.View<UInt32>` descriptor-loop lowering now also covers member-derived receivers:
   `wrapper.bucket.forward_view(values)` and `shelf.buckets[0].forward_view(values)` both lower through the computed
   descriptor loop and preserve the owned `DynamicArray<T>` boundary.
-- 2026-07-24: computed owned `DynamicArray<UInt32>` iterables are now explicitly rejected when no named descriptor
-  owner exists. The fixture `dynamic_array_computed_iterable_rejected.or` pins `for word in flag ? left : right` as
-  requiring a named descriptor iterable until ownership, cleanup, and descriptor-storage rules are proven.
+- 2026-07-24: computed owned `DynamicArray<UInt32>` iterables were explicitly rejected when no named descriptor owner
+  existed. This restriction was later narrowed by the 2026-10-15 branch-selected descriptor work.
+- 2026-10-15: direct distinct-owner `DynamicArray<UInt32>` ternary iteration now lowers through compiler-generated
+  descriptor storage. Each branch transfers its selected descriptor, finalizes the unselected scalar array, and joins
+  with both source owners consumed; nested, projected, and owned-element distinct-owner shapes remain rejected.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

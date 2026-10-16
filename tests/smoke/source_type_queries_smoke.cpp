@@ -4387,6 +4387,42 @@ int main() {
         ) == "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to computed_left "
             "computed_right for DynamicArray<UInt32>"
     );
+    auto selected_owner_state = state;
+    selected_owner_state.dynamic_array_local_cleanup_plans.push_back(
+        orison::lowering::DynamicArrayDescriptorCleanupPlan {
+            .owner_name = "computed_dynamic_array_selection",
+            .source_type_name = "DynamicArray<UInt32>",
+            .element_source_type_name = "UInt32",
+            .element_llvm_type = "i32",
+            .descriptor_storage_name = "%computed_dynamic_array_selection.addr",
+            .descriptor_storage_status =
+                orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+            .element_size_bytes = 4,
+        }
+    );
+    auto selected_owner_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            selected_owner_state
+        );
+    assert(
+        selected_owner_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::
+            ternary_branch_selected_owner_proven
+    );
+    assert(selected_owner_plan.ownership_join_matches);
+    assert(selected_owner_plan.cleanup_owner_proven);
+    auto selected_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            selected_owner_state
+        );
+    assert(selected_handoff_plan.cleanup_owner_proven);
+    assert(selected_handoff_plan.descriptor_storage_available);
+    assert(selected_handoff_plan.handoff_owner_name == "computed_dynamic_array_selection");
+    assert(selected_handoff_plan.descriptor_storage_name == "%computed_dynamic_array_selection.addr");
     auto mismatched_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(name("flag"), name("computed_left"), name("computed_right")),

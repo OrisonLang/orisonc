@@ -1933,6 +1933,10 @@ auto computed_dynamic_array_single_owner_name(
 
 }  // namespace
 
+auto computed_dynamic_array_selected_owner_name(FunctionLoweringState const& state) -> std::string {
+    return "computed_dynamic_array_selection" + state.computed_dynamic_array_for_unique_suffix;
+}
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
     auto arguments = std::vector<std::string> {};
     auto depth = std::size_t {0};
@@ -2395,6 +2399,25 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
 
     auto single_owner_name = computed_dynamic_array_single_owner_name(branch_descriptors);
     if (!single_owner_name.has_value()) {
+        auto const direct_distinct_owner_selection =
+            expression.right != nullptr &&
+            expression.alternate != nullptr &&
+            expression.right->kind == syntax::ExpressionKind::name &&
+            expression.alternate->kind == syntax::ExpressionKind::name &&
+            branch_descriptors.size() == 2;
+        auto const selected_owner_name = computed_dynamic_array_selected_owner_name(state);
+        auto const selected_cleanup_plan = matching_dynamic_array_cleanup_plan(
+            state,
+            selected_owner_name,
+            plan.source_type_name
+        );
+        if (direct_distinct_owner_selection && selected_cleanup_plan != nullptr) {
+            plan.merged_transfers = state.ownership_transfers;
+            plan.ownership_join_matches = true;
+            plan.cleanup_owner_proven = true;
+            plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_selected_owner_proven;
+            return plan;
+        }
         plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch;
         return plan;
     }
@@ -2442,6 +2465,9 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
             break;
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch:
             output += "ternary branch owner mismatch";
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_selected_owner_proven:
+            output += "ternary branch-selected owner proven";
             break;
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven:
             output += "ternary single owner unproven";
@@ -2621,6 +2647,10 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch:
             plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked;
             return plan;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_selected_owner_proven:
+            plan.source_owner_name = computed_dynamic_array_selected_owner_name(state);
+            plan.handoff_owner_name = plan.source_owner_name;
+            break;
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven:
             plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
             if (!plan.ownership_plan.branch_owner_names.empty()) {
