@@ -1,4 +1,4 @@
-package fixtures.dynamicarraybranchreturnedownedcomputedownermismatchrejected
+package fixtures.dynamicarraybranchreturnedownedcomputeddistinctownerrun
 
 record Payload
     public value: UInt32
@@ -25,4 +25,4 @@ function main() -> UInt32
     var total = 0 as UInt32
     for item in true ? left : right
         total = total + item.value
-    total
+    total - 5 as UInt32

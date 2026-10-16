@@ -6311,24 +6311,25 @@ auto main(int argc, char** argv) -> int {
         fixtures / "runtime_indexed_dynamic_array_constructor_computed_expression_nested_member_compiler_derived_sibling_cleanup.or",
         smoke_temp_root / "runtime_indexed_dynamic_array_nested_member_compiler_derived_sibling_cleanup"
     );
-    assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or",
-        smoke_temp_root / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected",
-        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
-        "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        fixtures / "dynamic_array_branch_returned_owned_computed_distinct_owner_run.or",
+        smoke_temp_root / "dynamic_array_branch_returned_owned_computed_distinct_owner_run"
     );
-    assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
-        fixtures / "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or",
-        smoke_temp_root / "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected",
-        "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
-        "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        fixtures / "dynamic_array_switch_returned_owned_computed_distinct_owner_run.or",
+        smoke_temp_root / "dynamic_array_switch_returned_owned_computed_distinct_owner_run"
     );
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_distinct_owner_ternary_scalar_for_run.or",
         smoke_temp_root / "dynamic_array_distinct_owner_ternary_scalar_for_run"
+    );
+    assert_cli_dynamic_array_owned_result_fixture_full_production_success(
+        executable,
+        fixtures / "dynamic_array_distinct_owner_ternary_owned_for_run.or",
+        smoke_temp_root / "dynamic_array_distinct_owner_ternary_owned_for_run"
     );
     assert_cli_computed_dynamic_array_owner_mismatch_production_failures(
         executable,

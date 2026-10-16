@@ -922,7 +922,11 @@ This file tracks which source-language frontend slices are reflected in the curr
   existed. This restriction was later narrowed by the 2026-10-15 branch-selected descriptor work.
 - 2026-10-15: direct distinct-owner `DynamicArray<UInt32>` ternary iteration now lowers through compiler-generated
   descriptor storage. Each branch transfers its selected descriptor, finalizes the unselected scalar array, and joins
-  with both source owners consumed; nested, projected, and owned-element distinct-owner shapes remain rejected.
+  with both source owners consumed; nested and projected distinct-owner shapes remain rejected.
+- 2026-10-16: direct distinct-owner owned-element `DynamicArray<T>` ternary iteration now lowers when semantic element
+  cleanup is authorized. The unselected branch walks initialized elements before deallocation, while the selected
+  descriptor uses the existing automatic post-iteration element cleanup. The former branch-returned and switch-returned
+  owner-mismatch fixtures are now positive distinct-owner run fixtures; this supersedes their 2026-08-25 rejection entries.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

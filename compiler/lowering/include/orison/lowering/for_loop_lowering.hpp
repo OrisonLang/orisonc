@@ -596,6 +596,15 @@ inline auto seed_runtime_index_aggregate_computed_dynamic_array_descriptor_stora
     return true;
 }
 
+inline auto emit_computed_dynamic_array_element_owned_cleanup_walk(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix,
+    std::string_view entry_block_name,
+    std::string_view owned_cleanup_symbol_name
+) -> std::string;
+
 inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
     syntax::ExpressionSyntax const& expression,
     std::string_view source_type_name,
@@ -628,8 +637,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         return false;
     }
     auto const sequence = dynamic_sequence_source_type(source_type_name);
-    if (!sequence.has_value() ||
-        !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+    if (!sequence.has_value()) {
         return false;
     }
     auto const cleanup_construction_plan = plan_dynamic_array_construction(
@@ -648,6 +656,17 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
     );
     if (!cleanup_plan.has_value()) {
         return false;
+    }
+    auto element_owned_cleanup_symbol_name = std::optional<std::string> {};
+    if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        element_owned_cleanup_symbol_name = computed_dynamic_array_element_owned_cleanup_symbol_name(
+            owner_name,
+            sequence->element_source_type_name,
+            context.options
+        );
+        if (!element_owned_cleanup_symbol_name.has_value()) {
+            return false;
+        }
     }
 
     auto condition = lower_expression(
@@ -686,6 +705,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         auto const else_cleanup_descriptor =
             "%" + llvm_identifier_fragment(owner_name) + ".else.unselected";
         auto const else_cleanup_data = else_cleanup_descriptor + ".data";
+        auto const else_cleanup_length = else_cleanup_descriptor + ".length";
         auto const else_cleanup_capacity = else_cleanup_descriptor + ".capacity";
         output << emit_dynamic_array_descriptor_load(
             else_cleanup_descriptor,
@@ -697,10 +717,28 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
             DynamicArrayDescriptorField::data
         );
         output << emit_dynamic_array_descriptor_field_projection(
+            else_cleanup_length,
+            else_cleanup_descriptor,
+            DynamicArrayDescriptorField::length
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
             else_cleanup_capacity,
             else_cleanup_descriptor,
             DynamicArrayDescriptorField::capacity
         );
+        if (element_owned_cleanup_symbol_name.has_value()) {
+            auto const else_cleanup_prefix = else_cleanup_descriptor + ".cleanup";
+            output << emit_computed_dynamic_array_element_owned_cleanup_walk(
+                *cleanup_construction_plan,
+                else_cleanup_data,
+                else_cleanup_length,
+                else_cleanup_prefix,
+                session.state.current_block,
+                *element_owned_cleanup_symbol_name
+            );
+            session.state.current_block =
+                computed_dynamic_array_owned_cleanup_label_prefix(else_cleanup_prefix) + ".drop.done";
+        }
         output << emit_dynamic_array_deallocation_call(
             *cleanup_construction_plan,
             else_cleanup_data,
@@ -721,6 +759,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         auto const then_cleanup_descriptor =
             "%" + llvm_identifier_fragment(owner_name) + ".then.unselected";
         auto const then_cleanup_data = then_cleanup_descriptor + ".data";
+        auto const then_cleanup_length = then_cleanup_descriptor + ".length";
         auto const then_cleanup_capacity = then_cleanup_descriptor + ".capacity";
         output << emit_dynamic_array_descriptor_load(
             then_cleanup_descriptor,
@@ -732,10 +771,28 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
             DynamicArrayDescriptorField::data
         );
         output << emit_dynamic_array_descriptor_field_projection(
+            then_cleanup_length,
+            then_cleanup_descriptor,
+            DynamicArrayDescriptorField::length
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
             then_cleanup_capacity,
             then_cleanup_descriptor,
             DynamicArrayDescriptorField::capacity
         );
+        if (element_owned_cleanup_symbol_name.has_value()) {
+            auto const then_cleanup_prefix = then_cleanup_descriptor + ".cleanup";
+            output << emit_computed_dynamic_array_element_owned_cleanup_walk(
+                *cleanup_construction_plan,
+                then_cleanup_data,
+                then_cleanup_length,
+                then_cleanup_prefix,
+                session.state.current_block,
+                *element_owned_cleanup_symbol_name
+            );
+            session.state.current_block =
+                computed_dynamic_array_owned_cleanup_label_prefix(then_cleanup_prefix) + ".drop.done";
+        }
         output << emit_dynamic_array_deallocation_call(
             *cleanup_construction_plan,
             then_cleanup_data,

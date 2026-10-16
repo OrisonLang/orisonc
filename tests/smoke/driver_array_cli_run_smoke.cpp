@@ -2130,31 +2130,6 @@ void assert_computed_dynamic_array_owner_reuse_emit_llvm_failure(
     assert(output.find("use after move: " + std::string {owner_name}) != std::string::npos);
 }
 
-void assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
-    std::filesystem::path const& executable,
-    std::filesystem::path const& source_path
-) {
-    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
-    assert(
-        output.find(
-            "computed DynamicArray owner mismatch: expected one cleanup owner; branches resolve to left right for "
-            "DynamicArray<Payload>"
-        ) != std::string::npos
-    );
-    assert(
-        output.find(
-            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
-            "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        output.find(
-            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<Payload> "
-            "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
-        ) != std::string::npos
-    );
-}
-
 void assert_computed_dynamic_array_owner_mismatch_failure_matrix(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -4203,10 +4178,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_forwarded_choice_payload_final_switch_branch_local_alias_reassigned_rejected.or";
     auto forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch_path =
         fixtures / "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch_rejected.or";
-    auto branch_returned_owned_computed_dynamic_array_owner_mismatch_path =
-        fixtures / "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
-    auto switch_returned_owned_computed_dynamic_array_owner_mismatch_path =
-        fixtures / "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or";
+    auto branch_returned_owned_computed_dynamic_array_distinct_owner_path =
+        fixtures / "dynamic_array_branch_returned_owned_computed_distinct_owner_run.or";
+    auto switch_returned_owned_computed_dynamic_array_distinct_owner_path =
+        fixtures / "dynamic_array_switch_returned_owned_computed_distinct_owner_run.or";
     auto owned_dynamic_array_parameter_missing_drop_path =
         fixtures / "dynamic_array_owned_parameter_iteration_missing_drop.or";
     auto dynamic_array_parameter_index_assignment_path =
@@ -7992,14 +7967,8 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_forwarded_choice_payload_nested_final_if_switch_branch_local_alias_owner_mismatch",
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
     );
-    assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
-        executable,
-        branch_returned_owned_computed_dynamic_array_owner_mismatch_path
-    );
-    assert_returned_owned_computed_dynamic_array_owner_mismatch_emit_llvm_failure(
-        executable,
-        switch_returned_owned_computed_dynamic_array_owner_mismatch_path
-    );
+    assert_run_success(executable, branch_returned_owned_computed_dynamic_array_distinct_owner_path);
+    assert_run_success(executable, switch_returned_owned_computed_dynamic_array_distinct_owner_path);
     assert_owned_dynamic_array_replacement_emit_llvm_success(executable, owned_dynamic_array_replacement_path);
     assert_emit_object_success(
         executable,

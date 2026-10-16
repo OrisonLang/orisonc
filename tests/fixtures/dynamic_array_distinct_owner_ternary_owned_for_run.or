@@ -1,0 +1,19 @@
+package fixtures.dynamicarraydistinctownerternaryownedforrun
+
+record Payload
+    public value: UInt32
+
+function sum_selected(flag: Bool) -> UInt32
+    var left: DynamicArray<Payload> = DynamicArray()
+    left.push(Payload(3 as UInt32))
+    left.push(Payload(5 as UInt32))
+    var right: DynamicArray<Payload> = DynamicArray()
+    right.push(Payload(7 as UInt32))
+    right.push(Payload(11 as UInt32))
+    var total = 0 as UInt32
+    for item in flag ? left : right
+        total = total + item.value
+    total
+
+function main() -> UInt32
+    sum_selected(true) + sum_selected(false) - 26 as UInt32

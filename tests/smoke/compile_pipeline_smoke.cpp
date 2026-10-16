@@ -8421,6 +8421,10 @@ auto main() -> int {
             smoke_temp_root / executable_name
         );
     }
+    assert_owned_cleanup_without_source_drop_spelling(
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_distinct_owner_ternary_owned_for_run.or"
+    );
 
     auto const source_drop_spelling_owned_computed_parameter_fixtures = std::array<std::string_view, 21> {
         "dynamic_array_forwarded_parameter_owned_computed_for_cleanup_run.or",
@@ -8989,6 +8993,38 @@ auto main() -> int {
         std::system(dynamic_array_returned_parameter_forwarding_executable.string().c_str());
     assert(WIFEXITED(dynamic_array_returned_parameter_forwarding_status));
     assert(WEXITSTATUS(dynamic_array_returned_parameter_forwarding_status) == 0);
+
+    auto dynamic_array_distinct_owner_ternary_owned_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_distinct_owner_ternary_owned_for_run.or";
+    auto dynamic_array_distinct_owner_ternary_owned_ir =
+        pipeline.emit_llvm(dynamic_array_distinct_owner_ternary_owned_path);
+    assert(!dynamic_array_distinct_owner_ternary_owned_ir.has_errors());
+    assert_ir_contains(
+        dynamic_array_distinct_owner_ternary_owned_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %computed_dynamic_array_selection.4.else.unselected.cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_distinct_owner_ternary_owned_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %computed_dynamic_array_selection.4.then.unselected.cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_distinct_owner_ternary_owned_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %computed_dynamic_array_selection.4.computed_dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_distinct_owner_ternary_owned_ir.ir_text,
+        "%computed_dynamic_array_selection.4.descriptor = phi { ptr, i64, i64 } "
+        "[ %computed_dynamic_array_selection.4.then, "
+        "%computed_dynamic_array_selection.4.else.unselected.cleanup.drop.done ], "
+        "[ %computed_dynamic_array_selection.4.else, "
+        "%computed_dynamic_array_selection.4.then.unselected.cleanup.drop.done ]"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_distinct_owner_ternary_owned_path,
+        smoke_temp_root / "dynamic_array_distinct_owner_ternary_owned_for_run"
+    );
 
     auto dynamic_array_returned_owned_computed_for_cleanup_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
@@ -12957,43 +12993,27 @@ auto main() -> int {
             "use after move: values"
         ) != std::string::npos
     );
-    auto dynamic_array_branch_returned_owned_computed_owner_mismatch_path =
+    auto dynamic_array_branch_returned_owned_computed_distinct_owner_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_branch_returned_owned_computed_owner_mismatch_rejected.or";
-    auto dynamic_array_branch_returned_owned_computed_owner_mismatch_ir = pipeline.emit_llvm(
-        dynamic_array_branch_returned_owned_computed_owner_mismatch_path
+        "dynamic_array_branch_returned_owned_computed_distinct_owner_run.or";
+    auto dynamic_array_branch_returned_owned_computed_distinct_owner_ir = pipeline.emit_llvm(
+        dynamic_array_branch_returned_owned_computed_distinct_owner_path
     );
-    assert(dynamic_array_branch_returned_owned_computed_owner_mismatch_ir.has_errors());
-    assert(
-        dynamic_array_branch_returned_owned_computed_owner_mismatch_ir.error_text.find(
-            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
-            "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
-        ) != std::string::npos
+    assert(!dynamic_array_branch_returned_owned_computed_distinct_owner_ir.has_errors());
+    assert_ir_contains(
+        dynamic_array_branch_returned_owned_computed_distinct_owner_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %computed_dynamic_array_selection.0.else.unselected.cleanup"
     );
-    assert(
-        dynamic_array_branch_returned_owned_computed_owner_mismatch_ir.error_text.find(
-            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<Payload> "
-            "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    auto dynamic_array_switch_returned_owned_computed_owner_mismatch_path =
+    auto dynamic_array_switch_returned_owned_computed_distinct_owner_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_switch_returned_owned_computed_owner_mismatch_rejected.or";
-    auto dynamic_array_switch_returned_owned_computed_owner_mismatch_ir = pipeline.emit_llvm(
-        dynamic_array_switch_returned_owned_computed_owner_mismatch_path
+        "dynamic_array_switch_returned_owned_computed_distinct_owner_run.or";
+    auto dynamic_array_switch_returned_owned_computed_distinct_owner_ir = pipeline.emit_llvm(
+        dynamic_array_switch_returned_owned_computed_distinct_owner_path
     );
-    assert(dynamic_array_switch_returned_owned_computed_owner_mismatch_ir.has_errors());
-    assert(
-        dynamic_array_switch_returned_owned_computed_owner_mismatch_ir.error_text.find(
-            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<Payload> "
-            "element Payload owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        dynamic_array_switch_returned_owned_computed_owner_mismatch_ir.error_text.find(
-            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<Payload> "
-            "element Payload [descriptor storage blocked] [cleanup owner blocked] [lowering disabled] (metadata only)"
-        ) != std::string::npos
+    assert(!dynamic_array_switch_returned_owned_computed_distinct_owner_ir.has_errors());
+    assert_ir_contains(
+        dynamic_array_switch_returned_owned_computed_distinct_owner_ir.ir_text,
+        "call void @__orison_owned_cleanup.Payload(ptr %computed_dynamic_array_selection.0.then.unselected.cleanup"
     );
 
     auto dynamic_array_returned_multi_hop_forwarding_path =

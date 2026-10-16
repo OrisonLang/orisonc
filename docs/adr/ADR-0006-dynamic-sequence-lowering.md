@@ -3553,4 +3553,9 @@ representation.
 - 2026-10-15 Direct distinct-owner scalar `DynamicArray<T>` ternaries now materialize a compiler-generated selected
   descriptor owner before computed-loop lowering. Each branch transfers and zeroes the selected source descriptor,
   deallocates and zeroes the unselected descriptor, and joins with both source bindings consumed. This remains limited
-  to direct name arms with scalar or non-owning elements; owned elements and broader computed shapes stay blocked.
+  to direct name arms; broader computed shapes stay blocked.
+- 2026-10-16 Direct distinct-owner `DynamicArray<T>` ternaries with owned elements now use the established semantic
+  element-cleanup authorization. Each branch walks and cleans the unselected descriptor's initialized elements before
+  deallocation, joins from the cleanup-loop exit, and leaves selected-element cleanup to the existing post-iteration
+  computed-array path. This supersedes the 2026-08-25 branch-returned and switch-returned owner-mismatch fixture
+  boundaries; those fixtures are now positive distinct-owner run coverage.
