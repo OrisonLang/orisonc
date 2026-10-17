@@ -119,9 +119,63 @@ auto named_or_static_indexed_dynamic_array_leaf(
     return static_indexed_aggregate_owner_name(expression).has_value();
 }
 
+auto reusable_runtime_index_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    using syntax::ExpressionKind;
+    switch (expression.kind) {
+        case ExpressionKind::name: {
+            auto source_type = state.source_type_names.find(expression.text);
+            if (source_type == state.source_type_names.end()) {
+                return false;
+            }
+            auto lowered_type = lowered_type_for_source_type_name(source_type->second, context);
+            return lowered_type.has_value() &&
+                lowered_type->signedness != IntegerSignedness::not_integer;
+        }
+        case ExpressionKind::integer_literal:
+            return true;
+        case ExpressionKind::unary:
+            return expression.left != nullptr &&
+                (expression.text == "-" || expression.text == "bit_not") &&
+                reusable_runtime_index_expression(*expression.left, context, state);
+        case ExpressionKind::cast: {
+            auto lowered_type = lowered_type_for_source_type_name(expression.text, context);
+            return expression.left != nullptr && lowered_type.has_value() &&
+                lowered_type->signedness != IntegerSignedness::not_integer &&
+                is_pure_runtime_index_expression(*expression.left);
+        }
+        case ExpressionKind::binary:
+            return expression.left != nullptr && expression.right != nullptr &&
+                (expression.text == "+" || expression.text == "-" || expression.text == "*" ||
+                 expression.text == "/" || expression.text == "%" || expression.text == "bit_and" ||
+                 expression.text == "bit_or" || expression.text == "bit_xor" ||
+                 expression.text == "shift_left" || expression.text == "shift_right") &&
+                reusable_runtime_index_expression(*expression.left, context, state) &&
+                reusable_runtime_index_expression(*expression.right, context, state);
+        case ExpressionKind::float_literal:
+        case ExpressionKind::string_literal:
+        case ExpressionKind::boolean_literal:
+        case ExpressionKind::array_literal:
+        case ExpressionKind::task:
+        case ExpressionKind::thread:
+        case ExpressionKind::call:
+        case ExpressionKind::member_access:
+        case ExpressionKind::null_safe_member_access:
+        case ExpressionKind::index_access:
+        case ExpressionKind::ternary:
+            return false;
+    }
+    return false;
+}
+
 auto matching_name_indexed_distinct_root_paths(
     syntax::ExpressionSyntax const& left,
-    syntax::ExpressionSyntax const& right
+    syntax::ExpressionSyntax const& right,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
 ) -> bool {
     auto left_path = collect_named_aggregate_path(left);
     auto right_path = collect_named_aggregate_path(right);
@@ -158,8 +212,8 @@ auto matching_name_indexed_distinct_root_paths(
             }
             continue;
         }
-        if (!is_pure_runtime_index_expression(*left_step.index_expression) ||
-            !is_pure_runtime_index_expression(*right_step.index_expression) ||
+        if (!reusable_runtime_index_expression(*left_step.index_expression, context, state) ||
+            !reusable_runtime_index_expression(*right_step.index_expression, context, state) ||
             runtime_index_expression_key(*left_step.index_expression) !=
                 runtime_index_expression_key(*right_step.index_expression)) {
             return false;
@@ -2358,7 +2412,12 @@ auto runtime_indexed_distinct_owner_selection_supported(
 ) -> bool {
     if (expression.kind != syntax::ExpressionKind::ternary ||
         expression.right == nullptr || expression.alternate == nullptr ||
-        !matching_name_indexed_distinct_root_paths(*expression.right, *expression.alternate)) {
+        !matching_name_indexed_distinct_root_paths(
+            *expression.right,
+            *expression.alternate,
+            context,
+            state
+        )) {
         return false;
     }
 

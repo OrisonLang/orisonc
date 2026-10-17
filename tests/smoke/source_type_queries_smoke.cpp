@@ -922,6 +922,40 @@ int main() {
     state.source_type_names["holder"] = "Holder";
     state.source_type_names["other_holder"] = "Holder";
     state.source_type_names["dynamic_index"] = "UInt64";
+    state.source_type_names["index_offset"] = "UInt64";
+    state.source_type_names["flag"] = "Bool";
+
+    auto distinct_holder_selection = [](
+        orison::syntax::ExpressionSyntax left_index_expression,
+        orison::syntax::ExpressionSyntax right_index_expression
+    ) {
+        return ternary(
+            name("flag"),
+            member(index(member(name("holder"), "buckets"), std::move(left_index_expression)), "items"),
+            member(index(member(name("other_holder"), "buckets"), std::move(right_index_expression)), "items")
+        );
+    };
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            binary(name("dynamic_index"), "+", name("index_offset")),
+            binary(name("dynamic_index"), "+", name("index_offset"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(name("flag"), name("flag")),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            binary(name("dynamic_index"), "<", name("index_offset")),
+            binary(name("dynamic_index"), "<", name("index_offset"))
+        ),
+        context,
+        state
+    ));
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");

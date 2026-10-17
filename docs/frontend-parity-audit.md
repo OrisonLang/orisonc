@@ -3462,3 +3462,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   guards, DynamicArray guard, old-element cleanup, replacement store, object emission, build, and run behavior.
 - 2026-09-13: Nested runtime-indexed aggregate-path DynamicArray reuse-rejection coverage now rejects dynamic-index
   element replacement after the same runtime-indexed descriptor projection has been moved.
+- 2026-10-17: Reusable distinct-root runtime-index proofs now require integer-producing expressions. Source-query
+  smoke coverage accepts matching integer arithmetic and rejects matching Boolean names and comparisons before
+  selected-owner lowering.

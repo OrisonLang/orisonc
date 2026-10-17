@@ -3592,3 +3592,7 @@ representation.
 - 2026-10-17 Nested matching pure computed indexes now fill the shared SSA cache lazily during the first aggregate
   projection. This preserves outer bounds-check ordering before inner index evaluation, reuses each row and column
   value for the second root, and keeps mismatched nested expressions rejected.
+- 2026-10-17 Reusable runtime-index proofs now require integer-producing expressions. Names and cast targets must
+  resolve to integer types, arithmetic and bitwise operators recurse through integer operands, and Boolean names,
+  comparisons, calls, projections, ternaries, concurrency expressions, and `await` remain excluded. Volatile
+  intrinsics remain excluded through the call boundary.
