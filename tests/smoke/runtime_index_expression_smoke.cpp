@@ -104,6 +104,7 @@ int main() {
     using orison::lowering::contains_runtime_indexed_projection;
     using orison::lowering::decimal_integer_literal_text;
     using orison::lowering::is_runtime_index_expression;
+    using orison::lowering::is_pure_runtime_index_expression;
     using orison::lowering::LlvmIrEmissionOptions;
     using orison::lowering::runtime_index_expression_key;
     using orison::lowering::runtime_indexed_member_cleanup_rewrite_enabled;
@@ -119,6 +120,15 @@ int main() {
     assert(aggregate_index_owner_suffix(binary(name("index"), "+", name("zero"))) == "[(index + zero)]");
     assert(!is_runtime_index_expression(integer_literal("7")));
     assert(is_runtime_index_expression(name("index")));
+    assert(is_pure_runtime_index_expression(name("index")));
+    assert(is_pure_runtime_index_expression(binary(name("index"), "+", name("zero"))));
+    assert(is_pure_runtime_index_expression(cast(name("index"), "UInt64")));
+    assert(is_pure_runtime_index_expression(unary("-", name("offset"))));
+    assert(!is_pure_runtime_index_expression(unary("await", name("pending"))));
+    assert(!is_pure_runtime_index_expression(call("normalize", name("index"))));
+    assert(!is_pure_runtime_index_expression(member(name("item"), "value")));
+    assert(!is_pure_runtime_index_expression(index(name("items"), name("index"))));
+    assert(!is_pure_runtime_index_expression(ternary(name("flag"), name("left"), name("right"))));
     assert(runtime_index_expression_key(binary(name("index"), "+", name("zero"))) == "(index + zero)");
     assert(runtime_index_expression_key(cast(name("index"), "UInt64")) == "index as UInt64");
     assert(runtime_index_expression_key(unary("not", name("flag"))) == "not flag");

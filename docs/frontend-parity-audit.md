@@ -951,6 +951,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-16: runtime-indexed distinct-root ternary bounds coverage now exercises direct and nested out-of-range
   indexes for both branch outcomes. Emitted guards and trap calls remain present through LLVM, object, executable,
   and runtime production paths.
+- 2026-10-16: runtime-indexed distinct-root ternaries now lower matching pure computed indexes with one evaluation per
+  selected branch and shared SSA reuse across both candidate projections. Production coverage includes arithmetic
+  indexes through run, LLVM, object, and build modes plus continued rejection of call-based indexes.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

@@ -32,6 +32,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -284,6 +285,8 @@ struct RuntimeIndexAggregateDescriptorProjectionPlan {
     AggregatePath aggregate_path;
 };
 
+using RuntimeIndexExpressionValues = std::unordered_map<std::string, std::string>;
+
 inline auto plan_runtime_index_aggregate_descriptor_projection(
     syntax::ExpressionSyntax const& expression,
     std::string_view owner_name,
@@ -321,7 +324,8 @@ inline auto emit_runtime_index_aggregate_descriptor_projection(
     std::string_view expected_source_type_name,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostringstream& output
+    std::ostringstream& output,
+    RuntimeIndexExpressionValues const* shared_index_values = nullptr
 ) -> std::optional<std::string> {
     auto cursor = initialize_aggregate_path_cursor(
         plan.root_storage,
@@ -358,18 +362,27 @@ inline auto emit_runtime_index_aggregate_descriptor_projection(
         if (auto index_text = decimal_integer_literal_text(*step.index_expression)) {
             index_value = std::string {*index_text};
         } else {
-            auto lowered_index = lower_expression(
-                *step.index_expression,
-                "i64",
-                IntegerSignedness::unsigned_integer,
-                context,
-                session,
-                output
-            );
-            if (!lowered_index.has_value()) {
-                return std::nullopt;
+            auto const index_key = runtime_index_expression_key(*step.index_expression);
+            if (shared_index_values != nullptr) {
+                auto const shared_index = shared_index_values->find(index_key);
+                if (shared_index != shared_index_values->end()) {
+                    index_value = shared_index->second;
+                }
             }
-            index_value = lowered_index->value;
+            if (index_value.empty()) {
+                auto lowered_index = lower_expression(
+                    *step.index_expression,
+                    "i64",
+                    IntegerSignedness::unsigned_integer,
+                    context,
+                    session,
+                    output
+                );
+                if (!lowered_index.has_value()) {
+                    return std::nullopt;
+                }
+                index_value = lowered_index->value;
+            }
             emit_fixed_array_runtime_index_bounds_check(
                 "computed_dynamic_array_runtime_aggregate_index",
                 index_value,
@@ -403,7 +416,8 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
     std::string_view expected_source_type_name,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostringstream& output
+    std::ostringstream& output,
+    RuntimeIndexExpressionValues const* shared_index_values = nullptr
 ) -> std::optional<std::string> {
     auto projection_plan = plan_runtime_index_aggregate_descriptor_projection(
         expression,
@@ -418,8 +432,50 @@ inline auto lower_named_runtime_index_aggregate_descriptor_storage(
         expected_source_type_name,
         context,
         session,
-        output
+        output,
+        shared_index_values
     );
+}
+
+inline auto lower_shared_runtime_index_expression_values(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<RuntimeIndexExpressionValues> {
+    auto const aggregate_path = collect_aggregate_path(expression);
+    if (aggregate_path.base_expression == nullptr || aggregate_path.steps.empty()) {
+        return std::nullopt;
+    }
+
+    auto values = RuntimeIndexExpressionValues {};
+    for (auto const& step : aggregate_path.steps) {
+        if (step.kind != AggregatePathStepKind::index || step.index_expression == nullptr ||
+            decimal_integer_literal_text(*step.index_expression).has_value()) {
+            continue;
+        }
+        if (!is_pure_runtime_index_expression(*step.index_expression)) {
+            return std::nullopt;
+        }
+
+        auto const index_key = runtime_index_expression_key(*step.index_expression);
+        if (values.contains(index_key)) {
+            continue;
+        }
+        auto lowered_index = lower_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_index.has_value()) {
+            return std::nullopt;
+        }
+        values.emplace(index_key, std::move(lowered_index->value));
+    }
+    return values;
 }
 
 inline auto lower_returned_runtime_index_aggregate_descriptor_storage(
@@ -708,13 +764,23 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         auto then_descriptor_storage = then_descriptor.descriptor_storage;
         auto else_descriptor_storage = else_descriptor.descriptor_storage;
         if (runtime_indexed_selection) {
+            auto shared_index_values = lower_shared_runtime_index_expression_values(
+                *expression.right,
+                context,
+                session,
+                output
+            );
+            if (!shared_index_values.has_value()) {
+                return false;
+            }
             auto lowered_then_storage = lower_named_runtime_index_aggregate_descriptor_storage(
                 *expression.right,
                 then_descriptor.owner_name,
                 source_type_name,
                 context,
                 session,
-                output
+                output,
+                &*shared_index_values
             );
             auto lowered_else_storage = lower_named_runtime_index_aggregate_descriptor_storage(
                 *expression.alternate,
@@ -722,7 +788,8 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
                 source_type_name,
                 context,
                 session,
-                output
+                output,
+                &*shared_index_values
             );
             if (!lowered_then_storage.has_value() || !lowered_else_storage.has_value()) {
                 return false;
@@ -787,13 +854,23 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         then_descriptor_storage = then_descriptor.descriptor_storage;
         else_descriptor_storage = else_descriptor.descriptor_storage;
         if (runtime_indexed_selection) {
+            auto shared_index_values = lower_shared_runtime_index_expression_values(
+                *expression.right,
+                context,
+                session,
+                output
+            );
+            if (!shared_index_values.has_value()) {
+                return false;
+            }
             auto lowered_then_storage = lower_named_runtime_index_aggregate_descriptor_storage(
                 *expression.right,
                 then_descriptor.owner_name,
                 source_type_name,
                 context,
                 session,
-                output
+                output,
+                &*shared_index_values
             );
             auto lowered_else_storage = lower_named_runtime_index_aggregate_descriptor_storage(
                 *expression.alternate,
@@ -801,7 +878,8 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
                 source_type_name,
                 context,
                 session,
-                output
+                output,
+                &*shared_index_values
             );
             if (!lowered_then_storage.has_value() || !lowered_else_storage.has_value()) {
                 return false;

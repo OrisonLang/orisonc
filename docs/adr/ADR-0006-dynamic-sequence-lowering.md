@@ -3585,3 +3585,7 @@ representation.
 - 2026-10-16 Runtime-indexed distinct-root selection now has direct and nested bounds-failure coverage for both
   ternary outcomes. LLVM emission retains fixed-array guards and trap blocks, object and executable production
   succeed, and runtime execution terminates before projecting an out-of-range selected descriptor.
+- 2026-10-16 Runtime-indexed distinct-root selection now accepts matching pure computed indexes formed from names,
+  scalar literals, casts, and recursively pure unary or binary expressions. Each unique index is lowered once in the
+  selected ternary branch and reused for both candidate projections; calls, projections, ternaries, concurrency
+  expressions, and `await` remain rejected.

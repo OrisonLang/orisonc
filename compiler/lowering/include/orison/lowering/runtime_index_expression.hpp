@@ -18,6 +18,8 @@ auto aggregate_index_owner_suffix(syntax::ExpressionSyntax const& expression) ->
 
 auto is_runtime_index_expression(syntax::ExpressionSyntax const& expression) -> bool;
 
+auto is_pure_runtime_index_expression(syntax::ExpressionSyntax const& expression) -> bool;
+
 auto contains_runtime_indexed_projection(syntax::ExpressionSyntax const& expression) -> bool;
 
 }  // namespace orison::lowering

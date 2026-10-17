@@ -36,6 +36,39 @@ auto is_runtime_index_expression(
     return !decimal_integer_literal_text(expression).has_value();
 }
 
+auto is_pure_runtime_index_expression(
+    syntax::ExpressionSyntax const& expression
+) -> bool {
+    using syntax::ExpressionKind;
+    switch (expression.kind) {
+    case ExpressionKind::name:
+    case ExpressionKind::integer_literal:
+    case ExpressionKind::float_literal:
+    case ExpressionKind::string_literal:
+    case ExpressionKind::boolean_literal:
+        return true;
+    case ExpressionKind::unary:
+        return expression.text != "await" && expression.left != nullptr &&
+            is_pure_runtime_index_expression(*expression.left);
+    case ExpressionKind::cast:
+        return expression.left != nullptr && is_pure_runtime_index_expression(*expression.left);
+    case ExpressionKind::binary:
+        return expression.left != nullptr && expression.right != nullptr &&
+            is_pure_runtime_index_expression(*expression.left) &&
+            is_pure_runtime_index_expression(*expression.right);
+    case ExpressionKind::array_literal:
+    case ExpressionKind::task:
+    case ExpressionKind::thread:
+    case ExpressionKind::call:
+    case ExpressionKind::member_access:
+    case ExpressionKind::null_safe_member_access:
+    case ExpressionKind::index_access:
+    case ExpressionKind::ternary:
+        return false;
+    }
+    return false;
+}
+
 auto aggregate_index_owner_suffix(
     syntax::ExpressionSyntax const& expression
 ) -> std::string {

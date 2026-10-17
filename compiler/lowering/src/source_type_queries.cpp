@@ -158,9 +158,10 @@ auto matching_name_indexed_distinct_root_paths(
             }
             continue;
         }
-        if (left_step.index_expression->kind != syntax::ExpressionKind::name ||
-            right_step.index_expression->kind != syntax::ExpressionKind::name ||
-            left_step.index_expression->text != right_step.index_expression->text) {
+        if (!is_pure_runtime_index_expression(*left_step.index_expression) ||
+            !is_pure_runtime_index_expression(*right_step.index_expression) ||
+            runtime_index_expression_key(*left_step.index_expression) !=
+                runtime_index_expression_key(*right_step.index_expression)) {
             return false;
         }
         saw_runtime_index = true;

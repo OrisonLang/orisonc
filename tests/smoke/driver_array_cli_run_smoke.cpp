@@ -3603,6 +3603,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run.or";
     auto runtime_indexed_distinct_root_computed_dynamic_array_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_computed_for_run.or";
+    auto runtime_indexed_distinct_root_pure_computed_dynamic_array_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_computed_for_run.or";
+    auto runtime_indexed_distinct_root_call_index_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_call_index_rejected.or";
     auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.or";
     auto runtime_indexed_distinct_root_mismatched_index_path =
@@ -4999,6 +5003,63 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_indexed_distinct_root_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_computed_for_run"
+    );
+    assert_run_success(executable, runtime_indexed_distinct_root_pure_computed_dynamic_array_path);
+    auto runtime_indexed_distinct_root_pure_computed_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_indexed_distinct_root_pure_computed_dynamic_array_path.string()
+    );
+    auto first_index_load = runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %index.addr"
+    );
+    assert(first_index_load != std::string::npos);
+    auto second_index_load = runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %index.addr",
+        first_index_load + 1
+    );
+    assert(second_index_load != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_computed_ir.find(
+            "load i64, ptr %index.addr",
+            second_index_load + 1
+        ) == std::string::npos
+    );
+    auto first_offset_load = runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %offset.addr"
+    );
+    assert(first_offset_load != std::string::npos);
+    auto second_offset_load = runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %offset.addr",
+        first_offset_load + 1
+    );
+    assert(second_offset_load != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_computed_ir.find(
+            "load i64, ptr %offset.addr",
+            second_offset_load + 1
+        ) == std::string::npos
+    );
+    assert_contains(
+        runtime_indexed_distinct_root_pure_computed_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_indexed_distinct_root_pure_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_computed_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_indexed_distinct_root_pure_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_computed_for_run"
+    );
+    assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
+        executable,
+        runtime_indexed_distinct_root_call_index_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_call_index_rejected.o",
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_call_index_rejected",
+        "left.buckets[select_index(index)].values",
+        "right.buckets[select_index(index)].values"
     );
     assert_run_success(executable, nested_runtime_indexed_distinct_root_computed_dynamic_array_path);
     auto nested_runtime_indexed_distinct_root_ir = read_successful_command_output(
