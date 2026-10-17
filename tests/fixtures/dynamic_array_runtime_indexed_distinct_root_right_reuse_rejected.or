@@ -1,0 +1,30 @@
+package tests.fixtures.dynamic_array_runtime_indexed_distinct_root_right_reuse_rejected
+
+record Payload
+    value: UInt32
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values
+
+function make_holder(seed: UInt32) -> Holder
+    Holder([Bucket(make_values(seed)), Bucket(make_values(seed + 20 as UInt32))])
+
+function consume_values(values: DynamicArray<Payload>) -> UInt32
+    0 as UInt32
+
+function main() -> UInt32
+    var left: Holder = make_holder(40 as UInt32)
+    var right: Holder = make_holder(80 as UInt32)
+    var index = 0 as UInt64
+    var total = 0 as UInt32
+    for item in false ? left.buckets[index].values : right.buckets[index].values
+        total = total + item.value
+    total + consume_values(right.buckets[index].values)

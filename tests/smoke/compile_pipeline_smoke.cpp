@@ -8478,13 +8478,14 @@ auto main() -> int {
     }
 
     auto const source_drop_spelling_indexed_aggregate_owned_computed_fixtures =
-        std::array<std::string_view, 13> {
+        std::array<std::string_view, 14> {
         "dynamic_array_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_nested_static_indexed_aggregate_owned_computed_for_cleanup_run.or",
         "dynamic_array_static_indexed_aggregate_owned_nested_computed_for_cleanup_run.or",
         "dynamic_array_static_indexed_aggregate_distinct_owner_computed_for_run.or",
         "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run.or",
         "dynamic_array_runtime_indexed_distinct_root_computed_for_run.or",
+        "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.or",
         "dynamic_array_forwarded_static_indexed_aggregate_helper_owned_computed_for_cleanup_run.or",
         "dynamic_array_forwarded_static_indexed_aggregate_helper_extra_statement_owned_computed_for_cleanup_run.or",
         "dynamic_array_direct_dynamic_index_aggregate_owned_computed_for_cleanup_run.or",

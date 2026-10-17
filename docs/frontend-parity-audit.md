@@ -945,6 +945,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   fixed-array projections from different same-typed named roots when both arms use the same name-only runtime index.
   Production coverage pins branch-local bounds checks, unselected owned-element cleanup, descriptor PHI formation,
   object emission, linking, and both branch outcomes. Mismatched index identities remain rejected in every mode.
+- 2026-10-16: runtime-indexed distinct-root ternary coverage now includes nested fixed-array paths plus direct and
+  nested post-transfer reuse rejection for both candidates. Symbolic owner paths remain stable across `run`, LLVM,
+  object, and executable production modes.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

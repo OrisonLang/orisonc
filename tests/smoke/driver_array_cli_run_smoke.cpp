@@ -3603,8 +3603,18 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_nested_static_indexed_aggregate_distinct_owner_computed_for_run.or";
     auto runtime_indexed_distinct_root_computed_dynamic_array_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_computed_for_run.or";
+    auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.or";
     auto runtime_indexed_distinct_root_mismatched_index_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_mismatched_index_rejected.or";
+    auto runtime_indexed_distinct_root_left_reuse_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_left_reuse_rejected.or";
+    auto runtime_indexed_distinct_root_right_reuse_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_right_reuse_rejected.or";
+    auto nested_runtime_indexed_distinct_root_left_reuse_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_left_reuse_rejected.or";
+    auto nested_runtime_indexed_distinct_root_right_reuse_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_right_reuse_rejected.or";
     auto static_indexed_aggregate_distinct_owner_left_reuse_path =
         fixtures / "dynamic_array_static_indexed_aggregate_distinct_owner_left_reuse_rejected.or";
     auto static_indexed_aggregate_distinct_owner_right_reuse_path =
@@ -4982,6 +4992,34 @@ auto main(int argc, char** argv) -> int {
         runtime_indexed_distinct_root_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_computed_for_run"
     );
+    assert_run_success(executable, nested_runtime_indexed_distinct_root_computed_dynamic_array_path);
+    auto nested_runtime_indexed_distinct_root_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        nested_runtime_indexed_distinct_root_computed_dynamic_array_path.string()
+    );
+    assert_contains(
+        nested_runtime_indexed_distinct_root_ir,
+        "computed_dynamic_array_runtime_aggregate_index"
+    );
+    assert_contains(
+        nested_runtime_indexed_distinct_root_ir,
+        "call void @__orison_owned_cleanup.Payload(ptr "
+        "%computed_dynamic_array_selection.0.then.unselected.cleanup.drop.element.addr)"
+    );
+    assert_contains(
+        nested_runtime_indexed_distinct_root_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
+        executable,
+        nested_runtime_indexed_distinct_root_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        nested_runtime_indexed_distinct_root_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run"
+    );
     assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
         executable,
         runtime_indexed_distinct_root_mismatched_index_path,
@@ -4989,6 +5027,34 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_mismatched_index_rejected",
         "left.buckets[left_index].values",
         "right.buckets[right_index].values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        runtime_indexed_distinct_root_left_reuse_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_left_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_left_reuse_rejected",
+        "use after move: left.buckets[index].values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        runtime_indexed_distinct_root_right_reuse_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_right_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_right_reuse_rejected",
+        "use after move: right.buckets[index].values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        nested_runtime_indexed_distinct_root_left_reuse_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_left_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_left_reuse_rejected",
+        "use after move: left.grid[row][column].values"
+    );
+    assert_diagnostic_failure_matrix(
+        executable,
+        nested_runtime_indexed_distinct_root_right_reuse_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_right_reuse_rejected.o",
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_right_reuse_rejected",
+        "use after move: right.grid[row][column].values"
     );
     assert_diagnostic_failure_matrix(
         executable,

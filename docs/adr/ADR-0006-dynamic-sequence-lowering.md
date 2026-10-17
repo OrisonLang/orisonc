@@ -3579,3 +3579,6 @@ representation.
   in two different named aggregates of the same type when every runtime index is the same name-only expression. The
   emitter resolves both descriptors inside the selected branch with bounds checks, finalizes both source descriptors,
   and preserves automatic owned-element cleanup. Different index identities and same-root paths remain rejected.
+- 2026-10-16 Matching runtime-indexed distinct-root selection now has nested fixed-array production coverage and
+  explicit post-transfer safety coverage for both candidate owners at direct and nested paths. Every production mode
+  rejects later owned reads with the canonical symbolic runtime-index owner.

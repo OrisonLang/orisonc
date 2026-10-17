@@ -1,0 +1,32 @@
+package tests.fixtures.dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run
+
+record Payload
+    value: UInt32
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    grid: Array<Array<Bucket, 2>, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values.push(Payload(seed + 1 as UInt32))
+    values
+
+function make_holder(seed: UInt32) -> Holder
+    Holder([[Bucket(make_values(seed)), Bucket(make_values(seed + 10 as UInt32))], [Bucket(make_values(seed + 100 as UInt32)), Bucket(make_values(seed + 200 as UInt32))]])
+
+function sum_selected(flag: Bool) -> UInt32
+    var left: Holder = make_holder(40 as UInt32)
+    var right: Holder = make_holder(80 as UInt32)
+    var row = 1 as UInt64
+    var column = 0 as UInt64
+    var total = 0 as UInt32
+    for item in flag ? left.grid[row][column].values : right.grid[row][column].values
+        total = total + item.value
+    total
+
+function main() -> UInt32
+    sum_selected(true) + sum_selected(false) - 642 as UInt32
