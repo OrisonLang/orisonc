@@ -3465,3 +3465,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-17: Reusable distinct-root runtime-index proofs now require integer-producing expressions. Source-query
   smoke coverage accepts matching integer arithmetic and rejects matching Boolean names and comparisons before
   selected-owner lowering.
+- 2026-10-17: Reusable distinct-root runtime-index proofs now accept pure integer ternaries. Production CLI coverage
+  verifies both root and index outcomes, shared index values across candidate roots, LLVM emission, object emission,
+  executable linking, and runtime behavior.

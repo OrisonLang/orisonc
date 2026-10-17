@@ -3596,3 +3596,6 @@ representation.
   resolve to integer types, arithmetic and bitwise operators recurse through integer operands, and Boolean names,
   comparisons, calls, projections, ternaries, concurrency expressions, and `await` remain excluded. Volatile
   intrinsics remain excluded through the call boundary.
+- 2026-10-17 Reusable runtime-index proofs now accept ternaries with pure Boolean conditions and integer-producing
+  result arms. The selected integer is lowered once per reachable outer-selection branch and reused for both aggregate
+  roots. Non-Boolean conditions and non-integer result arms remain rejected.

@@ -956,6 +956,30 @@ int main() {
         context,
         state
     ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(name("flag"), name("dynamic_index"), name("index_offset")),
+            ternary(name("flag"), name("dynamic_index"), name("index_offset"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(name("dynamic_index"), name("dynamic_index"), name("index_offset")),
+            ternary(name("dynamic_index"), name("dynamic_index"), name("index_offset"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(name("flag"), name("dynamic_index"), name("flag")),
+            ternary(name("flag"), name("dynamic_index"), name("flag"))
+        ),
+        context,
+        state
+    ));
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");

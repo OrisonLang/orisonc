@@ -123,6 +123,43 @@ auto reusable_runtime_index_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
+) -> bool;
+
+auto pure_boolean_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    using syntax::ExpressionKind;
+    if (expression.kind == ExpressionKind::boolean_literal) {
+        return true;
+    }
+    if (expression.kind == ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        return source_type != state.source_type_names.end() && source_type->second == "Bool";
+    }
+    if (expression.kind == ExpressionKind::unary) {
+        return expression.text == "not" && expression.left != nullptr &&
+            pure_boolean_expression(*expression.left, context, state);
+    }
+    if (expression.kind != ExpressionKind::binary || expression.left == nullptr ||
+        expression.right == nullptr) {
+        return false;
+    }
+    if (expression.text == "and" || expression.text == "or") {
+        return pure_boolean_expression(*expression.left, context, state) &&
+            pure_boolean_expression(*expression.right, context, state);
+    }
+    return (expression.text == "==" || expression.text == "!=" || expression.text == "<" ||
+            expression.text == "<=" || expression.text == ">" || expression.text == ">=") &&
+        reusable_runtime_index_expression(*expression.left, context, state) &&
+        reusable_runtime_index_expression(*expression.right, context, state);
+}
+
+auto reusable_runtime_index_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
 ) -> bool {
     using syntax::ExpressionKind;
     switch (expression.kind) {
@@ -155,6 +192,12 @@ auto reusable_runtime_index_expression(
                  expression.text == "shift_left" || expression.text == "shift_right") &&
                 reusable_runtime_index_expression(*expression.left, context, state) &&
                 reusable_runtime_index_expression(*expression.right, context, state);
+        case ExpressionKind::ternary:
+            return expression.left != nullptr && expression.right != nullptr &&
+                expression.alternate != nullptr &&
+                pure_boolean_expression(*expression.left, context, state) &&
+                reusable_runtime_index_expression(*expression.right, context, state) &&
+                reusable_runtime_index_expression(*expression.alternate, context, state);
         case ExpressionKind::float_literal:
         case ExpressionKind::string_literal:
         case ExpressionKind::boolean_literal:
@@ -165,7 +208,6 @@ auto reusable_runtime_index_expression(
         case ExpressionKind::member_access:
         case ExpressionKind::null_safe_member_access:
         case ExpressionKind::index_access:
-        case ExpressionKind::ternary:
             return false;
     }
     return false;
