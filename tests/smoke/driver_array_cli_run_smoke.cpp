@@ -3609,6 +3609,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_indexed_distinct_root_call_index_rejected.or";
     auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.or";
+    auto nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_pure_computed_for_run.or";
+    auto nested_runtime_indexed_distinct_root_computed_mismatch_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_computed_mismatch_rejected.or";
     auto runtime_indexed_distinct_root_mismatched_index_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_mismatched_index_rejected.or";
     auto runtime_indexed_distinct_root_left_reuse_path =
@@ -5088,6 +5092,69 @@ auto main(int argc, char** argv) -> int {
         executable,
         nested_runtime_indexed_distinct_root_computed_dynamic_array_path,
         smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run"
+    );
+    assert_run_success(executable, nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path);
+    auto nested_runtime_indexed_distinct_root_pure_computed_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path.string()
+    );
+    auto first_row_load = nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %row.addr"
+    );
+    assert(first_row_load != std::string::npos);
+    auto second_row_load = nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %row.addr",
+        first_row_load + 1
+    );
+    assert(second_row_load != std::string::npos);
+    assert(
+        nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+            "load i64, ptr %row.addr",
+            second_row_load + 1
+        ) == std::string::npos
+    );
+    auto first_column_load = nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %column.addr"
+    );
+    assert(first_column_load != std::string::npos);
+    auto second_column_load = nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+        "load i64, ptr %column.addr",
+        first_column_load + 1
+    );
+    assert(second_column_load != std::string::npos);
+    assert(
+        nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+            "load i64, ptr %column.addr",
+            second_column_load + 1
+        ) == std::string::npos
+    );
+    auto first_row_guard = nested_runtime_indexed_distinct_root_pure_computed_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        first_row_load
+    );
+    assert(first_row_guard != std::string::npos);
+    assert(first_row_guard < first_column_load);
+    assert_contains(
+        nested_runtime_indexed_distinct_root_pure_computed_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
+        executable,
+        nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_pure_computed_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_pure_computed_for_run"
+    );
+    assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
+        executable,
+        nested_runtime_indexed_distinct_root_computed_mismatch_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_computed_mismatch_rejected.o",
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_computed_mismatch_rejected",
+        "left.grid[(row + row_offset)][(column + left_column_offset)].values",
+        "right.grid[(row + row_offset)][(column + right_column_offset)].values"
     );
     assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
         executable,

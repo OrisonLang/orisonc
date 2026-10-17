@@ -3589,3 +3589,6 @@ representation.
   scalar literals, casts, and recursively pure unary or binary expressions. Each unique index is lowered once in the
   selected ternary branch and reused for both candidate projections; calls, projections, ternaries, concurrency
   expressions, and `await` remain rejected.
+- 2026-10-17 Nested matching pure computed indexes now fill the shared SSA cache lazily during the first aggregate
+  projection. This preserves outer bounds-check ordering before inner index evaluation, reuses each row and column
+  value for the second root, and keeps mismatched nested expressions rejected.
