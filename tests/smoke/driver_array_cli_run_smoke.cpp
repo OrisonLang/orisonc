@@ -3615,6 +3615,14 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_left_reuse_rejected.or";
     auto nested_runtime_indexed_distinct_root_right_reuse_path =
         fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_right_reuse_rejected.or";
+    auto runtime_indexed_distinct_root_then_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_then_out_of_bounds.or";
+    auto runtime_indexed_distinct_root_else_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_else_out_of_bounds.or";
+    auto nested_runtime_indexed_distinct_root_then_out_of_bounds_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_then_out_of_bounds.or";
+    auto nested_runtime_indexed_distinct_root_else_out_of_bounds_path =
+        fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_else_out_of_bounds.or";
     auto static_indexed_aggregate_distinct_owner_left_reuse_path =
         fixtures / "dynamic_array_static_indexed_aggregate_distinct_owner_left_reuse_rejected.or";
     auto static_indexed_aggregate_distinct_owner_right_reuse_path =
@@ -5056,6 +5064,124 @@ auto main(int argc, char** argv) -> int {
         smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_right_reuse_rejected",
         "use after move: right.grid[row][column].values"
     );
+    auto runtime_indexed_then_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_indexed_distinct_root_then_out_of_bounds_path.string()
+    );
+    assert_contains(runtime_indexed_then_out_of_bounds_ir, "computed_dynamic_array_runtime_aggregate_index");
+    assert_contains(runtime_indexed_then_out_of_bounds_ir, "call void @__orison_dynamic_array_bounds_failed()");
+    read_failing_command_output(
+        executable.string() + " run " + runtime_indexed_distinct_root_then_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_indexed_distinct_root_then_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_then_out_of_bounds.o"
+    );
+    auto runtime_indexed_then_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_then_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_indexed_distinct_root_then_out_of_bounds_path.string() + " -o " +
+            runtime_indexed_then_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(runtime_indexed_then_out_of_bounds_executable) > 0);
+    auto runtime_indexed_else_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_indexed_distinct_root_else_out_of_bounds_path.string()
+    );
+    assert_contains(runtime_indexed_else_out_of_bounds_ir, "computed_dynamic_array_runtime_aggregate_index");
+    assert_contains(runtime_indexed_else_out_of_bounds_ir, "call void @__orison_dynamic_array_bounds_failed()");
+    read_failing_command_output(
+        executable.string() + " run " + runtime_indexed_distinct_root_else_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_indexed_distinct_root_else_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_else_out_of_bounds.o"
+    );
+    auto runtime_indexed_else_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_else_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_indexed_distinct_root_else_out_of_bounds_path.string() + " -o " +
+            runtime_indexed_else_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(runtime_indexed_else_out_of_bounds_executable) > 0);
+    auto nested_runtime_indexed_then_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        nested_runtime_indexed_distinct_root_then_out_of_bounds_path.string()
+    );
+    auto nested_then_first_guard = nested_runtime_indexed_then_out_of_bounds_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index"
+    );
+    assert(nested_then_first_guard != std::string::npos);
+    auto nested_then_second_guard = nested_runtime_indexed_then_out_of_bounds_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        nested_then_first_guard + 1
+    );
+    assert(nested_then_second_guard != std::string::npos);
+    assert_contains(
+        nested_runtime_indexed_then_out_of_bounds_ir,
+        "call void @__orison_dynamic_array_bounds_failed()"
+    );
+    read_failing_command_output(
+        executable.string() + " run " + nested_runtime_indexed_distinct_root_then_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        nested_runtime_indexed_distinct_root_then_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_then_out_of_bounds.o"
+    );
+    auto nested_runtime_indexed_then_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_then_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            nested_runtime_indexed_distinct_root_then_out_of_bounds_path.string() + " -o " +
+            nested_runtime_indexed_then_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(nested_runtime_indexed_then_out_of_bounds_executable) > 0);
+    auto nested_runtime_indexed_else_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        nested_runtime_indexed_distinct_root_else_out_of_bounds_path.string()
+    );
+    auto nested_else_first_guard = nested_runtime_indexed_else_out_of_bounds_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index"
+    );
+    assert(nested_else_first_guard != std::string::npos);
+    auto nested_else_second_guard = nested_runtime_indexed_else_out_of_bounds_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        nested_else_first_guard + 1
+    );
+    assert(nested_else_second_guard != std::string::npos);
+    assert_contains(
+        nested_runtime_indexed_else_out_of_bounds_ir,
+        "call void @__orison_dynamic_array_bounds_failed()"
+    );
+    read_failing_command_output(
+        executable.string() + " run " + nested_runtime_indexed_distinct_root_else_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        nested_runtime_indexed_distinct_root_else_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_else_out_of_bounds.o"
+    );
+    auto nested_runtime_indexed_else_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_nested_runtime_indexed_distinct_root_else_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            nested_runtime_indexed_distinct_root_else_out_of_bounds_path.string() + " -o " +
+            nested_runtime_indexed_else_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(nested_runtime_indexed_else_out_of_bounds_executable) > 0);
     assert_diagnostic_failure_matrix(
         executable,
         static_indexed_aggregate_distinct_owner_left_reuse_path,

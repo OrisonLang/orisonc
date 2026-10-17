@@ -3582,3 +3582,6 @@ representation.
 - 2026-10-16 Matching runtime-indexed distinct-root selection now has nested fixed-array production coverage and
   explicit post-transfer safety coverage for both candidate owners at direct and nested paths. Every production mode
   rejects later owned reads with the canonical symbolic runtime-index owner.
+- 2026-10-16 Runtime-indexed distinct-root selection now has direct and nested bounds-failure coverage for both
+  ternary outcomes. LLVM emission retains fixed-array guards and trap blocks, object and executable production
+  succeed, and runtime execution terminates before projecting an out-of-range selected descriptor.
