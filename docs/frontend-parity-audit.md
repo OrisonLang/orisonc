@@ -3471,3 +3471,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-17: Reusable distinct-root runtime-index proofs now preserve integer width and signedness. Source-query
   coverage accepts contextual integer literals and rejects mixed-width arithmetic, mixed-signedness ternary arms, and
   mixed-width comparison conditions before selected-owner lowering.
+- 2026-10-17: Reusable distinct-root runtime-index proofs now accept integer fields on named record-member paths.
+  Source-query coverage includes nested paths and rejects Boolean, mixed-width, call-rooted, and indexed-rooted
+  projections. Production CLI coverage verifies one nested field load per reachable selection branch, shared use
+  across both aggregate roots, LLVM emission, object emission, executable linking, and runtime behavior.

@@ -725,6 +725,42 @@ int main() {
             },
         },
     });
+    context.records.emplace("IndexConfig", orison::lowering::LoweredRecordLayout {
+        .name = "IndexConfig",
+        .llvm_type_name = "%record.IndexConfig",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "selected",
+                .source_type_name = "UInt64",
+                .llvm_type = "i64",
+                .index = 0,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "narrow",
+                .source_type_name = "UInt32",
+                .llvm_type = "i32",
+                .index = 1,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "enabled",
+                .source_type_name = "Bool",
+                .llvm_type = "i1",
+                .index = 2,
+            },
+        },
+    });
+    context.records.emplace("IndexSettings", orison::lowering::LoweredRecordLayout {
+        .name = "IndexSettings",
+        .llvm_type_name = "%record.IndexSettings",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "indexes",
+                .source_type_name = "IndexConfig",
+                .llvm_type = "%record.IndexConfig",
+                .index = 0,
+            },
+        },
+    });
     context.functions.emplace("make_bucket", orison::lowering::LoweredFunctionSignature {
         .return_type = "%record.Bucket",
         .return_signedness = orison::lowering::IntegerSignedness::not_integer,
@@ -926,6 +962,9 @@ int main() {
     state.source_type_names["narrow_index"] = "UInt32";
     state.source_type_names["signed_index"] = "Int64";
     state.source_type_names["flag"] = "Bool";
+    state.source_type_names["index_config"] = "IndexConfig";
+    state.source_type_names["index_settings"] = "IndexSettings";
+    state.source_type_names["index_configs"] = "Array<IndexConfig, 2>";
 
     auto distinct_holder_selection = [](
         orison::syntax::ExpressionSyntax left_index_expression,
@@ -986,6 +1025,54 @@ int main() {
         distinct_holder_selection(
             binary(name("dynamic_index"), "+", integer_literal("1")),
             binary(name("dynamic_index"), "+", integer_literal("1"))
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(name("index_config"), "selected"),
+            member(name("index_config"), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(member(name("index_settings"), "indexes"), "selected"),
+            member(member(name("index_settings"), "indexes"), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(name("index_config"), "enabled"),
+            member(name("index_config"), "enabled")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(call("make_index_config"), "selected"),
+            member(call("make_index_config"), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(index(name("index_configs")), "selected"),
+            member(index(name("index_configs")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            binary(member(name("index_config"), "selected"), "+", member(name("index_config"), "narrow")),
+            binary(member(name("index_config"), "selected"), "+", member(name("index_config"), "narrow"))
         ),
         context,
         state

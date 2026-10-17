@@ -3602,3 +3602,7 @@ representation.
 - 2026-10-17 Reusable runtime-index proofs now retain concrete LLVM integer width and signedness. Binary operands,
   comparison operands, and ternary result arms must have matching concrete types; unsuffixed integer literals remain
   contextual and adopt the compatible concrete operand type.
+- 2026-10-17 Reusable runtime-index proofs now accept integer record fields reached through member-only paths rooted
+  in named bindings. Nested fields retain their concrete integer width and signedness, and each selected branch loads
+  one shared index for both aggregate roots. Call-rooted, indexed-rooted, null-safe, and non-integer projections remain
+  excluded.

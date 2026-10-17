@@ -3607,6 +3607,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_computed_for_run.or";
     auto runtime_indexed_distinct_root_pure_ternary_dynamic_array_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_ternary_for_run.or";
+    auto runtime_indexed_distinct_root_pure_member_dynamic_array_path =
+        fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run.or";
     auto runtime_indexed_distinct_root_call_index_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_call_index_rejected.or";
     auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
@@ -5107,6 +5109,40 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_indexed_distinct_root_pure_ternary_dynamic_array_path,
         smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_ternary_for_run"
+    );
+    assert_run_success(executable, runtime_indexed_distinct_root_pure_member_dynamic_array_path);
+    auto runtime_indexed_distinct_root_pure_member_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_indexed_distinct_root_pure_member_dynamic_array_path.string()
+    );
+    assert_contains(
+        runtime_indexed_distinct_root_pure_member_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    auto first_member_index_address = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr %record.IndexConfig"
+    );
+    assert(first_member_index_address != std::string::npos);
+    auto second_member_index_address = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr %record.IndexConfig",
+        first_member_index_address + 1
+    );
+    assert(second_member_index_address != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_member_ir.find(
+            "getelementptr %record.IndexConfig",
+            second_member_index_address + 1
+        ) == std::string::npos
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_indexed_distinct_root_pure_member_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_indexed_distinct_root_pure_member_dynamic_array_path,
+        smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run"
     );
     assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
         executable,

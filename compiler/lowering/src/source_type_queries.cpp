@@ -130,6 +130,14 @@ auto reusable_runtime_index_type(
     FunctionLoweringState const& state
 ) -> std::optional<ReusableRuntimeIndexType>;
 
+auto named_member_path(syntax::ExpressionSyntax const& expression) -> bool {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        return true;
+    }
+    return expression.kind == syntax::ExpressionKind::member_access &&
+        expression.left != nullptr && named_member_path(*expression.left);
+}
+
 auto merge_reusable_runtime_index_types(
     ReusableRuntimeIndexType const& left,
     ReusableRuntimeIndexType const& right
@@ -200,6 +208,21 @@ auto reusable_runtime_index_type(
             }
             return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};
         }
+        case ExpressionKind::member_access: {
+            if (!named_member_path(expression)) {
+                return std::nullopt;
+            }
+            auto source_type = source_type_name_for_expression(expression, context, state);
+            if (!source_type.has_value()) {
+                return std::nullopt;
+            }
+            auto lowered_type = lowered_type_for_source_type_name(*source_type, context);
+            if (!lowered_type.has_value() ||
+                lowered_type->signedness == IntegerSignedness::not_integer) {
+                return std::nullopt;
+            }
+            return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};
+        }
         case ExpressionKind::integer_literal:
             return ReusableRuntimeIndexType {.contextual_literal = true};
         case ExpressionKind::unary:
@@ -252,7 +275,6 @@ auto reusable_runtime_index_type(
         case ExpressionKind::task:
         case ExpressionKind::thread:
         case ExpressionKind::call:
-        case ExpressionKind::member_access:
         case ExpressionKind::null_safe_member_access:
         case ExpressionKind::index_access:
             return std::nullopt;
