@@ -3599,3 +3599,6 @@ representation.
 - 2026-10-17 Reusable runtime-index proofs now accept ternaries with pure Boolean conditions and integer-producing
   result arms. The selected integer is lowered once per reachable outer-selection branch and reused for both aggregate
   roots. Non-Boolean conditions and non-integer result arms remain rejected.
+- 2026-10-17 Reusable runtime-index proofs now retain concrete LLVM integer width and signedness. Binary operands,
+  comparison operands, and ternary result arms must have matching concrete types; unsuffixed integer literals remain
+  contextual and adopt the compatible concrete operand type.

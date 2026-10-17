@@ -923,6 +923,8 @@ int main() {
     state.source_type_names["other_holder"] = "Holder";
     state.source_type_names["dynamic_index"] = "UInt64";
     state.source_type_names["index_offset"] = "UInt64";
+    state.source_type_names["narrow_index"] = "UInt32";
+    state.source_type_names["signed_index"] = "Int64";
     state.source_type_names["flag"] = "Bool";
 
     auto distinct_holder_selection = [](
@@ -976,6 +978,46 @@ int main() {
         distinct_holder_selection(
             ternary(name("flag"), name("dynamic_index"), name("flag")),
             ternary(name("flag"), name("dynamic_index"), name("flag"))
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            binary(name("dynamic_index"), "+", integer_literal("1")),
+            binary(name("dynamic_index"), "+", integer_literal("1"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            binary(name("dynamic_index"), "+", name("narrow_index")),
+            binary(name("dynamic_index"), "+", name("narrow_index"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(name("flag"), name("dynamic_index"), name("signed_index")),
+            ternary(name("flag"), name("dynamic_index"), name("signed_index"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                binary(name("dynamic_index"), "<", name("narrow_index")),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                binary(name("dynamic_index"), "<", name("narrow_index")),
+                name("dynamic_index"),
+                name("index_offset")
+            )
         ),
         context,
         state

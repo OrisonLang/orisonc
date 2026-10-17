@@ -119,11 +119,32 @@ auto named_or_static_indexed_dynamic_array_leaf(
     return static_indexed_aggregate_owner_name(expression).has_value();
 }
 
-auto reusable_runtime_index_expression(
+struct ReusableRuntimeIndexType {
+    LoweredType type;
+    bool contextual_literal = false;
+};
+
+auto reusable_runtime_index_type(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
-) -> bool;
+) -> std::optional<ReusableRuntimeIndexType>;
+
+auto merge_reusable_runtime_index_types(
+    ReusableRuntimeIndexType const& left,
+    ReusableRuntimeIndexType const& right
+) -> std::optional<ReusableRuntimeIndexType> {
+    if (left.contextual_literal) {
+        return right;
+    }
+    if (right.contextual_literal) {
+        return left;
+    }
+    if (left.type.type != right.type.type || left.type.signedness != right.type.signedness) {
+        return std::nullopt;
+    }
+    return left;
+}
 
 auto pure_boolean_expression(
     syntax::ExpressionSyntax const& expression,
@@ -150,54 +171,80 @@ auto pure_boolean_expression(
         return pure_boolean_expression(*expression.left, context, state) &&
             pure_boolean_expression(*expression.right, context, state);
     }
-    return (expression.text == "==" || expression.text == "!=" || expression.text == "<" ||
-            expression.text == "<=" || expression.text == ">" || expression.text == ">=") &&
-        reusable_runtime_index_expression(*expression.left, context, state) &&
-        reusable_runtime_index_expression(*expression.right, context, state);
+    if (expression.text != "==" && expression.text != "!=" && expression.text != "<" &&
+        expression.text != "<=" && expression.text != ">" && expression.text != ">=") {
+        return false;
+    }
+    auto left_type = reusable_runtime_index_type(*expression.left, context, state);
+    auto right_type = reusable_runtime_index_type(*expression.right, context, state);
+    return left_type.has_value() && right_type.has_value() &&
+        merge_reusable_runtime_index_types(*left_type, *right_type).has_value();
 }
 
-auto reusable_runtime_index_expression(
+auto reusable_runtime_index_type(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
-) -> bool {
+) -> std::optional<ReusableRuntimeIndexType> {
     using syntax::ExpressionKind;
     switch (expression.kind) {
         case ExpressionKind::name: {
             auto source_type = state.source_type_names.find(expression.text);
             if (source_type == state.source_type_names.end()) {
-                return false;
+                return std::nullopt;
             }
             auto lowered_type = lowered_type_for_source_type_name(source_type->second, context);
-            return lowered_type.has_value() &&
-                lowered_type->signedness != IntegerSignedness::not_integer;
+            if (!lowered_type.has_value() ||
+                lowered_type->signedness == IntegerSignedness::not_integer) {
+                return std::nullopt;
+            }
+            return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};
         }
         case ExpressionKind::integer_literal:
-            return true;
+            return ReusableRuntimeIndexType {.contextual_literal = true};
         case ExpressionKind::unary:
-            return expression.left != nullptr &&
-                (expression.text == "-" || expression.text == "bit_not") &&
-                reusable_runtime_index_expression(*expression.left, context, state);
+            if (expression.left == nullptr ||
+                (expression.text != "-" && expression.text != "bit_not")) {
+                return std::nullopt;
+            }
+            return reusable_runtime_index_type(*expression.left, context, state);
         case ExpressionKind::cast: {
             auto lowered_type = lowered_type_for_source_type_name(expression.text, context);
-            return expression.left != nullptr && lowered_type.has_value() &&
-                lowered_type->signedness != IntegerSignedness::not_integer &&
-                is_pure_runtime_index_expression(*expression.left);
+            if (expression.left == nullptr || !lowered_type.has_value() ||
+                lowered_type->signedness == IntegerSignedness::not_integer ||
+                !is_pure_runtime_index_expression(*expression.left)) {
+                return std::nullopt;
+            }
+            return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};
         }
-        case ExpressionKind::binary:
-            return expression.left != nullptr && expression.right != nullptr &&
-                (expression.text == "+" || expression.text == "-" || expression.text == "*" ||
-                 expression.text == "/" || expression.text == "%" || expression.text == "bit_and" ||
-                 expression.text == "bit_or" || expression.text == "bit_xor" ||
-                 expression.text == "shift_left" || expression.text == "shift_right") &&
-                reusable_runtime_index_expression(*expression.left, context, state) &&
-                reusable_runtime_index_expression(*expression.right, context, state);
-        case ExpressionKind::ternary:
-            return expression.left != nullptr && expression.right != nullptr &&
-                expression.alternate != nullptr &&
-                pure_boolean_expression(*expression.left, context, state) &&
-                reusable_runtime_index_expression(*expression.right, context, state) &&
-                reusable_runtime_index_expression(*expression.alternate, context, state);
+        case ExpressionKind::binary: {
+            if (expression.left == nullptr || expression.right == nullptr ||
+                (expression.text != "+" && expression.text != "-" && expression.text != "*" &&
+                 expression.text != "/" && expression.text != "%" && expression.text != "bit_and" &&
+                 expression.text != "bit_or" && expression.text != "bit_xor" &&
+                 expression.text != "shift_left" && expression.text != "shift_right")) {
+                return std::nullopt;
+            }
+            auto left_type = reusable_runtime_index_type(*expression.left, context, state);
+            auto right_type = reusable_runtime_index_type(*expression.right, context, state);
+            if (!left_type.has_value() || !right_type.has_value()) {
+                return std::nullopt;
+            }
+            return merge_reusable_runtime_index_types(*left_type, *right_type);
+        }
+        case ExpressionKind::ternary: {
+            if (expression.left == nullptr || expression.right == nullptr ||
+                expression.alternate == nullptr ||
+                !pure_boolean_expression(*expression.left, context, state)) {
+                return std::nullopt;
+            }
+            auto then_type = reusable_runtime_index_type(*expression.right, context, state);
+            auto else_type = reusable_runtime_index_type(*expression.alternate, context, state);
+            if (!then_type.has_value() || !else_type.has_value()) {
+                return std::nullopt;
+            }
+            return merge_reusable_runtime_index_types(*then_type, *else_type);
+        }
         case ExpressionKind::float_literal:
         case ExpressionKind::string_literal:
         case ExpressionKind::boolean_literal:
@@ -208,9 +255,9 @@ auto reusable_runtime_index_expression(
         case ExpressionKind::member_access:
         case ExpressionKind::null_safe_member_access:
         case ExpressionKind::index_access:
-            return false;
+            return std::nullopt;
     }
-    return false;
+    return std::nullopt;
 }
 
 auto matching_name_indexed_distinct_root_paths(
@@ -254,8 +301,8 @@ auto matching_name_indexed_distinct_root_paths(
             }
             continue;
         }
-        if (!reusable_runtime_index_expression(*left_step.index_expression, context, state) ||
-            !reusable_runtime_index_expression(*right_step.index_expression, context, state) ||
+        if (!reusable_runtime_index_type(*left_step.index_expression, context, state).has_value() ||
+            !reusable_runtime_index_type(*right_step.index_expression, context, state).has_value() ||
             runtime_index_expression_key(*left_step.index_expression) !=
                 runtime_index_expression_key(*right_step.index_expression)) {
             return false;
