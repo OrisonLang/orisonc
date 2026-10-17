@@ -464,6 +464,12 @@ auto plan_dynamic_array_iterable_descriptor(
     FunctionLoweringState const& state
 ) -> DynamicArrayIterableDescriptorPlan;
 
+auto runtime_indexed_distinct_owner_selection_supported(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool;
+
 auto returned_aggregate_computed_dynamic_array_owner_name(
     syntax::ExpressionSyntax const& expression
 ) -> std::optional<std::string>;

@@ -3575,3 +3575,7 @@ representation.
 - 2026-10-16 Static-indexed distinct-owner ternary transfer now has explicit post-transfer safety coverage for both
   candidate projections in direct and nested fixed-array paths. Every production mode rejects a later owned read with
   the canonical projected use-after-move owner.
+- 2026-10-16 Runtime-indexed distinct-owner ternary iteration now accepts matching fixed-array projection paths rooted
+  in two different named aggregates of the same type when every runtime index is the same name-only expression. The
+  emitter resolves both descriptors inside the selected branch with bounds checks, finalizes both source descriptors,
+  and preserves automatic owned-element cleanup. Different index identities and same-root paths remain rejected.

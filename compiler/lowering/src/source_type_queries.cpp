@@ -119,6 +119,55 @@ auto named_or_static_indexed_dynamic_array_leaf(
     return static_indexed_aggregate_owner_name(expression).has_value();
 }
 
+auto matching_name_indexed_distinct_root_paths(
+    syntax::ExpressionSyntax const& left,
+    syntax::ExpressionSyntax const& right
+) -> bool {
+    auto left_path = collect_named_aggregate_path(left);
+    auto right_path = collect_named_aggregate_path(right);
+    if (!left_path.has_value() || !right_path.has_value() ||
+        left_path->base_expression == nullptr || right_path->base_expression == nullptr ||
+        left_path->base_expression->text == right_path->base_expression->text ||
+        left_path->steps.size() != right_path->steps.size()) {
+        return false;
+    }
+
+    auto saw_runtime_index = false;
+    for (auto index = std::size_t {0}; index < left_path->steps.size(); ++index) {
+        auto const& left_step = left_path->steps[index];
+        auto const& right_step = right_path->steps[index];
+        if (left_step.kind != right_step.kind) {
+            return false;
+        }
+        if (left_step.kind == AggregatePathStepKind::member) {
+            if (left_step.field_name != right_step.field_name) {
+                return false;
+            }
+            continue;
+        }
+        if (left_step.index_expression == nullptr || right_step.index_expression == nullptr) {
+            return false;
+        }
+
+        auto left_literal = decimal_integer_literal_text(*left_step.index_expression);
+        auto right_literal = decimal_integer_literal_text(*right_step.index_expression);
+        if (left_literal.has_value() || right_literal.has_value()) {
+            if (!left_literal.has_value() || !right_literal.has_value() ||
+                *left_literal != *right_literal) {
+                return false;
+            }
+            continue;
+        }
+        if (left_step.index_expression->kind != syntax::ExpressionKind::name ||
+            right_step.index_expression->kind != syntax::ExpressionKind::name ||
+            left_step.index_expression->text != right_step.index_expression->text) {
+            return false;
+        }
+        saw_runtime_index = true;
+    }
+    return saw_runtime_index;
+}
+
 auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
     auto cloned = syntax::ExpressionSyntax {
         .kind = expression.kind,
@@ -2301,6 +2350,33 @@ auto plan_dynamic_array_iterable_descriptor(
     return plan;
 }
 
+auto runtime_indexed_distinct_owner_selection_supported(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    if (expression.kind != syntax::ExpressionKind::ternary ||
+        expression.right == nullptr || expression.alternate == nullptr ||
+        !matching_name_indexed_distinct_root_paths(*expression.right, *expression.alternate)) {
+        return false;
+    }
+
+    auto left_path = collect_named_aggregate_path(*expression.right);
+    auto right_path = collect_named_aggregate_path(*expression.alternate);
+    auto left_root_type = source_type_name_for_expression(
+        *left_path->base_expression,
+        context,
+        state
+    );
+    auto right_root_type = source_type_name_for_expression(
+        *right_path->base_expression,
+        context,
+        state
+    );
+    return left_root_type.has_value() && right_root_type.has_value() &&
+        *left_root_type == *right_root_type;
+}
+
 auto dynamic_array_iterable_cleanup_owner_proof_status_report(
     DynamicArrayIterableCleanupOwnerProofStatus status
 ) -> std::string {
@@ -2404,8 +2480,9 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
             expression.alternate != nullptr &&
             named_or_static_indexed_dynamic_array_leaf(*expression.right) &&
             named_or_static_indexed_dynamic_array_leaf(*expression.alternate) &&
-            !contains_runtime_indexed_projection(*expression.right) &&
-            !contains_runtime_indexed_projection(*expression.alternate) &&
+            ((!contains_runtime_indexed_projection(*expression.right) &&
+                 !contains_runtime_indexed_projection(*expression.alternate)) ||
+                runtime_indexed_distinct_owner_selection_supported(expression, context, state)) &&
             branch_descriptors.size() == 2 &&
             branch_descriptors[0].owner_name != branch_descriptors[1].owner_name;
         auto const selected_owner_name = computed_dynamic_array_selected_owner_name(state);

@@ -630,8 +630,16 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         context.lowering,
         session.state
     );
-    if (!then_descriptor.can_lower_now || !else_descriptor.can_lower_now ||
-        then_descriptor.owner_name == else_descriptor.owner_name ||
+    auto const runtime_indexed_selection = runtime_indexed_distinct_owner_selection_supported(
+        expression,
+        context.lowering,
+        session.state
+    );
+    if ((!then_descriptor.can_lower_now || !else_descriptor.can_lower_now) &&
+        !runtime_indexed_selection) {
+        return false;
+    }
+    if (then_descriptor.owner_name == else_descriptor.owner_name ||
         then_descriptor.descriptor_storage == else_descriptor.descriptor_storage) {
         return false;
     }
@@ -697,9 +705,34 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         auto branch_scope = BranchBindingScope {session.state};
         emit_llvm_block_label(output, conditional.then_block);
         session.state.current_block = conditional.then_block;
+        auto then_descriptor_storage = then_descriptor.descriptor_storage;
+        auto else_descriptor_storage = else_descriptor.descriptor_storage;
+        if (runtime_indexed_selection) {
+            auto lowered_then_storage = lower_named_runtime_index_aggregate_descriptor_storage(
+                *expression.right,
+                then_descriptor.owner_name,
+                source_type_name,
+                context,
+                session,
+                output
+            );
+            auto lowered_else_storage = lower_named_runtime_index_aggregate_descriptor_storage(
+                *expression.alternate,
+                else_descriptor.owner_name,
+                source_type_name,
+                context,
+                session,
+                output
+            );
+            if (!lowered_then_storage.has_value() || !lowered_else_storage.has_value()) {
+                return false;
+            }
+            then_descriptor_storage = std::move(*lowered_then_storage);
+            else_descriptor_storage = std::move(*lowered_else_storage);
+        }
         auto const then_value = "%" + llvm_identifier_fragment(owner_name) + ".then";
-        output << emit_dynamic_array_descriptor_load(then_value, then_descriptor.descriptor_storage);
-        output << emit_dynamic_array_descriptor_finalization(then_descriptor.descriptor_storage);
+        output << emit_dynamic_array_descriptor_load(then_value, then_descriptor_storage);
+        output << emit_dynamic_array_descriptor_finalization(then_descriptor_storage);
         mark_owned_binding_consumed(session.state.ownership_transfers, then_descriptor.owner_name);
         auto const else_cleanup_descriptor =
             "%" + llvm_identifier_fragment(owner_name) + ".else.unselected";
@@ -708,7 +741,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         auto const else_cleanup_capacity = else_cleanup_descriptor + ".capacity";
         output << emit_dynamic_array_descriptor_load(
             else_cleanup_descriptor,
-            else_descriptor.descriptor_storage
+            else_descriptor_storage
         );
         output << emit_dynamic_array_descriptor_field_projection(
             else_cleanup_data,
@@ -743,7 +776,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
             else_cleanup_data,
             else_cleanup_capacity
         );
-        output << emit_dynamic_array_descriptor_finalization(else_descriptor.descriptor_storage);
+        output << emit_dynamic_array_descriptor_finalization(else_descriptor_storage);
         mark_owned_binding_consumed(session.state.ownership_transfers, else_descriptor.owner_name);
         auto const then_predecessor = session.state.current_block;
         emit_llvm_branch(output, conditional.merge_block);
@@ -751,9 +784,34 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         branch_scope.reset();
         emit_llvm_block_label(output, conditional.else_block);
         session.state.current_block = conditional.else_block;
+        then_descriptor_storage = then_descriptor.descriptor_storage;
+        else_descriptor_storage = else_descriptor.descriptor_storage;
+        if (runtime_indexed_selection) {
+            auto lowered_then_storage = lower_named_runtime_index_aggregate_descriptor_storage(
+                *expression.right,
+                then_descriptor.owner_name,
+                source_type_name,
+                context,
+                session,
+                output
+            );
+            auto lowered_else_storage = lower_named_runtime_index_aggregate_descriptor_storage(
+                *expression.alternate,
+                else_descriptor.owner_name,
+                source_type_name,
+                context,
+                session,
+                output
+            );
+            if (!lowered_then_storage.has_value() || !lowered_else_storage.has_value()) {
+                return false;
+            }
+            then_descriptor_storage = std::move(*lowered_then_storage);
+            else_descriptor_storage = std::move(*lowered_else_storage);
+        }
         auto const else_value = "%" + llvm_identifier_fragment(owner_name) + ".else";
-        output << emit_dynamic_array_descriptor_load(else_value, else_descriptor.descriptor_storage);
-        output << emit_dynamic_array_descriptor_finalization(else_descriptor.descriptor_storage);
+        output << emit_dynamic_array_descriptor_load(else_value, else_descriptor_storage);
+        output << emit_dynamic_array_descriptor_finalization(else_descriptor_storage);
         mark_owned_binding_consumed(session.state.ownership_transfers, else_descriptor.owner_name);
         auto const then_cleanup_descriptor =
             "%" + llvm_identifier_fragment(owner_name) + ".then.unselected";
@@ -762,7 +820,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
         auto const then_cleanup_capacity = then_cleanup_descriptor + ".capacity";
         output << emit_dynamic_array_descriptor_load(
             then_cleanup_descriptor,
-            then_descriptor.descriptor_storage
+            then_descriptor_storage
         );
         output << emit_dynamic_array_descriptor_field_projection(
             then_cleanup_data,
@@ -797,7 +855,7 @@ inline auto seed_distinct_owner_computed_dynamic_array_descriptor_storage(
             then_cleanup_data,
             then_cleanup_capacity
         );
-        output << emit_dynamic_array_descriptor_finalization(then_descriptor.descriptor_storage);
+        output << emit_dynamic_array_descriptor_finalization(then_descriptor_storage);
         mark_owned_binding_consumed(session.state.ownership_transfers, then_descriptor.owner_name);
         auto const else_predecessor = session.state.current_block;
         emit_llvm_branch(output, conditional.merge_block);
