@@ -1046,6 +1046,22 @@ auto is_integer_llvm_type_impl(std::string_view type) -> bool {
     return type == "i8" || type == "i16" || type == "i32" || type == "i64";
 }
 
+auto llvm_integer_bit_width(std::string_view type) -> std::optional<unsigned> {
+    if (type == "i8") {
+        return 8;
+    }
+    if (type == "i16") {
+        return 16;
+    }
+    if (type == "i32") {
+        return 32;
+    }
+    if (type == "i64") {
+        return 64;
+    }
+    return std::nullopt;
+}
+
 auto is_decimal_integer_text(std::string_view text) -> bool {
     return !text.empty() && std::ranges::all_of(text, [](char value) {
         return std::isdigit(static_cast<unsigned char>(value)) != 0;
@@ -4389,6 +4405,42 @@ auto lowered_expression(
                 "negative value to " + expression.text
             );
             return std::nullopt;
+        }
+        auto operand_type = inferred_expression_type(*expression.left, context, state);
+        if (operand_type.has_value() && is_integer_llvm_type_impl(operand_type->type) &&
+            operand_type->signedness != IntegerSignedness::not_integer &&
+            is_integer_llvm_type_impl(expected_llvm_type)) {
+            auto operand = lowered_expression(
+                *expression.left,
+                operand_type->type,
+                operand_type->signedness,
+                context,
+                session,
+                output
+            );
+            if (!operand.has_value()) {
+                return std::nullopt;
+            }
+            if (operand_type->type == expected_llvm_type) {
+                operand->signedness = cast_type->signedness;
+                return operand;
+            }
+            auto source_width = llvm_integer_bit_width(operand_type->type);
+            auto target_width = llvm_integer_bit_width(expected_llvm_type);
+            if (!source_width.has_value() || !target_width.has_value()) {
+                return std::nullopt;
+            }
+            auto instruction = *source_width < *target_width
+                ? (operand_type->signedness == IntegerSignedness::signed_integer ? "sext" : "zext")
+                : "trunc";
+            auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+            output << "  " << temporary_name << " = " << instruction << " " << operand_type->type
+                   << " " << operand->value << " to " << expected_llvm_type << "\n";
+            return LoweredExpression {
+                .type = std::string {expected_llvm_type},
+                .value = std::move(temporary_name),
+                .signedness = cast_type->signedness,
+            };
         }
         if (auto nested = lowered_expression(
                 *expression.left,

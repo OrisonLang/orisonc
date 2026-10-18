@@ -3475,3 +3475,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   Source-query coverage includes nested paths and rejects Boolean, mixed-width, call-rooted, and indexed-rooted
   projections. Production CLI coverage verifies one nested field load per reachable selection branch, shared use
   across both aggregate roots, LLVM emission, object emission, executable linking, and runtime behavior.
+- 2026-10-17: Reusable distinct-root runtime-index casts now use the typed operand proof. Coverage accepts a nested
+  `UInt32` member widened to `UInt64`, rejects Boolean names and fields cast to integers, and verifies one `zext` per
+  reachable selection branch through LLVM emission, object emission, executable linking, and runtime behavior.

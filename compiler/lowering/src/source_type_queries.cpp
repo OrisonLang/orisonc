@@ -235,7 +235,7 @@ auto reusable_runtime_index_type(
             auto lowered_type = lowered_type_for_source_type_name(expression.text, context);
             if (expression.left == nullptr || !lowered_type.has_value() ||
                 lowered_type->signedness == IntegerSignedness::not_integer ||
-                !is_pure_runtime_index_expression(*expression.left)) {
+                !reusable_runtime_index_type(*expression.left, context, state).has_value()) {
                 return std::nullopt;
             }
             return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};

@@ -5134,6 +5134,19 @@ auto main(int argc, char** argv) -> int {
             second_member_index_address + 1
         ) == std::string::npos
     );
+    auto first_member_index_cast = runtime_indexed_distinct_root_pure_member_ir.find("zext i32");
+    assert(first_member_index_cast != std::string::npos);
+    auto second_member_index_cast = runtime_indexed_distinct_root_pure_member_ir.find(
+        "zext i32",
+        first_member_index_cast + 1
+    );
+    assert(second_member_index_cast != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_member_ir.find(
+            "zext i32",
+            second_member_index_cast + 1
+        ) == std::string::npos
+    );
     assert_emit_object_success(
         executable,
         runtime_indexed_distinct_root_pure_member_dynamic_array_path,

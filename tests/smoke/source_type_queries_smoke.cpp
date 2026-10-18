@@ -1045,6 +1045,30 @@ int main() {
         context,
         state
     ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            cast(member(member(name("index_settings"), "indexes"), "narrow"), "UInt64"),
+            cast(member(member(name("index_settings"), "indexes"), "narrow"), "UInt64")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            cast(member(name("index_config"), "enabled"), "UInt64"),
+            cast(member(name("index_config"), "enabled"), "UInt64")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            cast(name("flag"), "UInt64"),
+            cast(name("flag"), "UInt64")
+        ),
+        context,
+        state
+    ));
     assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             member(name("index_config"), "enabled"),

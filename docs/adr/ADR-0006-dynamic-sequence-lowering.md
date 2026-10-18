@@ -3606,3 +3606,7 @@ representation.
   in named bindings. Nested fields retain their concrete integer width and signedness, and each selected branch loads
   one shared index for both aggregate roots. Call-rooted, indexed-rooted, null-safe, and non-integer projections remain
   excluded.
+- 2026-10-17 Reusable runtime-index cast proofs now recursively require an integer-producing operand as well as an
+  integer target. Nested integer member fields can therefore be widened or narrowed before reuse, while Boolean and
+  other non-integer operands remain excluded. General expression lowering now emits the required `zext`, `sext`, or
+  `trunc` instruction for non-literal integer width conversions.
