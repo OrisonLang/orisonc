@@ -3482,3 +3482,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   fixed-array paths. Source-query coverage accepts direct and nested static paths and rejects dynamic path indexes and
   non-integer leaves. Production coverage verifies one `groups[0]` projection and one widened scalar load per reachable
   selection branch across LLVM emission, object emission, executable linking, and runtime behavior.
+- 2026-10-17: Reusable distinct-root runtime indexes now accept compile-time fixed-array integer elements as direct
+  leaves. Source-query coverage accepts top-level and nested arrays and rejects dynamic indexes and Boolean elements.
+  Production coverage composes `groups[0].selected` with `indices[0]` and verifies one projection of each per reachable
+  selection branch across LLVM emission, object emission, executable linking, and runtime behavior.

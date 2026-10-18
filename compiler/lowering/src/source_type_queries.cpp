@@ -232,7 +232,8 @@ auto reusable_runtime_index_type(
             }
             return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};
         }
-        case ExpressionKind::member_access: {
+        case ExpressionKind::member_access:
+        case ExpressionKind::index_access: {
             if (!named_static_member_path(expression, context)) {
                 return std::nullopt;
             }
@@ -300,7 +301,6 @@ auto reusable_runtime_index_type(
         case ExpressionKind::thread:
         case ExpressionKind::call:
         case ExpressionKind::null_safe_member_access:
-        case ExpressionKind::index_access:
             return std::nullopt;
     }
     return std::nullopt;

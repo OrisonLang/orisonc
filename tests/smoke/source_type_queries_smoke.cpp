@@ -765,6 +765,18 @@ int main() {
                 .llvm_type = "[2 x %record.IndexConfig]",
                 .index = 1,
             },
+            orison::lowering::LoweredRecordField {
+                .name = "indices",
+                .source_type_name = "Array<UInt32, 2>",
+                .llvm_type = "[2 x i32]",
+                .index = 2,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "flags",
+                .source_type_name = "Array<Bool, 2>",
+                .llvm_type = "[2 x i1]",
+                .index = 3,
+            },
         },
     });
     context.functions.emplace("make_bucket", orison::lowering::LoweredFunctionSignature {
@@ -971,6 +983,8 @@ int main() {
     state.source_type_names["index_config"] = "IndexConfig";
     state.source_type_names["index_settings"] = "IndexSettings";
     state.source_type_names["index_configs"] = "Array<IndexConfig, 2>";
+    state.source_type_names["indices"] = "Array<UInt32, 2>";
+    state.source_type_names["index_flags"] = "Array<Bool, 2>";
 
     auto distinct_holder_selection = [](
         orison::syntax::ExpressionSyntax left_index_expression,
@@ -1104,6 +1118,32 @@ int main() {
             member(index(member(name("index_settings"), "groups")), "selected"),
             member(index(member(name("index_settings"), "groups")), "selected")
         ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(index(name("indices")), index(name("indices"))),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(member(name("index_settings"), "indices")),
+            index(member(name("index_settings"), "indices"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(name("indices"), name("dynamic_index")),
+            index(name("indices"), name("dynamic_index"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(index(name("index_flags")), index(name("index_flags"))),
         context,
         state
     ));

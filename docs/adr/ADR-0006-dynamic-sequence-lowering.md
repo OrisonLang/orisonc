@@ -3613,3 +3613,6 @@ representation.
 - 2026-10-17 Reusable runtime-index proofs now accept integer member fields reached through finite fixed-array paths
   rooted in named bindings. Array path steps require decimal integer literals, optionally cast to known integer types.
   Runtime-indexed, call-rooted, null-safe, and non-integer leaf projections remain excluded.
+- 2026-10-17 Reusable runtime-index proofs now accept integer fixed-array elements as direct leaves on the same finite
+  named paths. Direct and nested static element projections retain their concrete integer type; dynamic path indexes
+  and non-integer element arrays remain excluded.
