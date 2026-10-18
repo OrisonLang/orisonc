@@ -130,12 +130,36 @@ auto reusable_runtime_index_type(
     FunctionLoweringState const& state
 ) -> std::optional<ReusableRuntimeIndexType>;
 
-auto named_member_path(syntax::ExpressionSyntax const& expression) -> bool {
+auto static_integer_index(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::integer_literal) {
+        return decimal_integer_literal_text(expression).has_value();
+    }
+    if (expression.kind != syntax::ExpressionKind::cast || expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::integer_literal ||
+        !decimal_integer_literal_text(*expression.left).has_value()) {
+        return false;
+    }
+    auto target_type = lowered_type_for_source_type_name(expression.text, context);
+    return target_type.has_value() && target_type->signedness != IntegerSignedness::not_integer;
+}
+
+auto named_static_member_path(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context
+) -> bool {
     if (expression.kind == syntax::ExpressionKind::name) {
         return true;
     }
-    return expression.kind == syntax::ExpressionKind::member_access &&
-        expression.left != nullptr && named_member_path(*expression.left);
+    if (expression.kind == syntax::ExpressionKind::member_access) {
+        return expression.left != nullptr && named_static_member_path(*expression.left, context);
+    }
+    return expression.kind == syntax::ExpressionKind::index_access &&
+        expression.left != nullptr && expression.arguments.size() == 1 &&
+        named_static_member_path(*expression.left, context) &&
+        static_integer_index(expression.arguments.front(), context);
 }
 
 auto merge_reusable_runtime_index_types(
@@ -209,7 +233,7 @@ auto reusable_runtime_index_type(
             return ReusableRuntimeIndexType {.type = std::move(*lowered_type)};
         }
         case ExpressionKind::member_access: {
-            if (!named_member_path(expression)) {
+            if (!named_static_member_path(expression, context)) {
                 return std::nullopt;
             }
             auto source_type = source_type_name_for_expression(expression, context, state);

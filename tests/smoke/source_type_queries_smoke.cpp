@@ -759,6 +759,12 @@ int main() {
                 .llvm_type = "%record.IndexConfig",
                 .index = 0,
             },
+            orison::lowering::LoweredRecordField {
+                .name = "groups",
+                .source_type_name = "Array<IndexConfig, 2>",
+                .llvm_type = "[2 x %record.IndexConfig]",
+                .index = 1,
+            },
         },
     });
     context.functions.emplace("make_bucket", orison::lowering::LoweredFunctionSignature {
@@ -1085,10 +1091,42 @@ int main() {
         context,
         state
     ));
-    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             member(index(name("index_configs")), "selected"),
             member(index(name("index_configs")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(index(member(name("index_settings"), "groups")), "selected"),
+            member(index(member(name("index_settings"), "groups")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(index(name("index_configs"), name("dynamic_index")), "selected"),
+            member(index(name("index_configs"), name("dynamic_index")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(index(name("index_configs"), cast(integer_literal("0"), "Bool")), "selected"),
+            member(index(name("index_configs"), cast(integer_literal("0"), "Bool")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(index(name("index_configs")), "enabled"),
+            member(index(name("index_configs")), "enabled")
         ),
         context,
         state

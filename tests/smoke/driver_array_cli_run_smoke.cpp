@@ -5134,6 +5134,26 @@ auto main(int argc, char** argv) -> int {
             second_member_index_address + 1
         ) == std::string::npos
     );
+    auto static_member_cleanup_index = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x %record.IndexConfig]"
+    );
+    assert(static_member_cleanup_index != std::string::npos);
+    auto first_static_member_index = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x %record.IndexConfig]",
+        static_member_cleanup_index + 1
+    );
+    assert(first_static_member_index != std::string::npos);
+    auto second_static_member_index = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x %record.IndexConfig]",
+        first_static_member_index + 1
+    );
+    assert(second_static_member_index != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_member_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            second_static_member_index + 1
+        ) == std::string::npos
+    );
     auto first_member_index_cast = runtime_indexed_distinct_root_pure_member_ir.find("zext i32");
     assert(first_member_index_cast != std::string::npos);
     auto second_member_index_cast = runtime_indexed_distinct_root_pure_member_ir.find(

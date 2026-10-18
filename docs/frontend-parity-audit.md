@@ -3478,3 +3478,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-17: Reusable distinct-root runtime-index casts now use the typed operand proof. Coverage accepts a nested
   `UInt32` member widened to `UInt64`, rejects Boolean names and fields cast to integers, and verifies one `zext` per
   reachable selection branch through LLVM emission, object emission, executable linking, and runtime behavior.
+- 2026-10-17: Reusable distinct-root runtime indexes now accept integer fields reached through compile-time
+  fixed-array paths. Source-query coverage accepts direct and nested static paths and rejects dynamic path indexes and
+  non-integer leaves. Production coverage verifies one `groups[0]` projection and one widened scalar load per reachable
+  selection branch across LLVM emission, object emission, executable linking, and runtime behavior.

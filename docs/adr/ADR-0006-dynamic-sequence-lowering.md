@@ -3610,3 +3610,6 @@ representation.
   integer target. Nested integer member fields can therefore be widened or narrowed before reuse, while Boolean and
   other non-integer operands remain excluded. General expression lowering now emits the required `zext`, `sext`, or
   `trunc` instruction for non-literal integer width conversions.
+- 2026-10-17 Reusable runtime-index proofs now accept integer member fields reached through finite fixed-array paths
+  rooted in named bindings. Array path steps require decimal integer literals, optionally cast to known integer types.
+  Runtime-indexed, call-rooted, null-safe, and non-integer leaf projections remain excluded.
