@@ -3493,3 +3493,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-18: Nested runtime-indexed integer source paths now have source-query and production coverage. The production
   fixture composes `groups[0].selected`, `indices[slot]`, and `matrix[row][column]`; LLVM checks pin one ordered row and
   column guard plus one nested scalar projection per reachable branch, followed by object emission, linking, and run.
+- 2026-10-18: Runtime-indexed record-member source paths now have source-query and production coverage. The production
+  fixture composes `groups[group_slot].selected`, `indices[slot]`, and `matrix[row][column]`; LLVM checks pin each group
+  bounds guard before its branch-local member projection across object emission, executable linking, and runtime.

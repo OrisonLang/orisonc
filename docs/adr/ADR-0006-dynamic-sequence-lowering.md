@@ -3623,3 +3623,6 @@ representation.
 - 2026-10-18 Nested runtime-indexed integer source paths now have production verification. A composed
   `matrix[row][column]` leaf emits one row guard before one column guard in each reachable selection branch, projects
   the scalar once in that branch, and reuses the resulting outer aggregate index across both candidate roots.
+- 2026-10-18 Runtime-indexed record-member source paths now have production verification. A composed
+  `groups[group_slot].selected` leaf emits one group bounds guard before the record-member projection in each reachable
+  selection branch, then reuses the resulting outer aggregate index across both candidate roots.
