@@ -3499,3 +3499,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-18: Runtime-indexed integer source paths now have representative deepest-path bounds-failure coverage for
   both ternary outcomes. Invalid `matrix[row][column]` projections trap before the outer bucket-owner guard, while LLVM
   emission, object emission, and executable construction succeed for both selected branches.
+- 2026-10-18: Dependent runtime-indexed integer source paths now have production verification. For
+  `matrix[indices[slot] as UInt64][column]`, each selected branch emits the slot guard and scalar load before the cast,
+  derived row guard and projection, and column guard and projection; every stage is evaluated once before the outer
+  owner index.

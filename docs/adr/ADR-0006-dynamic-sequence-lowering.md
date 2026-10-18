@@ -3629,3 +3629,7 @@ representation.
 - 2026-10-18 Runtime-indexed integer source paths now have bounds-failure production coverage for both ternary
   outcomes. A deepest-path `matrix[row][column]` failure traps at the source projection before lowering reaches the
   outer bucket-owner index guard; object emission and executable construction remain valid for the trapping programs.
+- 2026-10-18 Dependent runtime-indexed integer source paths now have production verification. For
+  `matrix[indices[slot] as UInt64][column]`, each selected branch emits the slot guard and scalar load before the cast,
+  derived row guard and projection, and column guard and projection; every stage is evaluated once before the outer
+  owner index.

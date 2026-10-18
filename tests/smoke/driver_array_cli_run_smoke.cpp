@@ -3609,6 +3609,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_ternary_for_run.or";
     auto runtime_indexed_distinct_root_pure_member_dynamic_array_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run.or";
+    auto runtime_index_source_dependent_path =
+        fixtures / "dynamic_array_runtime_index_source_dependent_for_run.or";
     auto runtime_index_source_then_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_source_then_out_of_bounds.or";
     auto runtime_index_source_else_out_of_bounds_path =
@@ -5286,6 +5288,119 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_indexed_distinct_root_pure_member_dynamic_array_path,
         smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run"
+    );
+    assert_run_success(executable, runtime_index_source_dependent_path);
+    auto runtime_index_source_dependent_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " + runtime_index_source_dependent_path.string()
+    );
+    auto dependent_first_slot_guard = runtime_index_source_dependent_ir.find(
+        " = icmp ult i64 %slot, 2"
+    );
+    assert(dependent_first_slot_guard != std::string::npos);
+    auto dependent_second_slot_guard = runtime_index_source_dependent_ir.find(
+        " = icmp ult i64 %slot, 2",
+        dependent_first_slot_guard + 1
+    );
+    assert(dependent_second_slot_guard != std::string::npos);
+    assert(
+        runtime_index_source_dependent_ir.find(
+            " = icmp ult i64 %slot, 2",
+            dependent_second_slot_guard + 1
+        ) == std::string::npos
+    );
+    auto dependent_first_source_index = runtime_index_source_dependent_ir.find(
+        "getelementptr [2 x i32]",
+        dependent_first_slot_guard
+    );
+    assert(dependent_first_source_index != std::string::npos);
+    auto dependent_first_source_cast = runtime_index_source_dependent_ir.find(
+        "zext i32",
+        dependent_first_source_index
+    );
+    assert(dependent_first_source_cast != std::string::npos);
+    auto dependent_first_row_guard = runtime_index_source_dependent_ir.find(
+        " = icmp ult i64 ",
+        dependent_first_source_cast
+    );
+    assert(dependent_first_row_guard != std::string::npos);
+    auto dependent_first_row_projection = runtime_index_source_dependent_ir.find(
+        "getelementptr [2 x [2 x i32]]",
+        dependent_first_row_guard
+    );
+    assert(dependent_first_row_projection != std::string::npos);
+    auto dependent_first_column_guard = runtime_index_source_dependent_ir.find(
+        " = icmp ult i64 %column, 2",
+        dependent_first_row_projection
+    );
+    assert(dependent_first_column_guard != std::string::npos);
+    auto dependent_first_value_projection = runtime_index_source_dependent_ir.find(
+        "getelementptr [2 x i32]",
+        dependent_first_column_guard
+    );
+    assert(dependent_first_value_projection != std::string::npos);
+    assert(dependent_first_slot_guard < dependent_first_source_index);
+    assert(dependent_first_source_index < dependent_first_source_cast);
+    assert(dependent_first_source_cast < dependent_first_row_guard);
+    assert(dependent_first_row_guard < dependent_first_row_projection);
+    assert(dependent_first_row_projection < dependent_first_column_guard);
+    assert(dependent_first_column_guard < dependent_first_value_projection);
+    auto dependent_second_source_index = runtime_index_source_dependent_ir.find(
+        "getelementptr [2 x i32]",
+        dependent_second_slot_guard
+    );
+    assert(dependent_second_source_index != std::string::npos);
+    auto dependent_second_source_cast = runtime_index_source_dependent_ir.find(
+        "zext i32",
+        dependent_second_source_index
+    );
+    assert(dependent_second_source_cast != std::string::npos);
+    auto dependent_second_row_guard = runtime_index_source_dependent_ir.find(
+        " = icmp ult i64 ",
+        dependent_second_source_cast
+    );
+    assert(dependent_second_row_guard != std::string::npos);
+    auto dependent_second_row_projection = runtime_index_source_dependent_ir.find(
+        "getelementptr [2 x [2 x i32]]",
+        dependent_second_row_guard
+    );
+    assert(dependent_second_row_projection != std::string::npos);
+    auto dependent_second_column_guard = runtime_index_source_dependent_ir.find(
+        " = icmp ult i64 %column, 2",
+        dependent_second_row_projection
+    );
+    assert(dependent_second_column_guard != std::string::npos);
+    auto dependent_second_value_projection = runtime_index_source_dependent_ir.find(
+        "getelementptr [2 x i32]",
+        dependent_second_column_guard
+    );
+    assert(dependent_second_value_projection != std::string::npos);
+    assert(
+        runtime_index_source_dependent_ir.find(
+            "getelementptr [2 x [2 x i32]]",
+            dependent_second_row_projection + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_source_dependent_ir.find(
+            " = icmp ult i64 %column, 2",
+            dependent_second_column_guard + 1
+        ) == std::string::npos
+    );
+    assert(dependent_second_slot_guard < dependent_second_source_index);
+    assert(dependent_second_source_index < dependent_second_source_cast);
+    assert(dependent_second_source_cast < dependent_second_row_guard);
+    assert(dependent_second_row_guard < dependent_second_row_projection);
+    assert(dependent_second_row_projection < dependent_second_column_guard);
+    assert(dependent_second_column_guard < dependent_second_value_projection);
+    assert_emit_object_success(
+        executable,
+        runtime_index_source_dependent_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_source_dependent_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_for_run"
     );
     auto runtime_index_source_then_out_of_bounds_ir = read_successful_command_output(
         executable.string() + " --emit-llvm " + runtime_index_source_then_out_of_bounds_path.string()
