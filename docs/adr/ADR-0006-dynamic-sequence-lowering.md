@@ -3626,3 +3626,6 @@ representation.
 - 2026-10-18 Runtime-indexed record-member source paths now have production verification. A composed
   `groups[group_slot].selected` leaf emits one group bounds guard before the record-member projection in each reachable
   selection branch, then reuses the resulting outer aggregate index across both candidate roots.
+- 2026-10-18 Runtime-indexed integer source paths now have bounds-failure production coverage for both ternary
+  outcomes. A deepest-path `matrix[row][column]` failure traps at the source projection before lowering reaches the
+  outer bucket-owner index guard; object emission and executable construction remain valid for the trapping programs.

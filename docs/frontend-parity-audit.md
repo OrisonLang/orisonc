@@ -3496,3 +3496,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-18: Runtime-indexed record-member source paths now have source-query and production coverage. The production
   fixture composes `groups[group_slot].selected`, `indices[slot]`, and `matrix[row][column]`; LLVM checks pin each group
   bounds guard before its branch-local member projection across object emission, executable linking, and runtime.
+- 2026-10-18: Runtime-indexed integer source paths now have representative deepest-path bounds-failure coverage for
+  both ternary outcomes. Invalid `matrix[row][column]` projections trap before the outer bucket-owner guard, while LLVM
+  emission, object emission, and executable construction succeed for both selected branches.

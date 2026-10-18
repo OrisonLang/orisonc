@@ -3609,6 +3609,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_ternary_for_run.or";
     auto runtime_indexed_distinct_root_pure_member_dynamic_array_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run.or";
+    auto runtime_index_source_then_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_index_source_then_out_of_bounds.or";
+    auto runtime_index_source_else_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_index_source_else_out_of_bounds.or";
     auto runtime_indexed_distinct_root_call_index_path =
         fixtures / "dynamic_array_runtime_indexed_distinct_root_call_index_rejected.or";
     auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
@@ -5283,6 +5287,85 @@ auto main(int argc, char** argv) -> int {
         runtime_indexed_distinct_root_pure_member_dynamic_array_path,
         smoke_temp_root / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run"
     );
+    auto runtime_index_source_then_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " + runtime_index_source_then_out_of_bounds_path.string()
+    );
+    auto runtime_index_source_then_column_guard = runtime_index_source_then_out_of_bounds_ir.find(
+        " = icmp ult i64 %column, 2"
+    );
+    assert(runtime_index_source_then_column_guard != std::string::npos);
+    auto runtime_index_source_then_trap = runtime_index_source_then_out_of_bounds_ir.find(
+        "call void @__orison_dynamic_array_bounds_failed()",
+        runtime_index_source_then_column_guard
+    );
+    assert(runtime_index_source_then_trap != std::string::npos);
+    auto runtime_index_source_then_outer_guard = runtime_index_source_then_out_of_bounds_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        runtime_index_source_then_column_guard
+    );
+    assert(runtime_index_source_then_outer_guard != std::string::npos);
+    assert(runtime_index_source_then_column_guard < runtime_index_source_then_trap);
+    assert(runtime_index_source_then_trap < runtime_index_source_then_outer_guard);
+    read_failing_command_output(
+        executable.string() + " run " + runtime_index_source_then_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_source_then_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_then_out_of_bounds.o"
+    );
+    auto runtime_index_source_then_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_index_source_then_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_source_then_out_of_bounds_path.string() + " -o " +
+            runtime_index_source_then_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(runtime_index_source_then_out_of_bounds_executable) > 0);
+    auto runtime_index_source_else_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " + runtime_index_source_else_out_of_bounds_path.string()
+    );
+    auto runtime_index_source_else_first_column_guard = runtime_index_source_else_out_of_bounds_ir.find(
+        " = icmp ult i64 %column, 2"
+    );
+    assert(runtime_index_source_else_first_column_guard != std::string::npos);
+    auto runtime_index_source_else_column_guard = runtime_index_source_else_out_of_bounds_ir.find(
+        " = icmp ult i64 %column, 2",
+        runtime_index_source_else_first_column_guard + 1
+    );
+    assert(runtime_index_source_else_column_guard != std::string::npos);
+    auto runtime_index_source_else_trap = runtime_index_source_else_out_of_bounds_ir.find(
+        "call void @__orison_dynamic_array_bounds_failed()",
+        runtime_index_source_else_column_guard
+    );
+    assert(runtime_index_source_else_trap != std::string::npos);
+    auto runtime_index_source_else_outer_guard = runtime_index_source_else_out_of_bounds_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        runtime_index_source_else_column_guard
+    );
+    assert(runtime_index_source_else_outer_guard != std::string::npos);
+    assert(runtime_index_source_else_column_guard < runtime_index_source_else_trap);
+    assert(runtime_index_source_else_trap < runtime_index_source_else_outer_guard);
+    read_failing_command_output(
+        executable.string() + " run " + runtime_index_source_else_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_source_else_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_else_out_of_bounds.o"
+    );
+    auto runtime_index_source_else_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_index_source_else_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_source_else_out_of_bounds_path.string() + " -o " +
+            runtime_index_source_else_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(runtime_index_source_else_out_of_bounds_executable) > 0);
     assert_computed_dynamic_array_runtime_aggregate_owner_mismatch_failure_matrix(
         executable,
         runtime_indexed_distinct_root_call_index_path,

@@ -1,0 +1,38 @@
+package tests.fixtures.dynamic_array_runtime_index_source_then_out_of_bounds
+
+record Payload
+    value: UInt32
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+record IndexConfig
+    selected: UInt32
+
+record IndexSettings
+    groups: Array<IndexConfig, 2>
+    indices: Array<UInt32, 2>
+    matrix: Array<Array<UInt32, 2>, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values
+
+function make_holder(seed: UInt32) -> Holder
+    Holder([Bucket(make_values(seed)), Bucket(make_values(seed + 20 as UInt32))])
+
+function sum_selected(root_flag: Bool, index: UInt32, column: UInt64) -> UInt32
+    var left: Holder = make_holder(40 as UInt32)
+    var right: Holder = make_holder(80 as UInt32)
+    var settings = IndexSettings([IndexConfig(index), IndexConfig(index)], [0 as UInt32, 0 as UInt32], [[0 as UInt32, 0 as UInt32], [0 as UInt32, 0 as UInt32]])
+    var total = 0 as UInt32
+    for item in root_flag ? left.buckets[(settings.groups[0 as UInt64].selected + settings.indices[0 as UInt64] + settings.matrix[0 as UInt64][column]) as UInt64].values : right.buckets[(settings.groups[0 as UInt64].selected + settings.indices[0 as UInt64] + settings.matrix[0 as UInt64][column]) as UInt64].values
+        total = total + item.value
+    total
+
+function main() -> UInt32
+    sum_selected(true, 0 as UInt32, 2 as UInt64)
