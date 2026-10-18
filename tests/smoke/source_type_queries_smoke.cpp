@@ -777,6 +777,12 @@ int main() {
                 .llvm_type = "[2 x i1]",
                 .index = 3,
             },
+            orison::lowering::LoweredRecordField {
+                .name = "matrix",
+                .source_type_name = "Array<Array<UInt32, 2>, 2>",
+                .llvm_type = "[2 x [2 x i32]]",
+                .index = 4,
+            },
         },
     });
     context.functions.emplace("make_bucket", orison::lowering::LoweredFunctionSignature {
@@ -1159,6 +1165,36 @@ int main() {
         distinct_holder_selection(
             index(member(name("index_settings"), "indices"), name("dynamic_index")),
             index(member(name("index_settings"), "indices"), name("dynamic_index"))
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(
+                index(member(name("index_settings"), "matrix"), name("dynamic_index")),
+                name("index_offset")
+            ),
+            index(
+                index(member(name("index_settings"), "matrix"), name("dynamic_index")),
+                name("index_offset")
+            )
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(index(member(name("index_settings"), "matrix"), call("select_row")), name("index_offset")),
+            index(index(member(name("index_settings"), "matrix"), call("select_row")), name("index_offset"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(index(member(name("index_settings"), "matrix"), name("dynamic_index")), name("flag")),
+            index(index(member(name("index_settings"), "matrix"), name("dynamic_index")), name("flag"))
         ),
         context,
         state

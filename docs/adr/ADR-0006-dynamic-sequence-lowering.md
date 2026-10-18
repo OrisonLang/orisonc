@@ -3620,3 +3620,6 @@ representation.
   runtime-indexed named paths when each path index passes the existing typed purity proof. Production lowering emits
   one inner bounds guard and scalar projection per reachable selection branch. Calls, Boolean indexes, call-rooted
   paths, null-safe paths, and non-integer leaves remain excluded.
+- 2026-10-18 Nested runtime-indexed integer source paths now have production verification. A composed
+  `matrix[row][column]` leaf emits one row guard before one column guard in each reachable selection branch, projects
+  the scalar once in that branch, and reuses the resulting outer aggregate index across both candidate roots.

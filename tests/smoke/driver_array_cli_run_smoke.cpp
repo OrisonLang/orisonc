@@ -5163,10 +5163,20 @@ auto main(int argc, char** argv) -> int {
         first_runtime_integer_index + 1
     );
     assert(second_runtime_integer_index != std::string::npos);
+    auto third_runtime_integer_index = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x i32]",
+        second_runtime_integer_index + 1
+    );
+    assert(third_runtime_integer_index != std::string::npos);
+    auto fourth_runtime_integer_index = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x i32]",
+        third_runtime_integer_index + 1
+    );
+    assert(fourth_runtime_integer_index != std::string::npos);
     assert(
         runtime_indexed_distinct_root_pure_member_ir.find(
             "getelementptr [2 x i32]",
-            second_runtime_integer_index + 1
+            fourth_runtime_integer_index + 1
         ) == std::string::npos
     );
     auto first_runtime_integer_index_guard = runtime_indexed_distinct_root_pure_member_ir.find(
@@ -5184,6 +5194,55 @@ auto main(int argc, char** argv) -> int {
             second_runtime_integer_index_guard + 1
         ) == std::string::npos
     );
+    auto first_runtime_matrix_row = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x [2 x i32]]"
+    );
+    assert(first_runtime_matrix_row != std::string::npos);
+    auto second_runtime_matrix_row = runtime_indexed_distinct_root_pure_member_ir.find(
+        "getelementptr [2 x [2 x i32]]",
+        first_runtime_matrix_row + 1
+    );
+    assert(second_runtime_matrix_row != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_member_ir.find(
+            "getelementptr [2 x [2 x i32]]",
+            second_runtime_matrix_row + 1
+        ) == std::string::npos
+    );
+    auto first_runtime_matrix_row_guard = runtime_indexed_distinct_root_pure_member_ir.find(
+        " = icmp ult i64 %row, 2"
+    );
+    assert(first_runtime_matrix_row_guard != std::string::npos);
+    auto second_runtime_matrix_row_guard = runtime_indexed_distinct_root_pure_member_ir.find(
+        " = icmp ult i64 %row, 2",
+        first_runtime_matrix_row_guard + 1
+    );
+    assert(second_runtime_matrix_row_guard != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_member_ir.find(
+            " = icmp ult i64 %row, 2",
+            second_runtime_matrix_row_guard + 1
+        ) == std::string::npos
+    );
+    auto first_runtime_matrix_column_guard = runtime_indexed_distinct_root_pure_member_ir.find(
+        " = icmp ult i64 %column, 2"
+    );
+    assert(first_runtime_matrix_column_guard != std::string::npos);
+    auto second_runtime_matrix_column_guard = runtime_indexed_distinct_root_pure_member_ir.find(
+        " = icmp ult i64 %column, 2",
+        first_runtime_matrix_column_guard + 1
+    );
+    assert(second_runtime_matrix_column_guard != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_pure_member_ir.find(
+            " = icmp ult i64 %column, 2",
+            second_runtime_matrix_column_guard + 1
+        ) == std::string::npos
+    );
+    assert(first_runtime_integer_index_guard < first_runtime_matrix_row_guard);
+    assert(first_runtime_matrix_row_guard < first_runtime_matrix_column_guard);
+    assert(second_runtime_integer_index_guard < second_runtime_matrix_row_guard);
+    assert(second_runtime_matrix_row_guard < second_runtime_matrix_column_guard);
     auto first_member_index_cast = runtime_indexed_distinct_root_pure_member_ir.find("zext i32");
     assert(first_member_index_cast != std::string::npos);
     auto second_member_index_cast = runtime_indexed_distinct_root_pure_member_ir.find(

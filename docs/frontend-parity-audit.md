@@ -3490,3 +3490,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   paths. Source-query coverage accepts direct array elements and indexed record fields while rejecting call and
   Boolean path indexes. Production coverage composes `groups[0].selected` with `indices[slot]` and verifies one inner
   bounds guard and scalar projection per reachable branch across LLVM emission, object emission, linking, and runtime.
+- 2026-10-18: Nested runtime-indexed integer source paths now have source-query and production coverage. The production
+  fixture composes `groups[0].selected`, `indices[slot]`, and `matrix[row][column]`; LLVM checks pin one ordered row and
+  column guard plus one nested scalar projection per reachable branch, followed by object emission, linking, and run.
