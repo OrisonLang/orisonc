@@ -3486,3 +3486,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   leaves. Source-query coverage accepts top-level and nested arrays and rejects dynamic indexes and Boolean elements.
   Production coverage composes `groups[0].selected` with `indices[0]` and verifies one projection of each per reachable
   selection branch across LLVM emission, object emission, executable linking, and runtime behavior.
+- 2026-10-18: Reusable distinct-root runtime indexes now accept integer leaves reached through runtime-indexed named
+  paths. Source-query coverage accepts direct array elements and indexed record fields while rejecting call and
+  Boolean path indexes. Production coverage composes `groups[0].selected` with `indices[slot]` and verifies one inner
+  bounds guard and scalar projection per reachable branch across LLVM emission, object emission, linking, and runtime.

@@ -1134,7 +1134,7 @@ int main() {
         context,
         state
     ));
-    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             index(name("indices"), name("dynamic_index")),
             index(name("indices"), name("dynamic_index"))
@@ -1147,10 +1147,34 @@ int main() {
         context,
         state
     ));
-    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             member(index(name("index_configs"), name("dynamic_index")), "selected"),
             member(index(name("index_configs"), name("dynamic_index")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(member(name("index_settings"), "indices"), name("dynamic_index")),
+            index(member(name("index_settings"), "indices"), name("dynamic_index"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(name("indices"), call("select_index")),
+            index(name("indices"), call("select_index"))
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            index(name("indices"), name("flag")),
+            index(name("indices"), name("flag"))
         ),
         context,
         state

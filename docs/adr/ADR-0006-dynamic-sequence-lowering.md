@@ -3616,3 +3616,7 @@ representation.
 - 2026-10-17 Reusable runtime-index proofs now accept integer fixed-array elements as direct leaves on the same finite
   named paths. Direct and nested static element projections retain their concrete integer type; dynamic path indexes
   and non-integer element arrays remain excluded.
+- 2026-10-18 Reusable runtime-index proofs now accept integer fixed-array elements and member fields reached through
+  runtime-indexed named paths when each path index passes the existing typed purity proof. Production lowering emits
+  one inner bounds guard and scalar projection per reachable selection branch. Calls, Boolean indexes, call-rooted
+  paths, null-safe paths, and non-integer leaves remain excluded.

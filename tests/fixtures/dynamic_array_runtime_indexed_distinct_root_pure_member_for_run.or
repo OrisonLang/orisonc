@@ -26,14 +26,14 @@ function make_values(seed: UInt32) -> DynamicArray<Payload>
 function make_holder(seed: UInt32) -> Holder
     Holder([Bucket(make_values(seed)), Bucket(make_values(seed + 20 as UInt32))])
 
-function sum_selected(root_flag: Bool, index: UInt32) -> UInt32
+function sum_selected(root_flag: Bool, index: UInt32, slot: UInt64) -> UInt32
     var left: Holder = make_holder(40 as UInt32)
     var right: Holder = make_holder(80 as UInt32)
     var settings = IndexSettings(IndexConfig(index), [IndexConfig(index), IndexConfig(0 as UInt32)], [0 as UInt32, 0 as UInt32])
     var total = 0 as UInt32
-    for item in root_flag ? left.buckets[(settings.groups[0 as UInt64].selected + settings.indices[0 as UInt64]) as UInt64].values : right.buckets[(settings.groups[0 as UInt64].selected + settings.indices[0 as UInt64]) as UInt64].values
+    for item in root_flag ? left.buckets[(settings.groups[0 as UInt64].selected + settings.indices[slot]) as UInt64].values : right.buckets[(settings.groups[0 as UInt64].selected + settings.indices[slot]) as UInt64].values
         total = total + item.value
     total
 
 function main() -> UInt32
-    sum_selected(true, 0 as UInt32) + sum_selected(false, 1 as UInt32) - 282 as UInt32
+    sum_selected(true, 0 as UInt32, 0 as UInt64) + sum_selected(false, 1 as UInt32, 1 as UInt64) - 282 as UInt32
