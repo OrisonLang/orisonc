@@ -1031,6 +1031,22 @@ int main() {
         context,
         state
     ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                index(name("index_flags"), name("dynamic_index")),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                index(name("index_flags"), name("dynamic_index")),
+                name("dynamic_index"),
+                name("index_offset")
+            )
+        ),
+        context,
+        state
+    ));
     assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             ternary(name("dynamic_index"), name("dynamic_index"), name("index_offset")),

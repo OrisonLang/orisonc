@@ -177,6 +177,14 @@ auto pure_boolean_expression(
         auto source_type = state.source_type_names.find(expression.text);
         return source_type != state.source_type_names.end() && source_type->second == "Bool";
     }
+    if (expression.kind == ExpressionKind::member_access ||
+        expression.kind == ExpressionKind::index_access) {
+        if (!named_reusable_index_path(expression, context, state)) {
+            return false;
+        }
+        auto source_type = source_type_name_for_expression(expression, context, state);
+        return source_type.has_value() && *source_type == "Bool";
+    }
     if (expression.kind == ExpressionKind::unary) {
         return expression.text == "not" && expression.left != nullptr &&
             pure_boolean_expression(*expression.left, context, state);

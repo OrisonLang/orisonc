@@ -3645,3 +3645,6 @@ representation.
 - 2026-10-18 Dependent runtime-indexed record-member source paths now have group bounds-failure coverage for both
   ternary outcomes. An invalid derived group index traps after slot projection, load, and widening, before member
   projection or outer owner indexing; object emission and executable construction remain valid.
+- 2026-10-19 Reusable runtime-index ternary conditions now accept pure Boolean member and index paths rooted in named
+  bindings. Production coverage for `flags[condition_slot]` verifies one ordered bounds guard, Boolean projection and
+  load, index-selection PHI, and outer owner guard per selected branch. Call-rooted and null-safe paths remain excluded.

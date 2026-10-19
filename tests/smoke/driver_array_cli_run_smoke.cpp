@@ -3617,6 +3617,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_index_source_dependent_member_then_out_of_bounds.or";
     auto runtime_index_source_dependent_member_else_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_member_else_out_of_bounds.or";
+    auto runtime_index_boolean_path_condition_path =
+        fixtures / "dynamic_array_runtime_index_boolean_path_condition_for_run.or";
     auto runtime_index_source_dependent_then_slot_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds.or";
     auto runtime_index_source_dependent_else_slot_out_of_bounds_path =
@@ -5564,6 +5566,89 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_source_dependent_member_path,
         smoke_temp_root / "dynamic_array_runtime_index_source_dependent_member_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_path_condition_path);
+    auto runtime_index_boolean_path_condition_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " + runtime_index_boolean_path_condition_path.string()
+    );
+    auto boolean_path_first_condition_guard = runtime_index_boolean_path_condition_ir.find(
+        " = icmp ult i64 %condition_slot, 2"
+    );
+    assert(boolean_path_first_condition_guard != std::string::npos);
+    auto boolean_path_second_condition_guard = runtime_index_boolean_path_condition_ir.find(
+        " = icmp ult i64 %condition_slot, 2",
+        boolean_path_first_condition_guard + 1
+    );
+    assert(boolean_path_second_condition_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_path_condition_ir.find(
+            " = icmp ult i64 %condition_slot, 2",
+            boolean_path_second_condition_guard + 1
+        ) == std::string::npos
+    );
+    auto boolean_path_first_projection = runtime_index_boolean_path_condition_ir.find(
+        "getelementptr [2 x i1]",
+        boolean_path_first_condition_guard
+    );
+    assert(boolean_path_first_projection != std::string::npos);
+    auto boolean_path_first_load = runtime_index_boolean_path_condition_ir.find(
+        " = load i1, ptr ",
+        boolean_path_first_projection
+    );
+    assert(boolean_path_first_load != std::string::npos);
+    auto boolean_path_first_index_phi = runtime_index_boolean_path_condition_ir.find(
+        " = phi i64 [%first, ",
+        boolean_path_first_load
+    );
+    assert(boolean_path_first_index_phi != std::string::npos);
+    auto boolean_path_first_outer_guard = runtime_index_boolean_path_condition_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        boolean_path_first_index_phi
+    );
+    assert(boolean_path_first_outer_guard != std::string::npos);
+    assert(boolean_path_first_condition_guard < boolean_path_first_projection);
+    assert(boolean_path_first_projection < boolean_path_first_load);
+    assert(boolean_path_first_load < boolean_path_first_index_phi);
+    assert(boolean_path_first_index_phi < boolean_path_first_outer_guard);
+    auto boolean_path_second_projection = runtime_index_boolean_path_condition_ir.find(
+        "getelementptr [2 x i1]",
+        boolean_path_second_condition_guard
+    );
+    assert(boolean_path_second_projection != std::string::npos);
+    auto boolean_path_second_load = runtime_index_boolean_path_condition_ir.find(
+        " = load i1, ptr ",
+        boolean_path_second_projection
+    );
+    assert(boolean_path_second_load != std::string::npos);
+    auto boolean_path_second_index_phi = runtime_index_boolean_path_condition_ir.find(
+        " = phi i64 [%first, ",
+        boolean_path_second_load
+    );
+    assert(boolean_path_second_index_phi != std::string::npos);
+    auto boolean_path_second_outer_guard = runtime_index_boolean_path_condition_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        boolean_path_second_index_phi
+    );
+    assert(boolean_path_second_outer_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_path_condition_ir.find(
+            "getelementptr [2 x i1]",
+            boolean_path_second_projection + 1
+        ) == std::string::npos
+    );
+    assert(boolean_path_second_condition_guard < boolean_path_second_projection);
+    assert(boolean_path_second_projection < boolean_path_second_load);
+    assert(boolean_path_second_load < boolean_path_second_index_phi);
+    assert(boolean_path_second_index_phi < boolean_path_second_outer_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_path_condition_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_path_condition_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_for_run"
     );
     auto runtime_index_source_dependent_member_then_out_of_bounds_ir =
         read_successful_command_output(
