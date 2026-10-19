@@ -3633,3 +3633,6 @@ representation.
   `matrix[indices[slot] as UInt64][column]`, each selected branch emits the slot guard and scalar load before the cast,
   derived row guard and projection, and column guard and projection; every stage is evaluated once before the outer
   owner index.
+- 2026-10-18 Dependent runtime-indexed integer source paths now have derived-row bounds-failure coverage for both
+  ternary outcomes. An invalid `indices[slot]` value traps at the matrix row guard after the slot load and cast, before
+  column evaluation or outer owner projection; object emission and executable construction remain valid.
