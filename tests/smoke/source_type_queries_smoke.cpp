@@ -1223,6 +1223,32 @@ int main() {
         context,
         state
     ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(
+                index(
+                    member(name("index_settings"), "groups"),
+                    cast(
+                        index(member(name("index_settings"), "indices"), name("dynamic_index")),
+                        "UInt64"
+                    )
+                ),
+                "selected"
+            ),
+            member(
+                index(
+                    member(name("index_settings"), "groups"),
+                    cast(
+                        index(member(name("index_settings"), "indices"), name("dynamic_index")),
+                        "UInt64"
+                    )
+                ),
+                "selected"
+            )
+        ),
+        context,
+        state
+    ));
     assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             index(index(member(name("index_settings"), "matrix"), call("select_row")), name("index_offset")),

@@ -3639,3 +3639,6 @@ representation.
 - 2026-10-18 Dependent runtime-indexed integer source paths now have source-slot bounds-failure coverage for both
   ternary outcomes. An invalid `slot` traps before the `indices` element projection, load, cast, derived row, column,
   or outer owner paths, completing slot, row, and column failure coverage for the dependent source chain.
+- 2026-10-18 Dependent runtime-indexed record-member source paths now have semantic and production verification.
+  `groups[indices[slot] as UInt64].selected` preserves slot access, dependent group guarding, member projection, and
+  scalar widening exactly once per selected branch before outer owner indexing.

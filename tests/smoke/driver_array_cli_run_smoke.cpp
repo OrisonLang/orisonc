@@ -3611,6 +3611,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run.or";
     auto runtime_index_source_dependent_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_for_run.or";
+    auto runtime_index_source_dependent_member_path =
+        fixtures / "dynamic_array_runtime_index_source_dependent_member_for_run.or";
     auto runtime_index_source_dependent_then_slot_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds.or";
     auto runtime_index_source_dependent_else_slot_out_of_bounds_path =
@@ -5409,6 +5411,155 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_source_dependent_path,
         smoke_temp_root / "dynamic_array_runtime_index_source_dependent_for_run"
+    );
+    assert_run_success(executable, runtime_index_source_dependent_member_path);
+    auto runtime_index_source_dependent_member_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " + runtime_index_source_dependent_member_path.string()
+    );
+    auto dependent_member_first_slot_guard = runtime_index_source_dependent_member_ir.find(
+        " = icmp ult i64 %slot, 2"
+    );
+    assert(dependent_member_first_slot_guard != std::string::npos);
+    auto dependent_member_second_slot_guard = runtime_index_source_dependent_member_ir.find(
+        " = icmp ult i64 %slot, 2",
+        dependent_member_first_slot_guard + 1
+    );
+    assert(dependent_member_second_slot_guard != std::string::npos);
+    assert(
+        runtime_index_source_dependent_member_ir.find(
+            " = icmp ult i64 %slot, 2",
+            dependent_member_second_slot_guard + 1
+        ) == std::string::npos
+    );
+    auto dependent_member_first_source_index = runtime_index_source_dependent_member_ir.find(
+        "getelementptr [2 x i32]",
+        dependent_member_first_slot_guard
+    );
+    assert(dependent_member_first_source_index != std::string::npos);
+    auto dependent_member_first_source_load = runtime_index_source_dependent_member_ir.find(
+        " = load i32, ptr ",
+        dependent_member_first_source_index
+    );
+    assert(dependent_member_first_source_load != std::string::npos);
+    auto dependent_member_first_source_cast = runtime_index_source_dependent_member_ir.find(
+        " = zext i32 ",
+        dependent_member_first_source_load
+    );
+    assert(dependent_member_first_source_cast != std::string::npos);
+    auto dependent_member_first_group_guard = runtime_index_source_dependent_member_ir.find(
+        " = icmp ult i64 ",
+        dependent_member_first_source_cast
+    );
+    assert(dependent_member_first_group_guard != std::string::npos);
+    auto dependent_member_first_group_projection = runtime_index_source_dependent_member_ir.find(
+        "getelementptr [2 x %record.IndexConfig]",
+        dependent_member_first_group_guard
+    );
+    assert(dependent_member_first_group_projection != std::string::npos);
+    auto dependent_member_first_field_projection = runtime_index_source_dependent_member_ir.find(
+        "getelementptr %record.IndexConfig",
+        dependent_member_first_group_projection
+    );
+    assert(dependent_member_first_field_projection != std::string::npos);
+    auto dependent_member_first_field_load = runtime_index_source_dependent_member_ir.find(
+        " = load i32, ptr ",
+        dependent_member_first_field_projection
+    );
+    assert(dependent_member_first_field_load != std::string::npos);
+    auto dependent_member_first_field_cast = runtime_index_source_dependent_member_ir.find(
+        " = zext i32 ",
+        dependent_member_first_field_load
+    );
+    assert(dependent_member_first_field_cast != std::string::npos);
+    auto dependent_member_first_outer_guard = runtime_index_source_dependent_member_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        dependent_member_first_field_cast
+    );
+    assert(dependent_member_first_outer_guard != std::string::npos);
+    assert(dependent_member_first_slot_guard < dependent_member_first_source_index);
+    assert(dependent_member_first_source_index < dependent_member_first_source_load);
+    assert(dependent_member_first_source_load < dependent_member_first_source_cast);
+    assert(dependent_member_first_source_cast < dependent_member_first_group_guard);
+    assert(dependent_member_first_group_guard < dependent_member_first_group_projection);
+    assert(dependent_member_first_group_projection < dependent_member_first_field_projection);
+    assert(dependent_member_first_field_projection < dependent_member_first_field_load);
+    assert(dependent_member_first_field_load < dependent_member_first_field_cast);
+    assert(dependent_member_first_field_cast < dependent_member_first_outer_guard);
+    auto dependent_member_second_source_index = runtime_index_source_dependent_member_ir.find(
+        "getelementptr [2 x i32]",
+        dependent_member_second_slot_guard
+    );
+    assert(dependent_member_second_source_index != std::string::npos);
+    auto dependent_member_second_source_load = runtime_index_source_dependent_member_ir.find(
+        " = load i32, ptr ",
+        dependent_member_second_source_index
+    );
+    assert(dependent_member_second_source_load != std::string::npos);
+    auto dependent_member_second_source_cast = runtime_index_source_dependent_member_ir.find(
+        " = zext i32 ",
+        dependent_member_second_source_load
+    );
+    assert(dependent_member_second_source_cast != std::string::npos);
+    auto dependent_member_second_group_guard = runtime_index_source_dependent_member_ir.find(
+        " = icmp ult i64 ",
+        dependent_member_second_source_cast
+    );
+    assert(dependent_member_second_group_guard != std::string::npos);
+    auto dependent_member_second_group_projection = runtime_index_source_dependent_member_ir.find(
+        "getelementptr [2 x %record.IndexConfig]",
+        dependent_member_second_group_guard
+    );
+    assert(dependent_member_second_group_projection != std::string::npos);
+    auto dependent_member_second_field_projection = runtime_index_source_dependent_member_ir.find(
+        "getelementptr %record.IndexConfig",
+        dependent_member_second_group_projection
+    );
+    assert(dependent_member_second_field_projection != std::string::npos);
+    auto dependent_member_second_field_load = runtime_index_source_dependent_member_ir.find(
+        " = load i32, ptr ",
+        dependent_member_second_field_projection
+    );
+    assert(dependent_member_second_field_load != std::string::npos);
+    auto dependent_member_second_field_cast = runtime_index_source_dependent_member_ir.find(
+        " = zext i32 ",
+        dependent_member_second_field_load
+    );
+    assert(dependent_member_second_field_cast != std::string::npos);
+    auto dependent_member_second_outer_guard = runtime_index_source_dependent_member_ir.find(
+        "computed_dynamic_array_runtime_aggregate_index",
+        dependent_member_second_field_cast
+    );
+    assert(dependent_member_second_outer_guard != std::string::npos);
+    assert(
+        runtime_index_source_dependent_member_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            dependent_member_second_group_projection + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_source_dependent_member_ir.find(
+            "getelementptr %record.IndexConfig",
+            dependent_member_second_field_projection + 1
+        ) == std::string::npos
+    );
+    assert(dependent_member_second_slot_guard < dependent_member_second_source_index);
+    assert(dependent_member_second_source_index < dependent_member_second_source_load);
+    assert(dependent_member_second_source_load < dependent_member_second_source_cast);
+    assert(dependent_member_second_source_cast < dependent_member_second_group_guard);
+    assert(dependent_member_second_group_guard < dependent_member_second_group_projection);
+    assert(dependent_member_second_group_projection < dependent_member_second_field_projection);
+    assert(dependent_member_second_field_projection < dependent_member_second_field_load);
+    assert(dependent_member_second_field_load < dependent_member_second_field_cast);
+    assert(dependent_member_second_field_cast < dependent_member_second_outer_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_source_dependent_member_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_member_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_source_dependent_member_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_member_for_run"
     );
     auto runtime_index_source_dependent_then_slot_out_of_bounds_ir = read_successful_command_output(
         executable.string() + " --emit-llvm " +
