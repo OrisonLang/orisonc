@@ -1,0 +1,34 @@
+package tests.fixtures.dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds
+
+record Payload
+    value: UInt32
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+record IndexSettings
+    indices: Array<UInt32, 2>
+    matrix: Array<Array<UInt32, 2>, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values
+
+function make_holder(seed: UInt32) -> Holder
+    Holder([Bucket(make_values(seed)), Bucket(make_values(seed + 20 as UInt32))])
+
+function sum_selected(root_flag: Bool, slot: UInt64, column: UInt64) -> UInt32
+    var left: Holder = make_holder(40 as UInt32)
+    var right: Holder = make_holder(80 as UInt32)
+    var settings = IndexSettings([0 as UInt32, 0 as UInt32], [[0 as UInt32, 0 as UInt32], [0 as UInt32, 0 as UInt32]])
+    var total = 0 as UInt32
+    for item in root_flag ? left.buckets[settings.matrix[settings.indices[slot] as UInt64][column] as UInt64].values : right.buckets[settings.matrix[settings.indices[slot] as UInt64][column] as UInt64].values
+        total = total + item.value
+    total
+
+function main() -> UInt32
+    sum_selected(true, 2 as UInt64, 0 as UInt64)

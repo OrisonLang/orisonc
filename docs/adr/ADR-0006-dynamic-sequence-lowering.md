@@ -3636,3 +3636,6 @@ representation.
 - 2026-10-18 Dependent runtime-indexed integer source paths now have derived-row bounds-failure coverage for both
   ternary outcomes. An invalid `indices[slot]` value traps at the matrix row guard after the slot load and cast, before
   column evaluation or outer owner projection; object emission and executable construction remain valid.
+- 2026-10-18 Dependent runtime-indexed integer source paths now have source-slot bounds-failure coverage for both
+  ternary outcomes. An invalid `slot` traps before the `indices` element projection, load, cast, derived row, column,
+  or outer owner paths, completing slot, row, and column failure coverage for the dependent source chain.

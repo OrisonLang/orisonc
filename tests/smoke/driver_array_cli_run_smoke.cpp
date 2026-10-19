@@ -3611,6 +3611,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_indexed_distinct_root_pure_member_for_run.or";
     auto runtime_index_source_dependent_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_for_run.or";
+    auto runtime_index_source_dependent_then_slot_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds.or";
+    auto runtime_index_source_dependent_else_slot_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_index_source_dependent_else_slot_out_of_bounds.or";
     auto runtime_index_source_dependent_then_row_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_then_row_out_of_bounds.or";
     auto runtime_index_source_dependent_else_row_out_of_bounds_path =
@@ -5405,6 +5409,174 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_source_dependent_path,
         smoke_temp_root / "dynamic_array_runtime_index_source_dependent_for_run"
+    );
+    auto runtime_index_source_dependent_then_slot_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_index_source_dependent_then_slot_out_of_bounds_path.string()
+    );
+    auto dependent_then_slot_failure_guard =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %slot, 2"
+        );
+    assert(dependent_then_slot_failure_guard != std::string::npos);
+    auto dependent_then_slot_failure_trap =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            "call void @__orison_dynamic_array_bounds_failed()",
+            dependent_then_slot_failure_guard
+        );
+    assert(dependent_then_slot_failure_trap != std::string::npos);
+    auto dependent_then_slot_failure_source_index =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            "getelementptr [2 x i32]",
+            dependent_then_slot_failure_trap
+        );
+    assert(dependent_then_slot_failure_source_index != std::string::npos);
+    auto dependent_then_slot_failure_source_load =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            " = load i32, ptr ",
+            dependent_then_slot_failure_source_index
+        );
+    assert(dependent_then_slot_failure_source_load != std::string::npos);
+    auto dependent_then_slot_failure_source_cast =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            " = zext i32 ",
+            dependent_then_slot_failure_source_load
+        );
+    assert(dependent_then_slot_failure_source_cast != std::string::npos);
+    auto dependent_then_slot_failure_row_guard =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 ",
+            dependent_then_slot_failure_source_cast
+        );
+    assert(dependent_then_slot_failure_row_guard != std::string::npos);
+    auto dependent_then_slot_failure_column_guard =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %column, 2",
+            dependent_then_slot_failure_row_guard
+        );
+    assert(dependent_then_slot_failure_column_guard != std::string::npos);
+    auto dependent_then_slot_failure_outer_guard =
+        runtime_index_source_dependent_then_slot_out_of_bounds_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            dependent_then_slot_failure_column_guard
+        );
+    assert(dependent_then_slot_failure_outer_guard != std::string::npos);
+    assert(dependent_then_slot_failure_guard < dependent_then_slot_failure_trap);
+    assert(dependent_then_slot_failure_trap < dependent_then_slot_failure_source_index);
+    assert(dependent_then_slot_failure_source_index < dependent_then_slot_failure_source_load);
+    assert(dependent_then_slot_failure_source_load < dependent_then_slot_failure_source_cast);
+    assert(dependent_then_slot_failure_source_cast < dependent_then_slot_failure_row_guard);
+    assert(dependent_then_slot_failure_row_guard < dependent_then_slot_failure_column_guard);
+    assert(dependent_then_slot_failure_column_guard < dependent_then_slot_failure_outer_guard);
+    read_failing_command_output(
+        executable.string() + " run " +
+        runtime_index_source_dependent_then_slot_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_source_dependent_then_slot_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds.o"
+    );
+    auto runtime_index_source_dependent_then_slot_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_source_dependent_then_slot_out_of_bounds_path.string() + " -o " +
+            runtime_index_source_dependent_then_slot_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(
+        std::filesystem::file_size(
+            runtime_index_source_dependent_then_slot_out_of_bounds_executable
+        ) > 0
+    );
+    auto runtime_index_source_dependent_else_slot_out_of_bounds_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_index_source_dependent_else_slot_out_of_bounds_path.string()
+    );
+    auto dependent_else_first_slot_failure_guard =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %slot, 2"
+        );
+    assert(dependent_else_first_slot_failure_guard != std::string::npos);
+    auto dependent_else_slot_failure_guard =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %slot, 2",
+            dependent_else_first_slot_failure_guard + 1
+        );
+    assert(dependent_else_slot_failure_guard != std::string::npos);
+    auto dependent_else_slot_failure_trap =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            "call void @__orison_dynamic_array_bounds_failed()",
+            dependent_else_slot_failure_guard
+        );
+    assert(dependent_else_slot_failure_trap != std::string::npos);
+    auto dependent_else_slot_failure_source_index =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            "getelementptr [2 x i32]",
+            dependent_else_slot_failure_trap
+        );
+    assert(dependent_else_slot_failure_source_index != std::string::npos);
+    auto dependent_else_slot_failure_source_load =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            " = load i32, ptr ",
+            dependent_else_slot_failure_source_index
+        );
+    assert(dependent_else_slot_failure_source_load != std::string::npos);
+    auto dependent_else_slot_failure_source_cast =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            " = zext i32 ",
+            dependent_else_slot_failure_source_load
+        );
+    assert(dependent_else_slot_failure_source_cast != std::string::npos);
+    auto dependent_else_slot_failure_row_guard =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 ",
+            dependent_else_slot_failure_source_cast
+        );
+    assert(dependent_else_slot_failure_row_guard != std::string::npos);
+    auto dependent_else_slot_failure_column_guard =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %column, 2",
+            dependent_else_slot_failure_row_guard
+        );
+    assert(dependent_else_slot_failure_column_guard != std::string::npos);
+    auto dependent_else_slot_failure_outer_guard =
+        runtime_index_source_dependent_else_slot_out_of_bounds_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            dependent_else_slot_failure_column_guard
+        );
+    assert(dependent_else_slot_failure_outer_guard != std::string::npos);
+    assert(dependent_else_slot_failure_guard < dependent_else_slot_failure_trap);
+    assert(dependent_else_slot_failure_trap < dependent_else_slot_failure_source_index);
+    assert(dependent_else_slot_failure_source_index < dependent_else_slot_failure_source_load);
+    assert(dependent_else_slot_failure_source_load < dependent_else_slot_failure_source_cast);
+    assert(dependent_else_slot_failure_source_cast < dependent_else_slot_failure_row_guard);
+    assert(dependent_else_slot_failure_row_guard < dependent_else_slot_failure_column_guard);
+    assert(dependent_else_slot_failure_column_guard < dependent_else_slot_failure_outer_guard);
+    read_failing_command_output(
+        executable.string() + " run " +
+        runtime_index_source_dependent_else_slot_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_source_dependent_else_slot_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_else_slot_out_of_bounds.o"
+    );
+    auto runtime_index_source_dependent_else_slot_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_index_source_dependent_else_slot_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_source_dependent_else_slot_out_of_bounds_path.string() + " -o " +
+            runtime_index_source_dependent_else_slot_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(
+        std::filesystem::file_size(
+            runtime_index_source_dependent_else_slot_out_of_bounds_executable
+        ) > 0
     );
     auto runtime_index_source_dependent_then_row_out_of_bounds_ir = read_successful_command_output(
         executable.string() + " --emit-llvm " +
