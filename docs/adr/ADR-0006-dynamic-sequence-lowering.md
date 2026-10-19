@@ -3651,3 +3651,6 @@ representation.
 - 2026-10-19 Boolean aggregate-path ternary conditions now have condition-slot bounds-failure coverage for both outer
   branch outcomes. An invalid `condition_slot` traps before the Boolean projection and load, index-selection PHI, or
   outer owner index, while LLVM, object, and executable production remain valid.
+- 2026-10-19 Boolean record-member conditions reached through runtime-indexed named paths now have semantic and
+  production coverage. `groups[group_slot].enabled` emits one ordered group guard, array projection, member projection,
+  Boolean load, index-selection PHI, and outer owner guard per selected branch.

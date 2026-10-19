@@ -3521,3 +3521,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-19: Boolean aggregate-path ternary conditions now have condition-slot bounds-failure coverage for both outer
   branch outcomes. Invalid slots trap before Boolean projection and load, index selection, or outer owner indexing;
   LLVM emission, object emission, and executable construction remain valid.
+- 2026-10-19: Boolean record-member conditions reached through runtime-indexed named paths now have semantic and
+  production coverage. `groups[group_slot].enabled` is evaluated once per selected branch in guard, array projection,
+  member projection, load, index-selection PHI, and outer owner guard order.

@@ -3619,6 +3619,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_index_source_dependent_member_else_out_of_bounds.or";
     auto runtime_index_boolean_path_condition_path =
         fixtures / "dynamic_array_runtime_index_boolean_path_condition_for_run.or";
+    auto runtime_index_boolean_member_path_condition_path =
+        fixtures / "dynamic_array_runtime_index_boolean_member_path_condition_for_run.or";
     auto runtime_index_boolean_path_condition_then_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_boolean_path_condition_then_out_of_bounds.or";
     auto runtime_index_boolean_path_condition_else_out_of_bounds_path =
@@ -5653,6 +5655,108 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_boolean_path_condition_path,
         smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_member_path_condition_path);
+    auto runtime_index_boolean_member_path_condition_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_index_boolean_member_path_condition_path.string()
+    );
+    auto boolean_member_path_first_guard =
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2"
+        );
+    assert(boolean_member_path_first_guard != std::string::npos);
+    auto boolean_member_path_second_guard =
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2",
+            boolean_member_path_first_guard + 1
+        );
+    assert(boolean_member_path_second_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2",
+            boolean_member_path_second_guard + 1
+        ) == std::string::npos
+    );
+    auto boolean_member_path_first_array_projection =
+        runtime_index_boolean_member_path_condition_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_member_path_first_guard
+        );
+    assert(boolean_member_path_first_array_projection != std::string::npos);
+    auto boolean_member_path_first_field_projection =
+        runtime_index_boolean_member_path_condition_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_member_path_first_array_projection
+        );
+    assert(boolean_member_path_first_field_projection != std::string::npos);
+    auto boolean_member_path_first_load =
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_member_path_first_field_projection
+        );
+    assert(boolean_member_path_first_load != std::string::npos);
+    auto boolean_member_path_first_index_phi =
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_member_path_first_load
+        );
+    assert(boolean_member_path_first_index_phi != std::string::npos);
+    auto boolean_member_path_first_outer_guard =
+        runtime_index_boolean_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_member_path_first_index_phi
+        );
+    assert(boolean_member_path_first_outer_guard != std::string::npos);
+    assert(boolean_member_path_first_guard < boolean_member_path_first_array_projection);
+    assert(boolean_member_path_first_array_projection < boolean_member_path_first_field_projection);
+    assert(boolean_member_path_first_field_projection < boolean_member_path_first_load);
+    assert(boolean_member_path_first_load < boolean_member_path_first_index_phi);
+    assert(boolean_member_path_first_index_phi < boolean_member_path_first_outer_guard);
+    auto boolean_member_path_second_array_projection =
+        runtime_index_boolean_member_path_condition_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_member_path_second_guard
+        );
+    assert(boolean_member_path_second_array_projection != std::string::npos);
+    auto boolean_member_path_second_field_projection =
+        runtime_index_boolean_member_path_condition_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_member_path_second_array_projection
+        );
+    assert(boolean_member_path_second_field_projection != std::string::npos);
+    auto boolean_member_path_second_load =
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_member_path_second_field_projection
+        );
+    assert(boolean_member_path_second_load != std::string::npos);
+    auto boolean_member_path_second_index_phi =
+        runtime_index_boolean_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_member_path_second_load
+        );
+    assert(boolean_member_path_second_index_phi != std::string::npos);
+    auto boolean_member_path_second_outer_guard =
+        runtime_index_boolean_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_member_path_second_index_phi
+        );
+    assert(boolean_member_path_second_outer_guard != std::string::npos);
+    assert(boolean_member_path_second_guard < boolean_member_path_second_array_projection);
+    assert(boolean_member_path_second_array_projection < boolean_member_path_second_field_projection);
+    assert(boolean_member_path_second_field_projection < boolean_member_path_second_load);
+    assert(boolean_member_path_second_load < boolean_member_path_second_index_phi);
+    assert(boolean_member_path_second_index_phi < boolean_member_path_second_outer_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_member_path_condition_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_member_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_member_path_condition_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_member_path_condition_for_run"
     );
     auto runtime_index_boolean_path_condition_then_out_of_bounds_ir =
         read_successful_command_output(
