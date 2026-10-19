@@ -3654,3 +3654,6 @@ representation.
 - 2026-10-19 Boolean record-member conditions reached through runtime-indexed named paths now have semantic and
   production coverage. `groups[group_slot].enabled` emits one ordered group guard, array projection, member projection,
   Boolean load, index-selection PHI, and outer owner guard per selected branch.
+- 2026-10-19 Boolean runtime-indexed record-member conditions now have group-slot bounds-failure coverage for both
+  outer branch outcomes. Invalid slots trap before array or member projection, Boolean load, index-selection PHI, or
+  outer owner indexing while LLVM, object, and executable production remain valid.
