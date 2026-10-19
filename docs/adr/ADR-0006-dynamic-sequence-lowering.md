@@ -3648,3 +3648,6 @@ representation.
 - 2026-10-19 Reusable runtime-index ternary conditions now accept pure Boolean member and index paths rooted in named
   bindings. Production coverage for `flags[condition_slot]` verifies one ordered bounds guard, Boolean projection and
   load, index-selection PHI, and outer owner guard per selected branch. Call-rooted and null-safe paths remain excluded.
+- 2026-10-19 Boolean aggregate-path ternary conditions now have condition-slot bounds-failure coverage for both outer
+  branch outcomes. An invalid `condition_slot` traps before the Boolean projection and load, index-selection PHI, or
+  outer owner index, while LLVM, object, and executable production remain valid.

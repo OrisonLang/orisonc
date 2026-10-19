@@ -3619,6 +3619,10 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_index_source_dependent_member_else_out_of_bounds.or";
     auto runtime_index_boolean_path_condition_path =
         fixtures / "dynamic_array_runtime_index_boolean_path_condition_for_run.or";
+    auto runtime_index_boolean_path_condition_then_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_index_boolean_path_condition_then_out_of_bounds.or";
+    auto runtime_index_boolean_path_condition_else_out_of_bounds_path =
+        fixtures / "dynamic_array_runtime_index_boolean_path_condition_else_out_of_bounds.or";
     auto runtime_index_source_dependent_then_slot_out_of_bounds_path =
         fixtures / "dynamic_array_runtime_index_source_dependent_then_slot_out_of_bounds.or";
     auto runtime_index_source_dependent_else_slot_out_of_bounds_path =
@@ -5649,6 +5653,148 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_boolean_path_condition_path,
         smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_for_run"
+    );
+    auto runtime_index_boolean_path_condition_then_out_of_bounds_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_path_condition_then_out_of_bounds_path.string()
+        );
+    auto boolean_path_then_condition_guard =
+        runtime_index_boolean_path_condition_then_out_of_bounds_ir.find(
+            " = icmp ult i64 %condition_slot, 2"
+        );
+    assert(boolean_path_then_condition_guard != std::string::npos);
+    auto boolean_path_then_trap =
+        runtime_index_boolean_path_condition_then_out_of_bounds_ir.find(
+            "call void @__orison_dynamic_array_bounds_failed()",
+            boolean_path_then_condition_guard
+        );
+    assert(boolean_path_then_trap != std::string::npos);
+    auto boolean_path_then_projection =
+        runtime_index_boolean_path_condition_then_out_of_bounds_ir.find(
+            "getelementptr [2 x i1]",
+            boolean_path_then_trap
+        );
+    assert(boolean_path_then_projection != std::string::npos);
+    auto boolean_path_then_load =
+        runtime_index_boolean_path_condition_then_out_of_bounds_ir.find(
+            " = load i1, ptr ",
+            boolean_path_then_projection
+        );
+    assert(boolean_path_then_load != std::string::npos);
+    auto boolean_path_then_index_phi =
+        runtime_index_boolean_path_condition_then_out_of_bounds_ir.find(
+            " = phi i64 [%first, ",
+            boolean_path_then_load
+        );
+    assert(boolean_path_then_index_phi != std::string::npos);
+    auto boolean_path_then_outer_guard =
+        runtime_index_boolean_path_condition_then_out_of_bounds_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_path_then_index_phi
+        );
+    assert(boolean_path_then_outer_guard != std::string::npos);
+    assert(boolean_path_then_condition_guard < boolean_path_then_trap);
+    assert(boolean_path_then_trap < boolean_path_then_projection);
+    assert(boolean_path_then_projection < boolean_path_then_load);
+    assert(boolean_path_then_load < boolean_path_then_index_phi);
+    assert(boolean_path_then_index_phi < boolean_path_then_outer_guard);
+    read_failing_command_output(
+        executable.string() + " run " +
+        runtime_index_boolean_path_condition_then_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_path_condition_then_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_then_out_of_bounds.o"
+    );
+    auto runtime_index_boolean_path_condition_then_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_then_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_boolean_path_condition_then_out_of_bounds_path.string() + " -o " +
+            runtime_index_boolean_path_condition_then_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(
+        std::filesystem::file_size(
+            runtime_index_boolean_path_condition_then_out_of_bounds_executable
+        ) > 0
+    );
+    auto runtime_index_boolean_path_condition_else_out_of_bounds_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_path_condition_else_out_of_bounds_path.string()
+        );
+    auto boolean_path_else_first_condition_guard =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            " = icmp ult i64 %condition_slot, 2"
+        );
+    assert(boolean_path_else_first_condition_guard != std::string::npos);
+    auto boolean_path_else_condition_guard =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            " = icmp ult i64 %condition_slot, 2",
+            boolean_path_else_first_condition_guard + 1
+        );
+    assert(boolean_path_else_condition_guard != std::string::npos);
+    auto boolean_path_else_trap =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            "call void @__orison_dynamic_array_bounds_failed()",
+            boolean_path_else_condition_guard
+        );
+    assert(boolean_path_else_trap != std::string::npos);
+    auto boolean_path_else_projection =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            "getelementptr [2 x i1]",
+            boolean_path_else_trap
+        );
+    assert(boolean_path_else_projection != std::string::npos);
+    auto boolean_path_else_load =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            " = load i1, ptr ",
+            boolean_path_else_projection
+        );
+    assert(boolean_path_else_load != std::string::npos);
+    auto boolean_path_else_index_phi =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            " = phi i64 [%first, ",
+            boolean_path_else_load
+        );
+    assert(boolean_path_else_index_phi != std::string::npos);
+    auto boolean_path_else_outer_guard =
+        runtime_index_boolean_path_condition_else_out_of_bounds_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_path_else_index_phi
+        );
+    assert(boolean_path_else_outer_guard != std::string::npos);
+    assert(boolean_path_else_condition_guard < boolean_path_else_trap);
+    assert(boolean_path_else_trap < boolean_path_else_projection);
+    assert(boolean_path_else_projection < boolean_path_else_load);
+    assert(boolean_path_else_load < boolean_path_else_index_phi);
+    assert(boolean_path_else_index_phi < boolean_path_else_outer_guard);
+    read_failing_command_output(
+        executable.string() + " run " +
+        runtime_index_boolean_path_condition_else_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_path_condition_else_out_of_bounds_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_else_out_of_bounds.o"
+    );
+    auto runtime_index_boolean_path_condition_else_out_of_bounds_executable =
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_path_condition_else_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_boolean_path_condition_else_out_of_bounds_path.string() + " -o " +
+            runtime_index_boolean_path_condition_else_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(
+        std::filesystem::file_size(
+            runtime_index_boolean_path_condition_else_out_of_bounds_executable
+        ) > 0
     );
     auto runtime_index_source_dependent_member_then_out_of_bounds_ir =
         read_successful_command_output(
