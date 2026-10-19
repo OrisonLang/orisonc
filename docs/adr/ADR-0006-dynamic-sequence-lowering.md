@@ -3642,3 +3642,6 @@ representation.
 - 2026-10-18 Dependent runtime-indexed record-member source paths now have semantic and production verification.
   `groups[indices[slot] as UInt64].selected` preserves slot access, dependent group guarding, member projection, and
   scalar widening exactly once per selected branch before outer owner indexing.
+- 2026-10-18 Dependent runtime-indexed record-member source paths now have group bounds-failure coverage for both
+  ternary outcomes. An invalid derived group index traps after slot projection, load, and widening, before member
+  projection or outer owner indexing; object emission and executable construction remain valid.
