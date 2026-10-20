@@ -3666,3 +3666,6 @@ representation.
 - 2026-10-19 Dependent Boolean record-member conditions now have source-slot bounds-failure coverage for both outer
   branch outcomes. Invalid slots trap before the `indices` projection, load, widening, derived group access, Boolean
   member access, index selection, or outer owner indexing, completing the dependent condition failure matrix.
+- 2026-10-20 Unary `not` composition around Boolean runtime-indexed record-member conditions now has semantic and
+  production coverage. Each selected branch guards and loads `groups[group_slot].enabled`, inverts the loaded `i1`,
+  then performs index selection and the outer owner guard exactly once.

@@ -3536,3 +3536,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-19: Dependent Boolean record-member conditions now have source-slot bounds-failure coverage for both outer
   branch outcomes. Invalid slots trap before the `indices` projection, load, widening, derived group access, Boolean
   member access, index selection, or outer owner indexing, completing the dependent condition failure matrix.
+- 2026-10-20: Unary `not` composition around Boolean runtime-indexed record-member conditions now has semantic and
+  production coverage. Each selected branch preserves group guard, aggregate projection, member load, Boolean
+  inversion, index-selection PHI, and outer owner guard order exactly once.
