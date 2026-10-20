@@ -3688,3 +3688,6 @@ representation.
 - 2026-10-20 Left-nested `(gate or fallback) and groups[group_slot].enabled` conditions now have symmetric semantic
   and production coverage. The outer `and` branches from the inner `or` result and uses the inner merge block as its
   false-path PHI predecessor; false composite values suppress invalid indexed member access on both owner branches.
+- 2026-10-20 Boolean `and` conditions with two distinct runtime-indexed member paths now have semantic and production
+  coverage. Each owner branch evaluates the first guard and load once, conditionally evaluates the second once, and
+  skips an invalid second index when the first member is false before index selection and outer owner guarding.

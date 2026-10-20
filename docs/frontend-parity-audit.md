@@ -3558,3 +3558,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Left-nested `or` within `and` now has symmetric runtime-indexed member-path production coverage. The
   outer branch consumes the inner merge value and names that merge as its false-path PHI predecessor. Composite false
   paths skip invalid member indexes on both owner branches; true paths preserve member evaluation before selection.
+- 2026-10-20: Boolean `and` now has two-runtime-indexed-member-path production coverage. Each owner branch emits one
+  first-slot guard/load before the short-circuit branch and one conditional second-slot guard/load. A false first
+  member suppresses an invalid second index; evaluated paths merge before index selection and owner guarding.
