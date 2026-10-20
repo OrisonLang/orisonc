@@ -3660,3 +3660,6 @@ representation.
 - 2026-10-19 Dependent Boolean record-member conditions now have semantic and production coverage. For
   `groups[indices[slot] as UInt64].enabled`, each selected branch emits the slot guard and source load before widening,
   the derived group guard, Boolean member load, index-selection PHI, and outer owner guard.
+- 2026-10-19 Dependent Boolean record-member conditions now have derived-group bounds-failure coverage for both outer
+  branch outcomes. Invalid stored group indexes trap after slot projection, load, and widening but before Boolean
+  member projection, index selection, or outer owner indexing; object and executable production remain valid.
