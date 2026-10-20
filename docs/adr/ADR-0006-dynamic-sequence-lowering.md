@@ -3673,3 +3673,6 @@ representation.
   eager LLVM Boolean instructions. Production coverage for `gate and groups[group_slot].enabled` proves an invalid
   group slot remains unreachable when `gate` is false on either outer owner branch. RHS ownership transfers must
   match the skipped path; path-dependent transfers are rejected.
+- 2026-10-20 Runtime-indexed member-path `or` now has production short-circuit coverage. A true left operand skips an
+  invalid `groups[group_slot].enabled` access on both outer owner branches, while false-left calls verify ordered RHS
+  bounds checks, member loads, true-value merge PHIs, index selection, and outer owner guards.

@@ -3625,6 +3625,8 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_index_boolean_not_member_path_condition_for_run.or";
     auto runtime_index_boolean_and_member_path_condition_path =
         fixtures / "dynamic_array_runtime_index_boolean_and_member_path_condition_for_run.or";
+    auto runtime_index_boolean_or_member_path_condition_path =
+        fixtures / "dynamic_array_runtime_index_boolean_or_member_path_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
@@ -6051,6 +6053,153 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_boolean_and_member_path_condition_path,
         smoke_temp_root / "dynamic_array_runtime_index_boolean_and_member_path_condition_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_or_member_path_condition_path);
+    auto runtime_index_boolean_or_member_path_condition_ir = read_successful_command_output(
+        executable.string() + " --emit-llvm " +
+        runtime_index_boolean_or_member_path_condition_path.string()
+    );
+    auto boolean_or_member_path_first_branch =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "br i1 %gate, label %logical.or.merge."
+        );
+    assert(boolean_or_member_path_first_branch != std::string::npos);
+    auto boolean_or_member_path_second_branch =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "br i1 %gate, label %logical.or.merge.",
+            boolean_or_member_path_first_branch + 1
+        );
+    assert(boolean_or_member_path_second_branch != std::string::npos);
+    assert(
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "br i1 %gate, label %logical.or.merge.",
+            boolean_or_member_path_second_branch + 1
+        ) == std::string::npos
+    );
+    auto boolean_or_member_path_first_rhs =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "\nlogical.or.rhs.",
+            boolean_or_member_path_first_branch
+        );
+    auto boolean_or_member_path_first_guard =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2",
+            boolean_or_member_path_first_rhs
+        );
+    auto boolean_or_member_path_first_array_projection =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_or_member_path_first_guard
+        );
+    auto boolean_or_member_path_first_field_projection =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_or_member_path_first_array_projection
+        );
+    auto boolean_or_member_path_first_load =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_or_member_path_first_field_projection
+        );
+    auto boolean_or_member_path_first_merge =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "\nlogical.or.merge.",
+            boolean_or_member_path_first_load
+        );
+    auto boolean_or_member_path_first_phi =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = phi i1 [1, %",
+            boolean_or_member_path_first_merge
+        );
+    auto boolean_or_member_path_first_index_phi =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_or_member_path_first_phi
+        );
+    auto boolean_or_member_path_first_outer_guard =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_or_member_path_first_index_phi
+        );
+    assert(boolean_or_member_path_first_rhs != std::string::npos);
+    assert(boolean_or_member_path_first_guard != std::string::npos);
+    assert(boolean_or_member_path_first_array_projection != std::string::npos);
+    assert(boolean_or_member_path_first_field_projection != std::string::npos);
+    assert(boolean_or_member_path_first_load != std::string::npos);
+    assert(boolean_or_member_path_first_merge != std::string::npos);
+    assert(boolean_or_member_path_first_phi != std::string::npos);
+    assert(boolean_or_member_path_first_index_phi != std::string::npos);
+    assert(boolean_or_member_path_first_outer_guard != std::string::npos);
+    assert(boolean_or_member_path_first_branch < boolean_or_member_path_first_rhs);
+    assert(boolean_or_member_path_first_rhs < boolean_or_member_path_first_guard);
+    assert(boolean_or_member_path_first_guard < boolean_or_member_path_first_array_projection);
+    assert(
+        boolean_or_member_path_first_array_projection <
+        boolean_or_member_path_first_field_projection
+    );
+    assert(boolean_or_member_path_first_field_projection < boolean_or_member_path_first_load);
+    assert(boolean_or_member_path_first_load < boolean_or_member_path_first_merge);
+    assert(boolean_or_member_path_first_merge < boolean_or_member_path_first_phi);
+    assert(boolean_or_member_path_first_phi < boolean_or_member_path_first_index_phi);
+    assert(boolean_or_member_path_first_index_phi < boolean_or_member_path_first_outer_guard);
+    auto boolean_or_member_path_second_rhs =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "\nlogical.or.rhs.",
+            boolean_or_member_path_second_branch
+        );
+    auto boolean_or_member_path_second_guard =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2",
+            boolean_or_member_path_second_rhs
+        );
+    auto boolean_or_member_path_second_load =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_or_member_path_second_guard
+        );
+    auto boolean_or_member_path_second_merge =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "\nlogical.or.merge.",
+            boolean_or_member_path_second_load
+        );
+    auto boolean_or_member_path_second_phi =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = phi i1 [1, %",
+            boolean_or_member_path_second_merge
+        );
+    auto boolean_or_member_path_second_index_phi =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_or_member_path_second_phi
+        );
+    auto boolean_or_member_path_second_outer_guard =
+        runtime_index_boolean_or_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_or_member_path_second_index_phi
+        );
+    assert(boolean_or_member_path_second_rhs != std::string::npos);
+    assert(boolean_or_member_path_second_guard != std::string::npos);
+    assert(boolean_or_member_path_second_load != std::string::npos);
+    assert(boolean_or_member_path_second_merge != std::string::npos);
+    assert(boolean_or_member_path_second_phi != std::string::npos);
+    assert(boolean_or_member_path_second_index_phi != std::string::npos);
+    assert(boolean_or_member_path_second_outer_guard != std::string::npos);
+    assert(boolean_or_member_path_second_branch < boolean_or_member_path_second_rhs);
+    assert(boolean_or_member_path_second_rhs < boolean_or_member_path_second_guard);
+    assert(boolean_or_member_path_second_guard < boolean_or_member_path_second_load);
+    assert(boolean_or_member_path_second_load < boolean_or_member_path_second_merge);
+    assert(boolean_or_member_path_second_merge < boolean_or_member_path_second_phi);
+    assert(boolean_or_member_path_second_phi < boolean_or_member_path_second_index_phi);
+    assert(boolean_or_member_path_second_index_phi < boolean_or_member_path_second_outer_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_or_member_path_condition_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_or_member_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_or_member_path_condition_path,
+        smoke_temp_root / "dynamic_array_runtime_index_boolean_or_member_path_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

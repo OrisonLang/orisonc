@@ -3543,3 +3543,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   coverage verifies RHS bounds checks and loads occur only when the left operand is true, while false-left calls with
   invalid RHS indexes complete without trapping on both outer owner branches. Conditional RHS ownership transfers
   are rejected when the evaluated and skipped path states differ.
+- 2026-10-20: Runtime-indexed member-path `or` now has production short-circuit coverage. True-left calls with invalid
+  RHS indexes complete without trapping on both outer owner branches; false-left calls preserve RHS bounds-check,
+  projection, load, true-value PHI, index-selection PHI, and outer owner guard order.
