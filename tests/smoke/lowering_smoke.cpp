@@ -7635,7 +7635,11 @@ void test_emit_boolean_expression_returns() {
         "\n"
         "define i1 @allowed(i1 %left, i1 %right) {\n"
         "entry:\n"
-        "  %tmp0 = or i1 %left, %right\n"
+        "  br i1 %left, label %logical.or.merge.0, label %logical.or.rhs.0\n"
+        "logical.or.rhs.0:\n"
+        "  br label %logical.or.merge.0\n"
+        "logical.or.merge.0:\n"
+        "  %tmp0 = phi i1 [1, %entry], [%right, %logical.or.rhs.0]\n"
         "  ret i1 %tmp0\n"
         "}\n"
         "\n"
@@ -7654,13 +7658,42 @@ void test_emit_boolean_expression_returns() {
         "define i1 @in_range(i32 %value) {\n"
         "entry:\n"
         "  %tmp0 = icmp uge i32 %value, 1\n"
+        "  br i1 %tmp0, label %logical.and.rhs.0, label %logical.and.merge.0\n"
+        "logical.and.rhs.0:\n"
         "  %tmp1 = icmp ule i32 %value, 10\n"
-        "  %tmp2 = and i1 %tmp0, %tmp1\n"
+        "  br label %logical.and.merge.0\n"
+        "logical.and.merge.0:\n"
+        "  %tmp2 = phi i1 [0, %entry], [%tmp1, %logical.and.rhs.0]\n"
         "  ret i1 %tmp2\n"
         "}\n"
         "\n"
     };
     assert(result.ir_text == expected);
+}
+
+void test_reject_short_circuit_rhs_ownership_transfer() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_short_circuit_rhs_ownership_transfer.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Owned\n"
+        "    values: DynamicArray<UInt32>\n"
+        "\n"
+        "function consume(value: Owned) -> Bool\n"
+        "    true\n"
+        "\n"
+        "function choose(flag: Bool, value: Owned) -> Bool\n"
+        "    flag and consume(value)\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this return expression: branch type mismatch: logical operator ownership transfers"
+    );
 }
 
 void test_emit_ternary_expression_returns() {
@@ -14601,6 +14634,7 @@ auto main() -> int {
     test_emit_uint32_comparison_returns();
     test_emit_int32_comparison_returns();
     test_emit_boolean_expression_returns();
+    test_reject_short_circuit_rhs_ownership_transfer();
     test_reject_unsigned_unary_negation_return();
     test_reject_boolean_unary_negation_return();
     test_emit_ternary_expression_returns();

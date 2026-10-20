@@ -3539,3 +3539,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Unary `not` composition around Boolean runtime-indexed record-member conditions now has semantic and
   production coverage. Each selected branch preserves group guard, aggregate projection, member load, Boolean
   inversion, index-selection PHI, and outer owner guard order exactly once.
+- 2026-10-20: Boolean `and` and `or` now emit short-circuit CFG and merge PHIs. Runtime-indexed member-path `and`
+  coverage verifies RHS bounds checks and loads occur only when the left operand is true, while false-left calls with
+  invalid RHS indexes complete without trapping on both outer owner branches. Conditional RHS ownership transfers
+  are rejected when the evaluated and skipped path states differ.

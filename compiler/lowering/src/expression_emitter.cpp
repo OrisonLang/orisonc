@@ -4732,6 +4732,30 @@ auto lowered_expression(
                     session,
                     output
                 );
+                if (!left.has_value()) {
+                    return std::nullopt;
+                }
+
+                auto binding_scope = BranchBindingScope {state};
+                auto skipped_ownership_transfers = binding_scope.saved_ownership_transfers();
+                auto const left_exit_block = state.current_block;
+                auto const block_index = next_llvm_block_index(state.next_block_index);
+                auto const rhs_block = llvm_block_name(
+                    expression.text == "and" ? "logical.and.rhs" : "logical.or.rhs",
+                    block_index
+                );
+                auto const merge_block = llvm_block_name(
+                    expression.text == "and" ? "logical.and.merge" : "logical.or.merge",
+                    block_index
+                );
+                if (expression.text == "and") {
+                    emit_llvm_conditional_branch(output, left->value, rhs_block, merge_block);
+                } else {
+                    emit_llvm_conditional_branch(output, left->value, merge_block, rhs_block);
+                }
+
+                emit_llvm_block_label(output, rhs_block);
+                state.current_block = rhs_block;
                 auto right = lowered_expression(
                     *expression.right,
                     "i1",
@@ -4740,13 +4764,35 @@ auto lowered_expression(
                     session,
                     output
                 );
-                if (!left.has_value() || !right.has_value()) {
+                if (!right.has_value()) {
                     return std::nullopt;
                 }
+                auto ownership_transfers_by_path = std::vector<OwnershipTransferState> {
+                    std::move(skipped_ownership_transfers),
+                    state.ownership_transfers,
+                };
+                auto merged_transfers = merge_ownership_transfer_states(
+                    ownership_transfers_by_path
+                );
+                if (!merged_transfers.has_value()) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::branch_type_mismatch,
+                        "logical operator ownership transfers"
+                    );
+                    return std::nullopt;
+                }
+                binding_scope.commit_ownership_transfers(std::move(*merged_transfers));
+                auto const right_exit_block = state.current_block;
+                emit_llvm_branch(output, merge_block);
 
+                emit_llvm_block_label(output, merge_block);
+                state.current_block = merge_block;
                 auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-                output << "  " << temporary_name << " = " << expression.text << " i1 ";
-                output << left->value << ", " << right->value << "\n";
+                output << "  " << temporary_name << " = phi i1 ["
+                       << (expression.text == "and" ? "0" : "1") << ", %"
+                       << left_exit_block << "], [" << right->value << ", %"
+                       << right_exit_block << "]\n";
                 return LoweredExpression {
                     .type = "i1",
                     .value = std::move(temporary_name),

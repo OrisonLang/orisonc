@@ -3669,3 +3669,7 @@ representation.
 - 2026-10-20 Unary `not` composition around Boolean runtime-indexed record-member conditions now has semantic and
   production coverage. Each selected branch guards and loads `groups[group_slot].enabled`, inverts the loaded `i1`,
   then performs index selection and the outer owner guard exactly once.
+- 2026-10-20 Boolean `and` and `or` now lower through short-circuit control flow and an `i1` merge PHI instead of
+  eager LLVM Boolean instructions. Production coverage for `gate and groups[group_slot].enabled` proves an invalid
+  group slot remains unreachable when `gate` is false on either outer owner branch. RHS ownership transfers must
+  match the skipped path; path-dependent transfers are rejected.
