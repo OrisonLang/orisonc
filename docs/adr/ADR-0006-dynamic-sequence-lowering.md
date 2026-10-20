@@ -3657,3 +3657,6 @@ representation.
 - 2026-10-19 Boolean runtime-indexed record-member conditions now have group-slot bounds-failure coverage for both
   outer branch outcomes. Invalid slots trap before array or member projection, Boolean load, index-selection PHI, or
   outer owner indexing while LLVM, object, and executable production remain valid.
+- 2026-10-19 Dependent Boolean record-member conditions now have semantic and production coverage. For
+  `groups[indices[slot] as UInt64].enabled`, each selected branch emits the slot guard and source load before widening,
+  the derived group guard, Boolean member load, index-selection PHI, and outer owner guard.

@@ -3621,6 +3621,9 @@ auto main(int argc, char** argv) -> int {
         fixtures / "dynamic_array_runtime_index_boolean_path_condition_for_run.or";
     auto runtime_index_boolean_member_path_condition_path =
         fixtures / "dynamic_array_runtime_index_boolean_member_path_condition_for_run.or";
+    auto runtime_index_boolean_dependent_member_path_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
     auto runtime_index_boolean_member_path_condition_then_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_member_path_condition_then_out_of_bounds.or";
@@ -5763,6 +5766,179 @@ auto main(int argc, char** argv) -> int {
         executable,
         runtime_index_boolean_member_path_condition_path,
         smoke_temp_root / "dynamic_array_runtime_index_boolean_member_path_condition_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
+    auto runtime_index_boolean_dependent_member_path_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_dependent_member_path_condition_path.string()
+        );
+    auto boolean_dependent_member_first_slot_guard =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2"
+        );
+    assert(boolean_dependent_member_first_slot_guard != std::string::npos);
+    auto boolean_dependent_member_second_slot_guard =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2",
+            boolean_dependent_member_first_slot_guard + 1
+        );
+    assert(boolean_dependent_member_second_slot_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2",
+            boolean_dependent_member_second_slot_guard + 1
+        ) == std::string::npos
+    );
+    auto boolean_dependent_member_first_source_index =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "getelementptr [2 x i32]",
+            boolean_dependent_member_first_slot_guard
+        );
+    assert(boolean_dependent_member_first_source_index != std::string::npos);
+    auto boolean_dependent_member_first_source_load =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = load i32, ptr ",
+            boolean_dependent_member_first_source_index
+        );
+    assert(boolean_dependent_member_first_source_load != std::string::npos);
+    auto boolean_dependent_member_first_source_cast =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = zext i32 ",
+            boolean_dependent_member_first_source_load
+        );
+    assert(boolean_dependent_member_first_source_cast != std::string::npos);
+    auto boolean_dependent_member_first_group_guard =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 ",
+            boolean_dependent_member_first_source_cast
+        );
+    assert(boolean_dependent_member_first_group_guard != std::string::npos);
+    auto boolean_dependent_member_first_group_projection =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_dependent_member_first_group_guard
+        );
+    assert(boolean_dependent_member_first_group_projection != std::string::npos);
+    auto boolean_dependent_member_first_field_projection =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_dependent_member_first_group_projection
+        );
+    assert(boolean_dependent_member_first_field_projection != std::string::npos);
+    auto boolean_dependent_member_first_field_load =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_dependent_member_first_field_projection
+        );
+    assert(boolean_dependent_member_first_field_load != std::string::npos);
+    auto boolean_dependent_member_first_index_phi =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_dependent_member_first_field_load
+        );
+    assert(boolean_dependent_member_first_index_phi != std::string::npos);
+    auto boolean_dependent_member_first_outer_guard =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_dependent_member_first_index_phi
+        );
+    assert(boolean_dependent_member_first_outer_guard != std::string::npos);
+    assert(boolean_dependent_member_first_slot_guard < boolean_dependent_member_first_source_index);
+    assert(boolean_dependent_member_first_source_index < boolean_dependent_member_first_source_load);
+    assert(boolean_dependent_member_first_source_load < boolean_dependent_member_first_source_cast);
+    assert(boolean_dependent_member_first_source_cast < boolean_dependent_member_first_group_guard);
+    assert(
+        boolean_dependent_member_first_group_guard <
+        boolean_dependent_member_first_group_projection
+    );
+    assert(
+        boolean_dependent_member_first_group_projection <
+        boolean_dependent_member_first_field_projection
+    );
+    assert(boolean_dependent_member_first_field_projection < boolean_dependent_member_first_field_load);
+    assert(boolean_dependent_member_first_field_load < boolean_dependent_member_first_index_phi);
+    assert(boolean_dependent_member_first_index_phi < boolean_dependent_member_first_outer_guard);
+    auto boolean_dependent_member_second_source_index =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "getelementptr [2 x i32]",
+            boolean_dependent_member_second_slot_guard
+        );
+    assert(boolean_dependent_member_second_source_index != std::string::npos);
+    auto boolean_dependent_member_second_source_load =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = load i32, ptr ",
+            boolean_dependent_member_second_source_index
+        );
+    assert(boolean_dependent_member_second_source_load != std::string::npos);
+    auto boolean_dependent_member_second_source_cast =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = zext i32 ",
+            boolean_dependent_member_second_source_load
+        );
+    assert(boolean_dependent_member_second_source_cast != std::string::npos);
+    auto boolean_dependent_member_second_group_guard =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 ",
+            boolean_dependent_member_second_source_cast
+        );
+    assert(boolean_dependent_member_second_group_guard != std::string::npos);
+    auto boolean_dependent_member_second_group_projection =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_dependent_member_second_group_guard
+        );
+    assert(boolean_dependent_member_second_group_projection != std::string::npos);
+    auto boolean_dependent_member_second_field_projection =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_dependent_member_second_group_projection
+        );
+    assert(boolean_dependent_member_second_field_projection != std::string::npos);
+    auto boolean_dependent_member_second_field_load =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_dependent_member_second_field_projection
+        );
+    assert(boolean_dependent_member_second_field_load != std::string::npos);
+    auto boolean_dependent_member_second_index_phi =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_dependent_member_second_field_load
+        );
+    assert(boolean_dependent_member_second_index_phi != std::string::npos);
+    auto boolean_dependent_member_second_outer_guard =
+        runtime_index_boolean_dependent_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_dependent_member_second_index_phi
+        );
+    assert(boolean_dependent_member_second_outer_guard != std::string::npos);
+    assert(boolean_dependent_member_second_slot_guard < boolean_dependent_member_second_source_index);
+    assert(boolean_dependent_member_second_source_index < boolean_dependent_member_second_source_load);
+    assert(boolean_dependent_member_second_source_load < boolean_dependent_member_second_source_cast);
+    assert(boolean_dependent_member_second_source_cast < boolean_dependent_member_second_group_guard);
+    assert(
+        boolean_dependent_member_second_group_guard <
+        boolean_dependent_member_second_group_projection
+    );
+    assert(
+        boolean_dependent_member_second_group_projection <
+        boolean_dependent_member_second_field_projection
+    );
+    assert(boolean_dependent_member_second_field_projection < boolean_dependent_member_second_field_load);
+    assert(boolean_dependent_member_second_field_load < boolean_dependent_member_second_index_phi);
+    assert(boolean_dependent_member_second_index_phi < boolean_dependent_member_second_outer_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_dependent_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_dependent_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run"
     );
     auto runtime_index_boolean_member_path_condition_then_out_of_bounds_ir =
         read_successful_command_output(
