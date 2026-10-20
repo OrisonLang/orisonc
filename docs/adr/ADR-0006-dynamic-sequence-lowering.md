@@ -3676,3 +3676,6 @@ representation.
 - 2026-10-20 Runtime-indexed member-path `or` now has production short-circuit coverage. A true left operand skips an
   invalid `groups[group_slot].enabled` access on both outer owner branches, while false-left calls verify ordered RHS
   bounds checks, member loads, true-value merge PHIs, index selection, and outer owner guards.
+- 2026-10-20 Nested `gate or (fallback and groups[group_slot].enabled)` conditions now have semantic and production
+  coverage. Outer true paths skip the complete nested RHS, inner false paths skip the indexed member access, and
+  evaluated paths preserve inner-to-outer merge PHI predecessors before index selection and outer owner guarding.

@@ -986,6 +986,7 @@ int main() {
     state.source_type_names["narrow_index"] = "UInt32";
     state.source_type_names["signed_index"] = "Int64";
     state.source_type_names["flag"] = "Bool";
+    state.source_type_names["fallback"] = "Bool";
     state.source_type_names["index_config"] = "IndexConfig";
     state.source_type_names["index_settings"] = "IndexSettings";
     state.source_type_names["index_configs"] = "Array<IndexConfig, 2>";
@@ -1136,6 +1137,50 @@ int main() {
                             name("dynamic_index")
                         ),
                         "enabled"
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            )
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                binary(
+                    name("flag"),
+                    "or",
+                    binary(
+                        name("fallback"),
+                        "and",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                name("dynamic_index")
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                binary(
+                    name("flag"),
+                    "or",
+                    binary(
+                        name("fallback"),
+                        "and",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                name("dynamic_index")
+                            ),
+                            "enabled"
+                        )
                     )
                 ),
                 name("dynamic_index"),

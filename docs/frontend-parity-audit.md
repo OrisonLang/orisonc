@@ -3546,3 +3546,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Runtime-indexed member-path `or` now has production short-circuit coverage. True-left calls with invalid
   RHS indexes complete without trapping on both outer owner branches; false-left calls preserve RHS bounds-check,
   projection, load, true-value PHI, index-selection PHI, and outer owner guard order.
+- 2026-10-20: Nested `or` and `and` now have runtime-indexed member-path production coverage. Invalid deepest indexes
+  remain unreachable through either the outer true path or inner false path on both owner branches. Evaluated paths
+  verify that the inner merge is the outer PHI predecessor before index selection and outer owner guarding.
