@@ -3561,3 +3561,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Boolean `and` now has two-runtime-indexed-member-path production coverage. Each owner branch emits one
   first-slot guard/load before the short-circuit branch and one conditional second-slot guard/load. A false first
   member suppresses an invalid second index; evaluated paths merge before index selection and owner guarding.
+- 2026-10-20: Boolean `or` now has symmetric two-runtime-indexed-member-path production coverage. Each owner branch
+  emits one first-slot guard/load before the short-circuit branch and one conditional second-slot guard/load. A true
+  first member suppresses an invalid second index; evaluated paths merge before index selection and owner guarding.
