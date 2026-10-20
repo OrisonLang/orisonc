@@ -3694,3 +3694,6 @@ representation.
 - 2026-10-20 Boolean `or` conditions with two distinct runtime-indexed member paths now have symmetric semantic and
   production coverage. Each owner branch evaluates the first guard and load once, conditionally evaluates the second
   once, and skips an invalid second index when the first member is true before index selection and owner guarding.
+- 2026-10-20 Nested `first or (second and third)` conditions with three distinct runtime-indexed member paths now have
+  semantic and production coverage. Outer true paths skip both nested accesses, inner false paths skip the third
+  access, and each owner branch preserves the inner-to-outer PHI relationship before index selection and guarding.

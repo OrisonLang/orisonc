@@ -1195,6 +1195,75 @@ int main() {
         context,
         state
     ));
+    state.source_type_names["third_dynamic_index"] = "UInt64";
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            name("dynamic_index")
+                        ),
+                        "enabled"
+                    ),
+                    "or",
+                    binary(
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                name("second_dynamic_index")
+                            ),
+                            "enabled"
+                        ),
+                        "and",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                name("third_dynamic_index")
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            name("dynamic_index")
+                        ),
+                        "enabled"
+                    ),
+                    "or",
+                    binary(
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                name("second_dynamic_index")
+                            ),
+                            "enabled"
+                        ),
+                        "and",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                name("third_dynamic_index")
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            )
+        ),
+        context,
+        state
+    ));
     assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             ternary(
