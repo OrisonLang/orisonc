@@ -3630,6 +3630,12 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_dependent_member_path_condition_else_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_else_group_out_of_bounds.or";
+    auto runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds.or";
+    auto runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds.or";
     auto runtime_index_boolean_member_path_condition_then_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_member_path_condition_then_out_of_bounds.or";
@@ -6208,6 +6214,268 @@ auto main(int argc, char** argv) -> int {
         ).empty()
     );
     assert(std::filesystem::file_size(boolean_dependent_member_else_group_out_of_bounds_executable) > 0);
+    auto runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_path.string()
+        );
+    auto boolean_dependent_member_then_slot_guard =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %slot, 2"
+        );
+    assert(boolean_dependent_member_then_slot_guard != std::string::npos);
+    auto boolean_dependent_member_then_slot_trap =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            "call void @__orison_dynamic_array_bounds_failed()",
+            boolean_dependent_member_then_slot_guard
+        );
+    assert(boolean_dependent_member_then_slot_trap != std::string::npos);
+    auto boolean_dependent_member_then_slot_source_index =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            "getelementptr [2 x i32]",
+            boolean_dependent_member_then_slot_trap
+        );
+    assert(boolean_dependent_member_then_slot_source_index != std::string::npos);
+    auto boolean_dependent_member_then_slot_source_load =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            " = load i32, ptr ",
+            boolean_dependent_member_then_slot_source_index
+        );
+    assert(boolean_dependent_member_then_slot_source_load != std::string::npos);
+    auto boolean_dependent_member_then_slot_source_cast =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            " = zext i32 ",
+            boolean_dependent_member_then_slot_source_load
+        );
+    assert(boolean_dependent_member_then_slot_source_cast != std::string::npos);
+    auto boolean_dependent_member_then_slot_group_guard =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 ",
+            boolean_dependent_member_then_slot_source_cast
+        );
+    assert(boolean_dependent_member_then_slot_group_guard != std::string::npos);
+    auto boolean_dependent_member_then_slot_group_projection =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_dependent_member_then_slot_group_guard
+        );
+    assert(boolean_dependent_member_then_slot_group_projection != std::string::npos);
+    auto boolean_dependent_member_then_slot_field_projection =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_dependent_member_then_slot_group_projection
+        );
+    assert(boolean_dependent_member_then_slot_field_projection != std::string::npos);
+    auto boolean_dependent_member_then_slot_field_load =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            " = load i1, ptr ",
+            boolean_dependent_member_then_slot_field_projection
+        );
+    assert(boolean_dependent_member_then_slot_field_load != std::string::npos);
+    auto boolean_dependent_member_then_slot_index_phi =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            " = phi i64 [%first, ",
+            boolean_dependent_member_then_slot_field_load
+        );
+    assert(boolean_dependent_member_then_slot_index_phi != std::string::npos);
+    auto boolean_dependent_member_then_slot_outer_guard =
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_dependent_member_then_slot_index_phi
+        );
+    assert(boolean_dependent_member_then_slot_outer_guard != std::string::npos);
+    assert(boolean_dependent_member_then_slot_guard < boolean_dependent_member_then_slot_trap);
+    assert(
+        boolean_dependent_member_then_slot_trap <
+        boolean_dependent_member_then_slot_source_index
+    );
+    assert(
+        boolean_dependent_member_then_slot_source_index <
+        boolean_dependent_member_then_slot_source_load
+    );
+    assert(
+        boolean_dependent_member_then_slot_source_load <
+        boolean_dependent_member_then_slot_source_cast
+    );
+    assert(
+        boolean_dependent_member_then_slot_source_cast <
+        boolean_dependent_member_then_slot_group_guard
+    );
+    assert(
+        boolean_dependent_member_then_slot_group_guard <
+        boolean_dependent_member_then_slot_group_projection
+    );
+    assert(
+        boolean_dependent_member_then_slot_group_projection <
+        boolean_dependent_member_then_slot_field_projection
+    );
+    assert(
+        boolean_dependent_member_then_slot_field_projection <
+        boolean_dependent_member_then_slot_field_load
+    );
+    assert(
+        boolean_dependent_member_then_slot_field_load <
+        boolean_dependent_member_then_slot_index_phi
+    );
+    assert(
+        boolean_dependent_member_then_slot_index_phi <
+        boolean_dependent_member_then_slot_outer_guard
+    );
+    read_failing_command_output(
+        executable.string() + " run " +
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds.o"
+    );
+    auto boolean_dependent_member_then_slot_out_of_bounds_executable =
+        smoke_temp_root /
+        "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_boolean_dependent_member_path_condition_then_slot_out_of_bounds_path.string() +
+            " -o " + boolean_dependent_member_then_slot_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(boolean_dependent_member_then_slot_out_of_bounds_executable) > 0);
+    auto runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_path.string()
+        );
+    auto boolean_dependent_member_else_slot_first_guard =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %slot, 2"
+        );
+    assert(boolean_dependent_member_else_slot_first_guard != std::string::npos);
+    auto boolean_dependent_member_else_slot_guard =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 %slot, 2",
+            boolean_dependent_member_else_slot_first_guard + 1
+        );
+    assert(boolean_dependent_member_else_slot_guard != std::string::npos);
+    auto boolean_dependent_member_else_slot_trap =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            "call void @__orison_dynamic_array_bounds_failed()",
+            boolean_dependent_member_else_slot_guard
+        );
+    assert(boolean_dependent_member_else_slot_trap != std::string::npos);
+    auto boolean_dependent_member_else_slot_source_index =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            "getelementptr [2 x i32]",
+            boolean_dependent_member_else_slot_trap
+        );
+    assert(boolean_dependent_member_else_slot_source_index != std::string::npos);
+    auto boolean_dependent_member_else_slot_source_load =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = load i32, ptr ",
+            boolean_dependent_member_else_slot_source_index
+        );
+    assert(boolean_dependent_member_else_slot_source_load != std::string::npos);
+    auto boolean_dependent_member_else_slot_source_cast =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = zext i32 ",
+            boolean_dependent_member_else_slot_source_load
+        );
+    assert(boolean_dependent_member_else_slot_source_cast != std::string::npos);
+    auto boolean_dependent_member_else_slot_group_guard =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = icmp ult i64 ",
+            boolean_dependent_member_else_slot_source_cast
+        );
+    assert(boolean_dependent_member_else_slot_group_guard != std::string::npos);
+    auto boolean_dependent_member_else_slot_group_projection =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            "getelementptr [2 x %record.IndexConfig]",
+            boolean_dependent_member_else_slot_group_guard
+        );
+    assert(boolean_dependent_member_else_slot_group_projection != std::string::npos);
+    auto boolean_dependent_member_else_slot_field_projection =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            "getelementptr %record.IndexConfig",
+            boolean_dependent_member_else_slot_group_projection
+        );
+    assert(boolean_dependent_member_else_slot_field_projection != std::string::npos);
+    auto boolean_dependent_member_else_slot_field_load =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = load i1, ptr ",
+            boolean_dependent_member_else_slot_field_projection
+        );
+    assert(boolean_dependent_member_else_slot_field_load != std::string::npos);
+    auto boolean_dependent_member_else_slot_index_phi =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            " = phi i64 [%first, ",
+            boolean_dependent_member_else_slot_field_load
+        );
+    assert(boolean_dependent_member_else_slot_index_phi != std::string::npos);
+    auto boolean_dependent_member_else_slot_outer_guard =
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_dependent_member_else_slot_index_phi
+        );
+    assert(boolean_dependent_member_else_slot_outer_guard != std::string::npos);
+    assert(boolean_dependent_member_else_slot_guard < boolean_dependent_member_else_slot_trap);
+    assert(
+        boolean_dependent_member_else_slot_trap <
+        boolean_dependent_member_else_slot_source_index
+    );
+    assert(
+        boolean_dependent_member_else_slot_source_index <
+        boolean_dependent_member_else_slot_source_load
+    );
+    assert(
+        boolean_dependent_member_else_slot_source_load <
+        boolean_dependent_member_else_slot_source_cast
+    );
+    assert(
+        boolean_dependent_member_else_slot_source_cast <
+        boolean_dependent_member_else_slot_group_guard
+    );
+    assert(
+        boolean_dependent_member_else_slot_group_guard <
+        boolean_dependent_member_else_slot_group_projection
+    );
+    assert(
+        boolean_dependent_member_else_slot_group_projection <
+        boolean_dependent_member_else_slot_field_projection
+    );
+    assert(
+        boolean_dependent_member_else_slot_field_projection <
+        boolean_dependent_member_else_slot_field_load
+    );
+    assert(
+        boolean_dependent_member_else_slot_field_load <
+        boolean_dependent_member_else_slot_index_phi
+    );
+    assert(
+        boolean_dependent_member_else_slot_index_phi <
+        boolean_dependent_member_else_slot_outer_guard
+    );
+    read_failing_command_output(
+        executable.string() + " run " +
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_path.string()
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds.o"
+    );
+    auto boolean_dependent_member_else_slot_out_of_bounds_executable =
+        smoke_temp_root /
+        "dynamic_array_runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds";
+    assert(
+        read_successful_command_output(
+            executable.string() + " --build " +
+            runtime_index_boolean_dependent_member_path_condition_else_slot_out_of_bounds_path.string() +
+            " -o " + boolean_dependent_member_else_slot_out_of_bounds_executable.string()
+        ).empty()
+    );
+    assert(std::filesystem::file_size(boolean_dependent_member_else_slot_out_of_bounds_executable) > 0);
     auto runtime_index_boolean_member_path_condition_then_out_of_bounds_ir =
         read_successful_command_output(
             executable.string() + " --emit-llvm " +

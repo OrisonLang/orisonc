@@ -3663,3 +3663,6 @@ representation.
 - 2026-10-19 Dependent Boolean record-member conditions now have derived-group bounds-failure coverage for both outer
   branch outcomes. Invalid stored group indexes trap after slot projection, load, and widening but before Boolean
   member projection, index selection, or outer owner indexing; object and executable production remain valid.
+- 2026-10-19 Dependent Boolean record-member conditions now have source-slot bounds-failure coverage for both outer
+  branch outcomes. Invalid slots trap before the `indices` projection, load, widening, derived group access, Boolean
+  member access, index selection, or outer owner indexing, completing the dependent condition failure matrix.
