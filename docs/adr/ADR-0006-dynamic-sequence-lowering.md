@@ -3679,3 +3679,6 @@ representation.
 - 2026-10-20 Nested `gate or (fallback and groups[group_slot].enabled)` conditions now have semantic and production
   coverage. Outer true paths skip the complete nested RHS, inner false paths skip the indexed member access, and
   evaluated paths preserve inner-to-outer merge PHI predecessors before index selection and outer owner guarding.
+- 2026-10-20 Symmetric `gate and (fallback or groups[group_slot].enabled)` conditions now have semantic and production
+  coverage. Outer false paths skip the complete nested RHS, inner true paths skip the indexed member access, and
+  evaluated paths preserve reversed PHI constants and inner-to-outer predecessors before owner selection.

@@ -3549,3 +3549,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Nested `or` and `and` now have runtime-indexed member-path production coverage. Invalid deepest indexes
   remain unreachable through either the outer true path or inner false path on both owner branches. Evaluated paths
   verify that the inner merge is the outer PHI predecessor before index selection and outer owner guarding.
+- 2026-10-20: Nested `and` and `or` now have symmetric runtime-indexed member-path production coverage. Invalid
+  deepest indexes remain unreachable through either the outer false path or inner true path on both owner branches.
+  Evaluated paths verify reversed PHI constants and inner-merge predecessors before outer owner selection.
