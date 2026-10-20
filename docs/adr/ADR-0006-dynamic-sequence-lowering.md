@@ -3685,3 +3685,6 @@ representation.
 - 2026-10-20 Left-nested `(gate and fallback) or groups[group_slot].enabled` conditions now have semantic and
   production coverage. The outer `or` branches from the inner `and` result and uses the inner merge block as its
   skipped-path PHI predecessor; true composite values suppress invalid indexed member access on both owner branches.
+- 2026-10-20 Left-nested `(gate or fallback) and groups[group_slot].enabled` conditions now have symmetric semantic
+  and production coverage. The outer `and` branches from the inner `or` result and uses the inner merge block as its
+  false-path PHI predecessor; false composite values suppress invalid indexed member access on both owner branches.

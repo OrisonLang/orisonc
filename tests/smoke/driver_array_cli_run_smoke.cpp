@@ -3635,6 +3635,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_left_nested_and_or_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_left_nested_and_or_member_path_condition_for_run.or";
+    auto runtime_index_boolean_left_nested_or_and_member_path_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_left_nested_or_and_member_path_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
@@ -6813,6 +6816,184 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_left_nested_and_or_member_path_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_left_nested_and_or_member_path_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_left_nested_or_and_member_path_condition_path
+    );
+    auto runtime_index_boolean_left_nested_or_and_member_path_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_left_nested_or_and_member_path_condition_path.string()
+        );
+    auto boolean_left_nested_or_and_first_inner_branch =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "br i1 %gate, label %logical.or.merge."
+        );
+    assert(boolean_left_nested_or_and_first_inner_branch != std::string::npos);
+    auto boolean_left_nested_or_and_second_inner_branch =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "br i1 %gate, label %logical.or.merge.",
+            boolean_left_nested_or_and_first_inner_branch + 1
+        );
+    assert(boolean_left_nested_or_and_second_inner_branch != std::string::npos);
+    assert(
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "br i1 %gate, label %logical.or.merge.",
+            boolean_left_nested_or_and_second_inner_branch + 1
+        ) == std::string::npos
+    );
+    auto boolean_left_nested_or_and_first_inner_merge =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "\nlogical.or.merge.",
+            boolean_left_nested_or_and_first_inner_branch
+        );
+    auto boolean_left_nested_or_and_first_inner_phi =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = phi i1 [1, %ternary.then.",
+            boolean_left_nested_or_and_first_inner_merge
+        );
+    auto boolean_left_nested_or_and_first_outer_branch =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "label %logical.and.rhs.",
+            boolean_left_nested_or_and_first_inner_phi
+        );
+    auto boolean_left_nested_or_and_first_outer_rhs =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "\nlogical.and.rhs.",
+            boolean_left_nested_or_and_first_outer_branch
+        );
+    auto boolean_left_nested_or_and_first_guard =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2",
+            boolean_left_nested_or_and_first_outer_rhs
+        );
+    auto boolean_left_nested_or_and_first_load =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_left_nested_or_and_first_guard
+        );
+    auto boolean_left_nested_or_and_first_outer_merge =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "\nlogical.and.merge.",
+            boolean_left_nested_or_and_first_load
+        );
+    auto boolean_left_nested_or_and_first_outer_phi =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge.",
+            boolean_left_nested_or_and_first_outer_merge
+        );
+    auto boolean_left_nested_or_and_first_index_phi =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_left_nested_or_and_first_outer_phi
+        );
+    auto boolean_left_nested_or_and_first_owner_guard =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_left_nested_or_and_first_index_phi
+        );
+    assert(boolean_left_nested_or_and_first_inner_merge != std::string::npos);
+    assert(boolean_left_nested_or_and_first_inner_phi != std::string::npos);
+    assert(boolean_left_nested_or_and_first_outer_branch != std::string::npos);
+    assert(boolean_left_nested_or_and_first_outer_rhs != std::string::npos);
+    assert(boolean_left_nested_or_and_first_guard != std::string::npos);
+    assert(boolean_left_nested_or_and_first_load != std::string::npos);
+    assert(boolean_left_nested_or_and_first_outer_merge != std::string::npos);
+    assert(boolean_left_nested_or_and_first_outer_phi != std::string::npos);
+    assert(boolean_left_nested_or_and_first_index_phi != std::string::npos);
+    assert(boolean_left_nested_or_and_first_owner_guard != std::string::npos);
+    assert(boolean_left_nested_or_and_first_inner_branch < boolean_left_nested_or_and_first_inner_merge);
+    assert(boolean_left_nested_or_and_first_inner_merge < boolean_left_nested_or_and_first_inner_phi);
+    assert(boolean_left_nested_or_and_first_inner_phi < boolean_left_nested_or_and_first_outer_branch);
+    assert(boolean_left_nested_or_and_first_outer_branch < boolean_left_nested_or_and_first_outer_rhs);
+    assert(boolean_left_nested_or_and_first_outer_rhs < boolean_left_nested_or_and_first_guard);
+    assert(boolean_left_nested_or_and_first_guard < boolean_left_nested_or_and_first_load);
+    assert(boolean_left_nested_or_and_first_load < boolean_left_nested_or_and_first_outer_merge);
+    assert(boolean_left_nested_or_and_first_outer_merge < boolean_left_nested_or_and_first_outer_phi);
+    assert(boolean_left_nested_or_and_first_outer_phi < boolean_left_nested_or_and_first_index_phi);
+    assert(boolean_left_nested_or_and_first_index_phi < boolean_left_nested_or_and_first_owner_guard);
+    auto boolean_left_nested_or_and_second_inner_merge =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "\nlogical.or.merge.",
+            boolean_left_nested_or_and_second_inner_branch
+        );
+    auto boolean_left_nested_or_and_second_inner_phi =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = phi i1 [1, %ternary.else.",
+            boolean_left_nested_or_and_second_inner_merge
+        );
+    auto boolean_left_nested_or_and_second_outer_branch =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "label %logical.and.rhs.",
+            boolean_left_nested_or_and_second_inner_phi
+        );
+    auto boolean_left_nested_or_and_second_outer_rhs =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "\nlogical.and.rhs.",
+            boolean_left_nested_or_and_second_outer_branch
+        );
+    auto boolean_left_nested_or_and_second_guard =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = icmp ult i64 %group_slot, 2",
+            boolean_left_nested_or_and_second_outer_rhs
+        );
+    auto boolean_left_nested_or_and_second_load =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = load i1, ptr ",
+            boolean_left_nested_or_and_second_guard
+        );
+    auto boolean_left_nested_or_and_second_outer_merge =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "\nlogical.and.merge.",
+            boolean_left_nested_or_and_second_load
+        );
+    auto boolean_left_nested_or_and_second_outer_phi =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge.",
+            boolean_left_nested_or_and_second_outer_merge
+        );
+    auto boolean_left_nested_or_and_second_index_phi =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            " = phi i64 [%first, ",
+            boolean_left_nested_or_and_second_outer_phi
+        );
+    auto boolean_left_nested_or_and_second_owner_guard =
+        runtime_index_boolean_left_nested_or_and_member_path_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_left_nested_or_and_second_index_phi
+        );
+    assert(boolean_left_nested_or_and_second_inner_merge != std::string::npos);
+    assert(boolean_left_nested_or_and_second_inner_phi != std::string::npos);
+    assert(boolean_left_nested_or_and_second_outer_branch != std::string::npos);
+    assert(boolean_left_nested_or_and_second_outer_rhs != std::string::npos);
+    assert(boolean_left_nested_or_and_second_guard != std::string::npos);
+    assert(boolean_left_nested_or_and_second_load != std::string::npos);
+    assert(boolean_left_nested_or_and_second_outer_merge != std::string::npos);
+    assert(boolean_left_nested_or_and_second_outer_phi != std::string::npos);
+    assert(boolean_left_nested_or_and_second_index_phi != std::string::npos);
+    assert(boolean_left_nested_or_and_second_owner_guard != std::string::npos);
+    assert(boolean_left_nested_or_and_second_inner_branch < boolean_left_nested_or_and_second_inner_merge);
+    assert(boolean_left_nested_or_and_second_inner_merge < boolean_left_nested_or_and_second_inner_phi);
+    assert(boolean_left_nested_or_and_second_inner_phi < boolean_left_nested_or_and_second_outer_branch);
+    assert(boolean_left_nested_or_and_second_outer_branch < boolean_left_nested_or_and_second_outer_rhs);
+    assert(boolean_left_nested_or_and_second_outer_rhs < boolean_left_nested_or_and_second_guard);
+    assert(boolean_left_nested_or_and_second_guard < boolean_left_nested_or_and_second_load);
+    assert(boolean_left_nested_or_and_second_load < boolean_left_nested_or_and_second_outer_merge);
+    assert(boolean_left_nested_or_and_second_outer_merge < boolean_left_nested_or_and_second_outer_phi);
+    assert(boolean_left_nested_or_and_second_outer_phi < boolean_left_nested_or_and_second_index_phi);
+    assert(boolean_left_nested_or_and_second_index_phi < boolean_left_nested_or_and_second_owner_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_left_nested_or_and_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_left_nested_or_and_member_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_left_nested_or_and_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_left_nested_or_and_member_path_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

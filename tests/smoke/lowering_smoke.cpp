@@ -7776,6 +7776,41 @@ void test_emit_left_nested_and_or_short_circuit_boolean_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_left_nested_or_and_short_circuit_boolean_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_left_nested_or_and_short_circuit_boolean.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function allowed(gate: Bool, fallback: Bool, member: Bool) -> Bool\n"
+        "    (gate or fallback) and member\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i1 @allowed(i1 %gate, i1 %fallback, i1 %member) {\n"
+        "entry:\n"
+        "  br i1 %gate, label %logical.or.merge.0, label %logical.or.rhs.0\n"
+        "logical.or.rhs.0:\n"
+        "  br label %logical.or.merge.0\n"
+        "logical.or.merge.0:\n"
+        "  %tmp0 = phi i1 [1, %entry], [%fallback, %logical.or.rhs.0]\n"
+        "  br i1 %tmp0, label %logical.and.rhs.1, label %logical.and.merge.1\n"
+        "logical.and.rhs.1:\n"
+        "  br label %logical.and.merge.1\n"
+        "logical.and.merge.1:\n"
+        "  %tmp1 = phi i1 [0, %logical.or.merge.0], [%member, %logical.and.rhs.1]\n"
+        "  ret i1 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_short_circuit_rhs_ownership_transfer() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_short_circuit_rhs_ownership_transfer.or";
@@ -14742,6 +14777,7 @@ auto main() -> int {
     test_emit_nested_short_circuit_boolean_return();
     test_emit_nested_and_or_short_circuit_boolean_return();
     test_emit_left_nested_and_or_short_circuit_boolean_return();
+    test_emit_left_nested_or_and_short_circuit_boolean_return();
     test_reject_short_circuit_rhs_ownership_transfer();
     test_reject_unsigned_unary_negation_return();
     test_reject_boolean_unary_negation_return();
