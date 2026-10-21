@@ -3585,3 +3585,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Short-circuit `and` now composes with dependent runtime-indexed Boolean member paths. False gates
   suppress invalid source slots on both owner branches; evaluated paths preserve source-slot load, widening,
   derived-group access, member load, false-value PHI, index selection, and owner guarding.
+- 2026-10-20: Short-circuit `or` now composes with dependent runtime-indexed Boolean member paths. True gates
+  suppress invalid source slots on both owner branches; evaluated paths preserve source-slot load, widening,
+  derived-group access, member load, true-value PHI, index selection, and owner guarding.

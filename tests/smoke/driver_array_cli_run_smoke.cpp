@@ -3668,6 +3668,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_and_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_and_dependent_member_path_condition_for_run.or";
+    auto runtime_index_boolean_or_dependent_member_path_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_or_dependent_member_path_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds.or";
@@ -8590,6 +8593,80 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_and_dependent_member_path_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_and_dependent_member_path_condition_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_or_dependent_member_path_condition_path);
+    auto runtime_index_boolean_or_dependent_member_path_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_or_dependent_member_path_condition_path.string()
+        );
+    auto or_dependent_first_rhs =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find("\nlogical.or.rhs.");
+    auto or_dependent_second_rhs =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            "\nlogical.or.rhs.", or_dependent_first_rhs + 1
+        );
+    auto or_dependent_first_slot_guard =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2", or_dependent_first_rhs
+        );
+    auto or_dependent_second_slot_guard =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2", or_dependent_first_slot_guard + 1
+        );
+    auto or_dependent_first_source_load =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = load i32, ptr ", or_dependent_first_slot_guard
+        );
+    auto or_dependent_first_cast =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = zext i32 ", or_dependent_first_source_load
+        );
+    auto or_dependent_first_member_load =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = load i1, ptr ", or_dependent_first_cast
+        );
+    auto or_dependent_first_phi =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = phi i1 [1, %ternary.then.", or_dependent_first_member_load
+        );
+    auto or_dependent_second_source_load =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = load i32, ptr ", or_dependent_second_slot_guard
+        );
+    auto or_dependent_second_cast =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = zext i32 ", or_dependent_second_source_load
+        );
+    auto or_dependent_second_member_load =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = load i1, ptr ", or_dependent_second_cast
+        );
+    auto or_dependent_second_phi =
+        runtime_index_boolean_or_dependent_member_path_condition_ir.find(
+            " = phi i1 [1, %ternary.else.", or_dependent_second_member_load
+        );
+    assert(or_dependent_first_rhs < or_dependent_first_slot_guard);
+    assert(or_dependent_first_slot_guard < or_dependent_first_source_load);
+    assert(or_dependent_first_source_load < or_dependent_first_cast);
+    assert(or_dependent_first_cast < or_dependent_first_member_load);
+    assert(or_dependent_first_member_load < or_dependent_first_phi);
+    assert(or_dependent_second_rhs < or_dependent_second_slot_guard);
+    assert(or_dependent_second_slot_guard < or_dependent_second_source_load);
+    assert(or_dependent_second_source_load < or_dependent_second_cast);
+    assert(or_dependent_second_cast < or_dependent_second_member_load);
+    assert(or_dependent_second_member_load < or_dependent_second_phi);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_or_dependent_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_or_dependent_member_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_or_dependent_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_or_dependent_member_path_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =
