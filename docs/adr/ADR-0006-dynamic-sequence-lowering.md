@@ -3724,3 +3724,6 @@ representation.
 - 2026-10-21 Short-circuit `or` conditions now symmetrically support two distinct dependent runtime-indexed Boolean
   member paths. A true first member suppresses the second source chain, while evaluated paths preserve both ordered
   dependent chains and true-value PHI merging on both owner branches.
+- 2026-10-21 Nested `first or (second and third)` conditions now support three distinct dependent runtime-indexed
+  Boolean member paths. Outer true paths suppress both later source chains, inner false paths suppress the third
+  source chain, and both owner branches preserve inner-to-outer PHI ordering.

@@ -3594,3 +3594,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-21: Short-circuit `or` now symmetrically supports two distinct dependent runtime-indexed Boolean member
   paths. True first members suppress invalid second source slots on both owner branches; evaluated paths preserve
   both dependent chains, true-value PHI selection, and owner guarding.
+- 2026-10-21: Nested `first or (second and third)` now supports three dependent runtime-indexed Boolean member paths.
+  Outer true paths suppress invalid second and third source slots, inner false paths suppress invalid third source
+  slots, and evaluated paths preserve both nested PHIs before index selection and owner guarding.

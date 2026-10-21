@@ -983,6 +983,9 @@ int main() {
     state.source_type_names["other_holder"] = "Holder";
     state.source_type_names["dynamic_index"] = "UInt64";
     state.source_type_names["index_offset"] = "UInt64";
+    state.source_type_names["second_dynamic_index"] = "UInt64";
+    state.source_type_names["third_dynamic_index"] = "UInt64";
+    state.source_type_names["fourth_dynamic_index"] = "UInt64";
     state.source_type_names["narrow_index"] = "UInt32";
     state.source_type_names["signed_index"] = "Int64";
     state.source_type_names["flag"] = "Bool";
@@ -1007,6 +1010,110 @@ int main() {
         distinct_holder_selection(
             binary(name("dynamic_index"), "+", name("index_offset")),
             binary(name("dynamic_index"), "+", name("index_offset"))
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("dynamic_index")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    ),
+                    "or",
+                    binary(
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("second_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        ),
+                        "and",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("third_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("dynamic_index")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    ),
+                    "or",
+                    binary(
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("second_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        ),
+                        "and",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("third_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            )
         ),
         context,
         state
@@ -1362,9 +1469,6 @@ int main() {
         context,
         state
     ));
-    state.source_type_names["second_dynamic_index"] = "UInt64";
-    state.source_type_names["third_dynamic_index"] = "UInt64";
-    state.source_type_names["fourth_dynamic_index"] = "UInt64";
     assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
         distinct_holder_selection(
             ternary(

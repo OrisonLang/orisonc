@@ -3677,6 +3677,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_two_dependent_member_paths_or_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_two_dependent_member_paths_or_condition_for_run.or";
+    auto runtime_index_boolean_three_dependent_member_paths_nested_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_three_dependent_member_paths_nested_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds.or";
@@ -8891,6 +8894,216 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_two_dependent_member_paths_or_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_two_dependent_member_paths_or_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_path
+    );
+    auto runtime_index_boolean_three_dependent_member_paths_nested_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_three_dependent_member_paths_nested_condition_path.string()
+        );
+    auto three_dependent_first_first_guard =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3"
+        );
+    auto three_dependent_second_first_guard =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3", three_dependent_first_first_guard + 1
+        );
+    auto three_dependent_first_second_guard =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3"
+        );
+    auto three_dependent_second_second_guard =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3", three_dependent_first_second_guard + 1
+        );
+    auto three_dependent_first_third_guard =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3"
+        );
+    auto three_dependent_second_third_guard =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3", three_dependent_first_third_guard + 1
+        );
+    assert(three_dependent_first_first_guard != std::string::npos);
+    assert(three_dependent_second_first_guard != std::string::npos);
+    assert(three_dependent_first_second_guard != std::string::npos);
+    assert(three_dependent_second_second_guard != std::string::npos);
+    assert(three_dependent_first_third_guard != std::string::npos);
+    assert(three_dependent_second_third_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3", three_dependent_second_first_guard + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3", three_dependent_second_second_guard + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3", three_dependent_second_third_guard + 1
+        ) == std::string::npos
+    );
+    auto three_dependent_first_first_source_load =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i32, ptr ", three_dependent_first_first_guard
+        );
+    auto three_dependent_first_first_cast =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = zext i32 ", three_dependent_first_first_source_load
+        );
+    auto three_dependent_first_first_member =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i1, ptr ", three_dependent_first_first_cast
+        );
+    auto three_dependent_first_outer_rhs =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            "\nlogical.or.rhs.", three_dependent_first_first_member
+        );
+    auto three_dependent_first_second_source_load =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i32, ptr ", three_dependent_first_second_guard
+        );
+    auto three_dependent_first_second_cast =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = zext i32 ", three_dependent_first_second_source_load
+        );
+    auto three_dependent_first_second_member =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i1, ptr ", three_dependent_first_second_cast
+        );
+    auto three_dependent_first_inner_rhs =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            "\nlogical.and.rhs.", three_dependent_first_second_member
+        );
+    auto three_dependent_first_third_source_load =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i32, ptr ", three_dependent_first_third_guard
+        );
+    auto three_dependent_first_third_cast =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = zext i32 ", three_dependent_first_third_source_load
+        );
+    auto three_dependent_first_third_member =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i1, ptr ", three_dependent_first_third_cast
+        );
+    auto three_dependent_first_inner_phi =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", three_dependent_first_third_member
+        );
+    auto three_dependent_first_outer_phi =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", three_dependent_first_inner_phi
+        );
+    auto three_dependent_first_inner_predecessor =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            ", %logical.and.merge.", three_dependent_first_outer_phi
+        );
+    assert(three_dependent_first_first_guard < three_dependent_first_first_source_load);
+    assert(three_dependent_first_first_source_load < three_dependent_first_first_cast);
+    assert(three_dependent_first_first_cast < three_dependent_first_first_member);
+    assert(three_dependent_first_first_member < three_dependent_first_outer_rhs);
+    assert(three_dependent_first_outer_rhs < three_dependent_first_second_guard);
+    assert(three_dependent_first_second_guard < three_dependent_first_second_source_load);
+    assert(three_dependent_first_second_source_load < three_dependent_first_second_cast);
+    assert(three_dependent_first_second_cast < three_dependent_first_second_member);
+    assert(three_dependent_first_second_member < three_dependent_first_inner_rhs);
+    assert(three_dependent_first_inner_rhs < three_dependent_first_third_guard);
+    assert(three_dependent_first_third_guard < three_dependent_first_third_source_load);
+    assert(three_dependent_first_third_source_load < three_dependent_first_third_cast);
+    assert(three_dependent_first_third_cast < three_dependent_first_third_member);
+    assert(three_dependent_first_third_member < three_dependent_first_inner_phi);
+    assert(three_dependent_first_inner_phi < three_dependent_first_outer_phi);
+    assert(three_dependent_first_outer_phi < three_dependent_first_inner_predecessor);
+    auto three_dependent_second_first_source_load =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i32, ptr ", three_dependent_second_first_guard
+        );
+    auto three_dependent_second_first_cast =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = zext i32 ", three_dependent_second_first_source_load
+        );
+    auto three_dependent_second_first_member =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i1, ptr ", three_dependent_second_first_cast
+        );
+    auto three_dependent_second_outer_rhs =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            "\nlogical.or.rhs.", three_dependent_second_first_member
+        );
+    auto three_dependent_second_second_source_load =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i32, ptr ", three_dependent_second_second_guard
+        );
+    auto three_dependent_second_second_cast =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = zext i32 ", three_dependent_second_second_source_load
+        );
+    auto three_dependent_second_second_member =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i1, ptr ", three_dependent_second_second_cast
+        );
+    auto three_dependent_second_inner_rhs =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            "\nlogical.and.rhs.", three_dependent_second_second_member
+        );
+    auto three_dependent_second_third_source_load =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i32, ptr ", three_dependent_second_third_guard
+        );
+    auto three_dependent_second_third_cast =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = zext i32 ", three_dependent_second_third_source_load
+        );
+    auto three_dependent_second_third_member =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = load i1, ptr ", three_dependent_second_third_cast
+        );
+    auto three_dependent_second_inner_phi =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", three_dependent_second_third_member
+        );
+    auto three_dependent_second_outer_phi =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", three_dependent_second_inner_phi
+        );
+    auto three_dependent_second_inner_predecessor =
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_ir.find(
+            ", %logical.and.merge.", three_dependent_second_outer_phi
+        );
+    assert(three_dependent_second_first_guard < three_dependent_second_first_source_load);
+    assert(three_dependent_second_first_source_load < three_dependent_second_first_cast);
+    assert(three_dependent_second_first_cast < three_dependent_second_first_member);
+    assert(three_dependent_second_first_member < three_dependent_second_outer_rhs);
+    assert(three_dependent_second_outer_rhs < three_dependent_second_second_guard);
+    assert(three_dependent_second_second_guard < three_dependent_second_second_source_load);
+    assert(three_dependent_second_second_source_load < three_dependent_second_second_cast);
+    assert(three_dependent_second_second_cast < three_dependent_second_second_member);
+    assert(three_dependent_second_second_member < three_dependent_second_inner_rhs);
+    assert(three_dependent_second_inner_rhs < three_dependent_second_third_guard);
+    assert(three_dependent_second_third_guard < three_dependent_second_third_source_load);
+    assert(three_dependent_second_third_source_load < three_dependent_second_third_cast);
+    assert(three_dependent_second_third_cast < three_dependent_second_third_member);
+    assert(three_dependent_second_third_member < three_dependent_second_inner_phi);
+    assert(three_dependent_second_inner_phi < three_dependent_second_outer_phi);
+    assert(three_dependent_second_outer_phi < three_dependent_second_inner_predecessor);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_three_dependent_member_paths_nested_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_three_dependent_member_paths_nested_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_three_dependent_member_paths_nested_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =
