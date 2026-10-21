@@ -3659,6 +3659,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_four_member_paths_balanced_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_four_member_paths_balanced_condition_for_run.or";
+    auto runtime_index_boolean_four_member_paths_symmetric_balanced_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_four_member_paths_symmetric_balanced_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
@@ -8437,6 +8440,67 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_four_member_paths_balanced_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_four_member_paths_balanced_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_path
+    );
+    auto runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_four_member_paths_symmetric_balanced_condition_path.string()
+        );
+    auto symmetric_balanced_first_inner_phi =
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds."
+        );
+    auto symmetric_balanced_first_right_inner_phi =
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", symmetric_balanced_first_inner_phi + 1
+        );
+    auto symmetric_balanced_second_inner_phi =
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", symmetric_balanced_first_right_inner_phi + 1
+        );
+    auto symmetric_balanced_second_right_inner_phi =
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", symmetric_balanced_second_inner_phi + 1
+        );
+    auto symmetric_balanced_first_outer_phi =
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge."
+        );
+    auto symmetric_balanced_second_outer_phi =
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge.", symmetric_balanced_first_outer_phi + 1
+        );
+    assert(symmetric_balanced_first_inner_phi != std::string::npos);
+    assert(symmetric_balanced_first_right_inner_phi != std::string::npos);
+    assert(symmetric_balanced_second_inner_phi != std::string::npos);
+    assert(symmetric_balanced_second_right_inner_phi != std::string::npos);
+    assert(symmetric_balanced_first_outer_phi != std::string::npos);
+    assert(symmetric_balanced_second_outer_phi != std::string::npos);
+    assert(symmetric_balanced_first_inner_phi < symmetric_balanced_first_right_inner_phi);
+    assert(symmetric_balanced_first_right_inner_phi < symmetric_balanced_first_outer_phi);
+    assert(symmetric_balanced_first_outer_phi < symmetric_balanced_second_inner_phi);
+    assert(symmetric_balanced_second_inner_phi < symmetric_balanced_second_right_inner_phi);
+    assert(symmetric_balanced_second_right_inner_phi < symmetric_balanced_second_outer_phi);
+    assert(
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge.", symmetric_balanced_second_outer_phi + 1
+        ) == std::string::npos
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_four_member_paths_symmetric_balanced_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_four_member_paths_symmetric_balanced_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_four_member_paths_symmetric_balanced_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

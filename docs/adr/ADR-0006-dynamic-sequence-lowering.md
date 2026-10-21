@@ -3709,3 +3709,6 @@ representation.
 - 2026-10-20 Balanced `(first and second) or (third and fourth)` conditions with four distinct runtime-indexed member
   paths now have semantic and production coverage. Each owner branch preserves both inner short-circuit merges before
   the outer PHI, and skipped invalid paths remain unreachable.
+- 2026-10-20 Symmetric balanced `(first or second) and (third or fourth)` conditions with four distinct runtime-indexed
+  member paths now have semantic and production coverage. Each owner branch preserves both inner true-value merges
+  before the outer false-value PHI, and skipped invalid paths remain unreachable.

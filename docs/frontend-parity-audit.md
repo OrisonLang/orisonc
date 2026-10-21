@@ -3579,3 +3579,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Balanced `(first and second) or (third and fourth)` now has four-runtime-indexed-member-path production
   coverage. Both owner branches preserve sibling inner-and PHIs before the outer-or PHI, while short-circuit paths
   suppress invalid second, third, and fourth indexes.
+- 2026-10-20: Symmetric balanced `(first or second) and (third or fourth)` now has four-runtime-indexed-member-path
+  production coverage. Both owner branches preserve sibling inner-or PHIs before the outer-and PHI, while
+  short-circuit paths suppress invalid second, third, and fourth indexes.
