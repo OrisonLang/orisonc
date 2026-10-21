@@ -3567,3 +3567,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Nested `first or (second and third)` now has three-runtime-indexed-member-path production coverage.
   Outer true paths suppress invalid second and third indexes, inner false paths suppress invalid third indexes, and
   evaluated paths preserve inner-and to outer-or PHI ordering before index selection and owner guarding.
+- 2026-10-20: Symmetric `first and (second or third)` now has three-runtime-indexed-member-path production coverage.
+  Outer false paths suppress invalid second and third indexes, inner true paths suppress invalid third indexes, and
+  evaluated paths preserve inner-or to outer-and PHI ordering before index selection and owner guarding.
