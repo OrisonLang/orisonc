@@ -1015,6 +1015,78 @@ int main() {
         distinct_holder_selection(
             ternary(
                 binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("dynamic_index")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    ),
+                    "and",
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("index_offset")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("dynamic_index")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    ),
+                    "and",
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("index_offset")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            )
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                binary(
                     name("flag"),
                     "or",
                     member(

@@ -3671,6 +3671,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_or_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_or_dependent_member_path_condition_for_run.or";
+    auto runtime_index_boolean_two_dependent_member_paths_and_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_two_dependent_member_paths_and_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds.or";
@@ -8667,6 +8670,125 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_or_dependent_member_path_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_or_dependent_member_path_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_two_dependent_member_paths_and_condition_path
+    );
+    auto runtime_index_boolean_two_dependent_member_paths_and_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_two_dependent_member_paths_and_condition_path.string()
+        );
+    auto two_dependent_first_first_guard =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = icmp ult i64 %first_slot, 2"
+        );
+    auto two_dependent_second_first_guard =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = icmp ult i64 %first_slot, 2", two_dependent_first_first_guard + 1
+        );
+    auto two_dependent_first_second_guard =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = icmp ult i64 %second_slot, 2"
+        );
+    auto two_dependent_second_second_guard =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = icmp ult i64 %second_slot, 2", two_dependent_first_second_guard + 1
+        );
+    auto two_dependent_first_first_load =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i32, ptr ", two_dependent_first_first_guard
+        );
+    auto two_dependent_first_first_cast =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = zext i32 ", two_dependent_first_first_load
+        );
+    auto two_dependent_first_first_member =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i1, ptr ", two_dependent_first_first_cast
+        );
+    auto two_dependent_first_rhs =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            "\nlogical.and.rhs.", two_dependent_first_first_member
+        );
+    auto two_dependent_first_second_load =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i32, ptr ", two_dependent_first_second_guard
+        );
+    auto two_dependent_first_second_cast =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = zext i32 ", two_dependent_first_second_load
+        );
+    auto two_dependent_first_second_member =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i1, ptr ", two_dependent_first_second_cast
+        );
+    auto two_dependent_first_phi =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", two_dependent_first_second_member
+        );
+    auto two_dependent_second_first_load =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i32, ptr ", two_dependent_second_first_guard
+        );
+    auto two_dependent_second_first_cast =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = zext i32 ", two_dependent_second_first_load
+        );
+    auto two_dependent_second_first_member =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i1, ptr ", two_dependent_second_first_cast
+        );
+    auto two_dependent_second_rhs =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            "\nlogical.and.rhs.", two_dependent_second_first_member
+        );
+    auto two_dependent_second_second_load =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i32, ptr ", two_dependent_second_second_guard
+        );
+    auto two_dependent_second_second_cast =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = zext i32 ", two_dependent_second_second_load
+        );
+    auto two_dependent_second_second_member =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = load i1, ptr ", two_dependent_second_second_cast
+        );
+    auto two_dependent_second_phi =
+        runtime_index_boolean_two_dependent_member_paths_and_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", two_dependent_second_second_member
+        );
+    assert(two_dependent_first_first_guard < two_dependent_first_first_load);
+    assert(two_dependent_first_first_load < two_dependent_first_first_cast);
+    assert(two_dependent_first_first_cast < two_dependent_first_first_member);
+    assert(two_dependent_first_first_member < two_dependent_first_rhs);
+    assert(two_dependent_first_rhs < two_dependent_first_second_guard);
+    assert(two_dependent_first_second_guard < two_dependent_first_second_load);
+    assert(two_dependent_first_second_load < two_dependent_first_second_cast);
+    assert(two_dependent_first_second_cast < two_dependent_first_second_member);
+    assert(two_dependent_first_second_member < two_dependent_first_phi);
+    assert(two_dependent_second_first_guard < two_dependent_second_first_load);
+    assert(two_dependent_second_first_load < two_dependent_second_first_cast);
+    assert(two_dependent_second_first_cast < two_dependent_second_first_member);
+    assert(two_dependent_second_first_member < two_dependent_second_rhs);
+    assert(two_dependent_second_rhs < two_dependent_second_second_guard);
+    assert(two_dependent_second_second_guard < two_dependent_second_second_load);
+    assert(two_dependent_second_second_load < two_dependent_second_second_cast);
+    assert(two_dependent_second_second_cast < two_dependent_second_second_member);
+    assert(two_dependent_second_second_member < two_dependent_second_phi);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_two_dependent_member_paths_and_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_two_dependent_member_paths_and_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_two_dependent_member_paths_and_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_two_dependent_member_paths_and_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

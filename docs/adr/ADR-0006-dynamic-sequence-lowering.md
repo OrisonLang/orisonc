@@ -3718,3 +3718,6 @@ representation.
 - 2026-10-20 Short-circuit `or` conditions now compose symmetrically with dependent runtime-indexed Boolean member
   paths. A true gate suppresses the complete source-slot and derived-group access chain, while false paths preserve
   ordered guards, loads, widening, and true-value PHI merging on both owner branches.
+- 2026-10-21 Short-circuit `and` conditions now support two distinct dependent runtime-indexed Boolean member paths.
+  A false first member suppresses the second source chain, while evaluated paths preserve both ordered dependent
+  chains and false-value PHI merging on both owner branches.
