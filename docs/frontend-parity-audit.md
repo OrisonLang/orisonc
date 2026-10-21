@@ -3591,3 +3591,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-21: Short-circuit `and` now supports two distinct dependent runtime-indexed Boolean member paths. False
   first members suppress invalid second source slots on both owner branches; evaluated paths preserve both dependent
   chains, false-value PHI selection, and owner guarding.
+- 2026-10-21: Short-circuit `or` now symmetrically supports two distinct dependent runtime-indexed Boolean member
+  paths. True first members suppress invalid second source slots on both owner branches; evaluated paths preserve
+  both dependent chains, true-value PHI selection, and owner guarding.

@@ -1,0 +1,37 @@
+package tests.fixtures.dynamic_array_runtime_index_boolean_two_dependent_member_paths_or_condition_for_run
+
+record Payload
+    value: UInt32
+
+record Bucket
+    values: DynamicArray<Payload>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+record IndexConfig
+    enabled: Bool
+
+record IndexSettings
+    groups: Array<IndexConfig, 2>
+    indices: Array<UInt32, 2>
+
+function make_values(seed: UInt32) -> DynamicArray<Payload>
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(seed))
+    values
+
+function make_holder(seed: UInt32) -> Holder
+    Holder([Bucket(make_values(seed)), Bucket(make_values(seed + 20 as UInt32))])
+
+function sum_selected(root_flag: Bool, first_slot: UInt64, second_slot: UInt64, first: UInt64, second: UInt64) -> UInt32
+    var left: Holder = make_holder(40 as UInt32)
+    var right: Holder = make_holder(80 as UInt32)
+    var settings = IndexSettings([IndexConfig(true), IndexConfig(false)], [0 as UInt32, 1 as UInt32])
+    var total = 0 as UInt32
+    for item in root_flag ? left.buckets[settings.groups[settings.indices[first_slot] as UInt64].enabled or settings.groups[settings.indices[second_slot] as UInt64].enabled ? first : second].values : right.buckets[settings.groups[settings.indices[first_slot] as UInt64].enabled or settings.groups[settings.indices[second_slot] as UInt64].enabled ? first : second].values
+        total = total + item.value
+    total
+
+function main() -> UInt32
+    sum_selected(true, 0 as UInt64, 2 as UInt64, 0 as UInt64, 1 as UInt64) + sum_selected(false, 0 as UInt64, 2 as UInt64, 0 as UInt64, 1 as UInt64) + sum_selected(true, 1 as UInt64, 0 as UInt64, 0 as UInt64, 1 as UInt64) + sum_selected(false, 1 as UInt64, 1 as UInt64, 0 as UInt64, 1 as UInt64) - 260 as UInt32
