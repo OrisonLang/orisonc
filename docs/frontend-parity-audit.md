@@ -3576,3 +3576,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Symmetric left-nested `(first or second) and third` now has three-runtime-indexed-member-path production
   coverage. True first members suppress invalid second indexes, false inner results suppress invalid third indexes,
   and the outer false-value PHI names the inner-or merge before index selection and owner guarding.
+- 2026-10-20: Balanced `(first and second) or (third and fourth)` now has four-runtime-indexed-member-path production
+  coverage. Both owner branches preserve sibling inner-and PHIs before the outer-or PHI, while short-circuit paths
+  suppress invalid second, third, and fourth indexes.

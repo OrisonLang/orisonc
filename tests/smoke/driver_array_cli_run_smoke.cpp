@@ -3656,6 +3656,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_for_run.or";
+    auto runtime_index_boolean_four_member_paths_balanced_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_four_member_paths_balanced_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
@@ -8331,6 +8334,109 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_four_member_paths_balanced_condition_path);
+    auto runtime_index_boolean_four_member_paths_balanced_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_four_member_paths_balanced_condition_path.string()
+        );
+    auto balanced_first_guard =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3"
+        );
+    auto balanced_first_guard_second =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3", balanced_first_guard + 1
+        );
+    auto balanced_second_guard =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3"
+        );
+    auto balanced_second_guard_second =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3", balanced_second_guard + 1
+        );
+    auto balanced_third_guard =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3"
+        );
+    auto balanced_third_guard_second =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3", balanced_third_guard + 1
+        );
+    auto balanced_fourth_guard =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %fourth_slot, 3"
+        );
+    auto balanced_fourth_guard_second =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %fourth_slot, 3", balanced_fourth_guard + 1
+        );
+    assert(balanced_first_guard != std::string::npos);
+    assert(balanced_first_guard_second != std::string::npos);
+    assert(balanced_second_guard != std::string::npos);
+    assert(balanced_second_guard_second != std::string::npos);
+    assert(balanced_third_guard != std::string::npos);
+    assert(balanced_third_guard_second != std::string::npos);
+    assert(balanced_fourth_guard != std::string::npos);
+    assert(balanced_fourth_guard_second != std::string::npos);
+    assert(
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %fourth_slot, 3", balanced_fourth_guard_second + 1
+        ) == std::string::npos
+    );
+    auto balanced_first_inner_phi =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds."
+        );
+    auto balanced_first_right_inner_phi =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", balanced_first_inner_phi + 1
+        );
+    auto balanced_second_inner_phi =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", balanced_first_right_inner_phi + 1
+        );
+    auto balanced_second_right_inner_phi =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", balanced_second_inner_phi + 1
+        );
+    auto balanced_first_outer_phi =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [1, %logical.and.merge."
+        );
+    auto balanced_second_outer_phi =
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [1, %logical.and.merge.", balanced_first_outer_phi + 1
+        );
+    assert(balanced_first_inner_phi != std::string::npos);
+    assert(balanced_first_right_inner_phi != std::string::npos);
+    assert(balanced_second_inner_phi != std::string::npos);
+    assert(balanced_second_right_inner_phi != std::string::npos);
+    assert(balanced_first_outer_phi != std::string::npos);
+    assert(balanced_second_outer_phi != std::string::npos);
+    assert(balanced_first_inner_phi < balanced_first_right_inner_phi);
+    assert(balanced_first_right_inner_phi < balanced_first_outer_phi);
+    assert(balanced_first_outer_phi < balanced_second_inner_phi);
+    assert(balanced_second_inner_phi < balanced_second_right_inner_phi);
+    assert(balanced_second_right_inner_phi < balanced_second_outer_phi);
+    assert(
+        runtime_index_boolean_four_member_paths_balanced_condition_ir.find(
+            " = phi i1 [1, %logical.and.merge.", balanced_second_outer_phi + 1
+        ) == std::string::npos
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_four_member_paths_balanced_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_four_member_paths_balanced_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_four_member_paths_balanced_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_four_member_paths_balanced_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =
