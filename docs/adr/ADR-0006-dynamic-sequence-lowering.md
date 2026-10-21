@@ -3712,3 +3712,6 @@ representation.
 - 2026-10-20 Symmetric balanced `(first or second) and (third or fourth)` conditions with four distinct runtime-indexed
   member paths now have semantic and production coverage. Each owner branch preserves both inner true-value merges
   before the outer false-value PHI, and skipped invalid paths remain unreachable.
+- 2026-10-20 Short-circuit `and` conditions now compose with dependent runtime-indexed Boolean member paths. A false
+  gate suppresses the complete source-slot and derived-group access chain, while true paths preserve ordered guards,
+  loads, widening, and false-value PHI merging on both owner branches.

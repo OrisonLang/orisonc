@@ -3665,6 +3665,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
+    auto runtime_index_boolean_and_dependent_member_path_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_and_dependent_member_path_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds.or";
@@ -8501,6 +8504,92 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_four_member_paths_symmetric_balanced_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_four_member_paths_symmetric_balanced_condition_for_run"
+    );
+    assert_run_success(executable, runtime_index_boolean_and_dependent_member_path_condition_path);
+    auto runtime_index_boolean_and_dependent_member_path_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_and_dependent_member_path_condition_path.string()
+        );
+    auto and_dependent_first_rhs =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find("\nlogical.and.rhs.");
+    auto and_dependent_second_rhs =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            "\nlogical.and.rhs.", and_dependent_first_rhs + 1
+        );
+    auto and_dependent_first_slot_guard =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2", and_dependent_first_rhs
+        );
+    auto and_dependent_second_slot_guard =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 %slot, 2", and_dependent_first_slot_guard + 1
+        );
+    auto and_dependent_first_source_load =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = load i32, ptr ", and_dependent_first_slot_guard
+        );
+    auto and_dependent_first_cast =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = zext i32 ", and_dependent_first_source_load
+        );
+    auto and_dependent_first_group_guard =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 ", and_dependent_first_cast
+        );
+    auto and_dependent_first_member_load =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = load i1, ptr ", and_dependent_first_group_guard
+        );
+    auto and_dependent_first_phi =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = phi i1 [0, %ternary.then.", and_dependent_first_member_load
+        );
+    auto and_dependent_second_source_load =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = load i32, ptr ", and_dependent_second_slot_guard
+        );
+    auto and_dependent_second_cast =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = zext i32 ", and_dependent_second_source_load
+        );
+    auto and_dependent_second_group_guard =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = icmp ult i64 ", and_dependent_second_cast
+        );
+    auto and_dependent_second_member_load =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = load i1, ptr ", and_dependent_second_group_guard
+        );
+    auto and_dependent_second_phi =
+        runtime_index_boolean_and_dependent_member_path_condition_ir.find(
+            " = phi i1 [0, %ternary.else.", and_dependent_second_member_load
+        );
+    assert(and_dependent_first_rhs != std::string::npos);
+    assert(and_dependent_second_rhs != std::string::npos);
+    assert(and_dependent_first_rhs < and_dependent_first_slot_guard);
+    assert(and_dependent_first_slot_guard < and_dependent_first_source_load);
+    assert(and_dependent_first_source_load < and_dependent_first_cast);
+    assert(and_dependent_first_cast < and_dependent_first_group_guard);
+    assert(and_dependent_first_group_guard < and_dependent_first_member_load);
+    assert(and_dependent_first_member_load < and_dependent_first_phi);
+    assert(and_dependent_second_rhs < and_dependent_second_slot_guard);
+    assert(and_dependent_second_slot_guard < and_dependent_second_source_load);
+    assert(and_dependent_second_source_load < and_dependent_second_cast);
+    assert(and_dependent_second_cast < and_dependent_second_group_guard);
+    assert(and_dependent_second_group_guard < and_dependent_second_member_load);
+    assert(and_dependent_second_member_load < and_dependent_second_phi);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_and_dependent_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_and_dependent_member_path_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_and_dependent_member_path_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_and_dependent_member_path_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

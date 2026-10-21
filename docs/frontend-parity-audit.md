@@ -3582,3 +3582,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-20: Symmetric balanced `(first or second) and (third or fourth)` now has four-runtime-indexed-member-path
   production coverage. Both owner branches preserve sibling inner-or PHIs before the outer-and PHI, while
   short-circuit paths suppress invalid second, third, and fourth indexes.
+- 2026-10-20: Short-circuit `and` now composes with dependent runtime-indexed Boolean member paths. False gates
+  suppress invalid source slots on both owner branches; evaluated paths preserve source-slot load, widening,
+  derived-group access, member load, false-value PHI, index selection, and owner guarding.
