@@ -3653,6 +3653,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_three_member_paths_left_nested_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_three_member_paths_left_nested_condition_for_run.or";
+    auto runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_for_run.or";
@@ -8138,6 +8141,196 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_three_member_paths_left_nested_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_three_member_paths_left_nested_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path
+    );
+    auto runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path.string()
+        );
+    auto boolean_symmetric_left_nested_first_first_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3"
+        );
+    auto boolean_symmetric_left_nested_second_first_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3",
+            boolean_symmetric_left_nested_first_first_guard + 1
+        );
+    auto boolean_symmetric_left_nested_first_second_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3"
+        );
+    auto boolean_symmetric_left_nested_second_second_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3",
+            boolean_symmetric_left_nested_first_second_guard + 1
+        );
+    auto boolean_symmetric_left_nested_first_third_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3"
+        );
+    auto boolean_symmetric_left_nested_second_third_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3",
+            boolean_symmetric_left_nested_first_third_guard + 1
+        );
+    assert(boolean_symmetric_left_nested_first_first_guard != std::string::npos);
+    assert(boolean_symmetric_left_nested_second_first_guard != std::string::npos);
+    assert(boolean_symmetric_left_nested_first_second_guard != std::string::npos);
+    assert(boolean_symmetric_left_nested_second_second_guard != std::string::npos);
+    assert(boolean_symmetric_left_nested_first_third_guard != std::string::npos);
+    assert(boolean_symmetric_left_nested_second_third_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3",
+            boolean_symmetric_left_nested_second_first_guard + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3",
+            boolean_symmetric_left_nested_second_second_guard + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3",
+            boolean_symmetric_left_nested_second_third_guard + 1
+        ) == std::string::npos
+    );
+    auto boolean_symmetric_left_nested_first_first_load =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = load i1, ptr ", boolean_symmetric_left_nested_first_first_guard
+        );
+    auto boolean_symmetric_left_nested_first_inner_rhs =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.or.rhs.", boolean_symmetric_left_nested_first_first_load
+        );
+    auto boolean_symmetric_left_nested_first_second_load =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = load i1, ptr ", boolean_symmetric_left_nested_first_second_guard
+        );
+    auto boolean_symmetric_left_nested_first_inner_merge =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.or.merge.", boolean_symmetric_left_nested_first_second_load
+        );
+    auto boolean_symmetric_left_nested_first_inner_phi =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.",
+            boolean_symmetric_left_nested_first_inner_merge
+        );
+    auto boolean_symmetric_left_nested_first_outer_rhs =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.and.rhs.", boolean_symmetric_left_nested_first_inner_phi
+        );
+    auto boolean_symmetric_left_nested_first_third_load =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = load i1, ptr ", boolean_symmetric_left_nested_first_third_guard
+        );
+    auto boolean_symmetric_left_nested_first_outer_merge =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.and.merge.", boolean_symmetric_left_nested_first_third_load
+        );
+    auto boolean_symmetric_left_nested_first_outer_phi =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge.",
+            boolean_symmetric_left_nested_first_outer_merge
+        );
+    auto boolean_symmetric_left_nested_first_index_phi =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = phi i64 [%first, ", boolean_symmetric_left_nested_first_outer_phi
+        );
+    auto boolean_symmetric_left_nested_first_owner_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_symmetric_left_nested_first_index_phi
+        );
+    assert(boolean_symmetric_left_nested_first_first_load < boolean_symmetric_left_nested_first_inner_rhs);
+    assert(boolean_symmetric_left_nested_first_inner_rhs < boolean_symmetric_left_nested_first_second_guard);
+    assert(boolean_symmetric_left_nested_first_second_guard < boolean_symmetric_left_nested_first_second_load);
+    assert(boolean_symmetric_left_nested_first_second_load < boolean_symmetric_left_nested_first_inner_merge);
+    assert(boolean_symmetric_left_nested_first_inner_merge < boolean_symmetric_left_nested_first_inner_phi);
+    assert(boolean_symmetric_left_nested_first_inner_phi < boolean_symmetric_left_nested_first_outer_rhs);
+    assert(boolean_symmetric_left_nested_first_outer_rhs < boolean_symmetric_left_nested_first_third_guard);
+    assert(boolean_symmetric_left_nested_first_third_guard < boolean_symmetric_left_nested_first_third_load);
+    assert(boolean_symmetric_left_nested_first_third_load < boolean_symmetric_left_nested_first_outer_merge);
+    assert(boolean_symmetric_left_nested_first_outer_merge < boolean_symmetric_left_nested_first_outer_phi);
+    assert(boolean_symmetric_left_nested_first_outer_phi < boolean_symmetric_left_nested_first_index_phi);
+    assert(boolean_symmetric_left_nested_first_index_phi < boolean_symmetric_left_nested_first_owner_guard);
+    auto boolean_symmetric_left_nested_second_first_load =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = load i1, ptr ", boolean_symmetric_left_nested_second_first_guard
+        );
+    auto boolean_symmetric_left_nested_second_inner_rhs =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.or.rhs.", boolean_symmetric_left_nested_second_first_load
+        );
+    auto boolean_symmetric_left_nested_second_second_load =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = load i1, ptr ", boolean_symmetric_left_nested_second_second_guard
+        );
+    auto boolean_symmetric_left_nested_second_inner_merge =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.or.merge.", boolean_symmetric_left_nested_second_second_load
+        );
+    auto boolean_symmetric_left_nested_second_inner_phi =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.",
+            boolean_symmetric_left_nested_second_inner_merge
+        );
+    auto boolean_symmetric_left_nested_second_outer_rhs =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.and.rhs.", boolean_symmetric_left_nested_second_inner_phi
+        );
+    auto boolean_symmetric_left_nested_second_third_load =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = load i1, ptr ", boolean_symmetric_left_nested_second_third_guard
+        );
+    auto boolean_symmetric_left_nested_second_outer_merge =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "\nlogical.and.merge.", boolean_symmetric_left_nested_second_third_load
+        );
+    auto boolean_symmetric_left_nested_second_outer_phi =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = phi i1 [0, %logical.or.merge.",
+            boolean_symmetric_left_nested_second_outer_merge
+        );
+    auto boolean_symmetric_left_nested_second_index_phi =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            " = phi i64 [%first, ", boolean_symmetric_left_nested_second_outer_phi
+        );
+    auto boolean_symmetric_left_nested_second_owner_guard =
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            boolean_symmetric_left_nested_second_index_phi
+        );
+    assert(boolean_symmetric_left_nested_second_first_load < boolean_symmetric_left_nested_second_inner_rhs);
+    assert(boolean_symmetric_left_nested_second_inner_rhs < boolean_symmetric_left_nested_second_second_guard);
+    assert(boolean_symmetric_left_nested_second_second_guard < boolean_symmetric_left_nested_second_second_load);
+    assert(boolean_symmetric_left_nested_second_second_load < boolean_symmetric_left_nested_second_inner_merge);
+    assert(boolean_symmetric_left_nested_second_inner_merge < boolean_symmetric_left_nested_second_inner_phi);
+    assert(boolean_symmetric_left_nested_second_inner_phi < boolean_symmetric_left_nested_second_outer_rhs);
+    assert(boolean_symmetric_left_nested_second_outer_rhs < boolean_symmetric_left_nested_second_third_guard);
+    assert(boolean_symmetric_left_nested_second_third_guard < boolean_symmetric_left_nested_second_third_load);
+    assert(boolean_symmetric_left_nested_second_third_load < boolean_symmetric_left_nested_second_outer_merge);
+    assert(boolean_symmetric_left_nested_second_outer_merge < boolean_symmetric_left_nested_second_outer_phi);
+    assert(boolean_symmetric_left_nested_second_outer_phi < boolean_symmetric_left_nested_second_index_phi);
+    assert(boolean_symmetric_left_nested_second_index_phi < boolean_symmetric_left_nested_second_owner_guard);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_three_member_paths_symmetric_left_nested_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

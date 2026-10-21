@@ -3703,3 +3703,6 @@ representation.
 - 2026-10-20 Left-nested `(first and second) or third` conditions with three distinct runtime-indexed member paths now
   have semantic and production coverage. Inner false paths skip the second access, true inner results skip the third
   access, and each owner branch uses the inner merge as the outer true-value PHI predecessor before owner selection.
+- 2026-10-20 Symmetric left-nested `(first or second) and third` conditions with three distinct runtime-indexed member
+  paths now have semantic and production coverage. Inner true paths skip the second access, false inner results skip
+  the third access, and each owner branch uses the inner merge as the outer false-value PHI predecessor.
