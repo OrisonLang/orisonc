@@ -3727,3 +3727,6 @@ representation.
 - 2026-10-21 Nested `first or (second and third)` conditions now support three distinct dependent runtime-indexed
   Boolean member paths. Outer true paths suppress both later source chains, inner false paths suppress the third
   source chain, and both owner branches preserve inner-to-outer PHI ordering.
+- 2026-10-21 Symmetric `first and (second or third)` conditions now support three distinct dependent runtime-indexed
+  Boolean member paths. Outer false paths suppress both later source chains, inner true paths suppress the third
+  source chain, and both owner branches preserve reversed inner-to-outer PHI ordering.

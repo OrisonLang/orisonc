@@ -1125,6 +1125,110 @@ int main() {
                     member(
                         index(
                             member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("dynamic_index")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    ),
+                    "and",
+                    binary(
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("second_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        ),
+                        "or",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("third_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            ),
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
+                            cast(
+                                index(
+                                    member(name("index_settings"), "indices"),
+                                    name("dynamic_index")
+                                ),
+                                "UInt64"
+                            )
+                        ),
+                        "enabled"
+                    ),
+                    "and",
+                    binary(
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("second_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        ),
+                        "or",
+                        member(
+                            index(
+                                member(name("index_settings"), "groups"),
+                                cast(
+                                    index(
+                                        member(name("index_settings"), "indices"),
+                                        name("third_dynamic_index")
+                                    ),
+                                    "UInt64"
+                                )
+                            ),
+                            "enabled"
+                        )
+                    )
+                ),
+                name("dynamic_index"),
+                name("index_offset")
+            )
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            ternary(
+                binary(
+                    member(
+                        index(
+                            member(name("index_settings"), "groups"),
                             cast(index(member(name("index_settings"), "indices"), name("dynamic_index")), "UInt64")
                         ),
                         "enabled"

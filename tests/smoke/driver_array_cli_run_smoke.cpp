@@ -3680,6 +3680,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_three_dependent_member_paths_nested_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_three_dependent_member_paths_nested_condition_for_run.or";
+    auto runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds.or";
@@ -9104,6 +9107,216 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_three_dependent_member_paths_nested_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_three_dependent_member_paths_nested_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_path
+    );
+    auto runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_path.string()
+        );
+    auto symmetric_dependent_first_first_guard =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3"
+        );
+    auto symmetric_dependent_second_first_guard =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3", symmetric_dependent_first_first_guard + 1
+        );
+    auto symmetric_dependent_first_second_guard =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3"
+        );
+    auto symmetric_dependent_second_second_guard =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3", symmetric_dependent_first_second_guard + 1
+        );
+    auto symmetric_dependent_first_third_guard =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3"
+        );
+    auto symmetric_dependent_second_third_guard =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3", symmetric_dependent_first_third_guard + 1
+        );
+    assert(symmetric_dependent_first_first_guard != std::string::npos);
+    assert(symmetric_dependent_second_first_guard != std::string::npos);
+    assert(symmetric_dependent_first_second_guard != std::string::npos);
+    assert(symmetric_dependent_second_second_guard != std::string::npos);
+    assert(symmetric_dependent_first_third_guard != std::string::npos);
+    assert(symmetric_dependent_second_third_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3", symmetric_dependent_second_first_guard + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3", symmetric_dependent_second_second_guard + 1
+        ) == std::string::npos
+    );
+    assert(
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3", symmetric_dependent_second_third_guard + 1
+        ) == std::string::npos
+    );
+    auto symmetric_dependent_first_first_source_load =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i32, ptr ", symmetric_dependent_first_first_guard
+        );
+    auto symmetric_dependent_first_first_cast =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = zext i32 ", symmetric_dependent_first_first_source_load
+        );
+    auto symmetric_dependent_first_first_member =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i1, ptr ", symmetric_dependent_first_first_cast
+        );
+    auto symmetric_dependent_first_outer_rhs =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            "\nlogical.and.rhs.", symmetric_dependent_first_first_member
+        );
+    auto symmetric_dependent_first_second_source_load =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i32, ptr ", symmetric_dependent_first_second_guard
+        );
+    auto symmetric_dependent_first_second_cast =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = zext i32 ", symmetric_dependent_first_second_source_load
+        );
+    auto symmetric_dependent_first_second_member =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i1, ptr ", symmetric_dependent_first_second_cast
+        );
+    auto symmetric_dependent_first_inner_rhs =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            "\nlogical.or.rhs.", symmetric_dependent_first_second_member
+        );
+    auto symmetric_dependent_first_third_source_load =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i32, ptr ", symmetric_dependent_first_third_guard
+        );
+    auto symmetric_dependent_first_third_cast =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = zext i32 ", symmetric_dependent_first_third_source_load
+        );
+    auto symmetric_dependent_first_third_member =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i1, ptr ", symmetric_dependent_first_third_cast
+        );
+    auto symmetric_dependent_first_inner_phi =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", symmetric_dependent_first_third_member
+        );
+    auto symmetric_dependent_first_outer_phi =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", symmetric_dependent_first_inner_phi
+        );
+    auto symmetric_dependent_first_inner_predecessor =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            ", %logical.or.merge.", symmetric_dependent_first_outer_phi
+        );
+    assert(symmetric_dependent_first_first_guard < symmetric_dependent_first_first_source_load);
+    assert(symmetric_dependent_first_first_source_load < symmetric_dependent_first_first_cast);
+    assert(symmetric_dependent_first_first_cast < symmetric_dependent_first_first_member);
+    assert(symmetric_dependent_first_first_member < symmetric_dependent_first_outer_rhs);
+    assert(symmetric_dependent_first_outer_rhs < symmetric_dependent_first_second_guard);
+    assert(symmetric_dependent_first_second_guard < symmetric_dependent_first_second_source_load);
+    assert(symmetric_dependent_first_second_source_load < symmetric_dependent_first_second_cast);
+    assert(symmetric_dependent_first_second_cast < symmetric_dependent_first_second_member);
+    assert(symmetric_dependent_first_second_member < symmetric_dependent_first_inner_rhs);
+    assert(symmetric_dependent_first_inner_rhs < symmetric_dependent_first_third_guard);
+    assert(symmetric_dependent_first_third_guard < symmetric_dependent_first_third_source_load);
+    assert(symmetric_dependent_first_third_source_load < symmetric_dependent_first_third_cast);
+    assert(symmetric_dependent_first_third_cast < symmetric_dependent_first_third_member);
+    assert(symmetric_dependent_first_third_member < symmetric_dependent_first_inner_phi);
+    assert(symmetric_dependent_first_inner_phi < symmetric_dependent_first_outer_phi);
+    assert(symmetric_dependent_first_outer_phi < symmetric_dependent_first_inner_predecessor);
+    auto symmetric_dependent_second_first_source_load =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i32, ptr ", symmetric_dependent_second_first_guard
+        );
+    auto symmetric_dependent_second_first_cast =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = zext i32 ", symmetric_dependent_second_first_source_load
+        );
+    auto symmetric_dependent_second_first_member =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i1, ptr ", symmetric_dependent_second_first_cast
+        );
+    auto symmetric_dependent_second_outer_rhs =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            "\nlogical.and.rhs.", symmetric_dependent_second_first_member
+        );
+    auto symmetric_dependent_second_second_source_load =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i32, ptr ", symmetric_dependent_second_second_guard
+        );
+    auto symmetric_dependent_second_second_cast =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = zext i32 ", symmetric_dependent_second_second_source_load
+        );
+    auto symmetric_dependent_second_second_member =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i1, ptr ", symmetric_dependent_second_second_cast
+        );
+    auto symmetric_dependent_second_inner_rhs =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            "\nlogical.or.rhs.", symmetric_dependent_second_second_member
+        );
+    auto symmetric_dependent_second_third_source_load =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i32, ptr ", symmetric_dependent_second_third_guard
+        );
+    auto symmetric_dependent_second_third_cast =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = zext i32 ", symmetric_dependent_second_third_source_load
+        );
+    auto symmetric_dependent_second_third_member =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = load i1, ptr ", symmetric_dependent_second_third_cast
+        );
+    auto symmetric_dependent_second_inner_phi =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = phi i1 [1, %fixed_array.index.in_bounds.", symmetric_dependent_second_third_member
+        );
+    auto symmetric_dependent_second_outer_phi =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", symmetric_dependent_second_inner_phi
+        );
+    auto symmetric_dependent_second_inner_predecessor =
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_ir.find(
+            ", %logical.or.merge.", symmetric_dependent_second_outer_phi
+        );
+    assert(symmetric_dependent_second_first_guard < symmetric_dependent_second_first_source_load);
+    assert(symmetric_dependent_second_first_source_load < symmetric_dependent_second_first_cast);
+    assert(symmetric_dependent_second_first_cast < symmetric_dependent_second_first_member);
+    assert(symmetric_dependent_second_first_member < symmetric_dependent_second_outer_rhs);
+    assert(symmetric_dependent_second_outer_rhs < symmetric_dependent_second_second_guard);
+    assert(symmetric_dependent_second_second_guard < symmetric_dependent_second_second_source_load);
+    assert(symmetric_dependent_second_second_source_load < symmetric_dependent_second_second_cast);
+    assert(symmetric_dependent_second_second_cast < symmetric_dependent_second_second_member);
+    assert(symmetric_dependent_second_second_member < symmetric_dependent_second_inner_rhs);
+    assert(symmetric_dependent_second_inner_rhs < symmetric_dependent_second_third_guard);
+    assert(symmetric_dependent_second_third_guard < symmetric_dependent_second_third_source_load);
+    assert(symmetric_dependent_second_third_source_load < symmetric_dependent_second_third_cast);
+    assert(symmetric_dependent_second_third_cast < symmetric_dependent_second_third_member);
+    assert(symmetric_dependent_second_third_member < symmetric_dependent_second_inner_phi);
+    assert(symmetric_dependent_second_inner_phi < symmetric_dependent_second_outer_phi);
+    assert(symmetric_dependent_second_outer_phi < symmetric_dependent_second_inner_predecessor);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_three_dependent_member_paths_symmetric_nested_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =
