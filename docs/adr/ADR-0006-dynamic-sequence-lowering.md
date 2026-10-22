@@ -3730,3 +3730,6 @@ representation.
 - 2026-10-21 Symmetric `first and (second or third)` conditions now support three distinct dependent runtime-indexed
   Boolean member paths. Outer false paths suppress both later source chains, inner true paths suppress the third
   source chain, and both owner branches preserve reversed inner-to-outer PHI ordering.
+- 2026-10-21 Left-nested `(first and second) or third` conditions now support three distinct dependent runtime-indexed
+  Boolean member paths. False first members suppress the second source chain, true inner results suppress the third
+  source chain, and both owner branches use the inner merge as the outer true-value PHI predecessor.
