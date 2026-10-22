@@ -3609,3 +3609,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-21: Balanced `(first and second) or (third and fourth)` now supports four dependent runtime-indexed Boolean
   member paths. Both owners preserve sibling inner false-value PHIs before the outer true-value PHI, while
   short-circuit paths suppress invalid second, third, and fourth source slots.
+- 2026-10-22: Symmetric balanced `(first or second) and (third or fourth)` now supports four dependent runtime-indexed
+  Boolean member paths. Both owners preserve sibling inner true-value PHIs before the outer false-value PHI, while
+  short-circuit paths suppress invalid second, third, and fourth source slots.
