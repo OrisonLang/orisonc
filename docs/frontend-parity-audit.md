@@ -3603,3 +3603,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-21: Left-nested `(first and second) or third` now supports three dependent runtime-indexed Boolean member
   paths. False first members suppress invalid second source slots, true inner results suppress invalid third source
   slots, and both owner branches use the inner merge as the outer true-value PHI predecessor.
+- 2026-10-21: Symmetric left-nested `(first or second) and third` now supports three dependent runtime-indexed Boolean
+  member paths. True first members suppress invalid second source slots, false inner results suppress invalid third
+  source slots, and both owners use the inner merge as the outer false-value PHI predecessor.
