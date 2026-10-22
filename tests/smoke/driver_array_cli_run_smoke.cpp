@@ -3689,6 +3689,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_index_boolean_three_dependent_member_paths_symmetric_left_nested_condition_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_three_dependent_member_paths_symmetric_left_nested_condition_for_run.or";
+    auto runtime_index_boolean_four_dependent_member_paths_balanced_condition_path =
+        fixtures /
+        "dynamic_array_runtime_index_boolean_four_dependent_member_paths_balanced_condition_for_run.or";
     auto runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds_path =
         fixtures /
         "dynamic_array_runtime_index_boolean_dependent_member_path_condition_then_group_out_of_bounds.or";
@@ -9743,6 +9746,187 @@ auto main(int argc, char** argv) -> int {
         runtime_index_boolean_three_dependent_member_paths_symmetric_left_nested_condition_path,
         smoke_temp_root /
             "dynamic_array_runtime_index_boolean_three_dependent_member_paths_symmetric_left_nested_condition_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_path
+    );
+    auto runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_index_boolean_four_dependent_member_paths_balanced_condition_path.string()
+        );
+    auto balanced_dependent_first_first_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3"
+        );
+    auto balanced_dependent_second_first_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %first_slot, 3", balanced_dependent_first_first_guard + 1
+        );
+    auto balanced_dependent_first_second_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3"
+        );
+    auto balanced_dependent_second_second_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %second_slot, 3", balanced_dependent_first_second_guard + 1
+        );
+    auto balanced_dependent_first_third_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3"
+        );
+    auto balanced_dependent_second_third_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %third_slot, 3", balanced_dependent_first_third_guard + 1
+        );
+    auto balanced_dependent_first_fourth_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %fourth_slot, 3"
+        );
+    auto balanced_dependent_second_fourth_guard =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %fourth_slot, 3", balanced_dependent_first_fourth_guard + 1
+        );
+    assert(balanced_dependent_first_first_guard != std::string::npos);
+    assert(balanced_dependent_second_first_guard != std::string::npos);
+    assert(balanced_dependent_first_second_guard != std::string::npos);
+    assert(balanced_dependent_second_second_guard != std::string::npos);
+    assert(balanced_dependent_first_third_guard != std::string::npos);
+    assert(balanced_dependent_second_third_guard != std::string::npos);
+    assert(balanced_dependent_first_fourth_guard != std::string::npos);
+    assert(balanced_dependent_second_fourth_guard != std::string::npos);
+    assert(
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = icmp ult i64 %fourth_slot, 3", balanced_dependent_second_fourth_guard + 1
+        ) == std::string::npos
+    );
+    auto balanced_dependent_first_first_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_first_first_guard
+        );
+    auto balanced_dependent_first_first_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_first_first_source_load
+        );
+    auto balanced_dependent_first_second_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_first_second_guard
+        );
+    auto balanced_dependent_first_second_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_first_second_source_load
+        );
+    auto balanced_dependent_first_third_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_first_third_guard
+        );
+    auto balanced_dependent_first_third_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_first_third_source_load
+        );
+    auto balanced_dependent_first_fourth_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_first_fourth_guard
+        );
+    auto balanced_dependent_first_fourth_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_first_fourth_source_load
+        );
+    auto balanced_dependent_second_first_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_second_first_guard
+        );
+    auto balanced_dependent_second_first_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_second_first_source_load
+        );
+    auto balanced_dependent_second_second_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_second_second_guard
+        );
+    auto balanced_dependent_second_second_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_second_second_source_load
+        );
+    auto balanced_dependent_second_third_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_second_third_guard
+        );
+    auto balanced_dependent_second_third_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_second_third_source_load
+        );
+    auto balanced_dependent_second_fourth_source_load =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = load i32, ptr ", balanced_dependent_second_fourth_guard
+        );
+    auto balanced_dependent_second_fourth_cast =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = zext i32 ", balanced_dependent_second_fourth_source_load
+        );
+    assert(balanced_dependent_first_first_guard < balanced_dependent_first_first_source_load);
+    assert(balanced_dependent_first_first_source_load < balanced_dependent_first_first_cast);
+    assert(balanced_dependent_first_second_guard < balanced_dependent_first_second_source_load);
+    assert(balanced_dependent_first_second_source_load < balanced_dependent_first_second_cast);
+    assert(balanced_dependent_first_third_guard < balanced_dependent_first_third_source_load);
+    assert(balanced_dependent_first_third_source_load < balanced_dependent_first_third_cast);
+    assert(balanced_dependent_first_fourth_guard < balanced_dependent_first_fourth_source_load);
+    assert(balanced_dependent_first_fourth_source_load < balanced_dependent_first_fourth_cast);
+    assert(balanced_dependent_second_first_guard < balanced_dependent_second_first_source_load);
+    assert(balanced_dependent_second_first_source_load < balanced_dependent_second_first_cast);
+    assert(balanced_dependent_second_second_guard < balanced_dependent_second_second_source_load);
+    assert(balanced_dependent_second_second_source_load < balanced_dependent_second_second_cast);
+    assert(balanced_dependent_second_third_guard < balanced_dependent_second_third_source_load);
+    assert(balanced_dependent_second_third_source_load < balanced_dependent_second_third_cast);
+    assert(balanced_dependent_second_fourth_guard < balanced_dependent_second_fourth_source_load);
+    assert(balanced_dependent_second_fourth_source_load < balanced_dependent_second_fourth_cast);
+    auto balanced_dependent_first_left_inner_phi =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds."
+        );
+    auto balanced_dependent_first_right_inner_phi =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", balanced_dependent_first_left_inner_phi + 1
+        );
+    auto balanced_dependent_first_outer_phi =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = phi i1 [1, %logical.and.merge.", balanced_dependent_first_right_inner_phi
+        );
+    auto balanced_dependent_second_left_inner_phi =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", balanced_dependent_first_outer_phi
+        );
+    auto balanced_dependent_second_right_inner_phi =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = phi i1 [0, %fixed_array.index.in_bounds.", balanced_dependent_second_left_inner_phi + 1
+        );
+    auto balanced_dependent_second_outer_phi =
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_ir.find(
+            " = phi i1 [1, %logical.and.merge.", balanced_dependent_second_right_inner_phi
+        );
+    assert(balanced_dependent_first_left_inner_phi != std::string::npos);
+    assert(balanced_dependent_first_right_inner_phi != std::string::npos);
+    assert(balanced_dependent_first_outer_phi != std::string::npos);
+    assert(balanced_dependent_second_left_inner_phi != std::string::npos);
+    assert(balanced_dependent_second_right_inner_phi != std::string::npos);
+    assert(balanced_dependent_second_outer_phi != std::string::npos);
+    assert(balanced_dependent_first_left_inner_phi < balanced_dependent_first_right_inner_phi);
+    assert(balanced_dependent_first_right_inner_phi < balanced_dependent_first_outer_phi);
+    assert(balanced_dependent_first_outer_phi < balanced_dependent_second_left_inner_phi);
+    assert(balanced_dependent_second_left_inner_phi < balanced_dependent_second_right_inner_phi);
+    assert(balanced_dependent_second_right_inner_phi < balanced_dependent_second_outer_phi);
+    assert_emit_object_success(
+        executable,
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_four_dependent_member_paths_balanced_condition_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_index_boolean_four_dependent_member_paths_balanced_condition_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_index_boolean_four_dependent_member_paths_balanced_condition_for_run"
     );
     assert_run_success(executable, runtime_index_boolean_dependent_member_path_condition_path);
     auto runtime_index_boolean_dependent_member_path_condition_ir =

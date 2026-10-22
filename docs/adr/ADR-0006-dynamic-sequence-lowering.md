@@ -3736,3 +3736,6 @@ representation.
 - 2026-10-21 Symmetric left-nested `(first or second) and third` conditions now support three distinct dependent
   runtime-indexed Boolean member paths. True first members suppress the second source chain, false inner results
   suppress the third source chain, and both owners use the inner merge as the outer false-value PHI predecessor.
+- 2026-10-21 Balanced `(first and second) or (third and fourth)` conditions now support four distinct dependent
+  runtime-indexed Boolean member paths. Both owners preserve sibling inner false-value PHIs before the outer
+  true-value PHI, while short-circuit paths suppress invalid second, third, and fourth source slots.
