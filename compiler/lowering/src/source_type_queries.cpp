@@ -207,6 +207,54 @@ auto pure_boolean_expression(
         merge_reusable_runtime_index_types(*left_type, *right_type).has_value();
 }
 
+auto reusable_record_constructor_type(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto constructor_layout = context.records.find(expression.left->text);
+    if (constructor_layout == context.records.end() ||
+        constructor_layout->second.fields.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& field = constructor_layout->second.fields[index];
+        if (context.records.contains(field.source_type_name)) {
+            auto nested_constructor_type = reusable_record_constructor_type(
+                expression.arguments[index],
+                context,
+                state
+            );
+            if (!nested_constructor_type.has_value() ||
+                *nested_constructor_type != field.source_type_name) {
+                return std::nullopt;
+            }
+            continue;
+        }
+
+        auto argument_type = reusable_runtime_index_type(
+            expression.arguments[index],
+            context,
+            state
+        );
+        auto field_type = lowered_type_for_source_type_name(field.source_type_name, context);
+        if (!argument_type.has_value() || !field_type.has_value() ||
+            field_type->signedness == IntegerSignedness::not_integer ||
+            (!argument_type->contextual_literal &&
+             (argument_type->type.type != field_type->type ||
+              argument_type->type.signedness != field_type->signedness))) {
+            return std::nullopt;
+        }
+    }
+    return expression.left->text;
+}
+
 auto reusable_runtime_index_type(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -229,38 +277,17 @@ auto reusable_runtime_index_type(
         case ExpressionKind::member_access:
         case ExpressionKind::index_access: {
             if (!named_reusable_index_path(expression, context, state)) {
-                if (expression.kind != ExpressionKind::member_access ||
-                    expression.left == nullptr ||
-                    expression.left->kind != ExpressionKind::call ||
-                    expression.left->left == nullptr ||
-                    expression.left->left->kind != ExpressionKind::name) {
-                    return std::nullopt;
-                }
-
-                auto constructor_layout = context.records.find(expression.left->left->text);
-                if (constructor_layout == context.records.end() ||
-                    constructor_layout->second.fields.size() != expression.left->arguments.size()) {
-                    return std::nullopt;
-                }
-                for (auto index = std::size_t {0};
-                     index < expression.left->arguments.size();
-                     ++index) {
-                    auto argument_type = reusable_runtime_index_type(
-                        expression.left->arguments[index],
+                auto path = collect_temporary_aggregate_path(expression);
+                if (!path.has_value() || path->base_expression == nullptr ||
+                    !reusable_record_constructor_type(
+                        *path->base_expression,
                         context,
                         state
-                    );
-                    auto field_type = lowered_type_for_source_type_name(
-                        constructor_layout->second.fields[index].source_type_name,
-                        context
-                    );
-                    if (!argument_type.has_value() || !field_type.has_value() ||
-                        field_type->signedness == IntegerSignedness::not_integer ||
-                        (!argument_type->contextual_literal &&
-                         (argument_type->type.type != field_type->type ||
-                          argument_type->type.signedness != field_type->signedness))) {
-                        return std::nullopt;
-                    }
+                    ).has_value() ||
+                    std::ranges::any_of(path->steps, [](AggregatePathStep const& step) {
+                        return step.kind != AggregatePathStepKind::member;
+                    })) {
+                    return std::nullopt;
                 }
             }
             auto source_type = source_type_name_for_expression(expression, context, state);

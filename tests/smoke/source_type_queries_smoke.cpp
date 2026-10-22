@@ -761,6 +761,18 @@ int main() {
             },
         },
     });
+    context.records.emplace("IndexEnvelope", orison::lowering::LoweredRecordLayout {
+        .name = "IndexEnvelope",
+        .llvm_type_name = "%record.IndexEnvelope",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "inner",
+                .source_type_name = "IndexValue",
+                .llvm_type = "%record.IndexValue",
+                .index = 0,
+            },
+        },
+    });
     context.records.emplace("IndexSettings", orison::lowering::LoweredRecordLayout {
         .name = "IndexSettings",
         .llvm_type_name = "%record.IndexSettings",
@@ -2649,6 +2661,46 @@ int main() {
         distinct_holder_selection(
             member(call("IndexValue", call("select_index", name("dynamic_index"))), "selected"),
             member(call("IndexValue", call("select_index", name("dynamic_index"))), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(
+                member(call("IndexEnvelope", call("IndexValue", name("dynamic_index"))), "inner"),
+                "selected"
+            ),
+            member(
+                member(call("IndexEnvelope", call("IndexValue", name("dynamic_index"))), "inner"),
+                "selected"
+            )
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(
+                member(
+                    call(
+                        "IndexEnvelope",
+                        call("IndexValue", call("select_index", name("dynamic_index")))
+                    ),
+                    "inner"
+                ),
+                "selected"
+            ),
+            member(
+                member(
+                    call(
+                        "IndexEnvelope",
+                        call("IndexValue", call("select_index", name("dynamic_index")))
+                    ),
+                    "inner"
+                ),
+                "selected"
+            )
         ),
         context,
         state

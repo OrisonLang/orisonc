@@ -3745,3 +3745,6 @@ representation.
 - 2026-10-22 Distinct-owner runtime indexes now accept scalar integer fields projected from exact record constructor
   temporaries when every constructor operand is a reusable integer expression. Production coverage pins temporary
   spill, field projection, load, bounds checks, owner selection, cleanup, and artifacts; ordinary calls remain rejected.
+- 2026-10-22 Distinct-owner runtime indexes now accept member-only paths through nested exact record constructor
+  temporaries when every scalar leaf is a reusable integer expression. Both owner branches preserve outer spill,
+  nested projection, scalar load, bounds checks, selection, and cleanup; hidden calls and temporary indexes stay rejected.

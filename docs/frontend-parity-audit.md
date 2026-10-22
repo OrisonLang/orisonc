@@ -3615,3 +3615,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-22: Distinct-owner runtime indexes now accept scalar integer fields projected from exact record constructor
   temporaries when every constructor operand is reusable. LLVM coverage pins temporary spill, field projection, load,
   bounds checks, owner selection, cleanup, object emission, linking, and execution; ordinary calls remain rejected.
+- 2026-10-22: Distinct-owner runtime indexes now accept member-only paths through nested exact record constructor
+  temporaries when every scalar leaf is reusable. LLVM coverage pins outer spill, nested projection, scalar load,
+  bounds checks, owner selection, cleanup, and artifacts; hidden calls and temporary indexes remain rejected.

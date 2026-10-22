@@ -3734,6 +3734,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_indexed_distinct_root_record_constructor_index_path =
         fixtures /
         "dynamic_array_runtime_indexed_distinct_root_record_constructor_index_for_run.or";
+    auto runtime_indexed_distinct_root_nested_record_constructor_index_path =
+        fixtures /
+        "dynamic_array_runtime_indexed_distinct_root_nested_record_constructor_index_for_run.or";
     auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.or";
     auto nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path =
@@ -11764,6 +11767,109 @@ auto main(int argc, char** argv) -> int {
         runtime_indexed_distinct_root_record_constructor_index_path,
         smoke_temp_root /
             "dynamic_array_runtime_indexed_distinct_root_record_constructor_index_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_indexed_distinct_root_nested_record_constructor_index_path
+    );
+    auto runtime_indexed_distinct_root_nested_record_constructor_index_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_indexed_distinct_root_nested_record_constructor_index_path.string()
+        );
+    auto nested_record_constructor_first_insert =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexEnvelope undef, %record.IndexValue "
+        );
+    auto nested_record_constructor_second_insert =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexEnvelope undef, %record.IndexValue ",
+            nested_record_constructor_first_insert + 1
+        );
+    assert(nested_record_constructor_first_insert != std::string::npos);
+    assert(nested_record_constructor_second_insert != std::string::npos);
+    assert(
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexEnvelope undef, %record.IndexValue ",
+            nested_record_constructor_second_insert + 1
+        ) == std::string::npos
+    );
+    auto nested_record_constructor_first_spill =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = alloca %record.IndexEnvelope",
+            nested_record_constructor_first_insert
+        );
+    auto nested_record_constructor_first_outer_projection =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = getelementptr %record.IndexEnvelope",
+            nested_record_constructor_first_spill
+        );
+    auto nested_record_constructor_first_inner_projection =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = getelementptr %record.IndexValue",
+            nested_record_constructor_first_outer_projection
+        );
+    auto nested_record_constructor_first_load =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = load i64, ptr ",
+            nested_record_constructor_first_inner_projection
+        );
+    auto nested_record_constructor_first_guard =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            nested_record_constructor_first_load
+        );
+    auto nested_record_constructor_second_spill =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = alloca %record.IndexEnvelope",
+            nested_record_constructor_second_insert
+        );
+    auto nested_record_constructor_second_outer_projection =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = getelementptr %record.IndexEnvelope",
+            nested_record_constructor_second_spill
+        );
+    auto nested_record_constructor_second_inner_projection =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = getelementptr %record.IndexValue",
+            nested_record_constructor_second_outer_projection
+        );
+    auto nested_record_constructor_second_load =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            " = load i64, ptr ",
+            nested_record_constructor_second_inner_projection
+        );
+    auto nested_record_constructor_second_guard =
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            nested_record_constructor_second_load
+        );
+    assert(nested_record_constructor_first_insert < nested_record_constructor_first_spill);
+    assert(nested_record_constructor_first_spill < nested_record_constructor_first_outer_projection);
+    assert(nested_record_constructor_first_outer_projection < nested_record_constructor_first_inner_projection);
+    assert(nested_record_constructor_first_inner_projection < nested_record_constructor_first_load);
+    assert(nested_record_constructor_first_load < nested_record_constructor_first_guard);
+    assert(nested_record_constructor_first_guard < nested_record_constructor_second_insert);
+    assert(nested_record_constructor_second_insert < nested_record_constructor_second_spill);
+    assert(nested_record_constructor_second_spill < nested_record_constructor_second_outer_projection);
+    assert(nested_record_constructor_second_outer_projection < nested_record_constructor_second_inner_projection);
+    assert(nested_record_constructor_second_inner_projection < nested_record_constructor_second_load);
+    assert(nested_record_constructor_second_load < nested_record_constructor_second_guard);
+    assert_contains(
+        runtime_indexed_distinct_root_nested_record_constructor_index_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_indexed_distinct_root_nested_record_constructor_index_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_indexed_distinct_root_nested_record_constructor_index_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_indexed_distinct_root_nested_record_constructor_index_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_indexed_distinct_root_nested_record_constructor_index_for_run"
     );
     assert_run_success(executable, nested_runtime_indexed_distinct_root_computed_dynamic_array_path);
     auto nested_runtime_indexed_distinct_root_ir = read_successful_command_output(
