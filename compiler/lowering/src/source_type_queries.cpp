@@ -18,6 +18,12 @@
 
 namespace orison::lowering {
 
+auto source_type_name_for_record_constructor(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
 namespace {
 
 auto computed_dynamic_array_for_base_name(
@@ -218,7 +224,12 @@ auto reusable_record_constructor_type(
         return std::nullopt;
     }
 
-    auto constructor_layout = context.records.find(expression.left->text);
+    auto constructor_type = source_type_name_for_record_constructor(expression, context, state);
+    if (!constructor_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto constructor_layout = context.records.find(*constructor_type);
     if (constructor_layout == context.records.end() ||
         constructor_layout->second.fields.size() != expression.arguments.size()) {
         return std::nullopt;
@@ -252,7 +263,7 @@ auto reusable_record_constructor_type(
             return std::nullopt;
         }
     }
-    return expression.left->text;
+    return constructor_type;
 }
 
 auto reusable_runtime_index_type(

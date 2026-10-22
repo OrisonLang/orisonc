@@ -773,6 +773,41 @@ int main() {
             },
         },
     });
+    context.generic_record_parameters.emplace(
+        "GenericIndexValue",
+        std::vector<std::string> {"T"}
+    );
+    context.records.emplace("GenericIndexValue<UInt64>", orison::lowering::LoweredRecordLayout {
+        .name = "GenericIndexValue<UInt64>",
+        .llvm_type_name = "%record.GenericIndexValue_UInt64_",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "selected",
+                .source_type_name = "UInt64",
+                .llvm_type = "i64",
+                .index = 0,
+            },
+        },
+    });
+    context.generic_record_parameters.emplace(
+        "GenericIndexEnvelope",
+        std::vector<std::string> {"T"}
+    );
+    context.records.emplace(
+        "GenericIndexEnvelope<UInt64>",
+        orison::lowering::LoweredRecordLayout {
+            .name = "GenericIndexEnvelope<UInt64>",
+            .llvm_type_name = "%record.GenericIndexEnvelope_UInt64_",
+            .fields = {
+                orison::lowering::LoweredRecordField {
+                    .name = "inner",
+                    .source_type_name = "GenericIndexValue<UInt64>",
+                    .llvm_type = "%record.GenericIndexValue_UInt64_",
+                    .index = 0,
+                },
+            },
+        }
+    );
     context.records.emplace("IndexSettings", orison::lowering::LoweredRecordLayout {
         .name = "IndexSettings",
         .llvm_type_name = "%record.IndexSettings",
@@ -1759,6 +1794,64 @@ int main() {
         distinct_holder_selection(
             binary(name("dynamic_index"), "<", name("index_offset")),
             binary(name("dynamic_index"), "<", name("index_offset"))
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(
+                member(
+                    call(
+                        "GenericIndexEnvelope",
+                        call("GenericIndexValue", name("dynamic_index"))
+                    ),
+                    "inner"
+                ),
+                "selected"
+            ),
+            member(
+                member(
+                    call(
+                        "GenericIndexEnvelope",
+                        call("GenericIndexValue", name("dynamic_index"))
+                    ),
+                    "inner"
+                ),
+                "selected"
+            )
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(
+                member(
+                    call(
+                        "GenericIndexEnvelope",
+                        call(
+                            "GenericIndexValue",
+                            call("select_index", name("dynamic_index"))
+                        )
+                    ),
+                    "inner"
+                ),
+                "selected"
+            ),
+            member(
+                member(
+                    call(
+                        "GenericIndexEnvelope",
+                        call(
+                            "GenericIndexValue",
+                            call("select_index", name("dynamic_index"))
+                        )
+                    ),
+                    "inner"
+                ),
+                "selected"
+            )
         ),
         context,
         state

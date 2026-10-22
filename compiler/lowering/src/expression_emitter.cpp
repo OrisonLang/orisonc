@@ -4215,7 +4215,8 @@ auto lowered_expression(
             IntegerSignedness::not_integer,
             context,
             session,
-            output
+            output,
+            *base_source_type
         );
         if (!lowered_base.has_value()) {
             return std::nullopt;

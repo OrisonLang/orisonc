@@ -3737,6 +3737,9 @@ auto main(int argc, char** argv) -> int {
     auto runtime_indexed_distinct_root_nested_record_constructor_index_path =
         fixtures /
         "dynamic_array_runtime_indexed_distinct_root_nested_record_constructor_index_for_run.or";
+    auto runtime_indexed_distinct_root_generic_record_constructor_index_path =
+        fixtures /
+        "dynamic_array_runtime_indexed_distinct_root_generic_record_constructor_index_for_run.or";
     auto nested_runtime_indexed_distinct_root_computed_dynamic_array_path =
         fixtures / "dynamic_array_nested_runtime_indexed_distinct_root_computed_for_run.or";
     auto nested_runtime_indexed_distinct_root_pure_computed_dynamic_array_path =
@@ -11870,6 +11873,104 @@ auto main(int argc, char** argv) -> int {
         runtime_indexed_distinct_root_nested_record_constructor_index_path,
         smoke_temp_root /
             "dynamic_array_runtime_indexed_distinct_root_nested_record_constructor_index_for_run"
+    );
+    assert_run_success(
+        executable,
+        runtime_indexed_distinct_root_generic_record_constructor_index_path
+    );
+    auto runtime_indexed_distinct_root_generic_record_constructor_index_ir =
+        read_successful_command_output(
+            executable.string() + " --emit-llvm " +
+            runtime_indexed_distinct_root_generic_record_constructor_index_path.string()
+        );
+    assert_contains(
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir,
+        "%record.IndexValue_UInt64_ = type { i64 }"
+    );
+    assert_contains(
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir,
+        "%record.IndexEnvelope_UInt64_ = type { %record.IndexValue_UInt64_ }"
+    );
+    auto generic_constructor_first_inner_insert =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %index, 0"
+        );
+    auto generic_constructor_first_outer_insert =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexEnvelope_UInt64_ undef, %record.IndexValue_UInt64_ ",
+            generic_constructor_first_inner_insert
+        );
+    auto generic_constructor_first_outer_extract =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = extractvalue %record.IndexEnvelope_UInt64_ ",
+            generic_constructor_first_outer_insert
+        );
+    auto generic_constructor_first_inner_extract =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = extractvalue %record.IndexValue_UInt64_ ",
+            generic_constructor_first_outer_extract
+        );
+    auto generic_constructor_first_guard =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            generic_constructor_first_inner_extract
+        );
+    auto generic_constructor_second_inner_insert =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %index, 0",
+            generic_constructor_first_guard
+        );
+    auto generic_constructor_second_outer_insert =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexEnvelope_UInt64_ undef, %record.IndexValue_UInt64_ ",
+            generic_constructor_second_inner_insert
+        );
+    auto generic_constructor_second_outer_extract =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = extractvalue %record.IndexEnvelope_UInt64_ ",
+            generic_constructor_second_outer_insert
+        );
+    auto generic_constructor_second_inner_extract =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = extractvalue %record.IndexValue_UInt64_ ",
+            generic_constructor_second_outer_extract
+        );
+    auto generic_constructor_second_guard =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "computed_dynamic_array_runtime_aggregate_index",
+            generic_constructor_second_inner_extract
+        );
+    assert(generic_constructor_first_inner_insert != std::string::npos);
+    assert(generic_constructor_first_inner_insert < generic_constructor_first_outer_insert);
+    assert(generic_constructor_first_outer_insert < generic_constructor_first_outer_extract);
+    assert(generic_constructor_first_outer_extract < generic_constructor_first_inner_extract);
+    assert(generic_constructor_first_inner_extract < generic_constructor_first_guard);
+    assert(generic_constructor_first_guard < generic_constructor_second_inner_insert);
+    assert(generic_constructor_second_inner_insert < generic_constructor_second_outer_insert);
+    assert(generic_constructor_second_outer_insert < generic_constructor_second_outer_extract);
+    assert(generic_constructor_second_outer_extract < generic_constructor_second_inner_extract);
+    assert(generic_constructor_second_inner_extract < generic_constructor_second_guard);
+    assert(
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %index, 0",
+            generic_constructor_second_guard
+        ) == std::string::npos
+    );
+    assert_contains(
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir,
+        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+    );
+    assert_emit_object_success(
+        executable,
+        runtime_indexed_distinct_root_generic_record_constructor_index_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_indexed_distinct_root_generic_record_constructor_index_for_run.o"
+    );
+    assert_build_success(
+        executable,
+        runtime_indexed_distinct_root_generic_record_constructor_index_path,
+        smoke_temp_root /
+            "dynamic_array_runtime_indexed_distinct_root_generic_record_constructor_index_for_run"
     );
     assert_run_success(executable, nested_runtime_indexed_distinct_root_computed_dynamic_array_path);
     auto nested_runtime_indexed_distinct_root_ir = read_successful_command_output(

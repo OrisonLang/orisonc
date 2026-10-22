@@ -3618,3 +3618,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-22: Distinct-owner runtime indexes now accept member-only paths through nested exact record constructor
   temporaries when every scalar leaf is reusable. LLVM coverage pins outer spill, nested projection, scalar load,
   bounds checks, owner selection, cleanup, and artifacts; hidden calls and temporary indexes remain rejected.
+- 2026-10-22: Distinct-owner runtime indexes now accept nested inferred generic record constructor projections when
+  one concrete layout matches reusable operands. LLVM coverage pins concrete generic layouts, nested SSA insertion
+  and extraction, bounds checks, owner selection, cleanup, object emission, linking, and execution.
