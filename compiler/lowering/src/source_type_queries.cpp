@@ -229,7 +229,39 @@ auto reusable_runtime_index_type(
         case ExpressionKind::member_access:
         case ExpressionKind::index_access: {
             if (!named_reusable_index_path(expression, context, state)) {
-                return std::nullopt;
+                if (expression.kind != ExpressionKind::member_access ||
+                    expression.left == nullptr ||
+                    expression.left->kind != ExpressionKind::call ||
+                    expression.left->left == nullptr ||
+                    expression.left->left->kind != ExpressionKind::name) {
+                    return std::nullopt;
+                }
+
+                auto constructor_layout = context.records.find(expression.left->left->text);
+                if (constructor_layout == context.records.end() ||
+                    constructor_layout->second.fields.size() != expression.left->arguments.size()) {
+                    return std::nullopt;
+                }
+                for (auto index = std::size_t {0};
+                     index < expression.left->arguments.size();
+                     ++index) {
+                    auto argument_type = reusable_runtime_index_type(
+                        expression.left->arguments[index],
+                        context,
+                        state
+                    );
+                    auto field_type = lowered_type_for_source_type_name(
+                        constructor_layout->second.fields[index].source_type_name,
+                        context
+                    );
+                    if (!argument_type.has_value() || !field_type.has_value() ||
+                        field_type->signedness == IntegerSignedness::not_integer ||
+                        (!argument_type->contextual_literal &&
+                         (argument_type->type.type != field_type->type ||
+                          argument_type->type.signedness != field_type->signedness))) {
+                        return std::nullopt;
+                    }
+                }
             }
             auto source_type = source_type_name_for_expression(expression, context, state);
             if (!source_type.has_value()) {

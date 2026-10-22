@@ -749,6 +749,18 @@ int main() {
             },
         },
     });
+    context.records.emplace("IndexValue", orison::lowering::LoweredRecordLayout {
+        .name = "IndexValue",
+        .llvm_type_name = "%record.IndexValue",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "selected",
+                .source_type_name = "UInt64",
+                .llvm_type = "i64",
+                .index = 0,
+            },
+        },
+    });
     context.records.emplace("IndexSettings", orison::lowering::LoweredRecordLayout {
         .name = "IndexSettings",
         .llvm_type_name = "%record.IndexSettings",
@@ -2621,6 +2633,22 @@ int main() {
         distinct_holder_selection(
             member(call("make_index_config"), "selected"),
             member(call("make_index_config"), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(call("IndexValue", name("dynamic_index")), "selected"),
+            member(call("IndexValue", name("dynamic_index")), "selected")
+        ),
+        context,
+        state
+    ));
+    assert(!orison::lowering::runtime_indexed_distinct_owner_selection_supported(
+        distinct_holder_selection(
+            member(call("IndexValue", call("select_index", name("dynamic_index"))), "selected"),
+            member(call("IndexValue", call("select_index", name("dynamic_index"))), "selected")
         ),
         context,
         state

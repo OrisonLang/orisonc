@@ -3612,3 +3612,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-22: Symmetric balanced `(first or second) and (third or fourth)` now supports four dependent runtime-indexed
   Boolean member paths. Both owners preserve sibling inner true-value PHIs before the outer false-value PHI, while
   short-circuit paths suppress invalid second, third, and fourth source slots.
+- 2026-10-22: Distinct-owner runtime indexes now accept scalar integer fields projected from exact record constructor
+  temporaries when every constructor operand is reusable. LLVM coverage pins temporary spill, field projection, load,
+  bounds checks, owner selection, cleanup, object emission, linking, and execution; ordinary calls remain rejected.
