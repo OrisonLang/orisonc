@@ -222,6 +222,7 @@ int main() {
                 },
             },
             ParameterSyntax {.name = "slot", .type = TypeSyntax {.name = "UInt64"}},
+            ParameterSyntax {.name = "flag", .type = TypeSyntax {.name = "Bool"}},
         },
         .return_type = TypeSyntax {.name = "Unit"},
     };
@@ -273,6 +274,60 @@ int main() {
         .name = "ordinary_return_value",
         .expression = std::move(ordinary_return_call),
     });
+    auto wide_return_call = ExpressionSyntax {
+        .kind = ExpressionKind::call,
+        .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+            .kind = ExpressionKind::name,
+            .text = "normalize_wide_index",
+        }),
+    };
+    wide_return_call.arguments.push_back(ExpressionSyntax {
+        .kind = ExpressionKind::name,
+        .text = "member_value",
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "wide_return_value",
+        .expression = std::move(wide_return_call),
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "ternary_return_value",
+        .expression = ExpressionSyntax {
+            .kind = ExpressionKind::ternary,
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "flag",
+            }),
+            .right = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "ordinary_return_value",
+            }),
+            .alternate = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "ordinary_return_value",
+            }),
+        },
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "rejected_ternary_value",
+        .expression = ExpressionSyntax {
+            .kind = ExpressionKind::ternary,
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "flag",
+            }),
+            .right = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "ordinary_return_value",
+            }),
+            .alternate = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "wide_return_value",
+            }),
+        },
+    });
     auto generic_return_call = ExpressionSyntax {
         .kind = ExpressionKind::call,
         .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
@@ -317,7 +372,7 @@ int main() {
             }),
         },
     });
-    for (auto const* value_name : {"ordinary_return_value", "generic_return_value", "generic_member_value"}) {
+    for (auto const* value_name : {"ternary_return_value", "generic_return_value", "generic_member_value"}) {
         auto constructor_call = ExpressionSyntax {
             .kind = ExpressionKind::call,
             .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
@@ -348,6 +403,21 @@ int main() {
     projected_constructor_function.body_statements.push_back(StatementSyntax {
         .kind = StatementKind::expression_statement,
         .expression = std::move(rejected_constructor_call),
+    });
+    auto rejected_ternary_constructor_call = ExpressionSyntax {
+        .kind = ExpressionKind::call,
+        .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+            .kind = ExpressionKind::name,
+            .text = "NamedBox",
+        }),
+    };
+    rejected_ternary_constructor_call.arguments.push_back(ExpressionSyntax {
+        .kind = ExpressionKind::name,
+        .text = "rejected_ternary_value",
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::expression_statement,
+        .expression = std::move(rejected_ternary_constructor_call),
     });
     module.functions.push_back(std::move(projected_constructor_function));
     module.choices.push_back(ChoiceSyntax {

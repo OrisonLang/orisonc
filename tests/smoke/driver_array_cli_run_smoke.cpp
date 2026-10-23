@@ -11914,10 +11914,25 @@ auto main(int argc, char** argv) -> int {
             " = call i64 @normalize_index(i64 %",
             generic_constructor_projected_load
         );
+    auto generic_constructor_normalized_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%normalized = add i64 0, %",
+            generic_constructor_ordinary_call
+        );
+    auto generic_constructor_ternary_branch =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "br i1 %root_flag, label %ternary.then.",
+            generic_constructor_normalized_local
+        );
+    auto generic_constructor_ternary_phi =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = phi i64 [%normalized, %ternary.then.",
+            generic_constructor_ternary_branch
+        );
     auto generic_constructor_inferred_local =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
             "%selected = add i64 0, %",
-            generic_constructor_ordinary_call
+            generic_constructor_ternary_phi
         );
     auto generic_constructor_generic_call =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
@@ -11982,7 +11997,10 @@ auto main(int argc, char** argv) -> int {
     assert(generic_constructor_record_projection < generic_constructor_array_projection);
     assert(generic_constructor_array_projection < generic_constructor_projected_load);
     assert(generic_constructor_projected_load < generic_constructor_ordinary_call);
-    assert(generic_constructor_ordinary_call < generic_constructor_inferred_local);
+    assert(generic_constructor_ordinary_call < generic_constructor_normalized_local);
+    assert(generic_constructor_normalized_local < generic_constructor_ternary_branch);
+    assert(generic_constructor_ternary_branch < generic_constructor_ternary_phi);
+    assert(generic_constructor_ternary_phi < generic_constructor_inferred_local);
     assert(generic_constructor_inferred_local < generic_constructor_generic_call);
     assert(generic_constructor_generic_call < generic_constructor_generic_local);
     assert(generic_constructor_generic_local < generic_constructor_first_inner_insert);
@@ -12003,7 +12021,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert_contains(
         runtime_indexed_distinct_root_generic_record_constructor_index_ir,
-        "%computed_dynamic_array_selection.0.descriptor = phi { ptr, i64, i64 }"
+        "%computed_dynamic_array_selection.1.descriptor = phi { ptr, i64, i64 }"
     );
     assert_emit_object_success(
         executable,

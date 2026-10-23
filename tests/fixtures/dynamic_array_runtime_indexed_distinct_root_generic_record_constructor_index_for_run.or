@@ -36,7 +36,8 @@ function sum_selected(root_flag: Bool, index: UInt64) -> UInt32
     var left: Holder = make_holder(40 as UInt32)
     var right: Holder = make_holder(80 as UInt32)
     let config: IndexConfig = IndexConfig([index])
-    let selected = normalize_index(config.values[0])
+    let normalized = normalize_index(config.values[0])
+    let selected = root_flag ? normalized : normalized
     let generic_selected = identity(selected)
     var total = 0 as UInt32
     for item in root_flag ? left.buckets[IndexEnvelope(IndexValue(generic_selected)).inner.selected].values : right.buckets[IndexEnvelope(IndexValue(generic_selected)).inner.selected].values

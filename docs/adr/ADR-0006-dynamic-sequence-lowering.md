@@ -3760,3 +3760,5 @@ representation.
 - 2026-10-23 Generic layout discovery now follows unannotated aliases returned by direct source functions. Fixed
   functions require exact source argument types; generic functions reuse the canonical call resolver to substitute
   concrete return types before later constructor discovery.
+- 2026-10-23 Generic layout discovery now follows unannotated ternary aliases when both result branches resolve to
+  the same exact source type. Incompatible or unresolved branches remain excluded from layout evidence.

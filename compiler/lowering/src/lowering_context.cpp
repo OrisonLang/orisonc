@@ -1318,6 +1318,30 @@ auto infer_constructor_argument_type(
     if (expression.kind == syntax::ExpressionKind::cast && !expression.text.empty()) {
         return parse_source_type_name(expression.text);
     }
+    if (expression.kind == syntax::ExpressionKind::ternary &&
+        expression.right != nullptr &&
+        expression.alternate != nullptr) {
+        auto then_type = infer_constructor_argument_type(
+            *expression.right,
+            generic_records,
+            records,
+            functions,
+            local_source_types
+        );
+        auto else_type = infer_constructor_argument_type(
+            *expression.alternate,
+            generic_records,
+            records,
+            functions,
+            local_source_types
+        );
+        if (!then_type.has_value() ||
+            !else_type.has_value() ||
+            render_source_type_name(*then_type) != render_source_type_name(*else_type)) {
+            return std::nullopt;
+        }
+        return then_type;
+    }
     if (expression.kind == syntax::ExpressionKind::call) {
         if (auto constructor_type = infer_constructor_expression_type(
                 expression,

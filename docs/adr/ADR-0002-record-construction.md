@@ -27,6 +27,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
   instantiations, and sequence element types reached through `Array`, `DynamicArray`, and view indexing.
 - Unannotated aliases can inherit a fixed function's declared return type after exact argument matching. Generic
   function return aliases use the shared generic-call substitution resolver.
+- Unannotated ternary aliases contribute constructor type evidence only when both result branches resolve to the
+  same exact source type. Unresolved or incompatible branches contribute no layout evidence.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 
