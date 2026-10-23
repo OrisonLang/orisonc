@@ -1065,12 +1065,109 @@ struct GenericLayoutFunctionDeclarations {
     std::unordered_map<std::string, syntax::FunctionSyntax const*> generic_functions;
     std::unordered_map<std::string, syntax::RecordSyntax const*> concrete_records;
     std::unordered_set<std::string> record_names;
+    std::vector<GenericMethodCandidate> methods;
 };
 
 auto infer_constructor_expression_type(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
 ) -> std::optional<syntax::TypeSyntax>;
+
+auto infer_constructor_argument_type(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::RecordSyntax> const& records,
+    GenericLayoutFunctionDeclarations const& functions,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
+) -> std::optional<syntax::TypeSyntax>;
+
+auto infer_source_method_call_type(
+    syntax::ExpressionSyntax const& call,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::RecordSyntax> const& records,
+    GenericLayoutFunctionDeclarations const& functions,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
+) -> std::optional<syntax::TypeSyntax> {
+    if (call.left == nullptr ||
+        call.left->kind != syntax::ExpressionKind::member_access ||
+        call.left->left == nullptr) {
+        return std::nullopt;
+    }
+
+    auto receiver_type = infer_constructor_argument_type(
+        *call.left->left,
+        generic_records,
+        records,
+        functions,
+        local_source_types
+    );
+    if (!receiver_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto inferred_return_type = std::optional<syntax::TypeSyntax> {};
+    for (auto const& candidate : functions.methods) {
+        if (candidate.receiver_type == nullptr ||
+            candidate.method == nullptr ||
+            candidate.method->name != call.left->text ||
+            candidate.method->parameters.empty() ||
+            candidate.method->parameters.front().name != "this" ||
+            call.arguments.size() + 1 != candidate.method->parameters.size()) {
+            continue;
+        }
+
+        auto generic_parameters = generic_parameter_set(candidate.generic_parameters);
+        auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+        if (!unify_constructor_type(
+                *candidate.receiver_type,
+                *receiver_type,
+                generic_parameters,
+                substitutions
+            )) {
+            continue;
+        }
+
+        auto arguments_match = true;
+        for (auto index = std::size_t {0}; index < call.arguments.size(); ++index) {
+            auto argument_type = infer_constructor_argument_type(
+                call.arguments[index],
+                generic_records,
+                records,
+                functions,
+                local_source_types
+            );
+            if (!argument_type.has_value() ||
+                !unify_constructor_type(
+                    candidate.method->parameters[index + 1].type,
+                    *argument_type,
+                    generic_parameters,
+                    substitutions
+                )) {
+                arguments_match = false;
+                break;
+            }
+        }
+        if (!arguments_match ||
+            std::ranges::any_of(
+                candidate.generic_parameters,
+                [&](std::string const& parameter) {
+                    return !substitutions.contains(parameter);
+                }
+            )) {
+            continue;
+        }
+
+        auto concrete_receiver_type = substitute_type(*candidate.receiver_type, substitutions);
+        if (render_source_type_name(concrete_receiver_type) != render_source_type_name(*receiver_type)) {
+            continue;
+        }
+        if (inferred_return_type.has_value()) {
+            return std::nullopt;
+        }
+        inferred_return_type = substitute_type(candidate.method->return_type, substitutions);
+    }
+    return inferred_return_type;
+}
 
 auto infer_constructor_expression_type(
     syntax::ExpressionSyntax const& expression,
@@ -1351,6 +1448,16 @@ auto infer_constructor_argument_type(
                 local_source_types
             )) {
             return constructor_type;
+        }
+        if (expression.left != nullptr &&
+            expression.left->kind == syntax::ExpressionKind::member_access) {
+            return infer_source_method_call_type(
+                expression,
+                generic_records,
+                records,
+                functions,
+                local_source_types
+            );
         }
         if (expression.left == nullptr || expression.left->kind != syntax::ExpressionKind::name) {
             return std::nullopt;
@@ -1882,6 +1989,21 @@ auto collect_generic_type_instantiations(
             functions.concrete_records.emplace(record.name, &record);
             functions.record_names.insert(record.name);
         }
+    }
+    auto collect_methods = [&](syntax::TypeSyntax const& receiver_type, auto const& methods) {
+        for (auto const& method : methods) {
+            functions.methods.push_back(GenericMethodCandidate {
+                .receiver_type = &receiver_type,
+                .method = &method,
+                .generic_parameters = generic_method_parameters(receiver_type, method, module),
+            });
+        }
+    };
+    for (auto const& implementation : module.implementations) {
+        collect_methods(implementation.receiver_type, implementation.methods);
+    }
+    for (auto const& extension : module.extensions) {
+        collect_methods(extension.receiver_type, extension.methods);
     }
 
     for (auto const& alias : module.type_aliases) {

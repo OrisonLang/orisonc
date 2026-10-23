@@ -3762,3 +3762,5 @@ representation.
   concrete return types before later constructor discovery.
 - 2026-10-23 Generic layout discovery now follows unannotated ternary aliases when both result branches resolve to
   the same exact source type. Incompatible or unresolved branches remain excluded from layout evidence.
+- 2026-10-23 Generic layout discovery now follows unannotated aliases returned by uniquely matched source methods.
+  Receiver patterns and explicit arguments use exact source-type unification; generic substitutions must be complete.

@@ -29,6 +29,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
   function return aliases use the shared generic-call substitution resolver.
 - Unannotated ternary aliases contribute constructor type evidence only when both result branches resolve to the
   same exact source type. Unresolved or incompatible branches contribute no layout evidence.
+- Unannotated aliases can inherit source-method return types after a unique receiver and argument match. Generic
+  receiver and method parameters must all resolve before their substitutions contribute constructor type evidence.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 

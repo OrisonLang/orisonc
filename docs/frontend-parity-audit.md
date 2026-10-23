@@ -3633,3 +3633,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-23: Generic record instantiation collection now tracks unannotated aliases from ternary expressions whose
   result branches have the same exact source type. Collector coverage rejects incompatible branches; production
   coverage carries a fixed-call result through a ternary PHI before generic calls and nested generic construction.
+- 2026-10-23: Generic record instantiation collection now tracks unannotated aliases returned by source methods after
+  unique receiver and argument matching. Collector coverage includes ordinary extension methods, generic receiver
+  substitution, and rejection of an exact receiver paired with an incompatible explicit argument.
