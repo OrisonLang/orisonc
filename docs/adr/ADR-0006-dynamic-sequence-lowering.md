@@ -3757,3 +3757,6 @@ representation.
 - 2026-10-23 Generic layout discovery now infers unannotated local aliases from exact record member projections and
   indexed `Array`, `DynamicArray`, or view elements. Generic record fields substitute concrete type arguments before
   the alias enters the statement-ordered binding environment.
+- 2026-10-23 Generic layout discovery now follows unannotated aliases returned by direct source functions. Fixed
+  functions require exact source argument types; generic functions reuse the canonical call resolver to substitute
+  concrete return types before later constructor discovery.

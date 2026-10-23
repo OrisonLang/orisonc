@@ -3627,3 +3627,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-23: Generic record instantiation collection now tracks unannotated aliases inferred from concrete record
   members and indexed sequence elements. Coverage includes plain fields, substituted generic-record fields, and a
   production runtime-index fixture whose generic constructors depend on `config.values[0]` with no alias annotation.
+- 2026-10-23: Generic record instantiation collection now tracks unannotated aliases from fixed and generic function
+  returns. Collector coverage pins distinct layouts for each path; production coverage chains an indexed projection,
+  a fixed call, and a specialized generic call before nested generic construction.

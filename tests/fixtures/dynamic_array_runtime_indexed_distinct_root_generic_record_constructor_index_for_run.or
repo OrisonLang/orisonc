@@ -18,6 +18,12 @@ record IndexEnvelope<T>
 record IndexConfig
     values: Array<UInt64, 1>
 
+function normalize_index(value: UInt64) -> UInt64
+    value
+
+function identity<T>(value: T) -> T
+    value
+
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
     values.push(Payload(seed))
@@ -30,9 +36,10 @@ function sum_selected(root_flag: Bool, index: UInt64) -> UInt32
     var left: Holder = make_holder(40 as UInt32)
     var right: Holder = make_holder(80 as UInt32)
     let config: IndexConfig = IndexConfig([index])
-    let selected = config.values[0]
+    let selected = normalize_index(config.values[0])
+    let generic_selected = identity(selected)
     var total = 0 as UInt32
-    for item in root_flag ? left.buckets[IndexEnvelope(IndexValue(selected)).inner.selected].values : right.buckets[IndexEnvelope(IndexValue(selected)).inner.selected].values
+    for item in root_flag ? left.buckets[IndexEnvelope(IndexValue(generic_selected)).inner.selected].values : right.buckets[IndexEnvelope(IndexValue(generic_selected)).inner.selected].values
         total = total + item.value
     total
 

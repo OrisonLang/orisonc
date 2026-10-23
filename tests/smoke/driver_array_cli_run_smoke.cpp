@@ -11909,14 +11909,29 @@ auto main(int argc, char** argv) -> int {
             " = load i64, ptr ",
             generic_constructor_array_projection
         );
+    auto generic_constructor_ordinary_call =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = call i64 @normalize_index(i64 %",
+            generic_constructor_projected_load
+        );
     auto generic_constructor_inferred_local =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
             "%selected = add i64 0, %",
-            generic_constructor_projected_load
+            generic_constructor_ordinary_call
+        );
+    auto generic_constructor_generic_call =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = call i64 @identity__UInt64(i64 %selected)",
+            generic_constructor_inferred_local
+        );
+    auto generic_constructor_generic_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%generic_selected = add i64 0, %",
+            generic_constructor_generic_call
         );
     auto generic_constructor_first_inner_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %selected, 0"
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %generic_selected, 0"
         );
     auto generic_constructor_first_outer_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
@@ -11940,7 +11955,7 @@ auto main(int argc, char** argv) -> int {
         );
     auto generic_constructor_second_inner_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %selected, 0",
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %generic_selected, 0",
             generic_constructor_first_guard
         );
     auto generic_constructor_second_outer_insert =
@@ -11966,8 +11981,11 @@ auto main(int argc, char** argv) -> int {
     assert(generic_constructor_record_projection != std::string::npos);
     assert(generic_constructor_record_projection < generic_constructor_array_projection);
     assert(generic_constructor_array_projection < generic_constructor_projected_load);
-    assert(generic_constructor_projected_load < generic_constructor_inferred_local);
-    assert(generic_constructor_inferred_local < generic_constructor_first_inner_insert);
+    assert(generic_constructor_projected_load < generic_constructor_ordinary_call);
+    assert(generic_constructor_ordinary_call < generic_constructor_inferred_local);
+    assert(generic_constructor_inferred_local < generic_constructor_generic_call);
+    assert(generic_constructor_generic_call < generic_constructor_generic_local);
+    assert(generic_constructor_generic_local < generic_constructor_first_inner_insert);
     assert(generic_constructor_first_inner_insert < generic_constructor_first_outer_insert);
     assert(generic_constructor_first_outer_insert < generic_constructor_first_outer_extract);
     assert(generic_constructor_first_outer_extract < generic_constructor_first_inner_extract);
@@ -11979,7 +11997,7 @@ auto main(int argc, char** argv) -> int {
     assert(generic_constructor_second_inner_extract < generic_constructor_second_guard);
     assert(
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %selected, 0",
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %generic_selected, 0",
             generic_constructor_second_guard
         ) == std::string::npos
     );
