@@ -734,6 +734,72 @@ void collect_generic_calls_from_statement(
     }
 }
 
+auto ordinary_method_call_source_type(
+    syntax::ExpressionSyntax const& expression,
+    syntax::ModuleSyntax const& module,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::member_access ||
+        expression.left->left == nullptr) {
+        return std::nullopt;
+    }
+
+    auto receiver_source_type =
+        source_type_name_for_generic_call_argument(*expression.left->left, resolver);
+    if (!receiver_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto result = std::optional<std::string> {};
+    auto ambiguous = false;
+    auto inspect_methods = [&](syntax::TypeSyntax const& receiver_type, auto const& methods) {
+        if (ambiguous || render_source_type_name(receiver_type) != *receiver_source_type) {
+            return;
+        }
+        for (auto const& method : methods) {
+            if (!method.generic_parameters.empty() ||
+                method.name != expression.left->text ||
+                method.parameters.empty() ||
+                method.parameters.front().name != "this" ||
+                method.parameters.size() != expression.arguments.size() + 1) {
+                continue;
+            }
+
+            auto arguments_match = true;
+            for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+                auto argument_source_type =
+                    source_type_name_for_generic_call_argument(expression.arguments[index], resolver);
+                if (!argument_source_type.has_value() ||
+                    *argument_source_type != render_source_type_name(method.parameters[index + 1].type)) {
+                    arguments_match = false;
+                    break;
+                }
+            }
+            if (!arguments_match) {
+                continue;
+            }
+
+            auto return_source_type = render_source_type_name(method.return_type);
+            if (result.has_value()) {
+                result.reset();
+                ambiguous = true;
+                return;
+            }
+            result = std::move(return_source_type);
+        }
+    };
+
+    for (auto const& implementation : module.implementations) {
+        inspect_methods(implementation.receiver_type, implementation.methods);
+    }
+    for (auto const& extension : module.extensions) {
+        inspect_methods(extension.receiver_type, extension.methods);
+    }
+    return ambiguous ? std::nullopt : result;
+}
+
 auto collect_generic_function_specializations(
     syntax::ModuleSyntax const& module,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions
@@ -782,6 +848,13 @@ auto collect_generic_function_specializations(
                     statement.expression,
                     resolver
                 );
+                if (!inferred_source_type.has_value()) {
+                    inferred_source_type = ordinary_method_call_source_type(
+                        statement.expression,
+                        module,
+                        resolver
+                    );
+                }
                 if (inferred_source_type.has_value()) {
                     local_source_types[statement.name] = std::move(*inferred_source_type);
                 }

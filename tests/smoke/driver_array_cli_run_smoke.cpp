@@ -11914,10 +11914,20 @@ auto main(int argc, char** argv) -> int {
             " = call i64 @normalize_index(i64 %",
             generic_constructor_projected_load
         );
+    auto generic_constructor_projected_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%projected = add i64 0, %",
+            generic_constructor_ordinary_call
+        );
+    auto generic_constructor_method_call =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = call i64 @method.UInt64.normalized(i64 %projected)",
+            generic_constructor_projected_local
+        );
     auto generic_constructor_normalized_local =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
             "%normalized = add i64 0, %",
-            generic_constructor_ordinary_call
+            generic_constructor_method_call
         );
     auto generic_constructor_ternary_branch =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
@@ -11997,7 +12007,9 @@ auto main(int argc, char** argv) -> int {
     assert(generic_constructor_record_projection < generic_constructor_array_projection);
     assert(generic_constructor_array_projection < generic_constructor_projected_load);
     assert(generic_constructor_projected_load < generic_constructor_ordinary_call);
-    assert(generic_constructor_ordinary_call < generic_constructor_normalized_local);
+    assert(generic_constructor_ordinary_call < generic_constructor_projected_local);
+    assert(generic_constructor_projected_local < generic_constructor_method_call);
+    assert(generic_constructor_method_call < generic_constructor_normalized_local);
     assert(generic_constructor_normalized_local < generic_constructor_ternary_branch);
     assert(generic_constructor_ternary_branch < generic_constructor_ternary_phi);
     assert(generic_constructor_ternary_phi < generic_constructor_inferred_local);

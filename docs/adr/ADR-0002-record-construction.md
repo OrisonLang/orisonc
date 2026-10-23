@@ -31,6 +31,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
   same exact source type. Unresolved or incompatible branches contribute no layout evidence.
 - Unannotated aliases can inherit source-method return types after a unique receiver and argument match. Generic
   receiver and method parameters must all resolve before their substitutions contribute constructor type evidence.
+- Generic function specialization discovery follows unannotated aliases returned by exact ordinary method calls,
+  allowing method results to flow through later aliases into generic record construction.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 

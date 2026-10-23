@@ -3636,3 +3636,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-23: Generic record instantiation collection now tracks unannotated aliases returned by source methods after
   unique receiver and argument matching. Collector coverage includes ordinary extension methods, generic receiver
   substitution, and rejection of an exact receiver paired with an incompatible explicit argument.
+- 2026-10-23: Unannotated ordinary method-call aliases now participate in generic function specialization discovery.
+  Exact receiver, arity, and argument matching remains mandatory; production coverage emits the method call, ternary
+  PHI, `identity<UInt64>`, nested generic constructors, runtime-index guards, cleanup, objects, and executables.

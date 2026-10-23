@@ -21,6 +21,10 @@ record IndexConfig
 function normalize_index(value: UInt64) -> UInt64
     value
 
+extend UInt64
+    function normalized(this: shared This) -> UInt64
+        this
+
 function identity<T>(value: T) -> T
     value
 
@@ -36,7 +40,8 @@ function sum_selected(root_flag: Bool, index: UInt64) -> UInt32
     var left: Holder = make_holder(40 as UInt32)
     var right: Holder = make_holder(80 as UInt32)
     let config: IndexConfig = IndexConfig([index])
-    let normalized = normalize_index(config.values[0])
+    let projected = normalize_index(config.values[0])
+    let normalized = projected.normalized()
     let selected = root_flag ? normalized : normalized
     let generic_selected = identity(selected)
     var total = 0 as UInt32
