@@ -140,6 +140,22 @@ int main() {
             FieldSyntax {.name = "value", .type = TypeSyntax {.name = "T"}},
         },
     });
+    module.records.push_back(RecordSyntax {
+        .name = "GenericLayoutEvidence",
+        .fields = {
+            FieldSyntax {.name = "selected", .type = TypeSyntax {.name = "UInt32"}},
+            FieldSyntax {
+                .name = "values",
+                .type = TypeSyntax {
+                    .name = "Array",
+                    .generic_arguments = {
+                        TypeSyntax {.name = "Byte"},
+                        TypeSyntax {.name = "2"},
+                    },
+                },
+            },
+        },
+    });
     auto named_constructor_function = FunctionSyntax {
         .name = "collect_named_constructor",
         .parameters = {
@@ -169,6 +185,86 @@ int main() {
         .expression = std::move(named_constructor_call),
     });
     module.functions.push_back(std::move(named_constructor_function));
+    auto projected_constructor_function = FunctionSyntax {
+        .name = "collect_projected_constructors",
+        .parameters = {
+            ParameterSyntax {
+                .name = "evidence",
+                .type = TypeSyntax {.name = "GenericLayoutEvidence"},
+            },
+            ParameterSyntax {
+                .name = "generic_evidence",
+                .type = TypeSyntax {
+                    .name = "Box",
+                    .generic_arguments = {TypeSyntax {.name = "UInt64"}},
+                },
+            },
+            ParameterSyntax {.name = "slot", .type = TypeSyntax {.name = "UInt64"}},
+        },
+        .return_type = TypeSyntax {.name = "Unit"},
+    };
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "member_value",
+        .expression = ExpressionSyntax {
+            .kind = ExpressionKind::member_access,
+            .text = "selected",
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "evidence",
+            }),
+        },
+    });
+    auto indexed_value = ExpressionSyntax {
+        .kind = ExpressionKind::index_access,
+        .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+            .kind = ExpressionKind::member_access,
+            .text = "values",
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "evidence",
+            }),
+        }),
+    };
+    indexed_value.arguments.push_back(ExpressionSyntax {
+        .kind = ExpressionKind::name,
+        .text = "slot",
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "indexed_value",
+        .expression = std::move(indexed_value),
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "generic_member_value",
+        .expression = ExpressionSyntax {
+            .kind = ExpressionKind::member_access,
+            .text = "value",
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "generic_evidence",
+            }),
+        },
+    });
+    for (auto const* value_name : {"member_value", "indexed_value", "generic_member_value"}) {
+        auto constructor_call = ExpressionSyntax {
+            .kind = ExpressionKind::call,
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::name,
+                .text = "NamedBox",
+            }),
+        };
+        constructor_call.arguments.push_back(ExpressionSyntax {
+            .kind = ExpressionKind::name,
+            .text = value_name,
+        });
+        projected_constructor_function.body_statements.push_back(StatementSyntax {
+            .kind = StatementKind::expression_statement,
+            .expression = std::move(constructor_call),
+        });
+    }
+    module.functions.push_back(std::move(projected_constructor_function));
     module.choices.push_back(ChoiceSyntax {
         .name = "Maybe",
         .generic_parameters = {"T"},
@@ -309,8 +405,8 @@ int main() {
     auto diagnostics = orison::diagnostics::DiagnosticBag {};
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
-    assert(context.functions.size() == 5);
-    assert(context.records.size() == 10);
+    assert(context.functions.size() == 6);
+    assert(context.records.size() == 15);
     assert(context.choices.size() == 4);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
@@ -392,6 +488,24 @@ int main() {
     assert(named_box_layout.fields.size() == 1);
     assert(named_box_layout.fields[0].source_type_name == "UInt16");
     assert(named_box_layout.fields[0].llvm_type == "i16");
+    assert(context.records.contains("NamedBox<UInt32>"));
+    auto const& projected_member_box_layout = context.records.at("NamedBox<UInt32>");
+    assert(projected_member_box_layout.llvm_type_name == "%record.NamedBox_UInt32_");
+    assert(projected_member_box_layout.fields.size() == 1);
+    assert(projected_member_box_layout.fields[0].source_type_name == "UInt32");
+    assert(projected_member_box_layout.fields[0].llvm_type == "i32");
+    assert(context.records.contains("NamedBox<Byte>"));
+    auto const& projected_index_box_layout = context.records.at("NamedBox<Byte>");
+    assert(projected_index_box_layout.llvm_type_name == "%record.NamedBox_Byte_");
+    assert(projected_index_box_layout.fields.size() == 1);
+    assert(projected_index_box_layout.fields[0].source_type_name == "Byte");
+    assert(projected_index_box_layout.fields[0].llvm_type == "i8");
+    assert(context.records.contains("NamedBox<UInt64>"));
+    auto const& projected_generic_member_box_layout = context.records.at("NamedBox<UInt64>");
+    assert(projected_generic_member_box_layout.llvm_type_name == "%record.NamedBox_UInt64_");
+    assert(projected_generic_member_box_layout.fields.size() == 1);
+    assert(projected_generic_member_box_layout.fields[0].source_type_name == "UInt64");
+    assert(projected_generic_member_box_layout.fields[0].llvm_type == "i64");
     assert(context.choices.contains("Maybe"));
     auto const& maybe_layout = context.choices.at("Maybe");
     assert(maybe_layout.name == "Maybe");

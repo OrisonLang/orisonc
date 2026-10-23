@@ -1068,6 +1068,7 @@ auto infer_constructor_expression_type(
 auto infer_constructor_expression_type(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
 ) -> std::optional<syntax::TypeSyntax>;
 
@@ -1296,6 +1297,7 @@ auto collect_generic_method_specializations(
 auto infer_constructor_argument_type(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
 ) -> std::optional<syntax::TypeSyntax> {
     if (expression.kind == syntax::ExpressionKind::name) {
@@ -1308,12 +1310,64 @@ auto infer_constructor_argument_type(
         return parse_source_type_name(expression.text);
     }
     if (expression.kind == syntax::ExpressionKind::call) {
-        return infer_constructor_expression_type(expression, generic_records, local_source_types);
+        return infer_constructor_expression_type(expression, generic_records, records, local_source_types);
+    }
+    if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
+        auto base_type = infer_constructor_argument_type(
+            *expression.left,
+            generic_records,
+            records,
+            local_source_types
+        );
+        if (!base_type.has_value()) {
+            return std::nullopt;
+        }
+        auto record = std::ranges::find_if(
+            records,
+            [&](syntax::RecordSyntax const& candidate) {
+                return candidate.name == base_type->name;
+            }
+        );
+        if (record == records.end() ||
+            record->generic_parameters.size() != base_type->generic_arguments.size()) {
+            return std::nullopt;
+        }
+        auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+        for (auto index = std::size_t {0}; index < record->generic_parameters.size(); ++index) {
+            substitutions.emplace(record->generic_parameters[index], base_type->generic_arguments[index]);
+        }
+        for (auto const& field : record->fields) {
+            if (field.name == expression.text) {
+                return substitute_type(field.type, substitutions);
+            }
+        }
+        return std::nullopt;
+    }
+    if (expression.kind == syntax::ExpressionKind::index_access &&
+        expression.left != nullptr &&
+        expression.arguments.size() == 1) {
+        auto base_type = infer_constructor_argument_type(
+            *expression.left,
+            generic_records,
+            records,
+            local_source_types
+        );
+        if (!base_type.has_value() || base_type->generic_arguments.empty()) {
+            return std::nullopt;
+        }
+        if ((base_type->name == "Array" && base_type->generic_arguments.size() == 2) ||
+            ((base_type->name == "DynamicArray" || base_type->name == "View" ||
+              base_type->name == "shared.View" || base_type->name == "exclusive.View") &&
+             base_type->generic_arguments.size() == 1)) {
+            return base_type->generic_arguments.front();
+        }
+        return std::nullopt;
     }
     if (expression.kind == syntax::ExpressionKind::array_literal && !expression.arguments.empty()) {
         auto element_type = infer_constructor_argument_type(
             expression.arguments.front(),
             generic_records,
+            records,
             local_source_types
         );
         if (!element_type.has_value()) {
@@ -1323,6 +1377,7 @@ auto infer_constructor_argument_type(
             auto next_element_type = infer_constructor_argument_type(
                 expression.arguments[index],
                 generic_records,
+                records,
                 local_source_types
             );
             if (!next_element_type.has_value() ||
@@ -1344,6 +1399,7 @@ auto infer_constructor_argument_type(
 auto infer_constructor_expression_type(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
 ) -> std::optional<syntax::TypeSyntax> {
     if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr ||
@@ -1362,6 +1418,7 @@ auto infer_constructor_expression_type(
         auto argument_type = infer_constructor_argument_type(
             expression.arguments[index],
             generic_records,
+            records,
             local_source_types
         );
         if (!argument_type.has_value() ||
@@ -1394,6 +1451,7 @@ auto infer_constructor_expression_type(
     return infer_constructor_expression_type(
         expression,
         generic_records,
+        std::vector<syntax::RecordSyntax> {},
         std::unordered_map<std::string, syntax::TypeSyntax> {}
     );
 }
@@ -1404,6 +1462,7 @@ void collect_expression_type_instantiations(
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
 );
 
@@ -1413,6 +1472,7 @@ void collect_statement_type_instantiations(
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax>& local_source_types
 );
 
@@ -1422,6 +1482,7 @@ void collect_statement_block_type_instantiations(
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax>& local_source_types
 );
 
@@ -1468,11 +1529,13 @@ void collect_expression_type_instantiations(
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax> const& local_source_types
 ) {
     if (auto inferred_type = infer_constructor_expression_type(
             expression,
             generic_records,
+            records,
             local_source_types
         )) {
         collect_type_instantiations(*inferred_type, generic_records, generic_choices, pending, seen);
@@ -1485,6 +1548,7 @@ void collect_expression_type_instantiations(
             generic_choices,
             pending,
             seen,
+            records,
             local_source_types
         );
     }
@@ -1495,6 +1559,7 @@ void collect_expression_type_instantiations(
             generic_choices,
             pending,
             seen,
+            records,
             local_source_types
         );
     }
@@ -1505,6 +1570,7 @@ void collect_expression_type_instantiations(
             generic_choices,
             pending,
             seen,
+            records,
             local_source_types
         );
     }
@@ -1515,6 +1581,7 @@ void collect_expression_type_instantiations(
             generic_choices,
             pending,
             seen,
+            records,
             local_source_types
         );
     }
@@ -1527,6 +1594,7 @@ void collect_expression_type_instantiations(
                 generic_choices,
                 pending,
                 seen,
+                records,
                 nested_source_types
             );
         }
@@ -1539,6 +1607,7 @@ void collect_statement_type_instantiations(
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax>& local_source_types
 ) {
     if (!statement.annotated_type.name.empty()) {
@@ -1550,6 +1619,7 @@ void collect_statement_type_instantiations(
         generic_choices,
         pending,
         seen,
+        records,
         local_source_types
     );
     collect_expression_type_instantiations(
@@ -1558,6 +1628,7 @@ void collect_statement_type_instantiations(
         generic_choices,
         pending,
         seen,
+        records,
         local_source_types
     );
     auto nested_source_types = local_source_types;
@@ -1567,6 +1638,7 @@ void collect_statement_type_instantiations(
         generic_choices,
         pending,
         seen,
+        records,
         nested_source_types
     );
     auto alternate_source_types = local_source_types;
@@ -1576,6 +1648,7 @@ void collect_statement_type_instantiations(
         generic_choices,
         pending,
         seen,
+        records,
         alternate_source_types
     );
     for (auto const& switch_case : statement.switch_cases) {
@@ -1585,6 +1658,7 @@ void collect_statement_type_instantiations(
             generic_choices,
             pending,
             seen,
+            records,
             local_source_types
         );
         auto case_source_types = local_source_types;
@@ -1596,6 +1670,7 @@ void collect_statement_type_instantiations(
                     generic_choices,
                     pending,
                     seen,
+                    records,
                     case_source_types
                 );
             }
@@ -1613,6 +1688,7 @@ void collect_statement_type_instantiations(
     if (auto inferred_type = infer_constructor_argument_type(
             statement.expression,
             generic_records,
+            records,
             local_source_types
         )) {
         local_source_types[statement.name] = std::move(*inferred_type);
@@ -1625,6 +1701,7 @@ void collect_statement_block_type_instantiations(
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records,
     std::unordered_map<std::string, syntax::TypeSyntax>& local_source_types
 ) {
     for (auto const& statement : statements) {
@@ -1634,6 +1711,7 @@ void collect_statement_block_type_instantiations(
             generic_choices,
             pending,
             seen,
+            records,
             local_source_types
         );
     }
@@ -1644,7 +1722,8 @@ void collect_function_type_instantiations(
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
-    std::unordered_set<std::string>& seen
+    std::unordered_set<std::string>& seen,
+    std::vector<syntax::RecordSyntax> const& records
 ) {
     collect_type_instantiations(function.return_type, generic_records, generic_choices, pending, seen);
     for (auto const& parameter : function.parameters) {
@@ -1665,6 +1744,7 @@ void collect_function_type_instantiations(
         generic_choices,
         pending,
         seen,
+        records,
         local_source_types
     );
 }
@@ -1717,23 +1797,51 @@ auto collect_generic_type_instantiations(
         }
     }
     for (auto const& foreign_export : module.foreign_exports) {
-        collect_function_type_instantiations(foreign_export.function, generic_records, generic_choices, pending, seen);
+        collect_function_type_instantiations(
+            foreign_export.function,
+            generic_records,
+            generic_choices,
+            pending,
+            seen,
+            module.records
+        );
     }
     for (auto const& implementation : module.implementations) {
         collect_type_instantiations(implementation.interface_type, generic_records, generic_choices, pending, seen);
         collect_type_instantiations(implementation.receiver_type, generic_records, generic_choices, pending, seen);
         for (auto const& method : implementation.methods) {
-            collect_function_type_instantiations(method, generic_records, generic_choices, pending, seen);
+            collect_function_type_instantiations(
+                method,
+                generic_records,
+                generic_choices,
+                pending,
+                seen,
+                module.records
+            );
         }
     }
     for (auto const& extension : module.extensions) {
         collect_type_instantiations(extension.receiver_type, generic_records, generic_choices, pending, seen);
         for (auto const& method : extension.methods) {
-            collect_function_type_instantiations(method, generic_records, generic_choices, pending, seen);
+            collect_function_type_instantiations(
+                method,
+                generic_records,
+                generic_choices,
+                pending,
+                seen,
+                module.records
+            );
         }
     }
     for (auto const& function : module.functions) {
-        collect_function_type_instantiations(function, generic_records, generic_choices, pending, seen);
+        collect_function_type_instantiations(
+            function,
+            generic_records,
+            generic_choices,
+            pending,
+            seen,
+            module.records
+        );
     }
 
     for (auto index = std::size_t {0}; index < pending.size(); ++index) {

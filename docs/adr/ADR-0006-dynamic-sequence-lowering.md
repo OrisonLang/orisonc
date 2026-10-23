@@ -3754,3 +3754,6 @@ representation.
 - 2026-10-22 Generic layout discovery now resolves constructor arguments from typed function-local names in statement
   order. Runtime-indexed `for` iterables no longer need an unrelated concrete generic signature to register nested
   constructor layouts; block-local type evidence remains scoped to its block.
+- 2026-10-23 Generic layout discovery now infers unannotated local aliases from exact record member projections and
+  indexed `Array`, `DynamicArray`, or view elements. Generic record fields substitute concrete type arguments before
+  the alias enters the statement-ordered binding environment.

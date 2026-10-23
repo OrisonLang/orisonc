@@ -23,6 +23,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
 - Generic record layout discovery uses function parameter types and statement-ordered local binding types when
   inferring constructor specializations. Nested blocks receive copied binding environments so local evidence does
   not escape its source scope.
+- Statement-ordered inference follows exact record member types, including substituted fields of concrete generic
+  instantiations, and sequence element types reached through `Array`, `DynamicArray`, and view indexing.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 

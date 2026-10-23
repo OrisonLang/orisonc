@@ -15,6 +15,9 @@ record IndexValue<T>
 record IndexEnvelope<T>
     inner: IndexValue<T>
 
+record IndexConfig
+    values: Array<UInt64, 1>
+
 function make_values(seed: UInt32) -> DynamicArray<Payload>
     var values: DynamicArray<Payload> = DynamicArray()
     values.push(Payload(seed))
@@ -26,7 +29,8 @@ function make_holder(seed: UInt32) -> Holder
 function sum_selected(root_flag: Bool, index: UInt64) -> UInt32
     var left: Holder = make_holder(40 as UInt32)
     var right: Holder = make_holder(80 as UInt32)
-    let selected: UInt64 = index
+    let config: IndexConfig = IndexConfig([index])
+    let selected = config.values[0]
     var total = 0 as UInt32
     for item in root_flag ? left.buckets[IndexEnvelope(IndexValue(selected)).inner.selected].values : right.buckets[IndexEnvelope(IndexValue(selected)).inner.selected].values
         total = total + item.value

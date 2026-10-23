@@ -11891,9 +11891,28 @@ auto main(int argc, char** argv) -> int {
         runtime_indexed_distinct_root_generic_record_constructor_index_ir,
         "%record.IndexEnvelope_UInt64_ = type { %record.IndexValue_UInt64_ }"
     );
-    auto generic_constructor_typed_local =
+    assert_contains(
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir,
+        "%record.IndexConfig = type { [1 x i64] }"
+    );
+    auto generic_constructor_record_projection =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            "%selected = add i64 0, %index"
+            " = getelementptr %record.IndexConfig, ptr %config.addr, i32 0, i32 0"
+        );
+    auto generic_constructor_array_projection =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = getelementptr [1 x i64], ptr ",
+            generic_constructor_record_projection
+        );
+    auto generic_constructor_projected_load =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = load i64, ptr ",
+            generic_constructor_array_projection
+        );
+    auto generic_constructor_inferred_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%selected = add i64 0, %",
+            generic_constructor_projected_load
         );
     auto generic_constructor_first_inner_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
@@ -11944,8 +11963,11 @@ auto main(int argc, char** argv) -> int {
             "computed_dynamic_array_runtime_aggregate_index",
             generic_constructor_second_inner_extract
         );
-    assert(generic_constructor_typed_local != std::string::npos);
-    assert(generic_constructor_typed_local < generic_constructor_first_inner_insert);
+    assert(generic_constructor_record_projection != std::string::npos);
+    assert(generic_constructor_record_projection < generic_constructor_array_projection);
+    assert(generic_constructor_array_projection < generic_constructor_projected_load);
+    assert(generic_constructor_projected_load < generic_constructor_inferred_local);
+    assert(generic_constructor_inferred_local < generic_constructor_first_inner_insert);
     assert(generic_constructor_first_inner_insert < generic_constructor_first_outer_insert);
     assert(generic_constructor_first_outer_insert < generic_constructor_first_outer_extract);
     assert(generic_constructor_first_outer_extract < generic_constructor_first_inner_extract);

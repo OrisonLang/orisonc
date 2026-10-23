@@ -3624,3 +3624,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-22: Generic record instantiation collection now tracks parameters and typed local bindings in statement
   order, including constructors nested in runtime-indexed `for` iterables. The production fixture registers
   `IndexEnvelope<UInt64>` and `IndexValue<UInt64>` directly from its typed local index with no marker signature.
+- 2026-10-23: Generic record instantiation collection now tracks unannotated aliases inferred from concrete record
+  members and indexed sequence elements. Coverage includes plain fields, substituted generic-record fields, and a
+  production runtime-index fixture whose generic constructors depend on `config.values[0]` with no alias annotation.
