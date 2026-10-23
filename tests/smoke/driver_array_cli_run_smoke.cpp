@@ -11891,9 +11891,13 @@ auto main(int argc, char** argv) -> int {
         runtime_indexed_distinct_root_generic_record_constructor_index_ir,
         "%record.IndexEnvelope_UInt64_ = type { %record.IndexValue_UInt64_ }"
     );
+    auto generic_constructor_typed_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%selected = add i64 0, %index"
+        );
     auto generic_constructor_first_inner_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %index, 0"
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %selected, 0"
         );
     auto generic_constructor_first_outer_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
@@ -11917,7 +11921,7 @@ auto main(int argc, char** argv) -> int {
         );
     auto generic_constructor_second_inner_insert =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %index, 0",
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %selected, 0",
             generic_constructor_first_guard
         );
     auto generic_constructor_second_outer_insert =
@@ -11940,7 +11944,8 @@ auto main(int argc, char** argv) -> int {
             "computed_dynamic_array_runtime_aggregate_index",
             generic_constructor_second_inner_extract
         );
-    assert(generic_constructor_first_inner_insert != std::string::npos);
+    assert(generic_constructor_typed_local != std::string::npos);
+    assert(generic_constructor_typed_local < generic_constructor_first_inner_insert);
     assert(generic_constructor_first_inner_insert < generic_constructor_first_outer_insert);
     assert(generic_constructor_first_outer_insert < generic_constructor_first_outer_extract);
     assert(generic_constructor_first_outer_extract < generic_constructor_first_inner_extract);
@@ -11952,7 +11957,7 @@ auto main(int argc, char** argv) -> int {
     assert(generic_constructor_second_inner_extract < generic_constructor_second_guard);
     assert(
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %index, 0",
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %selected, 0",
             generic_constructor_second_guard
         ) == std::string::npos
     );

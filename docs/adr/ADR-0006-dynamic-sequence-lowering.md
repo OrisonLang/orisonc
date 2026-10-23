@@ -3751,3 +3751,6 @@ representation.
 - 2026-10-22 Distinct-owner runtime indexes now accept member-only paths through inferred generic record constructor
   temporaries when a unique concrete layout exists and every scalar leaf is reusable. Member emission preserves the
   inferred source type through nested SSA extraction; hidden calls and ambiguous layouts remain rejected.
+- 2026-10-22 Generic layout discovery now resolves constructor arguments from typed function-local names in statement
+  order. Runtime-indexed `for` iterables no longer need an unrelated concrete generic signature to register nested
+  constructor layouts; block-local type evidence remains scoped to its block.

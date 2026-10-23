@@ -1,6 +1,7 @@
 #include "orison/lowering/lowering_context.hpp"
 
 #include <cassert>
+#include <memory>
 #include <utility>
 
 int main() {
@@ -10,12 +11,16 @@ int main() {
     using orison::syntax::FieldSyntax;
     using orison::syntax::ImplementationSyntax;
     using orison::syntax::ExtensionSyntax;
+    using orison::syntax::ExpressionKind;
+    using orison::syntax::ExpressionSyntax;
     using orison::syntax::ModuleSyntax;
     using orison::syntax::ChoiceSyntax;
     using orison::syntax::ChoiceVariantSyntax;
     using orison::syntax::NamedTypeSyntax;
     using orison::syntax::ParameterSyntax;
     using orison::syntax::RecordSyntax;
+    using orison::syntax::StatementKind;
+    using orison::syntax::StatementSyntax;
     using orison::syntax::TypeSyntax;
 
     auto module = ModuleSyntax {};
@@ -128,6 +133,42 @@ int main() {
             FieldSyntax {.name = "value", .type = TypeSyntax {.name = "T"}},
         },
     });
+    module.records.push_back(RecordSyntax {
+        .name = "NamedBox",
+        .generic_parameters = {"T"},
+        .fields = {
+            FieldSyntax {.name = "value", .type = TypeSyntax {.name = "T"}},
+        },
+    });
+    auto named_constructor_function = FunctionSyntax {
+        .name = "collect_named_constructor",
+        .parameters = {
+            ParameterSyntax {.name = "input", .type = TypeSyntax {.name = "UInt16"}},
+        },
+        .return_type = TypeSyntax {.name = "Unit"},
+    };
+    named_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::let_binding,
+        .name = "typed_value",
+        .annotated_type = TypeSyntax {.name = "UInt16"},
+        .expression = ExpressionSyntax {.kind = ExpressionKind::name, .text = "input"},
+    });
+    auto named_constructor_call = ExpressionSyntax {
+        .kind = ExpressionKind::call,
+        .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+            .kind = ExpressionKind::name,
+            .text = "NamedBox",
+        }),
+    };
+    named_constructor_call.arguments.push_back(ExpressionSyntax {
+        .kind = ExpressionKind::name,
+        .text = "typed_value",
+    });
+    named_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::expression_statement,
+        .expression = std::move(named_constructor_call),
+    });
+    module.functions.push_back(std::move(named_constructor_function));
     module.choices.push_back(ChoiceSyntax {
         .name = "Maybe",
         .generic_parameters = {"T"},
@@ -268,15 +309,18 @@ int main() {
     auto diagnostics = orison::diagnostics::DiagnosticBag {};
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
-    assert(context.functions.size() == 4);
-    assert(context.records.size() == 9);
+    assert(context.functions.size() == 5);
+    assert(context.records.size() == 10);
     assert(context.choices.size() == 4);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
-    assert(context.generic_record_parameters.size() == 1);
+    assert(context.generic_record_parameters.size() == 2);
     assert(context.generic_record_parameters.contains("Box"));
     assert(context.generic_record_parameters.at("Box").size() == 1);
     assert(context.generic_record_parameters.at("Box")[0] == "T");
+    assert(context.generic_record_parameters.contains("NamedBox"));
+    assert(context.generic_record_parameters.at("NamedBox").size() == 1);
+    assert(context.generic_record_parameters.at("NamedBox")[0] == "T");
     assert(context.records.contains("UartRegisters"));
     auto const& uart_layout = context.records.at("UartRegisters");
     assert(uart_layout.name == "UartRegisters");
@@ -341,6 +385,13 @@ int main() {
     assert(nested_box_layout.fields[0].name == "value");
     assert(nested_box_layout.fields[0].source_type_name == "Box<UInt32>");
     assert(nested_box_layout.fields[0].llvm_type == "%record.Box_UInt32_");
+    assert(!context.records.contains("NamedBox"));
+    assert(context.records.contains("NamedBox<UInt16>"));
+    auto const& named_box_layout = context.records.at("NamedBox<UInt16>");
+    assert(named_box_layout.llvm_type_name == "%record.NamedBox_UInt16_");
+    assert(named_box_layout.fields.size() == 1);
+    assert(named_box_layout.fields[0].source_type_name == "UInt16");
+    assert(named_box_layout.fields[0].llvm_type == "i16");
     assert(context.choices.contains("Maybe"));
     auto const& maybe_layout = context.choices.at("Maybe");
     assert(maybe_layout.name == "Maybe");
