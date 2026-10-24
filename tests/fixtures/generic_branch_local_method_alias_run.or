@@ -1,0 +1,32 @@
+package tests.fixtures.generic_branch_local_method_alias_run
+
+record Box<T>
+    value: T
+
+record Envelope<T>
+    inner: Box<T>
+
+extend UInt64
+    function choose<T>(this: shared This, candidate: T) -> T
+        candidate
+
+extend Box<T>
+    function value_copy(this: shared This) -> T
+        this.value
+
+function identity<T>(value: T) -> T
+    value
+
+function select(flag: Bool, index: UInt64) -> UInt64
+    if flag
+        let chosen = index.choose(index)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let specialized = identity(copied)
+        let envelope = Envelope(Box(specialized))
+        envelope.inner.value
+    else
+        index
+
+function main() -> UInt32
+    select(true, 7 as UInt64) == 7 as UInt64 and select(false, 9 as UInt64) == 9 as UInt64 ? 0 as UInt32 : 1 as UInt32

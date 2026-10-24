@@ -35,6 +35,9 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
   allowing method results to flow through later aliases into generic record construction.
 - Generic method and generic-receiver specializations can seed unannotated aliases when source arguments identify
   one exact specialization. Ambiguous or incomplete substitutions contribute no constructor evidence.
+- Generic function and method specialization discovery carries statement-ordered inferred aliases through copied
+  nested-block environments. Branch, loop, and switch-case bindings can drive later specializations in their scope
+  without escaping into sibling or enclosing scopes.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 

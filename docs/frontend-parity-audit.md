@@ -3642,3 +3642,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-23: Unannotated generic method and generic-receiver results now participate in statement-ordered source
   inference. A unique source-compatible specialization supplies the return type; ambiguity remains fail-closed.
   Production coverage emits both specialized method forms before generic function and record construction.
+- 2026-10-23: Generic specialization collection now preserves statement-ordered inferred aliases in copied nested
+  control-flow environments. An `if`-local generic method result drives generic receiver construction, a second
+  specialized method, `identity<UInt64>`, nested generic record layout, linking, and successful execution.

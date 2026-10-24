@@ -3770,3 +3770,6 @@ representation.
 - 2026-10-23 Unannotated generic method and generic-receiver calls now infer one source-compatible specialization
   without a prior expected LLVM return type. Production coverage chains both forms through generic construction,
   ternary selection, `identity<UInt64>`, runtime-index cleanup, object generation, linking, and execution.
+- 2026-10-23 Generic function and method specialization discovery now maintains statement-ordered inferred aliases
+  inside copied nested-control environments. Production coverage resolves a generic method result, a constructed
+  generic receiver, a receiver-generic method, a generic function, and nested generic records within one `if` arm.

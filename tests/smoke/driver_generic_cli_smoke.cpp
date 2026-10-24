@@ -4038,6 +4038,32 @@ auto main(int argc, char** argv) -> int {
         executable,
         fixtures / "generic_method_inferred_receiver.or"
     );
+    auto generic_branch_local_method_alias_path =
+        fixtures / "generic_branch_local_method_alias_run.or";
+    assert_cli_run_fixture_success(executable, generic_branch_local_method_alias_path);
+    auto generic_branch_local_method_alias_ir = read_command_output(
+        executable.string() + " --emit-llvm " + generic_branch_local_method_alias_path.string()
+    );
+    assert(generic_branch_local_method_alias_ir.find("%record.Box_UInt64_ = type { i64 }") != std::string::npos);
+    assert(
+        generic_branch_local_method_alias_ir.find(
+            "%record.Envelope_UInt64_ = type { %record.Box_UInt64_ }"
+        ) != std::string::npos
+    );
+    assert(
+        generic_branch_local_method_alias_ir.find(
+            "call i64 @method.UInt64.choose__UInt64(i64 %index, i64 %index)"
+        ) != std::string::npos
+    );
+    assert(
+        generic_branch_local_method_alias_ir.find(
+            "call i64 @method.Box_UInt64_.value_copy__UInt64("
+        ) != std::string::npos
+    );
+    assert(
+        generic_branch_local_method_alias_ir.find("call i64 @identity__UInt64(i64 %copied)") !=
+        std::string::npos
+    );
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_method_parameter.or"
