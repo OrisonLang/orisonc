@@ -64,6 +64,13 @@ auto find_matching_generic_specialization(
     FunctionLoweringState const& state
 ) -> LoweredFunctionSignature const*;
 
+auto infer_generic_function_specialization(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> LoweredFunctionSignature const*;
+
 auto generic_specialization_ambiguity_detail(
     std::string_view function_name,
     syntax::ExpressionSyntax const& expression,

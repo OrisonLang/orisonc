@@ -4181,11 +4181,11 @@ auto main(int argc, char** argv) -> int {
         std::string::npos
     );
     assert(
-        generic_computed_dynamic_array_loop_alias_ir.find("call i64 @identity_wide__UInt64(") !=
+        generic_computed_dynamic_array_loop_alias_ir.find("call i64 @identity__UInt64(") !=
         std::string::npos
     );
     assert(
-        generic_computed_dynamic_array_loop_alias_ir.find("call i32 @identity_narrow__UInt32(") !=
+        generic_computed_dynamic_array_loop_alias_ir.find("call i32 @identity__UInt32(") !=
         std::string::npos
     );
     auto generic_computed_view_loop_alias_path =
@@ -4213,11 +4213,11 @@ auto main(int argc, char** argv) -> int {
         std::string::npos
     );
     assert(
-        generic_computed_view_loop_alias_ir.find("call i64 @identity_wide__UInt64(") !=
+        generic_computed_view_loop_alias_ir.find("call i64 @identity__UInt64(") !=
         std::string::npos
     );
     assert(
-        generic_computed_view_loop_alias_ir.find("call i32 @identity_narrow__UInt32(") !=
+        generic_computed_view_loop_alias_ir.find("call i32 @identity__UInt32(") !=
         std::string::npos
     );
     assert_cli_run_fixture_success(

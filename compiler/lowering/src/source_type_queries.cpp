@@ -5408,6 +5408,18 @@ auto source_type_name_for_expression(
             return constructor_type;
         }
 
+        if (auto specialization = infer_generic_function_specialization(
+                expression.left->text,
+                expression,
+                context,
+                state
+            )) {
+            if (!specialization->source_return_type_name.empty()) {
+                return specialization->source_return_type_name;
+            }
+            return source_type_name_for_llvm_type(specialization->return_type, context);
+        }
+
         auto function = context.functions.find(expression.left->text);
         if (function == context.functions.end() || function->second.return_type.empty() ||
             function->second.return_type == "void") {

@@ -5252,6 +5252,7 @@ auto lowered_expression(
             ? nullptr
             : &function->second;
         if (function_signature == nullptr ||
+            !has_supported_function_signature_types(*function_signature) ||
             function_signature->return_type != expected_llvm_type ||
             function_signature->parameter_types.size() != expression.arguments.size()) {
             if (auto specialization = find_matching_generic_specialization(

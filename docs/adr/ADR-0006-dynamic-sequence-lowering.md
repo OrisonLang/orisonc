@@ -3785,3 +3785,6 @@ representation.
 - 2026-10-24 Computed dynamic-sequence loops now carry exact element types through ordinary function and method
   returns during generic specialization discovery. Direct forwarding calls over `DynamicArray<T>` also use the
   existing parameter-forwarding proof as a single-owner cleanup plan instead of requiring a ternary wrapper.
+- 2026-10-24 Generic function source-type inference now selects one concrete specialization from call argument source
+  types without requiring an expected LLVM result type. Unannotated calls can therefore dispatch one generic source
+  name to multiple concrete return types while duplicate source-compatible candidates remain ambiguous.

@@ -748,6 +748,37 @@ auto find_matching_generic_specialization(
     return match;
 }
 
+auto infer_generic_function_specialization(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> LoweredFunctionSignature const* {
+    auto resolver = GenericCallSourceResolver {
+        .lowering_context = &context,
+        .state = &state,
+    };
+    auto const* match = static_cast<LoweredFunctionSignature const*>(nullptr);
+    for (auto const& specialization : context.generic_function_specializations) {
+        auto base_name = generic_specialization_base_name(specialization->name);
+        if (!base_name.has_value() || *base_name != function_name) {
+            continue;
+        }
+        auto signature = context.functions.find(specialization->name);
+        if (signature == context.functions.end() ||
+            signature->second.parameter_types.size() != expression.arguments.size() ||
+            !has_supported_function_signature_types(signature->second) ||
+            !call_arguments_match_source_types(expression, signature->second, resolver)) {
+            continue;
+        }
+        if (match != nullptr) {
+            return nullptr;
+        }
+        match = &signature->second;
+    }
+    return match;
+}
+
 auto generic_specialization_ambiguity_detail(
     std::string_view function_name,
     syntax::ExpressionSyntax const& expression,

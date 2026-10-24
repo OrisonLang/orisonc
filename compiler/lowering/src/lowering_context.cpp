@@ -2885,13 +2885,6 @@ auto build_lowering_context(
     }
 
     context.generic_function_specializations = collect_generic_function_specializations(module, context.functions);
-    auto specialization_counts = std::unordered_map<std::string, std::size_t> {};
-    for (auto const& specialization_ptr : context.generic_function_specializations) {
-        auto delimiter = specialization_ptr->name.find("__");
-        if (delimiter != std::string::npos) {
-            ++specialization_counts[specialization_ptr->name.substr(0, delimiter)];
-        }
-    }
     for (auto const& specialization_ptr : context.generic_function_specializations) {
         auto const& specialization = *specialization_ptr;
         auto signature = lower_contextual_function_signature(
@@ -2914,15 +2907,7 @@ auto build_lowering_context(
             )) {
             continue;
         }
-        auto original_name = std::string {};
-        auto delimiter = specialization.name.find("__");
-        if (delimiter != std::string::npos) {
-            original_name = specialization.name.substr(0, delimiter);
-        }
         context.functions[specialization.name] = signature;
-        if (!original_name.empty() && specialization_counts[original_name] == 1) {
-            context.functions[original_name] = signature;
-        }
     }
 
     for (auto const& implementation : module.implementations) {

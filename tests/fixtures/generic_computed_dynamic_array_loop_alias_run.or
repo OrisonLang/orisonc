@@ -21,10 +21,7 @@ extend Box<T>
     function value_copy(this: shared This) -> T
         this.value
 
-function identity_wide<T>(value: T) -> T
-    value
-
-function identity_narrow<T>(value: T) -> T
+function identity<T>(value: T) -> T
     value
 
 function forward_values(values: DynamicArray<UInt64>) -> DynamicArray<UInt64>
@@ -33,7 +30,7 @@ function forward_values(values: DynamicArray<UInt64>) -> DynamicArray<UInt64>
 function sum_function(values: DynamicArray<UInt64>) -> UInt64
     var total = 0 as UInt64
     for value in forward_values(values)
-        let specialized = identity_wide(value)
+        let specialized = identity(value)
         let chosen = specialized.choose_wide(specialized)
         let boxed = Box(chosen)
         let copied = boxed.value_copy()
@@ -44,7 +41,7 @@ function sum_function(values: DynamicArray<UInt64>) -> UInt64
 function sum_method(seed: UInt32, values: DynamicArray<UInt32>) -> UInt32
     var total = 0 as UInt32
     for value in seed.forward_values(values)
-        let specialized = identity_narrow(value)
+        let specialized = identity(value)
         let chosen = specialized.choose_narrow(specialized)
         let boxed = Box(chosen)
         let copied = boxed.value_copy()

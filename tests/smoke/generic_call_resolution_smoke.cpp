@@ -457,9 +457,22 @@ int main() {
             .name = "consume__UInt32",
         })
     );
+    context.generic_function_specializations.push_back(
+        std::make_shared<orison::syntax::FunctionSyntax>(orison::syntax::FunctionSyntax {
+            .name = "consume__UInt64",
+        })
+    );
     auto state = orison::lowering::FunctionLoweringState {};
     state.source_type_names["value"] = "UInt32";
     state.source_type_names["box"] = "Box<UInt32>";
+    auto inferred = orison::lowering::infer_generic_function_specialization(
+        "consume",
+        local_call,
+        context,
+        state
+    );
+    assert(inferred != nullptr);
+    assert(inferred->symbol_name == "consume__UInt32");
     auto matched = orison::lowering::find_matching_generic_specialization(
         "consume",
         local_call,

@@ -3657,3 +3657,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Annotation-free generic loop coverage now includes function-returned and method-returned dynamic arrays
   and views. Dynamic-array forwarding resolves one proven cleanup owner and executes both element-type paths; view
   forwarding emits both descriptor calls and both concrete generic specialization families.
+- 2026-10-24: Unannotated generic calls now infer their source result from a unique argument-compatible concrete
+  specialization before LLVM type inference. Computed dynamic-array and view loop fixtures use one `identity<T>`
+  source declaration and emit distinct `UInt64` and `UInt32` calls in the same module.
