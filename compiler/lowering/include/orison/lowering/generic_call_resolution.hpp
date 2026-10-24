@@ -81,6 +81,14 @@ auto find_matching_generic_method_specialization(
     FunctionLoweringState const& state
 ) -> LoweredFunctionSignature const*;
 
+auto infer_generic_method_specialization(
+    std::string_view receiver_type_name,
+    std::string_view method_name,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> LoweredFunctionSignature const*;
+
 auto generic_method_specialization_ambiguity_detail(
     std::string_view receiver_type_name,
     std::string_view method_name,

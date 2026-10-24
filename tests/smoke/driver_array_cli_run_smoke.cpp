@@ -11919,15 +11919,35 @@ auto main(int argc, char** argv) -> int {
             "%projected = add i64 0, %",
             generic_constructor_ordinary_call
         );
-    auto generic_constructor_method_call =
+    auto generic_constructor_generic_method_call =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
-            " = call i64 @method.UInt64.normalized(i64 %projected)",
+            " = call i64 @method.UInt64.choose__UInt64(i64 %projected, i64 %index)",
             generic_constructor_projected_local
+        );
+    auto generic_constructor_chosen_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%chosen = add i64 0, %",
+            generic_constructor_generic_method_call
+        );
+    auto generic_constructor_wrapped_insert =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = insertvalue %record.IndexValue_UInt64_ undef, i64 %chosen, 0",
+            generic_constructor_chosen_local
+        );
+    auto generic_constructor_wrapped_local =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            "%wrapped.addr = alloca %record.IndexValue_UInt64_",
+            generic_constructor_wrapped_insert
+        );
+    auto generic_constructor_receiver_method_call =
+        runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
+            " = call i64 @method.IndexValue_UInt64_.value_copy__UInt64(",
+            generic_constructor_wrapped_local
         );
     auto generic_constructor_normalized_local =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
             "%normalized = add i64 0, %",
-            generic_constructor_method_call
+            generic_constructor_receiver_method_call
         );
     auto generic_constructor_ternary_branch =
         runtime_indexed_distinct_root_generic_record_constructor_index_ir.find(
@@ -12008,8 +12028,12 @@ auto main(int argc, char** argv) -> int {
     assert(generic_constructor_array_projection < generic_constructor_projected_load);
     assert(generic_constructor_projected_load < generic_constructor_ordinary_call);
     assert(generic_constructor_ordinary_call < generic_constructor_projected_local);
-    assert(generic_constructor_projected_local < generic_constructor_method_call);
-    assert(generic_constructor_method_call < generic_constructor_normalized_local);
+    assert(generic_constructor_projected_local < generic_constructor_generic_method_call);
+    assert(generic_constructor_generic_method_call < generic_constructor_chosen_local);
+    assert(generic_constructor_chosen_local < generic_constructor_wrapped_insert);
+    assert(generic_constructor_wrapped_insert < generic_constructor_wrapped_local);
+    assert(generic_constructor_wrapped_local < generic_constructor_receiver_method_call);
+    assert(generic_constructor_receiver_method_call < generic_constructor_normalized_local);
     assert(generic_constructor_normalized_local < generic_constructor_ternary_branch);
     assert(generic_constructor_ternary_branch < generic_constructor_ternary_phi);
     assert(generic_constructor_ternary_phi < generic_constructor_inferred_local);

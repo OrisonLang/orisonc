@@ -1365,16 +1365,28 @@ auto inferred_expression_type(
         }
 
         auto resolved = resolve_member_call(expression, context, state);
-        if (resolved.receiver.result != MemberCallReceiverInferenceResult::found ||
-            resolved.method.result != LoweredMethodLookupResult::found ||
-            resolved.method.method == nullptr ||
-            !has_supported_function_signature_types(resolved.method.method->signature)) {
+        if (resolved.receiver.result != MemberCallReceiverInferenceResult::found) {
+            return std::nullopt;
+        }
+
+        auto const* signature = resolved.method.result == LoweredMethodLookupResult::found &&
+                resolved.method.method != nullptr &&
+                has_supported_function_signature_types(resolved.method.method->signature)
+            ? &resolved.method.method->signature
+            : infer_generic_method_specialization(
+                  resolved.receiver.receiver_type_name,
+                  resolved.receiver.method_name,
+                  expression,
+                  context.lowering,
+                  state
+              );
+        if (signature == nullptr) {
             return std::nullopt;
         }
 
         return LoweredType {
-            .type = resolved.method.method->signature.return_type,
-            .signedness = resolved.method.method->signature.return_signedness,
+            .type = signature->return_type,
+            .signedness = signature->return_signedness,
         };
     }
 

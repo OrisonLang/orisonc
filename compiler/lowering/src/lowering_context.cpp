@@ -734,7 +734,7 @@ void collect_generic_calls_from_statement(
     }
 }
 
-auto ordinary_method_call_source_type(
+auto method_call_source_type(
     syntax::ExpressionSyntax const& expression,
     syntax::ModuleSyntax const& module,
     GenericCallSourceResolver const& resolver
@@ -755,39 +755,67 @@ auto ordinary_method_call_source_type(
     auto result = std::optional<std::string> {};
     auto ambiguous = false;
     auto inspect_methods = [&](syntax::TypeSyntax const& receiver_type, auto const& methods) {
-        if (ambiguous || render_source_type_name(receiver_type) != *receiver_source_type) {
+        if (ambiguous) {
             return;
         }
         for (auto const& method : methods) {
-            if (!method.generic_parameters.empty() ||
-                method.name != expression.left->text ||
+            if (method.name != expression.left->text ||
                 method.parameters.empty() ||
                 method.parameters.front().name != "this" ||
                 method.parameters.size() != expression.arguments.size() + 1) {
                 continue;
             }
 
-            auto arguments_match = true;
-            for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
-                auto argument_source_type =
-                    source_type_name_for_generic_call_argument(expression.arguments[index], resolver);
-                if (!argument_source_type.has_value() ||
-                    *argument_source_type != render_source_type_name(method.parameters[index + 1].type)) {
-                    arguments_match = false;
-                    break;
+            auto generic_parameters = generic_method_parameters(receiver_type, method, module);
+            auto return_source_type = std::optional<std::string> {};
+            if (generic_parameters.empty()) {
+                if (render_source_type_name(receiver_type) != *receiver_source_type) {
+                    continue;
                 }
-            }
-            if (!arguments_match) {
-                continue;
+                auto arguments_match = true;
+                for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+                    auto argument_source_type =
+                        source_type_name_for_generic_call_argument(expression.arguments[index], resolver);
+                    if (!argument_source_type.has_value() ||
+                        *argument_source_type != render_source_type_name(method.parameters[index + 1].type)) {
+                        arguments_match = false;
+                        break;
+                    }
+                }
+                if (!arguments_match) {
+                    continue;
+                }
+                return_source_type = render_source_type_name(method.return_type);
+            } else {
+                auto substitutions = bind_generic_method_call_substitutions(
+                    receiver_type,
+                    method,
+                    expression,
+                    resolver
+                );
+                if (!substitutions.has_value() ||
+                    std::ranges::any_of(
+                        generic_parameters,
+                        [&](std::string const& parameter) {
+                            return !substitutions->contains(parameter);
+                        }
+                    )) {
+                    continue;
+                }
+                auto concrete_receiver_type = substitute_type(receiver_type, *substitutions);
+                if (render_source_type_name(concrete_receiver_type) != *receiver_source_type) {
+                    continue;
+                }
+                return_source_type =
+                    render_source_type_name(substitute_type(method.return_type, *substitutions));
             }
 
-            auto return_source_type = render_source_type_name(method.return_type);
             if (result.has_value()) {
                 result.reset();
                 ambiguous = true;
                 return;
             }
-            result = std::move(return_source_type);
+            result = std::move(*return_source_type);
         }
     };
 
@@ -849,7 +877,7 @@ auto collect_generic_function_specializations(
                     resolver
                 );
                 if (!inferred_source_type.has_value()) {
-                    inferred_source_type = ordinary_method_call_source_type(
+                    inferred_source_type = method_call_source_type(
                         statement.expression,
                         module,
                         resolver
@@ -1414,15 +1442,18 @@ auto collect_generic_method_specializations(
             } else if ((statement.kind == syntax::StatementKind::let_binding ||
                         statement.kind == syntax::StatementKind::var_binding) &&
                        !statement.name.empty()) {
-                auto inferred_source_type = source_type_name_for_generic_call_argument(
+                auto resolver = GenericCallSourceResolver {
+                    .generic_functions = &generic_functions,
+                    .functions = &functions,
+                    .local_source_types = &local_source_types,
+                    .concrete_records = &concrete_records,
+                    .generic_records = &generic_records,
+                    .record_names = &record_names,
+                };
+                auto inferred_source_type = source_type_name_for_generic_method_collection_expression(
                     statement.expression,
-                    GenericCallSourceResolver {
-                        .generic_functions = &generic_functions,
-                        .functions = &functions,
-                        .local_source_types = &local_source_types,
-                        .concrete_records = &concrete_records,
-                        .record_names = &record_names,
-                    }
+                    generic_methods,
+                    resolver
                 );
                 if (!inferred_source_type.has_value()) {
                     if (auto inferred_constructor_type =

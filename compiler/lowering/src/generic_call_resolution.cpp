@@ -812,6 +812,36 @@ auto find_matching_generic_method_specialization(
     return match;
 }
 
+auto infer_generic_method_specialization(
+    std::string_view receiver_type_name,
+    std::string_view method_name,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> LoweredFunctionSignature const* {
+    auto resolver = GenericCallSourceResolver {
+        .lowering_context = &context,
+        .state = &state,
+    };
+    auto const* match = static_cast<LoweredFunctionSignature const*>(nullptr);
+    for (auto const& method : context.methods) {
+        if (method.receiver_type_name != receiver_type_name ||
+            method.method_name != method_name ||
+            method.signature.parameter_types.size() != expression.arguments.size() + 1 ||
+            method.signature.parameter_source_type_names.empty() ||
+            method.signature.parameter_source_type_names.front() != receiver_type_name ||
+            !has_supported_function_signature_types(method.signature) ||
+            !method_call_arguments_match_source_types(expression, method.signature, resolver)) {
+            continue;
+        }
+        if (match != nullptr) {
+            return nullptr;
+        }
+        match = &method.signature;
+    }
+    return match;
+}
+
 auto generic_method_specialization_ambiguity_detail(
     std::string_view receiver_type_name,
     std::string_view method_name,

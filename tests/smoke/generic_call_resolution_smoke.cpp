@@ -546,6 +546,16 @@ int main() {
     assert(matched_method != nullptr);
     assert(matched_method->symbol_name == "method.Box_UInt32.pick");
 
+    auto inferred_method = orison::lowering::infer_generic_method_specialization(
+        "Box<UInt32>",
+        "pick",
+        method_call,
+        context,
+        state
+    );
+    assert(inferred_method != nullptr);
+    assert(inferred_method->symbol_name == "method.Box_UInt32.pick");
+
     auto no_matching_method = orison::lowering::find_matching_generic_method_specialization(
         "Box<UInt32>",
         "pick",
@@ -576,6 +586,15 @@ int main() {
         state
     );
     assert(ambiguous_method == nullptr);
+    assert(
+        orison::lowering::infer_generic_method_specialization(
+            "Box<UInt32>",
+            "pick",
+            method_call,
+            context,
+            state
+        ) == nullptr
+    );
     auto ambiguous_method_detail = orison::lowering::generic_method_specialization_ambiguity_detail(
         "Box<UInt32>",
         "pick",

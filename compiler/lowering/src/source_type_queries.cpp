@@ -3,6 +3,7 @@
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
+#include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
@@ -5310,14 +5311,22 @@ auto source_type_name_for_expression(
         }
 
         auto method = find_lowered_method_signature(context, lookup_receiver_type, expression.left->text);
-        if (method.result != LoweredMethodLookupResult::found || method.method == nullptr ||
-            method.method->signature.return_type.empty() || method.method->signature.return_type == "void") {
+        auto const* signature = method.result == LoweredMethodLookupResult::found && method.method != nullptr
+            ? &method.method->signature
+            : infer_generic_method_specialization(
+                  lookup_receiver_type,
+                  expression.left->text,
+                  expression,
+                  context,
+                  state
+              );
+        if (signature == nullptr || signature->return_type.empty() || signature->return_type == "void") {
             return std::nullopt;
         }
 
-        auto return_source_type = !method.method->signature.source_return_type_name.empty()
-            ? std::optional<std::string> {method.method->signature.source_return_type_name}
-            : source_type_name_for_llvm_type(method.method->signature.return_type, context);
+        auto return_source_type = !signature->source_return_type_name.empty()
+            ? std::optional<std::string> {signature->source_return_type_name}
+            : source_type_name_for_llvm_type(signature->return_type, context);
         if (!return_source_type.has_value()) {
             return std::nullopt;
         }

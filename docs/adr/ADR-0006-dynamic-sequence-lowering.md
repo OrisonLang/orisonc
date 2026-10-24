@@ -3767,3 +3767,6 @@ representation.
 - 2026-10-23 Generic function specialization discovery now follows unannotated ordinary method-call aliases after
   unique exact receiver, arity, and argument matching. Production coverage carries the method result through a
   ternary and `identity<UInt64>` into nested generic runtime-index construction, linking, and execution.
+- 2026-10-23 Unannotated generic method and generic-receiver calls now infer one source-compatible specialization
+  without a prior expected LLVM return type. Production coverage chains both forms through generic construction,
+  ternary selection, `identity<UInt64>`, runtime-index cleanup, object generation, linking, and execution.
