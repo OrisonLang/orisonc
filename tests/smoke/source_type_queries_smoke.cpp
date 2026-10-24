@@ -6750,6 +6750,31 @@ int main() {
             proven_computed_ownership_plan
         ).find("ternary single owner proven") != std::string::npos
     );
+    auto proven_forwarded_ownership_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            call("forward_items", name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_forwarded_ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_proven
+    );
+    assert(proven_forwarded_ownership_plan.branch_owner_names.size() == 1);
+    assert(proven_forwarded_ownership_plan.branch_owner_names.front() == "items");
+    assert(proven_forwarded_ownership_plan.ownership_join_matches);
+    assert(proven_forwarded_ownership_plan.cleanup_owner_proven);
+    assert(
+        orison::lowering::is_owned_binding_consumed(
+            proven_forwarded_ownership_plan.merged_transfers,
+            "items"
+        )
+    );
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            proven_forwarded_ownership_plan
+        ).find("single owner proven") != std::string::npos
+    );
     auto proven_nested_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
             ternary(

@@ -1,0 +1,64 @@
+package tests.fixtures.generic_computed_dynamic_array_loop_alias_run
+
+record Box<T>
+    value: T
+
+record Envelope<T>
+    inner: Box<T>
+
+extend UInt64
+    function choose_wide<T>(this: shared This, candidate: T) -> T
+        candidate
+
+extend UInt32
+    function choose_narrow<T>(this: shared This, candidate: T) -> T
+        candidate
+
+    function forward_values(this: shared This, values: DynamicArray<UInt32>) -> DynamicArray<UInt32>
+        values
+
+extend Box<T>
+    function value_copy(this: shared This) -> T
+        this.value
+
+function identity_wide<T>(value: T) -> T
+    value
+
+function identity_narrow<T>(value: T) -> T
+    value
+
+function forward_values(values: DynamicArray<UInt64>) -> DynamicArray<UInt64>
+    values
+
+function sum_function(values: DynamicArray<UInt64>) -> UInt64
+    var total = 0 as UInt64
+    for value in forward_values(values)
+        let specialized = identity_wide(value)
+        let chosen = specialized.choose_wide(specialized)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let envelope = Envelope(Box(copied))
+        total = total + envelope.inner.value
+    total
+
+function sum_method(seed: UInt32, values: DynamicArray<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for value in seed.forward_values(values)
+        let specialized = identity_narrow(value)
+        let chosen = specialized.choose_narrow(specialized)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let envelope = Envelope(Box(copied))
+        total = total + envelope.inner.value
+    total
+
+function main() -> UInt32
+    var function_values: DynamicArray<UInt64> = DynamicArray()
+    function_values.push(7 as UInt64)
+    function_values.push(9 as UInt64)
+    var method_values: DynamicArray<UInt32> = DynamicArray()
+    method_values.push(4 as UInt32)
+    method_values.push(6 as UInt32)
+    let function_ok = sum_function(function_values) == 16 as UInt64
+    let method_ok = sum_method(0 as UInt32, method_values) == 10 as UInt32
+    function_ok and method_ok ? 0 as UInt32 : 1 as UInt32

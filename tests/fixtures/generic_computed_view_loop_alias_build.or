@@ -1,0 +1,56 @@
+package tests.fixtures.generic_computed_view_loop_alias_build
+
+record Box<T>
+    value: T
+
+record Envelope<T>
+    inner: Box<T>
+
+extend UInt64
+    function choose_wide<T>(this: shared This, candidate: T) -> T
+        candidate
+
+extend UInt32
+    function choose_narrow<T>(this: shared This, candidate: T) -> T
+        candidate
+
+    function forward_values(this: shared This, values: View<UInt32>) -> View<UInt32>
+        values
+
+extend Box<T>
+    function value_copy(this: shared This) -> T
+        this.value
+
+function identity_wide<T>(value: T) -> T
+    value
+
+function identity_narrow<T>(value: T) -> T
+    value
+
+function forward_values(values: View<UInt64>) -> View<UInt64>
+    values
+
+function sum_function(values: View<UInt64>) -> UInt64
+    var total = 0 as UInt64
+    for value in forward_values(values)
+        let specialized = identity_wide(value)
+        let chosen = specialized.choose_wide(specialized)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let envelope = Envelope(Box(copied))
+        total = total + envelope.inner.value
+    total
+
+function sum_method(seed: UInt32, values: View<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for value in seed.forward_values(values)
+        let specialized = identity_narrow(value)
+        let chosen = specialized.choose_narrow(specialized)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let envelope = Envelope(Box(copied))
+        total = total + envelope.inner.value
+    total
+
+function main() -> UInt32
+    0 as UInt32

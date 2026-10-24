@@ -1108,6 +1108,20 @@ auto direct_forwarding_parameter_indexes_for_pointer_block(
     return parameter_indexes;
 }
 
+auto forwarded_dynamic_array_parameter_indexes_for_function(
+    syntax::FunctionSyntax const& source_function,
+    LoweredFunctionSignature const& signature,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth = 16,
+    bool* depth_exhausted = nullptr,
+    bool* alias_reassigned = nullptr,
+    bool* owner_read = nullptr,
+    bool* multiple_result_statements = nullptr,
+    bool* argument_shape = nullptr,
+    bool* callee_shape = nullptr
+) -> std::optional<std::vector<std::size_t>>;
+
 auto forwarded_dynamic_array_parameter_indexes(
     std::string_view function_name,
     std::string_view source_type_name,
@@ -1877,8 +1891,9 @@ auto forwarded_dynamic_array_parameter_indexes_for_statement(
     return std::nullopt;
 }
 
-auto forwarded_dynamic_array_parameter_indexes(
-    std::string_view function_name,
+auto forwarded_dynamic_array_parameter_indexes_for_function(
+    syntax::FunctionSyntax const& source_function,
+    LoweredFunctionSignature const& signature,
     std::string_view source_type_name,
     LoweringContext const& context,
     std::size_t remaining_depth,
@@ -1896,26 +1911,22 @@ auto forwarded_dynamic_array_parameter_indexes(
         return std::nullopt;
     }
 
-    auto signature = context.functions.find(std::string {function_name});
-    auto source_function = context.source_functions.find(std::string {function_name});
-    if (signature == context.functions.end() ||
-        source_function == context.source_functions.end() ||
-        signature->second.source_return_type_name != source_type_name) {
+    if (signature.source_return_type_name != source_type_name) {
         if (callee_shape != nullptr) {
             *callee_shape = true;
         }
         return std::nullopt;
     }
 
-    auto const* statement = final_value_statement_for(*source_function->second);
+    auto const* statement = final_value_statement_for(source_function);
     if (statement == nullptr) {
         return std::nullopt;
     }
 
     auto result = forwarded_dynamic_array_parameter_indexes_for_statement_block(
-        source_function->second->body_statements,
-        *source_function->second,
-        signature->second,
+        source_function.body_statements,
+        source_function,
+        signature,
         source_type_name,
         context,
         remaining_depth,
@@ -1928,15 +1939,50 @@ auto forwarded_dynamic_array_parameter_indexes(
     );
     if (!result.has_value() && owner_read != nullptr) {
         auto owner_names = forwarded_owner_parameter_names(
-            *source_function->second,
-            signature->second,
+            source_function,
+            signature,
             source_type_name
         );
-        if (statements_contain_owner_read(source_function->second->body_statements, owner_names)) {
+        if (statements_contain_owner_read(source_function.body_statements, owner_names)) {
             *owner_read = true;
         }
     }
     return result;
+}
+
+auto forwarded_dynamic_array_parameter_indexes(
+    std::string_view function_name,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::size_t remaining_depth,
+    bool* depth_exhausted,
+    bool* alias_reassigned,
+    bool* owner_read,
+    bool* multiple_result_statements,
+    bool* argument_shape,
+    bool* callee_shape
+) -> std::optional<std::vector<std::size_t>> {
+    auto signature = context.functions.find(std::string {function_name});
+    auto source_function = context.source_functions.find(std::string {function_name});
+    if (signature == context.functions.end() || source_function == context.source_functions.end()) {
+        if (callee_shape != nullptr) {
+            *callee_shape = true;
+        }
+        return std::nullopt;
+    }
+    return forwarded_dynamic_array_parameter_indexes_for_function(
+        *source_function->second,
+        signature->second,
+        source_type_name,
+        context,
+        remaining_depth,
+        depth_exhausted,
+        alias_reassigned,
+        owner_read,
+        multiple_result_statements,
+        argument_shape,
+        callee_shape
+    );
 }
 
 auto collect_computed_dynamic_array_leaf_descriptors(
@@ -2121,6 +2167,71 @@ auto collect_computed_dynamic_array_leaf_descriptors(
             if (forwarded_index >= expression.arguments.size() ||
                 !collect_computed_dynamic_array_leaf_descriptors(
                     expression.arguments[forwarded_index],
+                    source_type_name,
+                    context,
+                    state,
+                    descriptors,
+                    unsupported_reason
+                )) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access &&
+        expression.left->left != nullptr) {
+        auto receiver_type = source_type_name_for_expression(*expression.left->left, context, state);
+        auto method = receiver_type.has_value()
+            ? find_lowered_method_signature(context, *receiver_type, expression.left->text)
+            : LoweredMethodLookup {};
+        if (method.result != LoweredMethodLookupResult::found || method.method == nullptr ||
+            method.method->source_method == nullptr) {
+            return false;
+        }
+
+        auto depth_exhausted = false;
+        auto alias_reassigned = false;
+        auto owner_read = false;
+        auto multiple_result_statements = false;
+        auto argument_shape = false;
+        auto callee_shape = false;
+        auto forwarded_indexes = forwarded_dynamic_array_parameter_indexes_for_function(
+            *method.method->source_method,
+            method.method->signature,
+            source_type_name,
+            context,
+            16,
+            &depth_exhausted,
+            &alias_reassigned,
+            &owner_read,
+            &multiple_result_statements,
+            &argument_shape,
+            &callee_shape
+        );
+        if (!forwarded_indexes.has_value() || forwarded_indexes->empty()) {
+            apply_forwarded_owner_resolution_failure_reason(
+                unsupported_reason,
+                depth_exhausted,
+                alias_reassigned,
+                multiple_result_statements,
+                argument_shape,
+                callee_shape,
+                owner_read
+            );
+            return false;
+        }
+        for (auto forwarded_index : *forwarded_indexes) {
+            auto const* forwarded_expression = forwarded_index == 0
+                ? expression.left->left.get()
+                : forwarded_index <= expression.arguments.size()
+                    ? &expression.arguments[forwarded_index - 1]
+                    : nullptr;
+            if (forwarded_expression == nullptr ||
+                !collect_computed_dynamic_array_leaf_descriptors(
+                    *forwarded_expression,
                     source_type_name,
                     context,
                     state,
@@ -2705,11 +2816,6 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
 
     plan.source_type_name = std::move(*source_type_name);
     plan.element_source_type_name = std::move(sequence->element_source_type_name);
-    if (expression.kind != syntax::ExpressionKind::ternary) {
-        plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
-        return plan;
-    }
-
     auto branch_descriptors = std::vector<DynamicArrayIterableDescriptorPlan> {};
     if (!collect_computed_dynamic_array_leaf_descriptors(
             expression,
@@ -2786,9 +2892,15 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
     plan.merged_transfers = std::move(*merged);
     plan.ownership_join_matches = true;
     plan.cleanup_owner_proven = cleanup_owner_proven;
-    plan.kind = plan.cleanup_owner_proven
-        ? ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven
-        : ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven;
+    if (expression.kind == syntax::ExpressionKind::ternary) {
+        plan.kind = plan.cleanup_owner_proven
+            ? ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven
+            : ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven;
+    } else {
+        plan.kind = plan.cleanup_owner_proven
+            ? ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_proven
+            : ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_unproven;
+    }
     return plan;
 }
 
@@ -2802,6 +2914,12 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
             return output;
         case ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape:
             output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_unproven:
+            output += "single owner unproven";
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_proven:
+            output += "single owner proven";
             break;
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch:
             output += "ternary branch owner mismatch";
@@ -2927,11 +3045,16 @@ auto computed_dynamic_array_iterable_failure_summary_report(
         return output;
     }
 
-    if (plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven &&
+    if ((plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_unproven ||
+         plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven) &&
         !plan.branch_owner_names.empty()) {
-        auto output = std::string {
-            "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to"
-        };
+        auto output = plan.kind == ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_unproven
+            ? std::string {
+                  "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; owner resolves to"
+              }
+            : std::string {
+                  "computed DynamicArray cleanup owner unproven: expected proven cleanup owner; branches resolve to"
+              };
         for (auto const& owner : plan.branch_owner_names) {
             output += ' ';
             output += owner;
@@ -2984,6 +3107,11 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
         case ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape:
             plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape;
             return plan;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::single_owner_proven:
+            break;
         case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch:
             plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked;
             return plan;

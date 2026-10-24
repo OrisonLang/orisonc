@@ -16,6 +16,7 @@ namespace orison::lowering {
 struct LoweredMethodSignature {
     std::string receiver_type_name;
     std::string method_name;
+    syntax::FunctionSyntax const* source_method = nullptr;
     LoweredFunctionSignature signature;
 };
 

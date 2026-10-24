@@ -3654,3 +3654,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Iterable-family coverage now includes an executed `DynamicArray<UInt64>` generic chain and a compiled,
   linked `View<UInt32>` generic chain. Runtime view invocation is not covered while the source language lacks a view
   construction or conversion path.
+- 2026-10-24: Annotation-free generic loop coverage now includes function-returned and method-returned dynamic arrays
+  and views. Dynamic-array forwarding resolves one proven cleanup owner and executes both element-type paths; view
+  forwarding emits both descriptor calls and both concrete generic specialization families.

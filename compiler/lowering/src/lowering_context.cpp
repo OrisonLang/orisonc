@@ -768,8 +768,27 @@ void collect_generic_calls_from_statement(
             .concrete_records = &concrete_records,
             .generic_records = &generic_records,
         };
-        if (auto iterable_source_type =
-                source_type_name_for_generic_call_argument(statement.expression, resolver)) {
+        auto iterable_source_type =
+            source_type_name_for_generic_call_argument(statement.expression, resolver);
+        if (!iterable_source_type.has_value() &&
+            statement.expression.kind == syntax::ExpressionKind::call &&
+            statement.expression.left != nullptr &&
+            statement.expression.left->kind == syntax::ExpressionKind::name) {
+            auto source_function = std::ranges::find_if(
+                module.functions,
+                [&](syntax::FunctionSyntax const& function) {
+                    return function.name == statement.expression.left->text &&
+                        function.parameters.size() == statement.expression.arguments.size();
+                }
+            );
+            if (source_function != module.functions.end()) {
+                iterable_source_type = render_source_type_name(source_function->return_type);
+            }
+        }
+        if (!iterable_source_type.has_value()) {
+            iterable_source_type = method_call_source_type(statement.expression, module, resolver);
+        }
+        if (iterable_source_type.has_value()) {
             if (auto element_source_type = iterable_element_source_type_name(*iterable_source_type)) {
                 nested_source_types[statement.name] = std::move(*element_source_type);
             }
@@ -1057,6 +1076,7 @@ void collect_generic_method_calls_from_expression(
             for (auto const& candidate : generic_methods) {
                 if (candidate.receiver_type == nullptr ||
                     candidate.method == nullptr ||
+                    candidate.generic_parameters.empty() ||
                     candidate.method->name != expression.left->text) {
                     continue;
                 }
@@ -1551,31 +1571,30 @@ auto collect_generic_method_specializations(
     }
 
     auto generic_methods = std::vector<GenericMethodCandidate> {};
+    auto has_generic_method = false;
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
             auto generic_parameters = generic_method_parameters(implementation.receiver_type, method, module);
-            if (!generic_parameters.empty()) {
-                generic_methods.push_back(GenericMethodCandidate {
-                    .receiver_type = &implementation.receiver_type,
-                    .method = &method,
-                    .generic_parameters = std::move(generic_parameters),
-                });
-            }
+            has_generic_method = has_generic_method || !generic_parameters.empty();
+            generic_methods.push_back(GenericMethodCandidate {
+                .receiver_type = &implementation.receiver_type,
+                .method = &method,
+                .generic_parameters = std::move(generic_parameters),
+            });
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
             auto generic_parameters = generic_method_parameters(extension.receiver_type, method, module);
-            if (!generic_parameters.empty()) {
-                generic_methods.push_back(GenericMethodCandidate {
-                    .receiver_type = &extension.receiver_type,
-                    .method = &method,
-                    .generic_parameters = std::move(generic_parameters),
-                });
-            }
+            has_generic_method = has_generic_method || !generic_parameters.empty();
+            generic_methods.push_back(GenericMethodCandidate {
+                .receiver_type = &extension.receiver_type,
+                .method = &method,
+                .generic_parameters = std::move(generic_parameters),
+            });
         }
     }
-    if (generic_methods.empty()) {
+    if (!has_generic_method) {
         return {};
     }
 
@@ -2517,6 +2536,7 @@ auto collect_method_signature(
     return LoweredMethodSignature {
         .receiver_type_name = receiver_type_name,
         .method_name = method.name,
+        .source_method = &method,
         .signature = lower_method_signature(receiver_type, method, std::move(symbol_name), record_names, choices),
     };
 }
@@ -2979,6 +2999,7 @@ auto build_lowering_context(
         context.methods.push_back(LoweredMethodSignature {
             .receiver_type_name = specialization.receiver_type_name,
             .method_name = specialization.method_name,
+            .source_method = specialization.source_method,
             .signature = std::move(signature),
         });
         context.generic_method_specializations.push_back(std::move(specialization));

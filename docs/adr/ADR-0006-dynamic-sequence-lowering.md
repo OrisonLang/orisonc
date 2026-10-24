@@ -3782,3 +3782,6 @@ representation.
 - 2026-10-24 Annotation-free loop-local generic chains now have separate `DynamicArray<UInt64>` and `View<UInt32>`
   production fixtures. Dynamic-array coverage executes two iterations; view coverage emits and links the complete
   function body pending a source-level view construction or conversion path.
+- 2026-10-24 Computed dynamic-sequence loops now carry exact element types through ordinary function and method
+  returns during generic specialization discovery. Direct forwarding calls over `DynamicArray<T>` also use the
+  existing parameter-forwarding proof as a single-owner cleanup plan instead of requiring a ternary wrapper.

@@ -74,6 +74,8 @@ struct DynamicArrayIterableDescriptorPlan {
 enum class ComputedDynamicArrayIterableOwnershipPlanKind {
     not_computed_dynamic_array,
     unsupported_computed_shape,
+    single_owner_unproven,
+    single_owner_proven,
     ternary_branch_owner_mismatch,
     ternary_branch_selected_owner_proven,
     ternary_single_owner_unproven,
