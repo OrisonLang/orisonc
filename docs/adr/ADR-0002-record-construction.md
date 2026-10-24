@@ -40,6 +40,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
   without escaping into sibling or enclosing scopes.
 - `for` bindings inherit the iterable element source type for generic function and method specialization discovery.
   Choice-case payload bindings inherit their declared payload types for generic record layout discovery.
+- Generic record layout discovery also assigns each `for` binding its iterable element type. An unannotated generic
+  method result can therefore feed a generic constructor inside the loop when specialization is unique.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 

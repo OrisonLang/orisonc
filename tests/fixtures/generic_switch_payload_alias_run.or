@@ -25,7 +25,7 @@ function select(index: Index) -> UInt64
     switch index
         Value(value) =>
             let payload_box = Box(value)
-            let chosen: UInt64 = value.choose(value)
+            let chosen = value.choose(value)
             let boxed = Box(chosen)
             let copied = boxed.value_copy()
             let specialized = identity(copied)

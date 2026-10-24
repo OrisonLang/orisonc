@@ -266,6 +266,17 @@ auto iterable_element_source_type_name(std::string_view source_type_name) -> std
     return array_element_source_type_name(source_type_name);
 }
 
+auto iterable_element_source_type(syntax::TypeSyntax const& source_type)
+    -> std::optional<syntax::TypeSyntax> {
+    auto const expected_argument_count = source_type.name == "Array" ? std::size_t {2} : std::size_t {1};
+    if ((source_type.name != "Array" && source_type.name != "DynamicArray" &&
+         source_type.name != "View") ||
+        source_type.generic_arguments.size() != expected_argument_count) {
+        return std::nullopt;
+    }
+    return source_type.generic_arguments.front();
+}
+
 auto generic_parameter_set(syntax::RecordSyntax const& record) -> std::unordered_set<std::string> {
     auto parameters = std::unordered_set<std::string> {};
     for (auto const& parameter : record.generic_parameters) {
@@ -2069,6 +2080,19 @@ void collect_statement_type_instantiations(
         local_source_types
     );
     auto nested_source_types = local_source_types;
+    if (statement.kind == syntax::StatementKind::for_statement && !statement.name.empty()) {
+        if (auto iterable_source_type = infer_constructor_argument_type(
+                statement.expression,
+                generic_records,
+                records,
+                functions,
+                local_source_types
+            )) {
+            if (auto element_source_type = iterable_element_source_type(*iterable_source_type)) {
+                nested_source_types[statement.name] = std::move(*element_source_type);
+            }
+        }
+    }
     collect_statement_block_type_instantiations(
         statement.nested_statements,
         generic_records,

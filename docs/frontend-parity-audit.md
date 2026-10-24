@@ -3648,3 +3648,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Scoped generic discovery now assigns iterable element source types to `for` bindings and declared
   variant payload types to switch-case bindings. Production fixtures compile, link, and run generic method, generic
   function, and nested generic-record chains rooted in those local bindings.
+- 2026-10-24: Generic record layout discovery now carries iterable element types into loop-local environments.
+  Annotation-free generic method results feed nested generic constructors in loop and switch fixtures through LLVM,
+  object, executable, and runtime production paths.

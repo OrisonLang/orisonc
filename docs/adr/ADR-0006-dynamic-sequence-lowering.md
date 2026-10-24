@@ -3776,3 +3776,6 @@ representation.
 - 2026-10-24 Scoped generic discovery now seeds `for` bindings from fixed-array, dynamic-array, and view element
   source types, and seeds choice-case payload bindings from variant declarations. Production coverage emits and runs
   loop-local generic methods, a generic function, nested generic records, and a switch-payload generic chain.
+- 2026-10-24 Generic layout discovery now seeds loop-local bindings from fixed-array, dynamic-array, and view element
+  types. Loop and switch production fixtures infer generic method results without explicit result annotations before
+  constructing nested generic records, emitting LLVM IR, linking, and running successfully.

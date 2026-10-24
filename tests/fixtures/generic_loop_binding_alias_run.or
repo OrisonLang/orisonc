@@ -20,7 +20,7 @@ function identity<T>(value: T) -> T
 function sum(values: Array<UInt64, 2>) -> UInt64
     var total = 0 as UInt64
     for value in values
-        let chosen: UInt64 = value.choose(value)
+        let chosen = value.choose(value)
         let boxed = Box(chosen)
         let copied = boxed.value_copy()
         let specialized = identity(copied)
