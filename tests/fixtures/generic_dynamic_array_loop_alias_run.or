@@ -1,0 +1,35 @@
+package tests.fixtures.generic_dynamic_array_loop_alias_run
+
+record Box<T>
+    value: T
+
+record Envelope<T>
+    inner: Box<T>
+
+extend UInt64
+    function choose<T>(this: shared This, candidate: T) -> T
+        candidate
+
+extend Box<T>
+    function value_copy(this: shared This) -> T
+        this.value
+
+function identity<T>(value: T) -> T
+    value
+
+function sum(values: DynamicArray<UInt64>) -> UInt64
+    var total = 0 as UInt64
+    for value in values
+        let chosen = value.choose(value)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let specialized = identity(copied)
+        let envelope = Envelope(Box(specialized))
+        total = total + envelope.inner.value
+    total
+
+function main() -> UInt32
+    var values: DynamicArray<UInt64> = DynamicArray()
+    values.push(7 as UInt64)
+    values.push(9 as UInt64)
+    sum(values) == 16 as UInt64 ? 0 as UInt32 : 1 as UInt32

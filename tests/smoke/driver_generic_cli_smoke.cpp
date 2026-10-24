@@ -4106,6 +4106,54 @@ auto main(int argc, char** argv) -> int {
         std::string::npos
     );
     assert(generic_loop_binding_alias_ir.find("call i64 @identity__UInt64(") != std::string::npos);
+    auto generic_dynamic_array_loop_alias_path =
+        fixtures / "generic_dynamic_array_loop_alias_run.or";
+    assert_cli_run_fixture_success(executable, generic_dynamic_array_loop_alias_path);
+    auto generic_dynamic_array_loop_alias_ir = read_command_output(
+        executable.string() + " --emit-llvm " + generic_dynamic_array_loop_alias_path.string()
+    );
+    assert(
+        generic_dynamic_array_loop_alias_ir.find("%record.Box_UInt64_ = type { i64 }") !=
+        std::string::npos
+    );
+    assert(
+        generic_dynamic_array_loop_alias_ir.find(
+            "%record.Envelope_UInt64_ = type { %record.Box_UInt64_ }"
+        ) != std::string::npos
+    );
+    assert(
+        generic_dynamic_array_loop_alias_ir.find("call i64 @method.UInt64.choose__UInt64(") !=
+        std::string::npos
+    );
+    assert(
+        generic_dynamic_array_loop_alias_ir.find(
+            "call i64 @method.Box_UInt64_.value_copy__UInt64("
+        ) != std::string::npos
+    );
+    assert(
+        generic_dynamic_array_loop_alias_ir.find("call i64 @identity__UInt64(") !=
+        std::string::npos
+    );
+    auto generic_view_loop_alias_path = fixtures / "generic_view_loop_alias_build.or";
+    assert_cli_run_fixture_success(executable, generic_view_loop_alias_path);
+    auto generic_view_loop_alias_ir = read_command_output(
+        executable.string() + " --emit-llvm " + generic_view_loop_alias_path.string()
+    );
+    assert(generic_view_loop_alias_ir.find("%record.Box_UInt32_ = type { i32 }") != std::string::npos);
+    assert(
+        generic_view_loop_alias_ir.find(
+            "%record.Envelope_UInt32_ = type { %record.Box_UInt32_ }"
+        ) != std::string::npos
+    );
+    assert(
+        generic_view_loop_alias_ir.find("call i32 @method.UInt32.choose__UInt32(") !=
+        std::string::npos
+    );
+    assert(
+        generic_view_loop_alias_ir.find("call i32 @method.Box_UInt32_.value_copy__UInt32(") !=
+        std::string::npos
+    );
+    assert(generic_view_loop_alias_ir.find("call i32 @identity__UInt32(") != std::string::npos);
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_method_parameter.or"

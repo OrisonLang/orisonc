@@ -1,0 +1,32 @@
+package tests.fixtures.generic_view_loop_alias_build
+
+record Box<T>
+    value: T
+
+record Envelope<T>
+    inner: Box<T>
+
+extend UInt32
+    function choose<T>(this: shared This, candidate: T) -> T
+        candidate
+
+extend Box<T>
+    function value_copy(this: shared This) -> T
+        this.value
+
+function identity<T>(value: T) -> T
+    value
+
+function sum(values: View<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for value in values
+        let chosen = value.choose(value)
+        let boxed = Box(chosen)
+        let copied = boxed.value_copy()
+        let specialized = identity(copied)
+        let envelope = Envelope(Box(specialized))
+        total = total + envelope.inner.value
+    total
+
+function main() -> UInt32
+    0 as UInt32

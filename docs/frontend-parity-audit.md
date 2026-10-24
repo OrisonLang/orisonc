@@ -3651,3 +3651,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Generic record layout discovery now carries iterable element types into loop-local environments.
   Annotation-free generic method results feed nested generic constructors in loop and switch fixtures through LLVM,
   object, executable, and runtime production paths.
+- 2026-10-24: Iterable-family coverage now includes an executed `DynamicArray<UInt64>` generic chain and a compiled,
+  linked `View<UInt32>` generic chain. Runtime view invocation is not covered while the source language lacks a view
+  construction or conversion path.

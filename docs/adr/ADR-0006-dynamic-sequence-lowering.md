@@ -3779,3 +3779,6 @@ representation.
 - 2026-10-24 Generic layout discovery now seeds loop-local bindings from fixed-array, dynamic-array, and view element
   types. Loop and switch production fixtures infer generic method results without explicit result annotations before
   constructing nested generic records, emitting LLVM IR, linking, and running successfully.
+- 2026-10-24 Annotation-free loop-local generic chains now have separate `DynamicArray<UInt64>` and `View<UInt32>`
+  production fixtures. Dynamic-array coverage executes two iterations; view coverage emits and links the complete
+  function body pending a source-level view construction or conversion path.
