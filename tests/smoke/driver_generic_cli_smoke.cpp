@@ -4064,6 +4064,48 @@ auto main(int argc, char** argv) -> int {
         generic_branch_local_method_alias_ir.find("call i64 @identity__UInt64(i64 %copied)") !=
         std::string::npos
     );
+    auto generic_switch_payload_alias_path =
+        fixtures / "generic_switch_payload_alias_run.or";
+    assert_cli_run_fixture_success(executable, generic_switch_payload_alias_path);
+    auto generic_switch_payload_alias_ir = read_command_output(
+        executable.string() + " --emit-llvm " + generic_switch_payload_alias_path.string()
+    );
+    assert(generic_switch_payload_alias_ir.find("%record.Box_UInt64_ = type { i64 }") != std::string::npos);
+    assert(
+        generic_switch_payload_alias_ir.find(
+            "%record.Envelope_UInt64_ = type { %record.Box_UInt64_ }"
+        ) != std::string::npos
+    );
+    assert(
+        generic_switch_payload_alias_ir.find("call i64 @method.UInt64.choose__UInt64(") !=
+        std::string::npos
+    );
+    assert(
+        generic_switch_payload_alias_ir.find("call i64 @method.Box_UInt64_.value_copy__UInt64(") !=
+        std::string::npos
+    );
+    assert(generic_switch_payload_alias_ir.find("call i64 @identity__UInt64(") != std::string::npos);
+    auto generic_loop_binding_alias_path =
+        fixtures / "generic_loop_binding_alias_run.or";
+    assert_cli_run_fixture_success(executable, generic_loop_binding_alias_path);
+    auto generic_loop_binding_alias_ir = read_command_output(
+        executable.string() + " --emit-llvm " + generic_loop_binding_alias_path.string()
+    );
+    assert(generic_loop_binding_alias_ir.find("%record.Box_UInt64_ = type { i64 }") != std::string::npos);
+    assert(
+        generic_loop_binding_alias_ir.find(
+            "%record.Envelope_UInt64_ = type { %record.Box_UInt64_ }"
+        ) != std::string::npos
+    );
+    assert(
+        generic_loop_binding_alias_ir.find("call i64 @method.UInt64.choose__UInt64(") !=
+        std::string::npos
+    );
+    assert(
+        generic_loop_binding_alias_ir.find("call i64 @method.Box_UInt64_.value_copy__UInt64(") !=
+        std::string::npos
+    );
+    assert(generic_loop_binding_alias_ir.find("call i64 @identity__UInt64(") != std::string::npos);
     assert_cli_run_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_method_parameter.or"

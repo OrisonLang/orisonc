@@ -3645,3 +3645,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-23: Generic specialization collection now preserves statement-ordered inferred aliases in copied nested
   control-flow environments. An `if`-local generic method result drives generic receiver construction, a second
   specialized method, `identity<UInt64>`, nested generic record layout, linking, and successful execution.
+- 2026-10-24: Scoped generic discovery now assigns iterable element source types to `for` bindings and declared
+  variant payload types to switch-case bindings. Production fixtures compile, link, and run generic method, generic
+  function, and nested generic-record chains rooted in those local bindings.

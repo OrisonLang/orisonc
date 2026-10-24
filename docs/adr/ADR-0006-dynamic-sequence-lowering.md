@@ -3773,3 +3773,6 @@ representation.
 - 2026-10-23 Generic function and method specialization discovery now maintains statement-ordered inferred aliases
   inside copied nested-control environments. Production coverage resolves a generic method result, a constructed
   generic receiver, a receiver-generic method, a generic function, and nested generic records within one `if` arm.
+- 2026-10-24 Scoped generic discovery now seeds `for` bindings from fixed-array, dynamic-array, and view element
+  source types, and seeds choice-case payload bindings from variant declarations. Production coverage emits and runs
+  loop-local generic methods, a generic function, nested generic records, and a switch-payload generic chain.

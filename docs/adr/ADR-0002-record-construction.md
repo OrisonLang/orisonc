@@ -38,6 +38,8 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
 - Generic function and method specialization discovery carries statement-ordered inferred aliases through copied
   nested-block environments. Branch, loop, and switch-case bindings can drive later specializations in their scope
   without escaping into sibling or enclosing scopes.
+- `for` bindings inherit the iterable element source type for generic function and method specialization discovery.
+  Choice-case payload bindings inherit their declared payload types for generic record layout discovery.
 - Lowering validates emitted record LLVM type identifiers through the shared module symbol registry's type-symbol
   namespace before generated LLVM IR is accepted.
 

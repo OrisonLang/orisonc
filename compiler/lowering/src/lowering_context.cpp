@@ -259,6 +259,13 @@ auto parse_source_type_name(std::string_view type_name) -> syntax::TypeSyntax {
     return parsed;
 }
 
+auto iterable_element_source_type_name(std::string_view source_type_name) -> std::optional<std::string> {
+    if (auto sequence = dynamic_sequence_source_type(source_type_name)) {
+        return sequence->element_source_type_name;
+    }
+    return array_element_source_type_name(source_type_name);
+}
+
 auto generic_parameter_set(syntax::RecordSyntax const& record) -> std::unordered_set<std::string> {
     auto parameters = std::unordered_set<std::string> {};
     for (auto const& parameter : record.generic_parameters) {
@@ -742,6 +749,21 @@ void collect_generic_calls_from_statement(
         specializations
     );
     auto nested_source_types = local_source_types;
+    if (statement.kind == syntax::StatementKind::for_statement && !statement.name.empty()) {
+        auto resolver = GenericCallSourceResolver {
+            .generic_functions = &generic_functions,
+            .functions = &functions,
+            .local_source_types = &local_source_types,
+            .concrete_records = &concrete_records,
+            .generic_records = &generic_records,
+        };
+        if (auto iterable_source_type =
+                source_type_name_for_generic_call_argument(statement.expression, resolver)) {
+            if (auto element_source_type = iterable_element_source_type_name(*iterable_source_type)) {
+                nested_source_types[statement.name] = std::move(*element_source_type);
+            }
+        }
+    }
     for (auto const& nested_statement : statement.nested_statements) {
         collect_generic_calls_from_statement(
             nested_statement,
@@ -956,6 +978,35 @@ void seed_choice_case_payload_source_types(
                 if (argument.kind == syntax::ExpressionKind::name &&
                     !variant.payloads[index].type.name.empty()) {
                     local_source_types[argument.text] = render_source_type_name(variant.payloads[index].type);
+                }
+            }
+            return;
+        }
+    }
+}
+
+void seed_choice_case_payload_source_types(
+    syntax::SwitchCaseSyntax const& switch_case,
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    std::unordered_map<std::string, syntax::TypeSyntax>& local_source_types
+) {
+    if (switch_case.pattern.kind != syntax::ExpressionKind::call ||
+        switch_case.pattern.left == nullptr ||
+        switch_case.pattern.left->kind != syntax::ExpressionKind::name) {
+        return;
+    }
+
+    for (auto const& choice : choices) {
+        for (auto const& variant : choice.variants) {
+            if (variant.name != switch_case.pattern.left->text ||
+                variant.payloads.size() != switch_case.pattern.arguments.size()) {
+                continue;
+            }
+            for (auto index = std::size_t {0}; index < switch_case.pattern.arguments.size(); ++index) {
+                auto const& argument = switch_case.pattern.arguments[index];
+                if (argument.kind == syntax::ExpressionKind::name &&
+                    !variant.payloads[index].type.name.empty()) {
+                    local_source_types[argument.text] = variant.payloads[index].type;
                 }
             }
             return;
@@ -1179,6 +1230,25 @@ void collect_generic_method_calls_from_statement(
         specializations
     );
     auto nested_source_types = local_source_types;
+    if (statement.kind == syntax::StatementKind::for_statement && !statement.name.empty()) {
+        auto resolver = GenericCallSourceResolver {
+            .generic_functions = &generic_functions,
+            .functions = &functions,
+            .local_source_types = &local_source_types,
+            .concrete_records = &concrete_records,
+            .generic_records = &generic_records,
+            .record_names = &record_names,
+        };
+        if (auto iterable_source_type = source_type_name_for_generic_method_collection_expression(
+                statement.expression,
+                generic_methods,
+                resolver
+            )) {
+            if (auto element_source_type = iterable_element_source_type_name(*iterable_source_type)) {
+                nested_source_types[statement.name] = std::move(*element_source_type);
+            }
+        }
+    }
     for (auto const& nested_statement : statement.nested_statements) {
         collect_generic_method_calls_from_statement(
             nested_statement,
@@ -1246,6 +1316,7 @@ struct GenericLayoutFunctionDeclarations {
     std::unordered_map<std::string, syntax::RecordSyntax const*> concrete_records;
     std::unordered_set<std::string> record_names;
     std::vector<GenericMethodCandidate> methods;
+    std::vector<syntax::ChoiceSyntax> const* choices = nullptr;
 };
 
 auto infer_constructor_expression_type(
@@ -2031,6 +2102,13 @@ void collect_statement_type_instantiations(
             local_source_types
         );
         auto case_source_types = local_source_types;
+        if (functions.choices != nullptr) {
+            seed_choice_case_payload_source_types(
+                switch_case,
+                *functions.choices,
+                case_source_types
+            );
+        }
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
                 collect_statement_type_instantiations(
@@ -2131,7 +2209,9 @@ auto collect_generic_type_instantiations(
 ) -> std::vector<syntax::TypeSyntax> {
     auto pending = std::vector<syntax::TypeSyntax> {};
     auto seen = std::unordered_set<std::string> {};
-    auto functions = GenericLayoutFunctionDeclarations {};
+    auto functions = GenericLayoutFunctionDeclarations {
+        .choices = &module.choices,
+    };
     for (auto const& function : module.functions) {
         auto& declarations = function.generic_parameters.empty()
             ? functions.ordinary_functions
