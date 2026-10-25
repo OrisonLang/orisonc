@@ -3797,3 +3797,6 @@ representation.
 - 2026-10-24 Unannotated local ambiguity detection now walks complete initializer expression trees in deterministic
   child order. Ambiguous generic calls nested in receivers, call arguments, operands, indexes, or ternary arms are
   diagnosed before outer-expression LLVM contextual fallback.
+- 2026-10-24 Expected-type-independent generic ambiguity checks now run before `for` iterable classification in unit,
+  value-prefix, and nested-while lowering paths. Direct or nested ambiguous generic calls report their concrete
+  specialization symbols instead of falling through to a fixed-array iterable diagnostic.

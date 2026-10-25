@@ -1448,6 +1448,89 @@ int main() {
         diagnostics.entries().front().message ==
         "lowering does not yet support this function parameter type"
     );
+
+    auto ambiguity_path = std::filesystem::temp_directory_path() / "orison_function_emitter_for_ambiguity_smoke.or";
+    {
+        auto output = std::ofstream(ambiguity_path);
+        output << "package demo.function_emitter_ambiguity\n"
+                  "\n"
+                  "function direct_ambiguous_for(input: UInt32) -> Unit\n"
+                  "    for item in choose(input)\n"
+                  "        return\n"
+                  "\n"
+                  "function value_ambiguous_for(input: UInt32) -> UInt32\n"
+                  "    for item in outer(choose(input))\n"
+                  "        return 0 as UInt32\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "function while_ambiguous_for(input: UInt32) -> Unit\n"
+                  "    while false\n"
+                  "        for item in choose(input)\n"
+                  "            return\n";
+    }
+    auto ambiguity_source = orison::source::SourceFile::read(ambiguity_path);
+    assert(ambiguity_source.has_value());
+    auto ambiguity_parse_result = parser.parse(*ambiguity_source);
+    assert(!ambiguity_parse_result.diagnostics.has_errors());
+    diagnostics = {};
+    auto ambiguity_context = orison::lowering::build_lowering_context(
+        ambiguity_parse_result.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    ambiguity_context.functions.emplace(
+        "choose__UInt32_array",
+        orison::lowering::LoweredFunctionSignature {
+            .return_type = "[1 x i32]",
+            .source_return_type_name = "Array<UInt32, 1>",
+            .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+            .parameter_types = {"i32"},
+            .parameter_source_type_names = {"UInt32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "choose__UInt32_array",
+        }
+    );
+    ambiguity_context.functions.emplace(
+        "choose__UInt64_array",
+        orison::lowering::LoweredFunctionSignature {
+            .return_type = "[1 x i64]",
+            .source_return_type_name = "Array<UInt64, 1>",
+            .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+            .parameter_types = {"i32"},
+            .parameter_source_type_names = {"UInt32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "choose__UInt64_array",
+        }
+    );
+    ambiguity_context.generic_function_specializations.push_back(
+        std::make_shared<orison::syntax::FunctionSyntax>(orison::syntax::FunctionSyntax {
+            .name = "choose__UInt32_array",
+        })
+    );
+    ambiguity_context.generic_function_specializations.push_back(
+        std::make_shared<orison::syntax::FunctionSyntax>(orison::syntax::FunctionSyntax {
+            .name = "choose__UInt64_array",
+        })
+    );
+    auto ambiguity_strings = orison::lowering::collect_string_constants(ambiguity_parse_result.module);
+    auto expected_ambiguity = std::string {
+        "lowering does not yet support this for iterable: ambiguous generic specialization: "
+        "choose matches multiple generic specializations: choose__UInt32_array, choose__UInt64_array"
+    };
+    for (auto const& function : ambiguity_parse_result.module.functions) {
+        diagnostics = {};
+        orison::lowering::emit_function(
+            function,
+            ambiguity_context.functions.at(function.name),
+            ambiguity_context,
+            ambiguity_strings,
+            diagnostics
+        );
+        assert(diagnostics.has_errors());
+        assert(diagnostics.entries().front().message == expected_ambiguity);
+    }
+    std::filesystem::remove(ambiguity_path);
+
     std::filesystem::remove(path);
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

@@ -1850,6 +1850,24 @@ auto lower_prefix_statement(
         return record_deferred_cleanup(statement, session, diagnostics);
     }
     if (statement.kind == syntax::StatementKind::for_statement) {
+        if (auto detail = generic_specialization_source_ambiguity_detail(
+                statement.expression,
+                context.lowering,
+                session.state
+            )) {
+            diagnostics.error(
+                statement.line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this for iterable",
+                    ExpressionLoweringFailure {
+                        .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                        .detail = *detail,
+                    }
+                )
+            );
+            return false;
+        }
+
         auto lower_body = [&]() {
             auto statement_pointers = statement_pointers_for(statement.nested_statements);
             return lower_prefix_statement_block(

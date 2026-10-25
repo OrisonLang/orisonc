@@ -3669,3 +3669,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Generic ambiguity checks now traverse nested unannotated initializer expressions. Resolver coverage
   pins outer-call arguments and ternary arms, while statement-emitter coverage proves an ambiguous nested argument is
   reported before the unresolved outer call.
+- 2026-10-24: Unannotated `for` iterable expressions now receive the same recursive generic ambiguity diagnostic before
+  sequence classification. Function-emitter coverage pins direct unit-body iteration, nested value-body arguments, and
+  iteration nested inside `while`, preventing unrelated fixed-array fallback diagnostics.

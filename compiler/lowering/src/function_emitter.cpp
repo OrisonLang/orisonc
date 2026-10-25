@@ -11,6 +11,7 @@
 #include "orison/lowering/for_loop_lowering.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
@@ -1279,6 +1280,24 @@ auto lower_unit_for_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
+    if (auto detail = generic_specialization_source_ambiguity_detail(
+            statement.expression,
+            context.lowering,
+            session.state
+        )) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this for iterable",
+                ExpressionLoweringFailure {
+                    .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    .detail = *detail,
+                }
+            )
+        );
+        return StatementFlow::failed;
+    }
+
     if (statement.expression.kind != syntax::ExpressionKind::array_literal) {
         auto source_type_name =
             source_type_name_for_expression(statement.expression, context.lowering, session.state);
