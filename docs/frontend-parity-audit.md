@@ -3672,3 +3672,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Unannotated `for` iterable expressions now receive the same recursive generic ambiguity diagnostic before
   sequence classification. Function-emitter coverage pins direct unit-body iteration, nested value-body arguments, and
   iteration nested inside `while`, preventing unrelated fixed-array fallback diagnostics.
+- 2026-10-24: Standalone call statements now apply recursive expected-type-independent generic ambiguity checks before
+  lowering a discarded result. Statement-emitter coverage pins direct free-function calls, nested ambiguous arguments,
+  and ambiguous methods with concrete candidate-symbol diagnostics.

@@ -3800,3 +3800,6 @@ representation.
 - 2026-10-24 Expected-type-independent generic ambiguity checks now run before `for` iterable classification in unit,
   value-prefix, and nested-while lowering paths. Direct or nested ambiguous generic calls report their concrete
   specialization symbols instead of falling through to a fixed-array iterable diagnostic.
+- 2026-10-24 Standalone call statements now reject source-compatible generic ambiguity before inferring a discarded
+  result type. Free-function, nested-argument, and method-call ambiguities report their concrete specialization symbols
+  instead of selecting a candidate through incidental result inference.

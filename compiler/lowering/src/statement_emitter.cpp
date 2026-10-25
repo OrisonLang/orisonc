@@ -3100,6 +3100,23 @@ auto lower_call_statement(
         diagnostics.error(statement.line, "lowering call statement requires a call expression");
         return false;
     }
+    if (auto detail = generic_specialization_source_ambiguity_detail(
+            statement.expression,
+            context.lowering,
+            session.state
+        )) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this call statement",
+                ExpressionLoweringFailure {
+                    .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    .detail = *detail,
+                }
+            )
+        );
+        return false;
+    }
     if (statement.expression.left != nullptr &&
         statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
         if (auto void_target = null_safe_member_call_void_target_name(

@@ -380,9 +380,101 @@ int main() {
     );
     assert(output.str().empty());
 
+    auto ambiguous_call_statement = orison::syntax::StatementSyntax {};
+    ambiguous_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    ambiguous_call_statement.line = 13;
+    ambiguous_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    ambiguous_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_call_statement.expression.left->kind = orison::syntax::ExpressionKind::name;
+    ambiguous_call_statement.expression.left->text = "choose";
+    ambiguous_call_statement.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        ambiguous_call_statement,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this call statement: ambiguous generic specialization: "
+        "choose matches multiple generic specializations: choose__UInt32, choose__UInt32_wide"
+    );
+    assert(output.str().empty());
+
+    auto nested_ambiguous_call_statement = orison::syntax::StatementSyntax {};
+    nested_ambiguous_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    nested_ambiguous_call_statement.line = 14;
+    nested_ambiguous_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    nested_ambiguous_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    nested_ambiguous_call_statement.expression.left->kind = orison::syntax::ExpressionKind::name;
+    nested_ambiguous_call_statement.expression.left->text = "outer";
+    auto nested_ambiguous_argument = orison::syntax::ExpressionSyntax {};
+    nested_ambiguous_argument.kind = orison::syntax::ExpressionKind::call;
+    nested_ambiguous_argument.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    nested_ambiguous_argument.left->kind = orison::syntax::ExpressionKind::name;
+    nested_ambiguous_argument.left->text = "choose";
+    nested_ambiguous_argument.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    nested_ambiguous_call_statement.expression.arguments.push_back(std::move(nested_ambiguous_argument));
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        nested_ambiguous_call_statement,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this call statement: ambiguous generic specialization: "
+        "choose matches multiple generic specializations: choose__UInt32, choose__UInt32_wide"
+    );
+    assert(output.str().empty());
+
+    auto ambiguous_method_call_statement = orison::syntax::StatementSyntax {};
+    ambiguous_method_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    ambiguous_method_call_statement.line = 15;
+    ambiguous_method_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    ambiguous_method_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_method_call_statement.expression.left->kind = orison::syntax::ExpressionKind::member_access;
+    ambiguous_method_call_statement.expression.left->text = "pick";
+    ambiguous_method_call_statement.expression.left->left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_method_call_statement.expression.left->left->kind = orison::syntax::ExpressionKind::name;
+    ambiguous_method_call_statement.expression.left->left->text = "box";
+    ambiguous_method_call_statement.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        ambiguous_method_call_statement,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this call statement: ambiguous generic specialization: "
+        "Box<UInt32>.pick matches multiple generic method specializations: "
+        "method.Box_UInt32.pick, method.Box_UInt32.pick_wide"
+    );
+    assert(output.str().empty());
+
     auto annotated_let = orison::syntax::StatementSyntax {};
     annotated_let.kind = orison::syntax::StatementKind::let_binding;
-    annotated_let.line = 13;
+    annotated_let.line = 16;
     annotated_let.name = "chosen";
     annotated_let.annotated_type.name = "UInt64";
     annotated_let.expression.kind = orison::syntax::ExpressionKind::call;
