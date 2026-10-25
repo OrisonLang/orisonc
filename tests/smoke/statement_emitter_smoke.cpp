@@ -242,9 +242,45 @@ int main() {
     );
     assert(output.str().empty());
 
+    auto nested_ambiguous_let = orison::syntax::StatementSyntax {};
+    nested_ambiguous_let.kind = orison::syntax::StatementKind::let_binding;
+    nested_ambiguous_let.line = 10;
+    nested_ambiguous_let.name = "nested_chosen";
+    nested_ambiguous_let.expression.kind = orison::syntax::ExpressionKind::call;
+    nested_ambiguous_let.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    nested_ambiguous_let.expression.left->kind = orison::syntax::ExpressionKind::name;
+    nested_ambiguous_let.expression.left->text = "outer";
+    auto nested_choose = orison::syntax::ExpressionSyntax {};
+    nested_choose.kind = orison::syntax::ExpressionKind::call;
+    nested_choose.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    nested_choose.left->kind = orison::syntax::ExpressionKind::name;
+    nested_choose.left->text = "choose";
+    nested_choose.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    nested_ambiguous_let.expression.arguments.push_back(std::move(nested_choose));
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_let_statement(
+        nested_ambiguous_let,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this let initializer: ambiguous generic specialization: "
+        "choose matches multiple generic specializations: choose__UInt32, choose__UInt32_wide"
+    );
+    assert(output.str().empty());
+
     auto ambiguous_var = orison::syntax::StatementSyntax {};
     ambiguous_var.kind = orison::syntax::StatementKind::var_binding;
-    ambiguous_var.line = 10;
+    ambiguous_var.line = 11;
     ambiguous_var.name = "mutable_chosen";
     ambiguous_var.expression.kind = orison::syntax::ExpressionKind::call;
     ambiguous_var.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
@@ -312,7 +348,7 @@ int main() {
     });
     auto ambiguous_method_let = orison::syntax::StatementSyntax {};
     ambiguous_method_let.kind = orison::syntax::StatementKind::let_binding;
-    ambiguous_method_let.line = 11;
+    ambiguous_method_let.line = 12;
     ambiguous_method_let.name = "method_chosen";
     ambiguous_method_let.expression.kind = orison::syntax::ExpressionKind::call;
     ambiguous_method_let.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
@@ -346,7 +382,7 @@ int main() {
 
     auto annotated_let = orison::syntax::StatementSyntax {};
     annotated_let.kind = orison::syntax::StatementKind::let_binding;
-    annotated_let.line = 12;
+    annotated_let.line = 13;
     annotated_let.name = "chosen";
     annotated_let.annotated_type.name = "UInt64";
     annotated_let.expression.kind = orison::syntax::ExpressionKind::call;

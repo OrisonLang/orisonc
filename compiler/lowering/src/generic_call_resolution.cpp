@@ -784,16 +784,14 @@ auto generic_specialization_source_ambiguity_detail(
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
-    if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr) {
-        return std::nullopt;
-    }
-
     auto resolver = GenericCallSourceResolver {
         .lowering_context = &context,
         .state = &state,
     };
     auto candidates = std::vector<std::string> {};
-    if (expression.left->kind == syntax::ExpressionKind::name) {
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
         auto const& function_name = expression.left->text;
         for (auto const& specialization : context.generic_function_specializations) {
             auto base_name = generic_specialization_base_name(specialization->name);
@@ -809,37 +807,58 @@ auto generic_specialization_source_ambiguity_detail(
             }
             candidates.push_back(signature->second.symbol_name);
         }
-        if (candidates.size() < 2) {
-            return std::nullopt;
+        if (candidates.size() >= 2) {
+            return function_name + " matches multiple generic specializations: " +
+                join_candidate_symbols(candidates);
         }
-        return function_name + " matches multiple generic specializations: " +
-            join_candidate_symbols(candidates);
     }
 
-    if (expression.left->kind != syntax::ExpressionKind::member_access) {
-        return std::nullopt;
-    }
-    auto receiver = infer_member_call_receiver(expression, context, state);
-    if (receiver.result != MemberCallReceiverInferenceResult::found) {
-        return std::nullopt;
-    }
-    for (auto const& method : context.methods) {
-        if (method.receiver_type_name != receiver.receiver_type_name ||
-            method.method_name != receiver.method_name ||
-            method.signature.parameter_types.size() != expression.arguments.size() + 1 ||
-            method.signature.parameter_source_type_names.empty() ||
-            method.signature.parameter_source_type_names.front() != receiver.receiver_type_name ||
-            !has_supported_function_signature_types(method.signature) ||
-            !method_call_arguments_match_source_types(expression, method.signature, resolver)) {
-            continue;
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access) {
+        auto receiver = infer_member_call_receiver(expression, context, state);
+        if (receiver.result == MemberCallReceiverInferenceResult::found) {
+            for (auto const& method : context.methods) {
+                if (method.receiver_type_name != receiver.receiver_type_name ||
+                    method.method_name != receiver.method_name ||
+                    method.signature.parameter_types.size() != expression.arguments.size() + 1 ||
+                    method.signature.parameter_source_type_names.empty() ||
+                    method.signature.parameter_source_type_names.front() != receiver.receiver_type_name ||
+                    !has_supported_function_signature_types(method.signature) ||
+                    !method_call_arguments_match_source_types(expression, method.signature, resolver)) {
+                    continue;
+                }
+                candidates.push_back(method.signature.symbol_name);
+            }
+            if (candidates.size() >= 2) {
+                return receiver.receiver_type_name + "." + receiver.method_name +
+                    " matches multiple generic method specializations: " +
+                    join_candidate_symbols(candidates);
+            }
         }
-        candidates.push_back(method.signature.symbol_name);
     }
-    if (candidates.size() < 2) {
-        return std::nullopt;
+
+    if (expression.left != nullptr) {
+        if (auto detail = generic_specialization_source_ambiguity_detail(*expression.left, context, state)) {
+            return detail;
+        }
     }
-    return receiver.receiver_type_name + "." + receiver.method_name +
-        " matches multiple generic method specializations: " + join_candidate_symbols(candidates);
+    for (auto const& argument : expression.arguments) {
+        if (auto detail = generic_specialization_source_ambiguity_detail(argument, context, state)) {
+            return detail;
+        }
+    }
+    if (expression.right != nullptr) {
+        if (auto detail = generic_specialization_source_ambiguity_detail(*expression.right, context, state)) {
+            return detail;
+        }
+    }
+    if (expression.alternate != nullptr) {
+        if (auto detail = generic_specialization_source_ambiguity_detail(*expression.alternate, context, state)) {
+            return detail;
+        }
+    }
+    return std::nullopt;
 }
 
 auto generic_specialization_ambiguity_detail(

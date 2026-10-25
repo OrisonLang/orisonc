@@ -535,6 +535,29 @@ int main() {
         );
     assert(source_ambiguous_detail.has_value());
     assert(*source_ambiguous_detail == *ambiguous_detail);
+    auto nested_argument_detail =
+        orison::lowering::generic_specialization_source_ambiguity_detail(
+            call_expression(
+                "outer",
+                call_expression("consume", name_expression("value"))
+            ),
+            context,
+            state
+        );
+    assert(nested_argument_detail.has_value());
+    assert(*nested_argument_detail == *ambiguous_detail);
+    auto nested_ternary_detail =
+        orison::lowering::generic_specialization_source_ambiguity_detail(
+            ternary_expression(
+                name_expression("condition"),
+                call_expression("consume", name_expression("value")),
+                cast_expression(integer_literal("0"), "UInt32")
+            ),
+            context,
+            state
+        );
+    assert(nested_ternary_detail.has_value());
+    assert(*nested_ternary_detail == *ambiguous_detail);
 
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Box<UInt32>",

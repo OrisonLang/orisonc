@@ -3666,3 +3666,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Expected-type-independent generic ambiguity diagnostics now cover unannotated `let` and `var`
   initializers for free-function and method calls. Diagnostics list the concrete matching symbols; explicit local
   annotations continue through contextual specialization selection.
+- 2026-10-24: Generic ambiguity checks now traverse nested unannotated initializer expressions. Resolver coverage
+  pins outer-call arguments and ternary arms, while statement-emitter coverage proves an ambiguous nested argument is
+  reported before the unresolved outer call.

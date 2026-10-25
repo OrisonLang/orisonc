@@ -3794,3 +3794,6 @@ representation.
 - 2026-10-24 Source-compatible generic ambiguity checks now cover both immutable and mutable local initializers and
   both free-function and method calls. All unannotated local calls reject multiple candidates before LLVM contextual
   fallback, while explicit annotations retain contextual selection.
+- 2026-10-24 Unannotated local ambiguity detection now walks complete initializer expression trees in deterministic
+  child order. Ambiguous generic calls nested in receivers, call arguments, operands, indexes, or ternary arms are
+  diagnosed before outer-expression LLVM contextual fallback.
