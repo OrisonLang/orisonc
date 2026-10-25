@@ -3660,3 +3660,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Unannotated generic calls now infer their source result from a unique argument-compatible concrete
   specialization before LLVM type inference. Computed dynamic-array and view loop fixtures use one `identity<T>`
   source declaration and emit distinct `UInt64` and `UInt32` calls in the same module.
+- 2026-10-24: Unannotated `let` initializers now reject multiple source-compatible generic specializations with the
+  concrete candidate symbols. Enclosing function result types no longer resolve local source ambiguity implicitly;
+  annotated locals retain explicit contextual selection.

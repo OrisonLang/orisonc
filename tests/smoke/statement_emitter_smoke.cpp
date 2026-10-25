@@ -176,6 +176,98 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(output.str() == "  %tmp0 = add i32 %input, 1\n  %value = add i32 0, %tmp0\n");
     assert(state.immutable_bindings.at("value").value == "%value");
+    state.source_type_names["input"] = "UInt32";
+
+    lowering.functions.emplace(
+        "choose__UInt32",
+        orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+            .parameter_types = {"i32"},
+            .parameter_source_type_names = {"UInt32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "choose__UInt32",
+        }
+    );
+    lowering.functions.emplace(
+        "choose__UInt32_wide",
+        orison::lowering::LoweredFunctionSignature {
+            .return_type = "i64",
+            .source_return_type_name = "UInt64",
+            .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+            .parameter_types = {"i32"},
+            .parameter_source_type_names = {"UInt32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "choose__UInt32_wide",
+        }
+    );
+    lowering.generic_function_specializations.push_back(
+        std::make_shared<orison::syntax::FunctionSyntax>(orison::syntax::FunctionSyntax {
+            .name = "choose__UInt32",
+        })
+    );
+    lowering.generic_function_specializations.push_back(
+        std::make_shared<orison::syntax::FunctionSyntax>(orison::syntax::FunctionSyntax {
+            .name = "choose__UInt32_wide",
+        })
+    );
+    auto ambiguous_let = orison::syntax::StatementSyntax {};
+    ambiguous_let.kind = orison::syntax::StatementKind::let_binding;
+    ambiguous_let.line = 9;
+    ambiguous_let.name = "chosen";
+    ambiguous_let.expression.kind = orison::syntax::ExpressionKind::call;
+    ambiguous_let.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_let.expression.left->kind = orison::syntax::ExpressionKind::name;
+    ambiguous_let.expression.left->text = "choose";
+    ambiguous_let.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_let_statement(
+        ambiguous_let,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this let initializer: ambiguous generic specialization: "
+        "choose matches multiple generic specializations: choose__UInt32, choose__UInt32_wide"
+    );
+    assert(output.str().empty());
+
+    auto annotated_let = orison::syntax::StatementSyntax {};
+    annotated_let.kind = orison::syntax::StatementKind::let_binding;
+    annotated_let.line = 10;
+    annotated_let.name = "chosen";
+    annotated_let.annotated_type.name = "UInt64";
+    annotated_let.expression.kind = orison::syntax::ExpressionKind::call;
+    annotated_let.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    annotated_let.expression.left->kind = orison::syntax::ExpressionKind::name;
+    annotated_let.expression.left->text = "choose";
+    annotated_let.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_let_statement(
+        annotated_let,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(!diagnostics.has_errors());
+    assert(output.str().find("call i64 @choose__UInt32_wide(i32 %input)") != std::string::npos);
 
     auto mutable_state = orison::lowering::FunctionLoweringState {};
     mutable_state.local_name_counts["input"] = 1;

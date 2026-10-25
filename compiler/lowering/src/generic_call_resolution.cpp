@@ -779,6 +779,38 @@ auto infer_generic_function_specialization(
     return match;
 }
 
+auto generic_specialization_source_ambiguity_detail(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto resolver = GenericCallSourceResolver {
+        .lowering_context = &context,
+        .state = &state,
+    };
+    auto candidates = std::vector<std::string> {};
+    for (auto const& specialization : context.generic_function_specializations) {
+        auto base_name = generic_specialization_base_name(specialization->name);
+        if (!base_name.has_value() || *base_name != function_name) {
+            continue;
+        }
+        auto signature = context.functions.find(specialization->name);
+        if (signature == context.functions.end() ||
+            signature->second.parameter_types.size() != expression.arguments.size() ||
+            !has_supported_function_signature_types(signature->second) ||
+            !call_arguments_match_source_types(expression, signature->second, resolver)) {
+            continue;
+        }
+        candidates.push_back(signature->second.symbol_name);
+    }
+    if (candidates.size() < 2) {
+        return std::nullopt;
+    }
+    return std::string {function_name} + " matches multiple generic specializations: " +
+        join_candidate_symbols(candidates);
+}
+
 auto generic_specialization_ambiguity_detail(
     std::string_view function_name,
     syntax::ExpressionSyntax const& expression,

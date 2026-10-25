@@ -3788,3 +3788,6 @@ representation.
 - 2026-10-24 Generic function source-type inference now selects one concrete specialization from call argument source
   types without requiring an expected LLVM result type. Unannotated calls can therefore dispatch one generic source
   name to multiple concrete return types while duplicate source-compatible candidates remain ambiguous.
+- 2026-10-24 Unannotated local bindings now diagnose multiple source-compatible generic specializations before LLVM
+  contextual fallback. An enclosing function return type cannot silently select one candidate; explicit local type
+  annotations retain contextual specialization selection.

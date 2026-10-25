@@ -71,6 +71,13 @@ auto infer_generic_function_specialization(
     FunctionLoweringState const& state
 ) -> LoweredFunctionSignature const*;
 
+auto generic_specialization_source_ambiguity_detail(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
 auto generic_specialization_ambiguity_detail(
     std::string_view function_name,
     syntax::ExpressionSyntax const& expression,

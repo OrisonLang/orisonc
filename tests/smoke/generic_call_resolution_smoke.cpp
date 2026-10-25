@@ -527,6 +527,15 @@ int main() {
         *ambiguous_detail ==
         "consume matches multiple generic specializations: consume__UInt32, consume__UInt32_duplicate"
     );
+    auto source_ambiguous_detail =
+        orison::lowering::generic_specialization_source_ambiguity_detail(
+            "consume",
+            local_call,
+            context,
+            state
+        );
+    assert(source_ambiguous_detail.has_value());
+    assert(*source_ambiguous_detail == *ambiguous_detail);
 
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Box<UInt32>",
