@@ -1227,6 +1227,24 @@ auto lower_unit_switch_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
+    if (auto detail = generic_specialization_source_ambiguity_detail(
+            statement.expression,
+            context.lowering,
+            session.state
+        )) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this Unit switch subject",
+                ExpressionLoweringFailure {
+                    .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    .detail = *detail,
+                }
+            )
+        );
+        return StatementFlow::failed;
+    }
+
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
     if (!subject_type.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this Unit switch subject");
@@ -1674,6 +1692,24 @@ auto lower_nonvoid_switch_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
+    if (auto detail = generic_specialization_source_ambiguity_detail(
+            statement.expression,
+            context.lowering,
+            session.state
+        )) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this non-void switch subject",
+                ExpressionLoweringFailure {
+                    .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                    .detail = *detail,
+                }
+            )
+        );
+        return StatementFlow::failed;
+    }
+
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
     if (!subject_type.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this non-void switch subject");

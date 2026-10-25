@@ -1466,7 +1466,25 @@ int main() {
                   "function while_ambiguous_for(input: UInt32) -> Unit\n"
                   "    while false\n"
                   "        for item in choose(input)\n"
-                  "            return\n";
+                  "            return\n"
+                  "\n"
+                  "function unit_ambiguous_switch(input: UInt32) -> Unit\n"
+                  "    switch choose(input)\n"
+                  "        default => return\n"
+                  "\n"
+                  "function value_ambiguous_switch(input: UInt32) -> UInt32\n"
+                  "    switch choose(input)\n"
+                  "        default => return 0 as UInt32\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "function while_ambiguous_switch(input: UInt32) -> Unit\n"
+                  "    while false\n"
+                  "        switch choose(input)\n"
+                  "            default => return\n"
+                  "\n"
+                  "function final_ambiguous_switch(input: UInt32) -> UInt32\n"
+                  "    switch choose(input)\n"
+                  "        default => 0 as UInt32\n";
     }
     auto ambiguity_source = orison::source::SourceFile::read(ambiguity_path);
     assert(ambiguity_source.has_value());
@@ -1513,8 +1531,8 @@ int main() {
         })
     );
     auto ambiguity_strings = orison::lowering::collect_string_constants(ambiguity_parse_result.module);
-    auto expected_ambiguity = std::string {
-        "lowering does not yet support this for iterable: ambiguous generic specialization: "
+    auto ambiguity_detail = std::string {
+        "ambiguous generic specialization: "
         "choose matches multiple generic specializations: choose__UInt32_array, choose__UInt64_array"
     };
     for (auto const& function : ambiguity_parse_result.module.functions) {
@@ -1527,7 +1545,19 @@ int main() {
             diagnostics
         );
         assert(diagnostics.has_errors());
-        assert(diagnostics.entries().front().message == expected_ambiguity);
+        auto const& message = diagnostics.entries().front().message;
+        if (function.name.find("ambiguous_for") != std::string::npos) {
+            assert(message == "lowering does not yet support this for iterable: " + ambiguity_detail);
+        } else if (function.name == "unit_ambiguous_switch") {
+            assert(message == "lowering does not yet support this Unit switch subject: " + ambiguity_detail);
+        } else if (function.name == "value_ambiguous_switch") {
+            assert(message == "lowering does not yet support this non-void switch subject: " + ambiguity_detail);
+        } else if (function.name == "while_ambiguous_switch") {
+            assert(message == "lowering does not yet support this while-body switch subject: " + ambiguity_detail);
+        } else {
+            assert(function.name == "final_ambiguous_switch");
+            assert(message.find(ambiguity_detail) != std::string::npos);
+        }
     }
     std::filesystem::remove(ambiguity_path);
 

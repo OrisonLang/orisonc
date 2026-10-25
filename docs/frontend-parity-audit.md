@@ -3675,3 +3675,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Standalone call statements now apply recursive expected-type-independent generic ambiguity checks before
   lowering a discarded result. Statement-emitter coverage pins direct free-function calls, nested ambiguous arguments,
   and ambiguous methods with concrete candidate-symbol diagnostics.
+- 2026-10-24: Switch-subject lowering now applies recursive generic ambiguity checks before subject-type inference.
+  Function-emitter coverage pins final, unit, non-void-prefix, and nested-while switches. The remaining audited
+  inference sites have explicit destination, return, Boolean-condition, receiver, or aggregate-path context.

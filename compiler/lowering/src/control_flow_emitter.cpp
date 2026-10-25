@@ -4,6 +4,7 @@
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
@@ -956,6 +957,19 @@ auto lower_final_switch_statement(
             failures,
             ControlFlowLoweringFailureReason::invalid_switch_shape,
             "a final switch requires at least one case"
+        );
+        return std::nullopt;
+    }
+
+    if (auto detail = generic_specialization_source_ambiguity_detail(
+            statement.expression,
+            context.lowering,
+            state
+        )) {
+        record_control_flow_lowering_failure(
+            failures,
+            ControlFlowLoweringFailureReason::switch_subject_type_failure,
+            "ambiguous generic specialization: " + *detail
         );
         return std::nullopt;
     }

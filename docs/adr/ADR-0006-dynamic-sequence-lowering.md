@@ -3803,3 +3803,6 @@ representation.
 - 2026-10-24 Standalone call statements now reject source-compatible generic ambiguity before inferring a discarded
   result type. Free-function, nested-argument, and method-call ambiguities report their concrete specialization symbols
   instead of selecting a candidate through incidental result inference.
+- 2026-10-24 Switch subjects now reject source-compatible generic ambiguity before subject-type inference in final,
+  unit, non-void-prefix, and nested-while paths. The inference-context audit retains destination and Boolean context for
+  assignments, returns, and conditions; source-independent locals, iterables, discarded calls, and subjects are guarded.
