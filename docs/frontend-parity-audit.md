@@ -3683,3 +3683,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   calls; source duplicate-name checks and symbol deduplication prevent speculative duplicate candidates.
 - 2026-10-25: Generic method discovery now pins the same deduplication invariant as generic functions. Repeated calls
   on `Box<UInt64>.value_copy` produce one canonical method specialization, including when one result is discarded.
+- 2026-10-25: Generic method dispatch now has same-module production coverage for `Box<UInt32>` and `Box<UInt64>`.
+  LLVM IR contains one definition and the correctly typed call for each specialization; object and executable paths run.

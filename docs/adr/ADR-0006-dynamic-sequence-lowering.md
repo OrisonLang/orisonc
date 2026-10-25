@@ -3812,3 +3812,6 @@ representation.
 - 2026-10-25 Generic method discovery now has explicit canonical-symbol coverage parallel to generic functions.
   Repeated binding and discarded calls on the same concrete generic receiver retain one method specialization rather
   than duplicating candidate evidence.
+- 2026-10-25 One source module now production-verifies `Box<UInt32>.value_copy` and
+  `Box<UInt64>.value_copy` together. Each concrete receiver selects one canonical method symbol through LLVM emission,
+  object generation, linking, compiler build, and execution.

@@ -1,0 +1,15 @@
+package tests.fixtures.generic_method_multiple_specializations_run
+
+record Box<T>
+    value: T
+
+extend Box<T>
+    function value_copy(this: shared This) -> T
+        this.value
+
+function main() -> UInt32
+    let narrow = Box(11 as UInt32)
+    let wide = Box(31 as UInt64)
+    let narrow_value = narrow.value_copy()
+    let wide_value = wide.value_copy()
+    narrow_value == 11 as UInt32 and wide_value == 31 as UInt64 ? 0 as UInt32 : 1 as UInt32
