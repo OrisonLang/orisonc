@@ -1,0 +1,11 @@
+package tests.fixtures.generic_method_parameter_multiple_specializations_run
+
+extend UInt32
+    function select<T>(this: shared This, candidate: T) -> T
+        candidate
+
+function main() -> UInt32
+    let seed = 7 as UInt32
+    let narrow = seed.select(13 as UInt32)
+    let wide = seed.select(29 as UInt64)
+    narrow == 13 as UInt32 and wide == 29 as UInt64 ? 0 as UInt32 : 1 as UInt32

@@ -3685,3 +3685,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   on `Box<UInt64>.value_copy` produce one canonical method specialization, including when one result is discarded.
 - 2026-10-25: Generic method dispatch now has same-module production coverage for `Box<UInt32>` and `Box<UInt64>`.
   LLVM IR contains one definition and the correctly typed call for each specialization; object and executable paths run.
+- 2026-10-25: Method-level generic dispatch now has same-module coverage for `UInt32.select<UInt32>` and
+  `UInt32.select<UInt64>`. Each specialization has one canonical definition and a call with its concrete LLVM type.

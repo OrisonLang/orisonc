@@ -3815,3 +3815,6 @@ representation.
 - 2026-10-25 One source module now production-verifies `Box<UInt32>.value_copy` and
   `Box<UInt64>.value_copy` together. Each concrete receiver selects one canonical method symbol through LLVM emission,
   object generation, linking, compiler build, and execution.
+- 2026-10-25 A fixed `UInt32` receiver now production-verifies `select<UInt32>` and `select<UInt64>` in one module.
+  Method-level substitutions produce distinct return and parameter types, canonical symbols, typed calls, artifacts,
+  and successful execution.

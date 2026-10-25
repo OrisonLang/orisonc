@@ -4081,6 +4081,50 @@ auto main(int argc, char** argv) -> int {
         generic_method_multiple_specializations_path,
         smoke_temp_root / "generic_method_multiple_specializations_build"
     );
+    auto generic_method_parameter_multiple_specializations_path =
+        fixtures / "generic_method_parameter_multiple_specializations_run.or";
+    assert_cli_run_fixture_success(executable, generic_method_parameter_multiple_specializations_path);
+    auto generic_method_parameter_multiple_specializations_ir = read_command_output(
+        executable.string() + " --emit-llvm " +
+        generic_method_parameter_multiple_specializations_path.string()
+    );
+    assert(
+        occurrence_count(
+            generic_method_parameter_multiple_specializations_ir,
+            "define i32 @method.UInt32.select__UInt32(i32 %this, i32 %candidate)"
+        ) == 1
+    );
+    assert(
+        occurrence_count(
+            generic_method_parameter_multiple_specializations_ir,
+            "define i64 @method.UInt32.select__UInt64(i32 %this, i64 %candidate)"
+        ) == 1
+    );
+    assert(
+        generic_method_parameter_multiple_specializations_ir.find(
+            "call i32 @method.UInt32.select__UInt32(i32 %seed, i32 13)"
+        ) != std::string::npos
+    );
+    assert(
+        generic_method_parameter_multiple_specializations_ir.find(
+            "call i64 @method.UInt32.select__UInt64(i32 %seed, i64 29)"
+        ) != std::string::npos
+    );
+    assert_cli_emit_llvm_fixture_links_and_runs(
+        executable,
+        generic_method_parameter_multiple_specializations_path,
+        smoke_temp_root / "generic_method_parameter_multiple_specializations_llvm"
+    );
+    assert_cli_emit_object_fixture_success(
+        executable,
+        generic_method_parameter_multiple_specializations_path,
+        smoke_temp_root / "generic_method_parameter_multiple_specializations.o"
+    );
+    assert_cli_build_fixture_runs(
+        executable,
+        generic_method_parameter_multiple_specializations_path,
+        smoke_temp_root / "generic_method_parameter_multiple_specializations_build"
+    );
     auto generic_branch_local_method_alias_path =
         fixtures / "generic_branch_local_method_alias_run.or";
     assert_cli_run_fixture_success(executable, generic_branch_local_method_alias_path);
