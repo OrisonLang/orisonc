@@ -3818,3 +3818,6 @@ representation.
 - 2026-10-25 A fixed `UInt32` receiver now production-verifies `select<UInt32>` and `select<UInt64>` in one module.
   Method-level substitutions produce distinct return and parameter types, canonical symbols, typed calls, artifacts,
   and successful execution.
+- 2026-10-25 Combined receiver-level and method-level substitutions now have crossed same-module production coverage.
+  `Box<UInt32>.choose<UInt64>` and `Box<UInt64>.choose<UInt32>` preserve method-then-receiver symbol ordering,
+  concrete signatures, typed calls, artifacts, and runtime results.

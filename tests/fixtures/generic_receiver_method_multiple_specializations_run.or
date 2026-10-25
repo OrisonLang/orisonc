@@ -1,0 +1,15 @@
+package tests.fixtures.generic_receiver_method_multiple_specializations_run
+
+record Box<T>
+    value: T
+
+extend Box<T>
+    function choose<U>(this: shared This, candidate: U) -> U
+        candidate
+
+function main() -> UInt32
+    let narrow_box = Box(5 as UInt32)
+    let wide_box = Box(7 as UInt64)
+    let wide_result = narrow_box.choose(17 as UInt64)
+    let narrow_result = wide_box.choose(19 as UInt32)
+    wide_result == 17 as UInt64 and narrow_result == 19 as UInt32 ? 0 as UInt32 : 1 as UInt32
