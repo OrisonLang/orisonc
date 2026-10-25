@@ -529,7 +529,6 @@ int main() {
     );
     auto source_ambiguous_detail =
         orison::lowering::generic_specialization_source_ambiguity_detail(
-            "consume",
             local_call,
             context,
             state
@@ -630,6 +629,14 @@ int main() {
         *ambiguous_method_detail ==
         "Box<UInt32>.pick matches multiple generic method specializations: method.Box_UInt32.pick, method.Box_UInt32.pick_duplicate"
     );
+    auto source_ambiguous_method_detail =
+        orison::lowering::generic_specialization_source_ambiguity_detail(
+            method_call,
+            context,
+            state
+        );
+    assert(source_ambiguous_method_detail.has_value());
+    assert(*source_ambiguous_method_detail == *ambiguous_method_detail);
 
     return 0;
 }

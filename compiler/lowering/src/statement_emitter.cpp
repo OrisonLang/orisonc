@@ -2730,27 +2730,22 @@ auto lower_let_statement(
         }
         type = std::move(*annotated_type);
     } else {
-        if (statement.expression.kind == syntax::ExpressionKind::call &&
-            statement.expression.left != nullptr &&
-            statement.expression.left->kind == syntax::ExpressionKind::name) {
-            if (auto detail = generic_specialization_source_ambiguity_detail(
-                    statement.expression.left->text,
-                    statement.expression,
-                    context.lowering,
-                    session.state
-                )) {
-                diagnostics.error(
-                    statement.line,
-                    append_expression_lowering_failure(
-                        "lowering does not yet support this let initializer",
-                        ExpressionLoweringFailure {
-                            .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
-                            .detail = *detail,
-                        }
-                    )
-                );
-                return false;
-            }
+        if (auto detail = generic_specialization_source_ambiguity_detail(
+                statement.expression,
+                context.lowering,
+                session.state
+            )) {
+            diagnostics.error(
+                statement.line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this let initializer",
+                    ExpressionLoweringFailure {
+                        .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                        .detail = *detail,
+                    }
+                )
+            );
+            return false;
         }
         if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
             type = std::move(*inferred);
@@ -2874,10 +2869,29 @@ auto lower_var_statement(
             return false;
         }
         type = std::move(*annotated_type);
-    } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
-        type = std::move(*inferred);
-        annotated_source_type_name =
-            source_type_name_for_expression(statement.expression, context.lowering, session.state);
+    } else {
+        if (auto detail = generic_specialization_source_ambiguity_detail(
+                statement.expression,
+                context.lowering,
+                session.state
+            )) {
+            diagnostics.error(
+                statement.line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this var initializer",
+                    ExpressionLoweringFailure {
+                        .reason = ExpressionLoweringFailureReason::ambiguous_generic_specialization,
+                        .detail = *detail,
+                    }
+                )
+            );
+            return false;
+        }
+        if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
+            type = std::move(*inferred);
+            annotated_source_type_name =
+                source_type_name_for_expression(statement.expression, context.lowering, session.state);
+        }
     }
 
     if (reject_owned_aggregate_projection_value_read(statement.expression, context, session)) {

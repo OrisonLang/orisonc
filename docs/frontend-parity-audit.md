@@ -3663,3 +3663,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Unannotated `let` initializers now reject multiple source-compatible generic specializations with the
   concrete candidate symbols. Enclosing function result types no longer resolve local source ambiguity implicitly;
   annotated locals retain explicit contextual selection.
+- 2026-10-24: Expected-type-independent generic ambiguity diagnostics now cover unannotated `let` and `var`
+  initializers for free-function and method calls. Diagnostics list the concrete matching symbols; explicit local
+  annotations continue through contextual specialization selection.

@@ -3791,3 +3791,6 @@ representation.
 - 2026-10-24 Unannotated local bindings now diagnose multiple source-compatible generic specializations before LLVM
   contextual fallback. An enclosing function return type cannot silently select one candidate; explicit local type
   annotations retain contextual specialization selection.
+- 2026-10-24 Source-compatible generic ambiguity checks now cover both immutable and mutable local initializers and
+  both free-function and method calls. All unannotated local calls reject multiple candidates before LLVM contextual
+  fallback, while explicit annotations retain contextual selection.

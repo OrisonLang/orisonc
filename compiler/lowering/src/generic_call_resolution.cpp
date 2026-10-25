@@ -780,35 +780,66 @@ auto infer_generic_function_specialization(
 }
 
 auto generic_specialization_source_ambiguity_detail(
-    std::string_view function_name,
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr) {
+        return std::nullopt;
+    }
+
     auto resolver = GenericCallSourceResolver {
         .lowering_context = &context,
         .state = &state,
     };
     auto candidates = std::vector<std::string> {};
-    for (auto const& specialization : context.generic_function_specializations) {
-        auto base_name = generic_specialization_base_name(specialization->name);
-        if (!base_name.has_value() || *base_name != function_name) {
+    if (expression.left->kind == syntax::ExpressionKind::name) {
+        auto const& function_name = expression.left->text;
+        for (auto const& specialization : context.generic_function_specializations) {
+            auto base_name = generic_specialization_base_name(specialization->name);
+            if (!base_name.has_value() || *base_name != function_name) {
+                continue;
+            }
+            auto signature = context.functions.find(specialization->name);
+            if (signature == context.functions.end() ||
+                signature->second.parameter_types.size() != expression.arguments.size() ||
+                !has_supported_function_signature_types(signature->second) ||
+                !call_arguments_match_source_types(expression, signature->second, resolver)) {
+                continue;
+            }
+            candidates.push_back(signature->second.symbol_name);
+        }
+        if (candidates.size() < 2) {
+            return std::nullopt;
+        }
+        return function_name + " matches multiple generic specializations: " +
+            join_candidate_symbols(candidates);
+    }
+
+    if (expression.left->kind != syntax::ExpressionKind::member_access) {
+        return std::nullopt;
+    }
+    auto receiver = infer_member_call_receiver(expression, context, state);
+    if (receiver.result != MemberCallReceiverInferenceResult::found) {
+        return std::nullopt;
+    }
+    for (auto const& method : context.methods) {
+        if (method.receiver_type_name != receiver.receiver_type_name ||
+            method.method_name != receiver.method_name ||
+            method.signature.parameter_types.size() != expression.arguments.size() + 1 ||
+            method.signature.parameter_source_type_names.empty() ||
+            method.signature.parameter_source_type_names.front() != receiver.receiver_type_name ||
+            !has_supported_function_signature_types(method.signature) ||
+            !method_call_arguments_match_source_types(expression, method.signature, resolver)) {
             continue;
         }
-        auto signature = context.functions.find(specialization->name);
-        if (signature == context.functions.end() ||
-            signature->second.parameter_types.size() != expression.arguments.size() ||
-            !has_supported_function_signature_types(signature->second) ||
-            !call_arguments_match_source_types(expression, signature->second, resolver)) {
-            continue;
-        }
-        candidates.push_back(signature->second.symbol_name);
+        candidates.push_back(method.signature.symbol_name);
     }
     if (candidates.size() < 2) {
         return std::nullopt;
     }
-    return std::string {function_name} + " matches multiple generic specializations: " +
-        join_candidate_symbols(candidates);
+    return receiver.receiver_type_name + "." + receiver.method_name +
+        " matches multiple generic method specializations: " + join_candidate_symbols(candidates);
 }
 
 auto generic_specialization_ambiguity_detail(

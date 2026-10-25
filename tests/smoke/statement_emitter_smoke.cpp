@@ -242,9 +242,111 @@ int main() {
     );
     assert(output.str().empty());
 
+    auto ambiguous_var = orison::syntax::StatementSyntax {};
+    ambiguous_var.kind = orison::syntax::StatementKind::var_binding;
+    ambiguous_var.line = 10;
+    ambiguous_var.name = "mutable_chosen";
+    ambiguous_var.expression.kind = orison::syntax::ExpressionKind::call;
+    ambiguous_var.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_var.expression.left->kind = orison::syntax::ExpressionKind::name;
+    ambiguous_var.expression.left->text = "choose";
+    ambiguous_var.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_var_statement(
+        ambiguous_var,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this var initializer: ambiguous generic specialization: "
+        "choose matches multiple generic specializations: choose__UInt32, choose__UInt32_wide"
+    );
+    assert(output.str().empty());
+
+    state.immutable_bindings.emplace("box", orison::lowering::LoweredExpression {
+        .type = "%record.Box_UInt32",
+        .value = "%box",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    state.source_type_names["box"] = "Box<UInt32>";
+    lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "pick",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+            .parameter_types = {"%record.Box_UInt32", "i32"},
+            .parameter_source_type_names = {"Box<UInt32>", "UInt32"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::not_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.Box_UInt32.pick",
+        },
+    });
+    lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "pick",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i64",
+            .source_return_type_name = "UInt64",
+            .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+            .parameter_types = {"%record.Box_UInt32", "i32"},
+            .parameter_source_type_names = {"Box<UInt32>", "UInt32"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::not_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.Box_UInt32.pick_wide",
+        },
+    });
+    auto ambiguous_method_let = orison::syntax::StatementSyntax {};
+    ambiguous_method_let.kind = orison::syntax::StatementKind::let_binding;
+    ambiguous_method_let.line = 11;
+    ambiguous_method_let.name = "method_chosen";
+    ambiguous_method_let.expression.kind = orison::syntax::ExpressionKind::call;
+    ambiguous_method_let.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_method_let.expression.left->kind = orison::syntax::ExpressionKind::member_access;
+    ambiguous_method_let.expression.left->text = "pick";
+    ambiguous_method_let.expression.left->left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ambiguous_method_let.expression.left->left->kind = orison::syntax::ExpressionKind::name;
+    ambiguous_method_let.expression.left->left->text = "box";
+    ambiguous_method_let.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "input",
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_let_statement(
+        ambiguous_method_let,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this let initializer: ambiguous generic specialization: "
+        "Box<UInt32>.pick matches multiple generic method specializations: "
+        "method.Box_UInt32.pick, method.Box_UInt32.pick_wide"
+    );
+    assert(output.str().empty());
+
     auto annotated_let = orison::syntax::StatementSyntax {};
     annotated_let.kind = orison::syntax::StatementKind::let_binding;
-    annotated_let.line = 10;
+    annotated_let.line = 12;
     annotated_let.name = "chosen";
     annotated_let.annotated_type.name = "UInt64";
     annotated_let.expression.kind = orison::syntax::ExpressionKind::call;
