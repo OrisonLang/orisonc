@@ -379,6 +379,21 @@ int main() {
         .name = "generic_return_value",
         .expression = std::move(generic_return_call),
     });
+    auto repeated_generic_call = ExpressionSyntax {
+        .kind = ExpressionKind::call,
+        .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+            .kind = ExpressionKind::name,
+            .text = "identity",
+        }),
+    };
+    repeated_generic_call.arguments.push_back(ExpressionSyntax {
+        .kind = ExpressionKind::name,
+        .text = "indexed_value",
+    });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::expression_statement,
+        .expression = std::move(repeated_generic_call),
+    });
     auto rejected_return_call = ExpressionSyntax {
         .kind = ExpressionKind::call,
         .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
@@ -651,6 +666,8 @@ int main() {
     assert(context.generic_record_parameters.contains("NamedBox"));
     assert(context.generic_record_parameters.at("NamedBox").size() == 1);
     assert(context.generic_record_parameters.at("NamedBox")[0] == "T");
+    assert(context.generic_function_specializations.size() == 1);
+    assert(context.generic_function_specializations.front()->name == "identity__Byte");
     assert(context.records.contains("UartRegisters"));
     auto const& uart_layout = context.records.at("UartRegisters");
     assert(uart_layout.name == "UartRegisters");

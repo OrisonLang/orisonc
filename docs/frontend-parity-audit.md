@@ -3678,3 +3678,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-24: Switch-subject lowering now applies recursive generic ambiguity checks before subject-type inference.
   Function-emitter coverage pins final, unit, non-void-prefix, and nested-while switches. The remaining audited
   inference sites have explicit destination, return, Boolean-condition, receiver, or aggregate-path context.
+- 2026-10-25: Generic discovery must retain candidates encountered in source-independent expressions for later
+  ambiguity checks. Lowering-context coverage now pins one canonical specialization for repeated identical generic
+  calls; source duplicate-name checks and symbol deduplication prevent speculative duplicate candidates.
