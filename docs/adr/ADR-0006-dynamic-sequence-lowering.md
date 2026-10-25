@@ -3809,3 +3809,6 @@ representation.
 - 2026-10-25 Generic specialization discovery intentionally retains candidates from source-independent expressions so
   lowering can distinguish one valid specialization from ambiguity. Source declarations prohibit duplicate callable
   names, and discovery deduplicates repeated concrete symbols; provisional collection and pruning are not required.
+- 2026-10-25 Generic method discovery now has explicit canonical-symbol coverage parallel to generic functions.
+  Repeated binding and discarded calls on the same concrete generic receiver retain one method specialization rather
+  than duplicating candidate evidence.

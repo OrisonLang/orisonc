@@ -425,6 +425,20 @@ int main() {
             }),
         },
     });
+    projected_constructor_function.body_statements.push_back(StatementSyntax {
+        .kind = StatementKind::expression_statement,
+        .expression = ExpressionSyntax {
+            .kind = ExpressionKind::call,
+            .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                .kind = ExpressionKind::member_access,
+                .text = "value_copy",
+                .left = std::make_unique<ExpressionSyntax>(ExpressionSyntax {
+                    .kind = ExpressionKind::name,
+                    .text = "generic_evidence",
+                }),
+            }),
+        },
+    });
     for (auto const* value_name : {
              "ternary_return_value",
              "generic_return_value",
@@ -668,6 +682,11 @@ int main() {
     assert(context.generic_record_parameters.at("NamedBox")[0] == "T");
     assert(context.generic_function_specializations.size() == 1);
     assert(context.generic_function_specializations.front()->name == "identity__Byte");
+    assert(context.generic_method_specializations.size() == 1);
+    assert(
+        context.generic_method_specializations.front().symbol_name ==
+        "method.Box_UInt64_.value_copy__UInt64"
+    );
     assert(context.records.contains("UartRegisters"));
     auto const& uart_layout = context.records.at("UartRegisters");
     assert(uart_layout.name == "UartRegisters");
