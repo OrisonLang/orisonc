@@ -3711,3 +3711,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Multiple requirements on one generic parameter now cross the production CLI boundary.
   `Ordered + Identified` admits a concrete specialization only when both implementations exist; a partial
   implementation set reports the single missing requirement before LLVM emission.
+- 2026-10-26: Constraints on separate generic parameters now cross the production CLI boundary. A concrete
+  `select_left<Left, Right>` specialization emits and runs when `A: Ordered` and `B: Identified`; a missing
+  implementation for `B` reports only that failed requirement before LLVM emission.

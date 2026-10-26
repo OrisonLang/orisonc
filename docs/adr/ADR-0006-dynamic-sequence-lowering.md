@@ -3843,3 +3843,6 @@ representation.
 - 2026-10-26 Conjunctive `where` requirements now have production driver coverage. A value implementing both `Ordered`
   and `Identified` emits and executes `retain<Value>`; a value implementing only `Ordered` reports only the unmet
   `Identified` requirement and emits no LLVM definitions.
+- 2026-10-26 Independent constraints on multiple generic parameters now have production driver coverage.
+  `Left: Ordered` and `Right: Identified` emit and execute `select_left<Left, Right>`; omitting only the `Right`
+  implementation reports only the failed `B: Identified` requirement before LLVM emission.

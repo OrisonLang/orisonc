@@ -4190,6 +4190,92 @@ auto main(int argc, char** argv) -> int {
         ) == std::string::npos
     );
     assert(conjunctive_constraint_partial_output.find("define ") == std::string::npos);
+
+    auto independent_constraints_path = smoke_temp_root / "orison_cli_independent_constraints.or";
+    write_lines(
+        independent_constraints_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Identified",
+            "    function identifier(this: shared This) -> UInt32",
+            "record Left",
+            "    number: UInt32",
+            "record Right",
+            "    number: UInt32",
+            "implements Ordered for Left",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "implements Identified for Right",
+            "    function identifier(this: shared This) -> UInt32",
+            "        return this.number",
+            "function select_left<A, B>(left: A, right: B) -> A",
+            "where A: Ordered, B: Identified",
+            "    return left",
+            "function main() -> UInt32",
+            "    let left: Left = Left(7 as UInt32)",
+            "    let right: Right = Right(9 as UInt32)",
+            "    let selected: Left = select_left(left, right)",
+            "    selected.number - 7 as UInt32",
+        }
+    );
+    auto independent_constraints_ir = read_command_output(
+        executable.string() + " --emit-llvm " + independent_constraints_path.string()
+    );
+    assert(
+        independent_constraints_ir.find(
+            "define %record.Left @select_left__Left__Right(%record.Left %left, %record.Right %right)"
+        ) != std::string::npos
+    );
+    assert(
+        independent_constraints_ir.find(
+            "call %record.Left @select_left__Left__Right(%record.Left %tmp"
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, independent_constraints_path);
+
+    auto independent_constraints_partial_path =
+        smoke_temp_root / "orison_cli_independent_constraints_partial_implementation.or";
+    write_lines(
+        independent_constraints_partial_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Identified",
+            "    function identifier(this: shared This) -> UInt32",
+            "record Left",
+            "    number: UInt32",
+            "record Right",
+            "    number: UInt32",
+            "implements Ordered for Left",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "function select_left<A, B>(left: A, right: B) -> A",
+            "where A: Ordered, B: Identified",
+            "    return left",
+            "function main() -> UInt32",
+            "    let left: Left = Left(7 as UInt32)",
+            "    let right: Right = Right(9 as UInt32)",
+            "    let selected: Left = select_left(left, right)",
+            "    selected.number",
+        }
+    );
+    auto independent_constraints_partial_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + independent_constraints_partial_path.string()
+    );
+    assert(
+        independent_constraints_partial_output.find(
+            "generic function 'select_left' type argument 'Right' for 'B' does not satisfy constraint 'Identified'"
+        ) != std::string::npos
+    );
+    assert(
+        independent_constraints_partial_output.find(
+            "generic function 'select_left' type argument 'Left' for 'A' does not satisfy constraint 'Ordered'"
+        ) == std::string::npos
+    );
+    assert(independent_constraints_partial_output.find("define ") == std::string::npos);
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",
