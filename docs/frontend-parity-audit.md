@@ -3702,3 +3702,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-25: Constrained generic function calls now cross the production CLI boundary. A conforming implementation
   emits and executes its concrete specialization, while missing and return-incompatible implementations stop during
   semantic analysis before LLVM definitions are emitted.
+- 2026-10-25: Parameterized `where` requirements now cross the production CLI boundary. Generic receiver substitution
+  proves `Box<UInt32>: Contains<UInt32>` and emits the concrete `preserve` specialization; `Contains<UInt64>` and an
+  implementation return-type mismatch are rejected before LLVM emission.

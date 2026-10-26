@@ -3945,6 +3945,106 @@ auto main(int argc, char** argv) -> int {
         ) != std::string::npos
     );
     assert(nonconforming_constraint_output.find("define ") == std::string::npos);
+
+    auto parameterized_constraint_path = smoke_temp_root / "orison_cli_parameterized_constraint.or";
+    write_lines(
+        parameterized_constraint_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "record Box<T>",
+            "    item: T",
+            "implements Contains<T> for Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.item",
+            "function preserve<C, T>(container: C, item: T) -> C",
+            "where C: Contains<T>",
+            "    return container",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(7 as UInt32)",
+            "    let preserved: Box<UInt32> = preserve(box, 9 as UInt32)",
+            "    preserved.item - 7 as UInt32",
+        }
+    );
+    auto parameterized_constraint_ir = read_command_output(
+        executable.string() + " --emit-llvm " + parameterized_constraint_path.string()
+    );
+    assert(
+        parameterized_constraint_ir.find(
+            "define %record.Box_UInt32_ @preserve__Box_UInt32___UInt32(%record.Box_UInt32_ %container, i32 %item)"
+        ) != std::string::npos
+    );
+    assert(
+        parameterized_constraint_ir.find(
+            "call %record.Box_UInt32_ @preserve__Box_UInt32___UInt32(%record.Box_UInt32_ %tmp"
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, parameterized_constraint_path);
+
+    auto parameterized_constraint_mismatch_path =
+        smoke_temp_root / "orison_cli_parameterized_constraint_mismatch.or";
+    write_lines(
+        parameterized_constraint_mismatch_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "record Box<T>",
+            "    item: T",
+            "implements Contains<T> for Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.item",
+            "function preserve<C, T>(container: C, item: T) -> C",
+            "where C: Contains<T>",
+            "    return container",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(7 as UInt32)",
+            "    let preserved: Box<UInt32> = preserve(box, 9 as UInt64)",
+            "    preserved.item",
+        }
+    );
+    auto parameterized_constraint_mismatch_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + parameterized_constraint_mismatch_path.string()
+    );
+    assert(
+        parameterized_constraint_mismatch_output.find(
+            "generic function 'preserve' type argument 'Box<UInt32>' for 'C' does not satisfy constraint 'Contains<UInt64>'"
+        ) != std::string::npos
+    );
+    assert(parameterized_constraint_mismatch_output.find("define ") == std::string::npos);
+
+    auto nonconforming_parameterized_constraint_path =
+        smoke_temp_root / "orison_cli_parameterized_constraint_nonconforming_implementation.or";
+    write_lines(
+        nonconforming_parameterized_constraint_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "record Box<T>",
+            "    item: T",
+            "implements Contains<T> for Box<T>",
+            "    function value(this: shared This) -> UInt32",
+            "        return 0 as UInt32",
+            "function preserve<C, T>(container: C, item: T) -> C",
+            "where C: Contains<T>",
+            "    return container",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(7 as UInt32)",
+            "    let preserved: Box<UInt32> = preserve(box, 9 as UInt32)",
+            "    preserved.item",
+        }
+    );
+    auto nonconforming_parameterized_constraint_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + nonconforming_parameterized_constraint_path.string()
+    );
+    assert(
+        nonconforming_parameterized_constraint_output.find(
+            "implementation method 'Contains<T> for Box<T>.value' does not match the interface signature"
+        ) != std::string::npos
+    );
+    assert(nonconforming_parameterized_constraint_output.find("define ") == std::string::npos);
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",
