@@ -8216,6 +8216,186 @@ void test_duplicate_implementation_method_across_blocks_failure() {
     assert_fixture_single_diagnostic(path, 8, "implementation method 'Reader for Buffer.read' is duplicated");
 }
 
+void test_generic_interface_implementation_conformance_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_generic_interface_implementation_conformance_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Ordered",
+            "record Box<T>",
+            "    value: T",
+            "implements Mapper<UInt32> for Box<UInt32>",
+            "    function map<V>(this: shared This, value: V, fallback: UInt32) -> V",
+            "    where V: Ordered",
+            "        return value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_unknown_interface_implementation_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_interface_implementation.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "implements Missing for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        2,
+        "implementation 'Missing for Buffer' refers to unknown interface 'Missing'"
+    );
+}
+
+void test_interface_implementation_generic_arity_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_interface_implementation_generic_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader<T>",
+            "    function read(this: shared This) -> T",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "implementation 'Reader for Buffer' supplies 0 interface type arguments; interface 'Reader' requires 1"
+    );
+}
+
+void test_interface_implementation_missing_method_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_implementation_missing_method.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "    function reset(this: exclusive This) -> Unit",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "implementation 'Reader for Buffer' is missing interface method 'reset'"
+    );
+}
+
+void test_interface_implementation_extra_method_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_implementation_extra_method.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt32",
+            "        return 0",
+            "    function reset(this: exclusive This) -> Unit",
+            "        return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "implementation method 'Reader for Buffer.reset' is not declared by interface 'Reader'"
+    );
+}
+
+void test_interface_implementation_parameter_signature_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_implementation_parameter_signature.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader",
+            "    function read(this: exclusive This, count: UInt32) -> UInt32",
+            "implements Reader for Buffer",
+            "    function read(this: shared This, count: UInt64) -> UInt32",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "implementation method 'Reader for Buffer.read' does not match the interface signature"
+    );
+}
+
+void test_interface_implementation_return_signature_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_implementation_return_signature.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> UInt32",
+            "implements Reader for Buffer",
+            "    function read(this: shared This) -> UInt64",
+            "        return 0",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "implementation method 'Reader for Buffer.read' does not match the interface signature"
+    );
+}
+
+void test_interface_implementation_where_signature_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_implementation_where_signature.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Mapper",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "    where T: Ordered",
+            "implements Mapper for Buffer",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "        return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        8,
+        "implementation method 'Mapper for Buffer.map' does not match the interface signature"
+    );
+}
+
 void test_direct_constant_initializer_cycle_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_direct_constant_cycle_failure.or";
     write_concurrency_fixture(
@@ -14202,6 +14382,14 @@ int main() {
     test_duplicate_interface_method_name_failure();
     test_duplicate_implementation_method_name_failure();
     test_duplicate_implementation_method_across_blocks_failure();
+    test_generic_interface_implementation_conformance_success();
+    test_unknown_interface_implementation_failure();
+    test_interface_implementation_generic_arity_failure();
+    test_interface_implementation_missing_method_failure();
+    test_interface_implementation_extra_method_failure();
+    test_interface_implementation_parameter_signature_failure();
+    test_interface_implementation_return_signature_failure();
+    test_interface_implementation_where_signature_failure();
     test_direct_constant_initializer_cycle_failure();
     test_indirect_constant_initializer_cycle_failure();
     test_constant_initializer_await_failure();

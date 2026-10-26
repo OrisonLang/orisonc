@@ -2109,6 +2109,7 @@ private:
     }
 
     void parse_implementation(ParseResult& result) {
+        auto line = current().line;
         advance();
         auto interface_type = parse_type(result, "implements declaration requires an interface type");
         if (interface_type.name.empty()) {
@@ -2130,6 +2131,7 @@ private:
         }
 
         ImplementationSyntax implementation {
+            .line = line,
             .interface_type = std::move(interface_type),
             .receiver_type = std::move(receiver_type),
             .methods = {},

@@ -107,6 +107,7 @@ public:
         validate_duplicate_foreign_import_functions();
         validate_duplicate_interface_methods();
         validate_duplicate_implementation_methods();
+        validate_interface_implementations();
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
         validate_duplicate_generic_parameters_and_constraints();
@@ -4012,6 +4013,203 @@ private:
                     diagnostics_.error(
                         method.line,
                         "implementation method '" + key + "' is duplicated"
+                    );
+                }
+            }
+        }
+    }
+
+    auto normalized_where_constraints(
+        std::vector<syntax::WhereConstraintSyntax> const& constraints,
+        std::unordered_map<std::string, syntax::TypeSyntax> const& bindings
+    ) const -> std::vector<std::pair<std::string, std::vector<std::string>>> {
+        std::vector<std::pair<std::string, std::vector<std::string>>> normalized;
+        for (auto const& constraint : constraints) {
+            auto parameter = substitute_generic_type_bindings(
+                syntax::TypeSyntax {.name = constraint.parameter_name},
+                bindings
+            );
+            std::vector<std::string> requirements;
+            for (auto const& requirement : constraint.requirements) {
+                requirements.push_back(render_type_name(substitute_generic_type_bindings(requirement, bindings)));
+            }
+            std::sort(requirements.begin(), requirements.end());
+            normalized.emplace_back(render_type_name(parameter), std::move(requirements));
+        }
+        std::sort(normalized.begin(), normalized.end());
+        return normalized;
+    }
+
+    auto implementation_method_matches_interface_method(
+        syntax::InterfaceMethodSyntax const& interface_method,
+        syntax::FunctionSyntax const& implementation_method,
+        std::unordered_map<std::string, syntax::TypeSyntax> interface_bindings
+    ) const -> bool {
+        if (interface_method.generic_parameters.size() != implementation_method.generic_parameters.size() ||
+            interface_method.parameters.size() != implementation_method.parameters.size()) {
+            return false;
+        }
+
+        for (std::size_t index = 0; index < interface_method.generic_parameters.size(); ++index) {
+            interface_bindings.insert_or_assign(
+                interface_method.generic_parameters[index],
+                syntax::TypeSyntax {.name = implementation_method.generic_parameters[index]}
+            );
+        }
+
+        for (std::size_t index = 0; index < interface_method.parameters.size(); ++index) {
+            auto const& interface_parameter = interface_method.parameters[index];
+            auto const& implementation_parameter = implementation_method.parameters[index];
+            if ((interface_parameter.name == "this") != (implementation_parameter.name == "this")) {
+                return false;
+            }
+
+            auto expected_type = substitute_generic_type_bindings(interface_parameter.type, interface_bindings);
+            if (!are_type_syntaxes_compatible(implementation_parameter.type, expected_type)) {
+                return false;
+            }
+        }
+
+        auto expected_return_type =
+            substitute_generic_type_bindings(interface_method.return_type, interface_bindings);
+        if (!are_type_syntaxes_compatible(implementation_method.return_type, expected_return_type)) {
+            return false;
+        }
+
+        return normalized_where_constraints(interface_method.where_constraints, interface_bindings) ==
+            normalized_where_constraints(implementation_method.where_constraints, {});
+    }
+
+    auto implementation_method_contract_has_duplicates(
+        syntax::FunctionSyntax const& method
+    ) const -> bool {
+        std::unordered_set<std::string> names;
+        for (auto const& parameter : method.parameters) {
+            if (!names.insert(parameter.name).second) {
+                return true;
+            }
+        }
+
+        names.clear();
+        for (auto const& generic_parameter : method.generic_parameters) {
+            if (!names.insert(generic_parameter).second) {
+                return true;
+            }
+        }
+
+        names.clear();
+        for (auto const& constraint : method.where_constraints) {
+            if (!names.insert(constraint.parameter_name).second) {
+                return true;
+            }
+
+            std::unordered_set<std::string> requirements;
+            for (auto const& requirement : constraint.requirements) {
+                if (!requirements.insert(render_type_name(requirement)).second) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    void validate_interface_implementations() {
+        for (auto const& implementation : module_.implementations) {
+            auto interface_name = implementation.interface_type.name;
+            if (interface_name == "Transferable" || interface_name == "Shareable") {
+                continue;
+            }
+
+            auto interface_declaration = std::find_if(
+                module_.interfaces.begin(),
+                module_.interfaces.end(),
+                [&](syntax::InterfaceSyntax const& candidate) {
+                    return candidate.name == interface_name;
+                }
+            );
+            auto implementation_name =
+                render_type_name(implementation.interface_type) + " for " +
+                render_type_name(implementation.receiver_type);
+            if (interface_declaration == module_.interfaces.end()) {
+                diagnostics_.error(
+                    implementation.line,
+                    "implementation '" + implementation_name + "' refers to unknown interface '" +
+                        interface_name + "'"
+                );
+                continue;
+            }
+
+            if (interface_declaration->generic_parameters.size() !=
+                implementation.interface_type.generic_arguments.size()) {
+                diagnostics_.error(
+                    implementation.line,
+                    "implementation '" + implementation_name + "' supplies " +
+                        std::to_string(implementation.interface_type.generic_arguments.size()) +
+                        " interface type argument" +
+                        (implementation.interface_type.generic_arguments.size() == 1 ? "" : "s") +
+                        "; interface '" + interface_name + "' requires " +
+                        std::to_string(interface_declaration->generic_parameters.size())
+                );
+                continue;
+            }
+
+            std::unordered_map<std::string, syntax::TypeSyntax> interface_bindings;
+            for (std::size_t index = 0; index < interface_declaration->generic_parameters.size(); ++index) {
+                interface_bindings.emplace(
+                    interface_declaration->generic_parameters[index],
+                    implementation.interface_type.generic_arguments[index]
+                );
+            }
+
+            for (auto const& interface_method : interface_declaration->methods) {
+                auto implementation_method = std::find_if(
+                    implementation.methods.begin(),
+                    implementation.methods.end(),
+                    [&](syntax::FunctionSyntax const& candidate) {
+                        return candidate.name == interface_method.name;
+                    }
+                );
+                if (implementation_method == implementation.methods.end()) {
+                    diagnostics_.error(
+                        implementation.line,
+                        "implementation '" + implementation_name + "' is missing interface method '" +
+                            interface_method.name + "'"
+                    );
+                    continue;
+                }
+
+                if (implementation_method_contract_has_duplicates(*implementation_method)) {
+                    continue;
+                }
+
+                if (!implementation_method_matches_interface_method(
+                        interface_method,
+                        *implementation_method,
+                        interface_bindings
+                    )) {
+                    diagnostics_.error(
+                        implementation_method->line,
+                        "implementation method '" + implementation_name + "." +
+                            implementation_method->name + "' does not match the interface signature"
+                    );
+                }
+            }
+
+            for (auto const& implementation_method : implementation.methods) {
+                auto declared_method = std::find_if(
+                    interface_declaration->methods.begin(),
+                    interface_declaration->methods.end(),
+                    [&](syntax::InterfaceMethodSyntax const& candidate) {
+                        return candidate.name == implementation_method.name;
+                    }
+                );
+                if (declared_method == interface_declaration->methods.end()) {
+                    diagnostics_.error(
+                        implementation_method.line,
+                        "implementation method '" + implementation_name + "." +
+                            implementation_method.name + "' is not declared by interface '" +
+                            interface_name + "'"
                     );
                 }
             }

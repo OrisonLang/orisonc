@@ -3824,3 +3824,7 @@ representation.
 - 2026-10-25 Generic call validation now checks each inferred concrete type argument against its declared `where`
   requirements before specialization reaches lowering. Function and method constraints use matching `implements`
   declarations, including generic receiver patterns; failed argument unification suppresses secondary constraint errors.
+- 2026-10-25 Non-marker `implements` declarations now resolve a known interface and conform to its complete method
+  contract before they can satisfy generic constraints. Validation substitutes interface arguments, alpha-maps method
+  generics, and compares receiver roles, parameter and return types, and normalized `where` requirements. Missing,
+  extra, and incompatible methods are rejected; malformed method declarations retain their root duplicate diagnostic.

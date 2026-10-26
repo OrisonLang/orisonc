@@ -715,6 +715,7 @@ void test_implements_success() {
 
     assert(!result.diagnostics.has_errors());
     assert(result.module.implementations.size() == 1);
+    assert(result.module.implementations.front().line == 2);
     assert(result.module.implementations.front().interface_type.name == "Iterator");
     assert(result.module.implementations.front().interface_type.generic_arguments.size() == 1);
     assert(result.module.implementations.front().interface_type.generic_arguments[0].name == "Byte");

@@ -218,6 +218,7 @@ struct ForeignExportSyntax {
 };
 
 struct ImplementationSyntax {
+    std::size_t line = 0;
     TypeSyntax interface_type;
     TypeSyntax receiver_type;
     std::vector<FunctionSyntax> methods;

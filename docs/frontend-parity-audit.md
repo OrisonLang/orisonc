@@ -3692,3 +3692,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-25: Inferred function and method type arguments now enforce declared `where` requirements at call analysis.
   Matching concrete or generic `implements` declarations admit specialization; missing implementations produce one
   source-line diagnostic before lowering, while prior argument conflicts do not produce duplicate constraint errors.
+- 2026-10-25: Ordinary interface implementations now require a declared interface, exact interface generic arity, and
+  a complete method contract. Generic substitutions and renamed method type parameters are supported; missing, extra,
+  parameter-incompatible, return-incompatible, and constraint-incompatible methods have semantic regressions.
+  Compiler marker interfaces remain exempt while implementation blocks require at least one parsed method.
