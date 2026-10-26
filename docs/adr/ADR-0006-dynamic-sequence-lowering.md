@@ -3840,3 +3840,6 @@ representation.
 - 2026-10-25 Method-level `where` constraints now have production driver coverage. A conforming `Ordered for Value`
   implementation admits and executes `UInt32.choose<Value>` with its concrete record signature; omitting the
   implementation reports the generic-method constraint diagnostic before LLVM definitions are emitted.
+- 2026-10-26 Conjunctive `where` requirements now have production driver coverage. A value implementing both `Ordered`
+  and `Identified` emits and executes `retain<Value>`; a value implementing only `Ordered` reports only the unmet
+  `Identified` requirement and emits no LLVM definitions.

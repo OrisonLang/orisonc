@@ -3708,3 +3708,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-25: Constrained generic methods now cross the production CLI boundary. `Ordered for Value` admits the
   concrete `UInt32.choose<Value>` specialization and runtime path; a missing implementation stops during semantic
   analysis before LLVM definitions are emitted.
+- 2026-10-26: Multiple requirements on one generic parameter now cross the production CLI boundary.
+  `Ordered + Identified` admits a concrete specialization only when both implementations exist; a partial
+  implementation set reports the single missing requirement before LLVM emission.

@@ -4112,6 +4112,84 @@ auto main(int argc, char** argv) -> int {
         ) != std::string::npos
     );
     assert(constrained_generic_method_missing_implementation_output.find("define ") == std::string::npos);
+
+    auto conjunctive_constraint_path = smoke_temp_root / "orison_cli_conjunctive_constraint.or";
+    write_lines(
+        conjunctive_constraint_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Identified",
+            "    function identifier(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "implements Identified for Value",
+            "    function identifier(this: shared This) -> UInt32",
+            "        return this.number",
+            "function retain<T>(value: T) -> T",
+            "where T: Ordered + Identified",
+            "    return value",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let retained: Value = retain(value)",
+            "    retained.number - 7 as UInt32",
+        }
+    );
+    auto conjunctive_constraint_ir = read_command_output(
+        executable.string() + " --emit-llvm " + conjunctive_constraint_path.string()
+    );
+    assert(
+        conjunctive_constraint_ir.find("define %record.Value @retain__Value(%record.Value %value)") !=
+        std::string::npos
+    );
+    assert(
+        conjunctive_constraint_ir.find("call %record.Value @retain__Value(%record.Value %tmp") !=
+        std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, conjunctive_constraint_path);
+
+    auto conjunctive_constraint_partial_path =
+        smoke_temp_root / "orison_cli_conjunctive_constraint_partial_implementation.or";
+    write_lines(
+        conjunctive_constraint_partial_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Identified",
+            "    function identifier(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "function retain<T>(value: T) -> T",
+            "where T: Ordered + Identified",
+            "    return value",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let retained: Value = retain(value)",
+            "    retained.number",
+        }
+    );
+    auto conjunctive_constraint_partial_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + conjunctive_constraint_partial_path.string()
+    );
+    assert(
+        conjunctive_constraint_partial_output.find(
+            "generic function 'retain' type argument 'Value' for 'T' does not satisfy constraint 'Identified'"
+        ) != std::string::npos
+    );
+    assert(
+        conjunctive_constraint_partial_output.find(
+            "generic function 'retain' type argument 'Value' for 'T' does not satisfy constraint 'Ordered'"
+        ) == std::string::npos
+    );
+    assert(conjunctive_constraint_partial_output.find("define ") == std::string::npos);
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",
