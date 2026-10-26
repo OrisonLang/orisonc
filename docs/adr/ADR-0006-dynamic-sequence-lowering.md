@@ -3831,3 +3831,6 @@ representation.
 - 2026-10-25 Interface parsing now honors the existing optional interface body grammar. Bodyless marker and generic
   interfaces retain visibility and generic metadata, terminate at the declaration newline, and leave the next
   top-level declaration untouched. Declared `Transferable` and `Shareable` markers participate in constraint analysis.
+- 2026-10-25 Constrained generic calls now have production driver coverage at the semantic-to-lowering boundary. A
+  conforming `Ordered for Value` implementation emits and executes `identity__Value`; missing and signature-incompatible
+  implementations report semantic diagnostics without emitting LLVM definitions.

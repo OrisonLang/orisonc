@@ -3852,6 +3852,99 @@ auto main(int argc, char** argv) -> int {
         underconstrained_generic_record_for_lines(),
         "generic parameter 'T' cannot be inferred for record 'Tag'"
     );
+    auto constrained_generic_path = smoke_temp_root / "orison_cli_constrained_generic.or";
+    write_lines(
+        constrained_generic_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "function identity<T>(value: T) -> T",
+            "where T: Ordered",
+            "    return value",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let copied: Value = identity(value)",
+            "    copied.number - 7 as UInt32",
+        }
+    );
+    auto constrained_generic_ir = read_command_output(
+        executable.string() + " --emit-llvm " + constrained_generic_path.string()
+    );
+    assert(
+        constrained_generic_ir.find("define %record.Value @identity__Value(%record.Value %value)") !=
+        std::string::npos
+    );
+    assert(
+        constrained_generic_ir.find("call %record.Value @identity__Value(%record.Value %tmp") !=
+        std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, constrained_generic_path);
+
+    auto missing_constraint_path = smoke_temp_root / "orison_cli_constrained_generic_missing_implementation.or";
+    write_lines(
+        missing_constraint_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "function identity<T>(value: T) -> T",
+            "where T: Ordered",
+            "    return value",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let copied: Value = identity(value)",
+            "    copied.number",
+        }
+    );
+    auto missing_constraint_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + missing_constraint_path.string()
+    );
+    assert(
+        missing_constraint_output.find(
+            "generic function 'identity' type argument 'Value' for 'T' does not satisfy constraint 'Ordered'"
+        ) != std::string::npos
+    );
+    assert(missing_constraint_output.find("define ") == std::string::npos);
+
+    auto nonconforming_constraint_path =
+        smoke_temp_root / "orison_cli_constrained_generic_nonconforming_implementation.or";
+    write_lines(
+        nonconforming_constraint_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt64",
+            "        return this.number as UInt64",
+            "function identity<T>(value: T) -> T",
+            "where T: Ordered",
+            "    return value",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let copied: Value = identity(value)",
+            "    copied.number",
+        }
+    );
+    auto nonconforming_constraint_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + nonconforming_constraint_path.string()
+    );
+    assert(
+        nonconforming_constraint_output.find(
+            "implementation method 'Ordered for Value.rank' does not match the interface signature"
+        ) != std::string::npos
+    );
+    assert(nonconforming_constraint_output.find("define ") == std::string::npos);
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

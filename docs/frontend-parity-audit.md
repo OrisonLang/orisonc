@@ -3699,3 +3699,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-25: Bodyless interface declarations now match the tour and `interface_body_opt` grammar. Parser coverage pins
   consecutive marker declarations, visibility, generic parameters, and following top-level declarations; semantic
   coverage pins a declared `Transferable` marker used by an implemented concrete type and a constrained generic call.
+- 2026-10-25: Constrained generic function calls now cross the production CLI boundary. A conforming implementation
+  emits and executes its concrete specialization, while missing and return-incompatible implementations stop during
+  semantic analysis before LLVM definitions are emitted.
