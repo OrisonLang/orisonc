@@ -4276,6 +4276,90 @@ auto main(int argc, char** argv) -> int {
         ) == std::string::npos
     );
     assert(independent_constraints_partial_output.find("define ") == std::string::npos);
+
+    auto constrained_generic_interface_method_path =
+        smoke_temp_root / "orison_cli_constrained_generic_interface_method.or";
+    write_lines(
+        constrained_generic_interface_method_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Ordered",
+            "record Box<T>",
+            "    value: T",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "implements Mapper<UInt32> for Box<UInt32>",
+            "    function map<V>(this: shared This, value: V, fallback: UInt32) -> V",
+            "    where V: Ordered",
+            "        return value",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(1 as UInt32)",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let mapped: Value = box.map(value, 0 as UInt32)",
+            "    mapped.number - 7 as UInt32",
+        }
+    );
+    auto constrained_generic_interface_method_ir = read_command_output(
+        executable.string() + " --emit-llvm " + constrained_generic_interface_method_path.string()
+    );
+    assert(
+        constrained_generic_interface_method_ir.find(
+            "define %record.Value @method.Box_UInt32_.map__Value("
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_interface_method_ir.find(
+            "call %record.Value @method.Box_UInt32_.map__Value("
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, constrained_generic_interface_method_path);
+
+    auto constrained_generic_interface_method_missing_implementation_path =
+        smoke_temp_root / "orison_cli_constrained_generic_interface_method_missing_implementation.or";
+    write_lines(
+        constrained_generic_interface_method_missing_implementation_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Ordered",
+            "record Box<T>",
+            "    value: T",
+            "record Value",
+            "    number: UInt32",
+            "implements Mapper<UInt32> for Box<UInt32>",
+            "    function map<V>(this: shared This, value: V, fallback: UInt32) -> V",
+            "    where V: Ordered",
+            "        return value",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(1 as UInt32)",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let mapped: Value = box.map(value, 0 as UInt32)",
+            "    mapped.number",
+        }
+    );
+    auto constrained_generic_interface_method_missing_implementation_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " +
+        constrained_generic_interface_method_missing_implementation_path.string()
+    );
+    assert(
+        constrained_generic_interface_method_missing_implementation_output.find(
+            "generic method 'map' type argument 'Value' for 'V' does not satisfy constraint 'Ordered'"
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_interface_method_missing_implementation_output.find("define ") == std::string::npos
+    );
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

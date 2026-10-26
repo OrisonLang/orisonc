@@ -3846,3 +3846,6 @@ representation.
 - 2026-10-26 Independent constraints on multiple generic parameters now have production driver coverage.
   `Left: Ordered` and `Right: Identified` emit and execute `select_left<Left, Right>`; omitting only the `Right`
   implementation reports only the failed `B: Identified` requirement before LLVM emission.
+- 2026-10-26 Generic interface methods with method-local constraints now have production driver coverage.
+  `Mapper<UInt32> for Box<UInt32>` alpha-renames interface parameter `U` to implementation parameter `V`, emits and
+  executes `Box<UInt32>.map<Value>`, and rejects a `Value` without `Ordered` before LLVM emission.

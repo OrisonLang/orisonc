@@ -3714,3 +3714,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Constraints on separate generic parameters now cross the production CLI boundary. A concrete
   `select_left<Left, Right>` specialization emits and runs when `A: Ordered` and `B: Identified`; a missing
   implementation for `B` reports only that failed requirement before LLVM emission.
+- 2026-10-26: Generic interface methods with their own `where` clauses now cross the production CLI boundary.
+  A conforming implementation may alpha-rename the method type parameter and emits the concrete receiver-call
+  specialization; a missing constraint implementation reports the implementation parameter name before LLVM emission.
