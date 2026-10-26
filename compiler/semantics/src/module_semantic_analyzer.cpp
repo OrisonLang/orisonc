@@ -46,6 +46,7 @@ struct MethodReturnSignature {
     std::string method_name;
     std::vector<std::string> generic_parameters;
     std::vector<syntax::ParameterSyntax> parameters;
+    std::vector<syntax::WhereConstraintSyntax> where_constraints;
     syntax::TypeSyntax return_type;
 };
 
@@ -68,6 +69,7 @@ struct CallableSignature {
     std::string name;
     std::vector<std::string> generic_parameters;
     std::vector<syntax::ParameterSyntax> parameters;
+    std::vector<syntax::WhereConstraintSyntax> where_constraints;
     syntax::TypeSyntax return_type;
     bool foreign = false;
 };
@@ -795,6 +797,70 @@ private:
             }
 
             collect_receiver_generic_placeholder_names(argument, placeholders);
+        }
+    }
+
+    auto type_satisfies_where_requirement(
+        syntax::TypeSyntax const& concrete_type,
+        syntax::TypeSyntax const& requirement
+    ) const -> bool {
+        for (auto const& implementation : module_.implementations) {
+            std::unordered_set<std::string> receiver_placeholder_set;
+            collect_receiver_generic_placeholder_names(
+                implementation.receiver_type,
+                receiver_placeholder_set
+            );
+            std::vector<std::string> receiver_placeholders(
+                receiver_placeholder_set.begin(),
+                receiver_placeholder_set.end()
+            );
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (!match_generic_type_pattern(
+                    implementation.receiver_type,
+                    concrete_type,
+                    receiver_placeholders,
+                    bindings
+                )) {
+                continue;
+            }
+
+            auto implemented_interface =
+                substitute_generic_type_bindings(implementation.interface_type, bindings);
+            if (are_type_syntaxes_compatible(implemented_interface, requirement)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void validate_where_constraint_bindings(
+        std::vector<syntax::WhereConstraintSyntax> const& where_constraints,
+        std::unordered_map<std::string, syntax::TypeSyntax> const& bindings,
+        std::string_view callable_kind,
+        std::string_view callable_name,
+        std::size_t line
+    ) {
+        for (auto const& constraint : where_constraints) {
+            auto binding = bindings.find(constraint.parameter_name);
+            if (binding == bindings.end()) {
+                continue;
+            }
+
+            for (auto const& requirement : constraint.requirements) {
+                auto concrete_requirement = substitute_generic_type_bindings(requirement, bindings);
+                if (type_satisfies_where_requirement(binding->second, concrete_requirement)) {
+                    continue;
+                }
+
+                diagnostics_.error(
+                    line,
+                    std::string(callable_kind) + " '" + std::string(callable_name) +
+                        "' type argument '" + render_type_name(binding->second) + "' for '" +
+                        constraint.parameter_name + "' does not satisfy constraint '" +
+                        render_type_name(concrete_requirement) + "'"
+                );
+            }
         }
     }
 
@@ -2359,6 +2425,15 @@ private:
                     0,
                     signature.foreign
                 );
+                if (conflicting_argument_indices.empty()) {
+                    validate_where_constraint_bindings(
+                        signature.where_constraints,
+                        bindings,
+                        "generic function",
+                        signature.name,
+                        expression.line
+                    );
+                }
                 return;
             }
             if (arity_mismatch != nullptr) {
@@ -2462,6 +2537,15 @@ private:
                 "method",
                 argument_offset
             );
+            if (conflicting_argument_indices.empty()) {
+                validate_where_constraint_bindings(
+                    signature.where_constraints,
+                    bindings,
+                    "generic method",
+                    signature.method_name,
+                    expression.line
+                );
+            }
             return;
         }
 
@@ -4236,6 +4320,7 @@ private:
                 .name = function.name,
                 .generic_parameters = function.generic_parameters,
                 .parameters = function.parameters,
+                .where_constraints = function.where_constraints,
                 .return_type = function.return_type,
                 .foreign = false,
             });
@@ -4247,6 +4332,7 @@ private:
                     .name = function.name,
                     .generic_parameters = {},
                     .parameters = function.parameters,
+                    .where_constraints = {},
                     .return_type = function.return_type,
                     .foreign = true,
                 });
@@ -4260,6 +4346,7 @@ private:
                     .method_name = method.name,
                     .generic_parameters = method.generic_parameters,
                     .parameters = method.parameters,
+                    .where_constraints = method.where_constraints,
                     .return_type = method.return_type,
                 });
             }
@@ -4272,6 +4359,7 @@ private:
                     .method_name = method.name,
                     .generic_parameters = method.generic_parameters,
                     .parameters = method.parameters,
+                    .where_constraints = method.where_constraints,
                     .return_type = method.return_type,
                 });
             }
@@ -4282,6 +4370,7 @@ private:
                 .name = foreign_export.function.name,
                 .generic_parameters = foreign_export.function.generic_parameters,
                 .parameters = foreign_export.function.parameters,
+                .where_constraints = foreign_export.function.where_constraints,
                 .return_type = foreign_export.function.return_type,
                 .foreign = false,
             });

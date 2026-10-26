@@ -3689,3 +3689,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `UInt32.select<UInt64>`. Each specialization has one canonical definition and a call with its concrete LLVM type.
 - 2026-10-25: Combined generic receiver and method substitutions now have crossed production coverage. Canonical
   symbols retain method-parameter then receiver-parameter ordering, with matching LLVM signatures and calls.
+- 2026-10-25: Inferred function and method type arguments now enforce declared `where` requirements at call analysis.
+  Matching concrete or generic `implements` declarations admit specialization; missing implementations produce one
+  source-line diagnostic before lowering, while prior argument conflicts do not produce duplicate constraint errors.

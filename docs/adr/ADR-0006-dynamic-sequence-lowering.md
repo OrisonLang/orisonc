@@ -3821,3 +3821,6 @@ representation.
 - 2026-10-25 Combined receiver-level and method-level substitutions now have crossed same-module production coverage.
   `Box<UInt32>.choose<UInt64>` and `Box<UInt64>.choose<UInt32>` preserve method-then-receiver symbol ordering,
   concrete signatures, typed calls, artifacts, and runtime results.
+- 2026-10-25 Generic call validation now checks each inferred concrete type argument against its declared `where`
+  requirements before specialization reaches lowering. Function and method constraints use matching `implements`
+  declarations, including generic receiver patterns; failed argument unification suppresses secondary constraint errors.
