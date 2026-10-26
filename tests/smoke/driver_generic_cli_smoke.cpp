@@ -4360,6 +4360,103 @@ auto main(int argc, char** argv) -> int {
         constrained_generic_interface_method_missing_implementation_output.find("define ") == std::string::npos
     );
 
+    auto constrained_generic_interface_method_receiver_path =
+        smoke_temp_root / "orison_cli_constrained_generic_interface_method_receiver.or";
+    write_lines(
+        constrained_generic_interface_method_receiver_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Ordered",
+            "record Box<T>",
+            "    value: T",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "implements Mapper<T> for Box<T>",
+            "    function map<V>(this: shared This, value: V, fallback: T) -> V",
+            "    where V: Ordered",
+            "        return value",
+            "function main() -> UInt32",
+            "    let narrow_box: Box<UInt32> = Box(1 as UInt32)",
+            "    let wide_box: Box<UInt64> = Box(2 as UInt64)",
+            "    let narrow_value: Value = Value(7 as UInt32)",
+            "    let wide_value: Value = Value(9 as UInt32)",
+            "    let narrow_mapped: Value = narrow_box.map(narrow_value, 0 as UInt32)",
+            "    let wide_mapped: Value = wide_box.map(wide_value, 0 as UInt64)",
+            "    narrow_mapped.number + wide_mapped.number - 16 as UInt32",
+        }
+    );
+    auto constrained_generic_interface_method_receiver_ir = read_command_output(
+        executable.string() + " --emit-llvm " + constrained_generic_interface_method_receiver_path.string()
+    );
+    assert(
+        constrained_generic_interface_method_receiver_ir.find(
+            "define %record.Value @method.Box_UInt32_.map__Value__UInt32("
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_interface_method_receiver_ir.find(
+            "define %record.Value @method.Box_UInt64_.map__Value__UInt64("
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_interface_method_receiver_ir.find(
+            "call %record.Value @method.Box_UInt32_.map__Value__UInt32("
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_interface_method_receiver_ir.find(
+            "call %record.Value @method.Box_UInt64_.map__Value__UInt64("
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, constrained_generic_interface_method_receiver_path);
+
+    auto constrained_generic_interface_method_receiver_missing_implementation_path =
+        smoke_temp_root / "orison_cli_constrained_generic_interface_method_receiver_missing_implementation.or";
+    write_lines(
+        constrained_generic_interface_method_receiver_missing_implementation_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Ordered",
+            "record Box<T>",
+            "    value: T",
+            "record Value",
+            "    number: UInt32",
+            "implements Mapper<T> for Box<T>",
+            "    function map<V>(this: shared This, value: V, fallback: T) -> V",
+            "    where V: Ordered",
+            "        return value",
+            "function main() -> UInt32",
+            "    let box: Box<UInt64> = Box(2 as UInt64)",
+            "    let value: Value = Value(9 as UInt32)",
+            "    let mapped: Value = box.map(value, 0 as UInt64)",
+            "    mapped.number",
+        }
+    );
+    auto constrained_generic_interface_method_receiver_missing_implementation_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " +
+        constrained_generic_interface_method_receiver_missing_implementation_path.string()
+    );
+    assert(
+        constrained_generic_interface_method_receiver_missing_implementation_output.find(
+            "generic method 'map' type argument 'Value' for 'V' does not satisfy constraint 'Ordered'"
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_interface_method_receiver_missing_implementation_output.find("define ") ==
+        std::string::npos
+    );
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

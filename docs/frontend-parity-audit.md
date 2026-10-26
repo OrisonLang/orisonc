@@ -3717,3 +3717,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Generic interface methods with their own `where` clauses now cross the production CLI boundary.
   A conforming implementation may alpha-rename the method type parameter and emits the concrete receiver-call
   specialization; a missing constraint implementation reports the implementation parameter name before LLVM emission.
+- 2026-10-26: Generic implementation receivers now compose with constrained interface methods through production CLI
+  lowering. One `Mapper<T> for Box<T>` implementation emits distinct `UInt32` and `UInt64` receiver specializations,
+  while a missing method-argument constraint implementation remains a semantic error with no LLVM definitions.
