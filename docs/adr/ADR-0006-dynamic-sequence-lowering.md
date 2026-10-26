@@ -3828,3 +3828,6 @@ representation.
   contract before they can satisfy generic constraints. Validation substitutes interface arguments, alpha-maps method
   generics, and compares receiver roles, parameter and return types, and normalized `where` requirements. Missing,
   extra, and incompatible methods are rejected; malformed method declarations retain their root duplicate diagnostic.
+- 2026-10-25 Interface parsing now honors the existing optional interface body grammar. Bodyless marker and generic
+  interfaces retain visibility and generic metadata, terminate at the declaration newline, and leave the next
+  top-level declaration untouched. Declared `Transferable` and `Shareable` markers participate in constraint analysis.

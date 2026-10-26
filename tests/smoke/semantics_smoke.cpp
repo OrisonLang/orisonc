@@ -8241,6 +8241,33 @@ void test_generic_interface_implementation_conformance_success() {
     assert_fixture_success(path);
 }
 
+void test_bodyless_marker_interface_constraint_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_bodyless_marker_interface_constraint_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Transferable",
+            "interface Shareable",
+            "record Buffer",
+            "    value: UInt32",
+            "implements Transferable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function identity<T>(value: T) -> T",
+            "where T: Transferable",
+            "    return value",
+            "function main() -> UInt32",
+            "    let buffer: Buffer = Buffer(7 as UInt32)",
+            "    let copied: Buffer = identity(buffer)",
+            "    copied.value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_unknown_interface_implementation_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_interface_implementation.or";
     write_concurrency_fixture(
@@ -14383,6 +14410,7 @@ int main() {
     test_duplicate_implementation_method_name_failure();
     test_duplicate_implementation_method_across_blocks_failure();
     test_generic_interface_implementation_conformance_success();
+    test_bodyless_marker_interface_constraint_success();
     test_unknown_interface_implementation_failure();
     test_interface_implementation_generic_arity_failure();
     test_interface_implementation_missing_method_failure();

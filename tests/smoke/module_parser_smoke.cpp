@@ -697,6 +697,36 @@ void test_interface_generic_success() {
     assert(result.module.interfaces.front().methods[0].return_type.generic_arguments[0].name == "T");
 }
 
+void test_bodyless_interface_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_bodyless_interface_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.interfaces\n";
+        output << "interface Transferable\n";
+        output << "public interface Marker<T>\n";
+        output << "function main() -> UInt32\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.interfaces.size() == 2);
+    assert(result.module.interfaces[0].name == "Transferable");
+    assert(result.module.interfaces[0].methods.empty());
+    assert(result.module.interfaces[1].name == "Marker");
+    assert(result.module.interfaces[1].visibility == orison::syntax::Visibility::public_visibility);
+    assert(result.module.interfaces[1].generic_parameters.size() == 1);
+    assert(result.module.interfaces[1].generic_parameters[0] == "T");
+    assert(result.module.interfaces[1].methods.empty());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().name == "main");
+}
+
 void test_implements_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_implements_success.or";
     {
@@ -2289,6 +2319,7 @@ int main() {
     test_unsafe_function_failure();
     test_choice_generic_success();
     test_interface_generic_success();
+    test_bodyless_interface_success();
     test_implements_success();
     test_implements_failure();
     test_extend_success();

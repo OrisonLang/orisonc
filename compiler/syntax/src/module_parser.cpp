@@ -2082,10 +2082,21 @@ private:
             .methods = {},
         };
 
-        if (!consume_block_start(result, "interface declaration requires an indented member block")) {
+        if (!is(TokenKind::newline)) {
+            result.diagnostics.error(current().line, "interface declaration must end after its name or generic parameters");
             skip_to_next_top_level();
             return;
         }
+
+        advance();
+        if (!is(TokenKind::indent)) {
+            result.module.interfaces.push_back(std::move(interface_syntax));
+            ++result.module.top_level_declaration_count;
+            return;
+        }
+
+        advance();
+        skip_newlines();
 
         while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
             if (is(TokenKind::newline)) {

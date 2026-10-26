@@ -3696,3 +3696,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   a complete method contract. Generic substitutions and renamed method type parameters are supported; missing, extra,
   parameter-incompatible, return-incompatible, and constraint-incompatible methods have semantic regressions.
   Compiler marker interfaces remain exempt while implementation blocks require at least one parsed method.
+- 2026-10-25: Bodyless interface declarations now match the tour and `interface_body_opt` grammar. Parser coverage pins
+  consecutive marker declarations, visibility, generic parameters, and following top-level declarations; semantic
+  coverage pins a declared `Transferable` marker used by an implemented concrete type and a constrained generic call.
