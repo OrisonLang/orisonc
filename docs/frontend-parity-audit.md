@@ -3705,3 +3705,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-25: Parameterized `where` requirements now cross the production CLI boundary. Generic receiver substitution
   proves `Box<UInt32>: Contains<UInt32>` and emits the concrete `preserve` specialization; `Contains<UInt64>` and an
   implementation return-type mismatch are rejected before LLVM emission.
+- 2026-10-25: Constrained generic methods now cross the production CLI boundary. `Ordered for Value` admits the
+  concrete `UInt32.choose<Value>` specialization and runtime path; a missing implementation stops during semantic
+  analysis before LLVM definitions are emitted.

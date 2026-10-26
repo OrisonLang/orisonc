@@ -4045,6 +4045,73 @@ auto main(int argc, char** argv) -> int {
         ) != std::string::npos
     );
     assert(nonconforming_parameterized_constraint_output.find("define ") == std::string::npos);
+
+    auto constrained_generic_method_path = smoke_temp_root / "orison_cli_constrained_generic_method.or";
+    write_lines(
+        constrained_generic_method_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "implements Ordered for Value",
+            "    function rank(this: shared This) -> UInt32",
+            "        return this.number",
+            "extend UInt32",
+            "    function choose<T>(this: shared This, candidate: T) -> T",
+            "    where T: Ordered",
+            "        return candidate",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let chosen: Value = (0 as UInt32).choose(value)",
+            "    chosen.number - 7 as UInt32",
+        }
+    );
+    auto constrained_generic_method_ir = read_command_output(
+        executable.string() + " --emit-llvm " + constrained_generic_method_path.string()
+    );
+    assert(
+        constrained_generic_method_ir.find(
+            "define %record.Value @method.UInt32.choose__Value(i32 %this, %record.Value %candidate)"
+        ) != std::string::npos
+    );
+    assert(
+        constrained_generic_method_ir.find(
+            "call %record.Value @method.UInt32.choose__Value(i32 0, %record.Value %tmp"
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, constrained_generic_method_path);
+
+    auto constrained_generic_method_missing_implementation_path =
+        smoke_temp_root / "orison_cli_constrained_generic_method_missing_implementation.or";
+    write_lines(
+        constrained_generic_method_missing_implementation_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "    function rank(this: shared This) -> UInt32",
+            "record Value",
+            "    number: UInt32",
+            "extend UInt32",
+            "    function choose<T>(this: shared This, candidate: T) -> T",
+            "    where T: Ordered",
+            "        return candidate",
+            "function main() -> UInt32",
+            "    let value: Value = Value(7 as UInt32)",
+            "    let chosen: Value = (0 as UInt32).choose(value)",
+            "    chosen.number",
+        }
+    );
+    auto constrained_generic_method_missing_implementation_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + constrained_generic_method_missing_implementation_path.string()
+    );
+    assert(
+        constrained_generic_method_missing_implementation_output.find(
+            "generic method 'choose' type argument 'Value' for 'T' does not satisfy constraint 'Ordered'"
+        ) != std::string::npos
+    );
+    assert(constrained_generic_method_missing_implementation_output.find("define ") == std::string::npos);
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",
