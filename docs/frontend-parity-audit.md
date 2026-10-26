@@ -3720,3 +3720,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Generic implementation receivers now compose with constrained interface methods through production CLI
   lowering. One `Mapper<T> for Box<T>` implementation emits distinct `UInt32` and `UInt64` receiver specializations,
   while a missing method-argument constraint implementation remains a semantic error with no LLVM definitions.
+- 2026-10-26: Receiver substitutions now flow into parameterized method constraints through the production CLI.
+  `V: Contains<T>` accepts `Box<UInt32>` for a `Holder<UInt32>` receiver, while `Box<UInt64>` reports the substituted
+  `Contains<UInt32>` requirement and emits no LLVM definitions.

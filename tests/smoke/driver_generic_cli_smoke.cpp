@@ -4457,6 +4457,93 @@ auto main(int argc, char** argv) -> int {
         std::string::npos
     );
 
+    auto receiver_dependent_interface_method_constraint_path =
+        smoke_temp_root / "orison_cli_receiver_dependent_interface_method_constraint.or";
+    write_lines(
+        receiver_dependent_interface_method_constraint_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Contains<T>",
+            "record Box<T>",
+            "    item: T",
+            "record Holder<T>",
+            "    item: T",
+            "implements Contains<T> for Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.item",
+            "implements Mapper<T> for Holder<T>",
+            "    function map<V>(this: shared This, value: V, fallback: T) -> V",
+            "    where V: Contains<T>",
+            "        return value",
+            "function main() -> UInt32",
+            "    let holder: Holder<UInt32> = Holder(1 as UInt32)",
+            "    let box: Box<UInt32> = Box(7 as UInt32)",
+            "    let mapped: Box<UInt32> = holder.map(box, 0 as UInt32)",
+            "    mapped.item - 7 as UInt32",
+        }
+    );
+    auto receiver_dependent_interface_method_constraint_ir = read_command_output(
+        executable.string() + " --emit-llvm " + receiver_dependent_interface_method_constraint_path.string()
+    );
+    assert(
+        receiver_dependent_interface_method_constraint_ir.find(
+            "define %record.Box_UInt32_ @method.Holder_UInt32_.map__Box_UInt32___UInt32("
+        ) != std::string::npos
+    );
+    assert(
+        receiver_dependent_interface_method_constraint_ir.find(
+            "call %record.Box_UInt32_ @method.Holder_UInt32_.map__Box_UInt32___UInt32("
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, receiver_dependent_interface_method_constraint_path);
+
+    auto receiver_dependent_interface_method_constraint_mismatch_path =
+        smoke_temp_root / "orison_cli_receiver_dependent_interface_method_constraint_mismatch.or";
+    write_lines(
+        receiver_dependent_interface_method_constraint_mismatch_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Contains<T>",
+            "record Box<T>",
+            "    item: T",
+            "record Holder<T>",
+            "    item: T",
+            "implements Contains<T> for Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.item",
+            "implements Mapper<T> for Holder<T>",
+            "    function map<V>(this: shared This, value: V, fallback: T) -> V",
+            "    where V: Contains<T>",
+            "        return value",
+            "function main() -> UInt64",
+            "    let holder: Holder<UInt32> = Holder(1 as UInt32)",
+            "    let box: Box<UInt64> = Box(7 as UInt64)",
+            "    let mapped: Box<UInt64> = holder.map(box, 0 as UInt32)",
+            "    mapped.item",
+        }
+    );
+    auto receiver_dependent_interface_method_constraint_mismatch_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " +
+        receiver_dependent_interface_method_constraint_mismatch_path.string()
+    );
+    assert(
+        receiver_dependent_interface_method_constraint_mismatch_output.find(
+            "generic method 'map' type argument 'Box<UInt64>' for 'V' does not satisfy constraint "
+            "'Contains<UInt32>'"
+        ) != std::string::npos
+    );
+    assert(
+        receiver_dependent_interface_method_constraint_mismatch_output.find("define ") == std::string::npos
+    );
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

@@ -3852,3 +3852,6 @@ representation.
 - 2026-10-26 Constrained interface methods on generic implementation receivers now have production driver coverage.
   One `Mapper<T> for Box<T>` declaration emits and executes `map<Value>` for both `Box<UInt32>` and `Box<UInt64>`,
   preserving method-then-receiver specialization order; an unmet `V: Ordered` requirement stops before LLVM emission.
+- 2026-10-26 Method constraints that reference a generic receiver parameter now have production driver coverage.
+  `Holder<UInt32>.map<Box<UInt32>>` resolves `V: Contains<T>` to `Box<UInt32>: Contains<UInt32>` and executes;
+  `Box<UInt64>` reports the concrete `Contains<UInt32>` mismatch before LLVM emission.
