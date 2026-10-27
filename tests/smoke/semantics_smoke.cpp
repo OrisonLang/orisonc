@@ -8078,6 +8078,47 @@ void test_record_field_source_type_arity_failure() {
     );
 }
 
+void test_type_alias_target_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_type_alias_target_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.declaration_types",
+        {
+            "type Port = Outcome<UInt16>",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        2,
+        "type alias 'Port' target type 'Outcome<UInt16>' supplies 1 type argument; type 'Outcome' requires 2"
+    );
+}
+
+void test_constant_annotation_array_size_role_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_annotation_array_size_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.declaration_types",
+        {
+            "const MAGIC: Array<Byte, UInt32> = [0]",
+        }
+    );
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(diagnostics.has_errors());
+    auto found_declaration_diagnostic = false;
+    for (auto const& diagnostic : diagnostics.entries()) {
+        if (diagnostic.line == 2 &&
+            diagnostic.message ==
+                "constant 'MAGIC' annotation type 'Array<Byte, UInt32>' requires an integer size as its second "
+                "argument") {
+            found_declaration_diagnostic = true;
+        }
+    }
+    assert(found_declaration_diagnostic);
+}
+
 void test_generic_record_field_array_size_role_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_field_array_size_role.or";
     write_concurrency_fixture(
@@ -14883,6 +14924,8 @@ int main() {
     test_interface_method_generic_parameter_shadowing_failure();
     test_implementation_method_generic_parameter_shadowing_failure();
     test_extension_method_generic_parameter_shadowing_failure();
+    test_type_alias_target_type_arity_failure();
+    test_constant_annotation_array_size_role_failure();
     test_record_field_source_type_arity_failure();
     test_generic_record_field_array_size_role_failure();
     test_choice_payload_builtin_type_arity_failure();

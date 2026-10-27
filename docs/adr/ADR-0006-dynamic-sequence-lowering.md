@@ -3886,3 +3886,6 @@ representation.
 - 2026-10-27 Record fields and choice payloads now use the same declaration-time type-constructor validation as
   callable signatures. Aggregate generic parameters remain in scope for recursive validation, and malformed arity or
   `Array<T, N>` argument roles stop before aggregate metadata reaches lowering.
+- 2026-10-27 Type-alias targets and top-level constant annotations now use declaration-time type-constructor
+  validation before constant binding and initializer analysis. Known arity and `Array<T, N>` roles are checked without
+  changing deferred handling for unresolved or imported nominal metadata.

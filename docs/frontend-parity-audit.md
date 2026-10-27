@@ -3754,3 +3754,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-27: Record field and choice payload declarations now validate known generic constructor arity and fixed-array
   argument roles before aggregate metadata collection. Aggregate generic scopes support nested and recursive member
   types, while malformed declarations block LLVM definitions.
+- 2026-10-27: Type-alias targets and top-level constant annotations now validate known generic constructor arity and
+  fixed-array argument roles during declaration analysis. Malformed declarations report their alias or constant
+  context and block LLVM definitions before lowering.

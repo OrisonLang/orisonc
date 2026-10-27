@@ -4822,6 +4822,33 @@ auto main(int argc, char** argv) -> int {
     );
     assert(aggregate_member_signature_type_arity_output.find("define ") == std::string::npos);
 
+    auto alias_and_constant_signature_type_path =
+        smoke_temp_root / "orison_cli_alias_and_constant_signature_type.or";
+    write_lines(
+        alias_and_constant_signature_type_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "type Port = Outcome<UInt16>",
+            "const MAGIC: Array<Byte, UInt32> = [0]",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto alias_and_constant_signature_type_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + alias_and_constant_signature_type_path.string()
+    );
+    assert(
+        alias_and_constant_signature_type_output.find(
+            "type alias 'Port' target type 'Outcome<UInt16>' supplies 1 type argument; type 'Outcome' requires 2"
+        ) != std::string::npos
+    );
+    assert(
+        alias_and_constant_signature_type_output.find(
+            "constant 'MAGIC' annotation type 'Array<Byte, UInt32>' requires an integer size as its second argument"
+        ) != std::string::npos
+    );
+    assert(alias_and_constant_signature_type_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

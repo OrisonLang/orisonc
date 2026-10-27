@@ -111,6 +111,7 @@ public:
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
         validate_duplicate_generic_parameters_and_constraints();
+        validate_type_alias_and_constant_types();
         validate_aggregate_member_types();
         validate_callable_signature_types();
         validate_where_constraint_declarations();
@@ -4684,6 +4685,28 @@ private:
                     );
                 }
             }
+        }
+    }
+
+    void validate_type_alias_and_constant_types() {
+        for (auto const& type_alias : module_.type_aliases) {
+            validate_declared_type_reference(
+                type_alias.aliased_type,
+                {},
+                false,
+                type_alias.line,
+                "type alias '" + type_alias.name + "' target"
+            );
+        }
+
+        for (auto const& constant : module_.constants) {
+            validate_declared_type_reference(
+                constant.type,
+                {},
+                false,
+                constant.line,
+                "constant '" + constant.name + "' annotation"
+            );
         }
     }
 
