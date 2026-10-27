@@ -3855,3 +3855,6 @@ representation.
 - 2026-10-26 Method constraints that reference a generic receiver parameter now have production driver coverage.
   `Holder<UInt32>.map<Box<UInt32>>` resolves `V: Contains<T>` to `Box<UInt32>: Contains<UInt32>` and executes;
   `Box<UInt64>` reports the concrete `Contains<UInt32>` mismatch before LLVM emission.
+- 2026-10-26 Generic implementation conformance now has production coverage for receiver-dependent method constraints.
+  An implementation that replaces interface-required `V: Contains<T>` with `V: Contains<UInt64>` is rejected at its
+  declaration before LLVM emission, even when no source call reaches the method.

@@ -3723,3 +3723,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Receiver substitutions now flow into parameterized method constraints through the production CLI.
   `V: Contains<T>` accepts `Box<UInt32>` for a `Holder<UInt32>` receiver, while `Box<UInt64>` reports the substituted
   `Contains<UInt32>` requirement and emits no LLVM definitions.
+- 2026-10-26: Generic implementation conformance preserves receiver-dependent method constraints through the
+  production CLI. Hard-coding `V: Contains<UInt64>` where the interface requires `V: Contains<T>` reports an
+  implementation-signature mismatch before any LLVM definition, without requiring a method call.

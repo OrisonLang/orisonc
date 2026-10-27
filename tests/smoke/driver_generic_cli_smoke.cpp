@@ -4544,6 +4544,40 @@ auto main(int argc, char** argv) -> int {
         receiver_dependent_interface_method_constraint_mismatch_output.find("define ") == std::string::npos
     );
 
+    auto receiver_dependent_interface_method_contract_mismatch_path =
+        smoke_temp_root / "orison_cli_receiver_dependent_interface_method_contract_mismatch.or";
+    write_lines(
+        receiver_dependent_interface_method_contract_mismatch_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Contains<T>",
+            "record Holder<T>",
+            "    item: T",
+            "implements Mapper<T> for Holder<T>",
+            "    function map<V>(this: shared This, value: V, fallback: T) -> V",
+            "    where V: Contains<UInt64>",
+            "        return value",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto receiver_dependent_interface_method_contract_mismatch_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " +
+        receiver_dependent_interface_method_contract_mismatch_path.string()
+    );
+    assert(
+        receiver_dependent_interface_method_contract_mismatch_output.find(
+            "implementation method 'Mapper<T> for Holder<T>.map' does not match the interface signature"
+        ) != std::string::npos
+    );
+    assert(
+        receiver_dependent_interface_method_contract_mismatch_output.find("define ") == std::string::npos
+    );
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",
