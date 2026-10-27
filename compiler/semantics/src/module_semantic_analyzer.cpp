@@ -132,15 +132,19 @@ public:
 
         for (auto const& implementation : module_.implementations) {
             auto receiver_type_name = render_type_name(implementation.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(implementation.receiver_type, receiver_generic_scope);
             for (auto const& method : implementation.methods) {
-                analyze_function(method, receiver_type_name);
+                analyze_function(method, receiver_type_name, receiver_generic_scope);
             }
         }
 
         for (auto const& extension : module_.extensions) {
             auto receiver_type_name = render_type_name(extension.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(extension.receiver_type, receiver_generic_scope);
             for (auto const& method : extension.methods) {
-                analyze_function(method, receiver_type_name);
+                analyze_function(method, receiver_type_name, receiver_generic_scope);
             }
         }
 
@@ -5988,18 +5992,22 @@ private:
 
     void analyze_function(
         syntax::FunctionSyntax const& function,
-        std::string receiver_type_name = {}
+        std::string receiver_type_name = {},
+        std::unordered_set<std::string> enclosing_generic_scope = {}
     ) {
         auto saved_receiver_context_active = receiver_context_active_;
         auto saved_unsafe_context_active = unsafe_context_active_;
         auto saved_current_function_returns_pointer = current_function_returns_pointer_;
         auto saved_current_function_returns_address = current_function_returns_address_;
         auto saved_current_function_return_type_name = current_function_return_type_name_;
+        auto saved_current_generic_scope = current_generic_scope_;
         receiver_context_active_ = !receiver_type_name.empty();
         unsafe_context_active_ = function.is_unsafe;
         current_function_returns_pointer_ = is_pointer_type(function.return_type);
         current_function_returns_address_ = is_address_type(function.return_type);
         current_function_return_type_name_ = render_type_name(function.return_type);
+        current_generic_scope_ = std::move(enclosing_generic_scope);
+        current_generic_scope_.insert(function.generic_parameters.begin(), function.generic_parameters.end());
 
         scope_stack_.clear();
         transferable_constraint_types_.clear();
@@ -6060,6 +6068,7 @@ private:
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
         current_function_returns_address_ = saved_current_function_returns_address;
         current_function_return_type_name_ = saved_current_function_return_type_name;
+        current_generic_scope_ = std::move(saved_current_generic_scope);
     }
 
     auto statement_produces_function_value(syntax::StatementSyntax const& statement) const -> bool {
@@ -6466,6 +6475,17 @@ private:
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
         if (statement.kind == syntax::StatementKind::let_binding || statement.kind == syntax::StatementKind::var_binding) {
+            if (!statement.annotated_type.name.empty()) {
+                auto binding_kind =
+                    statement.kind == syntax::StatementKind::let_binding ? std::string {"let"} : std::string {"var"};
+                validate_declared_type_reference(
+                    statement.annotated_type,
+                    current_generic_scope_,
+                    receiver_context_active_,
+                    statement.line,
+                    binding_kind + " binding '" + statement.name + "' annotation"
+                );
+            }
             auto saved_expected_pointer_type_name = expected_pointer_type_name_;
             if (!statement.annotated_type.name.empty() && is_pointer_type(statement.annotated_type)) {
                 expected_pointer_type_name_ = render_type_name(statement.annotated_type);
@@ -7436,6 +7456,7 @@ private:
     bool current_function_returns_pointer_ = false;
     bool current_function_returns_address_ = false;
     std::string current_function_return_type_name_;
+    std::unordered_set<std::string> current_generic_scope_;
     std::string expected_pointer_type_name_;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;

@@ -3889,3 +3889,6 @@ representation.
 - 2026-10-27 Type-alias targets and top-level constant annotations now use declaration-time type-constructor
   validation before constant binding and initializer analysis. Known arity and `Array<T, N>` roles are checked without
   changing deferred handling for unresolved or imported nominal metadata.
+- 2026-10-27 Explicit local `let` and `var` annotations now use the same recursive type-constructor validation before
+  initializer analysis. Function and method generic parameters plus generic receiver placeholders remain in scope, and
+  nested control-flow bindings receive validation through normal statement traversal.
