@@ -7971,6 +7971,72 @@ void test_duplicate_interface_method_generic_parameter_name_failure() {
     assert_fixture_single_diagnostic(path, 3, "interface method 'Mapper.map' generic parameter 'T' is duplicated");
 }
 
+void test_interface_method_generic_parameter_shadowing_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_interface_method_generic_shadowing_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Mapper<T>",
+            "    function map<T>(this: shared This, value: T) -> T",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "interface method 'Mapper.map' generic parameter 'T' shadows enclosing interface generic parameter"
+    );
+}
+
+void test_implementation_method_generic_parameter_shadowing_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_implementation_method_generic_shadowing_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Mapper<U>",
+            "    function map<V>(this: shared This, value: V) -> V",
+            "record Box<T>",
+            "    value: T",
+            "implements Mapper<T> for Box<T>",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "        return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "implementation method 'Mapper<T> for Box<T>.map' generic parameter 'T' shadows enclosing receiver generic "
+        "parameter"
+    );
+}
+
+void test_extension_method_generic_parameter_shadowing_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_extension_method_generic_shadowing_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "record Box<T>",
+            "    value: T",
+            "extend Box<T>",
+            "    function replace<T>(this: exclusive This, value: T) -> T",
+            "        return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "extension method 'Box<T>.replace' generic parameter 'T' shadows enclosing receiver generic parameter"
+    );
+}
+
 void test_duplicate_where_constraint_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_where_constraint_failure.or";
     write_concurrency_fixture(
@@ -14658,6 +14724,9 @@ int main() {
     test_duplicate_record_generic_parameter_name_failure();
     test_duplicate_function_generic_parameter_name_failure();
     test_duplicate_interface_method_generic_parameter_name_failure();
+    test_interface_method_generic_parameter_shadowing_failure();
+    test_implementation_method_generic_parameter_shadowing_failure();
+    test_extension_method_generic_parameter_shadowing_failure();
     test_duplicate_where_constraint_name_failure();
     test_duplicate_where_requirement_name_failure();
     test_unknown_where_requirement_interface_failure();

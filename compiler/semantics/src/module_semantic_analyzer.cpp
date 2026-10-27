@@ -4325,12 +4325,23 @@ private:
                 "interface '" + interface.name + "'"
             );
 
+            auto enclosing_generic_parameters = std::unordered_set<std::string> {
+                interface.generic_parameters.begin(),
+                interface.generic_parameters.end(),
+            };
             for (auto const& method : interface.methods) {
                 auto method_name = "interface method '" + interface.name + "." + method.name + "'";
                 validate_duplicate_generic_parameters(
                     method.generic_parameters,
                     method.generic_parameter_lines,
                     method_name
+                );
+                validate_shadowing_generic_parameters(
+                    method.generic_parameters,
+                    method.generic_parameter_lines,
+                    enclosing_generic_parameters,
+                    method_name,
+                    "interface"
                 );
                 validate_duplicate_where_constraints(method.where_constraints, method_name);
             }
@@ -4343,21 +4354,35 @@ private:
         for (auto const& implementation : module_.implementations) {
             auto interface_type_name = render_type_name(implementation.interface_type);
             auto receiver_type_name = render_type_name(implementation.receiver_type);
+            auto receiver_generic_parameters = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(implementation.receiver_type, receiver_generic_parameters);
             for (auto const& method : implementation.methods) {
-                validate_duplicate_function_generics_and_constraints(
-                    method,
-                    "implementation method '" + interface_type_name + " for " +
-                        receiver_type_name + "." + method.name + "'"
+                auto method_name = "implementation method '" + interface_type_name + " for " +
+                    receiver_type_name + "." + method.name + "'";
+                validate_duplicate_function_generics_and_constraints(method, method_name);
+                validate_shadowing_generic_parameters(
+                    method.generic_parameters,
+                    method.generic_parameter_lines,
+                    receiver_generic_parameters,
+                    method_name,
+                    "receiver"
                 );
             }
         }
 
         for (auto const& extension : module_.extensions) {
             auto receiver_type_name = render_type_name(extension.receiver_type);
+            auto receiver_generic_parameters = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(extension.receiver_type, receiver_generic_parameters);
             for (auto const& method : extension.methods) {
-                validate_duplicate_function_generics_and_constraints(
-                    method,
-                    "extension method '" + receiver_type_name + "." + method.name + "'"
+                auto method_name = "extension method '" + receiver_type_name + "." + method.name + "'";
+                validate_duplicate_function_generics_and_constraints(method, method_name);
+                validate_shadowing_generic_parameters(
+                    method.generic_parameters,
+                    method.generic_parameter_lines,
+                    receiver_generic_parameters,
+                    method_name,
+                    "receiver"
                 );
             }
         }
@@ -4396,6 +4421,26 @@ private:
                 diagnostics_.error(
                     line,
                     declaration_name + " generic parameter '" + generic_parameter + "' is duplicated"
+                );
+            }
+        }
+    }
+
+    void validate_shadowing_generic_parameters(
+        std::vector<std::string> const& generic_parameters,
+        std::vector<std::size_t> const& generic_parameter_lines,
+        std::unordered_set<std::string> const& enclosing_generic_parameters,
+        std::string const& declaration_name,
+        std::string_view enclosing_scope_name
+    ) {
+        for (auto index = std::size_t {0}; index < generic_parameters.size(); ++index) {
+            auto const& generic_parameter = generic_parameters[index];
+            if (enclosing_generic_parameters.contains(generic_parameter)) {
+                auto line = index < generic_parameter_lines.size() ? generic_parameter_lines[index] : std::size_t {0};
+                diagnostics_.error(
+                    line,
+                    declaration_name + " generic parameter '" + generic_parameter + "' shadows enclosing " +
+                        std::string {enclosing_scope_name} + " generic parameter"
                 );
             }
         }

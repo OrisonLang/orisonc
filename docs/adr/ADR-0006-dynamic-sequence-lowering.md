@@ -3876,3 +3876,6 @@ representation.
 - 2026-10-26 Nested `where` requirement arguments now enforce built-in argument roles. `Array<T, N>` requires a type
   for `T` and an integer literal for `N`; integer literals in ordinary generic type slots and nonliteral array sizes
   stop before LLVM emission.
+- 2026-10-27 Method-local generic parameters may not shadow generic names from an enclosing interface or receiver
+  pattern. Interface, implementation, and extension declarations report the method parameter line before ambiguous
+  substitutions can reach constraint analysis or lowering.

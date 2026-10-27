@@ -3744,3 +3744,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Nested `where` requirement arguments now preserve the distinct roles in `Array<T, N>`. The element slot
   requires a type, the size slot requires an integer literal, and other generic constructors reject integer literals
   in type slots before LLVM definitions are emitted.
+- 2026-10-27: Method generic declarations now reject names already bound by their enclosing generic interface or
+  receiver pattern. Interface, implementation, and extension methods fail at declaration analysis before LLVM
+  definitions are emitted; free functions retain their independent generic scope.
