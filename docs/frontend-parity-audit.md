@@ -3726,3 +3726,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Generic implementation conformance preserves receiver-dependent method constraints through the
   production CLI. Hard-coding `V: Contains<UInt64>` where the interface requires `V: Contains<T>` reports an
   implementation-signature mismatch before any LLVM definition, without requiring a method call.
+- 2026-10-26: Unannotated results from constrained generic interface implementations now propagate through the
+  production CLI. An inferred `Box<UInt32>` method result selects a later constrained generic function specialization,
+  retains its field type, emits both calls, links, and runs successfully.

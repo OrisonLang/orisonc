@@ -4578,6 +4578,59 @@ auto main(int argc, char** argv) -> int {
         receiver_dependent_interface_method_contract_mismatch_output.find("define ") == std::string::npos
     );
 
+    auto inferred_constrained_interface_method_result_path =
+        smoke_temp_root / "orison_cli_inferred_constrained_interface_method_result.or";
+    write_lines(
+        inferred_constrained_interface_method_result_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "interface Mapper<T>",
+            "    function map<U>(this: shared This, value: U, fallback: T) -> U",
+            "    where U: Contains<T>",
+            "record Box<T>",
+            "    item: T",
+            "record Holder<T>",
+            "    item: T",
+            "implements Contains<T> for Box<T>",
+            "    function value(this: shared This) -> T",
+            "        return this.item",
+            "implements Mapper<T> for Holder<T>",
+            "    function map<V>(this: shared This, value: V, fallback: T) -> V",
+            "    where V: Contains<T>",
+            "        return value",
+            "function preserve<C, T>(container: C, item: T) -> C",
+            "where C: Contains<T>",
+            "    return container",
+            "function main() -> UInt32",
+            "    let holder: Holder<UInt32> = Holder(1 as UInt32)",
+            "    let box: Box<UInt32> = Box(7 as UInt32)",
+            "    let mapped = holder.map(box, 0 as UInt32)",
+            "    let preserved = preserve(mapped, 9 as UInt32)",
+            "    preserved.item - 7 as UInt32",
+        }
+    );
+    auto inferred_constrained_interface_method_result_ir = read_command_output(
+        executable.string() + " --emit-llvm " + inferred_constrained_interface_method_result_path.string()
+    );
+    assert(
+        inferred_constrained_interface_method_result_ir.find(
+            "call %record.Box_UInt32_ @method.Holder_UInt32_.map__Box_UInt32___UInt32("
+        ) != std::string::npos
+    );
+    assert(
+        inferred_constrained_interface_method_result_ir.find(
+            "define %record.Box_UInt32_ @preserve__Box_UInt32___UInt32("
+        ) != std::string::npos
+    );
+    assert(
+        inferred_constrained_interface_method_result_ir.find(
+            "call %record.Box_UInt32_ @preserve__Box_UInt32___UInt32("
+        ) != std::string::npos
+    );
+    assert_cli_run_fixture_success(executable, inferred_constrained_interface_method_result_path);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

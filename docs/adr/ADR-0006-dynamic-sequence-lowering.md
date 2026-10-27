@@ -3858,3 +3858,6 @@ representation.
 - 2026-10-26 Generic implementation conformance now has production coverage for receiver-dependent method constraints.
   An implementation that replaces interface-required `V: Contains<T>` with `V: Contains<UInt64>` is rejected at its
   declaration before LLVM emission, even when no source call reaches the method.
+- 2026-10-26 Unannotated constrained interface-method results now have production driver coverage.
+  `Holder<UInt32>.map<Box<UInt32>>` infers a `Box<UInt32>` local that drives constrained
+  `preserve<Box<UInt32>, UInt32>`, field projection, LLVM emission, linking, and execution.
