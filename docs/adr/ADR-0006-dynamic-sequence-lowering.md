@@ -3861,3 +3861,6 @@ representation.
 - 2026-10-26 Unannotated constrained interface-method results now have production driver coverage.
   `Holder<UInt32>.map<Box<UInt32>>` infers a `Box<UInt32>` local that drives constrained
   `preserve<Box<UInt32>, UInt32>`, field projection, LLVM emission, linking, and execution.
+- 2026-10-26 `where` requirement declarations now resolve before callable analysis and lowering.
+  Requirements must name a declared interface with exact generic arity; compiler-known zero-arity `Transferable` and
+  `Shareable` remain valid without local declarations. Unknown interface-method requirements stop before LLVM emission.

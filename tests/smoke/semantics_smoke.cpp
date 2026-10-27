@@ -8005,6 +8005,47 @@ void test_duplicate_where_requirement_name_failure() {
     );
 }
 
+void test_unknown_where_requirement_interface_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_where_requirement_interface.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "function identity<T>(value: T) -> T",
+            "where T: Missing",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "function 'identity' where constraint 'T' requirement 'Missing' refers to unknown interface 'Missing'"
+    );
+}
+
+void test_where_requirement_interface_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_interface_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "    function value(this: shared This) -> T",
+            "function identity<C>(value: C) -> C",
+            "where C: Contains",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "function 'identity' where constraint 'C' requirement 'Contains' supplies 0 interface type arguments; "
+        "interface 'Contains' requires 1"
+    );
+}
+
 void test_generic_function_where_constraint_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_generic_function_constraint_success.or";
     write_concurrency_fixture(
@@ -14400,6 +14441,8 @@ int main() {
     test_duplicate_interface_method_generic_parameter_name_failure();
     test_duplicate_where_constraint_name_failure();
     test_duplicate_where_requirement_name_failure();
+    test_unknown_where_requirement_interface_failure();
+    test_where_requirement_interface_arity_failure();
     test_generic_function_where_constraint_success();
     test_generic_function_where_constraint_failure();
     test_generic_function_parameterized_where_constraint_success();

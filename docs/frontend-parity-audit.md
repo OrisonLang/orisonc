@@ -3729,3 +3729,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Unannotated results from constrained generic interface implementations now propagate through the
   production CLI. An inferred `Box<UInt32>` method result selects a later constrained generic function specialization,
   retains its field type, emits both calls, links, and runs successfully.
+- 2026-10-26: `where` requirements now receive declaration-time interface resolution and generic-arity validation
+  across interface methods, functions, implementation methods, extension methods, and foreign exports. Compiler-known
+  marker interfaces remain zero-arity; unknown interface-method requirements fail before LLVM definitions are emitted.

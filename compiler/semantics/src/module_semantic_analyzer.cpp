@@ -111,6 +111,7 @@ public:
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
         validate_duplicate_generic_parameters_and_constraints();
+        validate_where_constraint_requirements();
         collect_async_callable_names();
         collect_unsafe_callable_names();
         collect_callable_return_types();
@@ -4428,6 +4429,90 @@ private:
                     );
                 }
             }
+        }
+    }
+
+    void validate_where_constraint_requirements(
+        std::vector<syntax::WhereConstraintSyntax> const& where_constraints,
+        std::string const& callable_name
+    ) {
+        for (auto const& constraint : where_constraints) {
+            for (auto index = std::size_t {0}; index < constraint.requirements.size(); ++index) {
+                auto const& requirement = constraint.requirements[index];
+                auto line = index < constraint.requirement_lines.size()
+                    ? constraint.requirement_lines[index]
+                    : constraint.line;
+                auto interface_declaration = std::ranges::find_if(
+                    module_.interfaces,
+                    [&](syntax::InterfaceSyntax const& candidate) {
+                        return candidate.name == requirement.name;
+                    }
+                );
+                auto compiler_marker = requirement.name == "Transferable" || requirement.name == "Shareable";
+                if (interface_declaration == module_.interfaces.end() && !compiler_marker) {
+                    diagnostics_.error(
+                        line,
+                        callable_name + " where constraint '" + constraint.parameter_name +
+                            "' requirement '" + render_type_name(requirement) +
+                            "' refers to unknown interface '" + requirement.name + "'"
+                    );
+                    continue;
+                }
+
+                auto expected_count = interface_declaration == module_.interfaces.end()
+                    ? std::size_t {0}
+                    : interface_declaration->generic_parameters.size();
+                if (requirement.generic_arguments.size() == expected_count) {
+                    continue;
+                }
+                diagnostics_.error(
+                    line,
+                    callable_name + " where constraint '" + constraint.parameter_name +
+                        "' requirement '" + render_type_name(requirement) + "' supplies " +
+                        std::to_string(requirement.generic_arguments.size()) + " interface type argument" +
+                        (requirement.generic_arguments.size() == 1 ? "" : "s") + "; interface '" +
+                        requirement.name + "' requires " + std::to_string(expected_count)
+                );
+            }
+        }
+    }
+
+    void validate_where_constraint_requirements() {
+        for (auto const& interface : module_.interfaces) {
+            for (auto const& method : interface.methods) {
+                validate_where_constraint_requirements(
+                    method.where_constraints,
+                    "interface method '" + interface.name + "." + method.name + "'"
+                );
+            }
+        }
+        for (auto const& function : module_.functions) {
+            validate_where_constraint_requirements(function.where_constraints, "function '" + function.name + "'");
+        }
+        for (auto const& implementation : module_.implementations) {
+            auto owner_name = render_type_name(implementation.interface_type) + " for " +
+                render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                validate_where_constraint_requirements(
+                    method.where_constraints,
+                    "implementation method '" + owner_name + "." + method.name + "'"
+                );
+            }
+        }
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                validate_where_constraint_requirements(
+                    method.where_constraints,
+                    "extension method '" + receiver_type_name + "." + method.name + "'"
+                );
+            }
+        }
+        for (auto const& foreign_export : module_.foreign_exports) {
+            validate_where_constraint_requirements(
+                foreign_export.function.where_constraints,
+                "foreign export function '" + foreign_export.function.name + "'"
+            );
         }
     }
 
