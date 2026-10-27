@@ -3738,3 +3738,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Type references nested inside `where` requirement arguments now receive recursive declaration-time
   resolution. Known scoped, built-in, source-declared, imported, receiver, and integer type-level references pass;
   unknown nested references fail semantic analysis before LLVM definitions are emitted.
+- 2026-10-26: Resolved nested `where` requirement types now receive generic-arity validation from built-in and source
+  declaration metadata. Non-generic references reject type arguments, and malformed constructors fail before LLVM
+  definitions are emitted; imported constructor arity awaits import metadata.

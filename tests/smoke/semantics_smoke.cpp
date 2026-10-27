@@ -8126,10 +8126,79 @@ void test_nested_where_requirement_type_arguments_success() {
             "function preserve<C>(container: C) -> C",
             "where C: Contains<Box<ItemId>>",
             "    return container",
+            "function preserve_array<C>(container: C) -> C",
+            "where C: Contains<Array<UInt32, 4>>",
+            "    return container",
         }
     );
 
     assert_fixture_success(path);
+}
+
+void test_where_requirement_source_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_source_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "record Envelope<T>",
+            "    value: T",
+            "function preserve<C, T, U>(container: C) -> C",
+            "where C: Contains<Envelope<T, U>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        6,
+        "function 'preserve' where constraint 'C' requirement 'Contains<Envelope<T, U>>' type argument "
+        "'Envelope<T, U>' supplies 2 type arguments; type 'Envelope' requires 1"
+    );
+}
+
+void test_where_requirement_scalar_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_scalar_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "function preserve<C, T>(container: C) -> C",
+            "where C: Contains<UInt32<T>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'preserve' where constraint 'C' requirement 'Contains<UInt32<T>>' type argument 'UInt32<T>' "
+        "supplies 1 type argument; type 'UInt32' requires 0"
+    );
+}
+
+void test_where_requirement_generic_parameter_arity_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_generic_parameter_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "function preserve<C, T>(container: C) -> C",
+            "where C: Contains<T<UInt32>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'preserve' where constraint 'C' requirement 'Contains<T<UInt32>>' type argument 'T<UInt32>' "
+        "supplies 1 type argument; type 'T' requires 0"
+    );
 }
 
 void test_generic_function_where_constraint_success() {
@@ -14533,6 +14602,9 @@ int main() {
     test_enclosing_where_constraint_subjects_success();
     test_unknown_where_requirement_type_argument_failure();
     test_nested_where_requirement_type_arguments_success();
+    test_where_requirement_source_type_arity_failure();
+    test_where_requirement_scalar_type_arity_failure();
+    test_where_requirement_generic_parameter_arity_failure();
     test_generic_function_where_constraint_success();
     test_generic_function_where_constraint_failure();
     test_generic_function_parameterized_where_constraint_success();

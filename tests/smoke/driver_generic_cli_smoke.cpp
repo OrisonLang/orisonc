@@ -4704,6 +4704,31 @@ auto main(int argc, char** argv) -> int {
     );
     assert(unknown_interface_method_constraint_type_argument_output.find("define ") == std::string::npos);
 
+    auto interface_method_constraint_type_argument_arity_path =
+        smoke_temp_root / "orison_cli_interface_method_constraint_type_argument_arity.or";
+    write_lines(
+        interface_method_constraint_type_argument_arity_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "interface Mapper",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "    where T: Contains<Outcome<T>>",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto interface_method_constraint_type_argument_arity_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + interface_method_constraint_type_argument_arity_path.string()
+    );
+    assert(
+        interface_method_constraint_type_argument_arity_output.find(
+            "interface method 'Mapper.map' where constraint 'T' requirement 'Contains<Outcome<T>>' type argument "
+            "'Outcome<T>' supplies 1 type argument; type 'Outcome' requires 2"
+        ) != std::string::npos
+    );
+    assert(interface_method_constraint_type_argument_arity_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

@@ -4432,17 +4432,22 @@ private:
         }
     }
 
-    auto is_known_where_requirement_type_reference(
-        syntax::TypeSyntax const& type,
-        std::unordered_set<std::string> const& generic_scope,
-        bool receiver_context
-    ) const -> bool {
+    auto unqualified_where_requirement_type_name(syntax::TypeSyntax const& type) const -> std::string_view {
         auto type_name = std::string_view {type.name};
         if (type_name.starts_with("shared.")) {
             type_name.remove_prefix(std::string_view {"shared."}.size());
         } else if (type_name.starts_with("exclusive.")) {
             type_name.remove_prefix(std::string_view {"exclusive."}.size());
         }
+        return type_name;
+    }
+
+    auto is_known_where_requirement_type_reference(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context
+    ) const -> bool {
+        auto type_name = unqualified_where_requirement_type_name(type);
 
         auto unqualified_name = std::string {type_name};
         if (generic_scope.contains(unqualified_name) ||
@@ -4477,6 +4482,47 @@ private:
                std::ranges::find_if(module_.choices, declared_type_name_matches) != module_.choices.end();
     }
 
+    auto where_requirement_type_arity(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context
+    ) const -> std::optional<std::size_t> {
+        auto type_name = unqualified_where_requirement_type_name(type);
+        auto unqualified_name = std::string {type_name};
+        if (generic_scope.contains(unqualified_name) ||
+            (receiver_context && unqualified_name == "This") ||
+            (!unqualified_name.empty() && unqualified_name.front() >= '0' && unqualified_name.front() <= '9') ||
+            is_primitive_scalar_type_name(unqualified_name)) {
+            return std::size_t {0};
+        }
+
+        if (type_name == "Array" || type_name == "Outcome") {
+            return std::size_t {2};
+        }
+        if (type_name == "Box" || type_name == "DynamicArray" || type_name == "Maybe" ||
+            type_name == "Pointer" || type_name == "View") {
+            return std::size_t {1};
+        }
+
+        for (auto const& type_alias : module_.type_aliases) {
+            if (type_alias.name == type_name) {
+                return std::size_t {0};
+            }
+        }
+        for (auto const& record : module_.records) {
+            if (record.name == type_name) {
+                return record.generic_parameters.size();
+            }
+        }
+        for (auto const& choice : module_.choices) {
+            if (choice.name == type_name) {
+                return choice.generic_parameters.size();
+            }
+        }
+
+        return std::nullopt;
+    }
+
     void validate_where_requirement_type_references(
         syntax::TypeSyntax const& type,
         std::string const& rendered_requirement,
@@ -4491,6 +4537,20 @@ private:
                 line,
                 callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
                     rendered_requirement + "' refers to unknown type argument '" + type.name + "'"
+            );
+            return;
+        }
+
+        auto expected_arity = where_requirement_type_arity(type, generic_scope, receiver_context);
+        if (expected_arity.has_value() && type.generic_arguments.size() != *expected_arity) {
+            diagnostics_.error(
+                line,
+                callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
+                    rendered_requirement + "' type argument '" + render_type_name(type) + "' supplies " +
+                    std::to_string(type.generic_arguments.size()) + " type argument" +
+                    (type.generic_arguments.size() == 1 ? "" : "s") + "; type '" +
+                    std::string {unqualified_where_requirement_type_name(type)} + "' requires " +
+                    std::to_string(*expected_arity)
             );
             return;
         }

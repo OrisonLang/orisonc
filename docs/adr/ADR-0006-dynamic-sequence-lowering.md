@@ -3870,3 +3870,6 @@ representation.
 - 2026-10-26 Generic arguments nested in `where` requirements now resolve recursively before callable analysis.
   Scoped generics, receiver `This`, built-in and source-declared types, imported bindings, and type-level integer
   arguments are accepted; unknown nested type arguments stop before LLVM emission.
+- 2026-10-26 Nested `where` requirement types now enforce declared or built-in generic arity. Scalars, aliases,
+  generic parameters, receiver `This`, and integer arguments are zero-arity; malformed nested types stop before LLVM
+  emission. Imported type arity remains deferred until import metadata is available.
