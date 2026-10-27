@@ -4655,6 +4655,30 @@ auto main(int argc, char** argv) -> int {
     );
     assert(unknown_interface_method_constraint_output.find("define ") == std::string::npos);
 
+    auto unknown_interface_method_constraint_subject_path =
+        smoke_temp_root / "orison_cli_unknown_interface_method_constraint_subject.or";
+    write_lines(
+        unknown_interface_method_constraint_subject_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Ordered",
+            "interface Mapper",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "    where Missing: Ordered",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto unknown_interface_method_constraint_subject_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + unknown_interface_method_constraint_subject_path.string()
+    );
+    assert(
+        unknown_interface_method_constraint_subject_output.find(
+            "interface method 'Mapper.map' where constraint subject 'Missing' is not a generic parameter in scope"
+        ) != std::string::npos
+    );
+    assert(unknown_interface_method_constraint_subject_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

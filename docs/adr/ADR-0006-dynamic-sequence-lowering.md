@@ -3864,3 +3864,6 @@ representation.
 - 2026-10-26 `where` requirement declarations now resolve before callable analysis and lowering.
   Requirements must name a declared interface with exact generic arity; compiler-known zero-arity `Transferable` and
   `Shareable` remain valid without local declarations. Unknown interface-method requirements stop before LLVM emission.
+- 2026-10-26 Every `where` constraint subject must now name a generic parameter in its declaration scope. Interface
+  methods include enclosing interface parameters; implementation and extension methods include receiver-pattern
+  parameters. Undeclared subjects are rejected before LLVM emission.

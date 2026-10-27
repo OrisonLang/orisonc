@@ -3732,3 +3732,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: `where` requirements now receive declaration-time interface resolution and generic-arity validation
   across interface methods, functions, implementation methods, extension methods, and foreign exports. Compiler-known
   marker interfaces remain zero-arity; unknown interface-method requirements fail before LLVM definitions are emitted.
+- 2026-10-26: `where` constraint subjects now resolve against their declaration's generic scope. Interface methods can
+  constrain enclosing interface parameters, and receiver methods can constrain receiver-pattern parameters; an
+  undeclared subject fails semantic analysis before LLVM definitions are emitted.

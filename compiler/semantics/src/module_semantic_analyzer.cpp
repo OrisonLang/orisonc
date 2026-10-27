@@ -111,7 +111,7 @@ public:
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
         validate_duplicate_generic_parameters_and_constraints();
-        validate_where_constraint_requirements();
+        validate_where_constraint_declarations();
         collect_async_callable_names();
         collect_unsafe_callable_names();
         collect_callable_return_types();
@@ -4432,11 +4432,20 @@ private:
         }
     }
 
-    void validate_where_constraint_requirements(
+    void validate_where_constraint_declarations(
         std::vector<syntax::WhereConstraintSyntax> const& where_constraints,
+        std::unordered_set<std::string> const& generic_scope,
         std::string const& callable_name
     ) {
         for (auto const& constraint : where_constraints) {
+            if (!generic_scope.contains(constraint.parameter_name)) {
+                diagnostics_.error(
+                    constraint.line,
+                    callable_name + " where constraint subject '" + constraint.parameter_name +
+                        "' is not a generic parameter in scope"
+                );
+            }
+
             for (auto index = std::size_t {0}; index < constraint.requirements.size(); ++index) {
                 auto const& requirement = constraint.requirements[index];
                 auto line = index < constraint.requirement_lines.size()
@@ -4477,40 +4486,67 @@ private:
         }
     }
 
-    void validate_where_constraint_requirements() {
+    void validate_where_constraint_declarations() {
         for (auto const& interface : module_.interfaces) {
             for (auto const& method : interface.methods) {
-                validate_where_constraint_requirements(
+                auto generic_scope = std::unordered_set<std::string> {
+                    interface.generic_parameters.begin(),
+                    interface.generic_parameters.end(),
+                };
+                generic_scope.insert(method.generic_parameters.begin(), method.generic_parameters.end());
+                validate_where_constraint_declarations(
                     method.where_constraints,
+                    generic_scope,
                     "interface method '" + interface.name + "." + method.name + "'"
                 );
             }
         }
         for (auto const& function : module_.functions) {
-            validate_where_constraint_requirements(function.where_constraints, "function '" + function.name + "'");
+            validate_where_constraint_declarations(
+                function.where_constraints,
+                std::unordered_set<std::string> {
+                    function.generic_parameters.begin(),
+                    function.generic_parameters.end(),
+                },
+                "function '" + function.name + "'"
+            );
         }
         for (auto const& implementation : module_.implementations) {
             auto owner_name = render_type_name(implementation.interface_type) + " for " +
                 render_type_name(implementation.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(implementation.receiver_type, receiver_generic_scope);
             for (auto const& method : implementation.methods) {
-                validate_where_constraint_requirements(
+                auto generic_scope = receiver_generic_scope;
+                generic_scope.insert(method.generic_parameters.begin(), method.generic_parameters.end());
+                validate_where_constraint_declarations(
                     method.where_constraints,
+                    generic_scope,
                     "implementation method '" + owner_name + "." + method.name + "'"
                 );
             }
         }
         for (auto const& extension : module_.extensions) {
             auto receiver_type_name = render_type_name(extension.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(extension.receiver_type, receiver_generic_scope);
             for (auto const& method : extension.methods) {
-                validate_where_constraint_requirements(
+                auto generic_scope = receiver_generic_scope;
+                generic_scope.insert(method.generic_parameters.begin(), method.generic_parameters.end());
+                validate_where_constraint_declarations(
                     method.where_constraints,
+                    generic_scope,
                     "extension method '" + receiver_type_name + "." + method.name + "'"
                 );
             }
         }
         for (auto const& foreign_export : module_.foreign_exports) {
-            validate_where_constraint_requirements(
+            validate_where_constraint_declarations(
                 foreign_export.function.where_constraints,
+                std::unordered_set<std::string> {
+                    foreign_export.function.generic_parameters.begin(),
+                    foreign_export.function.generic_parameters.end(),
+                },
                 "foreign export function '" + foreign_export.function.name + "'"
             );
         }

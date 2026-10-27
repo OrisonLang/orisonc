@@ -8046,6 +8046,52 @@ void test_where_requirement_interface_arity_failure() {
     );
 }
 
+void test_unknown_where_constraint_subject_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_where_constraint_subject.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Ordered",
+            "function identity<T>(value: T) -> T",
+            "where Missing: Ordered",
+            "    return value",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'identity' where constraint subject 'Missing' is not a generic parameter in scope"
+    );
+}
+
+void test_enclosing_where_constraint_subjects_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_enclosing_where_constraint_subjects.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Ordered",
+            "interface Mapper<T>",
+            "    function keep(this: shared This, value: T) -> T",
+            "    where T: Ordered",
+            "record Box<T>",
+            "    value: T",
+            "implements Mapper<T> for Box<T>",
+            "    function keep(this: shared This, value: T) -> T",
+            "    where T: Ordered",
+            "        return value",
+            "extend Box<T>",
+            "    function copy(this: shared This) -> T",
+            "    where T: Ordered",
+            "        return this.value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_generic_function_where_constraint_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_generic_function_constraint_success.or";
     write_concurrency_fixture(
@@ -14443,6 +14489,8 @@ int main() {
     test_duplicate_where_requirement_name_failure();
     test_unknown_where_requirement_interface_failure();
     test_where_requirement_interface_arity_failure();
+    test_unknown_where_constraint_subject_failure();
+    test_enclosing_where_constraint_subjects_success();
     test_generic_function_where_constraint_success();
     test_generic_function_where_constraint_failure();
     test_generic_function_parameterized_where_constraint_success();
