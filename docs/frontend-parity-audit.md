@@ -3735,3 +3735,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: `where` constraint subjects now resolve against their declaration's generic scope. Interface methods can
   constrain enclosing interface parameters, and receiver methods can constrain receiver-pattern parameters; an
   undeclared subject fails semantic analysis before LLVM definitions are emitted.
+- 2026-10-26: Type references nested inside `where` requirement arguments now receive recursive declaration-time
+  resolution. Known scoped, built-in, source-declared, imported, receiver, and integer type-level references pass;
+  unknown nested references fail semantic analysis before LLVM definitions are emitted.

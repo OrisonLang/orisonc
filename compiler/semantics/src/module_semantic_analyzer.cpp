@@ -4432,9 +4432,86 @@ private:
         }
     }
 
+    auto is_known_where_requirement_type_reference(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context
+    ) const -> bool {
+        auto type_name = std::string_view {type.name};
+        if (type_name.starts_with("shared.")) {
+            type_name.remove_prefix(std::string_view {"shared."}.size());
+        } else if (type_name.starts_with("exclusive.")) {
+            type_name.remove_prefix(std::string_view {"exclusive."}.size());
+        }
+
+        auto unqualified_name = std::string {type_name};
+        if (generic_scope.contains(unqualified_name) ||
+            (receiver_context && unqualified_name == "This") ||
+            (!unqualified_name.empty() && unqualified_name.front() >= '0' && unqualified_name.front() <= '9') ||
+            is_primitive_scalar_type_name(unqualified_name)) {
+            return true;
+        }
+
+        static constexpr std::string_view builtin_type_names[] = {
+            "Array", "Box", "DynamicArray", "Maybe", "Outcome", "Pointer", "View",
+        };
+        if (std::ranges::find(builtin_type_names, type_name) != std::ranges::end(builtin_type_names)) {
+            return true;
+        }
+
+        auto imported_type = std::ranges::find_if(
+            module_.imports,
+            [&](syntax::ImportSyntax const& import) {
+                return (import.alias.empty() ? import.name : import.alias) == type_name;
+            }
+        );
+        if (imported_type != module_.imports.end()) {
+            return true;
+        }
+
+        auto declared_type_name_matches = [&](auto const& declaration) {
+            return declaration.name == type_name;
+        };
+        return std::ranges::find_if(module_.type_aliases, declared_type_name_matches) != module_.type_aliases.end() ||
+               std::ranges::find_if(module_.records, declared_type_name_matches) != module_.records.end() ||
+               std::ranges::find_if(module_.choices, declared_type_name_matches) != module_.choices.end();
+    }
+
+    void validate_where_requirement_type_references(
+        syntax::TypeSyntax const& type,
+        std::string const& rendered_requirement,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context,
+        std::size_t line,
+        std::string const& callable_name,
+        std::string const& constraint_parameter_name
+    ) {
+        if (!is_known_where_requirement_type_reference(type, generic_scope, receiver_context)) {
+            diagnostics_.error(
+                line,
+                callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
+                    rendered_requirement + "' refers to unknown type argument '" + type.name + "'"
+            );
+            return;
+        }
+
+        for (auto const& argument : type.generic_arguments) {
+            validate_where_requirement_type_references(
+                argument,
+                rendered_requirement,
+                generic_scope,
+                receiver_context,
+                line,
+                callable_name,
+                constraint_parameter_name
+            );
+        }
+    }
+
     void validate_where_constraint_declarations(
         std::vector<syntax::WhereConstraintSyntax> const& where_constraints,
         std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context,
         std::string const& callable_name
     ) {
         for (auto const& constraint : where_constraints) {
@@ -4468,6 +4545,19 @@ private:
                     continue;
                 }
 
+                auto rendered_requirement = render_type_name(requirement);
+                for (auto const& argument : requirement.generic_arguments) {
+                    validate_where_requirement_type_references(
+                        argument,
+                        rendered_requirement,
+                        generic_scope,
+                        receiver_context,
+                        line,
+                        callable_name,
+                        constraint.parameter_name
+                    );
+                }
+
                 auto expected_count = interface_declaration == module_.interfaces.end()
                     ? std::size_t {0}
                     : interface_declaration->generic_parameters.size();
@@ -4497,6 +4587,7 @@ private:
                 validate_where_constraint_declarations(
                     method.where_constraints,
                     generic_scope,
+                    true,
                     "interface method '" + interface.name + "." + method.name + "'"
                 );
             }
@@ -4508,6 +4599,7 @@ private:
                     function.generic_parameters.begin(),
                     function.generic_parameters.end(),
                 },
+                false,
                 "function '" + function.name + "'"
             );
         }
@@ -4522,6 +4614,7 @@ private:
                 validate_where_constraint_declarations(
                     method.where_constraints,
                     generic_scope,
+                    true,
                     "implementation method '" + owner_name + "." + method.name + "'"
                 );
             }
@@ -4536,6 +4629,7 @@ private:
                 validate_where_constraint_declarations(
                     method.where_constraints,
                     generic_scope,
+                    true,
                     "extension method '" + receiver_type_name + "." + method.name + "'"
                 );
             }
@@ -4547,6 +4641,7 @@ private:
                     foreign_export.function.generic_parameters.begin(),
                     foreign_export.function.generic_parameters.end(),
                 },
+                false,
                 "foreign export function '" + foreign_export.function.name + "'"
             );
         }

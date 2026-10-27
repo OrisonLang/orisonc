@@ -4679,6 +4679,31 @@ auto main(int argc, char** argv) -> int {
     );
     assert(unknown_interface_method_constraint_subject_output.find("define ") == std::string::npos);
 
+    auto unknown_interface_method_constraint_type_argument_path =
+        smoke_temp_root / "orison_cli_unknown_interface_method_constraint_type_argument.or";
+    write_lines(
+        unknown_interface_method_constraint_type_argument_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "interface Mapper",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "    where T: Contains<Box<Missing>>",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto unknown_interface_method_constraint_type_argument_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + unknown_interface_method_constraint_type_argument_path.string()
+    );
+    assert(
+        unknown_interface_method_constraint_type_argument_output.find(
+            "interface method 'Mapper.map' where constraint 'T' requirement 'Contains<Box<Missing>>' refers to "
+            "unknown type argument 'Missing'"
+        ) != std::string::npos
+    );
+    assert(unknown_interface_method_constraint_type_argument_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

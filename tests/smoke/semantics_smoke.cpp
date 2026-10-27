@@ -8092,6 +8092,46 @@ void test_enclosing_where_constraint_subjects_success() {
     assert_fixture_success(path);
 }
 
+void test_unknown_where_requirement_type_argument_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_where_requirement_type_argument.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "function preserve<C>(container: C) -> C",
+            "where C: Contains<Missing>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'preserve' where constraint 'C' requirement 'Contains<Missing>' refers to unknown type argument "
+        "'Missing'"
+    );
+}
+
+void test_nested_where_requirement_type_arguments_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_where_requirement_type_arguments.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "type ItemId = UInt32",
+            "record Box<T>",
+            "    value: T",
+            "interface Contains<T>",
+            "function preserve<C>(container: C) -> C",
+            "where C: Contains<Box<ItemId>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_generic_function_where_constraint_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_generic_function_constraint_success.or";
     write_concurrency_fixture(
@@ -14491,6 +14531,8 @@ int main() {
     test_where_requirement_interface_arity_failure();
     test_unknown_where_constraint_subject_failure();
     test_enclosing_where_constraint_subjects_success();
+    test_unknown_where_requirement_type_argument_failure();
+    test_nested_where_requirement_type_arguments_success();
     test_generic_function_where_constraint_success();
     test_generic_function_where_constraint_failure();
     test_generic_function_parameterized_where_constraint_success();

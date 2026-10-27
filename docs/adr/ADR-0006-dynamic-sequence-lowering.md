@@ -3867,3 +3867,6 @@ representation.
 - 2026-10-26 Every `where` constraint subject must now name a generic parameter in its declaration scope. Interface
   methods include enclosing interface parameters; implementation and extension methods include receiver-pattern
   parameters. Undeclared subjects are rejected before LLVM emission.
+- 2026-10-26 Generic arguments nested in `where` requirements now resolve recursively before callable analysis.
+  Scoped generics, receiver `This`, built-in and source-declared types, imported bindings, and type-level integer
+  arguments are accepted; unknown nested type arguments stop before LLVM emission.
