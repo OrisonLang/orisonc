@@ -3879,3 +3879,7 @@ representation.
 - 2026-10-27 Method-local generic parameters may not shadow generic names from an enclosing interface or receiver
   pattern. Interface, implementation, and extension declarations report the method parameter line before ambiguous
   substitutions can reach constraint analysis or lowering.
+- 2026-10-27 Callable parameter and return types now receive declaration-time constructor validation. Functions,
+  interface methods, implementation methods, extension methods, and foreign callables enforce known built-in and
+  source-declared arity plus `Array<T, N>` argument roles. Source and imported bindings take precedence over built-in
+  spellings. Unresolved and imported nominal arity remains deferred until module metadata is available.

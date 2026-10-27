@@ -111,6 +111,7 @@ public:
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
         validate_duplicate_generic_parameters_and_constraints();
+        validate_callable_signature_types();
         validate_where_constraint_declarations();
         collect_async_callable_names();
         collect_unsafe_callable_names();
@@ -4477,7 +4478,7 @@ private:
         }
     }
 
-    auto unqualified_where_requirement_type_name(syntax::TypeSyntax const& type) const -> std::string_view {
+    auto unqualified_type_name(syntax::TypeSyntax const& type) const -> std::string_view {
         auto type_name = std::string_view {type.name};
         if (type_name.starts_with("shared.")) {
             type_name.remove_prefix(std::string_view {"shared."}.size());
@@ -4487,73 +4488,12 @@ private:
         return type_name;
     }
 
-    auto is_where_requirement_integer_argument(syntax::TypeSyntax const& type) const -> bool {
+    auto is_type_level_integer_argument(syntax::TypeSyntax const& type) const -> bool {
         return type.generic_arguments.empty() && !type.name.empty() && type.name.front() >= '0' &&
                type.name.front() <= '9';
     }
 
-    auto is_known_where_requirement_type_reference(
-        syntax::TypeSyntax const& type,
-        std::unordered_set<std::string> const& generic_scope,
-        bool receiver_context
-    ) const -> bool {
-        auto type_name = unqualified_where_requirement_type_name(type);
-
-        auto unqualified_name = std::string {type_name};
-        if (generic_scope.contains(unqualified_name) ||
-            (receiver_context && unqualified_name == "This") ||
-            is_where_requirement_integer_argument(type) ||
-            is_primitive_scalar_type_name(unqualified_name)) {
-            return true;
-        }
-
-        static constexpr std::string_view builtin_type_names[] = {
-            "Array", "Box", "DynamicArray", "Maybe", "Outcome", "Pointer", "View",
-        };
-        if (std::ranges::find(builtin_type_names, type_name) != std::ranges::end(builtin_type_names)) {
-            return true;
-        }
-
-        auto imported_type = std::ranges::find_if(
-            module_.imports,
-            [&](syntax::ImportSyntax const& import) {
-                return (import.alias.empty() ? import.name : import.alias) == type_name;
-            }
-        );
-        if (imported_type != module_.imports.end()) {
-            return true;
-        }
-
-        auto declared_type_name_matches = [&](auto const& declaration) {
-            return declaration.name == type_name;
-        };
-        return std::ranges::find_if(module_.type_aliases, declared_type_name_matches) != module_.type_aliases.end() ||
-               std::ranges::find_if(module_.records, declared_type_name_matches) != module_.records.end() ||
-               std::ranges::find_if(module_.choices, declared_type_name_matches) != module_.choices.end();
-    }
-
-    auto where_requirement_type_arity(
-        syntax::TypeSyntax const& type,
-        std::unordered_set<std::string> const& generic_scope,
-        bool receiver_context
-    ) const -> std::optional<std::size_t> {
-        auto type_name = unqualified_where_requirement_type_name(type);
-        auto unqualified_name = std::string {type_name};
-        if (generic_scope.contains(unqualified_name) ||
-            (receiver_context && unqualified_name == "This") ||
-            is_where_requirement_integer_argument(type) ||
-            is_primitive_scalar_type_name(unqualified_name)) {
-            return std::size_t {0};
-        }
-
-        if (type_name == "Array" || type_name == "Outcome") {
-            return std::size_t {2};
-        }
-        if (type_name == "Box" || type_name == "DynamicArray" || type_name == "Maybe" ||
-            type_name == "Pointer" || type_name == "View") {
-            return std::size_t {1};
-        }
-
+    auto source_declared_type_arity(std::string_view type_name) const -> std::optional<std::size_t> {
         for (auto const& type_alias : module_.type_aliases) {
             if (type_alias.name == type_name) {
                 return std::size_t {0};
@@ -4569,8 +4509,257 @@ private:
                 return choice.generic_parameters.size();
             }
         }
+        return std::nullopt;
+    }
+
+    auto is_imported_type_reference_name(std::string_view type_name) const -> bool {
+        return std::ranges::any_of(
+            module_.imports,
+            [&](syntax::ImportSyntax const& import) {
+                return (import.alias.empty() ? import.name : import.alias) == type_name;
+            }
+        );
+    }
+
+    auto is_builtin_array_type_reference(syntax::TypeSyntax const& type) const -> bool {
+        auto type_name = unqualified_type_name(type);
+        return type_name == "Array" && !source_declared_type_arity(type_name).has_value() &&
+               !is_imported_type_reference_name(type_name);
+    }
+
+    auto is_known_type_reference(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context
+    ) const -> bool {
+        auto type_name = unqualified_type_name(type);
+
+        auto unqualified_name = std::string {type_name};
+        if (generic_scope.contains(unqualified_name) ||
+            (receiver_context && unqualified_name == "This") ||
+            is_type_level_integer_argument(type) ||
+            is_primitive_scalar_type_name(unqualified_name)) {
+            return true;
+        }
+
+        static constexpr std::string_view builtin_type_names[] = {
+            "Array", "Box", "DynamicArray", "Maybe", "Outcome", "Pointer", "View",
+        };
+        if (std::ranges::find(builtin_type_names, type_name) != std::ranges::end(builtin_type_names)) {
+            return true;
+        }
+
+        if (is_imported_type_reference_name(type_name)) {
+            return true;
+        }
+
+        auto declared_type_name_matches = [&](auto const& declaration) {
+            return declaration.name == type_name;
+        };
+        return std::ranges::find_if(module_.type_aliases, declared_type_name_matches) != module_.type_aliases.end() ||
+               std::ranges::find_if(module_.records, declared_type_name_matches) != module_.records.end() ||
+               std::ranges::find_if(module_.choices, declared_type_name_matches) != module_.choices.end();
+    }
+
+    auto type_reference_arity(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context
+    ) const -> std::optional<std::size_t> {
+        auto type_name = unqualified_type_name(type);
+        auto unqualified_name = std::string {type_name};
+        if (generic_scope.contains(unqualified_name) ||
+            (receiver_context && unqualified_name == "This") ||
+            is_type_level_integer_argument(type) ||
+            is_primitive_scalar_type_name(unqualified_name)) {
+            return std::size_t {0};
+        }
+
+        if (auto source_arity = source_declared_type_arity(type_name)) {
+            return source_arity;
+        }
+        if (is_imported_type_reference_name(type_name)) {
+            return std::nullopt;
+        }
+
+        if (type_name == "Array" || type_name == "Outcome") {
+            return std::size_t {2};
+        }
+        if (type_name == "Box" || type_name == "DynamicArray" || type_name == "Maybe" ||
+            type_name == "Pointer" || type_name == "View") {
+            return std::size_t {1};
+        }
 
         return std::nullopt;
+    }
+
+    void validate_callable_signature_type(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context,
+        std::size_t line,
+        std::string const& type_context
+    ) {
+        if (is_type_level_integer_argument(type)) {
+            diagnostics_.error(
+                line,
+                type_context + " uses integer literal '" + type.name + "' where a type is required"
+            );
+            return;
+        }
+
+        if (!is_known_type_reference(type, generic_scope, receiver_context)) {
+            return;
+        }
+
+        auto expected_arity = type_reference_arity(type, generic_scope, receiver_context);
+        if (expected_arity.has_value() && type.generic_arguments.size() != *expected_arity) {
+            diagnostics_.error(
+                line,
+                type_context + " type '" + render_type_name(type) + "' supplies " +
+                    std::to_string(type.generic_arguments.size()) + " type argument" +
+                    (type.generic_arguments.size() == 1 ? "" : "s") + "; type '" +
+                    std::string {unqualified_type_name(type)} + "' requires " + std::to_string(*expected_arity)
+            );
+            return;
+        }
+
+        if (is_builtin_array_type_reference(type)) {
+            auto const& size_argument = type.generic_arguments[1];
+            if (!is_type_level_integer_argument(size_argument)) {
+                diagnostics_.error(
+                    line,
+                    type_context + " type '" + render_type_name(type) +
+                        "' requires an integer size as its second argument"
+                );
+                return;
+            }
+
+            validate_callable_signature_type(
+                type.generic_arguments[0],
+                generic_scope,
+                receiver_context,
+                line,
+                type_context
+            );
+            return;
+        }
+
+        for (auto const& argument : type.generic_arguments) {
+            validate_callable_signature_type(argument, generic_scope, receiver_context, line, type_context);
+        }
+    }
+
+    template <typename CallableSyntax>
+    void validate_callable_signature_types(
+        CallableSyntax const& callable,
+        std::unordered_set<std::string> const& generic_scope,
+        bool receiver_context,
+        std::string const& callable_name
+    ) {
+        for (auto const& parameter : callable.parameters) {
+            validate_callable_signature_type(
+                parameter.type,
+                generic_scope,
+                receiver_context,
+                parameter.line,
+                callable_name + " parameter '" + parameter.name + "'"
+            );
+        }
+        validate_callable_signature_type(
+            callable.return_type,
+            generic_scope,
+            receiver_context,
+            callable.line,
+            callable_name + " return"
+        );
+    }
+
+    void validate_callable_signature_types() {
+        for (auto const& function : module_.functions) {
+            validate_callable_signature_types(
+                function,
+                std::unordered_set<std::string> {
+                    function.generic_parameters.begin(),
+                    function.generic_parameters.end(),
+                },
+                false,
+                "function '" + function.name + "'"
+            );
+        }
+
+        for (auto const& interface : module_.interfaces) {
+            for (auto const& method : interface.methods) {
+                auto generic_scope = std::unordered_set<std::string> {
+                    interface.generic_parameters.begin(),
+                    interface.generic_parameters.end(),
+                };
+                generic_scope.insert(method.generic_parameters.begin(), method.generic_parameters.end());
+                validate_callable_signature_types(
+                    method,
+                    generic_scope,
+                    true,
+                    "interface method '" + interface.name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            auto owner_name = render_type_name(implementation.interface_type) + " for " +
+                render_type_name(implementation.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(implementation.receiver_type, receiver_generic_scope);
+            for (auto const& method : implementation.methods) {
+                auto generic_scope = receiver_generic_scope;
+                generic_scope.insert(method.generic_parameters.begin(), method.generic_parameters.end());
+                validate_callable_signature_types(
+                    method,
+                    generic_scope,
+                    true,
+                    "implementation method '" + owner_name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(extension.receiver_type, receiver_generic_scope);
+            for (auto const& method : extension.methods) {
+                auto generic_scope = receiver_generic_scope;
+                generic_scope.insert(method.generic_parameters.begin(), method.generic_parameters.end());
+                validate_callable_signature_types(
+                    method,
+                    generic_scope,
+                    true,
+                    "extension method '" + receiver_type_name + "." + method.name + "'"
+                );
+            }
+        }
+
+        for (auto const& foreign_import : module_.foreign_imports) {
+            for (auto const& function : foreign_import.functions) {
+                validate_callable_signature_types(
+                    function,
+                    {},
+                    false,
+                    "foreign import function '" + function.name + "'"
+                );
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            auto const& function = foreign_export.function;
+            validate_callable_signature_types(
+                function,
+                std::unordered_set<std::string> {
+                    function.generic_parameters.begin(),
+                    function.generic_parameters.end(),
+                },
+                false,
+                "foreign export function '" + function.name + "'"
+            );
+        }
     }
 
     void validate_where_requirement_type_references(
@@ -4582,7 +4771,7 @@ private:
         std::string const& callable_name,
         std::string const& constraint_parameter_name
     ) {
-        if (is_where_requirement_integer_argument(type)) {
+        if (is_type_level_integer_argument(type)) {
             diagnostics_.error(
                 line,
                 callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
@@ -4591,7 +4780,7 @@ private:
             return;
         }
 
-        if (!is_known_where_requirement_type_reference(type, generic_scope, receiver_context)) {
+        if (!is_known_type_reference(type, generic_scope, receiver_context)) {
             diagnostics_.error(
                 line,
                 callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
@@ -4600,7 +4789,7 @@ private:
             return;
         }
 
-        auto expected_arity = where_requirement_type_arity(type, generic_scope, receiver_context);
+        auto expected_arity = type_reference_arity(type, generic_scope, receiver_context);
         if (expected_arity.has_value() && type.generic_arguments.size() != *expected_arity) {
             diagnostics_.error(
                 line,
@@ -4608,16 +4797,15 @@ private:
                     rendered_requirement + "' type argument '" + render_type_name(type) + "' supplies " +
                     std::to_string(type.generic_arguments.size()) + " type argument" +
                     (type.generic_arguments.size() == 1 ? "" : "s") + "; type '" +
-                    std::string {unqualified_where_requirement_type_name(type)} + "' requires " +
+                    std::string {unqualified_type_name(type)} + "' requires " +
                     std::to_string(*expected_arity)
             );
             return;
         }
 
-        auto type_name = unqualified_where_requirement_type_name(type);
-        if (type_name == "Array") {
+        if (is_builtin_array_type_reference(type)) {
             auto const& size_argument = type.generic_arguments[1];
-            if (!is_where_requirement_integer_argument(size_argument)) {
+            if (!is_type_level_integer_argument(size_argument)) {
                 diagnostics_.error(
                     line,
                     callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +

@@ -4776,6 +4776,29 @@ auto main(int argc, char** argv) -> int {
     );
     assert(interface_method_generic_shadowing_output.find("define ") == std::string::npos);
 
+    auto interface_method_signature_type_arity_path =
+        smoke_temp_root / "orison_cli_interface_method_signature_type_arity.or";
+    write_lines(
+        interface_method_signature_type_arity_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Reader",
+            "    function read(this: shared This) -> Outcome<UInt32>",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto interface_method_signature_type_arity_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + interface_method_signature_type_arity_path.string()
+    );
+    assert(
+        interface_method_signature_type_arity_output.find(
+            "interface method 'Reader.read' return type 'Outcome<UInt32>' supplies 1 type argument; type 'Outcome' "
+            "requires 2"
+        ) != std::string::npos
+    );
+    assert(interface_method_signature_type_arity_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

@@ -3747,3 +3747,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-27: Method generic declarations now reject names already bound by their enclosing generic interface or
   receiver pattern. Interface, implementation, and extension methods fail at declaration analysis before LLVM
   definitions are emitted; free functions retain their independent generic scope.
+- 2026-10-27: Callable signatures now validate known generic constructor arity and fixed-array argument roles before
+  callable analysis. Coverage spans functions, interface and receiver methods, and foreign imports; malformed
+  signatures stop before LLVM definitions. Source declarations override matching built-in spellings, while unknown and
+  imported nominal arity awaits module metadata.

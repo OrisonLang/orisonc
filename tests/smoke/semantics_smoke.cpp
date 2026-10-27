@@ -8037,6 +8037,87 @@ void test_extension_method_generic_parameter_shadowing_failure() {
     );
 }
 
+void test_function_parameter_source_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_function_parameter_source_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.signatures",
+        {
+            "record Box<T>",
+            "    value: T",
+            "function consume(value: Box<UInt32, UInt64>) -> Unit",
+            "    return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'consume' parameter 'value' type 'Box<UInt32, UInt64>' supplies 2 type arguments; type 'Box' "
+        "requires 1"
+    );
+}
+
+void test_interface_method_return_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_interface_method_return_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.signatures",
+        {
+            "interface Reader",
+            "    function read(this: shared This) -> Outcome<UInt32>",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "interface method 'Reader.read' return type 'Outcome<UInt32>' supplies 1 type argument; type 'Outcome' "
+        "requires 2"
+    );
+}
+
+void test_extension_method_parameter_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_extension_method_parameter_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.signatures",
+        {
+            "record Box<T>",
+            "    value: T",
+            "extend Box<T>",
+            "    function consume(this: shared This, value: Box<T, UInt32>) -> Unit",
+            "        return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "extension method 'Box<T>.consume' parameter 'value' type 'Box<T, UInt32>' supplies 2 type arguments; type "
+        "'Box' requires 1"
+    );
+}
+
+void test_foreign_import_parameter_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_foreign_parameter_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.signatures",
+        {
+            "package foreign \"c\"",
+            "    function host_write(value: Pointer<Byte, UInt32>) -> Int32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "foreign import function 'host_write' parameter 'value' type 'Pointer<Byte, UInt32>' supplies 2 type "
+        "arguments; type 'Pointer' requires 1"
+    );
+}
+
 void test_duplicate_where_constraint_name_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_where_constraint_failure.or";
     write_concurrency_fixture(
@@ -14727,6 +14808,10 @@ int main() {
     test_interface_method_generic_parameter_shadowing_failure();
     test_implementation_method_generic_parameter_shadowing_failure();
     test_extension_method_generic_parameter_shadowing_failure();
+    test_function_parameter_source_type_arity_failure();
+    test_interface_method_return_type_arity_failure();
+    test_extension_method_parameter_type_arity_failure();
+    test_foreign_import_parameter_type_arity_failure();
     test_duplicate_where_constraint_name_failure();
     test_duplicate_where_requirement_name_failure();
     test_unknown_where_requirement_interface_failure();
