@@ -3873,3 +3873,6 @@ representation.
 - 2026-10-26 Nested `where` requirement types now enforce declared or built-in generic arity. Scalars, aliases,
   generic parameters, receiver `This`, and integer arguments are zero-arity; malformed nested types stop before LLVM
   emission. Imported type arity remains deferred until import metadata is available.
+- 2026-10-26 Nested `where` requirement arguments now enforce built-in argument roles. `Array<T, N>` requires a type
+  for `T` and an integer literal for `N`; integer literals in ordinary generic type slots and nonliteral array sizes
+  stop before LLVM emission.

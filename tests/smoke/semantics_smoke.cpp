@@ -8201,6 +8201,70 @@ void test_where_requirement_generic_parameter_arity_failure() {
     );
 }
 
+void test_where_requirement_array_element_role_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_array_element_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "function preserve<C>(container: C) -> C",
+            "where C: Contains<Array<4, 8>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'preserve' where constraint 'C' requirement 'Contains<Array<4, 8>>' uses integer literal '4' "
+        "where a type is required"
+    );
+}
+
+void test_where_requirement_array_size_role_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_array_size_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "function preserve<C, T>(container: C) -> C",
+            "where C: Contains<Array<UInt32, T>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'preserve' where constraint 'C' requirement 'Contains<Array<UInt32, T>>' type argument "
+        "'Array<UInt32, T>' requires an integer size as its second argument"
+    );
+}
+
+void test_where_requirement_ordinary_type_argument_role_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_where_requirement_ordinary_type_argument_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.generics",
+        {
+            "interface Contains<T>",
+            "function preserve<C>(container: C) -> C",
+            "where C: Contains<Box<4>>",
+            "    return container",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "function 'preserve' where constraint 'C' requirement 'Contains<Box<4>>' uses integer literal '4' where a "
+        "type is required"
+    );
+}
+
 void test_generic_function_where_constraint_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_generic_function_constraint_success.or";
     write_concurrency_fixture(
@@ -14605,6 +14669,9 @@ int main() {
     test_where_requirement_source_type_arity_failure();
     test_where_requirement_scalar_type_arity_failure();
     test_where_requirement_generic_parameter_arity_failure();
+    test_where_requirement_array_element_role_failure();
+    test_where_requirement_array_size_role_failure();
+    test_where_requirement_ordinary_type_argument_role_failure();
     test_generic_function_where_constraint_success();
     test_generic_function_where_constraint_failure();
     test_generic_function_parameterized_where_constraint_success();

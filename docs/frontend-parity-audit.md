@@ -3741,3 +3741,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-26: Resolved nested `where` requirement types now receive generic-arity validation from built-in and source
   declaration metadata. Non-generic references reject type arguments, and malformed constructors fail before LLVM
   definitions are emitted; imported constructor arity awaits import metadata.
+- 2026-10-26: Nested `where` requirement arguments now preserve the distinct roles in `Array<T, N>`. The element slot
+  requires a type, the size slot requires an integer literal, and other generic constructors reject integer literals
+  in type slots before LLVM definitions are emitted.

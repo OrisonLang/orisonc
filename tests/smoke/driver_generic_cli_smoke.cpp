@@ -4729,6 +4729,31 @@ auto main(int argc, char** argv) -> int {
     );
     assert(interface_method_constraint_type_argument_arity_output.find("define ") == std::string::npos);
 
+    auto interface_method_constraint_array_size_role_path =
+        smoke_temp_root / "orison_cli_interface_method_constraint_array_size_role.or";
+    write_lines(
+        interface_method_constraint_array_size_role_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "interface Mapper",
+            "    function map<T>(this: shared This, value: T) -> T",
+            "    where T: Contains<Array<UInt32, T>>",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto interface_method_constraint_array_size_role_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + interface_method_constraint_array_size_role_path.string()
+    );
+    assert(
+        interface_method_constraint_array_size_role_output.find(
+            "interface method 'Mapper.map' where constraint 'T' requirement 'Contains<Array<UInt32, T>>' type "
+            "argument 'Array<UInt32, T>' requires an integer size as its second argument"
+        ) != std::string::npos
+    );
+    assert(interface_method_constraint_array_size_role_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

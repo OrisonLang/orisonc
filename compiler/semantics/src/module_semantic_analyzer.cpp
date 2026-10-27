@@ -4442,6 +4442,11 @@ private:
         return type_name;
     }
 
+    auto is_where_requirement_integer_argument(syntax::TypeSyntax const& type) const -> bool {
+        return type.generic_arguments.empty() && !type.name.empty() && type.name.front() >= '0' &&
+               type.name.front() <= '9';
+    }
+
     auto is_known_where_requirement_type_reference(
         syntax::TypeSyntax const& type,
         std::unordered_set<std::string> const& generic_scope,
@@ -4452,7 +4457,7 @@ private:
         auto unqualified_name = std::string {type_name};
         if (generic_scope.contains(unqualified_name) ||
             (receiver_context && unqualified_name == "This") ||
-            (!unqualified_name.empty() && unqualified_name.front() >= '0' && unqualified_name.front() <= '9') ||
+            is_where_requirement_integer_argument(type) ||
             is_primitive_scalar_type_name(unqualified_name)) {
             return true;
         }
@@ -4491,7 +4496,7 @@ private:
         auto unqualified_name = std::string {type_name};
         if (generic_scope.contains(unqualified_name) ||
             (receiver_context && unqualified_name == "This") ||
-            (!unqualified_name.empty() && unqualified_name.front() >= '0' && unqualified_name.front() <= '9') ||
+            is_where_requirement_integer_argument(type) ||
             is_primitive_scalar_type_name(unqualified_name)) {
             return std::size_t {0};
         }
@@ -4532,6 +4537,15 @@ private:
         std::string const& callable_name,
         std::string const& constraint_parameter_name
     ) {
+        if (is_where_requirement_integer_argument(type)) {
+            diagnostics_.error(
+                line,
+                callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
+                    rendered_requirement + "' uses integer literal '" + type.name + "' where a type is required"
+            );
+            return;
+        }
+
         if (!is_known_where_requirement_type_reference(type, generic_scope, receiver_context)) {
             diagnostics_.error(
                 line,
@@ -4551,6 +4565,31 @@ private:
                     (type.generic_arguments.size() == 1 ? "" : "s") + "; type '" +
                     std::string {unqualified_where_requirement_type_name(type)} + "' requires " +
                     std::to_string(*expected_arity)
+            );
+            return;
+        }
+
+        auto type_name = unqualified_where_requirement_type_name(type);
+        if (type_name == "Array") {
+            auto const& size_argument = type.generic_arguments[1];
+            if (!is_where_requirement_integer_argument(size_argument)) {
+                diagnostics_.error(
+                    line,
+                    callable_name + " where constraint '" + constraint_parameter_name + "' requirement '" +
+                        rendered_requirement + "' type argument '" + render_type_name(type) +
+                        "' requires an integer size as its second argument"
+                );
+                return;
+            }
+
+            validate_where_requirement_type_references(
+                type.generic_arguments[0],
+                rendered_requirement,
+                generic_scope,
+                receiver_context,
+                line,
+                callable_name,
+                constraint_parameter_name
             );
             return;
         }
