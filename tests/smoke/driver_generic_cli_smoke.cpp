@@ -4799,6 +4799,29 @@ auto main(int argc, char** argv) -> int {
     );
     assert(interface_method_signature_type_arity_output.find("define ") == std::string::npos);
 
+    auto aggregate_member_signature_type_arity_path =
+        smoke_temp_root / "orison_cli_aggregate_member_signature_type_arity.or";
+    write_lines(
+        aggregate_member_signature_type_arity_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "choice Task<T>",
+            "    Remote(done: Outcome<T>)",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto aggregate_member_signature_type_arity_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + aggregate_member_signature_type_arity_path.string()
+    );
+    assert(
+        aggregate_member_signature_type_arity_output.find(
+            "choice 'Task' variant 'Remote' payload 'done' type 'Outcome<T>' supplies 1 type argument; type "
+            "'Outcome' requires 2"
+        ) != std::string::npos
+    );
+    assert(aggregate_member_signature_type_arity_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

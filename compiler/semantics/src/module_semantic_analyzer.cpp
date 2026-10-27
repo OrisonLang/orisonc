@@ -111,6 +111,7 @@ public:
         validate_duplicate_extension_methods();
         validate_duplicate_callable_parameters();
         validate_duplicate_generic_parameters_and_constraints();
+        validate_aggregate_member_types();
         validate_callable_signature_types();
         validate_where_constraint_declarations();
         collect_async_callable_names();
@@ -4593,7 +4594,7 @@ private:
         return std::nullopt;
     }
 
-    void validate_callable_signature_type(
+    void validate_declared_type_reference(
         syntax::TypeSyntax const& type,
         std::unordered_set<std::string> const& generic_scope,
         bool receiver_context,
@@ -4635,7 +4636,7 @@ private:
                 return;
             }
 
-            validate_callable_signature_type(
+            validate_declared_type_reference(
                 type.generic_arguments[0],
                 generic_scope,
                 receiver_context,
@@ -4646,7 +4647,43 @@ private:
         }
 
         for (auto const& argument : type.generic_arguments) {
-            validate_callable_signature_type(argument, generic_scope, receiver_context, line, type_context);
+            validate_declared_type_reference(argument, generic_scope, receiver_context, line, type_context);
+        }
+    }
+
+    void validate_aggregate_member_types() {
+        for (auto const& record : module_.records) {
+            auto generic_scope = std::unordered_set<std::string> {
+                record.generic_parameters.begin(),
+                record.generic_parameters.end(),
+            };
+            for (auto const& field : record.fields) {
+                validate_declared_type_reference(
+                    field.type,
+                    generic_scope,
+                    false,
+                    field.line,
+                    "record '" + record.name + "' field '" + field.name + "'"
+                );
+            }
+        }
+
+        for (auto const& choice : module_.choices) {
+            auto generic_scope = std::unordered_set<std::string> {
+                choice.generic_parameters.begin(),
+                choice.generic_parameters.end(),
+            };
+            for (auto const& variant : choice.variants) {
+                for (auto const& payload : variant.payloads) {
+                    validate_declared_type_reference(
+                        payload.type,
+                        generic_scope,
+                        false,
+                        payload.line,
+                        "choice '" + choice.name + "' variant '" + variant.name + "' payload '" + payload.name + "'"
+                    );
+                }
+            }
         }
     }
 
@@ -4658,7 +4695,7 @@ private:
         std::string const& callable_name
     ) {
         for (auto const& parameter : callable.parameters) {
-            validate_callable_signature_type(
+            validate_declared_type_reference(
                 parameter.type,
                 generic_scope,
                 receiver_context,
@@ -4666,7 +4703,7 @@ private:
                 callable_name + " parameter '" + parameter.name + "'"
             );
         }
-        validate_callable_signature_type(
+        validate_declared_type_reference(
             callable.return_type,
             generic_scope,
             receiver_context,

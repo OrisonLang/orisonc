@@ -3883,3 +3883,6 @@ representation.
   interface methods, implementation methods, extension methods, and foreign callables enforce known built-in and
   source-declared arity plus `Array<T, N>` argument roles. Source and imported bindings take precedence over built-in
   spellings. Unresolved and imported nominal arity remains deferred until module metadata is available.
+- 2026-10-27 Record fields and choice payloads now use the same declaration-time type-constructor validation as
+  callable signatures. Aggregate generic parameters remain in scope for recursive validation, and malformed arity or
+  `Array<T, N>` argument roles stop before aggregate metadata reaches lowering.

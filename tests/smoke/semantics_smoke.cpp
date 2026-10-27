@@ -8058,6 +8058,81 @@ void test_function_parameter_source_type_arity_failure() {
     );
 }
 
+void test_record_field_source_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_field_source_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aggregate_signatures",
+        {
+            "record Box<T>",
+            "    value: T",
+            "record Holder",
+            "    value: Box<UInt32, UInt64>",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "record 'Holder' field 'value' type 'Box<UInt32, UInt64>' supplies 2 type arguments; type 'Box' requires 1"
+    );
+}
+
+void test_generic_record_field_array_size_role_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_field_array_size_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aggregate_signatures",
+        {
+            "record Buffer<T>",
+            "    values: Array<T, UInt32>",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "record 'Buffer' field 'values' type 'Array<T, UInt32>' requires an integer size as its second argument"
+    );
+}
+
+void test_choice_payload_builtin_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_payload_builtin_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aggregate_signatures",
+        {
+            "choice Task<T>",
+            "    Remote(done: Outcome<T>)",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "choice 'Task' variant 'Remote' payload 'done' type 'Outcome<T>' supplies 1 type argument; type "
+        "'Outcome' requires 2"
+    );
+}
+
+void test_choice_payload_integer_type_argument_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_payload_integer_type_argument.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aggregate_signatures",
+        {
+            "choice Slot",
+            "    Filled(value: Maybe<4>)",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "choice 'Slot' variant 'Filled' payload 'value' uses integer literal '4' where a type is required"
+    );
+}
+
 void test_interface_method_return_type_arity_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_interface_method_return_type_arity.or";
     write_concurrency_fixture(
@@ -14808,6 +14883,10 @@ int main() {
     test_interface_method_generic_parameter_shadowing_failure();
     test_implementation_method_generic_parameter_shadowing_failure();
     test_extension_method_generic_parameter_shadowing_failure();
+    test_record_field_source_type_arity_failure();
+    test_generic_record_field_array_size_role_failure();
+    test_choice_payload_builtin_type_arity_failure();
+    test_choice_payload_integer_type_argument_failure();
     test_function_parameter_source_type_arity_failure();
     test_interface_method_return_type_arity_failure();
     test_extension_method_parameter_type_arity_failure();

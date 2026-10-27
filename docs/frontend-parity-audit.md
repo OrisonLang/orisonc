@@ -3751,3 +3751,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   callable analysis. Coverage spans functions, interface and receiver methods, and foreign imports; malformed
   signatures stop before LLVM definitions. Source declarations override matching built-in spellings, while unknown and
   imported nominal arity awaits module metadata.
+- 2026-10-27: Record field and choice payload declarations now validate known generic constructor arity and fixed-array
+  argument roles before aggregate metadata collection. Aggregate generic scopes support nested and recursive member
+  types, while malformed declarations block LLVM definitions.
