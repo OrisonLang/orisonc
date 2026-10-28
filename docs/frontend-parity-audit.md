@@ -3772,3 +3772,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: Imported type constructor arity can now be supplied as typed semantic metadata and propagated through
   compile-pipeline options. Metadata matches the import's source package and exported name, including locally aliased
   bindings; malformed imported applications stop before LLVM output. Imports without metadata retain deferred arity.
+- 2026-10-28: Parsed modules can now produce typed package interfaces containing only public type declarations, with
+  explicit alias, record, choice, or interface kind and generic arity. Named imports consume matching package
+  interfaces into semantic metadata through original package and declaration identity; storage and discovery remain
+  separate future work.

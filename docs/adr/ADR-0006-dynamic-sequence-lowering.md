@@ -3905,3 +3905,7 @@ representation.
   exported declaration name, and generic arity. Import aliases resolve through their original package and name before
   arity validation, and pipeline options carry the metadata through the production semantic stage. Missing metadata
   still defers imported arity; filesystem package discovery remains outside this decision.
+- 2026-10-28 A typed package-interface boundary now derives public type aliases, records, choices, and interfaces from
+  parsed modules while retaining declaration kind and generic arity. Import consumption matches source package and
+  exported declaration identity, then produces semantic imported-type metadata. Package-interface serialization,
+  filesystem discovery, and search-path policy remain outside this decision.

@@ -729,6 +729,22 @@ add_test(
     COMMAND orison_semantics_smoke
 )
 
+add_executable(orison_package_interface_smoke
+    smoke/package_interface_smoke.cpp
+)
+
+target_link_libraries(orison_package_interface_smoke
+    PRIVATE
+        orison_semantics
+)
+
+target_compile_features(orison_package_interface_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_package_interface_smoke
+    COMMAND orison_package_interface_smoke
+)
+
 add_executable(orison_drop_model_smoke
     smoke/drop_model_smoke.cpp
 )

@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/semantics/drop_model.hpp"
+#include "orison/semantics/package_interface.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
@@ -176,12 +177,6 @@ struct SemanticAnalysisResult {
     auto render(std::string_view path) const -> std::string {
         return diagnostics.render(path);
     }
-};
-
-struct ImportedTypeDeclarationMetadata {
-    std::string package_name;
-    std::string declaration_name;
-    std::size_t generic_arity = 0;
 };
 
 struct SemanticAnalysisOptions {

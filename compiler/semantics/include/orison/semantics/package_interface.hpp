@@ -1,0 +1,42 @@
+#pragma once
+
+#include "orison/syntax/module_parser.hpp"
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+namespace orison::semantics {
+
+enum class PackageTypeDeclarationKind {
+    type_alias,
+    record,
+    choice,
+    interface_declaration,
+};
+
+struct PackageTypeDeclaration {
+    PackageTypeDeclarationKind kind = PackageTypeDeclarationKind::type_alias;
+    std::string name;
+    std::size_t generic_arity = 0;
+};
+
+struct PackageInterface {
+    std::string package_name;
+    std::vector<PackageTypeDeclaration> exported_type_declarations;
+};
+
+struct ImportedTypeDeclarationMetadata {
+    std::string package_name;
+    std::string declaration_name;
+    std::size_t generic_arity = 0;
+};
+
+auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface;
+
+auto resolve_imported_type_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> std::vector<ImportedTypeDeclarationMetadata>;
+
+}  // namespace orison::semantics
