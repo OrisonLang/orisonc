@@ -1796,6 +1796,38 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     orison::pipeline::CompilePipeline pipeline;
+    auto imported_type_arity_path = smoke_temp_root / "imported_type_arity_failure.or";
+    {
+        std::ofstream output(imported_type_arity_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    Pair as ExternalPair from external.types\n";
+        output << "function consume(value: ExternalPair<UInt32>) -> Unit\n";
+        output << "    return\n";
+    }
+    auto imported_type_arity = pipeline.emit_llvm(
+        imported_type_arity_path,
+        orison::pipeline::CompilePipelineOptions {
+            .semantic_analysis = {
+                .imported_type_declarations = {
+                    {
+                        .package_name = "external.types",
+                        .declaration_name = "Pair",
+                        .generic_arity = 2,
+                    },
+                },
+            },
+        }
+    );
+    assert(imported_type_arity.has_errors());
+    assert(
+        imported_type_arity.error_text.find(
+            "function 'consume' parameter 'value' type 'ExternalPair<UInt32>' supplies 1 type argument; "
+            "type 'ExternalPair' requires 2"
+        ) != std::string::npos
+    );
+    assert(imported_type_arity.ir_text.empty());
+
     test_no_option_pipeline_emission_uses_production_defaults(pipeline);
     assert_aggregate_projection_access_plan_state(pipeline, smoke_temp_root);
     assert_production_semantic_owned_cleanup_emit_object_link_run_success(

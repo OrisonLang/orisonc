@@ -25,7 +25,7 @@ auto run_semantic_analysis_stage(
     collect_link_libraries(result.parse_result.module, result.link_libraries);
 
     semantics::ModuleSemanticAnalyzer semantic_analyzer;
-    result.semantic_result = semantic_analyzer.analyze(result.parse_result.module);
+    result.semantic_result = semantic_analyzer.analyze(result.parse_result.module, options.semantic_analysis);
     if (result.semantic_result.has_errors()) {
         result.error_text = result.semantic_result.render(result.source_file->path().string());
     }

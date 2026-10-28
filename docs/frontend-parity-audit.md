@@ -3769,3 +3769,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-27: Unresolved local nominal type references now fail semantic analysis in every type position covered by
   shared declaration validation. Named import bindings remain resolvable without local declarations, and imported
   constructor arity remains deferred until package metadata is available. Production diagnostics block LLVM output.
+- 2026-10-28: Imported type constructor arity can now be supplied as typed semantic metadata and propagated through
+  compile-pipeline options. Metadata matches the import's source package and exported name, including locally aliased
+  bindings; malformed imported applications stop before LLVM output. Imports without metadata retain deferred arity.

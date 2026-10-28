@@ -3901,3 +3901,7 @@ representation.
 - 2026-10-27 Declared type references now reject unresolved local nominal names across signatures, aggregate members,
   aliases, constants, local annotations, implementation and extension heads, and cast targets. Named imports remain
   valid type references, while their constructor arity stays deferred until package metadata is available.
+- 2026-10-28 Semantic analysis now accepts explicit imported-type declaration metadata containing the source package,
+  exported declaration name, and generic arity. Import aliases resolve through their original package and name before
+  arity validation, and pipeline options carry the metadata through the production semantic stage. Missing metadata
+  still defers imported arity; filesystem package discovery remains outside this decision.

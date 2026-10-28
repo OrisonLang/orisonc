@@ -178,6 +178,16 @@ struct SemanticAnalysisResult {
     }
 };
 
+struct ImportedTypeDeclarationMetadata {
+    std::string package_name;
+    std::string declaration_name;
+    std::size_t generic_arity = 0;
+};
+
+struct SemanticAnalysisOptions {
+    std::vector<ImportedTypeDeclarationMetadata> imported_type_declarations;
+};
+
 auto format_dynamic_array_descriptor_summary(SemanticDynamicArrayDescriptorSummary const& descriptor)
     -> std::string;
 
@@ -198,6 +208,10 @@ auto project_semantic_owned_cleanup_obligations(
 class ModuleSemanticAnalyzer {
 public:
     auto analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult;
+    auto analyze(
+        syntax::ModuleSyntax const& module,
+        SemanticAnalysisOptions const& options
+    ) const -> SemanticAnalysisResult;
 };
 
 }  // namespace orison::semantics

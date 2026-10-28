@@ -1740,7 +1740,10 @@ void assert_record_field_nested_array_context_success(
     assert_fixture_success(path);
 }
 
-auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
+auto analyze_orison_fixture(
+    std::filesystem::path const& path,
+    orison::semantics::SemanticAnalysisOptions const& options = {}
+) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
 
@@ -1749,7 +1752,7 @@ auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semant
     assert(!parse_result.diagnostics.has_errors());
 
     orison::semantics::ModuleSemanticAnalyzer analyzer;
-    return analyzer.analyze(parse_result.module);
+    return analyzer.analyze(parse_result.module, options);
 }
 
 template <typename MutateSwitch>
@@ -8372,6 +8375,67 @@ void test_imported_generic_type_reference_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_imported_type_metadata_alias_arity_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_imported_type_metadata_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "import",
+            "    Pair as ExternalPair from external.types",
+            "function identity(value: ExternalPair<UInt32, UInt64>) -> ExternalPair<UInt32, UInt64>",
+            "    return value",
+        }
+    );
+
+    auto diagnostics = analyze_orison_fixture(
+        path,
+        orison::semantics::SemanticAnalysisOptions {
+            .imported_type_declarations = {
+                {
+                    .package_name = "external.types",
+                    .declaration_name = "Pair",
+                    .generic_arity = 2,
+                },
+            },
+        }
+    );
+    assert(!diagnostics.has_errors());
+}
+
+void test_imported_type_metadata_alias_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_imported_type_metadata_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "import",
+            "    Pair as ExternalPair from external.types",
+            "function consume(value: ExternalPair<UInt32>) -> Unit",
+            "    return",
+        }
+    );
+
+    auto diagnostics = analyze_orison_fixture(
+        path,
+        orison::semantics::SemanticAnalysisOptions {
+            .imported_type_declarations = {
+                {
+                    .package_name = "external.types",
+                    .declaration_name = "Pair",
+                    .generic_arity = 2,
+                },
+            },
+        }
+    );
+    assert_single_diagnostic(
+        diagnostics,
+        4,
+        "function 'consume' parameter 'value' type 'ExternalPair<UInt32>' supplies 1 type argument; "
+        "type 'ExternalPair' requires 2"
+    );
 }
 
 void test_generic_record_field_array_size_role_failure() {
@@ -15314,6 +15378,8 @@ int main() {
     test_unknown_cast_target_type_failure();
     test_unknown_extension_receiver_type_failure();
     test_imported_generic_type_reference_success();
+    test_imported_type_metadata_alias_arity_success();
+    test_imported_type_metadata_alias_arity_failure();
     test_record_field_source_type_arity_failure();
     test_generic_record_field_array_size_role_failure();
     test_choice_payload_builtin_type_arity_failure();

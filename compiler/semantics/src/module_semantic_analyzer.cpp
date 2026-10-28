@@ -95,7 +95,8 @@ struct PayloadConstructorPatternKey {
 
 class Analyzer {
 public:
-    explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
+    Analyzer(syntax::ModuleSyntax const& module, SemanticAnalysisOptions const& options)
+        : module_(module), options_(options) {}
 
     auto analyze() -> SemanticAnalysisResult {
         validate_duplicate_import_bindings();
@@ -4541,6 +4542,30 @@ private:
         );
     }
 
+    auto imported_type_reference_arity(std::string_view type_name) const -> std::optional<std::size_t> {
+        auto imported_declaration = std::ranges::find_if(
+            module_.imports,
+            [&](syntax::ImportSyntax const& import) {
+                return (import.alias.empty() ? import.name : import.alias) == type_name;
+            }
+        );
+        if (imported_declaration == module_.imports.end()) {
+            return std::nullopt;
+        }
+
+        auto metadata = std::ranges::find_if(
+            options_.imported_type_declarations,
+            [&](ImportedTypeDeclarationMetadata const& declaration) {
+                return declaration.package_name == imported_declaration->from_package &&
+                       declaration.declaration_name == imported_declaration->name;
+            }
+        );
+        if (metadata == options_.imported_type_declarations.end()) {
+            return std::nullopt;
+        }
+        return metadata->generic_arity;
+    }
+
     auto is_builtin_array_type_reference(syntax::TypeSyntax const& type) const -> bool {
         auto type_name = unqualified_type_name(type);
         return type_name == "Array" && !source_declared_type_arity(type_name).has_value() &&
@@ -4599,7 +4624,7 @@ private:
             return source_arity;
         }
         if (is_imported_type_reference_name(type_name)) {
-            return std::nullopt;
+            return imported_type_reference_arity(type_name);
         }
 
         if (type_name == "Array" || type_name == "Outcome") {
@@ -7479,6 +7504,7 @@ private:
     }
 
     syntax::ModuleSyntax const& module_;
+    SemanticAnalysisOptions const& options_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
     SemanticModuleSummary semantic_module_;
@@ -7513,7 +7539,14 @@ private:
 }  // namespace
 
 auto ModuleSemanticAnalyzer::analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult {
-    return Analyzer(module).analyze();
+    return analyze(module, SemanticAnalysisOptions {});
+}
+
+auto ModuleSemanticAnalyzer::analyze(
+    syntax::ModuleSyntax const& module,
+    SemanticAnalysisOptions const& options
+) const -> SemanticAnalysisResult {
+    return Analyzer(module, options).analyze();
 }
 
 auto format_dynamic_array_descriptor_binding_kind(DynamicArrayDescriptorBindingKind binding_kind) -> std::string_view {
