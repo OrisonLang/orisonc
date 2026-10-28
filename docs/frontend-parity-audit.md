@@ -3782,3 +3782,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: Typed package interfaces now serialize to a canonical version-1 text artifact and parse back into the
   same typed representation. The parser reports unsupported versions, malformed declarations, unknown kinds, invalid
   arities, and duplicate exported names before any interface reaches semantic import resolution.
+- 2026-10-28: `orisonc` production compile commands now accept repeatable leading `--package-interface <file>`
+  arguments. Explicit artifacts are read and parsed before source compilation, and unreadable or malformed files fail
+  with path-qualified diagnostics. No implicit package discovery or search path was introduced.

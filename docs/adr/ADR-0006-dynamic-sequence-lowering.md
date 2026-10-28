@@ -3917,3 +3917,6 @@ representation.
   Serialization orders exported type declarations canonically, while parsing rejects unsupported versions, malformed
   records, unknown declaration kinds, invalid generic arities, and duplicate exported names. Artifact file placement,
   package discovery, and search paths remain outside this decision.
+- 2026-10-28 Production compiler commands accept repeatable leading `--package-interface <file>` options. The driver
+  reads and validates each explicit artifact before compilation, then supplies its typed package interface to semantic
+  import resolution. Automatic discovery and package search paths remain intentionally absent.

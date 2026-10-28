@@ -10,6 +10,7 @@
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/pipeline/owned_cleanup_readiness_source_correlation_report.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_readiness_report.hpp"
+#include "orison/semantics/package_interface.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -151,7 +152,8 @@ auto semantic_owned_cleanup_resolution_summary_state_report(
 }
 
 auto usage_text() -> std::string {
-    return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
+    return "usage: orisonc [--package-interface <file>]... "
+           "(--version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
            "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
            "--semantic-drop-summary <file> | --semantic-dynamic-array-descriptor-origins <file> | "
@@ -176,7 +178,40 @@ auto usage_text() -> std::string {
            "--runtime-indexed-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-emit-llvm <file> | "
            "--runtime-indexed-constructor-move-production-readiness <file> | "
-           "--emit-object <file> -o <output> | --build <file> -o <executable>";
+           "--emit-object <file> -o <output> | --build <file> -o <executable>)";
+}
+
+auto load_package_interface(
+    std::filesystem::path const& path,
+    pipeline::CompilePipelineOptions& options
+) -> std::optional<CompileResult> {
+    auto input = std::ifstream(path, std::ios::in | std::ios::binary);
+    if (!input) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = "error: unable to read package interface '" + path.string() + "'\n",
+        };
+    }
+
+    auto text = std::ostringstream {};
+    text << input.rdbuf();
+    if (input.bad()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = "error: unable to read package interface '" + path.string() + "'\n",
+        };
+    }
+
+    auto parsed = semantics::parse_package_interface(text.str());
+    if (parsed.has_error()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = "error: invalid package interface '" + path.string() + "': " +
+                           parsed.error_message + "\n",
+        };
+    }
+    options.available_package_interfaces.push_back(std::move(*parsed.package_interface));
+    return std::nullopt;
 }
 
 auto emit_llvm_report(
@@ -1066,6 +1101,19 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
     auto command_index = std::size_t {1};
     auto options = default_driver_options();
+
+    while (args.size() > command_index && std::string_view(args[command_index]) == "--package-interface") {
+        if (args.size() <= command_index + 1) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: --package-interface requires a file path\n",
+            };
+        }
+        if (auto error = load_package_interface(std::filesystem::path(args[command_index + 1]), options)) {
+            return std::move(*error);
+        }
+        command_index += 2;
+    }
 
     if (args.size() > command_index && std::string_view(args[command_index]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};

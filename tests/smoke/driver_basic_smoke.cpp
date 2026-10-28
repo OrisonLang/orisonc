@@ -97,6 +97,101 @@ int main() {
         "\n"
     );
 
+    auto first_interface_path = smoke_temp_root / "external_types.opi";
+    {
+        auto output = std::ofstream(first_interface_path);
+        output << "orison-package-interface 1\n"
+                  "package external.types\n"
+                  "type record Pair 2\n";
+    }
+    auto second_interface_path = smoke_temp_root / "external_values.opi";
+    {
+        auto output = std::ofstream(second_interface_path);
+        output << "orison-package-interface 1\n"
+                  "package external.values\n"
+                  "type choice Result 1\n";
+    }
+    auto imported_type_path = smoke_temp_root / "imported_type.or";
+    write_concurrency_fixture(
+        imported_type_path,
+        "demo.imported",
+        {
+            "import",
+            "    Pair from external.types",
+            "    Result from external.values",
+            "function consume(value: Result<UInt32, UInt64>) -> Unit",
+            "    return",
+        }
+    );
+    auto first_interface_path_text = first_interface_path.string();
+    auto second_interface_path_text = second_interface_path.string();
+    auto imported_type_path_text = imported_type_path.string();
+    std::array<char const*, 7> imported_type_argv {
+        "orisonc",
+        "--package-interface",
+        first_interface_path_text.c_str(),
+        "--package-interface",
+        second_interface_path_text.c_str(),
+        "--emit-llvm",
+        imported_type_path_text.c_str(),
+    };
+    auto imported_type_result = app.run(
+        std::span<char const* const>(imported_type_argv.data(), imported_type_argv.size())
+    );
+    assert_failure_with_no_stdout_contains(
+        imported_type_result,
+        "type 'Result<UInt32, UInt64>' supplies 2 type arguments; type 'Result' requires 1"
+    );
+
+    std::array<char const*, 2> missing_interface_value_argv {
+        "orisonc",
+        "--package-interface",
+    };
+    auto missing_interface_value = app.run(
+        std::span<char const* const>(missing_interface_value_argv.data(), missing_interface_value_argv.size())
+    );
+    assert_failure_with_no_stdout_contains(
+        missing_interface_value,
+        "--package-interface requires a file path"
+    );
+
+    auto missing_interface_path = smoke_temp_root / "missing.opi";
+    auto missing_interface_path_text = missing_interface_path.string();
+    auto emit_path_text = emit_path.string();
+    std::array<char const*, 5> missing_interface_argv {
+        "orisonc",
+        "--package-interface",
+        missing_interface_path_text.c_str(),
+        "--emit-llvm",
+        emit_path_text.c_str(),
+    };
+    auto missing_interface = app.run(
+        std::span<char const* const>(missing_interface_argv.data(), missing_interface_argv.size())
+    );
+    assert_failure_with_no_stdout_contains(missing_interface, "unable to read package interface");
+
+    auto invalid_interface_path = smoke_temp_root / "invalid.opi";
+    {
+        auto output = std::ofstream(invalid_interface_path);
+        output << "orison-package-interface 2\npackage external.types\n";
+    }
+    auto invalid_interface_path_text = invalid_interface_path.string();
+    std::array<char const*, 5> invalid_interface_argv {
+        "orisonc",
+        "--package-interface",
+        invalid_interface_path_text.c_str(),
+        "--emit-llvm",
+        emit_path_text.c_str(),
+    };
+    auto invalid_interface = app.run(
+        std::span<char const* const>(invalid_interface_argv.data(), invalid_interface_argv.size())
+    );
+    assert_failure_with_no_stdout_contains(
+        invalid_interface,
+        "invalid package interface '" + invalid_interface_path_text +
+            "': unsupported package interface version '2'"
+    );
+
     auto view_descriptor_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "view_descriptor_reads.or";
     auto view_descriptor = run_emit_llvm(app, view_descriptor_path);
     assert(view_descriptor.exit_code == 0);
@@ -122,7 +217,7 @@ int main() {
         ));
     assert_failure_with_no_stdout_contains(
         unknown_flag,
-        "usage: orisonc --version | run <file>"
+        "usage: orisonc [--package-interface <file>]..."
     );
 
     auto emit_failure_path =
