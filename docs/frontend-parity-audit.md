@@ -3779,3 +3779,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: Compile-pipeline callers can now provide available typed package interfaces directly. The semantic stage
   resolves matching named imports automatically, validates imported generic arity, and retains explicit semantic
   metadata as the deterministic override for a matching source declaration. No package search behavior was added.
+- 2026-10-28: Typed package interfaces now serialize to a canonical version-1 text artifact and parse back into the
+  same typed representation. The parser reports unsupported versions, malformed declarations, unknown kinds, invalid
+  arities, and duplicate exported names before any interface reaches semantic import resolution.

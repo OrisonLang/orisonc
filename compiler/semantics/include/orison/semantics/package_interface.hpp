@@ -3,7 +3,9 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::semantics {
@@ -26,6 +28,15 @@ struct PackageInterface {
     std::vector<PackageTypeDeclaration> exported_type_declarations;
 };
 
+struct PackageInterfaceParseResult {
+    std::optional<PackageInterface> package_interface;
+    std::string error_message;
+
+    auto has_error() const -> bool {
+        return !error_message.empty();
+    }
+};
+
 struct ImportedTypeDeclarationMetadata {
     std::string package_name;
     std::string declaration_name;
@@ -33,6 +44,10 @@ struct ImportedTypeDeclarationMetadata {
 };
 
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface;
+
+auto serialize_package_interface(PackageInterface const& package_interface) -> std::string;
+
+auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResult;
 
 auto resolve_imported_type_declarations(
     syntax::ModuleSyntax const& module,

@@ -64,6 +64,48 @@ int main() {
     assert(find_export("InternalIdentifier") == package_interface.exported_type_declarations.end());
     assert(find_export("InternalRecord") == package_interface.exported_type_declarations.end());
 
+    auto serialized = orison::semantics::serialize_package_interface(package_interface);
+    assert(
+        serialized ==
+        "orison-package-interface 1\n"
+        "package external.types\n"
+        "type alias Identifier 0\n"
+        "type record Pair 2\n"
+        "type interface Reader 0\n"
+        "type choice Result 1\n"
+    );
+    auto parsed = orison::semantics::parse_package_interface(serialized);
+    assert(!parsed.has_error());
+    assert(parsed.package_interface.has_value());
+    assert(orison::semantics::serialize_package_interface(*parsed.package_interface) == serialized);
+
+    auto empty = orison::semantics::parse_package_interface("");
+    assert(empty.has_error());
+    assert(empty.error_message == "package interface is empty");
+    auto unsupported_version = orison::semantics::parse_package_interface(
+        "orison-package-interface 2\npackage external.types\n"
+    );
+    assert(unsupported_version.has_error());
+    assert(unsupported_version.error_message == "unsupported package interface version '2'");
+    auto unknown_kind = orison::semantics::parse_package_interface(
+        "orison-package-interface 1\npackage external.types\ntype unknown Pair 2\n"
+    );
+    assert(unknown_kind.has_error());
+    assert(unknown_kind.error_message == "unknown package interface type kind 'unknown' at line 3");
+    auto invalid_arity = orison::semantics::parse_package_interface(
+        "orison-package-interface 1\npackage external.types\ntype record Pair two\n"
+    );
+    assert(invalid_arity.has_error());
+    assert(invalid_arity.error_message == "invalid package interface generic arity 'two' at line 3");
+    auto duplicate = orison::semantics::parse_package_interface(
+        "orison-package-interface 1\n"
+        "package external.types\n"
+        "type record Pair 2\n"
+        "type choice Pair 1\n"
+    );
+    assert(duplicate.has_error());
+    assert(duplicate.error_message == "duplicate package interface type declaration 'Pair' at line 4");
+
     auto consumer = orison::syntax::ModuleSyntax {};
     consumer.package_name = "demo.consumer";
     consumer.imports.push_back(orison::syntax::ImportSyntax {

@@ -3913,3 +3913,7 @@ representation.
   imports from those interfaces after parsing and merges the resulting type metadata before analysis. Explicitly
   supplied semantic metadata takes precedence for the same source package and declaration, preserving deterministic
   overrides without introducing package storage or discovery policy.
+- 2026-10-28 Typed package interfaces now have a deterministic, dependency-free text encoding with format version 1.
+  Serialization orders exported type declarations canonically, while parsing rejects unsupported versions, malformed
+  records, unknown declaration kinds, invalid generic arities, and duplicate exported names. Artifact file placement,
+  package discovery, and search paths remain outside this decision.
