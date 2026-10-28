@@ -3892,3 +3892,6 @@ representation.
 - 2026-10-27 Explicit local `let` and `var` annotations now use the same recursive type-constructor validation before
   initializer analysis. Function and method generic parameters plus generic receiver placeholders remain in scope, and
   nested control-flow bindings receive validation through normal statement traversal.
+- 2026-10-27 Implementation interface arguments and implementation or extension receiver types now use recursive
+  declaration-time type-constructor validation. Generic receiver placeholders remain in scope, invalid implementation
+  heads stop before interface conformance, and extension syntax retains its declaration line for precise diagnostics.

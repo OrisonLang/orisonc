@@ -2180,6 +2180,7 @@ private:
     }
 
     void parse_extension(ParseResult& result) {
+        auto line = current().line;
         advance();
         auto receiver_type = parse_type(result, "extend declaration requires a receiver type");
         if (receiver_type.name.empty()) {
@@ -2188,6 +2189,7 @@ private:
         }
 
         ExtensionSyntax extension {
+            .line = line,
             .receiver_type = std::move(receiver_type),
             .methods = {},
         };

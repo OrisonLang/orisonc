@@ -4877,6 +4877,40 @@ auto main(int argc, char** argv) -> int {
     );
     assert(local_annotation_type_output.find("define ") == std::string::npos);
 
+    auto declaration_head_type_path = smoke_temp_root / "orison_cli_declaration_head_type.or";
+    write_lines(
+        declaration_head_type_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "interface Contains<T>",
+            "record Box<T>",
+            "    value: T",
+            "implements Contains<Outcome<T>> for Box<T>",
+            "    function marker(this: shared This) -> Unit",
+            "        return",
+            "extend Array<Byte, UInt32>",
+            "    function count(this: shared This) -> UInt32",
+            "        0 as UInt32",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto declaration_head_type_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + declaration_head_type_path.string()
+    );
+    assert(
+        declaration_head_type_output.find(
+            "implementation 'Contains<Outcome<T>> for Box<T>' interface argument type 'Outcome<T>' supplies 1 type "
+            "argument; type 'Outcome' requires 2"
+        ) != std::string::npos
+    );
+    assert(
+        declaration_head_type_output.find(
+            "extension receiver type 'Array<Byte, UInt32>' requires an integer size as its second argument"
+        ) != std::string::npos
+    );
+    assert(declaration_head_type_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

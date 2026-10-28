@@ -8902,6 +8902,72 @@ void test_interface_implementation_generic_arity_failure() {
     );
 }
 
+void test_interface_implementation_nested_argument_arity_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_implementation_nested_argument_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Contains<T>",
+            "record Box<T>",
+            "    value: T",
+            "implements Contains<Outcome<T>> for Box<T>",
+            "    function marker(this: shared This) -> Unit",
+            "        return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "implementation 'Contains<Outcome<T>> for Box<T>' interface argument type 'Outcome<T>' supplies 1 type "
+        "argument; type 'Outcome' requires 2"
+    );
+}
+
+void test_interface_implementation_receiver_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_implementation_receiver_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.implements",
+        {
+            "interface Marker",
+            "record Box<T>",
+            "    value: T",
+            "implements Marker for Box<T, UInt32>",
+            "    function marker(this: shared This) -> Unit",
+            "        return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "implementation 'Marker for Box<T, UInt32>' receiver type 'Box<T, UInt32>' supplies 2 type arguments; "
+        "type 'Box' requires 1"
+    );
+}
+
+void test_extension_receiver_array_size_role_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_extension_receiver_array_size_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.extensions",
+        {
+            "extend Array<Byte, UInt32>",
+            "    function count(this: shared This) -> UInt32",
+            "        0 as UInt32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        2,
+        "extension receiver type 'Array<Byte, UInt32>' requires an integer size as its second argument"
+    );
+}
+
 void test_interface_implementation_missing_method_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_implementation_missing_method.or";
     write_concurrency_fixture(
@@ -15034,6 +15100,9 @@ int main() {
     test_bodyless_marker_interface_constraint_success();
     test_unknown_interface_implementation_failure();
     test_interface_implementation_generic_arity_failure();
+    test_interface_implementation_nested_argument_arity_failure();
+    test_interface_implementation_receiver_arity_failure();
+    test_extension_receiver_array_size_role_failure();
     test_interface_implementation_missing_method_failure();
     test_interface_implementation_extra_method_failure();
     test_interface_implementation_parameter_signature_failure();

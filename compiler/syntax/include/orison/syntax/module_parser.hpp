@@ -225,6 +225,7 @@ struct ImplementationSyntax {
 };
 
 struct ExtensionSyntax {
+    std::size_t line = 0;
     TypeSyntax receiver_type;
     std::vector<FunctionSyntax> methods;
 };

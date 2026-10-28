@@ -113,6 +113,7 @@ public:
         validate_duplicate_generic_parameters_and_constraints();
         validate_type_alias_and_constant_types();
         validate_aggregate_member_types();
+        validate_extension_receiver_types();
         validate_callable_signature_types();
         validate_where_constraint_declarations();
         collect_async_callable_names();
@@ -4125,6 +4126,32 @@ private:
     void validate_interface_implementations() {
         for (auto const& implementation : module_.implementations) {
             auto interface_name = implementation.interface_type.name;
+            auto implementation_name =
+                render_type_name(implementation.interface_type) + " for " +
+                render_type_name(implementation.receiver_type);
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(implementation.receiver_type, receiver_generic_scope);
+            auto head_types_valid = validate_declared_type_reference(
+                implementation.receiver_type,
+                receiver_generic_scope,
+                false,
+                implementation.line,
+                "implementation '" + implementation_name + "' receiver"
+            );
+            for (auto const& argument : implementation.interface_type.generic_arguments) {
+                auto argument_valid = validate_declared_type_reference(
+                    argument,
+                    receiver_generic_scope,
+                    false,
+                    implementation.line,
+                    "implementation '" + implementation_name + "' interface argument"
+                );
+                head_types_valid = argument_valid && head_types_valid;
+            }
+            if (!head_types_valid) {
+                continue;
+            }
+
             if (interface_name == "Transferable" || interface_name == "Shareable") {
                 continue;
             }
@@ -4136,9 +4163,6 @@ private:
                     return candidate.name == interface_name;
                 }
             );
-            auto implementation_name =
-                render_type_name(implementation.interface_type) + " for " +
-                render_type_name(implementation.receiver_type);
             if (interface_declaration == module_.interfaces.end()) {
                 diagnostics_.error(
                     implementation.line,
@@ -4599,23 +4623,23 @@ private:
         return std::nullopt;
     }
 
-    void validate_declared_type_reference(
+    auto validate_declared_type_reference(
         syntax::TypeSyntax const& type,
         std::unordered_set<std::string> const& generic_scope,
         bool receiver_context,
         std::size_t line,
         std::string const& type_context
-    ) {
+    ) -> bool {
         if (is_type_level_integer_argument(type)) {
             diagnostics_.error(
                 line,
                 type_context + " uses integer literal '" + type.name + "' where a type is required"
             );
-            return;
+            return false;
         }
 
         if (!is_known_type_reference(type, generic_scope, receiver_context)) {
-            return;
+            return true;
         }
 
         auto expected_arity = type_reference_arity(type, generic_scope, receiver_context);
@@ -4627,7 +4651,7 @@ private:
                     (type.generic_arguments.size() == 1 ? "" : "s") + "; type '" +
                     std::string {unqualified_type_name(type)} + "' requires " + std::to_string(*expected_arity)
             );
-            return;
+            return false;
         }
 
         if (is_builtin_array_type_reference(type)) {
@@ -4638,21 +4662,38 @@ private:
                     type_context + " type '" + render_type_name(type) +
                         "' requires an integer size as its second argument"
                 );
-                return;
+                return false;
             }
 
-            validate_declared_type_reference(
+            return validate_declared_type_reference(
                 type.generic_arguments[0],
                 generic_scope,
                 receiver_context,
                 line,
                 type_context
             );
-            return;
         }
 
+        auto valid = true;
         for (auto const& argument : type.generic_arguments) {
-            validate_declared_type_reference(argument, generic_scope, receiver_context, line, type_context);
+            auto argument_valid =
+                validate_declared_type_reference(argument, generic_scope, receiver_context, line, type_context);
+            valid = argument_valid && valid;
+        }
+        return valid;
+    }
+
+    void validate_extension_receiver_types() {
+        for (auto const& extension : module_.extensions) {
+            auto receiver_generic_scope = std::unordered_set<std::string> {};
+            collect_receiver_generic_placeholder_names(extension.receiver_type, receiver_generic_scope);
+            validate_declared_type_reference(
+                extension.receiver_type,
+                receiver_generic_scope,
+                false,
+                extension.line,
+                "extension receiver"
+            );
         }
     }
 
