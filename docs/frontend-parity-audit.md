@@ -3776,3 +3776,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   explicit alias, record, choice, or interface kind and generic arity. Named imports consume matching package
   interfaces into semantic metadata through original package and declaration identity; storage and discovery remain
   separate future work.
+- 2026-10-28: Compile-pipeline callers can now provide available typed package interfaces directly. The semantic stage
+  resolves matching named imports automatically, validates imported generic arity, and retains explicit semantic
+  metadata as the deterministic override for a matching source declaration. No package search behavior was added.

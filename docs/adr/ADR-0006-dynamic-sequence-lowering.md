@@ -3909,3 +3909,7 @@ representation.
   parsed modules while retaining declaration kind and generic arity. Import consumption matches source package and
   exported declaration identity, then produces semantic imported-type metadata. Package-interface serialization,
   filesystem discovery, and search-path policy remain outside this decision.
+- 2026-10-28 Compile-pipeline options now accept available typed package interfaces. The semantic stage resolves named
+  imports from those interfaces after parsing and merges the resulting type metadata before analysis. Explicitly
+  supplied semantic metadata takes precedence for the same source package and declaration, preserving deterministic
+  overrides without introducing package storage or discovery policy.

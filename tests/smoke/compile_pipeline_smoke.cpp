@@ -1805,20 +1805,21 @@ auto main() -> int {
         output << "function consume(value: ExternalPair<UInt32>) -> Unit\n";
         output << "    return\n";
     }
-    auto imported_type_arity = pipeline.emit_llvm(
-        imported_type_arity_path,
-        orison::pipeline::CompilePipelineOptions {
-            .semantic_analysis = {
-                .imported_type_declarations = {
+    auto package_interface_options = orison::pipeline::CompilePipelineOptions {
+        .available_package_interfaces = {
+            {
+                .package_name = "external.types",
+                .exported_type_declarations = {
                     {
-                        .package_name = "external.types",
-                        .declaration_name = "Pair",
+                        .kind = orison::semantics::PackageTypeDeclarationKind::record,
+                        .name = "Pair",
                         .generic_arity = 2,
                     },
                 },
             },
-        }
-    );
+        },
+    };
+    auto imported_type_arity = pipeline.emit_llvm(imported_type_arity_path, package_interface_options);
     assert(imported_type_arity.has_errors());
     assert(
         imported_type_arity.error_text.find(
@@ -1827,6 +1828,38 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(imported_type_arity.ir_text.empty());
+
+    auto imported_type_arity_success_path = smoke_temp_root / "imported_type_arity_success.or";
+    {
+        std::ofstream output(imported_type_arity_success_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    Pair as ExternalPair from external.types\n";
+        output << "function consume(value: ExternalPair<UInt32, UInt64>) -> Unit\n";
+        output << "    return\n";
+    }
+    auto imported_type_arity_success = pipeline.analyze(
+        imported_type_arity_success_path,
+        package_interface_options
+    );
+    assert(!imported_type_arity_success.has_errors());
+
+    auto explicit_imported_type_arity = pipeline.analyze(
+        imported_type_arity_path,
+        orison::pipeline::CompilePipelineOptions {
+            .semantic_analysis = {
+                .imported_type_declarations = {
+                    {
+                        .package_name = "external.types",
+                        .declaration_name = "Pair",
+                        .generic_arity = 1,
+                    },
+                },
+            },
+            .available_package_interfaces = package_interface_options.available_package_interfaces,
+        }
+    );
+    assert(!explicit_imported_type_arity.has_errors());
 
     test_no_option_pipeline_emission_uses_production_defaults(pipeline);
     assert_aggregate_projection_access_plan_state(pipeline, smoke_temp_root);

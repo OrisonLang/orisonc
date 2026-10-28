@@ -3,6 +3,8 @@
 #include "link_library_collection.hpp"
 #include "semantic_owned_cleanup_reports.hpp"
 
+#include <algorithm>
+
 namespace orison::pipeline {
 
 auto run_semantic_analysis_stage(
@@ -24,8 +26,26 @@ auto run_semantic_analysis_stage(
     }
     collect_link_libraries(result.parse_result.module, result.link_libraries);
 
+    auto semantic_analysis_options = options.semantic_analysis;
+    auto resolved_imported_declarations = semantics::resolve_imported_type_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
+    for (auto const& resolved_declaration : resolved_imported_declarations) {
+        auto already_supplied = std::ranges::any_of(
+            semantic_analysis_options.imported_type_declarations,
+            [&](semantics::ImportedTypeDeclarationMetadata const& supplied_declaration) {
+                return supplied_declaration.package_name == resolved_declaration.package_name &&
+                       supplied_declaration.declaration_name == resolved_declaration.declaration_name;
+            }
+        );
+        if (!already_supplied) {
+            semantic_analysis_options.imported_type_declarations.push_back(resolved_declaration);
+        }
+    }
+
     semantics::ModuleSemanticAnalyzer semantic_analyzer;
-    result.semantic_result = semantic_analyzer.analyze(result.parse_result.module, options.semantic_analysis);
+    result.semantic_result = semantic_analyzer.analyze(result.parse_result.module, semantic_analysis_options);
     if (result.semantic_result.has_errors()) {
         result.error_text = result.semantic_result.render(result.source_file->path().string());
     }
