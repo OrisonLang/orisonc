@@ -3763,3 +3763,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-27: `implements` interface arguments and receiver types plus `extend` receiver types now validate known
   constructor arity and fixed-array argument roles before method analysis. Invalid implementation heads do not proceed
   into interface conformance, and production diagnostics block LLVM definitions.
+- 2026-10-27: Cast target types now validate known constructor arity and fixed-array argument roles through the normal
+  recursive expression walk. Function, method, and receiver generic scopes remain available; invalid `This` use and
+  malformed cast targets block LLVM definitions.

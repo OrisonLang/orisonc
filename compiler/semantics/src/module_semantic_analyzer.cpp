@@ -6802,6 +6802,20 @@ private:
         bool in_async_function,
         bool allow_thread_value_name = false
     ) {
+        if (expression.kind == syntax::ExpressionKind::cast) {
+            auto cast_target = parse_rendered_type_name(expression.text);
+            if (cast_target.has_value()) {
+                validate_declared_type_reference(
+                    *cast_target,
+                    current_generic_scope_,
+                    receiver_context_active_,
+                    expression.line,
+                    "cast target"
+                );
+                validate_receiver_type_usage(*cast_target, expression.line);
+            }
+        }
+
         if (expression.kind == syntax::ExpressionKind::call && expression.left &&
             expression.left->kind == syntax::ExpressionKind::name &&
             is_unsafe_intrinsic_name(expression.left->text) && !unsafe_context_active_) {

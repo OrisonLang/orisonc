@@ -8189,6 +8189,98 @@ void test_extension_local_annotation_receiver_generic_scope_success() {
     assert_fixture_success(path);
 }
 
+void test_cast_target_type_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_cast_target_type_arity.or";
+    write_concurrency_fixture(
+        path,
+        "demo.cast_targets",
+        {
+            "function main() -> Unit",
+            "    let value = 1 as Outcome<UInt32>",
+            "    return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "cast target type 'Outcome<UInt32>' supplies 1 type argument; type 'Outcome' requires 2"
+    );
+}
+
+void test_cast_target_array_size_role_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_cast_target_array_size_role.or";
+    write_concurrency_fixture(
+        path,
+        "demo.cast_targets",
+        {
+            "function main() -> Unit",
+            "    let value = 1 as Array<Byte, UInt32>",
+            "    return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "cast target type 'Array<Byte, UInt32>' requires an integer size as its second argument"
+    );
+}
+
+void test_generic_cast_target_scope_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_generic_cast_target_scope.or";
+    write_concurrency_fixture(
+        path,
+        "demo.cast_targets",
+        {
+            "function convert<T>(value: T) -> T",
+            "    return value as T",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_extension_cast_target_receiver_generic_scope_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_extension_cast_target_scope.or";
+    write_concurrency_fixture(
+        path,
+        "demo.cast_targets",
+        {
+            "record Box<T>",
+            "    value: T",
+            "extend Box<T>",
+            "    function convert(this: shared This, value: T) -> T",
+            "        return value as T",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_cast_target_this_outside_receiver_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_cast_target_this_context.or";
+    write_concurrency_fixture(
+        path,
+        "demo.cast_targets",
+        {
+            "function convert(value: UInt32) -> UInt32",
+            "    return value as This",
+        }
+    );
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(diagnostics.has_errors());
+    auto found_receiver_context_diagnostic = false;
+    for (auto const& diagnostic : diagnostics.entries()) {
+        if (diagnostic.line == 3 &&
+            diagnostic.message == "This type is only valid inside interface, implements, or extend methods") {
+            found_receiver_context_diagnostic = true;
+        }
+    }
+    assert(found_receiver_context_diagnostic);
+}
+
 void test_generic_record_field_array_size_role_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_field_array_size_role.or";
     write_concurrency_fixture(
@@ -15065,6 +15157,11 @@ int main() {
     test_let_annotation_type_arity_failure();
     test_var_annotation_array_size_role_failure();
     test_extension_local_annotation_receiver_generic_scope_success();
+    test_cast_target_type_arity_failure();
+    test_cast_target_array_size_role_failure();
+    test_generic_cast_target_scope_success();
+    test_extension_cast_target_receiver_generic_scope_success();
+    test_cast_target_this_outside_receiver_failure();
     test_record_field_source_type_arity_failure();
     test_generic_record_field_array_size_role_failure();
     test_choice_payload_builtin_type_arity_failure();

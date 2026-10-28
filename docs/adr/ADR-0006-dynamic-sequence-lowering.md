@@ -3895,3 +3895,6 @@ representation.
 - 2026-10-27 Implementation interface arguments and implementation or extension receiver types now use recursive
   declaration-time type-constructor validation. Generic receiver placeholders remain in scope, invalid implementation
   heads stop before interface conformance, and extension syntax retains its declaration line for precise diagnostics.
+- 2026-10-27 Cast target types now use the same recursive type-constructor validation during expression analysis.
+  Callable and receiver generic parameters remain in scope, `This` retains its receiver-only rule, and malformed cast
+  targets stop LLVM emission without changing cast syntax or lowering representation.

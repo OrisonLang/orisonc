@@ -4911,6 +4911,36 @@ auto main(int argc, char** argv) -> int {
     );
     assert(declaration_head_type_output.find("define ") == std::string::npos);
 
+    auto cast_target_type_path = smoke_temp_root / "orison_cli_cast_target_type.or";
+    write_lines(
+        cast_target_type_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "function malformed_outcome() -> Unit",
+            "    let value = 1 as Outcome<UInt32>",
+            "    return",
+            "function malformed_array() -> Unit",
+            "    let value = 1 as Array<Byte, UInt32>",
+            "    return",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto cast_target_type_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + cast_target_type_path.string()
+    );
+    assert(
+        cast_target_type_output.find(
+            "cast target type 'Outcome<UInt32>' supplies 1 type argument; type 'Outcome' requires 2"
+        ) != std::string::npos
+    );
+    assert(
+        cast_target_type_output.find(
+            "cast target type 'Array<Byte, UInt32>' requires an integer size as its second argument"
+        ) != std::string::npos
+    );
+    assert(cast_target_type_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",
