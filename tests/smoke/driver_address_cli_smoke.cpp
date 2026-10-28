@@ -109,6 +109,8 @@ auto main() -> int {
             "package demo.cli",
             "unsafe function base(buf: exclusive Buffer) -> Address",
             "    address_of(buf.data[0])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_cli_parse_failure(
@@ -118,6 +120,8 @@ auto main() -> int {
             "package demo.cli",
             "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
             "    return flag ? address_of(buf.data[0]) : \"text\"",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         },
         "address-returning function currently requires a structurally address-like expression"
     );
@@ -129,6 +133,8 @@ auto main() -> int {
             "function base(flag: Bool, buf: exclusive Buffer) -> Address",
             "    unsafe",
             "        flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
 

@@ -4941,6 +4941,33 @@ auto main(int argc, char** argv) -> int {
     );
     assert(cast_target_type_output.find("define ") == std::string::npos);
 
+    auto unknown_local_type_path = smoke_temp_root / "orison_cli_unknown_local_type.or";
+    write_lines(
+        unknown_local_type_path,
+        std::vector<std::string> {
+            "package demo.generics",
+            "function consume(value: Missing) -> Unit",
+            "    return",
+            "function malformed_cast() -> Unit",
+            "    let value = 1 as Missing",
+            "    return",
+            "function main() -> UInt32",
+            "    0 as UInt32",
+        }
+    );
+    auto unknown_local_type_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + unknown_local_type_path.string()
+    );
+    assert(
+        unknown_local_type_output.find(
+            "function 'consume' parameter 'value' refers to unknown type 'Missing'"
+        ) != std::string::npos
+    );
+    assert(
+        unknown_local_type_output.find("cast target refers to unknown type 'Missing'") != std::string::npos
+    );
+    assert(unknown_local_type_output.find("define ") == std::string::npos);
+
     assert_cli_dynamic_array_owned_result_fixture_full_production_success(
         executable,
         fixtures / "dynamic_array_generic_parameter.or",

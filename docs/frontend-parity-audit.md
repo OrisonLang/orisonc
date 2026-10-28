@@ -3766,3 +3766,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-27: Cast target types now validate known constructor arity and fixed-array argument roles through the normal
   recursive expression walk. Function, method, and receiver generic scopes remain available; invalid `This` use and
   malformed cast targets block LLVM definitions.
+- 2026-10-27: Unresolved local nominal type references now fail semantic analysis in every type position covered by
+  shared declaration validation. Named import bindings remain resolvable without local declarations, and imported
+  constructor arity remains deferred until package metadata is available. Production diagnostics block LLVM output.

@@ -70,9 +70,9 @@ auto main() -> int {
         join_async_call_path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let pending = request(url)",
             "    return pending.join()",
         }
@@ -110,6 +110,8 @@ auto main() -> int {
             "    let worker = thread",
             "        process(buffer)",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
     assert_parse_success(run_parse(app, concrete_marker_path));
@@ -126,6 +128,8 @@ auto main() -> int {
             "    let worker = task",
             "        buffer",
             "    return await worker",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
     assert_parse_success(run_parse(app, shareable_task_path));
@@ -140,6 +144,8 @@ auto main() -> int {
             "        let produced: Buffer = make_buffer()",
             "        produced",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
     assert_parse_failure_contains(
@@ -160,6 +166,8 @@ auto main() -> int {
             "        let produced: Buffer = make_buffer()",
             "        produced",
             "    return await worker",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
     assert_parse_success(run_parse(app, task_result_success_path));

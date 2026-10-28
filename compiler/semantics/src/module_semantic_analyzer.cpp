@@ -507,16 +507,6 @@ private:
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
 
-    void validate_receiver_type_usage(syntax::TypeSyntax const& type, std::size_t line) {
-        if (is_receiver_self_type_name(type.name) && !receiver_context_active_) {
-            diagnostics_.error(line, "This type is only valid inside interface, implements, or extend methods");
-        }
-
-        for (auto const& argument : type.generic_arguments) {
-            validate_receiver_type_usage(argument, line);
-        }
-    }
-
     auto is_obviously_safe_capture_type(std::string const& type_name) const -> bool {
         if (type_name.empty()) {
             return false;
@@ -4638,8 +4628,17 @@ private:
             return false;
         }
 
+        if (is_receiver_self_type_name(type.name) && !receiver_context) {
+            diagnostics_.error(line, "This type is only valid inside interface, implements, or extend methods");
+            return false;
+        }
+
         if (!is_known_type_reference(type, generic_scope, receiver_context)) {
-            return true;
+            diagnostics_.error(
+                line,
+                type_context + " refers to unknown type '" + std::string {unqualified_type_name(type)} + "'"
+            );
+            return false;
         }
 
         auto expected_arity = type_reference_arity(type, generic_scope, receiver_context);
@@ -6073,9 +6072,6 @@ private:
                     "receiver parameter 'this' must use This, shared This, or exclusive This"
                 );
             }
-            if (!(parameter.name == "this" && receiver_type_name.empty())) {
-                validate_receiver_type_usage(parameter.type, function.line);
-            }
             declare_binding(
                 parameter.name,
                 parameter.name == "this" && !receiver_type_name.empty() ? receiver_type_name
@@ -6087,8 +6083,6 @@ private:
                 function.line
             );
         }
-
-        validate_receiver_type_usage(function.return_type, function.line);
 
         auto final_statement_index =
             function.body_statements.empty() ? std::optional<std::size_t> {} : function.body_statements.size() - 1;
@@ -6545,7 +6539,6 @@ private:
                 }
             }
             if (!statement.annotated_type.name.empty()) {
-                validate_receiver_type_usage(statement.annotated_type, statement.line);
                 auto read_result_type_mismatch = validate_read_result_type(
                     statement.expression,
                     render_type_name(statement.annotated_type),
@@ -6812,7 +6805,6 @@ private:
                     expression.line,
                     "cast target"
                 );
-                validate_receiver_type_usage(*cast_target, expression.line);
             }
         }
 

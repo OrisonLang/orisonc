@@ -3898,3 +3898,6 @@ representation.
 - 2026-10-27 Cast target types now use the same recursive type-constructor validation during expression analysis.
   Callable and receiver generic parameters remain in scope, `This` retains its receiver-only rule, and malformed cast
   targets stop LLVM emission without changing cast syntax or lowering representation.
+- 2026-10-27 Declared type references now reject unresolved local nominal names across signatures, aggregate members,
+  aliases, constants, local annotations, implementation and extension heads, and cast targets. Named imports remain
+  valid type references, while their constructor arity stays deferred until package metadata is available.

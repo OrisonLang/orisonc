@@ -182,6 +182,8 @@ auto main() -> int {
             "unsafe function first_ptr(buf: exclusive Buffer) -> Pointer<Byte>",
             "    let p = Pointer(address_of(buf.data[0]))",
             "    return p",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_parse_success(run_parse(app, pointer_construction_addressof_success_path));
@@ -423,6 +425,8 @@ auto main() -> int {
             "unsafe function first_addr(buf: exclusive Buffer) -> Address",
             "    let base: Address = address_of(buf.data[0])",
             "    return base",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_parse_success(run_parse(app, address_typed_binding_success_path));

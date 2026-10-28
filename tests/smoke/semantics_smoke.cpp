@@ -3245,7 +3245,7 @@ void test_await_inside_async_function_success() {
         path,
         "demo.await",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let request_task = task",
             "        request(url)",
             "    return await request_task",
@@ -3261,9 +3261,9 @@ void test_await_async_call_value_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let pending = request(url)",
             "    return await pending",
         }
@@ -3278,9 +3278,9 @@ void test_await_outside_async_function_failure() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "function fetch(url: Text) -> Outcome<Text, IOError>",
+            "function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    return await request(url)",
         }
     );
@@ -3294,11 +3294,13 @@ void test_await_outside_async_method_failure() {
         path,
         "demo.await",
         {
-            "async function request(id: Int64) -> Outcome<Text, IOError>",
+            "async function request(id: Int64) -> Outcome<Text, UInt32>",
             "    return fetch_remote(id)",
             "extend Worker",
-            "    function poll(this: shared This) -> Outcome<Text, IOError>",
+            "    function poll(this: shared This) -> Outcome<Text, UInt32>",
             "        return await request(this.id)",
+            "record Worker",
+            "    id: Int64",
         }
     );
 
@@ -3342,9 +3344,9 @@ void test_await_non_async_call_value_failure() {
         path,
         "demo.await",
         {
-            "function request(url: Text) -> Outcome<Text, IOError>",
+            "function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let pending = request(url)",
             "    return await pending",
         }
@@ -3360,14 +3362,16 @@ void test_await_member_call_not_marked_async_from_top_level_name_collision_failu
         path,
         "demo.await",
         {
-            "async function run(text: Text) -> Outcome<Text, IOError>",
+            "async function run(text: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(text)",
             "extend Printer",
-            "    function run(this: shared This) -> Outcome<Text, IOError>",
+            "    function run(this: shared This) -> Outcome<Text, UInt32>",
             "        return render(this)",
-            "async function fetch(printer: Printer) -> Outcome<Text, IOError>",
+            "async function fetch(printer: Printer) -> Outcome<Text, UInt32>",
             "    let pending = printer.run()",
             "    return await pending",
+            "record Printer",
+            "    value: UInt32",
         }
     );
 
@@ -3380,7 +3384,7 @@ void test_task_inside_async_function_success() {
         path,
         "demo.task",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let request_task = task",
             "        request(url)",
             "    return await request_task",
@@ -3396,7 +3400,7 @@ void test_return_task_value_failure() {
         path,
         "demo.task",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let request_task = task",
             "        request(url)",
             "    return request_task",
@@ -3412,9 +3416,9 @@ void test_return_async_call_value_failure() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let pending = request(url)",
             "    return pending",
         }
@@ -3445,9 +3449,9 @@ void test_assignment_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    var pending = request(url)",
             "    pending = request(url)",
             "    return await pending",
@@ -3481,9 +3485,9 @@ void test_ternary_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    let left = request(url)",
             "    let right = request(url)",
             "    let pending = flag ? left : right",
@@ -3519,9 +3523,9 @@ void test_return_ternary_async_origin_failure() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    let left = request(url)",
             "    let right = request(url)",
             "    return flag ? left : right",
@@ -3537,9 +3541,9 @@ void test_if_branch_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = request(url)",
             "    if flag",
             "        pending = request(url)",
@@ -3580,9 +3584,9 @@ void test_switch_branch_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = request(url)",
             "    switch flag",
             "        true => pending = request(url)",
@@ -3621,9 +3625,9 @@ void test_while_loop_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = request(url)",
             "    while flag",
             "        pending = request(url)",
@@ -3659,9 +3663,9 @@ void test_repeat_loop_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = 0",
             "    repeat",
             "        pending = request(url)",
@@ -3698,9 +3702,9 @@ void test_for_loop_preserves_async_call_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(items: shared View<Int64>, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(items: shared View<Int64>, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = request(url)",
             "    for item in items",
             "        pending = request(url)",
@@ -3737,9 +3741,9 @@ void test_guard_failure_path_does_not_override_async_origin_success() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = request(url)",
             "    guard flag else",
             "        pending = thread",
@@ -3759,9 +3763,9 @@ void test_guard_failure_path_does_not_create_async_origin_failure() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, UInt32>",
             "    var pending = 0",
             "    guard flag else",
             "        pending = request(url)",
@@ -4647,7 +4651,10 @@ void test_qualified_this_type_in_local_annotation_failure() {
 void test_receiver_parameter_with_nonself_type_inside_method_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_receiver_parameter_nonself_type_failure.or";
-    write_receiver_fixture(path, {"extend Buffer", "    function reset(this: Int64) -> Unit", "        return"});
+    write_receiver_fixture(
+        path,
+        {"extend Buffer", "    function reset(this: Int64) -> Unit", "        return", "record Buffer", "    value: UInt32"}
+    );
 
     assert_receiver_parameter_self_type_diagnostic(path, 3);
 }
@@ -7898,6 +7905,8 @@ void test_duplicate_extension_method_parameter_name_failure() {
             "extend Buffer",
             "    function read(this: shared This, this: shared This) -> UInt32",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -7917,6 +7926,8 @@ void test_duplicate_implementation_method_parameter_name_failure() {
             "implements Reader for Buffer",
             "    function read(this: shared This, this: shared This) -> UInt32",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -8279,6 +8290,88 @@ void test_cast_target_this_outside_receiver_failure() {
         }
     }
     assert(found_receiver_context_diagnostic);
+}
+
+void test_unknown_function_parameter_type_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_function_parameter_type.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "function consume(value: Missing) -> Unit",
+            "    return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        2,
+        "function 'consume' parameter 'value' refers to unknown type 'Missing'"
+    );
+}
+
+void test_unknown_nested_record_field_type_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_nested_record_field_type.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "record Holder",
+            "    value: Maybe<Missing>",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "record 'Holder' field 'value' refers to unknown type 'Missing'"
+    );
+}
+
+void test_unknown_cast_target_type_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_cast_target_type.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "function main() -> Unit",
+            "    let value = 1 as Missing",
+            "    return",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 3, "cast target refers to unknown type 'Missing'");
+}
+
+void test_unknown_extension_receiver_type_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_extension_receiver_type.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "extend Missing",
+            "    function value(this: shared This) -> UInt32",
+            "        0 as UInt32",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 2, "extension receiver refers to unknown type 'Missing'");
+}
+
+void test_imported_generic_type_reference_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_imported_generic_type_reference.or";
+    write_concurrency_fixture(
+        path,
+        "demo.type_resolution",
+        {
+            "import",
+            "    External from external.types",
+            "function identity(value: External<UInt32>) -> External<UInt32>",
+            "    return value",
+        }
+    );
+
+    assert_fixture_success(path);
 }
 
 void test_generic_record_field_array_size_role_failure() {
@@ -8874,6 +8967,8 @@ void test_duplicate_implementation_method_name_failure() {
             "        return 1",
             "    function read(this: shared This) -> UInt32",
             "        return 2",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -8895,6 +8990,8 @@ void test_duplicate_implementation_method_across_blocks_failure() {
             "implements Reader for Buffer",
             "    function read(this: shared This) -> UInt32",
             "        return 2",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -8962,6 +9059,8 @@ void test_unknown_interface_implementation_failure() {
             "implements Missing for Buffer",
             "    function read(this: shared This) -> UInt32",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -8984,6 +9083,8 @@ void test_interface_implementation_generic_arity_failure() {
             "implements Reader for Buffer",
             "    function read(this: shared This) -> UInt32",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -9072,6 +9173,8 @@ void test_interface_implementation_missing_method_failure() {
             "implements Reader for Buffer",
             "    function read(this: shared This) -> UInt32",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -9095,6 +9198,8 @@ void test_interface_implementation_extra_method_failure() {
             "        return 0",
             "    function reset(this: exclusive This) -> Unit",
             "        return",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -9117,6 +9222,8 @@ void test_interface_implementation_parameter_signature_failure() {
             "implements Reader for Buffer",
             "    function read(this: shared This, count: UInt64) -> UInt32",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -9139,6 +9246,8 @@ void test_interface_implementation_return_signature_failure() {
             "implements Reader for Buffer",
             "    function read(this: shared This) -> UInt64",
             "        return 0",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -9164,6 +9273,8 @@ void test_interface_implementation_where_signature_failure() {
             "implements Mapper for Buffer",
             "    function map<T>(this: shared This, value: T) -> T",
             "        return value",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -10374,6 +10485,8 @@ void test_nested_address_of_and_raw_offset_success() {
             "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit",
             "    let p = address_of(buf.data[0])",
             "    raw_write(raw_offset(p, 1), value)",
+            "record Buffer",
+            "    data: DynamicArray<Byte>",
         }
     );
 
@@ -10533,6 +10646,8 @@ void test_pointer_construction_with_address_of_argument_success() {
             "unsafe function first_ptr(buf: exclusive Buffer) -> Pointer<Byte>",
             "    let p = Pointer(address_of(buf.data[0]))",
             "    return p",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
 
@@ -13855,6 +13970,8 @@ void test_address_typed_binding_with_address_initializer_success() {
             "unsafe function first_addr(buf: exclusive Buffer) -> Address",
             "    let base: Address = address_of(buf.data[0])",
             "    return base",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
 
@@ -13953,6 +14070,8 @@ void test_address_return_with_address_expression_success() {
         {
             "unsafe function base(buf: exclusive Buffer) -> Address",
             "    return address_of(buf.data[0])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
 
@@ -13968,6 +14087,8 @@ void test_address_final_expression_with_address_expression_success() {
         {
             "unsafe function base(buf: exclusive Buffer) -> Address",
             "    address_of(buf.data[0])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
 
@@ -13983,6 +14104,8 @@ void test_address_return_ternary_expression_types() {
         {
             "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
             "    return flag ? address_of(buf.data[0]) : \"text\"",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_address_return_diagnostic(mismatch_path, 3);
@@ -13995,6 +14118,8 @@ void test_address_return_ternary_expression_types() {
         {
             "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
             "    return flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_fixture_success(success_path);
@@ -14010,6 +14135,8 @@ void test_address_nested_final_container_ternary_expression_types() {
             "function base(flag: Bool, buf: exclusive Buffer) -> Address",
             "    unsafe",
             "        flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_fixture_success(unsafe_success_path);
@@ -14025,6 +14152,8 @@ void test_address_nested_final_container_ternary_expression_types() {
             "        flag ? address_of(buf.data[0]) : \"text\"",
             "    else",
             "        address_of(buf.data[1])",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_address_return_diagnostic(if_mismatch_path, 4);
@@ -14073,7 +14202,7 @@ void test_task_outside_async_function_failure() {
         path,
         "demo.task",
         {
-            "function fetch(url: Text) -> Outcome<Text, IOError>",
+            "function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let request_task = task",
             "        request(url)",
             "    return request(url)",
@@ -14137,9 +14266,9 @@ void test_join_async_call_receiver_failure() {
         path,
         "demo.await",
         {
-            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "async function request(url: Text) -> Outcome<Text, UInt32>",
             "    return fetch_remote(url)",
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let pending = request(url)",
             "    return pending.join()",
         }
@@ -14170,7 +14299,7 @@ void test_concurrency_capture_classification_success() {
         path,
         "demo.capture",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let cached = url",
             "    let request_task = task",
             "        cached",
@@ -14211,6 +14340,8 @@ void test_thread_capture_owned_parameter_type_failure() {
             "    let worker = thread",
             "        process(buffer)",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14279,6 +14410,8 @@ void test_thread_capture_transferable_concrete_type_success() {
             "    let worker = thread",
             "        process(buffer)",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14344,6 +14477,8 @@ void test_task_capture_shareable_concrete_type_success() {
             "    let worker = task",
             "        buffer",
             "    return await worker",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14369,6 +14504,8 @@ void test_thread_capture_shareable_concrete_type_failure() {
             "    let worker = thread",
             "        process(buffer)",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14386,6 +14523,8 @@ void test_thread_result_owned_concrete_type_failure() {
             "        let produced: Buffer = make_buffer()",
             "        produced",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14406,6 +14545,8 @@ void test_thread_result_transferable_concrete_type_success() {
             "        let produced: Buffer = make_buffer()",
             "        produced",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14462,6 +14603,8 @@ void test_task_result_shareable_concrete_type_success() {
             "        let produced: Buffer = make_buffer()",
             "        produced",
             "    return await worker",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14482,6 +14625,8 @@ void test_thread_result_shareable_concrete_type_failure() {
             "        let produced: Buffer = make_buffer()",
             "        produced",
             "    return worker.join()",
+            "record Buffer",
+            "    value: UInt32",
         }
     );
 
@@ -14494,7 +14639,7 @@ void test_task_expression_value_boundary_failure() {
         path,
         "demo.task",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let request_task = task",
             "        let response = request(url)",
             "    return await request_task",
@@ -14510,7 +14655,7 @@ void test_task_expression_value_return_success() {
         path,
         "demo.task",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    let request_task = task",
             "        return request(url)",
             "    return await request_task",
@@ -14558,7 +14703,7 @@ void test_task_capture_mutable_outer_local_failure() {
         path,
         "demo.task",
         {
-            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
             "    var attempts = 0",
             "    let request_task = task",
             "        attempts",
@@ -14597,6 +14742,8 @@ void test_thread_capture_receiver_this_failure() {
             "        let worker = thread",
             "            this.id",
             "        return worker.join()",
+            "record Worker",
+            "    id: Int64",
         }
     );
 
@@ -15162,6 +15309,11 @@ int main() {
     test_generic_cast_target_scope_success();
     test_extension_cast_target_receiver_generic_scope_success();
     test_cast_target_this_outside_receiver_failure();
+    test_unknown_function_parameter_type_failure();
+    test_unknown_nested_record_field_type_failure();
+    test_unknown_cast_target_type_failure();
+    test_unknown_extension_receiver_type_failure();
+    test_imported_generic_type_reference_success();
     test_record_field_source_type_arity_failure();
     test_generic_record_field_array_size_role_failure();
     test_choice_payload_builtin_type_arity_failure();

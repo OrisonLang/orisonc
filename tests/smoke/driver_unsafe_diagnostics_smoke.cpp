@@ -141,6 +141,8 @@ auto main() -> int {
             "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit",
             "    let p = address_of(buf.data[0])",
             "    raw_write(raw_offset(p, 1), value)",
+            "record Buffer",
+            "    data: Pointer<Byte>",
         }
     );
     assert_parse_success(run_parse(app, nested_unsafe_operand_success_path));

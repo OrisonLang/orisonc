@@ -4825,6 +4825,9 @@ void test_emit_scalar_extension_method_definition() {
         path,
         "package demo.lowering\n"
         "\n"
+        "import\n"
+        "    Device from demo.devices\n"
+        "\n"
         "extend UInt32\n"
         "    function identity(this: shared This) -> UInt32\n"
         "        this\n"

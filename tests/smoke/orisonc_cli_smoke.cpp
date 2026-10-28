@@ -1791,6 +1791,9 @@ int main() {
         output << "const UART0_BASE: Address = 0x4000_1000\n";
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
+        output << "    IOError from demo.errors\n";
+        output << "    ParseError from demo.errors\n";
+        output << "    FileReader from demo.io\n";
         output << "package foreign \"c\" library \"m\"\n";
         output << "    function sin(x: Float64) -> Float64\n";
         output << "public foreign \"c\" as \"device_init\"\n";
@@ -1833,7 +1836,7 @@ int main() {
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
     assert(output.find("top-level declarations: 12") != std::string::npos);
-    assert(output.find("imports: 1") != std::string::npos);
+    assert(output.find("imports: 4") != std::string::npos);
     assert(output.find("foreign imports: 1") != std::string::npos);
     assert(output.find("foreign exports: 1") != std::string::npos);
     assert(output.find("constants: 1") != std::string::npos);
