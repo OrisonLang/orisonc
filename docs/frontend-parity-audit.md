@@ -3785,3 +3785,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: `orisonc` production compile commands now accept repeatable leading `--package-interface <file>`
   arguments. Explicit artifacts are read and parsed before source compilation, and unreadable or malformed files fail
   with path-qualified diagnostics. No implicit package discovery or search path was introduced.
+- 2026-10-28: `orisonc --emit-package-interface <source> -o <output>` now validates a source module and writes its
+  canonical public type interface. The emitted artifact can immediately supply imported generic arity to another
+  compiler invocation, completing the explicit producer-consumer path without package discovery.

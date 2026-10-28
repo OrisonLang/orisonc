@@ -3920,3 +3920,6 @@ representation.
 - 2026-10-28 Production compiler commands accept repeatable leading `--package-interface <file>` options. The driver
   reads and validates each explicit artifact before compilation, then supplies its typed package interface to semantic
   import resolution. Automatic discovery and package search paths remain intentionally absent.
+- 2026-10-28 The compiler driver can emit a canonical package-interface artifact with
+  `--emit-package-interface <source> -o <output>`. Emission requires successful semantic analysis, exports only public
+  type declarations, and supports explicit dependency interfaces through the same leading options as compilation.

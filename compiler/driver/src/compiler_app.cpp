@@ -178,6 +178,7 @@ auto usage_text() -> std::string {
            "--runtime-indexed-cleanup-audit <file> | "
            "--runtime-indexed-cleanup-emit-llvm <file> | "
            "--runtime-indexed-constructor-move-production-readiness <file> | "
+           "--emit-package-interface <file> -o <output> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>)";
 }
 
@@ -1436,6 +1437,39 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 3 && std::string_view(args[1]) == "--runtime-indexed-constructor-move-production-readiness") {
         return runtime_indexed_constructor_move_production_readiness(std::filesystem::path(args[2]));
+    }
+
+    if (args.size() == command_index + 4 &&
+        std::string_view(args[command_index]) == "--emit-package-interface" &&
+        std::string_view(args[command_index + 2]) == "-o") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.analyze(std::filesystem::path(args[command_index + 1]), options);
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        auto output_path = std::filesystem::path(args[command_index + 3]);
+        auto output = std::ofstream(output_path, std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!output) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: unable to write package interface '" + output_path.string() + "'\n",
+            };
+        }
+        output << semantics::serialize_package_interface(
+            semantics::build_package_interface(result.parse_result.module)
+        );
+        output.close();
+        if (!output) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: unable to write package interface '" + output_path.string() + "'\n",
+            };
+        }
+        return CompileResult {.exit_code = 0};
     }
 
     if (args.size() == command_index + 4 && std::string_view(args[command_index]) == "--emit-object" &&

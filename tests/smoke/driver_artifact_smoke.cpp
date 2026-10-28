@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
+#include <iterator>
 #include <span>
 #include <string>
 #include <string_view>
@@ -36,6 +37,23 @@ auto run_emit_object(
     std::array<char const*, 5> argv {
         "orisonc",
         "--emit-object",
+        source_path_text.c_str(),
+        "-o",
+        output_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
+auto run_emit_package_interface(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& output_path
+) -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    auto output_path_text = output_path.string();
+    std::array<char const*, 5> argv {
+        "orisonc",
+        "--emit-package-interface",
         source_path_text.c_str(),
         "-o",
         output_path_text.c_str()
@@ -110,12 +128,109 @@ auto main() -> int {
     assert_success_with_empty_stdout(object_result);
     assert(std::filesystem::file_size(object_path) > 0);
 
+    auto package_source_path = smoke_temp_root / "external_types.or";
+    write_fixture(
+        package_source_path,
+        "external.types",
+        {
+            "public type Identifier = UInt64",
+            "type InternalIdentifier = UInt64",
+            "public record Pair<Left, Right>",
+            "    public first: Left",
+            "    public second: Right",
+            "public choice Result<Value>",
+            "    Ok(value: Value)",
+            "public interface Reader",
+            "    function read(this: shared This) -> UInt32",
+        }
+    );
+    auto package_interface_path = smoke_temp_root / "external_types.opi";
+    auto package_interface_result = run_emit_package_interface(app, package_source_path, package_interface_path);
+    assert_success_with_empty_stdout(package_interface_result);
+    {
+        auto input = std::ifstream(package_interface_path);
+        auto contents = std::string(
+            std::istreambuf_iterator<char>(input),
+            std::istreambuf_iterator<char>()
+        );
+        assert(
+            contents ==
+            "orison-package-interface 1\n"
+            "package external.types\n"
+            "type alias Identifier 0\n"
+            "type record Pair 2\n"
+            "type interface Reader 0\n"
+            "type choice Result 1\n"
+        );
+    }
+
+    auto consumer_path = smoke_temp_root / "consumer.or";
+    write_fixture(
+        consumer_path,
+        "demo.consumer",
+        {
+            "import",
+            "    Pair from external.types",
+            "function consume(value: Pair<UInt32>) -> Unit",
+            "    return",
+        }
+    );
+    auto package_interface_path_text = package_interface_path.string();
+    auto consumer_path_text = consumer_path.string();
+    std::array<char const*, 5> consume_interface_argv {
+        "orisonc",
+        "--package-interface",
+        package_interface_path_text.c_str(),
+        "--emit-llvm",
+        consumer_path_text.c_str(),
+    };
+    auto consume_interface_result = app.run(
+        std::span<char const* const>(consume_interface_argv.data(), consume_interface_argv.size())
+    );
+    assert(consume_interface_result.exit_code == 1);
+    assert(consume_interface_result.stdout_text.empty());
+    assert(
+        consume_interface_result.stderr_text.find(
+            "type 'Pair<UInt32>' supplies 1 type argument; type 'Pair' requires 2"
+        ) != std::string::npos
+    );
+
+    auto invalid_package_source_path = smoke_temp_root / "invalid_external_types.or";
+    write_fixture(
+        invalid_package_source_path,
+        "external.invalid",
+        {
+            "public record Invalid",
+            "    public value: MissingType",
+        }
+    );
+    auto invalid_package_interface_path = smoke_temp_root / "invalid_external_types.opi";
+    auto invalid_package_interface_result = run_emit_package_interface(
+        app,
+        invalid_package_source_path,
+        invalid_package_interface_path
+    );
+    assert(invalid_package_interface_result.exit_code == 1);
+    assert(invalid_package_interface_result.stdout_text.empty());
+    assert(invalid_package_interface_result.stderr_text.find("unknown type 'MissingType'") != std::string::npos);
+    assert(!std::filesystem::exists(invalid_package_interface_path));
+
     auto missing_directory = smoke_temp_root / "orison_missing_object_directory";
     std::filesystem::remove_all(missing_directory);
     auto object_write_failure = run_emit_object(app, scalar_path, missing_directory / "output.o");
     assert(object_write_failure.exit_code == 1);
     assert(object_write_failure.stdout_text.empty());
     assert(object_write_failure.stderr_text == "error: unable to write object file\n");
+
+    auto package_interface_write_path = missing_directory / "output.opi";
+    auto package_interface_write_failure =
+        run_emit_package_interface(app, package_source_path, package_interface_write_path);
+    assert(package_interface_write_failure.exit_code == 1);
+    assert(package_interface_write_failure.stdout_text.empty());
+    assert(
+        package_interface_write_failure.stderr_text ==
+        "error: unable to write package interface '" + package_interface_write_path.string() + "'\n"
+    );
 
     auto view_descriptor_path = smoke_temp_root / "view_descriptor_reads.or";
     write_fixture(
