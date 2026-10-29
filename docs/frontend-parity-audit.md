@@ -3799,3 +3799,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   alias. Calls receive generic return inference, arity and argument checks, constraint enforcement, and async/unsafe
   classification. Dependent signature types honor explicit aliases imported from the same package, while source
   package and exported function identity remain available for future lowering. No source syntax changed.
+- 2026-10-29: Non-generic imported public functions now cross the LLVM emission boundary. Semantic function and call
+  summaries preserve source package, exported declaration, and local alias identity; lowering emits a fixed external
+  declaration and calls its exported symbol. Imported generic calls report an explicit unsupported-lowering diagnostic.
+  Package-qualified symbol naming, generic specialization, and dependency-object linking remain open. No source syntax
+  changed.

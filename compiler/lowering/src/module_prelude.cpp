@@ -45,7 +45,8 @@ auto emit_module_prelude(
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
     std::vector<OwnedCleanupDeclaration> const& owned_cleanup_declarations,
     std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations,
-    std::vector<std::string> const& owned_cleanup_symbols
+    std::vector<std::string> const& owned_cleanup_symbols,
+    std::vector<LoweredFunctionSignature> const& imported_declarations
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -76,6 +77,20 @@ auto emit_module_prelude(
         output << ")\n";
     }
     if (!foreign_declarations.empty()) {
+        output << "\n";
+    }
+
+    for (auto const& declaration : imported_declarations) {
+        output << "declare " << declaration.return_type << " @" << declaration.symbol_name << "(";
+        for (auto index = std::size_t {0}; index < declaration.parameter_types.size(); ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << declaration.parameter_types[index];
+        }
+        output << ")\n";
+    }
+    if (!imported_declarations.empty()) {
         output << "\n";
     }
 

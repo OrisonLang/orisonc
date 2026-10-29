@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/function_signature.hpp"
+#include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
@@ -72,6 +73,7 @@ struct LoweringContext {
     std::unordered_map<std::string, LoweredChoiceLayout> choices;
     std::vector<LoweredMethodSignature> methods;
     std::vector<LoweredFunctionSignature> foreign_declarations;
+    std::vector<LoweredFunctionSignature> imported_declarations;
     std::vector<std::shared_ptr<syntax::FunctionSyntax>> generic_function_specializations;
     std::vector<GenericMethodSpecialization> generic_method_specializations;
 };
@@ -86,6 +88,12 @@ struct LoweredMethodLookup {
     LoweredMethodLookupResult result = LoweredMethodLookupResult::not_found;
     LoweredMethodSignature const* method = nullptr;
 };
+
+auto build_lowering_context(
+    syntax::ModuleSyntax const& module,
+    semantics::SemanticModuleSummary const& semantic_module,
+    diagnostics::DiagnosticBag& diagnostics
+) -> LoweringContext;
 
 auto build_lowering_context(
     syntax::ModuleSyntax const& module,

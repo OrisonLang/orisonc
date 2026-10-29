@@ -39,6 +39,7 @@ enum class DynamicArrayDescriptorBindingKind {
 
 enum class SemanticFunctionKind {
     source_function,
+    imported_source_function,
     foreign_import_function,
     foreign_export_function,
     implementation_method,
@@ -54,6 +55,8 @@ struct SemanticParameterSummary {
 struct SemanticFunctionSummary {
     std::size_t line = 0;
     std::string name;
+    std::string source_package_name;
+    std::string source_declaration_name;
     std::string owner_type_name;
     std::vector<std::string> generic_parameters;
     std::vector<SemanticParameterSummary> parameters;
@@ -93,6 +96,8 @@ struct SemanticExpressionSummary {
     std::string type_name;
     SemanticExpressionTargetKind target_kind = SemanticExpressionTargetKind::none;
     std::string target_name;
+    std::string target_package_name;
+    std::string target_declaration_name;
     std::string receiver_type_name;
     bool foreign = false;
 };

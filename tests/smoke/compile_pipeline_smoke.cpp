@@ -1842,6 +1842,11 @@ auto main() -> int {
                 },
                 .exported_functions = {
                     {
+                        .name = "increment",
+                        .parameters = {{.name = "value", .type = {.name = "UInt32"}}},
+                        .return_type = {.name = "UInt32"},
+                    },
+                    {
                         .name = "choose",
                         .generic_parameters = {"Value"},
                         .parameters = {
@@ -1954,6 +1959,44 @@ auto main() -> int {
     }
     auto imported_function_access = pipeline.analyze(imported_function_access_path, package_interface_options);
     assert(!imported_function_access.has_errors());
+
+    auto imported_function_lowering_path = smoke_temp_root / "imported_function_lowering.or";
+    {
+        std::ofstream output(imported_function_lowering_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    increment as next from external.types\n";
+        output << "function next_value(value: UInt32) -> UInt32\n";
+        output << "    next(value)\n";
+    }
+    auto imported_function_lowering = pipeline.emit_llvm(
+        imported_function_lowering_path,
+        package_interface_options
+    );
+    assert(!imported_function_lowering.has_errors());
+    assert(imported_function_lowering.ir_text.find("declare i32 @increment(i32)") != std::string::npos);
+    assert(imported_function_lowering.ir_text.find("call i32 @increment(i32 %value)") != std::string::npos);
+    auto found_imported_call_identity = false;
+    for (auto const& expression : imported_function_lowering.semantic_result.semantic_module.expressions) {
+        if (expression.target_name != "next") {
+            continue;
+        }
+        assert(expression.target_package_name == "external.types");
+        assert(expression.target_declaration_name == "increment");
+        found_imported_call_identity = true;
+    }
+    assert(found_imported_call_identity);
+
+    auto imported_generic_function_lowering = pipeline.emit_llvm(
+        imported_function_access_path,
+        package_interface_options
+    );
+    assert(imported_generic_function_lowering.has_errors());
+    assert(
+        imported_generic_function_lowering.error_text.find(
+            "lowering imported generic function 'select' is not yet supported"
+        ) != std::string::npos
+    );
 
     auto imported_function_arity_path = smoke_temp_root / "imported_function_arity.or";
     {

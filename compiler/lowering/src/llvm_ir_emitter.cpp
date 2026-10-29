@@ -1923,6 +1923,16 @@ auto validate_prelude_module_symbols(
             diagnostics
         );
     }
+    for (auto const& declaration : context.imported_declarations) {
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            declaration.symbol_name,
+            "imported function declaration",
+            1,
+            diagnostics
+        );
+    }
     for (auto operation : concurrency_runtime_operations) {
         auto runtime_call = concurrency_runtime_call(operation);
         register_unique_module_symbol(
@@ -4710,7 +4720,31 @@ auto emit_module(
     }
     output << "\n";
 
-    auto context = build_lowering_context(module, result.diagnostics);
+    for (auto const& expression : semantic_result.semantic_module.expressions) {
+        if (expression.target_kind != semantics::SemanticExpressionTargetKind::direct_function ||
+            expression.target_package_name.empty()) {
+            continue;
+        }
+        auto imported_function = std::ranges::find_if(
+            semantic_result.semantic_module.functions,
+            [&](semantics::SemanticFunctionSummary const& function) {
+                return function.kind == semantics::SemanticFunctionKind::imported_source_function &&
+                    function.name == expression.target_name;
+            }
+        );
+        if (imported_function != semantic_result.semantic_module.functions.end() &&
+            !imported_function->generic_parameters.empty()) {
+            result.diagnostics.error(
+                expression.line,
+                "lowering imported generic function '" + expression.target_name + "' is not yet supported"
+            );
+        }
+    }
+    if (result.has_errors()) {
+        return result;
+    }
+
+    auto context = build_lowering_context(module, semantic_result.semantic_module, result.diagnostics);
     if (result.has_errors()) {
         return result;
     }
@@ -5301,7 +5335,8 @@ auto emit_module(
         concurrency_runtime_operations,
         result.owned_cleanup_declarations,
         result.dynamic_array_runtime_operations,
-        owned_cleanup_symbols
+        owned_cleanup_symbols,
+        context.imported_declarations
     );
     output << emit_owned_cleanup_definitions(
         module,

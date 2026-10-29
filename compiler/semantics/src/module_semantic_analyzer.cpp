@@ -67,6 +67,8 @@ auto is_compiler_prelude_symbol_name(std::string_view name) -> bool {
 
 struct CallableSignature {
     std::string name;
+    std::string source_package_name;
+    std::string source_declaration_name;
     std::vector<std::string> generic_parameters;
     std::vector<syntax::ParameterSyntax> parameters;
     std::vector<syntax::WhereConstraintSyntax> where_constraints;
@@ -1299,6 +1301,8 @@ private:
         summary.target_name = callee_name;
         if (auto const* signature = find_callable_signature(callee_name)) {
             summary.foreign = signature->foreign;
+            summary.target_package_name = signature->source_package_name;
+            summary.target_declaration_name = signature->source_declaration_name;
         }
         return summary;
     }
@@ -3679,6 +3683,23 @@ private:
     void collect_semantic_module_summary() {
         semantic_module_ = SemanticModuleSummary {};
 
+        for (auto const& function : options_.imported_function_declarations) {
+            semantic_module_.functions.push_back(SemanticFunctionSummary {
+                .line = 0,
+                .name = function.local_name,
+                .source_package_name = function.package_name,
+                .source_declaration_name = function.declaration_name,
+                .owner_type_name = {},
+                .generic_parameters = function.declaration.generic_parameters,
+                .parameters = summarize_parameters(function.declaration.parameters),
+                .return_type_name = render_type_name(function.declaration.return_type),
+                .kind = SemanticFunctionKind::imported_source_function,
+                .foreign = false,
+                .async_function = function.declaration.is_async,
+                .unsafe_function = function.declaration.is_unsafe,
+            });
+        }
+
         for (auto const& foreign_import : module_.foreign_imports) {
             for (auto const& function : foreign_import.functions) {
                 semantic_module_.functions.push_back(SemanticFunctionSummary {
@@ -5269,6 +5290,8 @@ private:
         for (auto const& function : options_.imported_function_declarations) {
             callable_signatures_.push_back(CallableSignature {
                 .name = function.local_name,
+                .source_package_name = function.package_name,
+                .source_declaration_name = function.declaration_name,
                 .generic_parameters = function.declaration.generic_parameters,
                 .parameters = function.declaration.parameters,
                 .where_constraints = function.declaration.where_constraints,

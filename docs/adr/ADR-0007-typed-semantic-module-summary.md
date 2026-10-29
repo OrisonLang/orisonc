@@ -17,6 +17,9 @@ names and callable targets when the analyzer can resolve them. Ownership facts c
 they need cleanup. Drop obligations mirror planned cleanup calls. Aggregate paths describe checked member/index
 projections rooted at named owners. DynamicArray descriptor facts include descriptor owner, descriptor source type,
 element source type, origin kind, and source line. This is not public Orison syntax and does not alter the grammar.
+Imported function summaries preserve the local binding, source package, exported declaration name, checked parameters,
+return type, generic parameters, and async/unsafe classification. Imported direct-call expression facts preserve the
+same source identity for lowering.
 
 ## Consequences
 
@@ -31,8 +34,13 @@ consume semantic summary descriptor facts directly. Direct lowering fixtures now
 Semantic descriptor report helpers now use descriptor-summary terminology. The DynamicArray descriptor projection helper
 and runtime origin overloads have been removed. Internal DynamicArray descriptor boundary fields and blockers now use
 descriptor-summary binding terminology in typed C++ state.
+Lowering consumes non-generic imported function summaries as fixed external LLVM declarations. Calls continue to use
+the local binding for lookup and emit the exported declaration symbol. Imported generic calls stop with a targeted
+lowering diagnostic until cross-package specialization is defined.
 
 ## Follow-up work
 
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
+- Define cross-package generic specialization and package-qualified source symbol policy before lowering imported
+  generic functions or packages that export colliding declaration names.

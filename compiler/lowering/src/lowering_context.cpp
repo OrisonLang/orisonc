@@ -2839,6 +2839,7 @@ void collect_all_record_layouts(
 
 auto build_lowering_context(
     syntax::ModuleSyntax const& module,
+    semantics::SemanticModuleSummary const& semantic_module,
     diagnostics::DiagnosticBag& diagnostics
 ) -> LoweringContext {
     auto context = LoweringContext {};
@@ -2882,6 +2883,45 @@ auto build_lowering_context(
         symbol_registry.register_symbol(signature.symbol_name, "source function symbol", function.line, diagnostics);
         context.functions.emplace(function.name, std::move(signature));
         context.source_functions.emplace(function.name, &function);
+    }
+
+    for (auto const& function : semantic_module.functions) {
+        if (function.kind != semantics::SemanticFunctionKind::imported_source_function ||
+            !function.generic_parameters.empty()) {
+            continue;
+        }
+        auto parameters = std::vector<syntax::ParameterSyntax> {};
+        parameters.reserve(function.parameters.size());
+        for (auto const& parameter : function.parameters) {
+            parameters.push_back(syntax::ParameterSyntax {
+                .name = parameter.name,
+                .type = parse_source_type_name(parameter.type_name),
+            });
+        }
+        auto signature = lower_contextual_function_signature(
+            parse_source_type_name(function.return_type_name),
+            parameters,
+            function.source_declaration_name,
+            record_names,
+            context.choices
+        );
+        if (!has_supported_function_signature_types(signature)) {
+            diagnostics.error(
+                function.line == 0 ? 1 : function.line,
+                "imported function '" + function.name + "' has a signature that is not supported by lowering"
+            );
+            continue;
+        }
+        if (!symbol_registry.register_symbol(
+                signature.symbol_name,
+                "imported function declaration",
+                function.line == 0 ? 1 : function.line,
+                diagnostics
+            )) {
+            continue;
+        }
+        context.functions.emplace(function.name, signature);
+        context.imported_declarations.push_back(std::move(signature));
     }
 
     context.generic_function_specializations = collect_generic_function_specializations(module, context.functions);
@@ -3040,6 +3080,13 @@ auto build_lowering_context(
         symbol_registry.validate_foreign_export(symbol_name, foreign_export.function.line, diagnostics);
     }
     return context;
+}
+
+auto build_lowering_context(
+    syntax::ModuleSyntax const& module,
+    diagnostics::DiagnosticBag& diagnostics
+) -> LoweringContext {
+    return build_lowering_context(module, semantics::SemanticModuleSummary {}, diagnostics);
 }
 
 auto find_lowered_method_signature(
