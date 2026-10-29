@@ -21,11 +21,26 @@ struct PackageTypeDeclaration {
     PackageTypeDeclarationKind kind = PackageTypeDeclarationKind::type_alias;
     std::string name;
     std::size_t generic_arity = 0;
+    std::vector<std::string> generic_parameters;
+    std::optional<syntax::TypeSyntax> aliased_type;
+    std::vector<syntax::FieldSyntax> public_record_fields;
+    std::vector<syntax::ChoiceVariantSyntax> choice_variants;
+};
+
+struct PackageFunctionDeclaration {
+    std::string name;
+    std::vector<std::string> generic_parameters;
+    std::vector<syntax::ParameterSyntax> parameters;
+    syntax::TypeSyntax return_type;
+    std::vector<syntax::WhereConstraintSyntax> where_constraints;
+    bool is_async = false;
+    bool is_unsafe = false;
 };
 
 struct PackageInterface {
     std::string package_name;
     std::vector<PackageTypeDeclaration> exported_type_declarations;
+    std::vector<PackageFunctionDeclaration> exported_functions;
 };
 
 struct PackageInterfaceParseResult {

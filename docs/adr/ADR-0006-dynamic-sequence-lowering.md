@@ -3923,3 +3923,7 @@ representation.
 - 2026-10-28 The compiler driver can emit a canonical package-interface artifact with
   `--emit-package-interface <source> -o <output>`. Emission requires successful semantic analysis, exports only public
   type declarations, and supports explicit dependency interfaces through the same leading options as compilation.
+- 2026-10-28 Package-interface format version 2 supersedes the initial name-and-arity format. It preserves generic
+  parameter names, alias targets, public record fields in constructor order, choice variants and payloads in tag order,
+  and public free-function signatures with constraints and async/unsafe flags. Cross-package semantic consumption of
+  the added structure remains follow-up work; imported type arity continues to consume the same typed declarations.

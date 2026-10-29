@@ -100,16 +100,16 @@ int main() {
     auto first_interface_path = smoke_temp_root / "external_types.opi";
     {
         auto output = std::ofstream(first_interface_path);
-        output << "orison-package-interface 1\n"
+        output << "orison-package-interface 2\n"
                   "package external.types\n"
-                  "type record Pair 2\n";
+                  "type record Pair 2 Left Right\n";
     }
     auto second_interface_path = smoke_temp_root / "external_values.opi";
     {
         auto output = std::ofstream(second_interface_path);
-        output << "orison-package-interface 1\n"
+        output << "orison-package-interface 2\n"
                   "package external.values\n"
-                  "type choice Result 1\n";
+                  "type choice Result 1 Value\n";
     }
     auto imported_type_path = smoke_temp_root / "imported_type.or";
     write_concurrency_fixture(
@@ -173,7 +173,7 @@ int main() {
     auto invalid_interface_path = smoke_temp_root / "invalid.opi";
     {
         auto output = std::ofstream(invalid_interface_path);
-        output << "orison-package-interface 2\npackage external.types\n";
+        output << "orison-package-interface 3\npackage external.types\n";
     }
     auto invalid_interface_path_text = invalid_interface_path.string();
     std::array<char const*, 5> invalid_interface_argv {
@@ -189,7 +189,7 @@ int main() {
     assert_failure_with_no_stdout_contains(
         invalid_interface,
         "invalid package interface '" + invalid_interface_path_text +
-            "': unsupported package interface version '2'"
+            "': unsupported package interface version '3'"
     );
 
     auto view_descriptor_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "view_descriptor_reads.or";

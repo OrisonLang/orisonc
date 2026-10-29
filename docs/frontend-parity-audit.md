@@ -3788,3 +3788,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: `orisonc --emit-package-interface <source> -o <output>` now validates a source module and writes its
   canonical public type interface. The emitted artifact can immediately supply imported generic arity to another
   compiler invocation, completing the explicit producer-consumer path without package discovery.
+- 2026-10-28: Package-interface version 2 now records generic parameter names, alias targets, public record fields,
+  choice variants and payloads, and public free-function signatures. Field, variant, payload, and parameter ordering is
+  preserved where it affects construction, tags, or calls; private fields and non-public functions are excluded.

@@ -155,12 +155,16 @@ auto main() -> int {
         );
         assert(
             contents ==
-            "orison-package-interface 1\n"
+            "orison-package-interface 2\n"
             "package external.types\n"
             "type alias Identifier 0\n"
-            "type record Pair 2\n"
+            "alias Identifier UInt64\n"
+            "type record Pair 2 Left Right\n"
+            "field Pair first Left\n"
+            "field Pair second Right\n"
             "type interface Reader 0\n"
-            "type choice Result 1\n"
+            "type choice Result 1 Value\n"
+            "variant Result Ok 1 value Value\n"
         );
     }
 
