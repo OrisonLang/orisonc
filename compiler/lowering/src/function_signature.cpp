@@ -84,6 +84,16 @@ auto lower_function_signature(
     return signature;
 }
 
+auto lowered_package_function_symbol_name(
+    std::string_view package_name,
+    std::string_view declaration_name
+) -> std::string {
+    if (package_name.empty()) {
+        return std::string {declaration_name};
+    }
+    return "__orison_fn." + std::string {package_name} + "." + std::string {declaration_name};
+}
+
 auto has_supported_function_signature_types(LoweredFunctionSignature const& signature) -> bool {
     if (signature.return_type.empty()) {
         return false;

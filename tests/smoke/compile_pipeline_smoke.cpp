@@ -1976,8 +1976,16 @@ auto main() -> int {
         package_interface_options
     );
     assert(!imported_function_lowering.has_errors());
-    assert(imported_function_lowering.ir_text.find("declare i32 @increment(i32)") != std::string::npos);
-    assert(imported_function_lowering.ir_text.find("call i32 @increment(i32 %value)") != std::string::npos);
+    assert(
+        imported_function_lowering.ir_text.find(
+            "declare i32 @__orison_fn.external.types.increment(i32)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_function_lowering.ir_text.find(
+            "call i32 @__orison_fn.external.types.increment(i32 %value)"
+        ) != std::string::npos
+    );
     auto found_imported_call_identity = false;
     for (auto const& expression : imported_function_lowering.semantic_result.semantic_module.expressions) {
         if (expression.target_name != "next") {
@@ -2007,7 +2015,7 @@ auto main() -> int {
         output << "import\n";
         output << "    increment as next from external.types\n";
         output << "function main() -> UInt32\n";
-        output << "    next(40 as UInt32)\n";
+        output << "    next(40 as UInt32) - 41 as UInt32\n";
     }
     auto imported_function_consumer_options = orison::pipeline::CompilePipelineOptions {
         .available_package_interfaces = {
@@ -2031,9 +2039,78 @@ auto main() -> int {
         imported_function_executable
     );
     assert(!imported_function_link.has_errors());
-    auto imported_function_status = std::system(imported_function_executable.string().c_str());
-    assert(WIFEXITED(imported_function_status));
-    assert(WEXITSTATUS(imported_function_status) == 41);
+    assert(std::system(imported_function_executable.string().c_str()) == 0);
+
+    auto first_collision_producer_path = smoke_temp_root / "first_collision_producer.or";
+    {
+        std::ofstream output(first_collision_producer_path);
+        output << "package first.math\n";
+        output << "public function increment(value: UInt32) -> UInt32\n";
+        output << "    value + 1 as UInt32\n";
+    }
+    auto first_collision_producer = pipeline.emit_object(first_collision_producer_path);
+    assert(!first_collision_producer.has_errors());
+    assert(
+        first_collision_producer.ir_text.find(
+            "define i32 @__orison_fn.first.math.increment(i32 %value)"
+        ) != std::string::npos
+    );
+
+    auto second_collision_producer_path = smoke_temp_root / "second_collision_producer.or";
+    {
+        std::ofstream output(second_collision_producer_path);
+        output << "package second.math\n";
+        output << "public function increment(value: UInt32) -> UInt32\n";
+        output << "    value + 1 as UInt32\n";
+    }
+    auto second_collision_producer = pipeline.emit_object(second_collision_producer_path);
+    assert(!second_collision_producer.has_errors());
+    assert(
+        second_collision_producer.ir_text.find(
+            "define i32 @__orison_fn.second.math.increment(i32 %value)"
+        ) != std::string::npos
+    );
+
+    auto collision_consumer_path = smoke_temp_root / "collision_consumer.or";
+    {
+        std::ofstream output(collision_consumer_path);
+        output << "package demo.collisions\n";
+        output << "import\n";
+        output << "    increment as first_increment from first.math\n";
+        output << "    increment as second_increment from second.math\n";
+        output << "function main() -> UInt32\n";
+        output << "    first_increment(10 as UInt32) + second_increment(20 as UInt32) - 32 as UInt32\n";
+    }
+    auto collision_consumer = pipeline.emit_object(
+        collision_consumer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .available_package_interfaces = {
+                orison::semantics::build_package_interface(first_collision_producer.parse_result.module),
+                orison::semantics::build_package_interface(second_collision_producer.parse_result.module),
+            },
+        }
+    );
+    assert(!collision_consumer.has_errors());
+    assert(
+        collision_consumer.ir_text.find(
+            "call i32 @__orison_fn.first.math.increment(i32 10)"
+        ) != std::string::npos
+    );
+    assert(
+        collision_consumer.ir_text.find(
+            "call i32 @__orison_fn.second.math.increment(i32 20)"
+        ) != std::string::npos
+    );
+
+    auto collision_object_images = std::array<std::string_view, 3> {
+        first_collision_producer.object_bytes,
+        second_collision_producer.object_bytes,
+        collision_consumer.object_bytes,
+    };
+    auto collision_executable = smoke_temp_root / "collision_consumer";
+    auto collision_link = orison::link::HostLinker {}.link(collision_object_images, collision_executable);
+    assert(!collision_link.has_errors());
+    assert(std::system(collision_executable.string().c_str()) == 0);
 
     auto imported_generic_function_lowering = pipeline.emit_llvm(
         imported_function_access_path,

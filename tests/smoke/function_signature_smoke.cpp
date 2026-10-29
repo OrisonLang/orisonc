@@ -10,6 +10,12 @@ int main() {
     using orison::syntax::ParameterSyntax;
     using orison::syntax::TypeSyntax;
 
+    assert(
+        orison::lowering::lowered_package_function_symbol_name("first.math", "increment") ==
+        "__orison_fn.first.math.increment"
+    );
+    assert(orison::lowering::lowered_package_function_symbol_name({}, "increment") == "increment");
+
     auto parameters = std::vector<ParameterSyntax> {
         ParameterSyntax {
             .name = "format",

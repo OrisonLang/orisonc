@@ -20,6 +20,9 @@ element source type, origin kind, and source line. This is not public Orison syn
 Imported function summaries preserve the local binding, source package, exported declaration name, checked parameters,
 return type, generic parameters, and async/unsafe classification. Imported direct-call expression facts preserve the
 same source identity for lowering.
+Public top-level Orison functions use deterministic LLVM symbols in the form
+`__orison_fn.<package>.<declaration>`. Imported fixed calls derive the same symbol from their preserved source identity.
+The host entry point `main` and programmer-declared C ABI symbols retain their required external names.
 
 ## Consequences
 
@@ -40,10 +43,13 @@ lowering diagnostic until cross-package specialization is defined.
 Producer and consumer modules can now emit separate object images and link them in one host-link invocation. This
 proves the fixed imported-call ABI through execution while keeping dependency discovery and object selection outside
 the language syntax.
+Distinct packages can export the same public function name and link into one executable without a symbol collision.
+Public concrete generic specializations use the same package qualification. Package-visible top-level functions,
+methods, and imported generic specialization remain outside this decision's implemented scope.
 
 ## Follow-up work
 
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
-- Define cross-package generic specialization and package-qualified source symbol policy before lowering imported
-  generic functions or packages that export colliding declaration names.
+- Define cross-package generic specialization before lowering imported generic functions.
+- Define collision-safe symbols or internal linkage for package-visible top-level functions and methods.

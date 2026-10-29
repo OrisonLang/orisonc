@@ -29,6 +29,11 @@ auto lower_function_signature(
     std::string symbol_name
 ) -> LoweredFunctionSignature;
 
+auto lowered_package_function_symbol_name(
+    std::string_view package_name,
+    std::string_view declaration_name
+) -> std::string;
+
 auto has_supported_function_signature_types(LoweredFunctionSignature const& signature) -> bool;
 
 auto apply_c_abi_adapter(

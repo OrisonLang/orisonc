@@ -3808,3 +3808,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   supplies the checked signature, producer and consumer compile independently, the host linker accepts both in-memory
   objects, and the consumer executes the producer function through its local alias. Automatic dependency discovery,
   package-qualified symbol naming, and imported generic specialization remain open. No source syntax changed.
+- 2026-10-29: Public top-level Orison functions now emit deterministic package-qualified LLVM symbols. Two producer
+  packages can export the same function name, compile independently, link with one consumer, and execute through
+  distinct local aliases. `main` and C ABI symbols remain unchanged; package-visible functions, methods, and imported
+  generic specialization remain open. No source syntax changed.

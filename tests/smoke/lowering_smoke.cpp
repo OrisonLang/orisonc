@@ -14245,7 +14245,10 @@ void test_emit_raw_mmio_intrinsics() {
     assert(result.ir_text.find("load i32, ptr") != std::string::npos);
     assert(result.ir_text.find("define void @write_word(i64 %address, i32 %value)") != std::string::npos);
     assert(result.ir_text.find("store i32 %value, ptr") != std::string::npos);
-    assert(result.ir_text.find("define void @clear(i64 %address)") != std::string::npos);
+    assert(
+        result.ir_text.find("define void @__orison_fn.demo.lowering.clear(i64 %address)") !=
+        std::string::npos
+    );
     assert(result.ir_text.find("store volatile i8 0, ptr") != std::string::npos);
     assert(result.ir_text.find("define i64 @status_address(ptr %regs)") != std::string::npos);
     assert(

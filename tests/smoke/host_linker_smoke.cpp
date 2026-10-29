@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <string>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
 
@@ -27,7 +26,8 @@ auto main() -> int {
         "entry:\n"
         "  %value = call double @cos(double 0.000000e+00)\n"
         "  %result = fptosi double %value to i32\n"
-        "  ret i32 %result\n"
+        "  %status = sub i32 %result, 1\n"
+        "  ret i32 %status\n"
         "}\n"
     );
     assert(!object.has_errors());
@@ -37,9 +37,7 @@ auto main() -> int {
     auto link = linker.link(object.object_bytes, executable, std::vector<std::string> {"m"});
     assert(!link.has_errors());
 
-    auto status = std::system(executable.string().c_str());
-    assert(WIFEXITED(status));
-    assert(WEXITSTATUS(status) == 1);
+    assert(std::system(executable.string().c_str()) == 0);
 
     auto producer_object = object_emitter.emit(
         "define i32 @increment(i32 %value) {\n"
@@ -54,8 +52,9 @@ auto main() -> int {
         "\n"
         "define i32 @main() {\n"
         "entry:\n"
-        "  %result = call i32 @increment(i32 40)\n"
-        "  ret i32 %result\n"
+        "  %value = call i32 @increment(i32 40)\n"
+        "  %status = sub i32 %value, 41\n"
+        "  ret i32 %status\n"
         "}\n"
     );
     assert(!consumer_object.has_errors());
@@ -66,9 +65,7 @@ auto main() -> int {
     auto multi_object_executable = std::filesystem::temp_directory_path() / "orison_host_linker_multi_object";
     auto multi_object_link = linker.link(object_images, multi_object_executable);
     assert(!multi_object_link.has_errors());
-    auto multi_object_status = std::system(multi_object_executable.string().c_str());
-    assert(WIFEXITED(multi_object_status));
-    assert(WEXITSTATUS(multi_object_status) == 41);
+    assert(std::system(multi_object_executable.string().c_str()) == 0);
 
     std::filesystem::remove(executable);
     std::filesystem::remove(multi_object_executable);

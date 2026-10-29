@@ -2872,10 +2872,14 @@ auto build_lowering_context(
     collect_all_record_layouts(module, instantiated_types, generic_records, record_names, context);
 
     for (auto const& function : module.functions) {
+        auto symbol_name = function.name;
+        if (function.visibility == syntax::Visibility::public_visibility && function.name != "main") {
+            symbol_name = lowered_package_function_symbol_name(module.package_name, function.name);
+        }
         auto signature = lower_contextual_function_signature(
             function.return_type,
             function.parameters,
-            function.name,
+            std::move(symbol_name),
             record_names,
             context.choices
         );
@@ -2901,7 +2905,10 @@ auto build_lowering_context(
         auto signature = lower_contextual_function_signature(
             parse_source_type_name(function.return_type_name),
             parameters,
-            function.source_declaration_name,
+            lowered_package_function_symbol_name(
+                function.source_package_name,
+                function.source_declaration_name
+            ),
             record_names,
             context.choices
         );
@@ -2927,10 +2934,14 @@ auto build_lowering_context(
     context.generic_function_specializations = collect_generic_function_specializations(module, context.functions);
     for (auto const& specialization_ptr : context.generic_function_specializations) {
         auto const& specialization = *specialization_ptr;
+        auto symbol_name = specialization.name;
+        if (specialization.visibility == syntax::Visibility::public_visibility && specialization.name != "main") {
+            symbol_name = lowered_package_function_symbol_name(module.package_name, specialization.name);
+        }
         auto signature = lower_contextual_function_signature(
             specialization.return_type,
             specialization.parameters,
-            specialization.name,
+            std::move(symbol_name),
             record_names,
             context.choices
         );
