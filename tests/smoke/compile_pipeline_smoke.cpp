@@ -1814,6 +1814,30 @@ auto main() -> int {
                         .kind = orison::semantics::PackageTypeDeclarationKind::record,
                         .name = "Pair",
                         .generic_arity = 2,
+                        .generic_parameters = {"Left", "Right"},
+                        .public_record_fields = {
+                            {
+                                .visibility = orison::syntax::Visibility::public_visibility,
+                                .name = "first",
+                                .type = {.name = "Left"},
+                            },
+                        },
+                    },
+                    {
+                        .kind = orison::semantics::PackageTypeDeclarationKind::choice,
+                        .name = "Result",
+                        .generic_arity = 1,
+                        .generic_parameters = {"Value"},
+                        .choice_variants = {
+                            {
+                                .name = "Ok",
+                                .payloads = {{.name = "value", .type = {.name = "Value"}}},
+                            },
+                            {
+                                .name = "Error",
+                                .payloads = {{.name = "reason", .type = {.name = "Text"}}},
+                            },
+                        },
                     },
                 },
             },
@@ -1843,6 +1867,65 @@ auto main() -> int {
         package_interface_options
     );
     assert(!imported_type_arity_success.has_errors());
+
+    auto imported_aggregate_access_path = smoke_temp_root / "imported_aggregate_access.or";
+    {
+        std::ofstream output(imported_aggregate_access_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    Pair as ExternalPair from external.types\n";
+        output << "    Result as ExternalResult from external.types\n";
+        output << "function first(value: ExternalPair<UInt32, UInt64>) -> UInt32\n";
+        output << "    value.first\n";
+        output << "function make(value: UInt32) -> ExternalResult<UInt32>\n";
+        output << "    Ok(value)\n";
+        output << "function read(value: ExternalResult<UInt32>) -> UInt32\n";
+        output << "    switch value\n";
+        output << "        Ok(item) => item\n";
+        output << "        Error(reason) => 0 as UInt32\n";
+    }
+    auto imported_aggregate_access = pipeline.analyze(
+        imported_aggregate_access_path,
+        package_interface_options
+    );
+    assert(!imported_aggregate_access.has_errors());
+
+    auto imported_private_field_path = smoke_temp_root / "imported_private_field.or";
+    {
+        std::ofstream output(imported_private_field_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    Pair as ExternalPair from external.types\n";
+        output << "function hidden(value: ExternalPair<UInt32, UInt64>) -> UInt64\n";
+        output << "    value.hidden\n";
+    }
+    auto imported_private_field = pipeline.analyze(imported_private_field_path, package_interface_options);
+    assert(imported_private_field.has_errors());
+    assert(
+        imported_private_field.error_text.find(
+            "has no member 'hidden'"
+        ) != std::string::npos
+    );
+
+    auto imported_record_constructor_path = smoke_temp_root / "imported_record_constructor.or";
+    {
+        std::ofstream output(imported_record_constructor_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    Pair as ExternalPair from external.types\n";
+        output << "function make() -> ExternalPair<UInt32, UInt64>\n";
+        output << "    ExternalPair(1 as UInt32)\n";
+    }
+    auto imported_record_constructor = pipeline.analyze(
+        imported_record_constructor_path,
+        package_interface_options
+    );
+    assert(imported_record_constructor.has_errors());
+    assert(
+        imported_record_constructor.error_text.find(
+            "imported record constructor 'ExternalPair' is unavailable from package interface metadata"
+        ) != std::string::npos
+    );
 
     auto explicit_imported_type_arity = pipeline.analyze(
         imported_type_arity_path,

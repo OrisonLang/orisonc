@@ -573,4 +573,49 @@ auto resolve_imported_type_declarations(
     return imported_declarations;
 }
 
+auto resolve_imported_aggregate_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> ImportedAggregateDeclarations {
+    auto imported_declarations = ImportedAggregateDeclarations {};
+
+    for (auto const& import : module.imports) {
+        for (auto const& package_interface : package_interfaces) {
+            if (package_interface.package_name != import.from_package) {
+                continue;
+            }
+
+            auto declaration = std::ranges::find_if(
+                package_interface.exported_type_declarations,
+                [&](PackageTypeDeclaration const& candidate) {
+                    return candidate.name == import.name;
+                }
+            );
+            if (declaration == package_interface.exported_type_declarations.end()) {
+                continue;
+            }
+
+            auto const local_name = import.alias.empty() ? import.name : import.alias;
+            if (declaration->kind == PackageTypeDeclarationKind::record) {
+                imported_declarations.records.push_back(syntax::RecordSyntax {
+                    .visibility = syntax::Visibility::public_visibility,
+                    .name = local_name,
+                    .generic_parameters = declaration->generic_parameters,
+                    .fields = declaration->public_record_fields,
+                });
+            } else if (declaration->kind == PackageTypeDeclarationKind::choice) {
+                imported_declarations.choices.push_back(syntax::ChoiceSyntax {
+                    .visibility = syntax::Visibility::public_visibility,
+                    .name = local_name,
+                    .generic_parameters = declaration->generic_parameters,
+                    .variants = declaration->choice_variants,
+                });
+            }
+            break;
+        }
+    }
+
+    return imported_declarations;
+}
+
 }  // namespace orison::semantics

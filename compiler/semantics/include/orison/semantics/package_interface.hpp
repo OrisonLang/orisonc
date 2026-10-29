@@ -58,6 +58,11 @@ struct ImportedTypeDeclarationMetadata {
     std::size_t generic_arity = 0;
 };
 
+struct ImportedAggregateDeclarations {
+    std::vector<syntax::RecordSyntax> records;
+    std::vector<syntax::ChoiceSyntax> choices;
+};
+
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface;
 
 auto serialize_package_interface(PackageInterface const& package_interface) -> std::string;
@@ -68,5 +73,10 @@ auto resolve_imported_type_declarations(
     syntax::ModuleSyntax const& module,
     std::vector<PackageInterface> const& package_interfaces
 ) -> std::vector<ImportedTypeDeclarationMetadata>;
+
+auto resolve_imported_aggregate_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> ImportedAggregateDeclarations;
 
 }  // namespace orison::semantics

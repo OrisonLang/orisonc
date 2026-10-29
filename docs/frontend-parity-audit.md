@@ -3791,3 +3791,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: Package-interface version 2 now records generic parameter names, alias targets, public record fields,
   choice variants and payloads, and public free-function signatures. Field, variant, payload, and parameter ordering is
   preserved where it affects construction, tags, or calls; private fields and non-public functions are excluded.
+- 2026-10-28: Imported version-2 aggregate metadata now participates in semantic analysis through the import's local
+  alias. Public generic record fields resolve with substituted types, private fields remain inaccessible, and imported
+  choice constructors and exhaustive payload patterns use the existing choice analysis. Imported record constructors
+  fail explicitly until an artifact can prove the complete constructor shape. No source syntax changed.

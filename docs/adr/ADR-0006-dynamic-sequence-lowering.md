@@ -3927,3 +3927,8 @@ representation.
   parameter names, alias targets, public record fields in constructor order, choice variants and payloads in tag order,
   and public free-function signatures with constraints and async/unsafe flags. Cross-package semantic consumption of
   the added structure remains follow-up work; imported type arity continues to consume the same typed declarations.
+- 2026-10-28 Semantic import resolution now projects version-2 public record fields and complete choice variants under
+  each import's local alias. Imported generic record field access, choice construction, payload patterns, and
+  exhaustiveness analysis reuse the local aggregate metadata paths. Imported record construction remains rejected:
+  version 2 omits private fields and cannot prove a complete constructor shape. Imported free-function resolution
+  remains follow-up work.

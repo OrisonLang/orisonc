@@ -181,6 +181,8 @@ struct SemanticAnalysisResult {
 
 struct SemanticAnalysisOptions {
     std::vector<ImportedTypeDeclarationMetadata> imported_type_declarations;
+    std::vector<syntax::RecordSyntax> imported_record_declarations;
+    std::vector<syntax::ChoiceSyntax> imported_choice_declarations;
 };
 
 auto format_dynamic_array_descriptor_summary(SemanticDynamicArrayDescriptorSummary const& descriptor)

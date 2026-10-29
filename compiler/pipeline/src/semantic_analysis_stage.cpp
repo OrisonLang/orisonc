@@ -43,6 +43,32 @@ auto run_semantic_analysis_stage(
             semantic_analysis_options.imported_type_declarations.push_back(resolved_declaration);
         }
     }
+    auto resolved_imported_aggregates = semantics::resolve_imported_aggregate_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
+    for (auto const& record : resolved_imported_aggregates.records) {
+        auto already_supplied = std::ranges::any_of(
+            semantic_analysis_options.imported_record_declarations,
+            [&](syntax::RecordSyntax const& supplied_record) {
+                return supplied_record.name == record.name;
+            }
+        );
+        if (!already_supplied) {
+            semantic_analysis_options.imported_record_declarations.push_back(record);
+        }
+    }
+    for (auto const& choice : resolved_imported_aggregates.choices) {
+        auto already_supplied = std::ranges::any_of(
+            semantic_analysis_options.imported_choice_declarations,
+            [&](syntax::ChoiceSyntax const& supplied_choice) {
+                return supplied_choice.name == choice.name;
+            }
+        );
+        if (!already_supplied) {
+            semantic_analysis_options.imported_choice_declarations.push_back(choice);
+        }
+    }
 
     semantics::ModuleSemanticAnalyzer semantic_analyzer;
     result.semantic_result = semantic_analyzer.analyze(result.parse_result.module, semantic_analysis_options);

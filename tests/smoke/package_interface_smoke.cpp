@@ -200,6 +200,11 @@ int main() {
         .from_package = "external.types",
     });
     consumer.imports.push_back(orison::syntax::ImportSyntax {
+        .name = "Result",
+        .alias = "ExternalResult",
+        .from_package = "external.types",
+    });
+    consumer.imports.push_back(orison::syntax::ImportSyntax {
         .name = "Missing",
         .from_package = "external.types",
     });
@@ -227,10 +232,23 @@ int main() {
         consumer,
         {package_interface}
     );
-    assert(imported_declarations.size() == 1);
+    assert(imported_declarations.size() == 2);
     assert(imported_declarations.front().package_name == "external.types");
     assert(imported_declarations.front().declaration_name == "Pair");
     assert(imported_declarations.front().generic_arity == 2);
+
+    auto imported_aggregates = orison::semantics::resolve_imported_aggregate_declarations(
+        consumer,
+        {package_interface}
+    );
+    assert(imported_aggregates.records.size() == 1);
+    assert(imported_aggregates.records.front().name == "ExternalPair");
+    assert(imported_aggregates.records.front().generic_parameters == std::vector<std::string>({"Left", "Right"}));
+    assert(imported_aggregates.records.front().fields.size() == 1);
+    assert(imported_aggregates.records.front().fields.front().name == "first");
+    assert(imported_aggregates.choices.size() == 1);
+    assert(imported_aggregates.choices.front().name == "ExternalResult");
+    assert(imported_aggregates.choices.front().variants.size() == 2);
 
     auto analysis = orison::semantics::ModuleSemanticAnalyzer {}.analyze(
         consumer,

@@ -3601,7 +3601,7 @@ private:
     void collect_choice_variant_metadata() {
         choice_variant_arities_.clear();
         choice_variant_signatures_.clear();
-        for (auto const& choice : module_.choices) {
+        auto collect_choice = [&](syntax::ChoiceSyntax const& choice) {
             syntax::TypeSyntax choice_type;
             choice_type.name = choice.name;
             for (auto const& generic_parameter : choice.generic_parameters) {
@@ -3619,6 +3619,12 @@ private:
                     .payloads = variant.payloads,
                 });
             }
+        };
+        for (auto const& choice : module_.choices) {
+            collect_choice(choice);
+        }
+        for (auto const& choice : options_.imported_choice_declarations) {
+            collect_choice(choice);
         }
     }
 
@@ -5255,7 +5261,7 @@ private:
     void collect_record_field_types() {
         record_field_signatures_.clear();
 
-        for (auto const& record : module_.records) {
+        auto collect_record = [&](syntax::RecordSyntax const& record) {
             syntax::TypeSyntax record_type {.name = record.name};
             for (auto const& generic_parameter : record.generic_parameters) {
                 record_type.generic_arguments.push_back(syntax::TypeSyntax {.name = generic_parameter});
@@ -5269,6 +5275,12 @@ private:
                     .field_type = field.type,
                 });
             }
+        };
+        for (auto const& record : module_.records) {
+            collect_record(record);
+        }
+        for (auto const& record : options_.imported_record_declarations) {
+            collect_record(record);
         }
     }
 
@@ -5865,6 +5877,21 @@ private:
         if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
             expression.left->kind != syntax::ExpressionKind::name) {
             return false;
+        }
+
+        auto imported_record = std::ranges::find_if(
+            options_.imported_record_declarations,
+            [&](syntax::RecordSyntax const& record) {
+                return record.name == expression.left->text;
+            }
+        );
+        if (imported_record != options_.imported_record_declarations.end()) {
+            diagnostics_.error(
+                expression.line,
+                "imported record constructor '" + expression.left->text +
+                    "' is unavailable from package interface metadata"
+            );
+            return true;
         }
 
         auto const* record = find_record_declaration_by_name(expression.left->text);
@@ -7101,12 +7128,28 @@ private:
                 return true;
             }
         }
+        for (auto const& record : options_.imported_record_declarations) {
+            if (record.name == base_name) {
+                return true;
+            }
+        }
+        for (auto const& choice : options_.imported_choice_declarations) {
+            if (choice.name == base_name) {
+                return true;
+            }
+        }
         return false;
     }
 
     auto is_source_declared_record_type_name(std::string const& type_name) const -> bool {
         auto const base_name = source_type_base_name(type_name);
-        return find_record_declaration_by_name(base_name) != nullptr;
+        return find_record_declaration_by_name(base_name) != nullptr ||
+               std::ranges::any_of(
+                   options_.imported_record_declarations,
+                   [&](syntax::RecordSyntax const& record) {
+                       return record.name == base_name;
+                   }
+               );
     }
 
     auto is_source_declared_choice_type_name(std::string const& type_name) const -> bool {
