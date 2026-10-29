@@ -69,6 +69,21 @@ auto run_semantic_analysis_stage(
             semantic_analysis_options.imported_choice_declarations.push_back(choice);
         }
     }
+    auto resolved_imported_functions = semantics::resolve_imported_function_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
+    for (auto const& function : resolved_imported_functions) {
+        auto already_supplied = std::ranges::any_of(
+            semantic_analysis_options.imported_function_declarations,
+            [&](semantics::ImportedFunctionDeclaration const& supplied_function) {
+                return supplied_function.local_name == function.local_name;
+            }
+        );
+        if (!already_supplied) {
+            semantic_analysis_options.imported_function_declarations.push_back(function);
+        }
+    }
 
     semantics::ModuleSemanticAnalyzer semantic_analyzer;
     result.semantic_result = semantic_analyzer.analyze(result.parse_result.module, semantic_analysis_options);

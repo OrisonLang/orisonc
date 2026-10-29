@@ -69,7 +69,7 @@ int main() {
             },
         },
         .return_type = {
-            .name = "Maybe",
+            .name = "Result",
             .generic_arguments = {{.name = "Value"}},
         },
         .where_constraints = {
@@ -134,7 +134,7 @@ int main() {
         "type choice Result 1 Value\n"
         "variant Result Ok 1 value Value\n"
         "variant Result Error 1 reason Text\n"
-        "function transform 1 Value 1 values shared.View<Value> Maybe<Value> async unsafe 1 Value 2 Reader Shareable\n"
+        "function transform 1 Value 1 values shared.View<Value> Result<Value> async unsafe 1 Value 2 Reader Shareable\n"
     );
     auto parsed = orison::semantics::parse_package_interface(serialized);
     assert(!parsed.has_error());
@@ -205,6 +205,11 @@ int main() {
         .from_package = "external.types",
     });
     consumer.imports.push_back(orison::syntax::ImportSyntax {
+        .name = "transform",
+        .alias = "external_transform",
+        .from_package = "external.types",
+    });
+    consumer.imports.push_back(orison::syntax::ImportSyntax {
         .name = "Missing",
         .from_package = "external.types",
     });
@@ -249,6 +254,22 @@ int main() {
     assert(imported_aggregates.choices.size() == 1);
     assert(imported_aggregates.choices.front().name == "ExternalResult");
     assert(imported_aggregates.choices.front().variants.size() == 2);
+
+    auto imported_functions = orison::semantics::resolve_imported_function_declarations(
+        consumer,
+        {package_interface}
+    );
+    assert(imported_functions.size() == 1);
+    assert(imported_functions.front().package_name == "external.types");
+    assert(imported_functions.front().declaration_name == "transform");
+    assert(imported_functions.front().local_name == "external_transform");
+    assert(imported_functions.front().declaration.generic_parameters == std::vector<std::string>({"Value"}));
+    assert(imported_functions.front().declaration.parameters.size() == 1);
+    assert(imported_functions.front().declaration.return_type.name == "ExternalResult");
+    assert(imported_functions.front().declaration.return_type.generic_arguments.front().name == "Value");
+    assert(imported_functions.front().declaration.is_async);
+    assert(imported_functions.front().declaration.is_unsafe);
+    assert(imported_functions.front().declaration.where_constraints.size() == 1);
 
     auto analysis = orison::semantics::ModuleSemanticAnalyzer {}.analyze(
         consumer,

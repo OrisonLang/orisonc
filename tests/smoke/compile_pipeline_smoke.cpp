@@ -1840,6 +1840,55 @@ auto main() -> int {
                         },
                     },
                 },
+                .exported_functions = {
+                    {
+                        .name = "choose",
+                        .generic_parameters = {"Value"},
+                        .parameters = {
+                            {.name = "left", .type = {.name = "Value"}},
+                            {.name = "right", .type = {.name = "Value"}},
+                        },
+                        .return_type = {.name = "Value"},
+                    },
+                    {
+                        .name = "inspect_pair",
+                        .generic_parameters = {"Left", "Right"},
+                        .parameters = {
+                            {
+                                .name = "value",
+                                .type = {
+                                    .name = "Pair",
+                                    .generic_arguments = {{.name = "Left"}, {.name = "Right"}},
+                                },
+                            },
+                        },
+                        .return_type = {.name = "Left"},
+                    },
+                    {
+                        .name = "require_shareable",
+                        .generic_parameters = {"Value"},
+                        .parameters = {{.name = "value", .type = {.name = "Value"}}},
+                        .return_type = {.name = "Value"},
+                        .where_constraints = {
+                            {
+                                .parameter_name = "Value",
+                                .requirements = {{.name = "Shareable"}},
+                            },
+                        },
+                    },
+                    {
+                        .name = "dangerous",
+                        .parameters = {{.name = "value", .type = {.name = "UInt32"}}},
+                        .return_type = {.name = "UInt32"},
+                        .is_unsafe = true,
+                    },
+                    {
+                        .name = "fetch",
+                        .parameters = {{.name = "value", .type = {.name = "UInt32"}}},
+                        .return_type = {.name = "UInt32"},
+                        .is_async = true,
+                    },
+                },
             },
         },
     };
@@ -1889,6 +1938,88 @@ auto main() -> int {
         package_interface_options
     );
     assert(!imported_aggregate_access.has_errors());
+
+    auto imported_function_access_path = smoke_temp_root / "imported_function_access.or";
+    {
+        std::ofstream output(imported_function_access_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    Pair as ExternalPair from external.types\n";
+        output << "    choose as select from external.types\n";
+        output << "    inspect_pair as inspect from external.types\n";
+        output << "function choose_value() -> UInt32\n";
+        output << "    select(1 as UInt32, 2 as UInt32)\n";
+        output << "function inspect_value(value: ExternalPair<UInt32, UInt64>) -> UInt32\n";
+        output << "    inspect(value)\n";
+    }
+    auto imported_function_access = pipeline.analyze(imported_function_access_path, package_interface_options);
+    assert(!imported_function_access.has_errors());
+
+    auto imported_function_arity_path = smoke_temp_root / "imported_function_arity.or";
+    {
+        std::ofstream output(imported_function_arity_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    choose as select from external.types\n";
+        output << "function choose_value() -> UInt32\n";
+        output << "    select(1 as UInt32)\n";
+    }
+    auto imported_function_arity = pipeline.analyze(imported_function_arity_path, package_interface_options);
+    assert(imported_function_arity.has_errors());
+    assert(
+        imported_function_arity.error_text.find(
+            "function 'select' expects 2 arguments but received 1"
+        ) != std::string::npos
+    );
+
+    auto imported_function_constraint_path = smoke_temp_root / "imported_function_constraint.or";
+    {
+        std::ofstream output(imported_function_constraint_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    require_shareable as checked from external.types\n";
+        output << "function checked_value() -> UInt32\n";
+        output << "    checked(1 as UInt32)\n";
+    }
+    auto imported_function_constraint = pipeline.analyze(
+        imported_function_constraint_path,
+        package_interface_options
+    );
+    assert(imported_function_constraint.has_errors());
+    assert(
+        imported_function_constraint.error_text.find(
+            "generic function 'checked' type argument 'UInt32' for 'Value' does not satisfy constraint 'Shareable'"
+        ) != std::string::npos
+    );
+
+    auto imported_function_safety_path = smoke_temp_root / "imported_function_safety.or";
+    {
+        std::ofstream output(imported_function_safety_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    dangerous as external_dangerous from external.types\n";
+        output << "function unsafe_call() -> UInt32\n";
+        output << "    external_dangerous(1 as UInt32)\n";
+    }
+    auto imported_function_safety = pipeline.analyze(imported_function_safety_path, package_interface_options);
+    assert(imported_function_safety.has_errors());
+    assert(
+        imported_function_safety.error_text.find(
+            "call to unsafe function 'external_dangerous' is only valid inside unsafe functions or unsafe blocks"
+        ) != std::string::npos
+    );
+
+    auto imported_function_async_path = smoke_temp_root / "imported_function_async.or";
+    {
+        std::ofstream output(imported_function_async_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    fetch as external_fetch from external.types\n";
+        output << "async function fetch_value() -> UInt32\n";
+        output << "    await external_fetch(1 as UInt32)\n";
+    }
+    auto imported_function_async = pipeline.analyze(imported_function_async_path, package_interface_options);
+    assert(!imported_function_async.has_errors());
 
     auto imported_private_field_path = smoke_temp_root / "imported_private_field.or";
     {

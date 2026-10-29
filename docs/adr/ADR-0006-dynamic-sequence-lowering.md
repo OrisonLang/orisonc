@@ -3932,3 +3932,8 @@ representation.
   exhaustiveness analysis reuse the local aggregate metadata paths. Imported record construction remains rejected:
   version 2 omits private fields and cannot prove a complete constructor shape. Imported free-function resolution
   remains follow-up work.
+- 2026-10-29 Semantic import resolution now projects version-2 public free-function signatures under each import's
+  local alias. Generic parameter inference, argument validation, constraints, return inference, and async/unsafe call
+  rules reuse the local callable analysis. Imported signature types are localized through explicit same-package type
+  aliases. Metadata retains the source package, exported name, and local binding separately for later symbol lowering.
+  Cross-package call emission and linking remain follow-up work.

@@ -63,6 +63,13 @@ struct ImportedAggregateDeclarations {
     std::vector<syntax::ChoiceSyntax> choices;
 };
 
+struct ImportedFunctionDeclaration {
+    std::string package_name;
+    std::string declaration_name;
+    std::string local_name;
+    PackageFunctionDeclaration declaration;
+};
+
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface;
 
 auto serialize_package_interface(PackageInterface const& package_interface) -> std::string;
@@ -78,5 +85,10 @@ auto resolve_imported_aggregate_declarations(
     syntax::ModuleSyntax const& module,
     std::vector<PackageInterface> const& package_interfaces
 ) -> ImportedAggregateDeclarations;
+
+auto resolve_imported_function_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> std::vector<ImportedFunctionDeclaration>;
 
 }  // namespace orison::semantics

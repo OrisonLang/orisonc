@@ -135,6 +135,26 @@ auto find_type_declaration(
     return found == package_interface.exported_type_declarations.end() ? nullptr : &*found;
 }
 
+auto localize_imported_type(
+    syntax::TypeSyntax type,
+    syntax::ModuleSyntax const& module,
+    std::string_view package_name
+) -> syntax::TypeSyntax {
+    auto imported_type = std::ranges::find_if(
+        module.imports,
+        [&](syntax::ImportSyntax const& import) {
+            return import.from_package == package_name && import.name == type.name;
+        }
+    );
+    if (imported_type != module.imports.end() && !imported_type->alias.empty()) {
+        type.name = imported_type->alias;
+    }
+    for (auto& argument : type.generic_arguments) {
+        argument = localize_imported_type(std::move(argument), module, package_name);
+    }
+    return type;
+}
+
 }  // namespace
 
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface {
@@ -611,6 +631,63 @@ auto resolve_imported_aggregate_declarations(
                     .variants = declaration->choice_variants,
                 });
             }
+            break;
+        }
+    }
+
+    return imported_declarations;
+}
+
+auto resolve_imported_function_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> std::vector<ImportedFunctionDeclaration> {
+    auto imported_declarations = std::vector<ImportedFunctionDeclaration> {};
+
+    for (auto const& import : module.imports) {
+        for (auto const& package_interface : package_interfaces) {
+            if (package_interface.package_name != import.from_package) {
+                continue;
+            }
+
+            auto declaration = std::ranges::find_if(
+                package_interface.exported_functions,
+                [&](PackageFunctionDeclaration const& candidate) {
+                    return candidate.name == import.name;
+                }
+            );
+            if (declaration == package_interface.exported_functions.end()) {
+                continue;
+            }
+
+            auto localized = *declaration;
+            for (auto& parameter : localized.parameters) {
+                parameter.type = localize_imported_type(
+                    std::move(parameter.type),
+                    module,
+                    package_interface.package_name
+                );
+            }
+            localized.return_type = localize_imported_type(
+                std::move(localized.return_type),
+                module,
+                package_interface.package_name
+            );
+            for (auto& constraint : localized.where_constraints) {
+                for (auto& requirement : constraint.requirements) {
+                    requirement = localize_imported_type(
+                        std::move(requirement),
+                        module,
+                        package_interface.package_name
+                    );
+                }
+            }
+            imported_declarations.push_back(ImportedFunctionDeclaration {
+                .package_name = package_interface.package_name,
+                .declaration_name = declaration->name,
+                .local_name = import.alias.empty() ? import.name : import.alias,
+                .declaration = std::move(localized),
+            });
             break;
         }
     }

@@ -3795,3 +3795,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   alias. Public generic record fields resolve with substituted types, private fields remain inaccessible, and imported
   choice constructors and exhaustive payload patterns use the existing choice analysis. Imported record constructors
   fail explicitly until an artifact can prove the complete constructor shape. No source syntax changed.
+- 2026-10-29: Imported public free-function metadata now participates in semantic analysis through the import's local
+  alias. Calls receive generic return inference, arity and argument checks, constraint enforcement, and async/unsafe
+  classification. Dependent signature types honor explicit aliases imported from the same package, while source
+  package and exported function identity remain available for future lowering. No source syntax changed.

@@ -5151,6 +5151,11 @@ private:
                 async_callable_names_.push_back(foreign_export.function.name);
             }
         }
+        for (auto const& function : options_.imported_function_declarations) {
+            if (function.declaration.is_async) {
+                async_callable_names_.push_back(function.local_name);
+            }
+        }
     }
 
     void collect_unsafe_callable_names() {
@@ -5188,6 +5193,11 @@ private:
         for (auto const& foreign_export : module_.foreign_exports) {
             if (foreign_export.function.is_unsafe) {
                 unsafe_callable_names_.push_back(foreign_export.function.name);
+            }
+        }
+        for (auto const& function : options_.imported_function_declarations) {
+            if (function.declaration.is_unsafe) {
+                unsafe_callable_names_.push_back(function.local_name);
             }
         }
     }
@@ -5253,6 +5263,16 @@ private:
                 .parameters = foreign_export.function.parameters,
                 .where_constraints = foreign_export.function.where_constraints,
                 .return_type = foreign_export.function.return_type,
+                .foreign = false,
+            });
+        }
+        for (auto const& function : options_.imported_function_declarations) {
+            callable_signatures_.push_back(CallableSignature {
+                .name = function.local_name,
+                .generic_parameters = function.declaration.generic_parameters,
+                .parameters = function.declaration.parameters,
+                .where_constraints = function.declaration.where_constraints,
+                .return_type = function.declaration.return_type,
                 .foreign = false,
             });
         }
