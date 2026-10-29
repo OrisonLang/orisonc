@@ -3804,3 +3804,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   declaration and calls its exported symbol. Imported generic calls report an explicit unsupported-lowering diagnostic.
   Package-qualified symbol naming, generic specialization, and dependency-object linking remain open. No source syntax
   changed.
+- 2026-10-29: Fixed imported public functions now cross the separate-object execution boundary. A producer interface
+  supplies the checked signature, producer and consumer compile independently, the host linker accepts both in-memory
+  objects, and the consumer executes the producer function through its local alias. Automatic dependency discovery,
+  package-qualified symbol naming, and imported generic specialization remain open. No source syntax changed.

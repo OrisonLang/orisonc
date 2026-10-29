@@ -30,6 +30,8 @@ analysis, and lowering components.
 - Host object emission uses LLVM target discovery, a host `TargetMachine`, and the target's object-file pass pipeline.
 - Initial executable linking delegates to a CMake-discovered host Clang/C driver through an argument-vector process
   launch; no shell command construction is used.
+- Host linking accepts one or more in-memory object images, writes each to a uniquely named temporary object, passes
+  every object to one host-driver invocation, and removes all temporary objects when linking completes.
 - `orisonc run <file>` uses the same host object and link path, executes a uniquely named temporary executable with
   inherited standard streams, propagates its exit status, and removes the temporary artifact.
 - Shared frontend, LLVM IR, and object compilation stages live behind `orison_pipeline`; CLI modes select an
@@ -293,7 +295,7 @@ analysis, and lowering components.
   Final aggregate cursor load emission is shared by the aggregate path helper while expression emission still owns
   expected-type validation, index-expression lowering, and diagnostic policy.
   Member-step temporary naming and cursor advancement are also shared by the aggregate path helper. Index-step temporary
-  naming and cursor advancement are shared too, while index operand lowering remains in expression emission because it
+  naming and cursor advancement are shared too, while index operand lowering remains in expression emission as it
   requires recursive expression lowering.
   Aggregate assignment target lowering also uses the shared member/index cursor-advancement helpers while retaining its
   assignment-specific diagnostics.

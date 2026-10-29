@@ -2,6 +2,7 @@
 #include "orison/lowering/llvm_object_emitter.hpp"
 
 #include <cassert>
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <string>
@@ -40,7 +41,37 @@ auto main() -> int {
     assert(WIFEXITED(status));
     assert(WEXITSTATUS(status) == 1);
 
+    auto producer_object = object_emitter.emit(
+        "define i32 @increment(i32 %value) {\n"
+        "entry:\n"
+        "  %result = add i32 %value, 1\n"
+        "  ret i32 %result\n"
+        "}\n"
+    );
+    assert(!producer_object.has_errors());
+    auto consumer_object = object_emitter.emit(
+        "declare i32 @increment(i32)\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %result = call i32 @increment(i32 40)\n"
+        "  ret i32 %result\n"
+        "}\n"
+    );
+    assert(!consumer_object.has_errors());
+    auto object_images = std::array<std::string_view, 2> {
+        producer_object.object_bytes,
+        consumer_object.object_bytes,
+    };
+    auto multi_object_executable = std::filesystem::temp_directory_path() / "orison_host_linker_multi_object";
+    auto multi_object_link = linker.link(object_images, multi_object_executable);
+    assert(!multi_object_link.has_errors());
+    auto multi_object_status = std::system(multi_object_executable.string().c_str());
+    assert(WIFEXITED(multi_object_status));
+    assert(WEXITSTATUS(multi_object_status) == 41);
+
     std::filesystem::remove(executable);
+    std::filesystem::remove(multi_object_executable);
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

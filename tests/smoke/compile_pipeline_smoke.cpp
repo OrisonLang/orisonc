@@ -14,10 +14,12 @@
 #include "orison/pipeline/runtime_indexed_member_cleanup_match_key.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_execution_summary.hpp"
 #include "orison/pipeline/runtime_indexed_member_cleanup_readiness_report.hpp"
+#include "orison/semantics/package_interface.hpp"
 
 #include "lowering_emission_reports.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstdlib>
 #include <cstddef>
@@ -1986,6 +1988,52 @@ auto main() -> int {
         found_imported_call_identity = true;
     }
     assert(found_imported_call_identity);
+
+    auto imported_function_producer_path = smoke_temp_root / "imported_function_producer.or";
+    {
+        std::ofstream output(imported_function_producer_path);
+        output << "package external.types\n";
+        output << "public function increment(value: UInt32) -> UInt32\n";
+        output << "    value + 1 as UInt32\n";
+    }
+    auto imported_function_producer = pipeline.emit_object(imported_function_producer_path);
+    assert(!imported_function_producer.has_errors());
+    assert(!imported_function_producer.object_bytes.empty());
+
+    auto imported_function_consumer_path = smoke_temp_root / "imported_function_consumer.or";
+    {
+        std::ofstream output(imported_function_consumer_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    increment as next from external.types\n";
+        output << "function main() -> UInt32\n";
+        output << "    next(40 as UInt32)\n";
+    }
+    auto imported_function_consumer_options = orison::pipeline::CompilePipelineOptions {
+        .available_package_interfaces = {
+            orison::semantics::build_package_interface(imported_function_producer.parse_result.module),
+        },
+    };
+    auto imported_function_consumer = pipeline.emit_object(
+        imported_function_consumer_path,
+        imported_function_consumer_options
+    );
+    assert(!imported_function_consumer.has_errors());
+    assert(!imported_function_consumer.object_bytes.empty());
+
+    auto imported_function_object_images = std::array<std::string_view, 2> {
+        imported_function_producer.object_bytes,
+        imported_function_consumer.object_bytes,
+    };
+    auto imported_function_executable = smoke_temp_root / "imported_function_consumer";
+    auto imported_function_link = orison::link::HostLinker {}.link(
+        imported_function_object_images,
+        imported_function_executable
+    );
+    assert(!imported_function_link.has_errors());
+    auto imported_function_status = std::system(imported_function_executable.string().c_str());
+    assert(WIFEXITED(imported_function_status));
+    assert(WEXITSTATUS(imported_function_status) == 41);
 
     auto imported_generic_function_lowering = pipeline.emit_llvm(
         imported_function_access_path,

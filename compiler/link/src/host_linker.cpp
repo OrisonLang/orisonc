@@ -1,6 +1,7 @@
 #include "orison/link/host_linker.hpp"
 
 #include <atomic>
+#include <array>
 #include <cerrno>
 #include <cstdint>
 #include <fstream>
@@ -23,21 +24,25 @@ auto temporary_object_path() -> std::filesystem::path {
            ("orison-link-" + std::to_string(getpid()) + "-" + std::to_string(next_id++) + ".o");
 }
 
-class TemporaryObject {
+class TemporaryObjects {
 public:
-    explicit TemporaryObject(std::filesystem::path path) : path_(std::move(path)) {}
-
-    ~TemporaryObject() {
-        auto error = std::error_code {};
-        std::filesystem::remove(path_, error);
+    ~TemporaryObjects() {
+        for (auto const& path : paths_) {
+            auto error = std::error_code {};
+            std::filesystem::remove(path, error);
+        }
     }
 
-    auto path() const -> std::filesystem::path const& {
-        return path_;
+    void add(std::filesystem::path path) {
+        paths_.push_back(std::move(path));
+    }
+
+    auto paths() const -> std::vector<std::filesystem::path> const& {
+        return paths_;
     }
 
 private:
-    std::filesystem::path path_;
+    std::vector<std::filesystem::path> paths_;
 };
 
 }  // namespace
@@ -51,7 +56,20 @@ auto HostLinker::link(
     std::filesystem::path const& output_path,
     std::vector<std::string> const& libraries
 ) const -> HostLinkResult {
+    auto object_images = std::array<std::string_view, 1> {object_bytes};
+    return link(object_images, output_path, libraries);
+}
+
+auto HostLinker::link(
+    std::span<std::string_view const> object_images,
+    std::filesystem::path const& output_path,
+    std::vector<std::string> const& libraries
+) const -> HostLinkResult {
     auto result = HostLinkResult {};
+    if (object_images.empty()) {
+        result.diagnostics.error(1, "host linker requires at least one object image");
+        return result;
+    }
     auto output_parent = output_path.parent_path();
     if (!output_parent.empty()) {
         auto status_error = std::error_code {};
@@ -104,24 +122,27 @@ auto HostLinker::link(
         }
     }
 
-    auto temporary_object = TemporaryObject(temporary_object_path());
-    auto object_output = std::ofstream(
-        temporary_object.path(),
-        std::ios::out | std::ios::binary | std::ios::trunc
-    );
-    if (!object_output) {
-        result.diagnostics.error(1, "unable to create temporary object file for linking");
-        return result;
-    }
-    object_output.write(object_bytes.data(), static_cast<std::streamsize>(object_bytes.size()));
-    object_output.close();
-    if (!object_output) {
-        result.diagnostics.error(1, "unable to write temporary object file for linking");
-        return result;
+    auto temporary_objects = TemporaryObjects {};
+    for (auto object_bytes : object_images) {
+        auto object_path = temporary_object_path();
+        temporary_objects.add(object_path);
+        auto object_output = std::ofstream(
+            object_path,
+            std::ios::out | std::ios::binary | std::ios::trunc
+        );
+        if (!object_output) {
+            result.diagnostics.error(1, "unable to create temporary object file for linking");
+            return result;
+        }
+        object_output.write(object_bytes.data(), static_cast<std::streamsize>(object_bytes.size()));
+        object_output.close();
+        if (!object_output) {
+            result.diagnostics.error(1, "unable to write temporary object file for linking");
+            return result;
+        }
     }
 
     auto driver = std::string(ORISON_HOST_LINK_DRIVER);
-    auto object_path = temporary_object.path().string();
     auto output_path_text = output_path.string();
     if (output_exists) {
         auto remove_error = std::error_code {};
@@ -135,9 +156,11 @@ auto HostLinker::link(
         }
     }
     auto argument_storage = std::vector<std::string> {};
-    argument_storage.reserve(6 + libraries.size());
+    argument_storage.reserve(5 + temporary_objects.paths().size() + libraries.size());
     argument_storage.push_back(driver);
-    argument_storage.push_back(object_path);
+    for (auto const& object_path : temporary_objects.paths()) {
+        argument_storage.push_back(object_path.string());
+    }
 #ifdef ORISON_CONCURRENCY_RUNTIME_ARCHIVE
     argument_storage.push_back(ORISON_CONCURRENCY_RUNTIME_ARCHIVE);
     argument_storage.push_back("-pthread");

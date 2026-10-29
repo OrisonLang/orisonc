@@ -37,6 +37,9 @@ descriptor-summary binding terminology in typed C++ state.
 Lowering consumes non-generic imported function summaries as fixed external LLVM declarations. Calls continue to use
 the local binding for lookup and emit the exported declaration symbol. Imported generic calls stop with a targeted
 lowering diagnostic until cross-package specialization is defined.
+Producer and consumer modules can now emit separate object images and link them in one host-link invocation. This
+proves the fixed imported-call ABI through execution while keeping dependency discovery and object selection outside
+the language syntax.
 
 ## Follow-up work
 
