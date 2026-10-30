@@ -5415,7 +5415,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert(
         generic_computed_dynamic_array_loop_alias_ir.find(
-            "define { ptr, i64, i64 } @method.UInt32.forward_values(i32 %this, "
+            "define { ptr, i64, i64 } @__orison_method.tests.fixtures.generic_computed_dynamic_array_loop_alias_run.UInt32.forward_values(i32 %this, "
             "{ ptr, i64, i64 } %values)"
         ) != std::string::npos
     );
@@ -5448,7 +5448,7 @@ auto main(int argc, char** argv) -> int {
     );
     assert(
         generic_computed_view_loop_alias_ir.find(
-            "call { ptr, i64 } @method.UInt32.forward_values(i32 %seed, { ptr, i64 } %values)"
+            "call { ptr, i64 } @__orison_method.tests.fixtures.generic_computed_view_loop_alias_build.UInt32.forward_values(i32 %seed, { ptr, i64 } %values)"
         ) != std::string::npos
     );
     assert(

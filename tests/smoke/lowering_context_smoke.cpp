@@ -902,6 +902,12 @@ int main() {
         orison::lowering::lowered_method_symbol_name("Pair<Header, UInt16>", "read_value") ==
         "method.Pair_Header__UInt16_.read_value"
     );
+    assert(
+        orison::lowering::lowered_package_method_symbol_name(
+            "demo.methods",
+            "method.Pair_Header__UInt16_.read_value"
+        ) == "__orison_method.demo.methods.Pair_Header__UInt16_.read_value"
+    );
 
     auto const& foreign = context.foreign_declarations.front();
     assert(foreign.symbol_name == "printf");

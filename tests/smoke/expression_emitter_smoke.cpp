@@ -475,7 +475,7 @@ int main() {
     assert(generic_null_safe_ir.find("nullsafe.call.merge.") != std::string::npos);
     assert(
         generic_null_safe_ir.find(
-            "call %record.Box_UInt32_ @method.Box_UInt32_.bump(%record.Box_UInt32_"
+            "call %record.Box_UInt32_ @__orison_method.demo.expression_emitter.Box_UInt32_.bump(%record.Box_UInt32_"
         ) != std::string::npos
     );
     assert(generic_null_safe_ir.find("insertvalue { i1, i32 } undef, i1 true, 0") != std::string::npos);
@@ -559,7 +559,7 @@ int main() {
     assert(member_lowered->value == "%tmp0");
     assert(
         output.str() ==
-        "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
+        "  %tmp0 = call i32 @__orison_method.demo.expression_emitter.UInt32.scale(i32 %value, i32 2)\n"
     );
 
     auto generic_method_lowering = lowering;

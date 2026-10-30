@@ -3812,3 +3812,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   packages can export the same function name, compile independently, link with one consumer, and execute through
   distinct local aliases. `main` and C ABI symbols remain unchanged; package-visible functions, methods, and imported
   generic specialization remain open. No source syntax changed.
+- 2026-10-29: Non-generic implementation and extension methods now use deterministic LLVM symbols of the form
+  `__orison_method.<package>.<receiver>.<method>`. Two packages can define the same method on the same receiver, compile
+  separately, link with one consumer, and execute distinct behavior. Generic method specializations remain unchanged.
+  A same-named record in two packages exposed a separate package-neutral owned-cleanup symbol collision for follow-up.

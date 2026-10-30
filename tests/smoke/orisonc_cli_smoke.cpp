@@ -2165,13 +2165,15 @@ int main() {
     );
     assert(
         aggregate_parameter_access_emit_output.find(
-            "define i32 @method.Reader.status_from(%record.Reader %this, %record.Page %page)"
+            "define i32 @__orison_method.examples.aggregates.Reader.status_from("
+            "%record.Reader %this, %record.Page %page)"
         ) !=
         std::string::npos
     );
     assert(
         aggregate_parameter_access_emit_output.find(
-            "define i32 @method.Reader.value_from(%record.Reader %this, [2 x i32] %values)"
+            "define i32 @__orison_method.examples.aggregates.Reader.value_from("
+            "%record.Reader %this, [2 x i32] %values)"
         ) !=
         std::string::npos
     );
@@ -2181,11 +2183,15 @@ int main() {
     );
     assert(aggregate_parameter_access_emit_output.find("call i32 @pick_value([2 x i32]") != std::string::npos);
     assert(
-        aggregate_parameter_access_emit_output.find("call i32 @method.Reader.status_from(%record.Reader") !=
+        aggregate_parameter_access_emit_output.find(
+            "call i32 @__orison_method.examples.aggregates.Reader.status_from(%record.Reader"
+        ) !=
         std::string::npos
     );
     assert(
-        aggregate_parameter_access_emit_output.find("call i32 @method.Reader.value_from(%record.Reader") !=
+        aggregate_parameter_access_emit_output.find(
+            "call i32 @__orison_method.examples.aggregates.Reader.value_from(%record.Reader"
+        ) !=
         std::string::npos
     );
     assert(aggregate_parameter_access_emit_output.find("alloca %record.Page") != std::string::npos);
@@ -2209,11 +2215,16 @@ int main() {
     );
     assert(
         call_argument_aggregate_scalar_emit_output.find(
-            "define i32 @method.Sink.mix(%record.Sink %this, i32 %left, i32 %right)"
+            "define i32 @__orison_method.examples.aggregates.Sink.mix("
+            "%record.Sink %this, i32 %left, i32 %right)"
         ) != std::string::npos
     );
     assert(call_argument_aggregate_scalar_emit_output.find("call i32 @combine(i32") != std::string::npos);
-    assert(call_argument_aggregate_scalar_emit_output.find("call i32 @method.Sink.mix(%record.Sink") != std::string::npos);
+    assert(
+        call_argument_aggregate_scalar_emit_output.find(
+            "call i32 @__orison_method.examples.aggregates.Sink.mix(%record.Sink"
+        ) != std::string::npos
+    );
     assert(call_argument_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
     assert(call_argument_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
     assert(call_argument_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
@@ -2432,8 +2443,8 @@ int main() {
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
     auto method_aggregate_access_emit_output =
         read_command_output(executable.string() + " --emit-llvm " + method_aggregate_access_emit_path.string());
-    assert(method_aggregate_access_emit_output.find("call %record.Page @method.UInt32.page") != std::string::npos);
-    assert(method_aggregate_access_emit_output.find("call [2 x i32] @method.UInt32.values") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("call %record.Page @__orison_method.examples.aggregates.UInt32.page") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("call [2 x i32] @__orison_method.examples.aggregates.UInt32.values") != std::string::npos);
     assert(method_aggregate_access_emit_output.find("alloca %record.Page") != std::string::npos);
     assert(method_aggregate_access_emit_output.find("alloca [2 x i32]") != std::string::npos);
     assert(method_aggregate_access_emit_output.find("getelementptr %record.Page") != std::string::npos);
@@ -2448,11 +2459,11 @@ int main() {
         executable.string() + " --emit-llvm " + record_method_aggregate_access_emit_path.string()
     );
     assert(
-        record_method_aggregate_access_emit_output.find("call %record.Page @method.Wrapper.page(%record.Wrapper") !=
+        record_method_aggregate_access_emit_output.find("call %record.Page @__orison_method.examples.aggregates.Wrapper.page(%record.Wrapper") !=
         std::string::npos
     );
     assert(
-        record_method_aggregate_access_emit_output.find("call [2 x i32] @method.Wrapper.values(%record.Wrapper") !=
+        record_method_aggregate_access_emit_output.find("call [2 x i32] @__orison_method.examples.aggregates.Wrapper.values(%record.Wrapper") !=
         std::string::npos
     );
     assert(record_method_aggregate_access_emit_output.find("alloca %record.Page") != std::string::npos);
@@ -2471,13 +2482,13 @@ int main() {
     );
     assert(
         member_receiver_method_aggregate_access_emit_output.find(
-            "call %record.Page @method.Bucket.page(%record.Bucket"
+            "call %record.Page @__orison_method.examples.aggregates.Bucket.page(%record.Bucket"
         ) !=
         std::string::npos
     );
     assert(
         member_receiver_method_aggregate_access_emit_output.find(
-            "call [2 x i32] @method.Bucket.values(%record.Bucket"
+            "call [2 x i32] @__orison_method.examples.aggregates.Bucket.values(%record.Bucket"
         ) !=
         std::string::npos
     );

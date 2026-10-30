@@ -152,12 +152,12 @@ void assert_emits_negative_int32_record_receiver_cleanup_call(
 ) {
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
 }
 
@@ -4767,7 +4767,7 @@ void test_emit_helper_and_method_returned_fixed_array_for_iterables() {
 
     assert(!result.has_errors());
     assert(result.ir_text.find("call [3 x i32] @make_values()") != std::string::npos);
-    assert(result.ir_text.find("call [3 x i32] @method.UInt32.triple") != std::string::npos);
+    assert(result.ir_text.find("call [3 x i32] @__orison_method.demo.lowering.UInt32.triple") != std::string::npos);
     assert(result.ir_text.find("for.iteration.0.0:") != std::string::npos);
     assert(result.ir_text.find("for.iteration.1.0:") != std::string::npos);
     assert(result.ir_text.find("extractvalue [3 x i32]") != std::string::npos);
@@ -4850,12 +4850,12 @@ void test_emit_scalar_extension_method_definition() {
         "  ret i32 0\n"
         "}\n"
         "\n"
-        "define i32 @method.UInt32.identity(i32 %this) {\n"
+        "define i32 @__orison_method.demo.lowering.UInt32.identity(i32 %this) {\n"
         "entry:\n"
         "  ret i32 %this\n"
         "}\n"
         "\n"
-        "define i32 @method.Device.scale(i32 %value) {\n"
+        "define i32 @__orison_method.demo.lowering.Device.scale(i32 %value) {\n"
         "entry:\n"
         "  %tmp0 = add i32 %value, 1\n"
         "  ret i32 %tmp0\n"
@@ -4880,7 +4880,7 @@ void test_emit_negative_int32_scalar_method_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "i32", "method.Int32.negative", "i32 %this");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.Int32.negative", "i32 %this");
     assert_returns_lowered_tmp(result);
 }
 
@@ -4922,7 +4922,7 @@ void test_emit_negative_int32_record_receiver_method_return() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "i32", "method.SignedBox.negative", "%record.SignedBox %this");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.SignedBox.negative", "%record.SignedBox %this");
     assert_returns_lowered_tmp(result);
 }
 
@@ -4967,7 +4967,7 @@ void test_emit_negative_int32_record_constructor_method_return() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "%record.SignedBox", "method.Int32.make_box", "i32 %this");
+    assert_defines_method(result, "%record.SignedBox", "__orison_method.demo.lowering.Int32.make_box", "i32 %this");
     assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
     assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
 }
@@ -4992,7 +4992,7 @@ void test_emit_negative_int32_ternary_record_constructor_method_return() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "%record.SignedBox", "method.Int32.choose_box", "i32 %this, i1 %flag");
+    assert_defines_method(result, "%record.SignedBox", "__orison_method.demo.lowering.Int32.choose_box", "i32 %this, i1 %flag");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
@@ -5039,7 +5039,7 @@ void test_emit_negative_int32_array_literal_method_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "[2 x i32]", "method.Int32.pair", "i32 %this");
+    assert_defines_method(result, "[2 x i32]", "__orison_method.demo.lowering.Int32.pair", "i32 %this");
     assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
     assert_ir_contains(result, " = insertvalue [2 x i32] %tmp");
     assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
@@ -5061,7 +5061,7 @@ void test_emit_negative_int32_ternary_array_literal_method_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "[2 x i32]", "method.Int32.choose_pair", "i32 %this, i1 %flag");
+    assert_defines_method(result, "[2 x i32]", "__orison_method.demo.lowering.Int32.choose_pair", "i32 %this, i1 %flag");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
@@ -5168,7 +5168,7 @@ void test_emit_negative_int32_final_if_method_return() {
 
     assert_emits_negative_int32_scalar_control_flow_method_return(
         result,
-        "method.Int32.choose",
+        "__orison_method.demo.lowering.Int32.choose",
         FinalControlFlowKind::if_expression
     );
 }
@@ -5192,7 +5192,7 @@ void test_emit_negative_int32_final_switch_method_return() {
 
     assert_emits_negative_int32_scalar_control_flow_method_return(
         result,
-        "method.Int32.choose",
+        "__orison_method.demo.lowering.Int32.choose",
         FinalControlFlowKind::switch_expression
     );
 }
@@ -5263,7 +5263,7 @@ void test_emit_negative_int32_final_if_record_constructor_method_return() {
     assert_emits_negative_int32_aggregate_control_flow_method_return(
         result,
         "%record.SignedBox",
-        "method.Int32.choose_box",
+        "__orison_method.demo.lowering.Int32.choose_box",
         FinalControlFlowKind::if_expression
     );
 }
@@ -5292,7 +5292,7 @@ void test_emit_negative_int32_final_switch_record_constructor_method_return() {
     assert_emits_negative_int32_aggregate_control_flow_method_return(
         result,
         "%record.SignedBox",
-        "method.Int32.choose_box",
+        "__orison_method.demo.lowering.Int32.choose_box",
         FinalControlFlowKind::switch_expression
     );
 }
@@ -5318,7 +5318,7 @@ void test_emit_negative_int32_final_if_array_literal_method_return() {
     assert_emits_negative_int32_aggregate_control_flow_method_return(
         result,
         "[2 x i32]",
-        "method.Int32.choose_pair",
+        "__orison_method.demo.lowering.Int32.choose_pair",
         FinalControlFlowKind::if_expression
     );
 }
@@ -5343,7 +5343,7 @@ void test_emit_negative_int32_final_switch_array_literal_method_return() {
     assert_emits_negative_int32_aggregate_control_flow_method_return(
         result,
         "[2 x i32]",
-        "method.Int32.choose_pair",
+        "__orison_method.demo.lowering.Int32.choose_pair",
         FinalControlFlowKind::switch_expression
     );
 }
@@ -5459,11 +5459,11 @@ void test_emit_scalar_member_call_expression() {
         "define i32 @main() {\n"
         "entry:\n"
         "  %value = add i32 0, 1\n"
-        "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
+        "  %tmp0 = call i32 @__orison_method.demo.lowering.UInt32.scale(i32 %value, i32 2)\n"
         "  ret i32 %tmp0\n"
         "}\n"
         "\n"
-        "define i32 @method.UInt32.scale(i32 %this, i32 %amount) {\n"
+        "define i32 @__orison_method.demo.lowering.UInt32.scale(i32 %this, i32 %amount) {\n"
         "entry:\n"
         "  %tmp0 = add i32 %this, %amount\n"
         "  ret i32 %tmp0\n"
@@ -5490,7 +5490,7 @@ void test_emit_negative_int32_scalar_member_call_argument_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_calls_lowered_int32_tmp(result, " = call i32 @method.Int32.shift(i32 %value, ");
+    assert_calls_lowered_int32_tmp(result, " = call i32 @__orison_method.demo.lowering.Int32.shift(i32 %value, ");
     assert_returns_lowered_tmp(result);
 }
 
@@ -5545,11 +5545,11 @@ void test_emit_negative_int32_ternary_scalar_member_call_argument_return() {
         "  br label %ternary.merge.0\n"
         "ternary.merge.0:\n"
         "  %tmp1 = phi i32 [%tmp0, %ternary.then.0], [4, %ternary.else.0]\n"
-        "  %tmp2 = call i32 @method.Int32.shift(i32 %value, i32 %tmp1)\n"
+        "  %tmp2 = call i32 @__orison_method.demo.lowering.Int32.shift(i32 %value, i32 %tmp1)\n"
         "  ret i32 %tmp2\n"
         "}\n"
         "\n"
-        "define i32 @method.Int32.shift(i32 %this, i32 %amount) {\n"
+        "define i32 @__orison_method.demo.lowering.Int32.shift(i32 %this, i32 %amount) {\n"
         "entry:\n"
         "  %tmp0 = add i32 %this, %amount\n"
         "  ret i32 %tmp0\n"
@@ -5599,12 +5599,12 @@ void test_emit_negative_int32_ternary_record_receiver_member_call_argument_retur
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "i32", "method.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, " = call i32 @method.SignedBox.shift(%record.SignedBox %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.SignedBox.shift(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_returns_lowered_tmp(result);
 }
@@ -5652,7 +5652,7 @@ void test_emit_negative_int32_final_if_scalar_member_call_argument_return() {
 
     assert_emits_negative_int32_control_flow_call_argument_return(
         result,
-        " = call i32 @method.Int32.shift(i32 %value, ",
+        " = call i32 @__orison_method.demo.lowering.Int32.shift(i32 %value, ",
         FinalControlFlowKind::if_expression
     );
 }
@@ -5677,7 +5677,7 @@ void test_emit_negative_int32_final_switch_scalar_member_call_argument_return() 
 
     assert_emits_negative_int32_control_flow_call_argument_return(
         result,
-        " = call i32 @method.Int32.shift(i32 %value, ",
+        " = call i32 @__orison_method.demo.lowering.Int32.shift(i32 %value, ",
         FinalControlFlowKind::switch_expression
     );
 }
@@ -5706,11 +5706,11 @@ void test_emit_negative_int32_final_if_record_receiver_member_call_argument_retu
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "i32", "method.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "if.then.");
     assert_ir_contains(result, "if.else.");
     assert_ir_contains(result, "if.merge.");
-    assert_ir_contains(result, " = call i32 @method.SignedBox.shift(%record.SignedBox %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.SignedBox.shift(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, " = phi i32 [%tmp");
     assert_returns_lowered_tmp(result);
@@ -5739,11 +5739,11 @@ void test_emit_negative_int32_final_switch_record_receiver_member_call_argument_
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "i32", "method.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "switch.case.");
     assert_ir_contains(result, "switch.default.");
     assert_ir_contains(result, "switch.merge.");
-    assert_ir_contains(result, " = call i32 @method.SignedBox.shift(%record.SignedBox %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.SignedBox.shift(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, " = phi i32 [%tmp");
     assert_returns_lowered_tmp(result);
@@ -5876,7 +5876,7 @@ void test_emit_scalar_member_call_statement() {
         "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
         "while.body.0:\n"
         "  %tmp2 = load i32, ptr %value.addr\n"
-        "  call void @method.UInt32.reset(i32 %tmp2)\n"
+        "  call void @__orison_method.demo.lowering.UInt32.reset(i32 %tmp2)\n"
         "  %tmp3 = load i32, ptr %value.addr\n"
         "  %tmp4 = add i32 %tmp3, 1\n"
         "  store i32 %tmp4, ptr %value.addr\n"
@@ -5886,7 +5886,7 @@ void test_emit_scalar_member_call_statement() {
         "  ret i32 %tmp5\n"
         "}\n"
         "\n"
-        "define void @method.UInt32.reset(i32 %this) {\n"
+        "define void @__orison_method.demo.lowering.UInt32.reset(i32 %this) {\n"
         "entry:\n"
         "  ret void\n"
         "}\n"
@@ -5913,7 +5913,7 @@ void test_emit_negative_int32_scalar_member_call_statement_argument() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_calls_lowered_int32_tmp(result, "call void @method.Int32.observe(i32 %value, ");
+    assert_calls_lowered_int32_tmp(result, "call void @__orison_method.demo.lowering.Int32.observe(i32 %value, ");
     assert_ir_contains(result, "ret i32 %value");
 }
 
@@ -5959,8 +5959,8 @@ void test_emit_negative_int32_record_receiver_member_call_statement_argument() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6010,7 +6010,7 @@ void test_emit_negative_int32_ternary_scalar_member_call_statement_argument() {
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_calls_lowered_int32_tmp(result, "call void @method.Int32.observe(i32 %value, ");
+    assert_calls_lowered_int32_tmp(result, "call void @__orison_method.demo.lowering.Int32.observe(i32 %value, ");
     assert_ir_contains(result, "ret i32 %value");
 }
 
@@ -6056,12 +6056,12 @@ void test_emit_negative_int32_ternary_record_receiver_member_call_statement_argu
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6114,13 +6114,13 @@ void test_emit_negative_int32_ternary_while_record_receiver_member_call_statemen
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "while.body.");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6175,13 +6175,13 @@ void test_emit_negative_int32_ternary_repeat_record_receiver_member_call_stateme
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "repeat.body.");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6234,13 +6234,13 @@ void test_emit_negative_int32_ternary_for_record_receiver_member_call_statement_
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "for.iteration.");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6294,11 +6294,11 @@ void test_emit_negative_int32_if_record_receiver_member_call_statement_argument(
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "if.then.");
     assert_ir_contains(result, "if.else.");
     assert_ir_contains(result, "if.merge.");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6353,11 +6353,11 @@ void test_emit_negative_int32_switch_record_receiver_member_call_statement_argum
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "switch.case.");
     assert_ir_contains(result, "switch.default.");
     assert_ir_contains(result, "switch.merge.");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -6670,12 +6670,12 @@ void test_emit_negative_int32_ternary_defer_record_receiver_member_call_statemen
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -7119,14 +7119,14 @@ void test_emit_negative_int32_ternary_guard_record_receiver_member_call_statemen
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "guard.failure.");
     assert_ir_contains(result, "guard.merge.");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -7178,12 +7178,12 @@ void test_emit_negative_int32_ternary_unsafe_record_receiver_member_call_stateme
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_defines_method(result, "void", "__orison_method.demo.lowering.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
     assert_ir_contains(result, "ternary.then.");
     assert_ir_contains(result, "ternary.else.");
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
-    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, "call void @__orison_method.demo.lowering.SignedBox.observe(%record.SignedBox %tmp");
     assert_ir_contains(result, ", i32 %tmp");
     assert_ir_contains(result, "ret i32 0");
 }
@@ -7246,11 +7246,11 @@ void test_emit_scalar_call_statements() {
         "entry:\n"
         "  %value = add i32 0, 1\n"
         "  call void @observe(i32 %value)\n"
-        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  call void @__orison_method.demo.lowering.UInt32.reset(i32 %value)\n"
         "  ret i32 %value\n"
         "}\n"
         "\n"
-        "define void @method.UInt32.reset(i32 %this) {\n"
+        "define void @__orison_method.demo.lowering.UInt32.reset(i32 %this) {\n"
         "entry:\n"
         "  ret void\n"
         "}\n"
@@ -7292,11 +7292,11 @@ void test_emit_scalar_unit_call_statements() {
         "define void @observe_then_return(i32 %value) {\n"
         "entry:\n"
         "  call void @observe(i32 %value)\n"
-        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  call void @__orison_method.demo.lowering.UInt32.reset(i32 %value)\n"
         "  ret void\n"
         "}\n"
         "\n"
-        "define void @method.UInt32.reset(i32 %this) {\n"
+        "define void @__orison_method.demo.lowering.UInt32.reset(i32 %this) {\n"
         "entry:\n"
         "  ret void\n"
         "}\n"
@@ -9742,12 +9742,12 @@ void test_emit_method_returned_view_for_iterable_lowering() {
     assert(!result.has_errors());
     assert_ir_contains(
         result,
-        "define { ptr, i64 } @method.UInt32.forward_view(i32 %this, { ptr, i64 } %values)"
+        "define { ptr, i64 } @__orison_method.demo.lowering.UInt32.forward_view(i32 %this, { ptr, i64 } %values)"
     );
     assert_ir_contains(result, "define i32 @sum(i32 %seed, { ptr, i64 } %values)");
     assert_ir_contains(
         result,
-        " = call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
+        " = call { ptr, i64 } @__orison_method.demo.lowering.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
     );
     assert_ir_contains(result, "  %computed.sequence_for");
     assert_ir_contains(result, ".length = extractvalue { ptr, i64 } %tmp");
@@ -9793,11 +9793,11 @@ void test_emit_member_receiver_method_returned_view_for_iterable_lowering() {
     assert(!result.has_errors());
     assert_ir_contains(
         result,
-        "define { ptr, i64 } @method.Bucket.forward_view(%record.Bucket %this, { ptr, i64 } %values)"
+        "define { ptr, i64 } @__orison_method.demo.lowering.Bucket.forward_view(%record.Bucket %this, { ptr, i64 } %values)"
     );
     assert_ir_contains(result, "define i32 @sum_wrapper(%record.Wrapper %wrapper, { ptr, i64 } %values)");
     assert_ir_contains(result, "define i32 @sum_shelf(%record.Shelf %shelf, { ptr, i64 } %values)");
-    assert_ir_contains(result, " = call { ptr, i64 } @method.Bucket.forward_view(%record.Bucket %tmp");
+    assert_ir_contains(result, " = call { ptr, i64 } @__orison_method.demo.lowering.Bucket.forward_view(%record.Bucket %tmp");
     assert_ir_contains(result, " = getelementptr %record.Wrapper, ptr %wrapper.addr");
     assert_ir_contains(result, " = getelementptr [2 x %record.Bucket], ptr %tmp");
     assert_ir_contains(result, "  %computed.sequence_for");
@@ -10158,12 +10158,12 @@ void test_emit_generic_record_constructor_method_call_argument_from_parameter_co
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
-    assert_defines_method(result, "i32", "method.UInt32.take", "i32 %this, %record.Tag_UInt32_ %value");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.UInt32.take", "i32 %this, %record.Tag_UInt32_ %value");
     assert_ir_contains(result, "%value.addr = alloca %record.Tag_UInt32_");
     assert_ir_contains(result, "store %record.Tag_UInt32_ %value, ptr %value.addr");
     assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %value.addr, i32 0, i32 0");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 7, 0");
-    assert_ir_contains(result, " = call i32 @method.UInt32.take(i32 %receiver, %record.Tag_UInt32_ %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.UInt32.take(i32 %receiver, %record.Tag_UInt32_ %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10196,15 +10196,15 @@ void test_emit_generic_record_constructor_method_return_control_flow_context() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
-    assert_defines_method(result, "%record.Tag_UInt32_", "method.UInt32.make_if", "i32 %this, i1 %flag");
-    assert_defines_method(result, "%record.Tag_UInt32_", "method.UInt32.make_switch", "i32 %this, i1 %flag");
+    assert_defines_method(result, "%record.Tag_UInt32_", "__orison_method.demo.lowering.UInt32.make_if", "i32 %this, i1 %flag");
+    assert_defines_method(result, "%record.Tag_UInt32_", "__orison_method.demo.lowering.UInt32.make_switch", "i32 %this, i1 %flag");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 11, 0");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 13, 0");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 17, 0");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 19, 0");
     assert_ir_contains(result, " = phi %record.Tag_UInt32_ [%tmp");
-    assert_ir_contains(result, " = call %record.Tag_UInt32_ @method.UInt32.make_if(i32 %receiver, i1 1)");
-    assert_ir_contains(result, " = call %record.Tag_UInt32_ @method.UInt32.make_switch(i32 %receiver, i1 0)");
+    assert_ir_contains(result, " = call %record.Tag_UInt32_ @__orison_method.demo.lowering.UInt32.make_if(i32 %receiver, i1 1)");
+    assert_ir_contains(result, " = call %record.Tag_UInt32_ @__orison_method.demo.lowering.UInt32.make_switch(i32 %receiver, i1 0)");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10236,14 +10236,14 @@ void test_emit_generic_record_constructor_method_guard_defer_return_context() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
-    assert_defines_method(result, "%record.Tag_UInt32_", "method.UInt32.choose", "i32 %this, i1 %flag");
+    assert_defines_method(result, "%record.Tag_UInt32_", "__orison_method.demo.lowering.UInt32.choose", "i32 %this, i1 %flag");
     assert_ir_contains(result, "guard.failure.");
     assert_ir_contains(result, "guard.merge.");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 11, 0");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 13, 0");
     assert_ir_contains(result, "call void @observe(i32 1)");
     assert_ir_contains(result, "ret %record.Tag_UInt32_ %tmp");
-    assert_ir_contains(result, " = call %record.Tag_UInt32_ @method.UInt32.choose(i32 %receiver, i1 0)");
+    assert_ir_contains(result, " = call %record.Tag_UInt32_ @__orison_method.demo.lowering.UInt32.choose(i32 %receiver, i1 0)");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10277,15 +10277,15 @@ void test_emit_generic_record_constructor_method_loop_built_return_context() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
-    assert_defines_method(result, "%record.Tag_UInt32_", "method.UInt32.make_while", "i32 %this");
-    assert_defines_method(result, "%record.Tag_UInt32_", "method.UInt32.make_for", "i32 %this");
+    assert_defines_method(result, "%record.Tag_UInt32_", "__orison_method.demo.lowering.UInt32.make_while", "i32 %this");
+    assert_defines_method(result, "%record.Tag_UInt32_", "__orison_method.demo.lowering.UInt32.make_for", "i32 %this");
     assert_ir_contains(result, "while.condition.");
     assert_ir_contains(result, "while.exit.");
     assert_ir_contains(result, "for.iteration.");
     assert_ir_contains(result, "for.exit.");
     assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 %tmp");
-    assert_ir_contains(result, " = call %record.Tag_UInt32_ @method.UInt32.make_while(i32 %receiver)");
-    assert_ir_contains(result, " = call %record.Tag_UInt32_ @method.UInt32.make_for(i32 %receiver)");
+    assert_ir_contains(result, " = call %record.Tag_UInt32_ @__orison_method.demo.lowering.UInt32.make_while(i32 %receiver)");
+    assert_ir_contains(result, " = call %record.Tag_UInt32_ @__orison_method.demo.lowering.UInt32.make_for(i32 %receiver)");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10323,15 +10323,15 @@ void test_emit_generic_record_array_method_control_flow_early_return_context() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
-    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "method.UInt32.choose_if", "i32 %this, i1 %flag");
-    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "method.UInt32.choose_early", "i32 %this, i1 %flag");
+    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "__orison_method.demo.lowering.UInt32.choose_if", "i32 %this, i1 %flag");
+    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "__orison_method.demo.lowering.UInt32.choose_early", "i32 %this, i1 %flag");
     assert_ir_contains(result, " = insertvalue [2 x %record.Tag_UInt32_] undef, %record.Tag_UInt32_ %tmp");
     assert_ir_contains(result, " = phi [2 x %record.Tag_UInt32_] [%tmp");
     assert_ir_contains(result, "guard.failure.");
     assert_ir_contains(result, "guard.merge.");
     assert_ir_contains(result, "call void @observe(i32 1)");
-    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @method.UInt32.choose_if(i32 %receiver, i1 1)");
-    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @method.UInt32.choose_early(i32 %receiver, i1 0)");
+    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @__orison_method.demo.lowering.UInt32.choose_if(i32 %receiver, i1 1)");
+    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @__orison_method.demo.lowering.UInt32.choose_early(i32 %receiver, i1 0)");
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
     assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
     assert_returns_lowered_tmp(result);
@@ -10367,15 +10367,15 @@ void test_emit_generic_record_array_method_loop_built_return_context() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
-    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "method.UInt32.make_while", "i32 %this");
-    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "method.UInt32.make_for", "i32 %this");
+    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "__orison_method.demo.lowering.UInt32.make_while", "i32 %this");
+    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "__orison_method.demo.lowering.UInt32.make_for", "i32 %this");
     assert_ir_contains(result, "while.condition.");
     assert_ir_contains(result, "while.exit.");
     assert_ir_contains(result, "for.iteration.");
     assert_ir_contains(result, "for.exit.");
     assert_ir_contains(result, " = insertvalue [2 x %record.Tag_UInt32_] undef, %record.Tag_UInt32_ %tmp");
-    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @method.UInt32.make_while(i32 %receiver)");
-    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @method.UInt32.make_for(i32 %receiver)");
+    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @__orison_method.demo.lowering.UInt32.make_while(i32 %receiver)");
+    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @__orison_method.demo.lowering.UInt32.make_for(i32 %receiver)");
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
     assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
     assert_returns_lowered_tmp(result);
@@ -10406,14 +10406,14 @@ void test_emit_nested_generic_record_array_method_return_context() {
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
     assert_ir_contains(result, "%record.Tag_Tag_UInt32__ = type { %record.Tag_UInt32_ }");
-    assert_defines_method(result, "[2 x [2 x %record.Tag_UInt32_]]", "method.UInt32.nested_array", "i32 %this");
-    assert_defines_method(result, "[2 x %record.Tag_Tag_UInt32__]", "method.UInt32.nested_record", "i32 %this");
+    assert_defines_method(result, "[2 x [2 x %record.Tag_UInt32_]]", "__orison_method.demo.lowering.UInt32.nested_array", "i32 %this");
+    assert_defines_method(result, "[2 x %record.Tag_Tag_UInt32__]", "__orison_method.demo.lowering.UInt32.nested_record", "i32 %this");
     assert_ir_contains(
         result, " = insertvalue [2 x [2 x %record.Tag_UInt32_]] undef, [2 x %record.Tag_UInt32_] %tmp");
     assert_ir_contains(
         result, " = insertvalue [2 x %record.Tag_Tag_UInt32__] undef, %record.Tag_Tag_UInt32__ %tmp");
-    assert_ir_contains(result, " = call [2 x [2 x %record.Tag_UInt32_]] @method.UInt32.nested_array(i32 %receiver)");
-    assert_ir_contains(result, " = call [2 x %record.Tag_Tag_UInt32__] @method.UInt32.nested_record(i32 %receiver)");
+    assert_ir_contains(result, " = call [2 x [2 x %record.Tag_UInt32_]] @__orison_method.demo.lowering.UInt32.nested_array(i32 %receiver)");
+    assert_ir_contains(result, " = call [2 x %record.Tag_Tag_UInt32__] @__orison_method.demo.lowering.UInt32.nested_record(i32 %receiver)");
     assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Tag_UInt32_]], ptr %tmp");
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_Tag_UInt32__], ptr %tmp");
@@ -10455,12 +10455,12 @@ void test_emit_nested_record_array_method_return_context() {
     assert_ir_contains(result, "%record.Counter = type { i32 }");
     assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
     assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
-    assert_defines_method(result, "%record.CounterPair", "method.UInt32.pair", "i32 %this");
-    assert_defines_method(result, "%record.CounterMatrix", "method.UInt32.matrix", "i32 %this");
+    assert_defines_method(result, "%record.CounterPair", "__orison_method.demo.lowering.UInt32.pair", "i32 %this");
+    assert_defines_method(result, "%record.CounterMatrix", "__orison_method.demo.lowering.UInt32.matrix", "i32 %this");
     assert_ir_contains(result, " = insertvalue %record.CounterPair undef, %record.Counter %tmp");
     assert_ir_contains(result, " = insertvalue %record.CounterMatrix undef, [2 x [2 x %record.Counter]] %tmp");
-    assert_ir_contains(result, " = call %record.CounterPair @method.UInt32.pair(i32 %receiver)");
-    assert_ir_contains(result, " = call %record.CounterMatrix @method.UInt32.matrix(i32 %receiver)");
+    assert_ir_contains(result, " = call %record.CounterPair @__orison_method.demo.lowering.UInt32.pair(i32 %receiver)");
+    assert_ir_contains(result, " = call %record.CounterMatrix @__orison_method.demo.lowering.UInt32.matrix(i32 %receiver)");
     assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %tmp");
     assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
     assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %tmp");
@@ -10489,12 +10489,12 @@ void test_emit_generic_record_receiver_field_return() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
-    assert_defines_method(result, "i32", "method.Box_UInt32_.read", "%record.Box_UInt32_ %this");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.Box_UInt32_.read", "%record.Box_UInt32_ %this");
     assert_ir_contains(result, "%this.addr = alloca %record.Box_UInt32_");
     assert_ir_contains(result, "store %record.Box_UInt32_ %this, ptr %this.addr");
     assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %this.addr, i32 0, i32 0");
     assert_ir_contains(result, " = load i32, ptr %tmp");
-    assert_ir_contains(result, " = call i32 @method.Box_UInt32_.read(%record.Box_UInt32_ %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.Box_UInt32_.read(%record.Box_UInt32_ %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10518,12 +10518,12 @@ void test_emit_generic_record_method_parameter_field_return() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
-    assert_defines_method(result, "i32", "method.UInt32.read_box", "i32 %this, %record.Box_UInt32_ %box");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.UInt32.read_box", "i32 %this, %record.Box_UInt32_ %box");
     assert_ir_contains(result, "%box.addr = alloca %record.Box_UInt32_");
     assert_ir_contains(result, "store %record.Box_UInt32_ %box, ptr %box.addr");
     assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %box.addr, i32 0, i32 0");
     assert_ir_contains(result, " = load i32, ptr %tmp");
-    assert_ir_contains(result, " = call i32 @method.UInt32.read_box(i32 %value, %record.Box_UInt32_ %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.UInt32.read_box(i32 %value, %record.Box_UInt32_ %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10548,13 +10548,13 @@ void test_emit_generic_record_array_method_parameter_field_return() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
-    assert_defines_method(result, "i32", "method.UInt32.read_boxes", "i32 %this, [2 x %record.Box_UInt32_] %boxes");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.UInt32.read_boxes", "i32 %this, [2 x %record.Box_UInt32_] %boxes");
     assert_ir_contains(result, "%boxes.addr = alloca [2 x %record.Box_UInt32_]");
     assert_ir_contains(result, "store [2 x %record.Box_UInt32_] %boxes, ptr %boxes.addr");
     assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %boxes.addr, i64 0, i64 0");
     assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
     assert_ir_contains(result, " = load i32, ptr %tmp");
-    assert_ir_contains(result, " = call i32 @method.UInt32.read_boxes(i32 %value, [2 x %record.Box_UInt32_] %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.UInt32.read_boxes(i32 %value, [2 x %record.Box_UInt32_] %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10584,17 +10584,17 @@ void test_emit_nested_generic_record_array_method_parameter_field_return() {
     assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
     assert_ir_contains(result, "%record.Tag_Tag_UInt32__ = type { %record.Tag_UInt32_ }");
     assert_defines_method(
-        result, "i32", "method.UInt32.read_nested_array", "i32 %this, [2 x [2 x %record.Tag_UInt32_]] %boxes");
+        result, "i32", "__orison_method.demo.lowering.UInt32.read_nested_array", "i32 %this, [2 x [2 x %record.Tag_UInt32_]] %boxes");
     assert_defines_method(
-        result, "i32", "method.UInt32.read_nested_record", "i32 %this, [2 x %record.Tag_Tag_UInt32__] %boxes");
+        result, "i32", "__orison_method.demo.lowering.UInt32.read_nested_record", "i32 %this, [2 x %record.Tag_Tag_UInt32__] %boxes");
     assert_ir_contains(result, "%boxes.addr = alloca [2 x [2 x %record.Tag_UInt32_]]");
     assert_ir_contains(result, "store [2 x [2 x %record.Tag_UInt32_]] %boxes, ptr %boxes.addr");
     assert_ir_contains(result, "%boxes.addr = alloca [2 x %record.Tag_Tag_UInt32__]");
     assert_ir_contains(result, "store [2 x %record.Tag_Tag_UInt32__] %boxes, ptr %boxes.addr");
     assert_ir_contains(
-        result, " = call i32 @method.UInt32.read_nested_array(i32 %receiver, [2 x [2 x %record.Tag_UInt32_]] %tmp");
+        result, " = call i32 @__orison_method.demo.lowering.UInt32.read_nested_array(i32 %receiver, [2 x [2 x %record.Tag_UInt32_]] %tmp");
     assert_ir_contains(
-        result, " = call i32 @method.UInt32.read_nested_record(i32 %receiver, [2 x %record.Tag_Tag_UInt32__] %tmp");
+        result, " = call i32 @__orison_method.demo.lowering.UInt32.read_nested_record(i32 %receiver, [2 x %record.Tag_Tag_UInt32__] %tmp");
     assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Tag_UInt32_]], ptr %boxes.addr");
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_Tag_UInt32__], ptr %boxes.addr");
@@ -10636,14 +10636,14 @@ void test_emit_nested_record_array_method_parameter_field_return() {
     assert_ir_contains(result, "%record.Counter = type { i32 }");
     assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
     assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
-    assert_defines_method(result, "i32", "method.UInt32.read_pair", "i32 %this, %record.CounterPair %pair");
-    assert_defines_method(result, "i32", "method.UInt32.read_matrix", "i32 %this, %record.CounterMatrix %matrix");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.UInt32.read_pair", "i32 %this, %record.CounterPair %pair");
+    assert_defines_method(result, "i32", "__orison_method.demo.lowering.UInt32.read_matrix", "i32 %this, %record.CounterMatrix %matrix");
     assert_ir_contains(result, "%pair.addr = alloca %record.CounterPair");
     assert_ir_contains(result, "store %record.CounterPair %pair, ptr %pair.addr");
     assert_ir_contains(result, "%matrix.addr = alloca %record.CounterMatrix");
     assert_ir_contains(result, "store %record.CounterMatrix %matrix, ptr %matrix.addr");
-    assert_ir_contains(result, " = call i32 @method.UInt32.read_pair(i32 %receiver, %record.CounterPair %tmp");
-    assert_ir_contains(result, " = call i32 @method.UInt32.read_matrix(i32 %receiver, %record.CounterMatrix %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.UInt32.read_pair(i32 %receiver, %record.CounterPair %tmp");
+    assert_ir_contains(result, " = call i32 @__orison_method.demo.lowering.UInt32.read_matrix(i32 %receiver, %record.CounterMatrix %tmp");
     assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %pair.addr, i32 0, i32 1");
     assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
     assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %matrix.addr, i32 0, i32 0");
@@ -10672,9 +10672,9 @@ void test_emit_generic_record_method_return_field_return() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
-    assert_defines_method(result, "%record.Box_UInt32_", "method.UInt32.make_box", "i32 %this");
+    assert_defines_method(result, "%record.Box_UInt32_", "__orison_method.demo.lowering.UInt32.make_box", "i32 %this");
     assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
-    assert_ir_contains(result, " = call %record.Box_UInt32_ @method.UInt32.make_box(i32 %value)");
+    assert_ir_contains(result, " = call %record.Box_UInt32_ @__orison_method.demo.lowering.UInt32.make_box(i32 %value)");
     assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
     assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_returns_lowered_tmp(result);
@@ -10701,11 +10701,11 @@ void test_emit_generic_record_array_method_return_field_return() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
-    assert_defines_method(result, "[2 x %record.Box_UInt32_]", "method.UInt32.make_boxes", "i32 %this");
+    assert_defines_method(result, "[2 x %record.Box_UInt32_]", "__orison_method.demo.lowering.UInt32.make_boxes", "i32 %this");
     assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
     assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 9, 0");
     assert_ir_contains(result, " = insertvalue [2 x %record.Box_UInt32_] undef, %record.Box_UInt32_ %tmp");
-    assert_ir_contains(result, " = call [2 x %record.Box_UInt32_] @method.UInt32.make_boxes(i32 %value)");
+    assert_ir_contains(result, " = call [2 x %record.Box_UInt32_] @__orison_method.demo.lowering.UInt32.make_boxes(i32 %value)");
     assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %tmp");
     assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
     assert_ir_contains(result, " = load i32, ptr %tmp");
@@ -12571,7 +12571,7 @@ void test_reject_foreign_alias_colliding_with_generic_specialization_symbol() {
     );
 }
 
-void test_reject_foreign_alias_colliding_with_method_symbol() {
+void test_allow_foreign_alias_matching_unqualified_method_symbol() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_foreign_method_symbol_collision.or";
     auto result = lower_source(
         path,
@@ -12591,11 +12591,11 @@ void test_reject_foreign_alias_colliding_with_method_symbol() {
         "    Box(1 as UInt32).read()\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message ==
-        "LLVM symbol 'method.Box_UInt32_.read' for foreign declaration collides with generated method symbol"
+    assert(!result.has_errors());
+    assert_ir_contains(result, "declare i32 @method.Box_UInt32_.read(i32)");
+    assert_ir_contains(
+        result,
+        "define i32 @__orison_method.demo.symbols.Box_UInt32_.read(%record.Box_UInt32_ %this)"
     );
 }
 
@@ -12620,35 +12620,6 @@ void test_reject_source_function_colliding_with_generic_specialization_symbol() 
     assert(
         result.diagnostics.entries().front().message ==
         "LLVM symbol 'id__UInt32' for generated generic function specialization collides with source function symbol"
-    );
-}
-
-void test_reject_foreign_export_alias_colliding_with_method_symbol() {
-    auto path = std::filesystem::temp_directory_path() / "orison_lowering_foreign_export_method_symbol_collision.or";
-    auto result = lower_source(
-        path,
-        "package demo.symbols\n"
-        "\n"
-        "public foreign \"c\" as \"method.Box_UInt32_.read\"\n"
-        "function exported() -> UInt32\n"
-        "    return 0\n"
-        "\n"
-        "record Box<T>\n"
-        "    value: T\n"
-        "\n"
-        "extend Box<UInt32>\n"
-        "    function read(this: shared This) -> UInt32\n"
-        "        this.value\n"
-        "\n"
-        "function main() -> UInt32\n"
-        "    Box(1 as UInt32).read()\n"
-    );
-
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message ==
-        "LLVM symbol 'method.Box_UInt32_.read' for foreign export collides with generated method symbol"
     );
 }
 
@@ -14935,9 +14906,8 @@ auto main() -> int {
     test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_reject_printf_adapter_with_unsupported_trailing_type();
     test_reject_foreign_alias_colliding_with_generic_specialization_symbol();
-    test_reject_foreign_alias_colliding_with_method_symbol();
+    test_allow_foreign_alias_matching_unqualified_method_symbol();
     test_reject_source_function_colliding_with_generic_specialization_symbol();
-    test_reject_foreign_export_alias_colliding_with_method_symbol();
     test_emit_fixed_arity_c_foreign_call();
     test_emit_unsafe_function_identity_return();
     test_reject_unsupported_return_expression();

@@ -1325,7 +1325,10 @@ void assert_aggregate_projection_access_plan_state(
     assert(receiver_state.source_type_names[0] == "UInt32");
     assert(receiver_state.diagnostics[0].empty());
     assert(!receiver_state.receiver_projections[0]);
-    assert(receiver_state.function_symbol_names[1] == "method.Box.payload");
+    assert(
+        receiver_state.function_symbol_names[1] ==
+        "__orison_method.smoke.aggregate_access_plan_state_receiver.Box.payload"
+    );
     assert(receiver_state.intents[1] == orison::lowering::AggregateProjectionAccessIntent::value_read);
     assert(receiver_state.statuses[1] == orison::lowering::AggregateProjectionAccessStatus::allowed);
     assert(receiver_state.binding_names[1] == "this.payload");
@@ -2045,8 +2048,11 @@ auto main() -> int {
     {
         std::ofstream output(first_collision_producer_path);
         output << "package first.math\n";
+        output << "extend UInt32\n";
+        output << "    function adjusted(this: shared This) -> UInt32\n";
+        output << "        this + 1 as UInt32\n";
         output << "public function increment(value: UInt32) -> UInt32\n";
-        output << "    value + 1 as UInt32\n";
+        output << "    value.adjusted()\n";
     }
     auto first_collision_producer = pipeline.emit_object(first_collision_producer_path);
     assert(!first_collision_producer.has_errors());
@@ -2055,19 +2061,32 @@ auto main() -> int {
             "define i32 @__orison_fn.first.math.increment(i32 %value)"
         ) != std::string::npos
     );
+    assert(
+        first_collision_producer.ir_text.find(
+            "define i32 @__orison_method.first.math.UInt32.adjusted(i32 %this)"
+        ) != std::string::npos
+    );
 
     auto second_collision_producer_path = smoke_temp_root / "second_collision_producer.or";
     {
         std::ofstream output(second_collision_producer_path);
         output << "package second.math\n";
+        output << "extend UInt32\n";
+        output << "    function adjusted(this: shared This) -> UInt32\n";
+        output << "        this + 2 as UInt32\n";
         output << "public function increment(value: UInt32) -> UInt32\n";
-        output << "    value + 1 as UInt32\n";
+        output << "    value.adjusted()\n";
     }
     auto second_collision_producer = pipeline.emit_object(second_collision_producer_path);
     assert(!second_collision_producer.has_errors());
     assert(
         second_collision_producer.ir_text.find(
             "define i32 @__orison_fn.second.math.increment(i32 %value)"
+        ) != std::string::npos
+    );
+    assert(
+        second_collision_producer.ir_text.find(
+            "define i32 @__orison_method.second.math.UInt32.adjusted(i32 %this)"
         ) != std::string::npos
     );
 
@@ -2079,7 +2098,7 @@ auto main() -> int {
         output << "    increment as first_increment from first.math\n";
         output << "    increment as second_increment from second.math\n";
         output << "function main() -> UInt32\n";
-        output << "    first_increment(10 as UInt32) + second_increment(20 as UInt32) - 32 as UInt32\n";
+        output << "    first_increment(10 as UInt32) + second_increment(20 as UInt32) - 33 as UInt32\n";
     }
     auto collision_consumer = pipeline.emit_object(
         collision_consumer_path,
@@ -7808,7 +7827,9 @@ auto main() -> int {
     assert(method_returned_shared_view_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         method_returned_shared_view_for.ir_text.find(
-            " = call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
+            " = call { ptr, i64 } "
+            "@__orison_method.demo.pipeline.methodreturnedsharedviewfor.UInt32.forward_view("
+            "i32 %seed, { ptr, i64 } %values)"
         ) != std::string::npos
     );
     assert(
@@ -7857,7 +7878,9 @@ auto main() -> int {
     assert(member_receiver_method_returned_shared_view_for.dynamic_array_runtime_request_state.operations.empty());
     assert(
         member_receiver_method_returned_shared_view_for.ir_text.find(
-            " = call { ptr, i64 } @method.Bucket.forward_view(%record.Bucket"
+            " = call { ptr, i64 } "
+            "@__orison_method.demo.pipeline.memberreceiverreturnedsharedviewfor.Bucket.forward_view("
+            "%record.Bucket"
         ) != std::string::npos
     );
     assert(

@@ -111,6 +111,11 @@ auto lowered_method_symbol_name(
     std::string_view method_name
 ) -> std::string;
 
+auto lowered_package_method_symbol_name(
+    std::string_view package_name,
+    std::string_view method_symbol_name
+) -> std::string;
+
 auto lowered_record_type_name(std::string_view record_name) -> std::string;
 
 auto find_lowered_choice_layout_by_llvm_type(

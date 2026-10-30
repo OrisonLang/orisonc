@@ -290,7 +290,7 @@ int main() {
         "define i32 @call_then_return(i32 %value) {\n"
         "entry:\n"
         "  call void @observe(i32 %value)\n"
-        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  call void @__orison_method.demo.function_emitter.UInt32.reset(i32 %value)\n"
         "  ret i32 %value\n"
         "}\n"
     );
@@ -308,7 +308,7 @@ int main() {
         "define void @observe_then_return(i32 %value) {\n"
         "entry:\n"
         "  call void @observe(i32 %value)\n"
-        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  call void @__orison_method.demo.function_emitter.UInt32.reset(i32 %value)\n"
         "  ret void\n"
         "}\n"
     );
@@ -525,7 +525,7 @@ int main() {
         diagnostics
     );
     assert(!diagnostics.has_errors());
-    assert(method_array_for_ir.find("call [3 x i32] @method.UInt32.triple") != std::string::npos);
+    assert(method_array_for_ir.find("call [3 x i32] @__orison_method.demo.function_emitter.UInt32.triple") != std::string::npos);
     assert(method_array_for_ir.find("for.iteration") != std::string::npos);
     assert(method_array_for_ir.find("ret i32 0") != std::string::npos);
 
@@ -538,7 +538,7 @@ int main() {
     );
     assert(!diagnostics.has_errors());
     assert(
-        record_method_array_for_ir.find("call [3 x i32] @method.Wrapper.view(%record.Wrapper") !=
+        record_method_array_for_ir.find("call [3 x i32] @__orison_method.demo.function_emitter.Wrapper.view(%record.Wrapper") !=
         std::string::npos
     );
     assert(record_method_array_for_ir.find("for.iteration") != std::string::npos);
@@ -553,7 +553,7 @@ int main() {
     );
     assert(!diagnostics.has_errors());
     assert(
-        member_receiver_method_array_for_ir.find("call [3 x i32] @method.Bucket.view(%record.Bucket") !=
+        member_receiver_method_array_for_ir.find("call [3 x i32] @__orison_method.demo.function_emitter.Bucket.view(%record.Bucket") !=
         std::string::npos
     );
     assert(

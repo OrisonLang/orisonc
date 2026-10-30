@@ -859,10 +859,10 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_member_call_argument_emit.or",
         sourced_scalar_choice_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, { i32, i32 } %status)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, { i32, i32 } %status)",
             "insertvalue { i32, i32 } undef, i32 0, 0",
             "i32 43, 1",
-            "call i32 @method.UInt32.observe(i32 %value, { i32, i32 }",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, { i32, i32 }",
             "switch i32",
         }
     );
@@ -899,11 +899,11 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_member_call_argument_emit.or",
         sourced_scalar_choice_maybe_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, { i1, { i32, i32 } } %maybe_status)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, { i1, { i32, i32 } } %maybe_status)",
             "insertvalue { i32, i32 } undef, i32 0, 0",
             "i32 47, 1",
             "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
-            "call i32 @method.UInt32.observe(i32 %value, { i1, { i32, i32 } }",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, { i1, { i32, i32 } }",
             "switch i1",
             "switch i32",
         }
@@ -935,10 +935,10 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_array_member_call_argument_emit.or",
         sourced_scalar_choice_array_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, [2 x { i32, i32 }] %statuses)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, [2 x { i32, i32 }] %statuses)",
             "insertvalue [2 x { i32, i32 }] undef, { i32, i32 }",
             "i32 131, 1",
-            "call i32 @method.UInt32.observe(i32 %value, [2 x { i32, i32 }]",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, [2 x { i32, i32 }]",
             "switch i32",
         }
     );
@@ -975,10 +975,10 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_array_member_call_argument_emit.or",
         sourced_scalar_choice_maybe_array_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, [2 x { i1, { i32, i32 } }] %statuses)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, [2 x { i1, { i32, i32 } }] %statuses)",
             "insertvalue [2 x { i1, { i32, i32 } }] undef, { i1, { i32, i32 } }",
             "i32 133, 1",
-            "call i32 @method.UInt32.observe(i32 %value, [2 x { i1, { i32, i32 } }]",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, [2 x { i1, { i32, i32 } }]",
             "switch i1",
             "switch i32",
         }
@@ -1010,11 +1010,11 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_nested_array_member_call_argument_emit.or",
         sourced_scalar_choice_nested_array_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, [2 x [2 x { i32, i32 }]] %statuses)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, [2 x [2 x { i32, i32 }]] %statuses)",
             "insertvalue [2 x { i32, i32 }] undef, { i32, i32 }",
             "insertvalue [2 x [2 x { i32, i32 }]] undef, [2 x { i32, i32 }]",
             "i32 139, 1",
-            "call i32 @method.UInt32.observe(i32 %value, [2 x [2 x { i32, i32 }]]",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, [2 x [2 x { i32, i32 }]]",
             "switch i32",
         }
     );
@@ -1051,11 +1051,11 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_nested_array_member_call_argument_emit.or",
         sourced_scalar_choice_maybe_nested_array_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, [2 x [2 x { i1, { i32, i32 } }]] %statuses)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, [2 x [2 x { i1, { i32, i32 } }]] %statuses)",
             "insertvalue [2 x { i1, { i32, i32 } }] undef, { i1, { i32, i32 } }",
             "insertvalue [2 x [2 x { i1, { i32, i32 } }]] undef, [2 x { i1, { i32, i32 } }]",
             "i32 141, 1",
-            "call i32 @method.UInt32.observe(i32 %value, [2 x [2 x { i1, { i32, i32 } }]]",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, [2 x [2 x { i1, { i32, i32 } }]]",
             "switch i1",
             "switch i32",
         }
@@ -1095,14 +1095,14 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_member_call_argument_emit.or",
         sourced_scalar_choice_maybe_record_nested_array_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, { i1, %record.StatusGrid } %maybe_grid)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, { i1, %record.StatusGrid } %maybe_grid)",
             "%record.StatusGrid = type { [2 x [2 x { i32, i32 }]] }",
             "insertvalue { i32, i32 } undef, i32 0, 0",
             "i32 179, 1",
             "insertvalue [2 x [2 x { i32, i32 }]] undef, [2 x { i32, i32 }]",
             "insertvalue %record.StatusGrid undef, [2 x [2 x { i32, i32 }]]",
             "insertvalue { i1, %record.StatusGrid } undef, i1 true, 0",
-            "call i32 @method.UInt32.observe(i32 %value, { i1, %record.StatusGrid }",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, { i1, %record.StatusGrid }",
             "switch i1",
             "switch i32",
         }
@@ -1145,7 +1145,7 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_member_call_argument_emit.or",
         sourced_scalar_choice_maybe_record_maybe_nested_array_member_call_argument_lines,
         {
-            "define i32 @method.UInt32.observe(i32 %this, { i1, %record.StatusGrid } %maybe_grid)",
+            "define i32 @__orison_method.demo.cli.UInt32.observe(i32 %this, { i1, %record.StatusGrid } %maybe_grid)",
             "%record.StatusGrid = type { [2 x [2 x { i1, { i32, i32 } }]] }",
             "insertvalue { i32, i32 } undef, i32 0, 0",
             "i32 181, 1",
@@ -1153,7 +1153,7 @@ auto main() -> int {
             "insertvalue [2 x [2 x { i1, { i32, i32 } }]] undef, [2 x { i1, { i32, i32 } }]",
             "insertvalue %record.StatusGrid undef, [2 x [2 x { i1, { i32, i32 } }]]",
             "insertvalue { i1, %record.StatusGrid } undef, i1 true, 0",
-            "call i32 @method.UInt32.observe(i32 %value, { i1, %record.StatusGrid }",
+            "call i32 @__orison_method.demo.cli.UInt32.observe(i32 %value, { i1, %record.StatusGrid }",
             "switch i1",
             "switch i32",
         }

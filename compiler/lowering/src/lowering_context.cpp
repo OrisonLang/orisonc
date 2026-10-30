@@ -2526,13 +2526,17 @@ auto lower_method_signature(
 }
 
 auto collect_method_signature(
+    std::string_view package_name,
     syntax::TypeSyntax const& receiver_type,
     std::string receiver_type_name,
     syntax::FunctionSyntax const& method,
     std::unordered_set<std::string> const& record_names,
     std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> LoweredMethodSignature {
-    auto symbol_name = lowered_method_symbol_name(receiver_type_name, method.name);
+    auto symbol_name = lowered_package_method_symbol_name(
+        package_name,
+        lowered_method_symbol_name(receiver_type_name, method.name)
+    );
     return LoweredMethodSignature {
         .receiver_type_name = receiver_type_name,
         .method_name = method.name,
@@ -2965,6 +2969,7 @@ auto build_lowering_context(
         auto receiver_type_name = render_source_type_name(implementation.receiver_type);
         for (auto const& method : implementation.methods) {
             auto lowered_method = collect_method_signature(
+                    module.package_name,
                     implementation.receiver_type,
                     receiver_type_name,
                     method,
@@ -2988,6 +2993,7 @@ auto build_lowering_context(
         auto receiver_type_name = render_source_type_name(extension.receiver_type);
         for (auto const& method : extension.methods) {
             auto lowered_method = collect_method_signature(
+                    module.package_name,
                     extension.receiver_type,
                     receiver_type_name,
                     method,
@@ -3147,6 +3153,21 @@ auto lowered_method_symbol_name(
     append_sanitized(receiver_type_name);
     symbol += ".";
     append_sanitized(method_name);
+    return symbol;
+}
+
+auto lowered_package_method_symbol_name(
+    std::string_view package_name,
+    std::string_view method_symbol_name
+) -> std::string {
+    if (package_name.empty()) {
+        return std::string {method_symbol_name};
+    }
+    auto symbol = "__orison_method." + std::string {package_name} + ".";
+    constexpr auto method_prefix = std::string_view {"method."};
+    symbol += method_symbol_name.starts_with(method_prefix)
+        ? method_symbol_name.substr(method_prefix.size())
+        : method_symbol_name;
     return symbol;
 }
 

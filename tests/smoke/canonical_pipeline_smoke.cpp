@@ -132,7 +132,11 @@ auto main() -> int {
         PipelineDemo {"concurrency_thread_main.or", "call ptr @__orison_thread_spawn"},
         PipelineDemo {"dynamic_array_parameter_reads.or", "define i64 @count({ ptr, i64, i64 } %values)"},
         PipelineDemo {"local_dynamic_array_append.or", "call void @__orison_dynamic_array_grow"},
-        PipelineDemo {"local_null_safe_generic_aggregate.or", "call %record.Box_UInt32_ @method.Box_UInt32_.bump"},
+        PipelineDemo {
+            "local_null_safe_generic_aggregate.or",
+            "call %record.Box_UInt32_ "
+            "@__orison_method.demo.local_null_safe_generic_aggregate.Box_UInt32_.bump",
+        },
         PipelineDemo {"local_record_field_assignment.or", "store i32 8, ptr %tmp"},
         PipelineDemo {"pointer_record_field_assignment.or", "store i32 8, ptr %tmp"},
         PipelineDemo {"view_descriptor_reads.or", "%values.sequence_for0.value = load i32"},

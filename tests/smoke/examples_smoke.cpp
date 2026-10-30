@@ -129,22 +129,22 @@ auto main() -> int {
     assert(view_descriptor_ir.ir_text.find("define i32 @sum({ ptr, i64 } %values)") != std::string::npos);
     assert(
         view_descriptor_ir.ir_text.find(
-            "define { ptr, i64 } @method.UInt32.forward_view(i32 %this, { ptr, i64 } %values)"
+            "define { ptr, i64 } @__orison_method.examples.viewdescriptor.UInt32.forward_view(i32 %this, { ptr, i64 } %values)"
         ) != std::string::npos
     );
     assert(
         view_descriptor_ir.ir_text.find(
-            "call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
+            "call { ptr, i64 } @__orison_method.examples.viewdescriptor.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
         ) != std::string::npos
     );
     assert(
         view_descriptor_ir.ir_text.find(
-            "define { ptr, i64 } @method.ViewBucket.forward_view(%record.ViewBucket %this, { ptr, i64 } %values)"
+            "define { ptr, i64 } @__orison_method.examples.viewdescriptor.ViewBucket.forward_view(%record.ViewBucket %this, { ptr, i64 } %values)"
         ) != std::string::npos
     );
     assert(
         view_descriptor_ir.ir_text.find(
-            "call { ptr, i64 } @method.ViewBucket.forward_view(%record.ViewBucket"
+            "call { ptr, i64 } @__orison_method.examples.viewdescriptor.ViewBucket.forward_view(%record.ViewBucket"
         ) != std::string::npos
     );
     assert(
